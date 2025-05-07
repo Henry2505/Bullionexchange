@@ -96,7 +96,7 @@
       background: rgba(0, 0, 0, 0.5);
       z-index: -1;
     }
-    /* Enhanced three-dot menu */
+    /* New three-dot menu */
     .menu-container {
       position: fixed;
       top: 0;
@@ -123,76 +123,84 @@
     }
     .menu-icon {
       position: relative;
-      width: 42px;
-      height: 42px;
-      background: rgba(255,215,0,0.1);
+      width: 48px;
+      height: 48px;
+      background: rgba(255,215,0,0.15);
       border-radius: 50%;
       display: flex;
       flex-direction: column;
       justify-content: center;
       align-items: center;
       cursor: pointer;
-      box-shadow: 0 0 8px rgba(255,215,0,0.5);
+      box-shadow: 0 0 10px rgba(255,215,0,0.6);
       transition: box-shadow 0.3s ease, transform 0.3s ease;
-      z-index: 1001;
+      animation: pulse 2s infinite ease-in-out;
     }
     .menu-icon:hover {
-      box-shadow: 0 0 12px rgba(255,215,0,0.8);
-      transform: scale(1.05);
+      box-shadow: 0 0 15px rgba(255,215,0,0.9);
+      transform: scale(1.1);
     }
     .menu-icon span {
       display: block;
-      width: 8px;
-      height: 8px;
+      width: 10px;
+      height: 10px;
       background: gold;
       border-radius: 50%;
-      margin: 4px 0;
+      margin: 5px 0;
       transition: transform 0.3s ease, opacity 0.3s ease;
     }
-    .menu-icon.open span:nth-child(1) {
-      transform: translateY(12px);
+    .menu-icon.active span:nth-child(1) {
+      transform: translateY(15px);
     }
-    .menu-icon.open span:nth-child(2) {
+    .menu-icon.active span:nth-child(2) {
       opacity: 0;
     }
-    .menu-icon.open span:nth-child(3) {
-      transform: translateY(-12px);
+    .menu-icon.active span:nth-child(3) {
+      transform: translateY(-15px);
     }
-    .nav-menu {
+    @keyframes pulse {
+      0% { box-shadow: 0 0 10px rgba(255,215,0,0.6); }
+      50% { box-shadow: 0 0 20px rgba(255,215,0,0.8); }
+      100% { box-shadow: 0 0 10px rgba(255,215,0,0.6); }
+    }
+    .menu-overlay {
       position: fixed;
       top: 0;
+      right: -100%;
+      width: 280px;
+      height: 100%;
+      background: #0b0b1f;
+      z-index: 1500;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      transition: right 0.4s ease;
+      box-shadow: -5px 0 15px rgba(0, 0, 0, 0.5);
+    }
+    .menu-overlay.active {
       right: 0;
-      width: 260px;
-      height: 100vh;
-      background: rgba(12,12,26,0.95);
-      transform: translateX(100%);
-      transition: transform 0.4s ease;
-      padding-top: 5rem;
-      box-shadow: -4px 0 12px rgba(0,0,0,0.5);
-      z-index: 1000;
     }
-    .nav-menu.open {
-      transform: translateX(0);
-    }
-    .nav-menu ul {
+    .menu-overlay ul {
       list-style: none;
-      padding: 0 2rem;
+      padding: 0;
+      margin: 0;
     }
-    .nav-menu li {
-      margin: 1.5rem 0;
+    .menu-overlay li {
+      margin: 20px 0;
     }
-    .nav-menu li a {
-      font-size: 1.1rem;
+    .menu-overlay a {
       color: gold;
       text-decoration: none;
+      font-size: 1.2rem;
       position: relative;
       transition: all 0.3s ease;
     }
-    .nav-menu li a:hover {
+    .menu-overlay a:hover {
       color: #e6c200;
       text-shadow: 0 0 10px gold;
     }
-    .nav-menu li a::after {
+    .menu-overlay a::after {
       content: '';
       position: absolute;
       left: 0;
@@ -204,7 +212,7 @@
       transform-origin: left;
       transition: transform 0.3s ease;
     }
-    .nav-menu li a:hover::after {
+    .menu-overlay a:hover::after {
       transform: scaleX(1);
     }
   </style>
@@ -220,16 +228,16 @@
   <!-- Overlay for readability -->
   <div class="overlay"></div>
 
-  <!-- Enhanced Three-Dot Menu with Logo -->
+  <!-- New Three-Dot Menu with Logo -->
   <div class="menu-container">
     <a href="index.html" class="logo">
       <img src="CBE_logo.png" alt="CBE Logo">
     </a>
-    <div class="menu-icon" id="navToggle">
+    <div class="menu-icon" id="menuToggle">
       <span></span><span></span><span></span>
     </div>
   </div>
-  <nav class="nav-menu" id="navMenu">
+  <div class="menu-overlay" id="menuOverlay">
     <ul>
       <li><a href="index.html">Home</a></li>
       <li><a href="about.html">About</a></li>
@@ -242,7 +250,7 @@
       <li><a href="privacy.html">Privacy Policy</a></li>
       <li><a href="CBE_login.html">Login</a></li>
     </ul>
-  </nav>
+  </div>
   <div style="height: 90px;"></div> <!-- Spacer for fixed menu -->
 
   <header>
@@ -299,16 +307,17 @@
   </div>
 
   <footer>
-    &copy; 2025 CBE - Chukwuemeka Bullion Exchange. All rights reserved.
+    © 2025 CBE - Chukwuemeka Bullion Exchange. All rights reserved.
   </footer>
 
   <script data-cfasync="false" src="/cdn-cgi/scripts/5c5dd728/cloudflare-static/email-decode.min.js"></script>
   <script>
-    const navToggle = document.getElementById('navToggle');
-    const navMenu = document.getElementById('navMenu');
-    navToggle.addEventListener('click', () => {
-      navToggle.classList.toggle('open');
-      navMenu.classList.toggle('open');
+    // Toggle menu
+    const menuToggle = document.getElementById('menuToggle');
+    const menuOverlay = document.getElementById('menuOverlay');
+    menuToggle.addEventListener('click', () => {
+      menuToggle.classList.toggle('active');
+      menuOverlay.classList.toggle('active');
     });
   </script>
 <script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'93c38daf7f2806f8',t:'MTc0NjY1MDY0Ny4wMDAwMDA='};var a=document.createElement('script');a.nonce='';a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script>
