@@ -10,16 +10,13 @@
     html, body { height: 100%; background: #0b0b0b; color: #f5f5f5; }
 
     video#bg-video {
-      position: fixed;
-      top: 0; left: 0;
+      position: fixed; top: 0; left: 0;
       width: 100%; height: 100%;
-      object-fit: cover;
-      z-index: -2;
+      object-fit: cover; z-index: -2;
     }
 
     #overlay {
-      position: fixed;
-      top: 0; left: 0;
+      position: fixed; top: 0; left: 0;
       width: 100%; height: 100%;
       background: rgba(0, 0, 0, 0.6);
       z-index: -1;
@@ -33,8 +30,7 @@
       color: #000;
       font-size: 1.5rem;
       border-radius: 5px;
-      width: 36px;
-      height: 36px;
+      width: 36px; height: 36px;
       cursor: pointer;
       z-index: 1001;
     }
@@ -78,26 +74,13 @@
     body.collapsed-sidebar .content { margin-left: 0; }
 
     h2 { color: gold; margin-bottom: 20px; }
-
-    table {
-      width: 100%;
-      border-collapse: collapse;
-      margin-bottom: 30px;
-    }
-
+    table { width: 100%; border-collapse: collapse; margin-bottom: 30px; }
     th, td {
       padding: 10px;
       border-bottom: 1px solid #333;
     }
-
-    th {
-      background-color: #222;
-      color: #ccc;
-    }
-
-    tr:hover {
-      background-color: #1e1e1e;
-    }
+    th { background-color: #222; color: #ccc; }
+    tr:hover { background-color: #1e1e1e; }
 
     .btn {
       background: gold;
@@ -108,10 +91,7 @@
       font-weight: bold;
       cursor: pointer;
     }
-
-    .btn:hover {
-      background: #e6c200;
-    }
+    .btn:hover { background: #e6c200; }
 
     .hidden { display: none; }
 
@@ -179,7 +159,7 @@
       <a href="#" data-section="trades">Trades</a>
       <a href="#" data-section="signals">Signals</a>
       <a href="#" data-section="broadcasts">Broadcasts</a>
-      <a href="#" data-section="messages">Inbox</a>
+      <a href="#" data-section="messages">Messages</a>
       <a href="#" data-section="settings">Settings</a>
       <a href="#" data-section="logs">Logs</a>
       <a href="index.html" target="_blank">Visit Site</a>
@@ -188,138 +168,96 @@
 
     <div class="content">
       <section id="dashboard">
-        <h2>Admin Dashboard</h2>
-        <p>Welcome to your admin panel. Use the sidebar to manage site content.</p>
+        <h2>Welcome Admin</h2>
+        <p>Use the navigation on the left to manage your platform.</p>
       </section>
 
-      <section id="payments" class="hidden">
-        <h2>Payment Approvals</h2>
-        <button class="download-btn" onclick="exportPayments()">Download Payment CSV</button>
+      <section id="signals" class="hidden">
+        <h2>Publish Signal</h2>
+        <form id="signalForm">
+          <div class="form-group"><label>Currency Pair</label><input type="text" id="pair" required></div>
+          <div class="form-group"><label>Type (BUY or SELL)</label><input type="text" id="type" required></div>
+          <div class="form-group"><label>Entry Price</label><input type="text" id="entry" required></div>
+          <div class="form-group"><label>Take Profit</label><input type="text" id="tp" required></div>
+          <div class="form-group"><label>Stop Loss</label><input type="text" id="sl" required></div>
+          <div class="form-group"><label>Time</label><input type="text" id="time" placeholder="e.g. 10:30 AM" required></div>
+          <div class="form-group"><label>Note</label><input type="text" id="note" placeholder="Optional note (e.g. Trade at your own risk)"></div>
+          <button type="submit" class="btn">Publish</button>
+        </form>
+        <h3 style="margin-top: 30px;">Published Signals</h3>
         <table>
-          <thead>
-            <tr><th>Email</th><th>Method</th><th>Plan</th><th>Proof</th><th>Action</th></tr>
-          </thead>
-          <tbody id="payments-list"></tbody>
+          <thead><tr><th>Date</th><th>Pair</th><th>Type</th><th>TP</th><th>SL</th><th>Action</th></tr></thead>
+          <tbody id="signalList"></tbody>
         </table>
       </section>
-
-      <!-- Placeholder sections for restored pages -->
-      <section id="users" class="hidden"><h2>Users</h2><p>User management coming soon.</p></section>
-      <section id="trades" class="hidden"><h2>Trades</h2><p>Trade records management.</p></section>
-      <section id="signals" class="hidden"><h2>Signals</h2><p>Publish or edit signal alerts.</p></section>
-      <section id="broadcasts" class="hidden"><h2>Broadcasts</h2><p>Send messages to all VIP users.</p></section>
-      <section id="messages" class="hidden"><h2>Inbox</h2><p>Contact form messages will appear here.</p></section>
-            <section id="settings" class="hidden">
-        <h2>Wallet Settings</h2>
-        <form id="settingsForm">
-          <div class="form-group"><label>Bitcoin Wallet</label><input type="text" id="btc" /></div>
-          <div class="form-group"><label>Ethereum Wallet</label><input type="text" id="eth" /></div>
-          <div class="form-group"><label>USDT Wallet</label><input type="text" id="usdt" /></div>
-          <button type="submit" class="btn">Save Settings</button>
-        </form>
-      </section>
-
-      <section id="logs" class="hidden">
-        <h2>Admin Logs</h2>
-        <ul id="log-list" style="line-height: 1.8; color: #ccc;"></ul>
-      </section>
-    </div> <!-- end content -->
-  </div> <!-- end container -->
-
-  <script>
-    document.getElementById("toggleSidebar").addEventListener("click", () => {
-      document.body.classList.toggle("collapsed-sidebar");
-    });
-
-    document.querySelectorAll('.sidebar a[data-section]').forEach(link => {
-      link.addEventListener('click', e => {
-        e.preventDefault();
-        document.querySelectorAll('.sidebar a').forEach(a => a.classList.remove('active'));
-        link.classList.add('active');
-        const sectionId = link.getAttribute('data-section');
-        document.querySelectorAll('.content section').forEach(sec => {
-          sec.classList.add('hidden');
-          if (sec.id === sectionId) sec.classList.remove('hidden');
+            <script>
+        document.getElementById("toggleSidebar").addEventListener("click", () => {
+          document.body.classList.toggle("collapsed-sidebar");
         });
-      });
-    });
 
-    const payments = JSON.parse(localStorage.getItem('payments') || '[]');
-    const table = document.getElementById('payments-list');
-    payments.forEach((payment, index) => {
-      const row = document.createElement('tr');
-      row.innerHTML = `
-        <td>${payment.email || ''}</td>
-        <td>${payment.method}</td>
-        <td>${payment.plan}</td>
-        <td><img src="${payment.proof}" alt="Proof" style="max-height:60px;"></td>
-        <td><button class="btn" onclick="approvePayment(${index})">Approve</button></td>
-      `;
-      table.appendChild(row);
-    });
+        document.querySelectorAll('.sidebar a[data-section]').forEach(link => {
+          link.addEventListener('click', e => {
+            e.preventDefault();
+            document.querySelectorAll('.sidebar a').forEach(a => a.classList.remove('active'));
+            link.classList.add('active');
+            const sectionId = link.getAttribute('data-section');
+            document.querySelectorAll('.content section').forEach(sec => {
+              sec.classList.add('hidden');
+              if (sec.id === sectionId) sec.classList.remove('hidden');
+            });
+          });
+        });
 
-    function approvePayment(index) {
-      const payments = JSON.parse(localStorage.getItem('payments') || '[]');
-      const payment = payments[index];
-      payments[index].status = "approved";
-      localStorage.setItem('payments', JSON.stringify(payments));
+        const signalForm = document.getElementById('signalForm');
+        const signalList = document.getElementById('signalList');
+        const signalStore = JSON.parse(localStorage.getItem('signals') || '[]');
 
-      let vipUsers = JSON.parse(localStorage.getItem('vipUsers') || '[]');
-      if (payment.email && !vipUsers.includes(payment.email)) {
-        vipUsers.push(payment.email);
-        localStorage.setItem('vipUsers', JSON.stringify(vipUsers));
-      }
+        function renderSignals() {
+          signalList.innerHTML = '';
+          signalStore.forEach((s, index) => {
+            const row = document.createElement('tr');
+            row.innerHTML = `
+              <td>${s.date}</td>
+              <td>${s.pair}</td>
+              <td>${s.type}</td>
+              <td>${s.tp}</td>
+              <td>${s.sl}</td>
+              <td><button class="btn" onclick="deleteSignal(${index})">Delete</button></td>
+            `;
+            signalList.appendChild(row);
+          });
+        }
 
-      addLog(`Approved payment for ${payment.email} (${payment.plan})`);
-      alert("Payment approved and VIP access granted.");
-      location.reload();
-    }
+        renderSignals();
 
-    // Load and save settings
-    const savedSettings = JSON.parse(localStorage.getItem('settings') || '{}');
-    document.getElementById('btc').value = savedSettings.btc || '';
-    document.getElementById('eth').value = savedSettings.eth || '';
-    document.getElementById('usdt').value = savedSettings.usdt || '';
+        signalForm.addEventListener('submit', e => {
+          e.preventDefault();
+          const date = new Date().toLocaleDateString();
+          const pair = document.getElementById('pair').value;
+          const type = document.getElementById('type').value.toUpperCase();
+          const entry = document.getElementById('entry').value;
+          const tp = document.getElementById('tp').value;
+          const sl = document.getElementById('sl').value;
+          const time = document.getElementById('time').value;
+          const note = document.getElementById('note').value;
 
-    document.getElementById('settingsForm').addEventListener('submit', function(e) {
-      e.preventDefault();
-      const btc = document.getElementById('btc').value;
-      const eth = document.getElementById('eth').value;
-      const usdt = document.getElementById('usdt').value;
-      const settings = { btc, eth, usdt };
-      localStorage.setItem('settings', JSON.stringify(settings));
-      addLog('Updated wallet settings.');
-      alert('Wallet settings saved.');
-    });
+          const signal = { date, pair, type, entry, tp, sl, time, note };
+          signalStore.unshift(signal);
+          localStorage.setItem('signals', JSON.stringify(signalStore));
+          renderSignals();
+          signalForm.reset();
+          alert("Signal published.");
+        });
 
-    // Logs
-    const logs = JSON.parse(localStorage.getItem('logs') || '[]');
-    const logList = document.getElementById('log-list');
-    logs.forEach(log => {
-      const li = document.createElement('li');
-      li.textContent = `[${new Date(log.time).toLocaleString()}] ${log.action}`;
-      logList.appendChild(li);
-    });
-
-    function addLog(action) {
-      const logs = JSON.parse(localStorage.getItem('logs') || '[]');
-      logs.unshift({ time: Date.now(), action });
-      localStorage.setItem('logs', JSON.stringify(logs));
-    }
-
-    function exportPayments() {
-      const payments = JSON.parse(localStorage.getItem('payments') || '[]');
-      let csv = "Email,Method,Plan,Status,SubmittedAt\n";
-      payments.forEach(p => {
-        csv += `${p.email || ''},${p.method},${p.plan},${p.status},${p.submittedAt}\n`;
-      });
-      const blob = new Blob([csv], { type: "text/csv" });
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement("a");
-      a.href = url;
-      a.download = "payments.csv";
-      a.click();
-    }
-  </script>
+        function deleteSignal(index) {
+          if (confirm("Delete this signal?")) {
+            signalStore.splice(index, 1);
+            localStorage.setItem('signals', JSON.stringify(signalStore));
+            renderSignals();
+          }
+        }
+      </script>
+    </div>
+  </div>
 </body>
 </html>
