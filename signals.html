@@ -1,38 +1,170 @@
-<script>
-  window.addEventListener('DOMContentLoaded', () => {
-    const container = document.getElementById('main-content');
-    const signals = JSON.parse(localStorage.getItem('vipSignals') || '[]');
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8"/>
+  <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+  <title>Forex Signals - CBE</title>
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;500;700&display=swap" rel="stylesheet"/>
+  <style>
+    body {
+      margin: 0;
+      font-family: 'Poppins', sans-serif;
+      background: linear-gradient(to bottom, #0b0b0b, #1a1a1a);
+      color: #f5f5f5;
+      user-select: none;
+    }
+    header {
+      background: linear-gradient(135deg, #111, #1c1c1c);
+      padding: 70px 20px 50px;
+      text-align: center;
+      box-shadow: 0 4px 10px rgba(0,0,0,0.5);
+    }
+    header h1 {
+      font-size: 38px;
+      color: gold;
+      margin-bottom: 10px;
+    }
+    header p {
+      font-size: 16px;
+      color: #bbb;
+    }
+    main#main-content {
+      max-width: 1000px;
+      margin: 40px auto;
+      padding: 20px;
+    }
+    .notice {
+      text-align: center;
+      font-size: 16px;
+      color: #ffcc00;
+      margin-bottom: 30px;
+    }
+    .signal-box {
+      background-color: #151515;
+      padding: 25px;
+      border-radius: 10px;
+      margin-bottom: 20px;
+      box-shadow: 0 0 12px rgba(0,0,0,0.5);
+    }
+    .signal-box h2 {
+      font-size: 20px;
+      color: gold;
+      margin-bottom: 10px;
+    }
+    .time {
+      font-size: 14px;
+      color: #999;
+      margin-bottom: 10px;
+    }
+    .signal-content {
+      font-size: 16px;
+      color: #eee;
+      background-color: #1f1f1f;
+      padding: 15px;
+      border-radius: 8px;
+      white-space: pre-wrap;
+    }
+    .copy-line {
+      margin-bottom: 8px;
+    }
+    .admin-note {
+      margin-top: 15px;
+      padding: 12px;
+      background-color: #222;
+      border-left: 4px solid gold;
+      font-size: 14px;
+      color: #ffcc00;
+      font-style: italic;
+      border-radius: 5px;
+    }
+    .copy-button {
+      margin-left: 10px;
+      background: #333;
+      color: #ffd700;
+      border: none;
+      padding: 4px 8px;
+      font-size: 12px;
+      border-radius: 5px;
+      cursor: pointer;
+      animation: blinkGlow 2s infinite;
+    }
+    @keyframes blinkGlow {
+      0%, 100% { box-shadow: 0 0 5px #ffd700; }
+      50% { box-shadow: 0 0 15px #ffd700; }
+    }
+    .copy-button:hover {
+      background: #444;
+    }
+    footer {
+      text-align: center;
+      padding: 20px;
+      font-size: 14px;
+      color: #888;
+      border-top: 1px solid #222;
+      background-color: #0b0b0b;
+    }
+  </style>
+</head>
+<body>
 
-    if (!signals.length) {
-      container.innerHTML += '<p class="notice">No signals available yet.</p>';
-      return;
+  <header>
+    <h1>Forex Signals</h1>
+    <p>Daily premium forex signals for VIP members only.</p>
+  </header>
+
+  <main id="main-content">
+    <div class="notice">
+      Sharing these signals is strictly prohibited. Unauthorized access is punishable.
+    </div>
+    <!-- Signal data will be loaded here -->
+  </main>
+
+  <footer>
+    © 2025 CBE - Chukwuemeka Bullion Exchange. All rights reserved.
+  </footer>
+
+  <script>
+    // Watermark user
+    const vipUser = sessionStorage.getItem('cbeUsername') || 'VIP_MEMBER';
+    function copyToClipboard(id) {
+      const txt = document.getElementById(id).textContent;
+      navigator.clipboard.writeText(txt).then(() => alert('Copied: ' + txt));
     }
 
-    signals.reverse().forEach((s, index) => {
-      const box = document.createElement('div');
-      box.className = 'signal-box';
-      box.innerHTML = `
-        <h2>${s.date || 'Date not set'}</h2>
-        <div class="time">Time: ${s.time || 'Time not set'}</div>
-        <div class="signal-content">
-          <div class="copy-line"> ${s.type} ${s.pair} @ <span id="price${index}">${s.entry}</span>
-            <button class="copy-button" onclick="copyToClipboard('price${index}')">Copy</button>
-          </div>
-          <div class="copy-line">TP: <span id="tp${index}">${s.tp}</span>
-            <button class="copy-button" onclick="copyToClipboard('tp${index}')">Copy</button>
-          </div>
-          <div class="copy-line">SL: <span id="sl${index}">${s.sl}</span>
-            <button class="copy-button" onclick="copyToClipboard('sl${index}')">Copy</button>
-          </div>
-        </div>
-        ${s.note ? `<div class="admin-note">Note: ${s.note}</div>` : ''}
-      `;
-      container.appendChild(box);
-    });
-  });
+    window.addEventListener('DOMContentLoaded', () => {
+      const container = document.getElementById('main-content');
+      const signals = JSON.parse(localStorage.getItem('vipSignals') || '[]');
 
-  function copyToClipboard(id) {
-    const txt = document.getElementById(id).textContent;
-    navigator.clipboard.writeText(txt).then(() => alert('Copied: ' + txt));
-  }
-</script>
+      if (!signals.length) {
+        container.innerHTML += '<p class="notice">No signals available yet.</p>';
+        return;
+      }
+
+      signals.reverse().forEach((s, i) => {
+        const box = document.createElement('div');
+        box.className = 'signal-box';
+        box.innerHTML = `
+          <h2>${s.date || 'Date not set'}</h2>
+          <div class="time">Time: ${s.time || 'Not set'}</div>
+          <div class="signal-content">
+            <div class="copy-line">
+              ${s.type} ${s.pair} @ <span id="price${i}">${s.entry}</span>
+              <button class="copy-button" onclick="copyToClipboard('price${i}')">Copy</button>
+            </div>
+            <div class="copy-line">
+              TP: <span id="tp${i}">${s.tp}</span>
+              <button class="copy-button" onclick="copyToClipboard('tp${i}')">Copy</button>
+            </div>
+            <div class="copy-line">
+              SL: <span id="sl${i}">${s.sl}</span>
+              <button class="copy-button" onclick="copyToClipboard('sl${i}')">Copy</button>
+            </div>
+          </div>
+          ${s.note ? `<div class="admin-note">Note: ${s.note}</div>` : ''}
+        `;
+        container.appendChild(box);
+      });
+    });
+  </script>
+</body>
+</html>
