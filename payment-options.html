@@ -54,13 +54,7 @@
       display: none;
       margin-bottom: 20px;
     }
-    .crypto-option {
-      margin-bottom: 10px;
-    }
-    .proof {
-      margin-top: 20px;
-    }
-    input[type="file"], select {
+    input[type="file"], input[type="email"], select {
       width: 100%;
       padding: 10px;
       background: #111;
@@ -112,6 +106,8 @@
     <h1>Payment Options</h1>
     <p class="info" id="selectedPlanInfo">Loading...</p>
 
+    <input type="email" id="userEmail" placeholder="Enter your email (same as application)" required />
+
     <div class="method-select">
       <button id="paystackBtn">Pay with Paystack</button>
       <button onclick="showCrypto()">Pay with Crypto</button>
@@ -141,10 +137,11 @@
   </div>
 
   <script>
+    const settings = JSON.parse(localStorage.getItem('settings') || '{}');
     const walletMap = {
-      Bitcoin: "bc1examplebtcwalletaddress",
-      Ethereum: "0xexampleethaddress",
-      USDT: "Texampleusdtwalletaddress"
+      Bitcoin: settings.btc || 'Not set',
+      Ethereum: settings.eth || 'Not set',
+      USDT: settings.usdt || 'Not set'
     };
 
     const selectedPackage = sessionStorage.getItem('selectedPackage') || '';
@@ -175,35 +172,41 @@
     }
 
     function submitPayment() {
+      const email = document.getElementById('userEmail').value.trim().toLowerCase();
       const proofFile = document.getElementById('proof').files[0];
       const cryptoType = document.getElementById('cryptoType').value;
       const wallet = walletMap[cryptoType] || '';
-      const reader = new FileReader();
+      const payments = JSON.parse(localStorage.getItem('payments') || '[]');
 
-      if (!proofFile) {
-        alert('Please upload a proof of payment image.');
+      if (!email || !proofFile) {
+        alert("Please enter your email and upload proof.");
         return;
       }
 
+      const alreadyPaid = payments.some(p => p.email === email && p.status !== "expired");
+      if (alreadyPaid) {
+        alert("You already submitted a payment. Please wait for approval or expiration before paying again.");
+        return;
+      }
+
+      const reader = new FileReader();
       reader.onload = function (e) {
         const paymentData = {
+          email,
           plan: selectedPackage,
           method: wallet ? cryptoType : 'Paystack',
-          wallet: wallet,
+          wallet,
           proof: e.target.result,
           status: 'pending',
           submittedAt: new Date().toISOString()
         };
 
-        const payments = JSON.parse(localStorage.getItem('payments') || '[]');
         payments.push(paymentData);
         localStorage.setItem('payments', JSON.stringify(payments));
-
-        alert('Payment submitted! Await approval from the admin.');
         sessionStorage.setItem('paymentApproved', false);
+        alert('Payment submitted! Await approval.');
         window.location.href = 'CBE_login.html';
       };
-
       reader.readAsDataURL(proofFile);
     }
 
