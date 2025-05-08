@@ -6,7 +6,7 @@
   <title>Payment Options – CBE</title>
   <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;500;700&display=swap" rel="stylesheet">
   <style>
-    /* ========== Your existing styles ========== */
+    /* ← all your existing styles untouched → */
     body { margin:0; font-family:'Poppins',sans-serif; background:#0b0b0b; color:#f5f5f5; }
     .container { max-width:700px; margin:120px auto 40px; padding:30px; background:rgba(0,0,0,0.7); border-radius:10px; box-shadow:0 0 20px gold; }
     h1 { color:gold; text-align:center; margin-bottom:30px; }
@@ -15,7 +15,7 @@
     button { background:gold; color:#000; border:none; padding:12px 20px; border-radius:6px; font-weight:bold; cursor:pointer; transition:0.3s; }
     button:hover { background:#e6c200; box-shadow:0 0 15px gold; }
     #cryptoOptions { display:none; margin-bottom:20px; }
-    input[type="file"], input[type="email"], select { width:100%; padding:10px; background:#111; border:1px solid #444; color:#f5f5f5; border-radius:6px; margin-bottom:20px; }
+    input[type="email"], select { width:100%; padding:10px; background:#111; border:1px solid #444; color:#f5f5f5; border-radius:6px; margin-bottom:20px; }
     .submit-btn { text-align:center; }
     .wallet-box { text-align:center; margin-top:10px; }
     .wallet-box p { display:inline-block; font-size:14px; color:gold; margin-right:10px; }
@@ -33,8 +33,9 @@
     <h1>Payment Options</h1>
     <p class="info" id="selectedPlanInfo">Loading...</p>
 
+    <!-- form wrapper -->
     <form id="paymentForm">
-      <input type="email" id="userEmail" placeholder="Enter your email (same as application)" required />
+      <input type="email" id="userEmail" placeholder="Enter your email" required />
 
       <div class="method-select">
         <button type="button" id="paystackBtn">Pay with Paystack</button>
@@ -54,10 +55,6 @@
         </div>
       </div>
 
-      <!-- Updated label for 5MB -->
-      <label for="proof">Upload Proof of Payment (max 5 MB):</label>
-      <input type="file" id="proof" accept="image/*" required />
-
       <div class="submit-btn">
         <button type="submit" id="submitBtn">Submit Payment</button>
       </div>
@@ -66,16 +63,9 @@
 
   <script>
     document.addEventListener('DOMContentLoaded', () => {
-      console.log('Payment page initialized');
-
-      // Load settings
+      // Load admin settings
       let settings = {};
-      try {
-        settings = JSON.parse(localStorage.getItem('paymentSettings')) || {};
-      } catch (e) {
-        console.warn('Could not parse paymentSettings:', e);
-      }
-
+      try { settings = JSON.parse(localStorage.getItem('paymentSettings')) || {}; } catch {}
       const walletMap   = { Bitcoin: settings.btc, Ethereum: settings.eth, USDT: settings.usdt };
       const paystackKey = settings.paystackKey || '';
 
@@ -89,15 +79,15 @@
       document.getElementById('selectedPlanInfo').textContent =
         planNames[pkg] || 'No valid package selected.';
 
-      // Reveal Crypto
+      // Reveal crypto fields
       document.getElementById('cryptoBtn').addEventListener('click', () => {
         document.getElementById('cryptoOptions').style.display = 'block';
       });
 
-      // Update wallet address
-      document.getElementById('cryptoType').addEventListener('change', function() {
-        const addr = walletMap[this.value] || 'Not set';
-        document.getElementById('walletAddress').textContent = addr;
+      // Update wallet display
+      document.getElementById('cryptoType').addEventListener('change', function(){
+        document.getElementById('walletAddress').textContent =
+          walletMap[this.value] || 'Not set';
       });
 
       // Copy wallet
@@ -106,67 +96,60 @@
         if (w && w !== 'Not set') {
           navigator.clipboard.writeText(w).then(() => alert('Wallet address copied'));
         } else {
-          alert('No wallet address to copy');
+          alert('No wallet to copy');
         }
       });
 
-      // Simulated Paystack
+      // Simulate Paystack
       document.getElementById('paystackBtn').addEventListener('click', () => {
-        if (!paystackKey) {
-          return alert('Paystack key not set in Admin Settings');
-        }
-        alert('Simulated Paystack payment – upload proof & submit below');
+        if (!paystackKey) return alert('Paystack key missing in Admin Settings.');
+        alert('Simulated Paystack payment – then submit below.');
       });
 
-      // Form submission
+      // Handle form submit
       document.getElementById('paymentForm').addEventListener('submit', e => {
         e.preventDefault();
-        console.log('Form submit fired');
 
-        const email      = document.getElementById('userEmail').value.trim().toLowerCase();
-        const proofFile  = document.getElementById('proof').files[0];
-        const cryptoType = document.getElementById('cryptoType').value;
-        const wallet     = walletMap[cryptoType] || '';
-        let records      = JSON.parse(localStorage.getItem('paymentRecords') || '[]');
+        const email     = document.getElementById('userEmail').value.trim().toLowerCase();
+        const cryptoType= document.getElementById('cryptoType').value;
+        const wallet    = walletMap[cryptoType] || '';
+        let records     = JSON.parse(localStorage.getItem('paymentRecords')||'[]');
 
-        // Basic validations
+        // Validations
         if (!email || !email.includes('@')) {
-          return alert('Please enter a valid email address.');
+          return alert('Please enter a valid email.');
         }
-        if (!proofFile) {
-          return alert('Please upload proof of payment.');
-        }
-        if (proofFile.size > 5 * 1024 * 1024) {  // 5MB limit
-          return alert('Proof file must be under 5 MB.');
-        }
-        if (document.getElementById('cryptoOptions').style.display === 'block' && !cryptoType) {
+        if (document.getElementById('cryptoOptions').style.display==='block' && !cryptoType) {
           return alert('Please select a cryptocurrency.');
         }
+        if (!pkg || !planNames[pkg]) {
+          return alert('No plan selected.');
+        }
 
-        // Read & store proof
-        const reader = new FileReader();
-        reader.onload = ev => {
-          const newRec = {
-            name:        email.split('@')[0],
-            email,
-            username:    email.split('@')[0],
-            amount:      pkg==='weekly'?50:pkg==='monthly'?150:pkg==='yearly'?1500:0,
-            method:      wallet?cryptoType:'Paystack',
-            walletType:  cryptoType||'Paystack',
-            proof:       ev.target.result,
-            status:      'pending',
-            submittedAt: new Date().toISOString()
-          };
-          records.push(newRec);
-          localStorage.setItem('paymentRecords', JSON.stringify(records));
-          sessionStorage.setItem('paymentApproved', 'false');
-          alert('Payment submitted successfully! Await approval.');
-          window.location.href = 'CBE_login.html';
+        // Build record
+        const rec = {
+          name:       email.split('@')[0],
+          email,
+          username:   email.split('@')[0],
+          amount:     pkg==='weekly'?50:pkg==='monthly'?150:pkg==='yearly'?1500:0,
+          method:     wallet ? cryptoType : 'Paystack',
+          walletType: cryptoType || 'Paystack',
+          proof:      '',           // proof removed
+          status:     'pending',
+          submittedAt:new Date().toISOString()
         };
-        reader.onerror = () => {
-          alert('Error reading proof file. Please try again.');
-        };
-        reader.readAsDataURL(proofFile);
+
+        // Prevent duplicate
+        if (records.some(r=>r.email===email && r.method===rec.method && r.status!=='expired')) {
+          return alert('You already submitted this payment.');
+        }
+
+        records.push(rec);
+        localStorage.setItem('paymentRecords', JSON.stringify(records));
+        sessionStorage.setItem('paymentApproved','false');
+
+        alert('Payment submitted successfully! Await approval.');
+        window.location.href = 'CBE_login.html';
       });
     });
   </script>
