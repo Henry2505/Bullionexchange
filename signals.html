@@ -6,6 +6,14 @@
   <title>Forex Signals - CBE</title>
   <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;500;700&display=swap" rel="stylesheet"/>
   <style>
+    /* disable text selection everywhere */
+    html, body {
+      -webkit-user-select: none;
+      -moz-user-select: none;
+      -ms-user-select: none;
+      user-select: none;
+    }
+
     body {
       margin: 0;
       font-family: 'Poppins', sans-serif;
@@ -27,10 +35,15 @@
       font-size: 16px;
       color: #bbb;
     }
-    main {
+    main#main-content {
       max-width: 1000px;
       margin: 40px auto;
       padding: 20px;
+      transition: filter 0.3s ease;
+    }
+    /* blur class to obscure on screenshot attempt */
+    .blurred {
+      filter: blur(8px);
     }
     .signal-box {
       background-color: #151515;
@@ -97,8 +110,6 @@
       font-style: italic;
       border-radius: 5px;
     }
-  </style>
-  <style>
     .glow-button {
       padding: 12px 24px;
       font-size: 1rem;
@@ -116,8 +127,6 @@
       50% { box-shadow: 0 0 20px #00ffcc, 0 0 30px #00ffcc, 0 0 40px #00ffcc; }
       100% { box-shadow: 0 0 10px #00ffcc, 0 0 20px #00ffcc, 0 0 30px #00ffcc; }
     }
-  </style>
-  <style>
     nav a {
       padding: 8px 16px;
       color: #00ffee;
@@ -145,8 +154,34 @@
     <div style="font-weight:bold;font-size:1.2em;">CBE</div>
   </header>
 
-  <!-- Copy helper script remains -->
+  <!-- Anti‑screenshot & copy script -->
   <script>
+    // disable right‑click
+    document.addEventListener('contextmenu', e => e.preventDefault());
+
+    // intercept PrintScreen & common shortcuts
+    document.addEventListener('keydown', function(e) {
+      // PrintScreen
+      if (e.key === 'PrintScreen') {
+        // clear clipboard (best‑effort)
+        navigator.clipboard.writeText('');
+        alert('Screenshots are disabled on this page');
+        // briefly blur content
+        const main = document.getElementById('main-content');
+        main.classList.add('blurred');
+        setTimeout(() => main.classList.remove('blurred'), 1200);
+        e.preventDefault();
+      }
+      // block Ctrl+P (print), Ctrl+S (save), Ctrl+U (view source), F12 (devtools)
+      if (
+        (e.ctrlKey && ['p','s','u'].includes(e.key.toLowerCase())) ||
+        e.key === 'F12'
+      ) {
+        e.preventDefault();
+      }
+    });
+
+    // copy-to-clipboard helper remains
     function copyToClipboard(id) {
       const text = document.getElementById(id).textContent;
       navigator.clipboard.writeText(text).then(() => {
@@ -160,7 +195,7 @@
     <p>Exclusive Premium Signals for CBE VIP Traders</p>
   </header>
 
-  <main>
+  <main id="main-content">
     <div class="notice">
       These signals are for VIP members only. Please copy and use responsibly.
     </div>
