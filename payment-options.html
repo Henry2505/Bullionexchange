@@ -52,7 +52,7 @@
         </div>
       </div>
 
-      <label for="proof">Upload Proof of Payment:</label>
+      <label for="proof">Upload Proof of Payment (max 500KB):</label>
       <input type="file" id="proof" accept="image/*" required />
 
       <div class="submit-btn">
@@ -64,6 +64,20 @@
   <script>
     document.addEventListener('DOMContentLoaded', () => {
       console.log('Payment page initialized');
+
+      // Function to calculate localStorage usage
+      function getLocalStorageSize() {
+        let total = 0;
+        for (let x in localStorage) {
+          if (localStorage.hasOwnProperty(x)) {
+            total += ((localStorage[x].length + x.length) * 2);
+          }
+        }
+        return total / 1024 / 1024; // Size in MB
+      }
+
+      // Log initial localStorage usage
+      console.log('Initial localStorage usage:', getLocalStorageSize(), 'MB');
 
       // 1) Load admin settings
       let settings = {};
@@ -156,9 +170,9 @@
           console.warn('No proof file uploaded');
           return alert('Please upload proof of payment.');
         }
-        if (proofFile.size > 2 * 1024 * 1024) { // Reduced to 2MB to avoid localStorage issues
+        if (proofFile.size > 500 * 1024) { // 500KB limit
           console.warn('Proof file too large:', proofFile.size);
-          return alert('Proof file must be under 2MB.');
+          return alert('Proof file must be under 500KB.');
         }
         if (document.getElementById('cryptoOptions').style.display === 'block' && !cryptoType) {
           console.warn('Crypto type not selected');
@@ -175,8 +189,8 @@
           try {
             console.log('Proof file read successfully, size:', proofFile.size, 'bytes');
             const base64Proof = ev.target.result;
-            if (!base64Proof || typeof base64Proof !== 'string' || base64Proof.length > 3 * 1024 * 1024) {
-              throw new Error('Invalid or oversized proof data');
+            if (!base64Proof || typeof base64Proof !== 'string' || base64Proof.length > 700 * 1024) {
+              throw new Error('Invalid or oversized proof data (max 700KB after encoding)');
             }
 
             // Validate email for name/username
@@ -200,14 +214,24 @@
 
             // Check localStorage capacity
             const testData = JSON.stringify([...records, newRecord]);
-            if (testData.length > 4 * 1024 * 1024) { // Rough check for localStorage limit
-              throw new Error('localStorage capacity exceeded');
+            const testSizeMB = testData.length / 1024 / 1024;
+            console.log('Estimated new localStorage size:', testSizeMB, 'MB');
+            if (testSizeMB > 4) {
+              const clearRecords = confirm('Storage limit reached. Clear existing payment records to proceed? (This will remove old submissions.)');
+              if (clearRecords) {
+                localStorage.removeItem('paymentRecords');
+                records = [];
+                console.log('paymentRecords cleared');
+              } else {
+                throw new Error('localStorage quota exceeded');
+              }
             }
 
             records.push(newRecord);
             localStorage.setItem('paymentRecords', JSON.stringify(records));
             sessionStorage.setItem('paymentApproved', 'false');
             console.log('Payment record saved to localStorage:', records);
+            console.log('Current localStorage usage:', getLocalStorageSize(), 'MB');
             alert('Payment submitted successfully! Awaiting approval.');
 
             // Attempt navigation
@@ -219,7 +243,7 @@
             }
           } catch (error) {
             console.error('Error saving payment record:', error.message);
-            alert(`Error saving payment: ${error.message}. Please try again with a smaller file or clear browser data.`);
+            alert(`Error saving payment: ${error.message}. Please use a smaller file (<500KB) or clear browser data.`);
           }
         };
         reader.onerror = () => {
