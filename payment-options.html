@@ -132,7 +132,46 @@
     </div>
 
     <div class="submit-btn">
-      <button onclick="submitPayment()">Submit Payment</button>
+      <button onclick="function submitPayment() {
+  const email = document.getElementById('userEmail').value.trim().toLowerCase();
+  const proofFile = document.getElementById('proof').files[0];
+  const cryptoType = document.getElementById('cryptoType').value;
+  const wallet = walletMap[cryptoType] || '';
+  const records = JSON.parse(localStorage.getItem('paymentRecords') || '[]');
+
+  if (!email || !proofFile) {
+    alert("Please enter your email and upload proof.");
+    return;
+  }
+
+  const alreadyPaid = records.some(p => p.email === email && p.status !== "expired");
+  if (alreadyPaid) {
+    alert("You already submitted a payment. Please wait for approval or expiration before paying again.");
+    return;
+  }
+
+  const reader = new FileReader();
+  reader.onload = function (e) {
+    const paymentData = {
+      name: email.split('@')[0],
+      email,
+      username: email.split('@')[0],
+      amount: selectedPackage === 'weekly' ? 50 : selectedPackage === 'monthly' ? 150 : 1500,
+      method: wallet ? cryptoType : 'Paystack',
+      walletType: cryptoType || 'Paystack',
+      proof: e.target.result,
+      status: 'pending',
+      submittedAt: new Date().toISOString()
+    };
+
+    records.push(paymentData);
+    localStorage.setItem('paymentRecords', JSON.stringify(records));
+    sessionStorage.setItem('paymentApproved', false);
+    alert('Payment submitted! Await approval.');
+    window.location.href = 'CBE_login.html';
+  };
+  reader.readAsDataURL(proofFile);
+}">Submit Payment</button>
     </div>
   </div>
 
