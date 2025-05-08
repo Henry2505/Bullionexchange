@@ -138,13 +138,22 @@
 
   <script>
     window.onload = function () {
-      const settings = JSON.parse(localStorage.getItem('settings') || '{}');
+      // Load settings and initialize wallet map
+      let settings;
+      try {
+        settings = JSON.parse(localStorage.getItem('settings') || '{}');
+      } catch (e) {
+        console.error('Error parsing settings:', e);
+        settings = {};
+      }
+      
       const walletMap = {
         Bitcoin: settings.btc || 'Not set',
         Ethereum: settings.eth || 'Not set',
         USDT: settings.usdt || 'Not set'
       };
 
+      // Load selected package and display plan info
       const selectedPackage = sessionStorage.getItem('selectedPackage') || '';
       const planNames = {
         weekly: 'Weekly VIP Plan – $50',
@@ -152,60 +161,102 @@
         yearly: 'Yearly VIP Plan – $1500'
       };
       const priceMap = {
-        weekly: 50, monthly: 150, yearly: 1500
+        weekly: 50,
+        monthly: 150,
+        yearly: 1500
       };
-      document.getElementById('selectedPlanInfo').textContent = planNames[selectedPackage] || 'No valid package selected.';
+      
+      const planInfo = planNames[selectedPackage] || 'No valid package selected.';
+      document.getElementById('selectedPlanInfo').textContent = planInfo;
 
+      // Update wallet address when crypto type changes
       document.getElementById('cryptoType').addEventListener('change', function () {
         const type = this.value;
         document.getElementById('walletAddress').textContent = walletMap[type] || '';
       });
 
+      // Handle Paystack button click
       document.getElementById('paystackBtn').addEventListener('click', () => {
         alert('Simulated Paystack payment. Please upload your proof and submit.');
       });
 
+      // Handle submit button click
       document.getElementById('submitBtn').addEventListener('click', () => {
-        const email = document.getElementById('userEmail').value.trim().toLowerCase();
+        const emailInput = document.getElementById('userEmail').value.trim().toLowerCase();
         const proofFile = document.getElementById('proof').files[0];
         const cryptoType = document.getElementById('cryptoType').value;
         const wallet = walletMap[cryptoType] || '';
-        const records = JSON.parse(localStorage.getItem('paymentRecords') || '[]');
+        const isCryptoPayment = document.getElementById('cryptoOptions').style.display === 'block';
 
-        if (!email) {
-          alert("Please enter your email.");
+        // Validate inputs
+        if (!selectedPackage || !planNames[selectedPackage]) {
+          alert('No valid package selected. Please select a plan and try again.');
           return;
         }
+        
+        if (!emailInput || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(emailInput)) {
+          alert('Please enter a valid email address.');
+          return;
+        }
+
         if (!proofFile) {
-          alert("Please upload proof of payment.");
+          alert('Please upload proof of payment.');
           return;
         }
 
-        const alreadyPaid = records.some(p => p.email === email && p.status !== "expired");
+        if (isCryptoPayment && !cryptoType) {
+          alert('Please select a cryptocurrency type.');
+          return;
+        }
+
+        if (proofFile.size > 5 * 1024 * 1024) { // Limit file size to 5MB
+          alert('Proof of payment file is too large. Please upload an image smaller than 5MB.');
+          return;
+        }
+
+        // Check for existing payment
+        let records;
+        try {
+          records = JSON.parse(localStorage.getItem('paymentRecords') || '[]');
+        } catch (e) {
+          console.error('Error parsing payment records:', e);
+          records = [];
+        }
+
+        const alreadyPaid = records.some(p => p.email === emailInput && p.status !== 'expired');
         if (alreadyPaid) {
-          alert("You already submitted a payment. Wait for approval or expiration.");
+          alert('You already submitted a payment. Wait for approval or expiration.');
           return;
         }
 
+        // Process file upload
         const reader = new FileReader();
         reader.onload = function (e) {
-          const paymentData = {
-            name: email.split('@')[0],
-            email,
-            username: email.split('@')[0],
-            amount: priceMap[selectedPackage] || 0,
-            method: wallet ? cryptoType : 'Paystack',
-            walletType: cryptoType || 'Paystack',
-            proof: e.target.result,
-            status: 'pending',
-            submittedAt: new Date().toISOString()
-          };
+          try {
+            const paymentData = {
+              name: emailInput.split('@')[0],
+              email: emailInput,
+              username: emailInput.split('@')[0],
+              amount: priceMap[selectedPackage] || 0,
+              method: wallet ? cryptoType : 'Paystack',
+              walletType: cryptoType || 'Paystack',
+              proof: e.target.result,
+              status: 'pending',
+              submittedAt: new Date().toISOString()
+            };
 
-          records.push(paymentData);
-          localStorage.setItem('paymentRecords', JSON.stringify(records));
-          sessionStorage.setItem('paymentApproved', false);
-          alert('Payment submitted successfully! Returning to homepage.');
-          window.location.href = 'index.html';
+            records.push(paymentData);
+            localStorage.setItem('paymentRecords', JSON.stringify(records));
+            sessionStorage.setItem('paymentApproved', 'false');
+            alert('Payment submitted! Await approval.');
+            window.location.href = 'index.html';
+          } catch (e) {
+            console.error('Error saving payment data:', e);
+            alert('An error occurred while submitting your payment. Please try again.');
+          }
+        };
+        reader.onerror = function () {
+          alert('Error reading the proof of payment file. Please try again.');
         };
         reader.readAsDataURL(proofFile);
       });
@@ -217,12 +268,14 @@
 
     function copyWallet() {
       const wallet = document.getElementById('walletAddress').textContent;
-      if (wallet) {
+      if (wallet && wallet !== 'Not set') {
         navigator.clipboard.writeText(wallet).then(() => {
-          alert("Wallet address copied!");
+          alert('Wallet address copied!');
         }).catch(() => {
-          alert("Failed to copy wallet address.");
+          alert('Failed to copy wallet address.');
         });
+      } else {
+        alert('No valid wallet address to copy.');
       }
     }
   </script>
