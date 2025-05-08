@@ -1,0 +1,467 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Admin Panel - Chukwuemeka Bullion Exchange</title>
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;500;700&display=swap" rel="stylesheet">
+  <style>
+    body {
+      margin: 0;
+      font-family: 'Poppins', sans-serif;
+      background-color: #0b0b0b;
+      color: #f5f5f5;
+      overflow-x: hidden;
+    }
+    .video-background {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      z-index: -2;
+      filter: brightness(0.7);
+    }
+    .overlay {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: linear-gradient(135deg, rgba(0, 0, 0, 0.6), rgba(34, 34, 34, 0.8));
+      z-index: -1;
+    }
+    .login-container {
+      position: fixed;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      background: rgba(17, 17, 17, 0.9);
+      padding: 40px;
+      border-radius: 15px;
+      box-shadow: 0 0 20px rgba(255, 215, 0, 0.5);
+      text-align: center;
+      z-index: 1000;
+      display: none;
+    }
+    .login-container.active {
+      display: block;
+    }
+    .login-container h2 {
+      color: gold;
+      margin-bottom: 20px;
+      font-size: 28px;
+    }
+    .login-container input {
+      width: 100%;
+      padding: 10px;
+      margin: 10px 0;
+      border: none;
+      border-radius: 5px;
+      background: #222;
+      color: #ddd;
+    }
+    .login-container button {
+      padding: 10px 20px;
+      background: gold;
+      color: #fff;
+      border: none;
+      border-radius: 5px;
+      cursor: pointer;
+      transition: background 0.3s;
+    }
+    .login-container button:hover {
+      background: #ffd700;
+    }
+    .container {
+      display: flex;
+      min-height: calc(100vh - 90px);
+      margin-top: 90px;
+      opacity: 0;
+      transition: opacity 0.5s;
+    }
+    .container.active {
+      opacity: 1;
+    }
+    .sidebar {
+      width: 250px;
+      background: linear-gradient(180deg, #1a1a1a, #111);
+      padding: 30px;
+      border-right: 2px solid #333;
+      position: fixed;
+      height: calc(100vh - 90px);
+      overflow-y: auto;
+      box-shadow: 5px 0 15px rgba(0, 0, 0, 0.5);
+    }
+    .sidebar h3 {
+      color: #ffd700;
+      font-size: 28px;
+      margin-bottom: 25px;
+      text-align: center;
+      text-shadow: 0 0 10px rgba(255, 215, 0, 0.7);
+    }
+    .sidebar ul {
+      list-style: none;
+      padding: 0;
+    }
+    .sidebar li {
+      margin: 15px 0;
+    }
+    .sidebar a {
+      color: #ccc;
+      text-decoration: none;
+      font-size: 18px;
+      display: block;
+      padding: 10px 15px;
+      border-radius: 5px;
+      transition: all 0.3s;
+    }
+    .sidebar a:hover {
+      color: #fff;
+      background: rgba(255, 215, 0, 0.2);
+      transform: translateX(5px);
+    }
+    .main-content {
+      margin-left: 250px;
+      padding: 50px;
+      flex: 1;
+      background: rgba(28, 28, 28, 0.9);
+      border-radius: 10px;
+      box-shadow: 0 0 30px rgba(0, 0, 0, 0.7);
+    }
+    .main-content h1 {
+      font-size: 40px;
+      color: #ffd700;
+      margin-bottom: 30px;
+      text-align: center;
+      text-shadow: 0 0 15px rgba(255, 215, 0, 0.8);
+    }
+    .dashboard-section {
+      background: #222;
+      padding: 25px;
+      border-radius: 10px;
+      margin-bottom: 30px;
+      border: 1px solid #444;
+    }
+    .dashboard-section h2 {
+      font-size: 26px;
+      color: #ffd700;
+      margin-bottom: 20px;
+      text-shadow: 0 0 10px rgba(255, 215, 0, 0.5);
+    }
+    .dashboard-section p {
+      font-size: 16px;
+      color: #ddd;
+      margin-bottom: 15px;
+    }
+    .form-group {
+      margin-bottom: 20px;
+    }
+    .form-group label {
+      display: block;
+      color: #ccc;
+      margin-bottom: 5px;
+    }
+    .form-group input, .form-group textarea, .form-group select {
+      width: 100%;
+      padding: 10px;
+      border: none;
+      border-radius: 5px;
+      background: #333;
+      color: #ddd;
+      box-shadow: inset 0 0 5px rgba(0, 0, 0, 0.5);
+    }
+    .form-group button {
+      padding: 10px 20px;
+      background: #4CAF50;
+      color: #fff;
+      border: none;
+      border-radius: 5px;
+      cursor: pointer;
+      transition: background 0.3s;
+    }
+    .form-group button:hover {
+      background: #45a049;
+    }
+    .trade-history-upload {
+      margin-top: 20px;
+    }
+    .trade-history-upload input[type="file"] {
+      display: none;
+    }
+    .trade-history-upload label {
+      background: #2196F3;
+      padding: 10px 20px;
+      color: #fff;
+      border-radius: 5px;
+      cursor: pointer;
+      transition: background 0.3s;
+    }
+    .trade-history-upload label:hover {
+      background: #1976D2;
+    }
+    .contact {
+      background: #111;
+      padding: 40px 20px;
+      text-align: center;
+      border-top: 1px solid #333;
+      margin-left: 250px;
+    }
+    .contact a {
+      color: #ffd700;
+      text-decoration: none;
+      font-weight: 500;
+      transition: color 0.3s;
+    }
+    .contact a:hover {
+      color: #fff;
+      text-shadow: 0 0 10px #ffd700;
+    }
+    .cta-button {
+      display: inline-block;
+      padding: 15px 35px;
+      background: linear-gradient(90deg, gold, #ffd700);
+      color: #fff;
+      font-weight: 600;
+      text-decoration: none;
+      border-radius: 30px;
+      box-shadow: 0 0 15px rgba(255, 215, 0, 0.6);
+      transition: all 0.3s;
+    }
+    .cta-button:hover {
+      transform: scale(1.05);
+      box-shadow: 0 0 25px rgba(255, 215, 0, 0.8);
+    }
+    footer {
+      text-align: center;
+      padding: 20px;
+      font-size: 14px;
+      color: #888;
+      background: #0b0b0b;
+      border-top: 1px solid #222;
+      margin-left: 250px;
+    }
+    @media (max-width: 600px) {
+      .sidebar {
+        width: 100%;
+        height: auto;
+        position: relative;
+        margin-top: 20px;
+      }
+      .main-content, .contact, footer {
+        margin-left: 0;
+      }
+      .login-container {
+        width: 90%;
+        padding: 20px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <video class="video-background" autoplay muted loop playsinline>
+    <source src="star-video.mp4" type="video/mp4">
+    Your browser does not support the video tag.
+  </video>
+  <div class="overlay"></div>
+  <div class="login-container" id="loginContainer">
+    <h2>Admin Login</h2>
+    <input type="password" id="adminPassword" placeholder="Enter Admin Password">
+    <button onclick="login()">Login</button>
+  </div>
+  <div class="container" id="adminPanel">
+    <div class="sidebar">
+      <h3>Admin Control</h3>
+      <ul>
+        <li><a href="#user-management">User Management</a></li>
+        <li><a href="#signal-management">Signal Management</a></li>
+        <li><a href="#trade-history">Trade History</a></li>
+        <li><a href="#content-editing">Content Editing</a></li>
+      </ul>
+    </div>
+    <div class="main-content">
+      <h1>Admin Panel</h1>
+      <div class="dashboard-section" id="user-management">
+        <h2>User Management</h2>
+        <p>Total users: <span id="total-users">Loading...</span></p>
+        <div class="form-group">
+          <label>Verify New User (Email)</label>
+          <input type="email" id="verify-email" placeholder="Enter user email">
+          <button onclick="verifyUser()">Verify User</button>
+        </div>
+        <table style="width: 100%; border-collapse: collapse; margin-top: 20px;">
+          <thead>
+            <tr style="background: #333; color: gold;">
+              <th style="padding: 10px; border: 1px solid #555;">ID</th>
+              <th style="padding: 10px; border: 1px solid #555;">Name</th>
+              <th style="padding: 10px; border: 1px solid #555;">Email</th>
+              <th style="padding: 10px; border: 1px solid #555;">Status</th>
+              <th style="padding: 10px; border: 1px solid #555;">Actions</th>
+            </tr>
+          </thead>
+          <tbody id="user-table">
+            <tr>
+              <td colspan="5" style="padding: 10px; text-align: center; color: #ddd;">Loading users...</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="dashboard-section" id="signal-management">
+        <h2>Signal Management</h2>
+        <div class="form-group">
+          <label>Send Signal</label>
+          <textarea id="signal-content" rows="4" placeholder="Enter signal details (e.g., Buy/Sell, Price, Time)"></textarea>
+          <button onclick="sendSignal()">Send Signal</button>
+        </div>
+        <p id="signal-status" style="color: #4CAF50;"></p>
+      </div>
+      <div class="dashboard-section" id="trade-history">
+        <h2>Trade History</h2>
+        <div class="trade-history-upload">
+          <input type="file" id="trade-file" accept=".txt,.pdf,.jpg,.png">
+          <label for="trade-file">Upload Trade History</label>
+          <p id="upload-status" style="color: #2196F3; margin-top: 10px;"></p>
+        </div>
+      </div>
+      <div class="dashboard-section" id="content-editing">
+        <h2>Content Editing</h2>
+        <div class="form-group">
+          <label>Page to Edit</label>
+          <select id="edit-page">
+            <option value="index">Homepage</option>
+            <option value="services">Services</option>
+            <option value="about">About</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>Content</label>
+          <textarea id="edit-content" rows="6" placeholder="Enter new content"></textarea>
+        </div>
+        <button onclick="updateContent()">Update Content</button>
+        <p id="content-status" style="color: #4CAF50;"></p>
+      </div>
+    </div>
+  </div>
+  <div class="contact" id="contact">
+    <h2>Contact Support</h2>
+    <p><a href="mailto:support@chukwuemekabullionexchange.com" target="_blank">Email</a></p>
+  </div>
+  <footer>
+    © 2025 CBE - Chukwuemeka Bullion Exchange. All rights reserved.
+  </footer>
+  <script>
+    // Admin authentication
+    const ADMIN_PASSWORD = 'your-secure-password'; // Replace with your secure password
+    const loginContainer = document.getElementById('loginContainer');
+    const adminPanel = document.getElementById('adminPanel');
+    let usersData = { totalUsers: 0, users: [] };
+
+    function login() {
+      const password = document.getElementById('adminPassword').value;
+      if (password === ADMIN_PASSWORD) {
+        loginContainer.classList.remove('active');
+        adminPanel.classList.add('active');
+        loadUsers();
+      } else {
+        alert('Incorrect password. Access denied.');
+      }
+    }
+
+    // Load users from localStorage or initialize
+    function loadUsers() {
+      const savedData = localStorage.getItem('usersData');
+      if (savedData) {
+        usersData = JSON.parse(savedData);
+      }
+      updateUserTable();
+    }
+
+    // Update user table
+    function updateUserTable() {
+      const userTable = document.getElementById('user-table');
+      document.getElementById('total-users').textContent = usersData.totalUsers;
+      userTable.innerHTML = '';
+      usersData.users.forEach(user => {
+        const row = document.createElement('tr');
+        row.innerHTML = `
+          <td style="padding: 10px; border: 1px solid #555;">${user.id}</td>
+          <td style="padding: 10px; border: 1px solid #555;">${user.name || 'N/A'}</td>
+          <td style="padding: 10px; border: 1px solid #555;">${user.email}</td>
+          <td style="padding: 10px; border: 1px solid #555;">${user.status}</td>
+          <td style="padding: 10px; border: 1px solid #555;">
+            <button onclick="deleteUser(${user.id})" style="background: #f44336; color: #fff; padding: 5px 10px; border: none; border-radius: 5px;">Delete</button>
+          </td>
+        `;
+        userTable.appendChild(row);
+      });
+    }
+
+    // Verify new user (simulated)
+    function verifyUser() {
+      const email = document.getElementById('verify-email').value;
+      if (email) {
+        const newUser = {
+          id: usersData.users.length + 1,
+          email: email,
+          status: 'pending',
+          name: 'New User'
+        };
+        usersData.users.push(newUser);
+        usersData.totalUsers = usersData.users.length;
+        updateUserTable();
+        saveUsers();
+        document.getElementById('verify-email').value = '';
+        alert('User verification submitted. Check status later.');
+      }
+    }
+
+    // Send signal (simulated)
+    function sendSignal() {
+      const signal = document.getElementById('signal-content').value;
+      if (signal) {
+        document.getElementById('signal-status').textContent = 'Signal sent successfully!';
+        setTimeout(() => document.getElementById('signal-status').textContent = '', 3000);
+        document.getElementById('signal-content').value = '';
+      }
+    }
+
+    // Upload trade history (simulated)
+    document.getElementById('trade-file').addEventListener('change', function(e) {
+      const file = e.target.files[0];
+      if (file) {
+        document.getElementById('upload-status').textContent = 'Trade history uploaded successfully!';
+        setTimeout(() => document.getElementById('upload-status').textContent = '', 3000);
+        e.target.value = '';
+      }
+    });
+
+    // Update content (simulated)
+    function updateContent() {
+      const page = document.getElementById('edit-page').value;
+      const content = document.getElementById('edit-content').value;
+      if (content) {
+        document.getElementById('content-status').textContent = `Content updated for ${page} page!`;
+        setTimeout(() => document.getElementById('content-status').textContent = '', 3000);
+        document.getElementById('edit-content').value = '';
+      }
+    }
+
+    // Delete user
+    function deleteUser(id) {
+      usersData.users = usersData.users.filter(user => user.id !== id);
+      usersData.totalUsers = usersData.users.length;
+      updateUserTable();
+      saveUsers();
+    }
+
+    // Save data to localStorage
+    function saveUsers() {
+      localStorage.setItem('usersData', JSON.stringify(usersData));
+    }
+
+    // Initial load
+    loginContainer.classList.add('active');
+  </script>
+</body>
+</html>
