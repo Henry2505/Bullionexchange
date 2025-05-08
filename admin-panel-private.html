@@ -10,6 +10,16 @@
     * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Poppins', sans-serif; }
     body, html { height: 100%; overflow: hidden; }
 
+    /* Toggle button */
+    #toggleSidebar {
+      position: fixed; top: 15px; left: 15px;
+      background: gold; color: #000;
+      border: none; border-radius: 4px;
+      font-size: 1.5rem; line-height:1;
+      width: 36px; height: 36px;
+      cursor: pointer; z-index: 1001;
+    }
+
     /* Video background */
     #bg-video {
       position: fixed; top: 0; left: 0;
@@ -23,13 +33,29 @@
     }
 
     /* Layout */
-    .container { display: flex; height: 100%; }
+    .container { display: flex; height: 100%; position: relative; }
     .sidebar {
+      position: absolute; top: 0; left: 0; bottom: 0;
       width: 220px; background: #111;
       border-right: 1px solid #222;
       display: flex; flex-direction: column;
-      padding-top: 20px;
+      padding-top: 60px; /* space for toggle */
+      transition: transform .3s ease;
+      z-index: 1000;
     }
+    .content {
+      margin-left: 220px;
+      flex: 1; overflow-y: auto;
+      padding: 20px 30px; color: #f5f5f5;
+      transition: margin-left .3s ease;
+    }
+    body.collapsed-sidebar .sidebar {
+      transform: translateX(-220px);
+    }
+    body.collapsed-sidebar .content {
+      margin-left: 0;
+    }
+
     .sidebar a {
       color: #ccc; text-decoration: none;
       padding: 12px 20px; margin: 4px 0;
@@ -39,11 +65,6 @@
     .sidebar a.active, .sidebar a:hover {
       color: gold; background: #222;
       border-left-color: gold;
-    }
-    .content {
-      flex: 1; overflow-y: auto; position: relative;
-      padding: 20px 30px;
-      color: #f5f5f5;
     }
 
     /* Section headings */
@@ -76,7 +97,7 @@
     form { background: #1c1c1c; padding:20px; border-radius:8px; margin-bottom:30px; }
     form .form-group { margin-bottom:15px; }
     form label { display:block; margin-bottom:6px; color:#ccc; }
-    form input[type=text], form input[type=datetime-local], form textarea, form select {
+    form input[type=text], form input[type=datetime-local], form textarea {
       width:100%; padding:8px; border:1px solid #333; border-radius:4px; background:#111; color:#f5f5f5;
     }
     form textarea { resize: vertical; height:80px; }
@@ -93,8 +114,8 @@
   <!-- Admin Auth -->
   <script>
     (function(){
-      const pw = sessionStorage.getItem('adminLoggedIn') === 'true';
-      if (!pw) {
+      const pwOK = sessionStorage.getItem('adminLoggedIn') === 'true';
+      if (!pwOK) {
         const attempt = prompt('Enter admin password:');
         if (attempt === 'YOUR_ADMIN_PASSWORD_HERE') {
           sessionStorage.setItem('adminLoggedIn','true');
@@ -106,9 +127,12 @@
     })();
   </script>
 
+  <!-- Toggle -->
+  <button id="toggleSidebar">⋮</button>
+
   <!-- Video + overlay -->
   <video id="bg-video" autoplay muted loop>
-    <source src="space-stars.mp4" type="video/mp4">
+    <source src="star-video.MP4" type="video/mp4">
   </video>
   <div id="overlay"></div>
 
@@ -133,18 +157,10 @@
       <section id="dashboard">
         <h2>Overview</h2>
         <div class="cards">
-          <div class="card">
-            <h3>Active VIPs</h3><p id="stat-users">—</p>
-          </div>
-          <div class="card">
-            <h3>Pending Payments</h3><p id="stat-pending">—</p>
-          </div>
-          <div class="card">
-            <h3>Total Trades</h3><p id="stat-trades">—</p>
-          </div>
-          <div class="card">
-            <h3>Unread Messages</h3><p id="stat-messages">—</p>
-          </div>
+          <div class="card"><h3>Active VIPs</h3><p id="stat-users">—</p></div>
+          <div class="card"><h3>Pending Payments</h3><p id="stat-pending">—</p></div>
+          <div class="card"><h3>Total Trades</h3><p id="stat-trades">—</p></div>
+          <div class="card"><h3>Unread Messages</h3><p id="stat-messages">—</p></div>
         </div>
       </section>
 
@@ -152,12 +168,8 @@
       <section id="payments" class="hidden">
         <h2>Payment Approvals</h2>
         <table>
-          <thead>
-            <tr><th>User</th><th>Plan</th><th>Proof</th><th>Actions</th></tr>
-          </thead>
-          <tbody id="payments-list">
-            <!-- Dynamically populated -->
-          </tbody>
+          <thead><tr><th>User</th><th>Plan</th><th>Proof</th><th>Actions</th></tr></thead>
+          <tbody id="payments-list"></tbody>
         </table>
       </section>
 
@@ -165,12 +177,8 @@
       <section id="users" class="hidden">
         <h2>User Management</h2>
         <table>
-          <thead>
-            <tr><th>Email</th><th>Plan</th><th>Status</th><th>Actions</th></tr>
-          </thead>
-          <tbody id="users-list">
-            <!-- Dynamically populated -->
-          </tbody>
+          <thead><tr><th>Email</th><th>Plan</th><th>Status</th><th>Actions</th></tr></thead>
+          <tbody id="users-list"></tbody>
         </table>
       </section>
 
@@ -178,27 +186,17 @@
       <section id="trades" class="hidden">
         <h2>Trade History Manager</h2>
         <form id="tradeForm">
-          <div class="form-group">
-            <label>Date & Time</label>
-            <input type="datetime-local" id="tradeDate" required>
-          </div>
-          <div class="form-group">
-            <label>Note (e.g. “Trade at your own risk”)</label>
-            <textarea id="tradeNote" required></textarea>
-          </div>
+          <div class="form-group"><label>Date & Time</label><input type="datetime-local" id="tradeDate" required></div>
+          <div class="form-group"><label>Note</label><textarea id="tradeNote" required></textarea></div>
           <div class="form-group">
             <label>Screenshot</label>
             <input type="file" id="tradeImage" accept="image/*" required>
             <img id="tradePreview" class="preview hidden">
           </div>
-          <div class="form-actions">
-            <button type="submit" class="btn">Upload Trade</button>
-          </div>
+          <div class="form-actions"><button type="submit" class="btn">Upload Trade</button></div>
         </form>
         <table>
-          <thead>
-            <tr><th>Date</th><th>Note</th><th>Image</th><th>Actions</th></tr>
-          </thead>
+          <thead><tr><th>Date</th><th>Note</th><th>Image</th><th>Actions</th></tr></thead>
           <tbody id="trades-list"></tbody>
         </table>
       </section>
@@ -207,31 +205,18 @@
       <section id="signals" class="hidden">
         <h2>Signal Publisher</h2>
         <form id="signalForm">
-          <div class="form-group">
-            <label>Date & Time</label>
-            <input type="datetime-local" id="signalDate" required>
-          </div>
-          <div class="form-group">
-            <label>Signal Content</label>
-            <textarea id="signalContent" placeholder="e.g. BUY EUR/USD @ 1.0725 ..." required></textarea>
-          </div>
-          <div class="form-group">
-            <label>Admin Note</label>
-            <textarea id="signalNote" placeholder="Trade at your own risk"></textarea>
-          </div>
+          <div class="form-group"><label>Date & Time</label><input type="datetime-local" id="signalDate" required></div>
+          <div class="form-group"><label>Signal Content</label><textarea id="signalContent" required></textarea></div>
+          <div class="form-group"><label>Admin Note</label><textarea id="signalNote" placeholder="Trade at your own risk"></textarea></div>
           <div class="form-group">
             <label>Attach Image (optional)</label>
             <input type="file" id="signalImage" accept="image/*">
             <img id="signalPreview" class="preview hidden">
           </div>
-          <div class="form-actions">
-            <button type="submit" class="btn">Publish Signal</button>
-          </div>
+          <div class="form-actions"><button type="submit" class="btn">Publish Signal</button></div>
         </form>
         <table>
-          <thead>
-            <tr><th>Date</th><th>Content</th><th>Note</th><th>Actions</th></tr>
-          </thead>
+          <thead><tr><th>Date</th><th>Content</th><th>Note</th><th>Actions</th></tr></thead>
           <tbody id="signals-list"></tbody>
         </table>
       </section>
@@ -240,17 +225,9 @@
       <section id="broadcasts" class="hidden">
         <h2>Broadcast Message</h2>
         <form id="broadcastForm">
-          <div class="form-group">
-            <label>Title</label>
-            <input type="text" id="bcTitle" required>
-          </div>
-          <div class="form-group">
-            <label>Message</label>
-            <textarea id="bcMessage" required></textarea>
-          </div>
-          <div class="form-actions">
-            <button type="submit" class="btn">Send Broadcast</button>
-          </div>
+          <div class="form-group"><label>Title</label><input type="text" id="bcTitle" required></div>
+          <div class="form-group"><label>Message</label><textarea id="bcMessage" required></textarea></div>
+          <div class="form-actions"><button type="submit" class="btn">Send Broadcast</button></div>
         </form>
       </section>
 
@@ -258,9 +235,7 @@
       <section id="inbox" class="hidden">
         <h2>Contact Inbox</h2>
         <table>
-          <thead>
-            <tr><th>Name</th><th>Email</th><th>Message</th><th>Reply</th></tr>
-          </thead>
+          <thead><tr><th>Name</th><th>Email</th><th>Message</th><th>Reply</th></tr></thead>
           <tbody id="inbox-list"></tbody>
         </table>
       </section>
@@ -269,29 +244,12 @@
       <section id="settings" class="hidden">
         <h2>Settings</h2>
         <form id="settingsForm">
-          <div class="form-group">
-            <label>Paystack Public Key</label>
-            <input type="text" id="settingPaystack">
-          </div>
-          <div class="form-group">
-            <label>Bitcoin Wallet</label>
-            <input type="text" id="settingBTC">
-          </div>
-          <div class="form-group">
-            <label>Ethereum Wallet</label>
-            <input type="text" id="settingETH">
-          </div>
-          <div class="form-group">
-            <label>USDT Wallet</label>
-            <input type="text" id="settingUSDT">
-          </div>
-          <div class="form-group">
-            <label>Support Email</label>
-            <input type="text" id="settingEmail">
-          </div>
-          <div class="form-actions">
-            <button type="submit" class="btn">Save Settings</button>
-          </div>
+          <div class="form-group"><label>Paystack Public Key</label><input type="text" id="settingPaystack"></div>
+          <div class="form-group"><label>Bitcoin Wallet</label><input type="text" id="settingBTC"></div>
+          <div class="form-group"><label>Ethereum Wallet</label><input type="text" id="settingETH"></div>
+          <div class="form-group"><label>USDT Wallet</label><input type="text" id="settingUSDT"></div>
+          <div class="form-group"><label>Support Email</label><input type="text" id="settingEmail"></div>
+          <div class="form-actions"><button type="submit" class="btn">Save Settings</button></div>
         </form>
       </section>
 
@@ -299,47 +257,45 @@
       <section id="logs" class="hidden">
         <h2>Activity Logs</h2>
         <table>
-          <thead>
-            <tr><th>Time</th><th>Action</th><th>Admin</th></tr>
-          </thead>
+          <thead><tr><th>Time</th><th>Action</th><th>Admin</th></tr></thead>
           <tbody id="logs-list"></tbody>
         </table>
       </section>
     </div>
   </div>
 
-  <!-- Tab‐switching & image preview scripts -->
   <script>
-    // Sidebar tab logic
-    document.querySelectorAll('.sidebar a[data-section]').forEach(a => {
-      a.addEventListener('click', e => {
+    // Sidebar toggle
+    document.getElementById('toggleSidebar').addEventListener('click', ()=>{
+      document.body.classList.toggle('collapsed-sidebar');
+    });
+
+    // Tab‐switching
+    document.querySelectorAll('.sidebar a[data-section]').forEach(a=>{
+      a.addEventListener('click', e=>{
         e.preventDefault();
         document.querySelectorAll('.sidebar a').forEach(x=>x.classList.remove('active'));
         a.classList.add('active');
-        const sec = a.dataset.section;
+        const sec=a.dataset.section;
         document.querySelectorAll('.content section').forEach(s=>{
-          s.id === sec ? s.classList.remove('hidden') : s.classList.add('hidden');
+          s.id===sec? s.classList.remove('hidden'): s.classList.add('hidden');
         });
       });
     });
 
-    // Image preview helper
-    function previewImage(inputEl, previewElId) {
-      const file = inputEl.files[0];
-      const img = document.getElementById(previewElId);
-      if (file) {
-        const reader = new FileReader();
-        reader.onload = e => {
-          img.src = e.target.result;
-          img.classList.remove('hidden');
-        };
+    // Image previews
+    function previewImage(inputEl, previewId){
+      const file=inputEl.files[0],img=document.getElementById(previewId);
+      if(file){
+        const reader=new FileReader();
+        reader.onload=e=>{ img.src=e.target.result; img.classList.remove('hidden'); };
         reader.readAsDataURL(file);
       }
     }
     document.getElementById('tradeImage').addEventListener('change', ()=>previewImage(event.target,'tradePreview'));
     document.getElementById('signalImage').addEventListener('change', ()=>previewImage(event.target,'signalPreview'));
 
-    // TODO: AJAX calls to load/fill each table & handle form submissions
+    // TODO: Hook up your AJAX/API calls here.
   </script>
 </body>
 </html>
