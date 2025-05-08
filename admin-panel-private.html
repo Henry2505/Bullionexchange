@@ -210,6 +210,12 @@
     .dashboard-section.active h2::after {
       transform: rotate(180deg);
     }
+    .dashboard-section h3 {
+      font-size: 22px;
+      color: #ffd700;
+      margin: 20px 0 10px;
+      text-shadow: 0 0 8px rgba(255, 215, 0, 0.5);
+    }
     .dashboard-section p {
       font-size: 16px;
       color: #ddd;
@@ -337,7 +343,7 @@
       transform: scale(1.05);
       box-shadow: 0 0 10px rgba(255, 215, 0, 0.5);
     }
-    .payment-plan-card {
+    .payment-method-card {
       background: linear-gradient(145deg, #333, #222);
       padding: 15px;
       border-radius: 10px;
@@ -347,22 +353,18 @@
       align-items: center;
       border: 1px solid #ffd700;
     }
-    .payment-plan-card button {
+    .payment-method-card button {
       padding: 8px 15px;
       border-radius: 8px;
       border: none;
       cursor: pointer;
       transition: background 0.3s, transform 0.2s;
     }
-    .payment-plan-card button.edit {
-      background: #2196F3;
-      color: #fff;
-    }
-    .payment-plan-card button.delete {
+    .payment-method-card button.delete {
       background: #f44336;
       color: #fff;
     }
-    .payment-plan-card button:hover {
+    .payment-method-card button:hover {
       transform: scale(1.05);
     }
     .contact {
@@ -461,16 +463,16 @@
       <div class="dashboard-section" id="payment-management">
         <h2 onclick="toggleSection('payment-management')">Payment Management</h2>
         <div class="section-content">
-          <p>Manage payment plans and review user-submitted payments with sophistication.</p>
-          <h3>Manage Payment Plans</h3>
+          <p>Manage payment methods and review user-submitted payments with sophistication.</p>
+          <h3>Manage Payment Methods</h3>
           <div class="form-group">
-            <label>Add/Edit Payment Plan</label>
-            <input type="text" id="plan-name" placeholder="Plan Name (e.g., Weekly)">
-            <input type="number" id="plan-price" placeholder="Price (e.g., 50)">
-            <button onclick="addPaymentPlan()">Add Plan</button>
+            <label>Add Payment Method</label>
+            <input type="text" id="method-name" placeholder="Method Name (e.g., BTC Wallet, Paystack)">
+            <input type="text" id="method-details" placeholder="Details (e.g., BTC Address, Paystack Link)">
+            <button onclick="addPaymentMethod()">Add Method</button>
           </div>
-          <div id="payment-plan-list" class="history-list">
-            <p>No payment plans yet.</p>
+          <div id="payment-method-list" class="history-list">
+            <p>No payment methods yet.</p>
           </div>
           <h3>Review Payments</h3>
           <div id="payment-list" class="history-list">
@@ -661,11 +663,7 @@
       }, 
       announcement: 'Stay tuned for updates!',
       vipTrades: [],
-      paymentPlans: [
-        { name: 'Weekly', price: 50 },
-        { name: 'Monthly', price: 150 },
-        { name: 'Yearly', price: 1500 }
-      ]
+      paymentMethods: []
     };
     let signals = [];
     let tradeHistory = [];
@@ -708,7 +706,7 @@
       updateUserTable();
       updateApplicationList();
       updatePaymentList();
-      updatePaymentPlanList();
+      updatePaymentMethodList();
       updateMessageList();
       updateSignalHistory();
       updateTradeHistory();
@@ -777,51 +775,39 @@
       alert('Application rejected.');
     }
 
-    function addPaymentPlan() {
-      const name = document.getElementById('plan-name').value;
-      const price = parseFloat(document.getElementById('plan-price').value);
-      if (name && price > 0) {
-        const existingPlan = siteData.paymentPlans.find(plan => plan.name.toLowerCase() === name.toLowerCase());
-        if (existingPlan) {
-          existingPlan.price = price;
-        } else {
-          siteData.paymentPlans.push({ name, price });
-        }
-        updatePaymentPlanList();
+    function addPaymentMethod() {
+      const name = document.getElementById('method-name').value;
+      const details = document.getElementById('method-details').value;
+      if (name && details) {
+        siteData.paymentMethods.push({ name, details });
+        updatePaymentMethodList();
         saveData();
-        document.getElementById('plan-name').value = '';
-        document.getElementById('plan-price').value = '';
+        document.getElementById('method-name').value = '';
+        document.getElementById('method-details').value = '';
       } else {
-        alert('Please enter a valid plan name and price.');
+        alert('Please enter a valid method name and details.');
       }
     }
 
-    function editPaymentPlan(index) {
-      const plan = siteData.paymentPlans[index];
-      document.getElementById('plan-name').value = plan.name;
-      document.getElementById('plan-price').value = plan.price;
-    }
-
-    function deletePaymentPlan(index) {
-      siteData.paymentPlans.splice(index, 1);
-      updatePaymentPlanList();
+    function deletePaymentMethod(index) {
+      siteData.paymentMethods.splice(index, 1);
+      updatePaymentMethodList();
       saveData();
     }
 
-    function updatePaymentPlanList() {
-      const planList = document.getElementById('payment-plan-list');
-      planList.innerHTML = siteData.paymentPlans.length ? siteData.paymentPlans.map((plan, index) => `
-        <div class="payment-plan-card">
+    function updatePaymentMethodList() {
+      const methodList = document.getElementById('payment-method-list');
+      methodList.innerHTML = siteData.paymentMethods.length ? siteData.paymentMethods.map((method, index) => `
+        <div class="payment-method-card">
           <div>
-            <p><strong>Name:</strong> ${plan.name}</p>
-            <p><strong>Price:</strong> $${plan.price}</p>
+            <p><strong>Method:</strong> ${method.name}</p>
+            <p><strong>Details:</strong> ${method.details}</p>
           </div>
           <div>
-            <button class="edit" onclick="editPaymentPlan(${index})">Edit</button>
-            <button class="delete" onclick="deletePaymentPlan(${index})">Delete</button>
+            <button class="delete" onclick="deletePaymentMethod(${index})">Delete</button>
           </div>
         </div>
-      `).join('') : '<p>No payment plans yet.</p>';
+      `).join('') : '<p>No payment methods yet.</p>';
     }
 
     function updatePaymentList() {
@@ -830,7 +816,7 @@
         <div class="payment-card">
           <div>
             <p><strong>Email:</strong> ${payment.email}</p>
-            <p><strong>Plan:</strong> ${payment.plan}</p>
+            <p><strong>Method:</strong> ${payment.method}</p>
             <p><strong>Details:</strong> ${payment.details}</p>
             <p><strong>Status:</strong> ${payment.status}</p>
             <p><strong>Date:</strong> ${new Date(payment.date).toLocaleString()}</p>
@@ -848,12 +834,12 @@
       payment.status = 'verified';
       const user = usersData.users.find(u => u.email === payment.email);
       if (user) {
-        user.status = 'active';
+        user.status = 'active'; // Grants VIP access
       }
       updatePaymentList();
       updateUserTable();
       saveData();
-      alert('Payment approved. User VIP status activated.');
+      alert('Payment approved. User can now access VIP dashboard.');
     }
 
     function rejectPayment(index) {
