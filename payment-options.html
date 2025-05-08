@@ -31,7 +31,6 @@
     <h1>Payment Options</h1>
     <p class="info" id="selectedPlanInfo">Loading...</p>
 
-    <!-- Wrap everything in a form -->
     <form id="paymentForm">
       <input type="email" id="userEmail" placeholder="Enter your email (same as application)" required />
 
@@ -127,7 +126,7 @@
       document.getElementById('paymentForm').addEventListener('submit', (e) => {
         e.preventDefault();
         console.log('Submit button clicked');
-        alert('Processing submission...'); // Immediate feedback
+        alert('Processing submission...');
 
         const email = document.getElementById('userEmail').value.trim().toLowerCase();
         const proofFile = document.getElementById('proof').files[0];
@@ -138,9 +137,14 @@
         // Load existing records
         try {
           records = JSON.parse(localStorage.getItem('paymentRecords') || '[]');
+          if (!Array.isArray(records)) {
+            console.warn('Invalid paymentRecords format, resetting to empty array');
+            records = [];
+          }
         } catch (e) {
           console.error('Error parsing paymentRecords:', e);
-          alert('Error accessing payment records. Submission may still proceed.');
+          alert('Error accessing payment records. Resetting records.');
+          records = [];
         }
 
         // Core validations
@@ -152,16 +156,14 @@
           console.warn('No proof file uploaded');
           return alert('Please upload proof of payment.');
         }
-        if (proofFile.size > 5 * 1024 * 1024) {
+        if (proofFile.size > 2 * 1024 * 1024) { // Reduced to 2MB to avoid localStorage issues
           console.warn('Proof file too large:', proofFile.size);
-          return alert('Proof file must be under 5MB.');
+          return alert('Proof file must be under 2MB.');
         }
-        // Optional crypto validation
         if (document.getElementById('cryptoOptions').style.display === 'block' && !cryptoType) {
           console.warn('Crypto type not selected');
           return alert('Please select a crypto type.');
         }
-        // Skip package validation for testing (re-enable later if needed)
         if (!pkg || !planNames[pkg]) {
           console.warn('No valid package selected');
           alert('Warning: No plan selected. Submission will proceed for testing.');
@@ -171,22 +173,41 @@
         const reader = new FileReader();
         reader.onload = function (ev) {
           try {
-            console.log('Proof file read successfully');
+            console.log('Proof file read successfully, size:', proofFile.size, 'bytes');
+            const base64Proof = ev.target.result;
+            if (!base64Proof || typeof base64Proof !== 'string' || base64Proof.length > 3 * 1024 * 1024) {
+              throw new Error('Invalid or oversized proof data');
+            }
+
+            // Validate email for name/username
+            const name = email.split('@')[0] || 'unknown';
+            if (!name) {
+              throw new Error('Invalid email format for name extraction');
+            }
+
             const newRecord = {
-              name: email.split('@')[0],
+              name,
               email,
-              username: email.split('@')[0],
+              username: name,
               amount: pkg === 'weekly' ? 50 : pkg === 'monthly' ? 150 : pkg === 'yearly' ? 1500 : 0,
               method: wallet ? cryptoType : 'Paystack',
               walletType: cryptoType || 'Paystack',
-              proof: ev.target.result,
+              proof: base64Proof,
               status: 'pending',
               submittedAt: new Date().toISOString()
             };
+            console.log('New record created:', newRecord);
+
+            // Check localStorage capacity
+            const testData = JSON.stringify([...records, newRecord]);
+            if (testData.length > 4 * 1024 * 1024) { // Rough check for localStorage limit
+              throw new Error('localStorage capacity exceeded');
+            }
+
             records.push(newRecord);
             localStorage.setItem('paymentRecords', JSON.stringify(records));
             sessionStorage.setItem('paymentApproved', 'false');
-            console.log('Payment record saved:', newRecord);
+            console.log('Payment record saved to localStorage:', records);
             alert('Payment submitted successfully! Awaiting approval.');
 
             // Attempt navigation
@@ -197,13 +218,13 @@
               alert('Submission successful, but redirect failed. Please go to the login page manually.');
             }
           } catch (error) {
-            console.error('Error saving payment record:', error);
-            alert('Error saving payment. Please try again.');
+            console.error('Error saving payment record:', error.message);
+            alert(`Error saving payment: ${error.message}. Please try again with a smaller file or clear browser data.`);
           }
         };
         reader.onerror = () => {
           console.error('FileReader error:', reader.error);
-          alert('Error reading proof file. Please upload a different file.');
+          alert('Error reading proof file. Please upload a different image.');
         };
         reader.readAsDataURL(proofFile);
       });
