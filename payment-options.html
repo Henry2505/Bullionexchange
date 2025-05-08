@@ -6,6 +6,7 @@
   <title>Payment Options – CBE</title>
   <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;500;700&display=swap" rel="stylesheet">
   <style>
+    /* — your existing styles — */
     body {
       margin: 0;
       font-family: 'Poppins', sans-serif;
@@ -110,7 +111,7 @@
 
     <div class="method-select">
       <button id="paystackBtn">Pay with Paystack</button>
-      <button onclick="showCrypto()">Pay with Crypto</button>
+      <button id="cryptoBtn">Pay with Crypto</button>
     </div>
 
     <div id="cryptoOptions">
@@ -122,7 +123,7 @@
       </select>
       <div class="wallet-box">
         <p id="walletAddress"></p>
-        <button onclick="copyWallet()">Copy</button>
+        <button id="copyWalletBtn">Copy</button>
       </div>
     </div>
 
@@ -138,146 +139,117 @@
 
   <script>
     window.onload = function () {
-      // Load settings and initialize wallet map
+      // 1) Load your admin‐saved paymentSettings
       let settings;
       try {
-        settings = JSON.parse(localStorage.getItem('settings') || '{}');
-      } catch (e) {
-        console.error('Error parsing settings:', e);
+        settings = JSON.parse(localStorage.getItem('paymentSettings') || '{}');
+      } catch {
         settings = {};
       }
-      
+
+      // 2) Build wallet & key from paymentSettings
       const walletMap = {
-        Bitcoin: settings.btc || 'Not set',
-        Ethereum: settings.eth || 'Not set',
-        USDT: settings.usdt || 'Not set'
+        Bitcoin:  settings.btc   || 'Not set',
+        Ethereum: settings.eth   || 'Not set',
+        USDT:     settings.usdt  || 'Not set'
       };
+      const paystackKey = settings.paystackKey || '';
 
-      // Load selected package and display plan info
-      const selectedPackage = sessionStorage.getItem('selectedPackage') || '';
+      // 3) Display selected plan info
+      const pkg = sessionStorage.getItem('selectedPackage') || '';
       const planNames = {
-        weekly: 'Weekly VIP Plan – $50',
+        weekly:  'Weekly VIP Plan – $50',
         monthly: 'Monthly VIP Plan – $150',
-        yearly: 'Yearly VIP Plan – $1500'
+        yearly:  'Yearly VIP Plan – $1500'
       };
-      const priceMap = {
-        weekly: 50,
-        monthly: 150,
-        yearly: 1500
+      const priceMap = { weekly:50, monthly:150, yearly:1500 };
+      document.getElementById('selectedPlanInfo').textContent =
+        planNames[pkg] || 'No valid package selected.';
+
+      // 4) Show Crypto UI
+      document.getElementById('cryptoBtn').onclick = () => {
+        document.getElementById('cryptoOptions').style.display = 'block';
       };
-      
-      const planInfo = planNames[selectedPackage] || 'No valid package selected.';
-      document.getElementById('selectedPlanInfo').textContent = planInfo;
 
-      // Update wallet address when crypto type changes
-      document.getElementById('cryptoType').addEventListener('change', function () {
-        const type = this.value;
-        document.getElementById('walletAddress').textContent = walletMap[type] || '';
-      });
+      // 5) Update wallet address
+      document.getElementById('cryptoType').onchange = function () {
+        document.getElementById('walletAddress').textContent =
+          walletMap[this.value] || '';
+      };
 
-      // Handle Paystack button click
-      document.getElementById('paystackBtn').addEventListener('click', () => {
-        alert('Simulated Paystack payment. Please upload your proof and submit.');
-      });
+      // 6) Copy wallet
+      document.getElementById('copyWalletBtn').onclick = () => {
+        const w = document.getElementById('walletAddress').textContent;
+        if (w && w !== 'Not set') {
+          navigator.clipboard.writeText(w).then(() => alert('Wallet address copied!'));
+        } else {
+          alert('No valid wallet to copy.');
+        }
+      };
 
-      // Handle submit button click
-      document.getElementById('submitBtn').addEventListener('click', () => {
-        const emailInput = document.getElementById('userEmail').value.trim().toLowerCase();
+      // 7) Paystack flow (simulate or integrate)
+      document.getElementById('paystackBtn').onclick = () => {
+        if (!paystackKey) {
+          alert('Paystack Public Key not set in Admin Settings.');
+          return;
+        }
+        alert('Simulated Paystack payment – then upload proof and submit below.');
+      };
+
+      // 8) Crypto submit / record into paymentRecords
+      document.getElementById('submitBtn').onclick = () => {
+        const email = document.getElementById('userEmail').value.trim().toLowerCase();
         const proofFile = document.getElementById('proof').files[0];
         const cryptoType = document.getElementById('cryptoType').value;
         const wallet = walletMap[cryptoType] || '';
-        const isCryptoPayment = document.getElementById('cryptoOptions').style.display === 'block';
+        const records = JSON.parse(localStorage.getItem('paymentRecords') || '[]');
 
-        // Validate inputs
-        if (!selectedPackage || !planNames[selectedPackage]) {
-          alert('No valid package selected. Please select a plan and try again.');
+        // Validations
+        if (!pkg || !planNames[pkg]) {
+          alert('No package selected.');
           return;
         }
-        
-        if (!emailInput || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(emailInput)) {
-          alert('Please enter a valid email address.');
+        if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+          alert('Enter a valid email.');
           return;
         }
-
         if (!proofFile) {
           alert('Please upload proof of payment.');
           return;
         }
-
-        if (isCryptoPayment && !cryptoType) {
-          alert('Please select a cryptocurrency type.');
+        if (document.getElementById('cryptoOptions').style.display === 'block' && !cryptoType) {
+          alert('Select a cryptocurrency.');
           return;
         }
 
-        if (proofFile.size > 5 * 1024 * 1024) { // Limit file size to 5MB
-          alert('Proof of payment file is too large. Please upload an image smaller than 5MB.');
+        // Prevent double submission
+        if (records.some(r => r.email === email && r.status !== 'expired')) {
+          alert('Payment already submitted. Await approval.');
           return;
         }
 
-        // Check for existing payment
-        let records;
-        try {
-          records = JSON.parse(localStorage.getItem('paymentRecords') || '[]');
-        } catch (e) {
-          console.error('Error parsing payment records:', e);
-          records = [];
-        }
-
-        const alreadyPaid = records.some(p => p.email === emailInput && p.status !== 'expired');
-        if (alreadyPaid) {
-          alert('You already submitted a payment. Wait for approval or expiration.');
-          return;
-        }
-
-        // Process file upload
+        // Read file and save record
         const reader = new FileReader();
         reader.onload = function (e) {
-          try {
-            const paymentData = {
-              name: emailInput.split('@')[0],
-              email: emailInput,
-              username: emailInput.split('@')[0],
-              amount: priceMap[selectedPackage] || 0,
-              method: wallet ? cryptoType : 'Paystack',
-              walletType: cryptoType || 'Paystack',
-              proof: e.target.result,
-              status: 'pending',
-              submittedAt: new Date().toISOString()
-            };
-
-            records.push(paymentData);
-            localStorage.setItem('paymentRecords', JSON.stringify(records));
-            sessionStorage.setItem('paymentApproved', 'false');
-            alert('Payment submitted! Await approval.');
-            window.location.href = 'index.html';
-          } catch (e) {
-            console.error('Error saving payment data:', e);
-            alert('An error occurred while submitting your payment. Please try again.');
-          }
-        };
-        reader.onerror = function () {
-          alert('Error reading the proof of payment file. Please try again.');
+          records.push({
+            name:       email.split('@')[0],
+            email:      email,
+            username:   email.split('@')[0],
+            amount:     priceMap[pkg] || 0,
+            method:     wallet ? cryptoType : 'Paystack',
+            walletType: cryptoType || 'Paystack',
+            proof:      e.target.result,
+            status:     'pending',
+            submittedAt:new Date().toISOString()
+          });
+          localStorage.setItem('paymentRecords', JSON.stringify(records));
+          sessionStorage.setItem('paymentApproved','false');
+          alert('Payment submitted! Await approval.');
+          window.location.href = 'index.html';
         };
         reader.readAsDataURL(proofFile);
-      });
+      };
     };
-
-    function showCrypto() {
-      document.getElementById('cryptoOptions').style.display = 'block';
-    }
-
-    function copyWallet() {
-      const wallet = document.getElementById('walletAddress').textContent;
-      if (wallet && wallet !== 'Not set') {
-        navigator.clipboard.writeText(wallet).then(() => {
-          alert('Wallet address copied!');
-        }).catch(() => {
-          alert('Failed to copy wallet address.');
-        });
-      } else {
-        alert('No valid wallet address to copy.');
-      }
-    }
   </script>
 </body>
 </html>
