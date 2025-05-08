@@ -135,3 +135,152 @@
 
     </div> <!-- /.content -->
   </div> <!-- /.container -->
+  <script>
+    // Sidebar toggle & navigation
+    document.getElementById("toggleSidebar").addEventListener("click", () => {
+      document.body.classList.toggle("collapsed-sidebar");
+    });
+    document.querySelectorAll(".sidebar a[data-section]").forEach(link => {
+      link.addEventListener("click", e => {
+        e.preventDefault();
+        document.querySelectorAll(".sidebar a").forEach(a => a.classList.remove("active"));
+        link.classList.add("active");
+        const sec = link.getAttribute("data-section");
+        document.querySelectorAll(".content section").forEach(s => s.classList.add("hidden"));
+        document.getElementById(sec).classList.remove("hidden");
+
+        if (sec === "payments") loadPayments();
+        if (sec === "signals") renderSignals();
+        if (sec === "logs") renderLogs();
+      });
+    });
+
+    // --- SIGNAL PUBLISHER ---
+    const signalForm = document.getElementById("signalForm");
+    const signalList = document.getElementById("signalList");
+    const signalStore = JSON.parse(localStorage.getItem("signals") || "[]");
+    function renderSignals() {
+      signalList.innerHTML = "";
+      signalStore.forEach((s,i) => {
+        const tr = document.createElement("tr");
+        tr.innerHTML = `
+          <td>${s.date}</td><td>${s.pair}</td><td>${s.type}</td>
+          <td>${s.tp}</td><td>${s.sl}</td>
+          <td><button class="btn" onclick="deleteSignal(${i})">Delete</button></td>`;
+        signalList.appendChild(tr);
+      });
+    }
+    signalForm.addEventListener("submit", e => {
+      e.preventDefault();
+      const date = new Date().toLocaleDateString();
+      const pair = document.getElementById("pair").value;
+      const type = document.getElementById("type").value.toUpperCase();
+      const entry = document.getElementById("entry").value;
+      const tp = document.getElementById("tp").value;
+      const sl = document.getElementById("sl").value;
+      const time = document.getElementById("time").value;
+      const note = document.getElementById("note").value;
+      signalStore.unshift({ date, pair, type, entry, tp, sl, time, note });
+      localStorage.setItem("signals", JSON.stringify(signalStore));
+      renderSignals();
+      signalForm.reset();
+      alert("Signal published.");
+    });
+    function deleteSignal(i) {
+      if (confirm("Delete this signal?")) {
+        signalStore.splice(i,1);
+        localStorage.setItem("signals", JSON.stringify(signalStore));
+        renderSignals();
+      }
+    }
+
+    // --- PAYMENT RECORDS ---
+    function loadPayments() {
+      const tbody = document.getElementById("paymentTableBody");
+      const records = JSON.parse(localStorage.getItem("paymentRecords") || "[]");
+      tbody.innerHTML = "";
+      records.forEach((r,i) => {
+        const tr = document.createElement("tr");
+        tr.innerHTML = `
+          <td>${r.name}</td><td>${r.email}</td><td>${r.username}</td>
+          <td>$${r.amount}</td><td>${r.method}</td><td>${r.walletType}</td>
+          <td><a href="${r.proof}" target="_blank">View</a></td>
+          <td>${r.status||"Pending"}</td>
+          <td>${r.status==="Approved"?"✓":`<button class="btn" onclick="approvePayment(${i})">Approve</button>`}</td>`;
+        tbody.appendChild(tr);
+      });
+    }
+    function approvePayment(i) {
+      const recs = JSON.parse(localStorage.getItem("paymentRecords") || "[]");
+      const rec = recs[i];
+      rec.status = "Approved";
+      localStorage.setItem("paymentRecords", JSON.stringify(recs));
+      // Grant VIP
+      const users = JSON.parse(localStorage.getItem("users")||"[]");
+      const u = users.find(u=>u.email===rec.email);
+      if(u) u.vip=true;
+      localStorage.setItem("users",JSON.stringify(users));
+      addLog(`Approved VIP for ${rec.username}`);
+      alert("VIP access granted.");
+      loadPayments();
+    }
+    function downloadPayments() {
+      const data = JSON.parse(localStorage.getItem("paymentRecords")||"[]");
+      if(!data.length) return alert("No records.");
+      const rows=[["Name","Email","Username","Amount","Method","Wallet","Proof","Status"]];
+      data.forEach(d=>rows.push([d.name,d.email,d.username,d.amount,d.method,d.walletType,d.proof,d.status||"Pending"]));
+      const csv="data:text/csv;charset=utf-8,"+rows.map(r=>r.join(",")).join("\n");
+      const link=document.createElement("a");
+      link.href=encodeURI(csv);
+      link.download="payment_records.csv";
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+    }
+
+    // --- SETTINGS LOGIC ---
+    const settingsForm = document.getElementById('settingsForm');
+    const btcInput = document.getElementById('btc');
+    const ethInput = document.getElementById('eth');
+    const usdtInput = document.getElementById('usdt');
+    function loadSettings(){
+      const s = JSON.parse(localStorage.getItem('paymentSettings') || '{}');
+      btcInput.value  = s.btc  || '';
+      ethInput.value  = s.eth  || '';
+      usdtInput.value = s.usdt || '';
+    }
+    settingsForm.addEventListener('submit', e => {
+      e.preventDefault();
+      const newS = { btc:btcInput.value.trim(), eth:ethInput.value.trim(), usdt:usdtInput.value.trim() };
+      localStorage.setItem('paymentSettings', JSON.stringify(newS));
+      addLog('Updated wallet settings');
+      alert('Wallet addresses saved!');
+    });
+
+    // --- LOGS ---
+    function renderLogs(){
+      const ul = document.getElementById('log-list');
+      const logs = JSON.parse(localStorage.getItem('adminLogs')||'[]');
+      ul.innerHTML='';
+      logs.forEach(entry => {
+        const li=document.createElement('li');
+        li.textContent=`[${new Date(entry.time||Date.now()).toLocaleString()}] ${entry}`;
+        ul.appendChild(li);
+      });
+    }
+    function addLog(action){
+      const logs = JSON.parse(localStorage.getItem('adminLogs')||'[]');
+      logs.unshift({ time:Date.now(), action });
+      localStorage.setItem('adminLogs', JSON.stringify(logs));
+    }
+
+    // Initialize on load
+    window.addEventListener('DOMContentLoaded', () => {
+      loadPayments();
+      renderSignals();
+      loadSettings();
+      renderLogs();
+    });
+  </script>
+</body>
+</html>
