@@ -6,13 +6,13 @@
   <title>Payment Options - CBE</title>
   <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;500;700&display=swap" rel="stylesheet">
   <style>
-    /* [Insert the full CSS from your original payment-options.html here] */
     body {
       margin: 0;
       font-family: 'Poppins', sans-serif;
-      background-color: #0b0b0b;
+      background: linear-gradient(135deg, #0b0b0b, #1c1c1c);
       color: #f5f5f5;
       line-height: 1.6;
+      overflow-x: hidden;
     }
     header {
       background: linear-gradient(135deg, #111, #1c1c1c);
@@ -20,8 +20,145 @@
       text-align: center;
       position: relative;
       overflow: hidden;
+      border-bottom: 1px solid #222;
     }
-    /* ... (rest of the CSS remains the same as your original file) ... */
+    header::before {
+      content: '';
+      position: absolute;
+      top: -20%;
+      left: -20%;
+      width: 140%;
+      height: 140%;
+      background: radial-gradient(circle at center, rgba(255,215,0,0.1), transparent 70%);
+      animation: rotate 20s linear infinite;
+    }
+    @keyframes rotate {
+      from { transform: rotate(0deg); }
+      to { transform: rotate(360deg); }
+    }
+    header h1 {
+      font-size: 2.5rem;
+      color: gold;
+      margin: 0 0 10px;
+      letter-spacing: 1px;
+      text-shadow: 0 0 10px rgba(255,215,0,0.7);
+    }
+    header p {
+      font-size: 1rem;
+      color: #ccc;
+    }
+    section {
+      max-width: 800px;
+      margin: -40px auto 40px;
+      padding: 0 20px;
+    }
+    .summary {
+      background: #141414;
+      padding: 20px 30px;
+      border-radius: 10px;
+      margin-bottom: 30px;
+      text-align: center;
+      border-left: 5px solid gold;
+      box-shadow: 0 6px 15px rgba(0,0,0,0.7);
+      transition: transform 0.3s ease;
+    }
+    .summary:hover {
+      transform: translateY(-2px);
+    }
+    .summary span {
+      color: gold;
+      font-weight: 600;
+    }
+    .method, .upload-proof {
+      background: #141414;
+      padding: 20px 30px;
+      border-radius: 10px;
+      margin-bottom: 30px;
+      border-left: 5px solid gold;
+      box-shadow: 0 6px 15px rgba(0,0,0,0.7);
+      transition: transform 0.3s ease;
+    }
+    .method:hover, .upload-proof:hover {
+      transform: translateY(-4px);
+    }
+    .method h3, .upload-proof h3 {
+      color: gold;
+      margin: 0 0 15px;
+      font-size: 1.3rem;
+      position: relative;
+    }
+    .method h3::after, .upload-proof h3::after {
+      content: '';
+      display: block;
+      width: 60px;
+      height: 3px;
+      background: gold;
+      margin-top: 8px;
+    }
+    .wallet-address {
+      background: #1f1f1f;
+      padding: 15px;
+      border-radius: 8px;
+      font-family: monospace;
+      margin-bottom: 15px;
+      color: #00ffcc;
+      word-break: break-all;
+      transition: background 0.3s;
+    }
+    .wallet-address:hover {
+      background: #252525;
+    }
+    .upload-proof input[type="file"] {
+      display: none;
+    }
+    .upload-proof label.file-label {
+      display: inline-block;
+      margin-bottom: 15px;
+      padding: 12px 25px;
+      background: #1f1f1f;
+      border-radius: 8px;
+      cursor: pointer;
+      color: #f5f5f5;
+      font-size: 1rem;
+      transition: background 0.3s, transform 0.3s;
+    }
+    .upload-proof label.file-label:hover {
+      background: #252525;
+      transform: scale(1.05);
+    }
+    .glow-button {
+      background-color: gold;
+      color: #000;
+      padding: 12px 25px;
+      border: none;
+      font-weight: 600;
+      font-size: 1rem;
+      border-radius: 8px;
+      cursor: pointer;
+      box-shadow: 0 0 10px #00ffcc, 0 0 20px #00ffcc, 0 0 30px #00ffcc;
+      transition: box-shadow 0.4s ease-in-out, transform 0.3s;
+      animation: pulseGlow 2s infinite;
+      display: inline-block;
+      margin-top: 10px;
+    }
+    @keyframes pulseGlow {
+      0% { box-shadow: 0 0 10px #00ffcc, 0 0 20px #00ffcc, 0 0 30px #00ffcc; }
+      50% { box-shadow: 0 0 20px #00ffcc, 0 0 30px #00ffcc, 0 0 40px #00ffcc; }
+      100% { box-shadow: 0 0 10px #00ffcc, 0 0 20px #00ffcc, 0 0 30px #00ffcc; }
+    }
+    .glow-button:hover {
+      box-shadow: 0 0 20px #00ffcc, 0 0 30px #00ffcc, 0 0 40px #00ffcc;
+      transform: translateY(-2px);
+    }
+    footer {
+      text-align: center;
+      padding: 20px;
+      font-size: 0.9rem;
+      color: #888;
+      border-top: 1px solid #222;
+      background: #0b0b0b;
+      margin-top: 40px;
+    }
   </style>
 </head>
 <body>
@@ -30,6 +167,9 @@
     <p>Complete your payment to activate your VIP subscription</p>
   </header>
   <section id="paymentSection">
+    <div class="summary">
+      You have chosen the <span id="planName">[Plan]</span> plan: <span id="planPrice">[Price]</span>
+    </div>
     <!-- Payment methods will be dynamically loaded here -->
   </section>
   <footer>
@@ -39,30 +179,29 @@
   <script>
     (function() {
       const plans = {
-        weekly: { price: '$50', duration: 7*24*60*60*1000 },
-        monthly: { price: '$150', duration: 30*24*60*60*1000 },
-        yearly: { price: '$1,500', duration: 365*24*60*60*1000 }
+        weekly: { price: '$50', duration: 7 * 24 * 60 * 60 * 1000 },
+        monthly: { price: '$150', duration: 30 * 24 * 60 * 60 * 1000 },
+        yearly: { price: '$1,500', duration: 365 * 24 * 60 * 60 * 1000 }
       };
       const planKey = localStorage.getItem('subscriptionPlan');
+      const userId = localStorage.getItem('userId'); // Assuming user ID is stored
 
-      // Fetch payment methods from backend (to be adjusted with your API endpoint)
-      fetch('/api/payment-methods')
-        .then(response => response.json())
-        .then(methods => {
-          if (!planKey || !plans[planKey]) {
-            alert('No plan selected. Redirecting...');
-            window.location.href = 'vip-subscription.html';
-            return;
-          }
+      if (!planKey || !plans[planKey]) {
+        alert('No plan selected. Redirecting...');
+        window.location.href = 'vip-subscription.html';
+        return;
+      }
+
+      // Fetch payment methods and user payment status
+      Promise.all([
+        fetch('/api/payment-methods'),
+        fetch(`/api/user-payment-status?userId=${userId}`)
+      ])
+        .then(responses => Promise.all(responses.map(res => res.json())))
+        .then(([methods, paymentStatus]) => {
+          const section = document.getElementById('paymentSection');
           document.getElementById('planName').textContent = planKey.charAt(0).toUpperCase() + planKey.slice(1);
           document.getElementById('planPrice').textContent = plans[planKey].price;
-
-          const section = document.getElementById('paymentSection');
-          section.innerHTML = `
-            <div class="summary">
-              You have chosen the <span id="planName">[Plan]</span> plan: <span id="planPrice">[Price]</span>
-            </div>
-          `;
 
           methods.forEach(method => {
             if (method.method_name.toLowerCase() === 'paystack') {
@@ -91,11 +230,14 @@
                 navigator.clipboard.writeText(method.details).then(() => alert('Address copied!'));
               });
               document.getElementById('cryptoConfirmBtn').addEventListener('click', () => {
-                const now = Date.now();
-                localStorage.setItem('subscribed', 'true');
-                localStorage.setItem('subscriptionEnd', (now + plans[planKey].duration).toString());
-                alert('Payment confirmed! Redirecting...');
-                window.location.href = 'vip-dashboard.html';
+                fetch('/api/submit-payment', {
+                  method: 'POST',
+                  headers: { 'Content-Type': 'application/json' },
+                  body: JSON.stringify({ userId, method: 'crypto', amount: plans[planKey].price })
+                })
+                  .then(res => res.json())
+                  .then(data => alert(data.message))
+                  .catch(err => console.error('Error submitting payment:', err));
               });
             }
           });
@@ -113,19 +255,30 @@
           document.getElementById('uploadProofBtn').addEventListener('click', () => {
             const fileIn = document.getElementById('proofFile');
             if (!fileIn.files.length) return alert('Select proof file.');
-            alert('Proof uploaded! We will verify shortly.');
+            const formData = new FormData();
+            formData.append('proof', fileIn.files[0]);
+            formData.append('userId', userId);
+            formData.append('amount', plans[planKey].price);
+            fetch('/api/upload-proof', { method: 'POST', body: formData })
+              .then(res => res.json())
+              .then(data => alert(data.message))
+              .catch(err => console.error('Error uploading proof:', err));
           });
 
-          // Expiry check
+          // Expiry and verification check
           const expiry = localStorage.getItem('subscriptionEnd');
           if (expiry && Date.now() > parseInt(expiry, 10)) {
             alert('Your subscription has expired.');
             localStorage.removeItem('subscribed');
             localStorage.removeItem('subscriptionEnd');
             window.location.href = 'login.html';
+          } else if (!paymentStatus.verified) {
+            alert('Your payment is pending verification by the admin. You cannot access the VIP dashboard yet.');
+            localStorage.removeItem('subscribed');
+            window.location.href = 'login.html';
           }
         })
-        .catch(error => console.error('Error fetching payment methods:', error));
+        .catch(error => console.error('Error fetching data:', error));
     })();
   </script>
   <script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'93c9262249ad675b',t:'MTc0NjcwOTMyMC4wMDAwMDA='};var a=document.createElement('script');a.nonce='';a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script>
