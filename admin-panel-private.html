@@ -7,49 +7,8 @@
   <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;500;700&display=swap" rel="stylesheet">
   <style>
     /* Reset & base */
-    * { box-sizing:border-box; margin:0; padding:0; font-family:'Poppins',sans-serif; }
+    * { box-sizing: border-box; margin:0; padding:0; font-family:'Poppins',sans-serif; }
     body,html { height:100%; overflow:hidden; }
-
-    /* Video background + overlay */
-    #bg-video {
-      position:fixed; top:0; left:0;
-      width:100%; height:100%;
-      object-fit:cover; z-index:-2;
-    }
-    #overlay { 
-      position:fixed; top:0; left:0;
-      width:100%; height:100%;
-      background:rgba(0,0,0,0.7); z-index:-1;
-    }
-
-    /* Password overlay */
-    #authOverlay {
-      position:fixed; top:0; left:0; right:0; bottom:0;
-      display:flex; align-items:center; justify-content:center;
-      background:rgba(0,0,0,0.8);
-      z-index:1002;
-    }
-    #authOverlay form {
-      background:#111; padding:30px; border-radius:8px;
-      box-shadow:0 0 20px rgba(0,0,0,0.8);
-      text-align:center;
-    }
-    #authOverlay h1 {
-      color:gold; margin-bottom:20px; font-size:1.8rem;
-    }
-    #authOverlay input[type=password] {
-      width:250px; padding:10px; margin-bottom:15px;
-      border:1px solid #333; border-radius:4px;
-      background:#222; color:#f5f5f5;
-    }
-    #authOverlay button {
-      padding:10px 20px; background:gold; color:#000;
-      border:none; border-radius:4px; cursor:pointer;
-      font-weight:bold;
-    }
-    #authError {
-      color:#f66; margin-top:10px; font-size:0.9rem;
-    }
 
     /* Toggle button */
     #toggleSidebar {
@@ -58,6 +17,18 @@
       border:none; border-radius:4px;
       font-size:1.5rem; width:36px; height:36px;
       cursor:pointer; z-index:1001;
+    }
+
+    /* Video background */
+    #bg-video {
+      position:fixed; top:0; left:0;
+      width:100%; height:100%;
+      object-fit:cover; z-index:-2;
+    }
+    #overlay {
+      position:fixed; top:0; left:0;
+      width:100%; height:100%;
+      background:rgba(0,0,0,0.7); z-index:-1;
     }
 
     /* Layout */
@@ -86,6 +57,7 @@
       color:gold; background:#222;
       border-left-color:gold;
     }
+    .sidebar .spacer { flex:1; }
 
     /* Section headings */
     h2 { margin-bottom:16px; color:gold; }
@@ -100,18 +72,15 @@
     .card p { font-size:2rem; color:#ffcc00; }
 
     /* Tables */
-    table {
-      width:100%; border-collapse:collapse; margin-bottom:30px;
-    }
-    table th, table td {
+    table { width:100%; border-collapse:collapse; margin-bottom:30px; }
+    th, td {
       padding:12px; border-bottom:1px solid #333;
       text-align:left;
     }
-    table th { background:#222; color:#ddd; }
-    table tr:hover { background:#222; }
+    th { background:#222; color:#ddd; }
+    tr:hover { background:#222; }
     .btn { padding:6px 12px; background:gold; color:#000; border:none; border-radius:4px; cursor:pointer; font-size:.9rem; }
     .btn.danger { background:#c0392b; color:#fff; }
-    .btn.small { font-size:.8rem; padding:4px 8px; }
 
     /* Forms */
     form { background:#1c1c1c; padding:20px; border-radius:8px; margin-bottom:30px; }
@@ -131,24 +100,21 @@
   </style>
 </head>
 <body>
+  <!-- Redirect if not authenticated -->
+  <script>
+    if (sessionStorage.getItem('adminAuthenticated') !== 'true') {
+      window.location.href = 'admin-login.html';
+    }
+  </script>
+
+  <!-- Sidebar Toggle -->
+  <button id="toggleSidebar">⋮</button>
+
   <!-- Video + overlay -->
   <video id="bg-video" autoplay muted loop playsinline preload="auto">
     <source src="star-video.MP4" type="video/mp4">
   </video>
   <div id="overlay"></div>
-
-  <!-- Password Overlay -->
-  <div id="authOverlay">
-    <form id="authForm">
-      <h1>Admin Login</h1>
-      <input type="password" id="adminPwd" placeholder="Enter password" required>
-      <button type="submit">Enter</button>
-      <div id="authError" class="hidden">Incorrect password.</div>
-    </form>
-  </div>
-
-  <!-- Sidebar Toggle -->
-  <button id="toggleSidebar">⋮</button>
 
   <div class="container">
     <!-- Sidebar -->
@@ -162,10 +128,12 @@
       <a href="#" data-section="inbox">Inbox</a>
       <a href="#" data-section="settings">Settings</a>
       <a href="#" data-section="logs">Logs</a>
-      <a href="CBE_login.html" style="margin-top:auto;" class="btn danger">Logout</a>
+      <div class="spacer"></div>
+      <a href="index.html" target="_blank">View Site</a>
+      <a href="admin-login.html" class="btn danger">Logout</a>
     </nav>
 
-    <!-- Main content -->
+    <!-- Main Content -->
     <div class="content">
       <!-- Dashboard -->
       <section id="dashboard">
@@ -177,52 +145,144 @@
           <div class="card"><h3>Unread Messages</h3><p id="stat-messages">—</p></div>
         </div>
       </section>
-      <!-- rest of your sections... -->
+
+      <!-- Payments -->
+      <section id="payments" class="hidden">
+        <h2>Payment Approvals</h2>
+        <table>
+          <thead><tr><th>User</th><th>Plan</th><th>Proof</th><th>Actions</th></tr></thead>
+          <tbody id="payments-list"></tbody>
+        </table>
+      </section>
+
+      <!-- Users -->
+      <section id="users" class="hidden">
+        <h2>User Management</h2>
+        <table>
+          <thead><tr><th>Email</th><th>Plan</th><th>Status</th><th>Actions</th></tr></thead>
+          <tbody id="users-list"></tbody>
+        </table>
+      </section>
+
+      <!-- Trades -->
+      <section id="trades" class="hidden">
+        <h2>Trade History Manager</h2>
+        <form id="tradeForm">
+          <div class="form-group"><label>Date & Time</label><input type="datetime-local" id="tradeDate" required></div>
+          <div class="form-group"><label>Note</label><textarea id="tradeNote" required></textarea></div>
+          <div class="form-group">
+            <label>Screenshot</label>
+            <input type="file" id="tradeImage" accept="image/*" required>
+            <img id="tradePreview" class="preview hidden">
+          </div>
+          <div class="form-actions"><button type="submit" class="btn">Upload Trade</button></div>
+        </form>
+        <table>
+          <thead><tr><th>Date</th><th>Note</th><th>Image</th><th>Actions</th></tr></thead>
+          <tbody id="trades-list"></tbody>
+        </table>
+      </section>
+
+      <!-- Signals -->
+      <section id="signals" class="hidden">
+        <h2>Signal Publisher</h2>
+        <form id="signalForm">
+          <div class="form-group"><label>Date & Time</label><input type="datetime-local" id="signalDate" required></div>
+          <div class="form-group"><label>Signal Content</label><textarea id="signalContent" required></textarea></div>
+          <div class="form-group"><label>Admin Note</label><textarea id="signalNote" placeholder="Trade at your own risk"></textarea></div>
+          <div class="form-group">
+            <label>Attach Image (optional)</label>
+            <input type="file" id="signalImage" accept="image/*">
+            <img id="signalPreview" class="preview hidden">
+          </div>
+          <div class="form-actions"><button type="submit" class="btn">Publish Signal</button></div>
+        </form>
+        <table>
+          <thead><tr><th>Date</th><th>Content</th><th>Note</th><th>Actions</th></tr></thead>
+          <tbody id="signals-list"></tbody>
+        </table>
+      </section>
+
+      <!-- Broadcasts -->
+      <section id="broadcasts" class="hidden">
+        <h2>Broadcast Message</h2>
+        <form id="broadcastForm">
+          <div class="form-group"><label>Title</label><input type="text" id="bcTitle" required></div>
+          <div class="form-group"><label>Message</label><textarea id="bcMessage" required></textarea></div>
+          <div class="form-actions"><button type="submit" class="btn">Send Broadcast</button></div>
+        </form>
+      </section>
+
+      <!-- Inbox -->
+      <section id="inbox" class="hidden">
+        <h2>Contact Inbox</h2>
+        <table>
+          <thead><tr><th>Name</th><th>Email</th><th>Message</th><th>Reply</th></tr></thead>
+          <tbody id="inbox-list"></tbody>
+        </table>
+      </section>
+
+      <!-- Settings -->
+      <section id="settings" class="hidden">
+        <h2>Settings</h2>
+        <form id="settingsForm">
+          <div class="form-group"><label>Paystack Public Key</label><input type="text" id="settingPaystack"></div>
+          <div class="form-group"><label>Bitcoin Wallet</label><input type="text" id="settingBTC"></div>
+          <div class="form-group"><label>Ethereum Wallet</label><input type="text" id="settingETH"></div>
+          <div class="form-group"><label>USDT Wallet</label><input type="text" id="settingUSDT"></div>
+          <div class="form-group"><label>Support Email</label><input type="text" id="settingEmail"></div>
+          <div class="form-actions"><button type="submit" class="btn">Save Settings</button></div>
+        </form>
+      </section>
+
+      <!-- Logs -->
+      <section id="logs" class="hidden">
+        <h2>Activity Logs</h2>
+        <table>
+          <thead><tr><th>Time</th><th>Action</th><th>Admin</th></tr></thead>
+          <tbody id="logs-list"></tbody>
+        </table>
+      </section>
     </div>
   </div>
 
   <script>
-    // Authentication
-    document.getElementById('authForm').addEventListener('submit', e => {
-      e.preventDefault();
-      const val = document.getElementById('adminPwd').value;
-      if (val === 'Blessed@123') {
-        document.getElementById('authOverlay').style.display = 'none';
-      } else {
-        const err = document.getElementById('authError');
-        err.classList.remove('hidden');
-      }
-    });
+    document.addEventListener('DOMContentLoaded', () => {
+      // Sidebar toggle
+      document.getElementById('toggleSidebar').addEventListener('click', () => {
+        document.body.classList.toggle('collapsed-sidebar');
+      });
 
-    // Sidebar toggle
-    document.getElementById('toggleSidebar').addEventListener('click', ()=>{
-      document.body.classList.toggle('collapsed-sidebar');
-    });
-
-    // Tab‐switching
-    document.querySelectorAll('.sidebar a[data-section]').forEach(a=>{
-      a.addEventListener('click', e=>{
-        e.preventDefault();
-        document.querySelectorAll('.sidebar a').forEach(x=>x.classList.remove('active'));
-        a.classList.add('active');
-        const sec = a.dataset.section;
-        document.querySelectorAll('.content section').forEach(s=>{
-          sec === s.id ? s.classList.remove('hidden') : s.classList.add('hidden');
+      // Tab-switching
+      document.querySelectorAll('.sidebar a[data-section]').forEach(a => {
+        a.addEventListener('click', e => {
+          e.preventDefault();
+          document.querySelectorAll('.sidebar a').forEach(x => x.classList.remove('active'));
+          a.classList.add('active');
+          const sec = a.getAttribute('data-section');
+          document.querySelectorAll('.content section').forEach(s => {
+            s.id === sec ? s.classList.remove('hidden') : s.classList.add('hidden');
+          });
         });
       });
+
+      // Image previews
+      function previewImage(inputEl, previewId) {
+        const file = inputEl.files[0], img = document.getElementById(previewId);
+        if (file) {
+          const reader = new FileReader();
+          reader.onload = e => { img.src = e.target.result; img.classList.remove('hidden'); };
+          reader.readAsDataURL(file);
+        }
+      }
+      document.getElementById('tradeImage').addEventListener('change', e => previewImage(e.target,'tradePreview'));
+      document.getElementById('signalImage').addEventListener('change', e => previewImage(e.target,'signalPreview'));
     });
 
-    // Image previews
-    function previewImage(inputEl, previewId){
-      const file = inputEl.files[0], img = document.getElementById(previewId);
-      if (file) {
-        const reader = new FileReader();
-        reader.onload = e => { img.src = e.target.result; img.classList.remove('hidden'); };
-        reader.readAsDataURL(file);
-      }
+    // Redirect if not authenticated
+    if (sessionStorage.getItem('adminAuthenticated') !== 'true') {
+      window.location.href = 'admin-login.html';
     }
-    document.getElementById('tradeImage').addEventListener('change', ()=>previewImage(event.target,'tradePreview'));
-    document.getElementById('signalImage').addEventListener('change', ()=>previewImage(event.target,'signalPreview'));
   </script>
 </body>
 </html>
