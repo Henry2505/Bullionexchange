@@ -3,10 +3,10 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Payment Options – CBE</title>
+  <title>Payment Options – CBE</title>
   <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;500;700&display=swap" rel="stylesheet">
   <style>
-    /* ========== Your existing styles (unchanged) ========== */
+    /* ========== Your existing styles ========== */
     body { margin:0; font-family:'Poppins',sans-serif; background:#0b0b0b; color:#f5f5f5; }
     .container { max-width:700px; margin:120px auto 40px; padding:30px; background:rgba(0,0,0,0.7); border-radius:10px; box-shadow:0 0 20px gold; }
     h1 { color:gold; text-align:center; margin-bottom:30px; }
@@ -24,9 +24,8 @@
   </style>
 </head>
 <body>
-  <!-- Background -->
   <video class="video-background" autoplay muted loop playsinline>
-    <source src="star-video.MP4" type="video/mp4" />
+    <source src="star-video.MP4" type="video/mp4"/>
   </video>
   <div class="overlay"></div>
 
@@ -34,9 +33,8 @@
     <h1>Payment Options</h1>
     <p class="info" id="selectedPlanInfo">Loading...</p>
 
-    <!-- Form wrapper ensures submit always fires -->
     <form id="paymentForm">
-      <input type="email" id="userEmail" placeholder="Enter your email" required />
+      <input type="email" id="userEmail" placeholder="Enter your email (same as application)" required />
 
       <div class="method-select">
         <button type="button" id="paystackBtn">Pay with Paystack</button>
@@ -56,7 +54,8 @@
         </div>
       </div>
 
-      <label for="proof">Upload Proof of Payment:</label>
+      <!-- Updated label for 5MB -->
+      <label for="proof">Upload Proof of Payment (max 5 MB):</label>
       <input type="file" id="proof" accept="image/*" required />
 
       <div class="submit-btn">
@@ -67,16 +66,20 @@
 
   <script>
     document.addEventListener('DOMContentLoaded', () => {
-      // 1) Load paymentSettings from Admin Panel
+      console.log('Payment page initialized');
+
+      // Load settings
       let settings = {};
       try {
         settings = JSON.parse(localStorage.getItem('paymentSettings')) || {};
-      } catch {}
+      } catch (e) {
+        console.warn('Could not parse paymentSettings:', e);
+      }
 
       const walletMap   = { Bitcoin: settings.btc, Ethereum: settings.eth, USDT: settings.usdt };
       const paystackKey = settings.paystackKey || '';
 
-      // 2) Show selected plan info
+      // Show selected plan
       const pkg = sessionStorage.getItem('selectedPackage') || '';
       const planNames = {
         weekly:  'Weekly VIP Plan – $50',
@@ -86,67 +89,64 @@
       document.getElementById('selectedPlanInfo').textContent =
         planNames[pkg] || 'No valid package selected.';
 
-      // 3) Crypto button reveals fields
+      // Reveal Crypto
       document.getElementById('cryptoBtn').addEventListener('click', () => {
         document.getElementById('cryptoOptions').style.display = 'block';
       });
 
-      // 4) Populate wallet address
+      // Update wallet address
       document.getElementById('cryptoType').addEventListener('change', function() {
-        document.getElementById('walletAddress').textContent =
-          walletMap[this.value] || 'Not set';
+        const addr = walletMap[this.value] || 'Not set';
+        document.getElementById('walletAddress').textContent = addr;
       });
 
-      // 5) Copy wallet button
+      // Copy wallet
       document.getElementById('copyWalletBtn').addEventListener('click', () => {
         const w = document.getElementById('walletAddress').textContent;
         if (w && w !== 'Not set') {
-          navigator.clipboard.writeText(w).then(() => alert('Wallet copied.'));
+          navigator.clipboard.writeText(w).then(() => alert('Wallet address copied'));
         } else {
-          alert('No wallet to copy.');
+          alert('No wallet address to copy');
         }
       });
 
-      // 6) Simulate Paystack flow
+      // Simulated Paystack
       document.getElementById('paystackBtn').addEventListener('click', () => {
-        if (!paystackKey) return alert('Paystack key missing in Admin Settings.');
-        alert('Simulated Paystack – please upload proof and submit.');
+        if (!paystackKey) {
+          return alert('Paystack key not set in Admin Settings');
+        }
+        alert('Simulated Paystack payment – upload proof & submit below');
       });
 
-      // 7) Handle form submission
+      // Form submission
       document.getElementById('paymentForm').addEventListener('submit', e => {
         e.preventDefault();
+        console.log('Form submit fired');
 
-        const email     = document.getElementById('userEmail').value.trim().toLowerCase();
-        const proofFile = document.getElementById('proof').files[0];
-        const cryptoType= document.getElementById('cryptoType').value;
-        const wallet    = walletMap[cryptoType] || '';
-        const records   = JSON.parse(localStorage.getItem('paymentRecords')||'[]');
+        const email      = document.getElementById('userEmail').value.trim().toLowerCase();
+        const proofFile  = document.getElementById('proof').files[0];
+        const cryptoType = document.getElementById('cryptoType').value;
+        const wallet     = walletMap[cryptoType] || '';
+        let records      = JSON.parse(localStorage.getItem('paymentRecords') || '[]');
 
-        // Validations
-        if (!pkg || !planNames[pkg]) {
-          return alert('No package selected.');
-        }
+        // Basic validations
         if (!email || !email.includes('@')) {
-          return alert('Enter a valid email.');
+          return alert('Please enter a valid email address.');
         }
         if (!proofFile) {
-          return alert('Upload proof of payment.');
+          return alert('Please upload proof of payment.');
         }
-        if (document.getElementById('cryptoOptions').style.display==='block' && !cryptoType) {
-          return alert('Select a cryptocurrency.');
-        }
-        if (proofFile.size > 5 * 1024 * 1024) {
+        if (proofFile.size > 5 * 1024 * 1024) {  // 5MB limit
           return alert('Proof file must be under 5 MB.');
         }
-        if (records.some(r => r.email===email && r.status!=='expired')) {
-          return alert('You already submitted a payment.');
+        if (document.getElementById('cryptoOptions').style.display === 'block' && !cryptoType) {
+          return alert('Please select a cryptocurrency.');
         }
 
-        // Read file and save record
+        // Read & store proof
         const reader = new FileReader();
-        reader.onload = function(ev) {
-          records.push({
+        reader.onload = ev => {
+          const newRec = {
             name:        email.split('@')[0],
             email,
             username:    email.split('@')[0],
@@ -156,16 +156,18 @@
             proof:       ev.target.result,
             status:      'pending',
             submittedAt: new Date().toISOString()
-          });
+          };
+          records.push(newRec);
           localStorage.setItem('paymentRecords', JSON.stringify(records));
-          sessionStorage.setItem('paymentApproved','false');
-          alert('Payment submitted! Await approval.');
+          sessionStorage.setItem('paymentApproved', 'false');
+          alert('Payment submitted successfully! Await approval.');
           window.location.href = 'CBE_login.html';
         };
-        reader.onerror = () => alert('Error reading proof file.');
+        reader.onerror = () => {
+          alert('Error reading proof file. Please try again.');
+        };
         reader.readAsDataURL(proofFile);
       });
-
     });
   </script>
 </body>
