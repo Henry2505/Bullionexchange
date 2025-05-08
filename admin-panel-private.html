@@ -288,9 +288,14 @@
       display: flex;
       justify-content: space-between;
       align-items: center;
+      transition: box-shadow 0.3s;
+    }
+    .application-card:hover, .payment-card:hover, .message-card:hover {
+      box-shadow: 0 0 15px rgba(255, 215, 0, 0.3);
     }
     .application-card p, .payment-card p, .message-card p {
       margin: 5px 0;
+      color: #ddd;
     }
     .application-card button, .payment-card button, .message-card button {
       padding: 8px 15px;
@@ -313,6 +318,7 @@
     }
     .application-card button:hover, .payment-card button:hover, .message-card button:hover {
       transform: scale(1.05);
+      box-shadow: 0 0 10px rgba(255, 215, 0, 0.5);
     }
     .contact {
       background: #111;
@@ -383,7 +389,6 @@
         <a onclick="navigateToSection('user-management')">User Management</a>
         <a onclick="navigateToSection('signal-management')">Signal Management</a>
         <a onclick="navigateToSection('trade-history')">Trade History</a>
-        <a onclick="navigateToSection('public-trade-history')">Public Trade History</a>
         <a onclick="navigateToSection('vip-trade-history')">VIP Trade History</a>
         <a onclick="navigateToSection('market-analysis')">Market Analysis</a>
         <a onclick="navigateToSection('content-editing')">Content Editing</a>
@@ -402,7 +407,7 @@
       <div class="dashboard-section" id="application-verification">
         <h2 onclick="toggleSection('application-verification')">Application Verification</h2>
         <div class="section-content">
-          <p>Review and verify new user applications.</p>
+          <p>Review and verify new user applications with a touch of elegance.</p>
           <div id="application-list" class="history-list">
             <p>No applications yet.</p>
           </div>
@@ -411,7 +416,7 @@
       <div class="dashboard-section" id="payment-management">
         <h2 onclick="toggleSection('payment-management')">Payment Management</h2>
         <div class="section-content">
-          <p>Manage and verify VIP subscription payments.</p>
+          <p>Manage and verify VIP subscription payments with sophistication.</p>
           <div class="form-group">
             <label>Add Payment Information</label>
             <input type="email" id="payment-email" placeholder="User Email">
@@ -431,7 +436,7 @@
       <div class="dashboard-section" id="contact-messages">
         <h2 onclick="toggleSection('contact-messages')">Contact Messages</h2>
         <div class="section-content">
-          <p>View and respond to messages from the Contact Us page.</p>
+          <p>View and respond to messages from the Contact Us page with grace.</p>
           <div id="message-list" class="history-list">
             <p>No messages yet.</p>
           </div>
@@ -507,20 +512,6 @@
           </div>
         </div>
       </div>
-      <div class="dashboard-section" id="public-trade-history">
-        <h2 onclick="toggleSection('public-trade-history')">Public Trade History</h2>
-        <div class="section-content">
-          <p>Manage trade history visible to all users (2 entries).</p>
-          <div class="form-group">
-            <label>Add Public Trade</label>
-            <textarea id="public-trade-content" rows="4" placeholder="e.g., Sold GOLD at $2050, 2025-05-01"></textarea>
-            <button onclick="addPublicTrade()">Add Trade</button>
-          </div>
-          <div id="public-trade-list" class="history-list">
-            <p>No public trades yet.</p>
-          </div>
-        </div>
-      </div>
       <div class="dashboard-section" id="vip-trade-history">
         <h2 onclick="toggleSection('vip-trade-history')">VIP Trade History</h2>
         <div class="section-content">
@@ -571,6 +562,8 @@
               <option value="index">Homepage</option>
               <option value="services">Services</option>
               <option value="about">About</option>
+              <option value="CBE_trade_insights_public">Trade Insights</option>
+              <option value="vip-dashboard">VIP Dashboard</option>
             </select>
           </div>
           <div class="form-group">
@@ -606,7 +599,6 @@
     © 2025 CBE - Chukwuemeka Bullion Exchange. All rights reserved.
   </footer>
   <script>
-    // Admin authentication
     const ADMIN_PASSWORD = 'Blessed@123';
     const loginContainer = document.getElementById('loginContainer');
     const adminPanel = document.getElementById('adminPanel');
@@ -618,17 +610,17 @@
       content: { 
         index: 'Welcome to Chukwuemeka Bullion Exchange!', 
         services: 'Explore our trading services.', 
-        about: 'Learn about our mission.' 
+        about: 'Learn about our mission.', 
+        'CBE_trade_insights_public': 'Explore our premium trade insights. Join VIP for full access!',
+        'vip-dashboard': 'Welcome to your VIP Dashboard!'
       }, 
       announcement: 'Stay tuned for updates!',
-      publicTrades: [],
       vipTrades: []
     };
     let signals = [];
     let tradeHistory = [];
     let marketInsights = [];
 
-    // Ensure login screen is shown on page load
     document.addEventListener('DOMContentLoaded', () => {
       loginContainer.classList.add('active');
       adminPanel.classList.remove('active');
@@ -669,7 +661,6 @@
       updateMessageList();
       updateSignalHistory();
       updateTradeHistory();
-      updatePublicTradeHistory();
       updateVIPTradeHistory();
       updateMarketInsights();
       updateContentDisplay();
@@ -691,7 +682,6 @@
       section.classList.toggle('active');
     }
 
-    // Application Verification
     function updateApplicationList() {
       const appList = document.getElementById('application-list');
       appList.innerHTML = applications.length ? applications.map(app => `
@@ -701,6 +691,7 @@
             <p><strong>Email:</strong> ${app.email}</p>
             <p><strong>Phone:</strong> ${app.phone}</p>
             <p><strong>Status:</strong> ${app.status}</p>
+            <p><strong>Date:</strong> ${new Date(app.date).toLocaleString()}</p>
           </div>
           <div>
             <button class="approve" onclick="approveApplication('${app.email}')">Approve</button>
@@ -735,7 +726,6 @@
       alert('Application rejected.');
     }
 
-    // Payment Management
     function addPayment() {
       const email = document.getElementById('payment-email').value;
       const plan = document.getElementById('payment-plan').value;
@@ -777,7 +767,7 @@
         payment.status = 'verified';
         const user = usersData.users.find(u => u.email === email);
         if (user) {
-          user.status = 'active'; // Activate VIP status
+          user.status = 'active';
         }
         updatePaymentList();
         saveData();
@@ -792,7 +782,6 @@
       alert('Payment rejected.');
     }
 
-    // Contact Messages
     function updateMessageList() {
       const messageList = document.getElementById('message-list');
       messageList.innerHTML = messages.length ? messages.map(msg => `
@@ -816,7 +805,6 @@
       window.location.href = `mailto:${email}?subject=${subject}&body=${body}`;
     }
 
-    // User Management
     function updateUserTable() {
       const userTable = document.getElementById('user-table');
       document.getElementById('total-users').textContent = usersData.totalUsers;
@@ -870,12 +858,11 @@
       saveData();
     }
 
-    // Signal Management
     function sendSignal() {
       const signal = document.getElementById('signal-content').value;
       if (signal) {
         signals.unshift({ id: signals.length + 1, content: signal, date: new Date().toISOString() });
-        document.getElementById('signal-status').textContent = 'Signal sent successfully!';
+        document.getElementById('signal-status').textContent = 'Signal sent successfully to VIPs!';
         updateSignalHistory();
         saveData();
         setTimeout(() => document.getElementById('signal-status').textContent = '', 3000);
@@ -888,7 +875,6 @@
       signalHistory.innerHTML = signals.length ? signals.map(s => `<p>${s.content} <small>(${new Date(s.date).toLocaleString()})</small></p>`).join('') : '<p>No signals yet.</p>';
     }
 
-    // Trade History Upload
     document.getElementById('trade-file').addEventListener('change', function(e) {
       const file = e.target.files[0];
       if (file) {
@@ -906,28 +892,6 @@
       tradeHistoryList.innerHTML = tradeHistory.length ? tradeHistory.map(t => `<p>${t.fileName} <small>(${new Date(t.date).toLocaleString()})</small></p>`).join('') : '<p>No trade history uploaded.</p>';
     }
 
-    // Public Trade History
-    function addPublicTrade() {
-      const content = document.getElementById('public-trade-content').value;
-      if (content) {
-        siteData.publicTrades.push({ content, date: new Date().toISOString() });
-        if (siteData.publicTrades.length > 2) {
-          siteData.publicTrades.shift(); // Keep only the latest 2 trades
-        }
-        updatePublicTradeHistory();
-        saveData();
-        document.getElementById('public-trade-content').value = '';
-      }
-    }
-
-    function updatePublicTradeHistory() {
-      const publicTradeList = document.getElementById('public-trade-list');
-      publicTradeList.innerHTML = siteData.publicTrades.length ? siteData.publicTrades.map(trade => `
-        <p>${trade.content} <small>(${new Date(trade.date).toLocaleString()})</small></p>
-      `).join('') : '<p>No public trades yet.</p>';
-    }
-
-    // VIP Trade History
     function addVIPTrade() {
       const month = document.getElementById('vip-trade-month').value;
       const content = document.getElementById('vip-trade-content').value;
@@ -946,14 +910,13 @@
       months.forEach(month => {
         const trades = siteData.vipTrades.filter(trade => trade.month === month);
         if (trades.length) {
-          html += `<p><strong>${month}</strong></p>`;
-          html += trades.map(trade => `<p style="margin-left: 20px;">${trade.content} <small>(${new Date(trade.date).toLocaleString()})</small></p>`).join('');
+          html += `<p style="font-size: 18px; color: #ffd700;"><strong>${month}</strong></p>`;
+          html += trades.map(trade => `<p style="margin-left: 20px; color: #ccc;">${trade.content} <small>(${new Date(trade.date).toLocaleString()})</small></p>`).join('');
         }
       });
       vipTradeList.innerHTML = html || '<p>No VIP trades yet.</p>';
     }
 
-    // Market Analysis
     function addMarketInsight() {
       const insight = document.getElementById('market-insight').value;
       if (insight) {
@@ -970,10 +933,9 @@
       insightsDiv.innerHTML = marketInsights.length ? marketInsights.map(i => `<p>${i.content} <small>(${new Date(i.date).toLocaleString()})</small></p>`).join('') : '<p>No insights yet.</p>';
     }
 
-    // Content Editing
     function updateContentDisplay() {
       const page = document.getElementById('edit-page').value;
-      document.getElementById('current-content').value = siteData.content[page];
+      document.getElementById('current-content').value = siteData.content[page] || '';
     }
 
     function updateContent() {
@@ -989,7 +951,6 @@
       }
     }
 
-    // Settings
     function updateAnnouncement() {
       const announcement = document.getElementById('site-announcement').value;
       if (announcement) {
@@ -1001,7 +962,6 @@
       }
     }
 
-    // Save all data to localStorage
     function saveData() {
       localStorage.setItem('usersData', JSON.stringify(usersData));
       localStorage.setItem('applications', JSON.stringify(applications));
