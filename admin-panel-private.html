@@ -190,3 +190,69 @@
           <button type="submit" class="btn">Save Settings</button>
         </form>
       </section>
+          </div> <!-- end .content -->
+  </div> <!-- end .container -->
+
+  <script>
+    document.getElementById("toggleSidebar").addEventListener("click", () => {
+      document.body.classList.toggle("collapsed-sidebar");
+    });
+
+    // Section Switching
+    document.querySelectorAll('.sidebar a[data-section]').forEach(link => {
+      link.addEventListener('click', e => {
+        e.preventDefault();
+        document.querySelectorAll('.sidebar a').forEach(a => a.classList.remove('active'));
+        link.classList.add('active');
+
+        const sectionId = link.getAttribute('data-section');
+        document.querySelectorAll('.content section').forEach(sec => {
+          sec.classList.add('hidden');
+          if (sec.id === sectionId) sec.classList.remove('hidden');
+        });
+      });
+    });
+
+    // Show Payment Records
+    const payments = JSON.parse(localStorage.getItem('payments') || '[]');
+    const table = document.getElementById('payments-list');
+    payments.forEach((payment, index) => {
+      const row = document.createElement('tr');
+      row.innerHTML = `
+        <td>${payment.method}</td>
+        <td>${payment.plan}</td>
+        <td><img src="${payment.proof}" alt="Proof" style="max-height:60px;"></td>
+        <td>
+          <button class="btn" onclick="approvePayment(${index})">Approve</button>
+        </td>
+      `;
+      table.appendChild(row);
+    });
+
+    function approvePayment(index) {
+      const payments = JSON.parse(localStorage.getItem('payments') || '[]');
+      payments[index].status = "approved";
+      localStorage.setItem('payments', JSON.stringify(payments));
+      alert("Payment approved!");
+      location.reload();
+    }
+
+    // Load Wallet Settings
+    const settings = JSON.parse(localStorage.getItem('settings') || '{}');
+    document.getElementById('btc').value = settings.btc || '';
+    document.getElementById('eth').value = settings.eth || '';
+    document.getElementById('usdt').value = settings.usdt || '';
+
+    // Save Wallet Settings
+    document.getElementById('settingsForm').addEventListener('submit', function(e) {
+      e.preventDefault();
+      const btc = document.getElementById('btc').value;
+      const eth = document.getElementById('eth').value;
+      const usdt = document.getElementById('usdt').value;
+      const walletData = { btc, eth, usdt };
+      localStorage.setItem('settings', JSON.stringify(walletData));
+      alert('Wallet addresses saved successfully!');
+    });
+  </script>
+</body>
+</html>
