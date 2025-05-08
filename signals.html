@@ -43,4 +43,261 @@
       background: linear-gradient(135deg, #111, #1c1c1c);
       padding: 70px 20px 50px;
       text-align: center;
-      box-shadow: 0 4px 
+      box-shadow: 0 4px 10px rgba(0,0,0,0.5);
+      position: relative;
+      z-index: 1;
+    }
+    header h1 {
+      font-size: 38px;
+      color: gold;
+      margin-bottom: 10px;
+    }
+    header p {
+      font-size: 16px;
+      color: #bbb;
+    }
+
+    main#main-content {
+      max-width: 1000px;
+      margin: 40px auto;
+      padding: 20px;
+      transition: filter 0.3s ease;
+      position: relative;
+      z-index: 1;
+    }
+    .blurred {
+      filter: blur(8px);
+    }
+
+    .notice {
+      text-align: center;
+      font-size: 16px;
+      color: #ffcc00;
+      margin-bottom: 30px;
+    }
+
+    .signal-box {
+      background-color: #151515;
+      padding: 25px;
+      border-radius: 10px;
+      margin-bottom: 20px;
+      box-shadow: 0 0 12px rgba(0,0,0,0.5);
+    }
+    .signal-box h2 {
+      font-size: 20px;
+      color: gold;
+      margin-bottom: 10px;
+    }
+    .time {
+      font-size: 14px;
+      color: #999;
+      margin-bottom: 10px;
+    }
+    .signal-content {
+      font-size: 16px;
+      color: #eee;
+      background-color: #1f1f1f;
+      padding: 15px;
+      border-radius: 8px;
+      white-space: pre-wrap;
+    }
+    .copy-line {
+      margin-bottom: 8px;
+    }
+    .admin-note {
+      margin-top: 15px;
+      padding: 12px;
+      background-color: #222;
+      border-left: 4px solid gold;
+      font-size: 14px;
+      color: #ffcc00;
+      font-style: italic;
+      border-radius: 5px;
+    }
+
+    /* restore blinking glow on copy buttons */
+    .copy-button {
+      margin-left: 10px;
+      background: #333;
+      color: #ffd700;
+      border: none;
+      padding: 4px 8px;
+      font-size: 12px;
+      border-radius: 5px;
+      cursor: pointer;
+      animation: blinkGlow 2s infinite;
+    }
+    @keyframes blinkGlow {
+      0%, 100% {
+        box-shadow: 0 0 5px #ffd700;
+      }
+      50% {
+        box-shadow: 0 0 15px #ffd700;
+      }
+    }
+    .copy-button:hover {
+      background: #444;
+    }
+
+    /* existing glow-button (if used elsewhere) */
+    .glow-button {
+      padding: 12px 24px;
+      font-size: 1rem;
+      background-color: #000;
+      color: white;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+      box-shadow: 0 0 10px #00ffcc, 0 0 20px #00ffcc, 0 0 30px #00ffcc;
+      transition: box-shadow 0.4s ease-in-out;
+      animation: pulseGlow 2s infinite;
+    }
+    @keyframes pulseGlow {
+      0% { box-shadow: 0 0 10px #00ffcc, 0 0 20px #00ffcc, 0 0 30px #00ffcc; }
+      50% { box-shadow: 0 0 20px #00ffcc, 0 0 30px #00ffcc, 0 0 40px #00ffcc; }
+      100% { box-shadow: 0 0 10px #00ffcc, 0 0 20px #00ffcc, 0 0 30px #00ffcc; }
+    }
+
+    nav a {
+      padding: 8px 16px;
+      color: #00ffee;
+      text-decoration: none;
+      font-weight: bold;
+      font-family: 'Segoe UI', sans-serif;
+      border-radius: 5px;
+      transition: all 0.3s ease-in-out;
+      animation: navGlow 2s infinite alternate;
+    }
+    @keyframes navGlow {
+      0% { text-shadow: 0 0 5px #00ffee, 0 0 10px #00ffee; }
+      100% { text-shadow: 0 0 15px #00ffee, 0 0 25px #00ffee; }
+    }
+
+    footer {
+      text-align: center;
+      padding: 20px;
+      font-size: 14px;
+      color: #888;
+      border-top: 1px solid #222;
+      background-color: #0b0b0b;
+      position: relative;
+      z-index: 1;
+    }
+  </style>
+</head>
+<body>
+  <!-- starfield background -->
+  <video autoplay loop muted id="bg-video"
+         style="position: fixed; right: 0; bottom: 0; min-width: 100%; min-height: 100%; z-index: -1; object-fit: cover;">
+    <source src="space-stars.mp4" type="video/mp4"/>
+  </video>
+
+  <!-- watermark overlay -->
+  <div id="watermarkContainer"></div>
+
+  <!-- compact top header -->
+  <header style="background:#000;color:#fff;padding:15px 30px;display:flex;justify-content:space-between;align-items:center;">
+    <div style="font-weight:bold;font-size:1.2em;">CBE</div>
+  </header>
+
+  <script>
+    // block right-click
+    document.addEventListener('contextmenu', e => e.preventDefault());
+
+    // get VIP username for watermark
+    const vipUser = sessionStorage.getItem('cbeUsername') || 'VIP_MEMBER';
+
+    function createWatermarks() {
+      const container = document.getElementById('watermarkContainer');
+      const text = `${vipUser} – ${new Date().toLocaleString()}`;
+      const stepX = 300, stepY = 150;
+      for (let y = 0; y < window.innerHeight; y += stepY) {
+        for (let x = 0; x < window.innerWidth; x += stepX) {
+          const wm = document.createElement('div');
+          wm.className = 'watermark';
+          wm.textContent = text;
+          wm.style.left = x + 'px';
+          wm.style.top = y + 'px';
+          container.appendChild(wm);
+        }
+      }
+    }
+
+    // intercept PrintScreen & blur
+    document.addEventListener('keydown', e => {
+      if (e.key === 'PrintScreen') {
+        navigator.clipboard.writeText('');
+        alert('Screenshots are disabled on this page');
+        document.getElementById('main-content').classList.add('blurred');
+        setTimeout(() => document.getElementById('main-content').classList.remove('blurred'), 1200);
+        e.preventDefault();
+      }
+      if ((e.ctrlKey && ['p','s','u'].includes(e.key.toLowerCase())) || e.key === 'F12') {
+        e.preventDefault();
+      }
+    });
+
+    function copyToClipboard(id) {
+      const txt = document.getElementById(id).textContent;
+      navigator.clipboard.writeText(txt).then(() => alert('Copied: ' + txt));
+    }
+
+    window.onload = createWatermarks;
+  </script>
+
+  <header>
+    <h1>Forex Signals</h1>
+    <p>Sharing of these signals and any illegal distribution is strictly prohibited and punishable by law.</p>
+  </header>
+
+  <main id="main-content">
+    <div class="notice">
+      Sharing of these signals or any illegal activity surrounding them is highly prohibited and punishable by law.
+    </div>
+
+    <div class="signal-box">
+      <h2>May 4, 2025</h2>
+      <div class="time">Time: 10:15 AM</div>
+      <div class="signal-content">
+        <div class="copy-line">
+          BUY EUR/USD @ <span id="price1">1.07250</span>
+          <button class="copy-button" onclick="copyToClipboard('price1')">Copy</button>
+        </div>
+        <div class="copy-line">
+          TP: <span id="tp1">1.07700</span>
+          <button class="copy-button" onclick="copyToClipboard('tp1')">Copy</button>
+        </div>
+        <div class="copy-line">
+          SL: <span id="sl1">1.06950</span>
+          <button class="copy-button" onclick="copyToClipboard('sl1')">Copy</button>
+        </div>
+      </div>
+      <div class="admin-note">Note: Trade at your own risk.</div>
+    </div>
+
+    <div class="signal-box">
+      <h2>May 4, 2025</h2>
+      <div class="time">Time: 11:30 AM</div>
+      <div class="signal-content">
+        <div class="copy-line">
+          SELL GBP/JPY @ <span id="price2">193.250</span>
+          <button class="copy-button" onclick="copyToClipboard('price2')">Copy</button>
+        </div>
+        <div class="copy-line">
+          TP: <span id="tp2">192.600</span>
+          <button class="copy-button" onclick="copyToClipboard('tp2')">Copy</button>
+        </div>
+        <div class="copy-line">
+          SL: <span id="sl2">193.800</span>
+          <button class="copy-button" onclick="copyToClipboard('sl2')">Copy</button>
+        </div>
+      </div>
+      <div class="admin-note">Note: Trade at your own risk.</div>
+    </div>
+  </main>
+
+  <footer>
+    © 2025 CBE - Chukwuemeka Bullion Exchange. All rights reserved.
+  </footer>
+</body>
+</html>
