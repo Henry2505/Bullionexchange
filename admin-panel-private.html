@@ -130,3 +130,93 @@
     <h1>Welcome to CBE Admin Panel</h1>
     <p>Select a section from the sidebar to begin.</p>
   </div>
+    <script>
+    function toggleSidebar() {
+      const sidebar = document.getElementById('sidebar');
+      const main = document.getElementById('mainContent');
+      const topbar = document.getElementById('topbar');
+      sidebar.classList.toggle('hidden');
+      main.classList.toggle('full-width');
+      topbar.classList.toggle('full-width');
+    }
+
+    function loadSection(section) {
+      const main = document.getElementById('mainContent');
+      main.innerHTML = `<h2>${section.charAt(0).toUpperCase() + section.slice(1)}</h2>`;
+
+      if (section === 'payments') {
+        const payments = JSON.parse(localStorage.getItem('paymentRecords') || '[]');
+        if (!payments.length) {
+          main.innerHTML += '<p>No payments found.</p>';
+          return;
+        }
+
+        let table = `<table border="1" style="width:100%;border-collapse:collapse;margin-top:20px;">
+        <tr style="background:gold;color:black;">
+          <th>Email</th><th>Amount</th><th>Method</th><th>Status</th><th>Proof</th><th>Action</th>
+        </tr>`;
+        payments.forEach((p, i) => {
+          table += `<tr>
+            <td>${p.email}</td>
+            <td>$${p.amount}</td>
+            <td>${p.method}</td>
+            <td>${p.status}</td>
+            <td><a href="${p.proof}" target="_blank">View</a></td>
+            <td>
+              <button onclick="approvePayment(${i})">Approve</button>
+              <button onclick="expirePayment(${i})">Expire</button>
+            </td>
+          </tr>`;
+        });
+        table += '</table>';
+        main.innerHTML += table;
+      }
+
+      if (section === 'settings') {
+        const settings = JSON.parse(localStorage.getItem('paymentSettings') || '{}');
+        main.innerHTML += `
+          <form id="settingsForm" style="margin-top:20px;">
+            <label>Bitcoin Wallet:</label><br>
+            <input type="text" id="btc" value="${settings.btc || ''}" style="width:100%;padding:8px;margin-bottom:10px;"><br>
+            <label>Ethereum Wallet:</label><br>
+            <input type="text" id="eth" value="${settings.eth || ''}" style="width:100%;padding:8px;margin-bottom:10px;"><br>
+            <label>USDT Wallet:</label><br>
+            <input type="text" id="usdt" value="${settings.usdt || ''}" style="width:100%;padding:8px;margin-bottom:10px;"><br>
+            <label>Paystack Public Key:</label><br>
+            <input type="text" id="paystackKey" value="${settings.paystackKey || ''}" style="width:100%;padding:8px;margin-bottom:10px;"><br>
+            <button type="submit">Save Settings</button>
+          </form>
+        `;
+
+        document.getElementById('settingsForm').addEventListener('submit', function(e) {
+          e.preventDefault();
+          const newSettings = {
+            btc: document.getElementById('btc').value.trim(),
+            eth: document.getElementById('eth').value.trim(),
+            usdt: document.getElementById('usdt').value.trim(),
+            paystackKey: document.getElementById('paystackKey').value.trim()
+          };
+          localStorage.setItem('paymentSettings', JSON.stringify(newSettings));
+          alert('Settings saved successfully.');
+        });
+      }
+    }
+
+    function approvePayment(index) {
+      let payments = JSON.parse(localStorage.getItem('paymentRecords') || '[]');
+      payments[index].status = 'approved';
+      localStorage.setItem('paymentRecords', JSON.stringify(payments));
+      alert('Payment approved.');
+      loadSection('payments');
+    }
+
+    function expirePayment(index) {
+      let payments = JSON.parse(localStorage.getItem('paymentRecords') || '[]');
+      payments[index].status = 'expired';
+      localStorage.setItem('paymentRecords', JSON.stringify(payments));
+      alert('Payment marked as expired.');
+      loadSection('payments');
+    }
+  </script>
+</body>
+</html>
