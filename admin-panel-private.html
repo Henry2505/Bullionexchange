@@ -3,63 +3,88 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>CBE Admin Panel</title>
-  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;600&display=swap" rel="stylesheet">
+  <title>Admin Panel – CBE</title>
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;600;800&display=swap" rel="stylesheet">
   <style>
     body {
       margin: 0; font-family: 'Poppins', sans-serif;
-      background-color: #0b0b0b; color: #f5f5f5;
+      background: #0b0b0b; color: #f5f5f5;
     }
     .sidebar {
-      position: fixed; top: 0; left: 0;
-      width: 260px; height: 100%;
-      background: #111; padding-top: 80px;
-      overflow-y: auto; box-shadow: 2px 0 10px rgba(0,0,0,0.5);
+      position: fixed; left: 0; top: 0; height: 100vh; width: 240px;
+      background: #111; overflow-y: auto; transition: 0.3s;
+      box-shadow: 2px 0 12px rgba(0,0,0,0.5);
     }
+    .sidebar.collapsed { width: 0; overflow: hidden; }
     .sidebar h2 {
-      text-align: center; color: gold; margin-bottom: 30px;
+      padding: 20px; color: gold; text-align: center;
     }
-    .sidebar a {
-      display: block; color: #ccc;
-      padding: 15px 20px; text-decoration: none;
-      border-bottom: 1px solid #222;
-      transition: background 0.3s;
+    .sidebar ul {
+      list-style: none; padding: 0;
     }
-    .sidebar a:hover {
-      background: #1a1a1a; color: gold;
+    .sidebar li {
+      padding: 15px 20px; border-bottom: 1px solid #222;
+    }
+    .sidebar li a {
+      color: #ddd; text-decoration: none; display: block;
+    }
+    .sidebar li a:hover {
+      background: #1c1c1c; color: gold;
     }
     .main {
-      margin-left: 260px; padding: 40px;
+      margin-left: 240px; padding: 30px; transition: margin-left 0.3s;
     }
-    h1 {
-      font-size: 24px; color: gold;
+    .sidebar.collapsed + .main { margin-left: 0; }
+
+    .toggle-btn {
+      position: fixed; top: 15px; left: 15px;
+      background: rgba(255,215,0,0.1); border: none;
+      border-radius: 50%; width: 40px; height: 40px;
+      display: flex; justify-content: center; align-items: center;
+      cursor: pointer; z-index: 9999; animation: pulse 2s infinite alternate;
     }
+    .toggle-btn span {
+      width: 8px; height: 8px; margin: 2px; background: gold; border-radius: 50%;
+    }
+    @keyframes pulse {
+      0% { box-shadow: 0 0 5px gold; }
+      100% { box-shadow: 0 0 20px gold; }
+    }
+
     .section {
-      margin-bottom: 40px;
-      padding: 30px;
-      background: #1c1c1c;
-      border-radius: 10px;
-      box-shadow: 0 0 12px rgba(255, 215, 0, 0.1);
+      display: none;
     }
-    label {
-      display: block; margin-top: 15px;
-      color: #ccc;
+    .section.active {
+      display: block;
     }
-    input[type="file"], textarea {
-      width: 100%;
-      padding: 12px;
+
+    h1 {
+      color: gold;
+    }
+
+    table {
+      width: 100%; border-collapse: collapse;
+      margin: 20px 0;
+    }
+    th, td {
+      padding: 10px; border-bottom: 1px solid #333;
+    }
+    th {
+      background: #222; color: gold;
+    }
+    tr:hover {
+      background: #1a1a1a;
+    }
+
+    input, textarea, select, button {
+      margin: 8px 0; padding: 10px;
       background: #111; color: #fff;
-      border: 1px solid #444;
-      border-radius: 6px;
+      border: 1px solid #444; border-radius: 5px;
+      width: 100%;
     }
     button {
-      margin-top: 15px;
       background: gold; color: #000;
-      font-weight: bold;
-      border: none;
-      padding: 10px 20px;
-      border-radius: 6px;
-      cursor: pointer;
+      font-weight: bold; cursor: pointer;
     }
     button:hover {
       background: #e6c200;
@@ -67,103 +92,327 @@
   </style>
 </head>
 <body>
-  <div class="sidebar">
-    <h2>CBE Admin</h2>
-    <a href="#dashboard">Dashboard</a>
-    <a href="#users">Users</a>
-    <a href="#payments">Payments</a>
-    <a href="#signals">Post Signals</a>
-    <a href="#insights">Trade Insights</a>
-    <a href="#history">Trade History</a>
-    <a href="#messages">Messages</a>
-    <a href="#settings">Settings</a>
+
+<!-- Sidebar Toggle -->
+<button class="toggle-btn" onclick="toggleSidebar()">
+  <span></span><span></span><span></span>
+</button>
+
+<!-- Sidebar Navigation -->
+<div class="sidebar" id="sidebar">
+  <h2>Admin</h2>
+  <ul>
+    <li><a href="#" onclick="showSection('dashboard')">Dashboard</a></li>
+    <li><a href="#" onclick="showSection('users')">Users</a></li>
+    <li><a href="#" onclick="showSection('applications')">Applications</a></li>
+    <li><a href="#" onclick="showSection('payments')">Payments</a></li>
+    <li><a href="#" onclick="showSection('signals')">Publish Signals</a></li>
+    <li><a href="#" onclick="showSection('tradeInsights')">Trade Insights</a></li>
+    <li><a href="#" onclick="showSection('tradeHistory')">Trade History</a></li>
+    <li><a href="#" onclick="showSection('messages')">Messages</a></li>
+    <li><a href="#" onclick="showSection('broadcast')">Broadcast</a></li>
+    <li><a href="#" onclick="showSection('settings')">Settings</a></li>
+    <li><a href="#" onclick="showSection('logs')">Admin Logs</a></li>
+  </ul>
+</div>
+
+<!-- Main Content -->
+<div class="main">
+
+  <!-- Sections -->
+  <div id="dashboard" class="section active">
+    <h1>Welcome to CBE Admin Panel</h1>
+    <p>Use the menu to navigate all admin features.</p>
   </div>
 
-  <div class="main">
-    <div id="insights" class="section">
-      <h1>Upload Trade Insights</h1>
-      <label for="insightNote">Brief Note:</label>
-      <textarea id="insightNote" rows="4" placeholder="Enter brief notes about the trade insight..."></textarea>
-      <label for="insightImage">Upload Screenshot:</label>
-      <input type="file" id="insightImage" accept="image/*" />
-      <button onclick="saveInsight()">Upload Insight</button>
-    </div>
-
-    <div id="history" class="section">
-      <h1>Upload Trade History</h1>
-      <label for="historyMonth">Select Month:</label>
-      <select id="historyMonth">
-        <option value="">Select</option>
-        <option>January</option><option>February</option><option>March</option>
-        <option>April</option><option>May</option><option>June</option>
-        <option>July</option><option>August</option><option>September</option>
-        <option>October</option><option>November</option><option>December</option>
-      </select>
-      <label for="historyNote">Note:</label>
-      <textarea id="historyNote" rows="4" placeholder="Describe the trade history..."></textarea>
-      <label for="historyImage">Upload Screenshot:</label>
-      <input type="file" id="historyImage" accept="image/*" />
-      <button onclick="saveHistory()">Upload History</button>
-    </div>
-        <script>
-      // Utility: Read image and return as Base64
-      function readImageAsBase64(file, callback) {
-        const reader = new FileReader();
-        reader.onload = () => callback(reader.result);
-        reader.onerror = () => alert('Error reading image file.');
-        reader.readAsDataURL(file);
-      }
-
-      // Save Trade Insight
-      function saveInsight() {
-        const note = document.getElementById('insightNote').value.trim();
-        const imageFile = document.getElementById('insightImage').files[0];
-
-        if (!note || !imageFile) {
-          alert('Please provide a note and upload an image.');
-          return;
-        }
-
-        readImageAsBase64(imageFile, base64Image => {
-          const insights = JSON.parse(localStorage.getItem('tradeInsights') || '[]');
-          insights.push({
-            note,
-            screenshot: base64Image,
-            date: new Date().toISOString()
-          });
-          localStorage.setItem('tradeInsights', JSON.stringify(insights));
-          alert('Insight uploaded successfully!');
-          document.getElementById('insightNote').value = '';
-          document.getElementById('insightImage').value = '';
-        });
-      }
-
-      // Save Trade History
-      function saveHistory() {
-        const month = document.getElementById('historyMonth').value;
-        const note = document.getElementById('historyNote').value.trim();
-        const imageFile = document.getElementById('historyImage').files[0];
-
-        if (!month || !note || !imageFile) {
-          alert('Please select a month, write a note, and upload an image.');
-          return;
-        }
-
-        readImageAsBase64(imageFile, base64Image => {
-          const historyData = JSON.parse(localStorage.getItem('tradeHistory') || '{}');
-          if (!Array.isArray(historyData[month])) historyData[month] = [];
-          historyData[month].push({
-            note,
-            screenshot: base64Image,
-            date: new Date().toISOString()
-          });
-          localStorage.setItem('tradeHistory', JSON.stringify(historyData));
-          alert(`History for ${month} uploaded successfully!`);
-          document.getElementById('historyNote').value = '';
-          document.getElementById('historyImage').value = '';
-        });
-      }
-    </script>
+  <!-- Other sections like users, applications, payments, etc. will be defined in Part 2 -->
+    <!-- USERS -->
+  <div id="users" class="section">
+    <h1>Registered Users</h1>
+    <table id="userTable">
+      <thead>
+        <tr><th>Name</th><th>Email</th><th>Status</th><th>Actions</th></tr>
+      </thead>
+      <tbody></tbody>
+    </table>
   </div>
+
+  <!-- APPLICATIONS -->
+  <div id="applications" class="section">
+    <h1>Applications</h1>
+    <table id="applicationTable">
+      <thead>
+        <tr><th>Name</th><th>Email</th><th>Phone</th><th>Message</th><th>Status</th></tr>
+      </thead>
+      <tbody></tbody>
+    </table>
+  </div>
+
+  <!-- PAYMENTS -->
+  <div id="payments" class="section">
+    <h1>Payments</h1>
+    <table id="paymentTable">
+      <thead>
+        <tr><th>Email</th><th>Amount</th><th>Method</th><th>Status</th><th>Proof</th><th>Actions</th></tr>
+      </thead>
+      <tbody></tbody>
+    </table>
+  </div>
+
+  <!-- SIGNALS -->
+  <div id="signals" class="section">
+    <h1>Publish Signal</h1>
+    <form id="signalForm">
+      <input placeholder="Pair (e.g. EUR/USD)" id="pair" required>
+      <input placeholder="Action (BUY/SELL)" id="action" required>
+      <input placeholder="Entry Price" id="entry" required>
+      <input placeholder="Take Profit" id="tp" required>
+      <input placeholder="Stop Loss" id="sl" required>
+      <textarea placeholder="Note (optional)" id="signalNote"></textarea>
+      <button type="submit">Publish</button>
+    </form>
+  </div>
+
+  <!-- TRADE INSIGHTS -->
+  <div id="tradeInsights" class="section">
+    <h1>Upload Trade Insight</h1>
+    <form id="insightForm">
+      <input type="date" id="insightDate" required>
+      <input type="file" id="insightImage" accept="image/*" required>
+      <textarea placeholder="Insight Notes" id="insightNote" required></textarea>
+      <button type="submit">Upload</button>
+    </form>
+  </div>
+
+  <!-- TRADE HISTORY -->
+  <div id="tradeHistory" class="section">
+    <h1>Upload Trade History</h1>
+    <form id="historyForm">
+      <input type="month" id="historyMonth" required>
+      <input type="file" id="historyImage" accept="image/*" required>
+      <textarea placeholder="Trade Summary" id="historyNote" required></textarea>
+      <button type="submit">Upload</button>
+    </form>
+  </div>
+
+  <!-- MESSAGES -->
+  <div id="messages" class="section">
+    <h1>Contact Messages</h1>
+    <table id="messageTable">
+      <thead><tr><th>Email</th><th>Message</th><th>Date</th></tr></thead>
+      <tbody></tbody>
+    </table>
+  </div>
+
+  <!-- BROADCAST -->
+  <div id="broadcast" class="section">
+    <h1>Broadcast Message</h1>
+    <form id="broadcastForm">
+      <textarea id="broadcastText" placeholder="Message to send to all users" required></textarea>
+      <button type="submit">Send</button>
+    </form>
+  </div>
+
+  <!-- SETTINGS -->
+  <div id="settings" class="section">
+    <h1>Payment Settings</h1>
+    <form id="settingsForm">
+      <input placeholder="BTC Address" id="btc">
+      <input placeholder="ETH Address" id="eth">
+      <input placeholder="USDT Address" id="usdt">
+      <input placeholder="Paystack Public Key" id="paystackKey">
+      <button type="submit">Save Settings</button>
+    </form>
+  </div>
+
+  <!-- LOGS -->
+  <div id="logs" class="section">
+    <h1>Admin Logs</h1>
+    <pre id="logOutput" style="background:#111;padding:10px;border-radius:5px;"></pre>
+  </div>
+</div> <!-- End of .main -->
+
+<script>
+  // Sidebar toggle
+  function toggleSidebar() {
+    document.getElementById('sidebar').classList.toggle('collapsed');
+    document.querySelector('.main').classList.toggle('collapsed');
+  }
+
+  function showSection(id) {
+    document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
+    document.getElementById(id).classList.add('active');
+  }
+
+  function log(msg) {
+    const logs = JSON.parse(localStorage.getItem('adminLogs') || '[]');
+    logs.push(`[${new Date().toLocaleString()}] ${msg}`);
+    localStorage.setItem('adminLogs', JSON.stringify(logs));
+    document.getElementById('logOutput').textContent = logs.reverse().join('\n');
+  }
+
+  // Init
+  window.onload = () => {
+    const settings = JSON.parse(localStorage.getItem('paymentSettings') || '{}');
+    if (settings.btc) document.getElementById('btc').value = settings.btc;
+    if (settings.eth) document.getElementById('eth').value = settings.eth;
+    if (settings.usdt) document.getElementById('usdt').value = settings.usdt;
+    if (settings.paystackKey) document.getElementById('paystackKey').value = settings.paystackKey;
+
+    // Load logs
+    log('Admin Panel Opened');
+
+    // Load users
+    const users = JSON.parse(localStorage.getItem('users') || '[]');
+    const userTable = document.querySelector('#userTable tbody');
+    userTable.innerHTML = '';
+    users.forEach((u, i) => {
+      const tr = document.createElement('tr');
+      tr.innerHTML = `<td>${u.name}</td><td>${u.email}</td><td>${u.status}</td>
+      <td><button onclick="updateUser(${i}, 'approved')">Approve</button>
+          <button onclick="updateUser(${i}, 'deactivated')">Deactivate</button>
+          <button onclick="deleteUser(${i})">Delete</button></td>`;
+      userTable.appendChild(tr);
+    });
+
+    // Load applications
+    const apps = JSON.parse(localStorage.getItem('applications') || '[]');
+    const appTable = document.querySelector('#applicationTable tbody');
+    appTable.innerHTML = '';
+    apps.forEach(a => {
+      const row = `<tr><td>${a.name}</td><td>${a.email}</td><td>${a.phone}</td><td>${a.message}</td><td>${a.status}</td></tr>`;
+      appTable.innerHTML += row;
+    });
+
+    // Load payments
+    const pays = JSON.parse(localStorage.getItem('paymentRecords') || '[]');
+    const payTable = document.querySelector('#paymentTable tbody');
+    payTable.innerHTML = '';
+    pays.forEach((p, i) => {
+      payTable.innerHTML += `<tr>
+        <td>${p.email}</td><td>$${p.amount}</td><td>${p.method}</td><td>${p.status}</td>
+        <td><a href="${p.proof}" target="_blank">View</a></td>
+        <td><button onclick="approvePayment(${i})">Approve</button></td>
+      </tr>`;
+    });
+
+    // Load messages
+    const msgs = JSON.parse(localStorage.getItem('messages') || '[]');
+    const msgTable = document.querySelector('#messageTable tbody');
+    msgTable.innerHTML = '';
+    msgs.forEach(m => {
+      msgTable.innerHTML += `<tr><td>${m.email}</td><td>${m.message}</td><td>${m.date}</td></tr>`;
+    });
+  };
+
+  function updateUser(index, status) {
+    const users = JSON.parse(localStorage.getItem('users') || '[]');
+    users[index].status = status;
+    localStorage.setItem('users', JSON.stringify(users));
+    log(`User ${users[index].email} set to ${status}`);
+    location.reload();
+  }
+
+  function deleteUser(index) {
+    const users = JSON.parse(localStorage.getItem('users') || '[]');
+    log(`User ${users[index].email} deleted`);
+    users.splice(index, 1);
+    localStorage.setItem('users', JSON.stringify(users));
+    location.reload();
+  }
+
+  function approvePayment(index) {
+    const pays = JSON.parse(localStorage.getItem('paymentRecords') || '[]');
+    const users = JSON.parse(localStorage.getItem('users') || '[]');
+    const record = pays[index];
+    pays[index].status = 'approved';
+
+    if (!users.find(u => u.email === record.email)) {
+      users.push({ name: record.username, email: record.email, status: 'approved' });
+    } else {
+      users.forEach(u => { if (u.email === record.email) u.status = 'approved'; });
+    }
+
+    localStorage.setItem('paymentRecords', JSON.stringify(pays));
+    localStorage.setItem('users', JSON.stringify(users));
+    log(`Payment approved: ${record.email}`);
+    location.reload();
+  }
+
+  // Save settings
+  document.getElementById('settingsForm').onsubmit = function(e) {
+    e.preventDefault();
+    const settings = {
+      btc: document.getElementById('btc').value,
+      eth: document.getElementById('eth').value,
+      usdt: document.getElementById('usdt').value,
+      paystackKey: document.getElementById('paystackKey').value
+    };
+    localStorage.setItem('paymentSettings', JSON.stringify(settings));
+    alert('Settings saved');
+    log('Payment settings updated');
+  };
+
+  // Signal form
+  document.getElementById('signalForm').onsubmit = function(e) {
+    e.preventDefault();
+    const sigs = JSON.parse(localStorage.getItem('signals') || '[]');
+    sigs.push({
+      pair: pair.value, action: action.value, entry: entry.value,
+      tp: tp.value, sl: sl.value, note: signalNote.value, date: new Date().toLocaleString()
+    });
+    localStorage.setItem('signals', JSON.stringify(sigs));
+    alert('Signal published!');
+    log('New signal published');
+    this.reset();
+  };
+
+  // Broadcast
+  document.getElementById('broadcastForm').onsubmit = function(e) {
+    e.preventDefault();
+    const txt = document.getElementById('broadcastText').value;
+    if (txt.length < 10) return alert('Message too short');
+    const logs = JSON.parse(localStorage.getItem('adminLogs') || '[]');
+    logs.push(`[${new Date().toLocaleString()}] Broadcast: ${txt}`);
+    localStorage.setItem('adminLogs', JSON.stringify(logs));
+    alert('Broadcast sent (simulated)');
+    log('Broadcast sent');
+    this.reset();
+  };
+
+  // Trade Insights
+  document.getElementById('insightForm').onsubmit = function(e) {
+    e.preventDefault();
+    const img = document.getElementById('insightImage').files[0];
+    const note = document.getElementById('insightNote').value;
+    const reader = new FileReader();
+    reader.onload = function(evt) {
+      const insights = JSON.parse(localStorage.getItem('insights') || '[]');
+      insights.push({ date: insightDate.value, image: evt.target.result, note });
+      localStorage.setItem('insights', JSON.stringify(insights));
+      alert('Insight uploaded');
+      log('Insight added');
+    };
+    reader.readAsDataURL(img);
+    this.reset();
+  };
+
+  // Trade History
+  document.getElementById('historyForm').onsubmit = function(e) {
+    e.preventDefault();
+    const img = document.getElementById('historyImage').files[0];
+    const note = document.getElementById('historyNote').value;
+    const reader = new FileReader();
+    reader.onload = function(evt) {
+      const history = JSON.parse(localStorage.getItem('tradeHistory') || '[]');
+      history.push({ month: historyMonth.value, image: evt.target.result, note });
+      localStorage.setItem('tradeHistory', JSON.stringify(history));
+      alert('Trade history saved');
+      log('Trade history uploaded');
+    };
+    reader.readAsDataURL(img);
+    this.reset();
+  };
+</script>
 </body>
 </html>
