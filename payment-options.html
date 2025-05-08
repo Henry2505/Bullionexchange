@@ -132,46 +132,7 @@
     </div>
 
     <div class="submit-btn">
-      <button onclick="function submitPayment() {
-  const email = document.getElementById('userEmail').value.trim().toLowerCase();
-  const proofFile = document.getElementById('proof').files[0];
-  const cryptoType = document.getElementById('cryptoType').value;
-  const wallet = walletMap[cryptoType] || '';
-  const records = JSON.parse(localStorage.getItem('paymentRecords') || '[]');
-
-  if (!email || !proofFile) {
-    alert("Please enter your email and upload proof.");
-    return;
-  }
-
-  const alreadyPaid = records.some(p => p.email === email && p.status !== "expired");
-  if (alreadyPaid) {
-    alert("You already submitted a payment. Please wait for approval or expiration before paying again.");
-    return;
-  }
-
-  const reader = new FileReader();
-  reader.onload = function (e) {
-    const paymentData = {
-      name: email.split('@')[0],
-      email,
-      username: email.split('@')[0],
-      amount: selectedPackage === 'weekly' ? 50 : selectedPackage === 'monthly' ? 150 : 1500,
-      method: wallet ? cryptoType : 'Paystack',
-      walletType: cryptoType || 'Paystack',
-      proof: e.target.result,
-      status: 'pending',
-      submittedAt: new Date().toISOString()
-    };
-
-    records.push(paymentData);
-    localStorage.setItem('paymentRecords', JSON.stringify(records));
-    sessionStorage.setItem('paymentApproved', false);
-    alert('Payment submitted! Await approval.');
-    window.location.href = 'CBE_login.html';
-  };
-  reader.readAsDataURL(proofFile);
-}">Submit Payment</button>
+      <button onclick="submitPayment()">Submit Payment</button>
     </div>
   </div>
 
@@ -188,6 +149,9 @@
       weekly: 'Weekly VIP Plan – $50',
       monthly: 'Monthly VIP Plan – $150',
       yearly: 'Yearly VIP Plan – $1500'
+    };
+    const priceMap = {
+      weekly: 50, monthly: 150, yearly: 1500
     };
     document.getElementById('selectedPlanInfo').textContent = planNames[selectedPackage] || 'No valid package selected.';
 
@@ -215,14 +179,14 @@
       const proofFile = document.getElementById('proof').files[0];
       const cryptoType = document.getElementById('cryptoType').value;
       const wallet = walletMap[cryptoType] || '';
-      const payments = JSON.parse(localStorage.getItem('payments') || '[]');
+      const records = JSON.parse(localStorage.getItem('paymentRecords') || '[]');
 
       if (!email || !proofFile) {
         alert("Please enter your email and upload proof.");
         return;
       }
 
-      const alreadyPaid = payments.some(p => p.email === email && p.status !== "expired");
+      const alreadyPaid = records.some(p => p.email === email && p.status !== "expired");
       if (alreadyPaid) {
         alert("You already submitted a payment. Please wait for approval or expiration before paying again.");
         return;
@@ -231,20 +195,22 @@
       const reader = new FileReader();
       reader.onload = function (e) {
         const paymentData = {
+          name: email.split('@')[0],
           email,
-          plan: selectedPackage,
+          username: email.split('@')[0],
+          amount: priceMap[selectedPackage] || 0,
           method: wallet ? cryptoType : 'Paystack',
-          wallet,
+          walletType: cryptoType || 'Paystack',
           proof: e.target.result,
           status: 'pending',
           submittedAt: new Date().toISOString()
         };
 
-        payments.push(paymentData);
-        localStorage.setItem('payments', JSON.stringify(payments));
+        records.push(paymentData);
+        localStorage.setItem('paymentRecords', JSON.stringify(records));
         sessionStorage.setItem('paymentApproved', false);
         alert('Payment submitted! Await approval.');
-        window.location.href = 'CBE_login.html';
+        window.location.href = 'index.html';
       };
       reader.readAsDataURL(proofFile);
     }
