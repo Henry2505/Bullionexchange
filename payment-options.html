@@ -173,7 +173,7 @@
     <!-- Payment methods will be dynamically loaded here -->
   </section>
   <footer>
-    &copy; 2025 CBE - Chukwuemeka Bullion Exchange. All rights reserved.
+    © 2025 CBE - Chukwuemeka Bullion Exchange. All rights reserved.
   </footer>
 
   <script>
@@ -194,14 +194,22 @@
 
       // Fetch payment methods and user payment status
       Promise.all([
-        fetch('/api/payment-methods'),
-        fetch(`/api/user-payment-status?userId=${userId}`)
+        fetch('/api/payment-methods', { headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` } }),
+        fetch(`/api/user-payment-status?userId=${userId}`, { headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` } })
       ])
-        .then(responses => Promise.all(responses.map(res => res.json())))
+        .then(responses => Promise.all(responses.map(res => {
+          if (!res.ok) throw new Error('Network error');
+          return res.json();
+        })))
         .then(([methods, paymentStatus]) => {
           const section = document.getElementById('paymentSection');
           document.getElementById('planName').textContent = planKey.charAt(0).toUpperCase() + planKey.slice(1);
           document.getElementById('planPrice').textContent = plans[planKey].price;
+
+          if (!methods.length) {
+            section.innerHTML += '<p>No payment methods available. Please contact support.</p>';
+            return;
+          }
 
           methods.forEach(method => {
             if (method.method_name.toLowerCase() === 'paystack') {
@@ -214,7 +222,15 @@
               `;
               section.appendChild(div);
               document.getElementById('paystackBtn').addEventListener('click', () => {
-                alert('Paystack integration coming soon. Use details: ' + method.details);
+                // Placeholder for Paystack integration
+                fetch('/api/submit-payment', {
+                  method: 'POST',
+                  headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${localStorage.getItem('token')}` },
+                  body: JSON.stringify({ userId, method: 'paystack', amount: plans[planKey].price })
+                })
+                  .then(res => res.json())
+                  .then(data => alert(data.message))
+                  .catch(err => console.error('Error submitting payment:', err));
               });
             } else if (method.method_name.toLowerCase() === 'bitcoin') {
               const div = document.createElement('div');
@@ -232,7 +248,7 @@
               document.getElementById('cryptoConfirmBtn').addEventListener('click', () => {
                 fetch('/api/submit-payment', {
                   method: 'POST',
-                  headers: { 'Content-Type': 'application/json' },
+                  headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${localStorage.getItem('token')}` },
                   body: JSON.stringify({ userId, method: 'crypto', amount: plans[planKey].price })
                 })
                   .then(res => res.json())
@@ -259,7 +275,11 @@
             formData.append('proof', fileIn.files[0]);
             formData.append('userId', userId);
             formData.append('amount', plans[planKey].price);
-            fetch('/api/upload-proof', { method: 'POST', body: formData })
+            fetch('/api/upload-proof', {
+              method: 'POST',
+              headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` },
+              body: formData
+            })
               .then(res => res.json())
               .then(data => alert(data.message))
               .catch(err => console.error('Error uploading proof:', err));
@@ -278,9 +298,11 @@
             window.location.href = 'login.html';
           }
         })
-        .catch(error => console.error('Error fetching data:', error));
+        .catch(error => {
+          console.error('Error fetching data:', error);
+          alert('Failed to load payment options. Please try again later.');
+        });
     })();
   </script>
-  <script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'93c9262249ad675b',t:'MTc0NjcwOTMyMC4wMDAwMDA='};var a=document.createElement('script');a.nonce='';a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script>
 </body>
 </html>
