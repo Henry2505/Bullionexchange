@@ -3,222 +3,328 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>CBE Admin Panel</title>
-  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;500;700&display=swap" rel="stylesheet">
+  <title>Admin Panel - CBE</title>
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;600&display=swap" rel="stylesheet">
   <style>
     body {
       margin: 0;
       font-family: 'Poppins', sans-serif;
       background-color: #0b0b0b;
       color: #f5f5f5;
-      overflow-x: hidden;
-    }
-
-    video.bg-video {
-      position: fixed;
-      top: 0; left: 0;
-      width: 100%; height: 100%;
-      object-fit: cover;
-      z-index: -2;
-    }
-
-    .overlay {
-      position: fixed;
-      top: 0; left: 0;
-      width: 100%; height: 100%;
-      background: rgba(0, 0, 0, 0.6);
-      z-index: -1;
     }
 
     .admin-container {
       display: flex;
+      min-height: 100vh;
     }
 
     .sidebar {
       width: 260px;
-      background-color: rgba(10, 10, 10, 0.95);
-      padding-top: 60px;
-      position: fixed;
-      top: 0; bottom: 0; left: 0;
-      overflow-y: auto;
-      box-shadow: 2px 0 10px rgba(255, 215, 0, 0.2);
-      transition: transform 0.3s ease;
-      z-index: 1000;
+      background: #111;
+      padding: 30px 20px;
+      transition: width 0.3s ease;
+      overflow: hidden;
     }
 
     .sidebar.collapsed {
-      transform: translateX(-100%);
+      width: 70px;
     }
 
     .sidebar h2 {
+      font-size: 22px;
       color: gold;
-      text-align: center;
       margin-bottom: 30px;
     }
 
-    .sidebar nav a {
+    .sidebar a {
       display: block;
-      padding: 14px 25px;
-      color: #ddd;
+      color: #ccc;
       text-decoration: none;
-      transition: 0.3s;
+      margin: 12px 0;
+      transition: color 0.3s;
     }
 
-    .sidebar nav a:hover {
-      background-color: rgba(255, 215, 0, 0.1);
+    .sidebar a:hover {
       color: gold;
     }
 
-    .topbar {
-      position: fixed;
-      top: 0; left: 0;
-      width: 100%;
-      height: 60px;
-      background-color: rgba(0, 0, 0, 0.9);
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      padding: 0 20px;
-      z-index: 1100;
-      box-shadow: 0 2px 10px rgba(255, 215, 0, 0.2);
-    }
-
-    .topbar .menu-toggle {
-      font-size: 24px;
-      color: gold;
-      cursor: pointer;
-      border: none;
+    .toggle-btn {
       background: none;
+      border: none;
+      color: gold;
+      font-size: 22px;
+      cursor: pointer;
+      margin-bottom: 30px;
     }
 
-    .main-content {
-      margin-left: 260px;
-      padding: 80px 20px 40px;
+    .content {
       flex: 1;
-      transition: margin-left 0.3s ease;
+      padding: 40px;
+      background: linear-gradient(to right, #0b0b0b, #1c1c1c);
     }
 
-    .main-content.collapsed {
-      margin-left: 0;
-    }
-
-    .admin-header {
+    .content h1 {
       font-size: 28px;
-      font-weight: bold;
       color: gold;
       margin-bottom: 20px;
-      text-align: center;
+    }
+
+    .user-card {
+      background: #141414;
+      padding: 20px;
+      margin-bottom: 20px;
+      border-left: 4px solid gold;
+      border-radius: 8px;
+    }
+
+    .user-card p {
+      margin: 8px 0;
+      font-size: 16px;
+    }
+
+    .user-card button {
+      margin-right: 10px;
+      padding: 6px 12px;
+      font-size: 14px;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+      background-color: gold;
+      color: #000;
+    }
+
+    .user-card button:hover {
+      background-color: #e6c200;
     }
   </style>
 </head>
 <body>
-
-<video class="bg-video" autoplay muted loop playsinline>
-  <source src="star-video.MP4" type="video/mp4" />
-</video>
-<div class="overlay"></div>
-
-<div class="topbar">
-  <button class="menu-toggle" onclick="toggleSidebar()">☰</button>
-  <div style="font-weight: bold; color: gold;">CBE Admin Panel</div>
-</div>
-
 <div class="admin-container">
-  <div class="sidebar" id="sidebar">
-    <h2>Navigation</h2>
-    <nav>
-      <a href="#dashboard">Dashboard</a>
-      <a href="#payments">Payments</a>
-      <a href="#users">Users</a>
-      <a href="#trades">Trades</a>
-      <a href="#trade-history">Trade History</a>
-      <a href="#signals">Signals</a>
-      <a href="#broadcasts">Broadcasts</a>
-      <a href="#messages">Messages</a>
-      <a href="#settings">Settings</a>
-      <a href="#logs">Logs</a>
-    </nav>
+  <div class="sidebar" id="adminSidebar">
+    <button class="toggle-btn" onclick="toggleSidebar()">&#8942;</button>
+    <h2>CBE Admin</h2>
+    <a href="#" onclick="loadSection('dashboard')">Dashboard</a>
+    <a href="#" onclick="loadSection('users')">Users</a>
+    <a href="#" onclick="loadSection('payments')">Payments</a>
+    <a href="#" onclick="loadSection('signals')">Signals</a>
+    <a href="#" onclick="loadSection('broadcasts')">Broadcasts</a>
+    <a href="#" onclick="loadSection('messages')">Messages</a>
+    <a href="#" onclick="loadSection('settings')">Settings</a>
+    <a href="index.html">Return to Site</a>
   </div>
-
-  <div class="main-content" id="mainContent">
-    <div class="admin-header">Welcome to CBE Admin Panel</div>
-    <!-- Content will load here dynamically -->
-        <div id="dashboardSection">
-      <p style="text-align:center; color:#ccc;">Select a navigation option to manage CBE content.</p>
-    </div>
-
-    <div id="paymentsSection" style="display:none;">
-      <h3 style="color:gold;">Payments</h3>
-      <div id="paymentTable" style="overflow-x:auto; color:#fff;"></div>
-    </div>
-
-    <div id="usersSection" style="display:none;">
-      <h3 style="color:gold;">Users</h3>
-      <div id="usersTable" style="color:#fff;">(Users list will be loaded here)</div>
-    </div>
-
-    <div id="tradesSection" style="display:none;">
-      <h3 style="color:gold;">Current Trades</h3>
-      <div id="tradesTable" style="color:#fff;">(Trade uploads go here)</div>
-    </div>
-
-    <div id="tradeHistorySection" style="display:none;">
-      <h3 style="color:gold;">Trade History</h3>
-      <div id="tradeHistoryTable" style="color:#fff;">(Trade history from Jan–Dec shown here)</div>
-    </div>
-
-    <div id="signalsSection" style="display:none;">
-      <h3 style="color:gold;">Signal Publisher</h3>
-      <div id="signalsForm" style="color:#fff;">(Signal submission form with note)</div>
-    </div>
-
-    <div id="broadcastsSection" style="display:none;">
-      <h3 style="color:gold;">Broadcast</h3>
-      <div id="broadcastForm" style="color:#fff;">(Broadcast messaging form goes here)</div>
-    </div>
-
-    <div id="messagesSection" style="display:none;">
-      <h3 style="color:gold;">Inbox</h3>
-      <div id="messageList" style="color:#fff;">(Messages received via contact page)</div>
-    </div>
-
-    <div id="settingsSection" style="display:none;">
-      <h3 style="color:gold;">Settings</h3>
-      <div id="settingsForm" style="color:#fff;">(BTC, ETH, USDT and Paystack keys editable here)</div>
-    </div>
-
-    <div id="logsSection" style="display:none;">
-      <h3 style="color:gold;">Logs</h3>
-      <div id="logData" style="color:#fff;">(Admin actions log history)</div>
-    </div>
+  <div class="content" id="adminContent">
+    <h1>Welcome to Admin Panel</h1>
+    <p>Select a section from the sidebar.</p>
   </div>
 </div>
 
 <script>
-  const sidebar = document.getElementById('sidebar');
-  const mainContent = document.getElementById('mainContent');
-
   function toggleSidebar() {
-    sidebar.classList.toggle('collapsed');
-    mainContent.classList.toggle('collapsed');
+    document.getElementById('adminSidebar').classList.toggle('collapsed');
   }
 
-  const sections = [
-    'dashboard', 'payments', 'users', 'trades', 'trade-history',
-    'signals', 'broadcasts', 'messages', 'settings', 'logs'
-  ];
+  function loadSection(section) {
+    const container = document.getElementById('adminContent');
+    container.innerHTML = '<h1>Loading ' + section + '...</h1>';
 
-  sidebar.querySelectorAll('a').forEach(link => {
-    link.addEventListener('click', e => {
-      e.preventDefault();
-      const target = link.getAttribute('href').replace('#', '');
-      sections.forEach(sec => {
-        const sectionId = sec.replace('-', '');
-        document.getElementById(sectionId + 'Section').style.display = (sec === target) ? 'block' : 'none';
+    if (section === 'users') {
+      renderUsers();
+    }
+  }
+
+  function renderUsers() {
+    const users = JSON.parse(localStorage.getItem('applications') || '[]');
+    let html = '<h1>Users</h1>';
+    if (users.length === 0) {
+      html += '<p>No users found.</p>';
+    } else {
+      users.forEach((user, i) => {
+        html += `
+        <div class="user-card">
+          <p><strong>Name:</strong> ${user.name}</p>
+          <p><strong>Email:</strong> ${user.email}</p>
+          <p><strong>Phone:</strong> ${user.phone || 'N/A'}</p>
+          <p><strong>Status:</strong> ${user.status}</p>
+          <p><strong>Joined:</strong> ${new Date(user.date).toLocaleString()}</p>
+          <button onclick="approveUser(${i})">Approve</button>
+          <button onclick="deactivateUser(${i})">Deactivate</button>
+          <button onclick="deleteUser(${i})">Delete</button>
+        </div>`;
       });
-    });
-  });
-</script>
+    }
+    document.getElementById('adminContent').innerHTML = html;
+  }
 
-</body>
-</html>
+  function approveUser(index) {
+    const users = JSON.parse(localStorage.getItem('applications') || '[]');
+    users[index].status = 'approved';
+    localStorage.setItem('applications', JSON.stringify(users));
+    alert('User approved');
+    renderUsers();
+  }
+
+  function deactivateUser(index) {
+    const users = JSON.parse(localStorage.getItem('applications') || '[]');
+    users[index].status = 'inactive';
+    localStorage.setItem('applications', JSON.stringify(users));
+    alert('User deactivated');
+    renderUsers();
+  }
+
+  function deleteUser(index) {
+    if (!confirm('Are you sure you want to delete this user?')) return;
+    const users = JSON.parse(localStorage.getItem('applications') || '[]');
+    users.splice(index, 1);
+    localStorage.setItem('applications', JSON.stringify(users));
+    alert('User deleted');
+    renderUsers();
+  }
+</script>
+<script>
+  function loadSection(section) {
+    const container = document.getElementById('adminContent');
+    if (section === 'users') return renderUsers();
+    if (section === 'payments') return renderPayments();
+    if (section === 'signals') return renderSignalPublisher();
+    if (section === 'broadcasts') return renderBroadcasts();
+    if (section === 'messages') return renderMessages();
+    if (section === 'settings') return renderSettings();
+
+    container.innerHTML = '<h1>' + section + '</h1><p>Section under construction.</p>';
+  }
+
+  function renderPayments() {
+    const records = JSON.parse(localStorage.getItem('paymentRecords') || '[]');
+    let html = '<h1>Payment Records</h1>';
+    if (records.length === 0) {
+      html += '<p>No payment records found.</p>';
+    } else {
+      records.forEach((rec, i) => {
+        html += `
+        <div class="user-card">
+          <p><strong>Name:</strong> ${rec.name}</p>
+          <p><strong>Email:</strong> ${rec.email}</p>
+          <p><strong>Plan:</strong> ${rec.amount}</p>
+          <p><strong>Status:</strong> ${rec.status}</p>
+          <img src="${rec.proof}" alt="Proof" style="max-width:100%;border-radius:6px;margin:10px 0;">
+          <button onclick="approvePayment(${i})">Approve</button>
+          <button onclick="expirePayment(${i})">Expire</button>
+        </div>`;
+      });
+    }
+    document.getElementById('adminContent').innerHTML = html;
+  }
+
+  function approvePayment(index) {
+    const records = JSON.parse(localStorage.getItem('paymentRecords') || '[]');
+    records[index].status = 'approved';
+    localStorage.setItem('paymentRecords', JSON.stringify(records));
+    alert('Payment approved!');
+    renderPayments();
+  }
+
+  function expirePayment(index) {
+    const records = JSON.parse(localStorage.getItem('paymentRecords') || '[]');
+    records[index].status = 'expired';
+    localStorage.setItem('paymentRecords', JSON.stringify(records));
+    alert('Payment marked as expired.');
+    renderPayments();
+  }
+
+  function renderSignalPublisher() {
+    const container = document.getElementById('adminContent');
+    container.innerHTML = `
+      <h1>Publish Forex Signal</h1>
+      <form id="signalForm">
+        <input type="text" id="pair" placeholder="e.g. BUY EUR/USD @ 1.07250" required><br><br>
+        <input type="text" id="tp" placeholder="Take Profit" required><br><br>
+        <input type="text" id="sl" placeholder="Stop Loss" required><br><br>
+        <textarea id="note" placeholder="Optional Note"></textarea><br><br>
+        <button type="submit">Publish</button>
+      </form>
+    `;
+
+    document.getElementById('signalForm').addEventListener('submit', function(e) {
+      e.preventDefault();
+      const pair = document.getElementById('pair').value;
+      const tp = document.getElementById('tp').value;
+      const sl = document.getElementById('sl').value;
+      const note = document.getElementById('note').value;
+      const timestamp = new Date().toISOString();
+      const signals = JSON.parse(localStorage.getItem('forexSignals') || '[]');
+
+      signals.unshift({ pair, tp, sl, note, time: timestamp });
+      localStorage.setItem('forexSignals', JSON.stringify(signals));
+      alert('Signal published successfully!');
+      this.reset();
+    });
+  }
+
+  function renderBroadcasts() {
+    const container = document.getElementById('adminContent');
+    container.innerHTML = `
+      <h1>Broadcast Message</h1>
+      <form id="broadcastForm">
+        <textarea id="broadcastMsg" placeholder="Type your message to all users" rows="6" style="width:100%;"></textarea><br><br>
+        <button type="submit">Send Broadcast</button>
+      </form>
+    `;
+
+    document.getElementById('broadcastForm').addEventListener('submit', function(e) {
+      e.preventDefault();
+      const msg = document.getElementById('broadcastMsg').value;
+      if (!msg.trim()) return alert('Please type a message.');
+      alert('Broadcast sent to all users:\n\n' + msg);
+      this.reset();
+    });
+  }
+
+  function renderMessages() {
+    const container = document.getElementById('adminContent');
+    const inbox = JSON.parse(localStorage.getItem('contactMessages') || '[]');
+    let html = '<h1>Inbox Messages</h1>';
+    if (inbox.length === 0) {
+      html += '<p>No messages received yet.</p>';
+    } else {
+      inbox.forEach((msg, i) => {
+        html += `
+          <div class="user-card">
+            <p><strong>Name:</strong> ${msg.name}</p>
+            <p><strong>Email:</strong> ${msg.email}</p>
+            <p><strong>Message:</strong> ${msg.message}</p>
+            <p><strong>Date:</strong> ${new Date(msg.date).toLocaleString()}</p>
+          </div>
+        `;
+      });
+    }
+    container.innerHTML = html;
+  }
+
+  function renderSettings() {
+    const container = document.getElementById('adminContent');
+    const settings = JSON.parse(localStorage.getItem('paymentSettings') || '{}');
+
+    container.innerHTML = `
+      <h1>Payment Wallet Settings</h1>
+      <form id="walletForm">
+        <input type="text" id="btc" placeholder="Bitcoin Wallet" value="${settings.btc || ''}"><br><br>
+        <input type="text" id="eth" placeholder="Ethereum Wallet" value="${settings.eth || ''}"><br><br>
+        <input type="text" id="usdt" placeholder="USDT Wallet" value="${settings.usdt || ''}"><br><br>
+        <input type="text" id="paystackKey" placeholder="Paystack Public Key" value="${settings.paystackKey || ''}"><br><br>
+        <button type="submit">Save Settings</button>
+      </form>
+    `;
+
+    document.getElementById('walletForm').addEventListener('submit', function(e) {
+      e.preventDefault();
+      const newSettings = {
+        btc: document.getElementById('btc').value,
+        eth: document.getElementById('eth').value,
+        usdt: document.getElementById('usdt').value,
+        paystackKey: document.getElementById('paystackKey').value
+      };
+      localStorage.setItem('paymentSettings', JSON.stringify(newSettings));
+      alert('Wallet settings saved successfully.');
+    });
+  }
+</script>
