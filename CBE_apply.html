@@ -20,42 +20,8 @@
       width: 100%; height: 100%;
       background: rgba(0,0,0,0.6); z-index: -1;
     }
-    .menu-icon {
-      position: fixed; top: 20px; right: 20px;
-      width: 48px; height: 48px;
-      background: rgba(255,215,0,0.2); border-radius: 50%;
-      display: flex; justify-content: center; align-items: center;
-      cursor: pointer; z-index: 2001;
-      box-shadow: 0 0 15px gold; animation: pulse 2s infinite;
-    }
-    .menu-icon span {
-      width: 10px; height: 10px; margin: 3px 0;
-      background: gold; border-radius: 50%;
-    }
-    @keyframes pulse {
-      0% { box-shadow: 0 0 10px gold; }
-      50% { box-shadow: 0 0 20px gold; }
-      100% { box-shadow: 0 0 10px gold; }
-    }
-    .menu-overlay {
-      position: fixed; top: 0; right: -100%;
-      width: 240px; height: 100%; background: #0b0b1f;
-      display: flex; flex-direction: column;
-      justify-content: center; align-items: center;
-      transition: right 0.3s ease; z-index: 2000;
-    }
-    .menu-overlay.active { right: 0; }
-    .menu-overlay ul {
-      list-style: none; padding: 0; margin: 0;
-      text-align: center;
-    }
-    .menu-overlay li { margin: 18px 0; }
-    .menu-overlay a {
-      color: gold; text-decoration: none;
-      font-size: 1.1rem;
-    }
     .apply-section {
-      max-width: 500px; margin: 100px auto;
+      max-width: 500px; margin: 120px auto;
       background: rgba(20,20,20,0.8);
       padding: 40px; border-radius: 12px;
       box-shadow: 0 0 20px rgba(255, 215, 0, 0.2);
@@ -98,25 +64,7 @@
   </video>
   <div class="overlay"></div>
 
-  <!-- Menu -->
-  <div class="menu-icon" id="menuToggle">
-    <span></span><span></span><span></span>
-  </div>
-  <div class="menu-overlay" id="menuOverlay">
-    <ul>
-      <li><a href="index.html">Home</a></li>
-      <li><a href="about.html">About</a></li>
-      <li><a href="services.html">Services</a></li>
-      <li><a href="CBE_trade_insights_public.html">Trade Insights</a></li>
-      <li><a href="FAQ.html">FAQ</a></li>
-      <li><a href="vip-subscription.html">VIP Subscription</a></li>
-      <li><a href="payment-options.html">Payment Options</a></li>
-      <li><a href="CBE_contact.html">Contact</a></li>
-      <li><a href="login.html">Login</a></li>
-    </ul>
-  </div>
-
-  <!-- Form -->
+  <!-- Apply Form -->
   <div class="apply-section">
     <h1>Apply to Join CBE</h1>
     <form id="apply-form">
@@ -131,36 +79,41 @@
   <footer>© 2025 CBE – Chukwuemeka Bullion Exchange</footer>
 
   <script>
-    const menuToggle = document.getElementById('menuToggle');
-    const menuOverlay = document.getElementById('menuOverlay');
-    menuToggle.addEventListener('click', () => {
-      menuOverlay.classList.toggle('active');
-    });
-
     document.getElementById('apply-form').addEventListener('submit', function (e) {
       e.preventDefault();
+
       const name = document.getElementById('apply-name').value.trim();
       const email = document.getElementById('apply-email').value.trim().toLowerCase();
       const phone = document.getElementById('apply-phone').value.trim();
       const message = document.getElementById('apply-message').value.trim();
 
-      const applications = JSON.parse(localStorage.getItem('applications') || '[]');
-      const exists = applications.some(app => app.email === email);
-      if (exists) {
-        alert("You have already applied. Please proceed to VIP Subscription.");
+      if (!name || !email || !phone || !message) {
+        alert("Please complete all fields.");
+        return;
+      }
+
+      let applications = JSON.parse(localStorage.getItem('applications') || '[]');
+      const alreadyExists = applications.some(app => app.email === email);
+
+      if (alreadyExists) {
+        alert("You’ve already applied. Please proceed to the VIP Subscription.");
         window.location.href = 'vip-subscription.html';
         return;
       }
 
-      const application = {
-        name, email, phone, message,
+      const newApplication = {
+        name,
+        email,
+        phone,
+        message,
         status: 'pending',
         date: new Date().toISOString()
       };
-      applications.push(application);
+
+      applications.push(newApplication);
       localStorage.setItem('applications', JSON.stringify(applications));
 
-      alert('Application submitted successfully. Please proceed to VIP subscription.');
+      alert("Application submitted successfully! Please proceed to VIP Subscription.");
       window.location.href = 'vip-subscription.html';
     });
   </script>
