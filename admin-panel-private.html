@@ -6,7 +6,7 @@
   <title>Admin Panel – CBE</title>
   <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;500;700&display=swap" rel="stylesheet" />
   <style>
-    /* [Your existing CSS unchanged] */
+    /* --- Your existing CSS (unchanged) --- */
     * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Poppins', sans-serif; }
     html, body { height: 100%; background: #0b0b0b; color: #f5f5f5; }
     video#bg-video { position: fixed; top:0; left:0; width:100%; height:100%; object-fit:cover; z-index:-2; }
@@ -30,7 +30,7 @@
     form { background:#1c1c1c; padding:20px; border-radius:10px; margin-bottom:30px; }
     .form-group { margin-bottom:16px; }
     .form-group label { display:block; margin-bottom:6px; color:#ccc; }
-    .form-group input { width:100%; padding:10px; background:#111; border:1px solid #333; color:#f5f5f5; border-radius:6px; }
+    .form-group input, .form-group textarea { width:100%; padding:10px; background:#111; border:1px solid #333; color:#f5f5f5; border-radius:6px; }
     .download-btn { margin-bottom:10px; background:#0b0b0b; border:1px solid gold; color:gold; padding:8px 12px; border-radius:4px; cursor:pointer; }
     .download-btn:hover { background:gold; color:#000; }
   </style>
@@ -54,7 +54,8 @@
       <a href="#" class="active" data-section="dashboard">Dashboard</a>
       <a href="#" data-section="payments">Payments</a>
       <a href="#" data-section="users">Users</a>
-      <a href="#" data-section="trades">Trades</a>
+      <a href="#" data-section="trades-current">Current Trades</a>
+      <a href="#" data-section="trades-history">Trade History</a>
       <a href="#" data-section="signals">Signals</a>
       <a href="#" data-section="broadcasts">Broadcasts</a>
       <a href="#" data-section="messages">Messages</a>
@@ -65,7 +66,6 @@
     </nav>
 
     <div class="content">
-
       <!-- Dashboard -->
       <section id="dashboard">
         <h2>Welcome Admin</h2>
@@ -87,7 +87,42 @@
         </table>
       </section>
 
-      <!-- Signal Publisher -->
+      <!-- Users -->
+      <section id="users" class="hidden">
+        <h2>Registered Users</h2>
+        <table>
+          <thead>
+            <tr><th>Name</th><th>Email</th><th>VIP</th><th>Active</th><th>Actions</th></tr>
+          </thead>
+          <tbody id="usersTable"></tbody>
+        </table>
+      </section>
+
+      <!-- Current Trades -->
+      <section id="trades-current" class="hidden">
+        <h2>Current Trades</h2>
+        <form id="currentTradeForm">
+          <div class="form-group">
+            <label>Upload Trade Screenshot</label>
+            <input type="file" id="tradeScreenshot" accept="image/*" />
+          </div>
+          <button type="submit" class="btn">Upload</button>
+        </form>
+        <div id="currentTradesList"></div>
+      </section>
+
+      <!-- Trade History -->
+      <section id="trades-history" class="hidden">
+        <h2>Trade History</h2>
+        <form id="historyForm">
+          <div class="form-group"><label>Date</label><input type="date" id="historyDate" required></div>
+          <div class="form-group"><label>Description</label><textarea id="historyDesc" rows="3" required></textarea></div>
+          <button type="submit" class="btn">Add Entry</button>
+        </form>
+        <ul id="historyList" style="list-style:none; color:#ccc; line-height:1.6;"></ul>
+      </section>
+
+      <!-- Signals -->
       <section id="signals" class="hidden">
         <h2>Publish Signal</h2>
         <form id="signalForm">
@@ -107,23 +142,35 @@
         </table>
       </section>
 
+      <!-- Broadcasts -->
+      <section id="broadcasts" class="hidden">
+        <h2>Send Broadcast</h2>
+        <form id="broadcastForm">
+          <div class="form-group"><label>Message</label><textarea id="broadcastMsg" rows="4" required></textarea></div>
+          <button type="submit" class="btn">Send to All VIPs</button>
+        </form>
+        <h3>Sent Broadcasts</h3>
+        <ul id="broadcastList" style="list-style:none; color:#ccc; line-height:1.6;"></ul>
+      </section>
+
+      <!-- Messages -->
+      <section id="messages" class="hidden">
+        <h2>Contact Messages</h2>
+        <table>
+          <thead><tr><th>Name</th><th>Email</th><th>Message</th><th>Date</th></tr></thead>
+          <tbody id="messagesTable"></tbody>
+        </table>
+      </section>
+
       <!-- Settings -->
       <section id="settings" class="hidden">
-        <h2>Payment Wallet Settings</h2>
+        <h2>Payment & API Settings</h2>
         <form id="settingsForm">
-          <div class="form-group">
-            <label for="btc">Bitcoin Wallet Address</label>
-            <input type="text" id="btc" placeholder="e.g. bc1q…" />
-          </div>
-          <div class="form-group">
-            <label for="eth">Ethereum Wallet Address</label>
-            <input type="text" id="eth" placeholder="e.g. 0x…" />
-          </div>
-          <div class="form-group">
-            <label for="usdt">USDT Wallet Address</label>
-            <input type="text" id="usdt" placeholder="e.g. T…" />
-          </div>
-          <button type="submit" class="btn">Save Wallet Addresses</button>
+          <div class="form-group"><label>Bitcoin Wallet Address</label><input type="text" id="btc" placeholder="e.g. bc1q…" /></div>
+          <div class="form-group"><label>Ethereum Wallet Address</label><input type="text" id="eth" placeholder="e.g. 0x…" /></div>
+          <div class="form-group"><label>USDT Wallet Address</label><input type="text" id="usdt" placeholder="e.g. T…" /></div>
+          <div class="form-group"><label>Paystack Public Key</label><input type="text" id="paystackKey" placeholder="pk_live_xxx…" /></div>
+          <button type="submit" class="btn">Save Settings</button>
         </form>
       </section>
 
@@ -135,152 +182,3 @@
 
     </div> <!-- /.content -->
   </div> <!-- /.container -->
-  <script>
-    // Sidebar toggle & navigation
-    document.getElementById("toggleSidebar").addEventListener("click", () => {
-      document.body.classList.toggle("collapsed-sidebar");
-    });
-    document.querySelectorAll(".sidebar a[data-section]").forEach(link => {
-      link.addEventListener("click", e => {
-        e.preventDefault();
-        document.querySelectorAll(".sidebar a").forEach(a => a.classList.remove("active"));
-        link.classList.add("active");
-        const sec = link.getAttribute("data-section");
-        document.querySelectorAll(".content section").forEach(s => s.classList.add("hidden"));
-        document.getElementById(sec).classList.remove("hidden");
-
-        if (sec === "payments") loadPayments();
-        if (sec === "signals") renderSignals();
-        if (sec === "logs") renderLogs();
-      });
-    });
-
-    // --- SIGNAL PUBLISHER ---
-    const signalForm = document.getElementById("signalForm");
-    const signalList = document.getElementById("signalList");
-    const signalStore = JSON.parse(localStorage.getItem("signals") || "[]");
-    function renderSignals() {
-      signalList.innerHTML = "";
-      signalStore.forEach((s,i) => {
-        const tr = document.createElement("tr");
-        tr.innerHTML = `
-          <td>${s.date}</td><td>${s.pair}</td><td>${s.type}</td>
-          <td>${s.tp}</td><td>${s.sl}</td>
-          <td><button class="btn" onclick="deleteSignal(${i})">Delete</button></td>`;
-        signalList.appendChild(tr);
-      });
-    }
-    signalForm.addEventListener("submit", e => {
-      e.preventDefault();
-      const date = new Date().toLocaleDateString();
-      const pair = document.getElementById("pair").value;
-      const type = document.getElementById("type").value.toUpperCase();
-      const entry = document.getElementById("entry").value;
-      const tp = document.getElementById("tp").value;
-      const sl = document.getElementById("sl").value;
-      const time = document.getElementById("time").value;
-      const note = document.getElementById("note").value;
-      signalStore.unshift({ date, pair, type, entry, tp, sl, time, note });
-      localStorage.setItem("signals", JSON.stringify(signalStore));
-      renderSignals();
-      signalForm.reset();
-      alert("Signal published.");
-    });
-    function deleteSignal(i) {
-      if (confirm("Delete this signal?")) {
-        signalStore.splice(i,1);
-        localStorage.setItem("signals", JSON.stringify(signalStore));
-        renderSignals();
-      }
-    }
-
-    // --- PAYMENT RECORDS ---
-    function loadPayments() {
-      const tbody = document.getElementById("paymentTableBody");
-      const records = JSON.parse(localStorage.getItem("paymentRecords") || "[]");
-      tbody.innerHTML = "";
-      records.forEach((r,i) => {
-        const tr = document.createElement("tr");
-        tr.innerHTML = `
-          <td>${r.name}</td><td>${r.email}</td><td>${r.username}</td>
-          <td>$${r.amount}</td><td>${r.method}</td><td>${r.walletType}</td>
-          <td><a href="${r.proof}" target="_blank">View</a></td>
-          <td>${r.status||"Pending"}</td>
-          <td>${r.status==="Approved"?"✓":`<button class="btn" onclick="approvePayment(${i})">Approve</button>`}</td>`;
-        tbody.appendChild(tr);
-      });
-    }
-    function approvePayment(i) {
-      const recs = JSON.parse(localStorage.getItem("paymentRecords") || "[]");
-      const rec = recs[i];
-      rec.status = "Approved";
-      localStorage.setItem("paymentRecords", JSON.stringify(recs));
-      // Grant VIP
-      const users = JSON.parse(localStorage.getItem("users")||"[]");
-      const u = users.find(u=>u.email===rec.email);
-      if(u) u.vip=true;
-      localStorage.setItem("users",JSON.stringify(users));
-      addLog(`Approved VIP for ${rec.username}`);
-      alert("VIP access granted.");
-      loadPayments();
-    }
-    function downloadPayments() {
-      const data = JSON.parse(localStorage.getItem("paymentRecords")||"[]");
-      if(!data.length) return alert("No records.");
-      const rows=[["Name","Email","Username","Amount","Method","Wallet","Proof","Status"]];
-      data.forEach(d=>rows.push([d.name,d.email,d.username,d.amount,d.method,d.walletType,d.proof,d.status||"Pending"]));
-      const csv="data:text/csv;charset=utf-8,"+rows.map(r=>r.join(",")).join("\n");
-      const link=document.createElement("a");
-      link.href=encodeURI(csv);
-      link.download="payment_records.csv";
-      document.body.appendChild(link);
-      link.click();
-      link.remove();
-    }
-
-    // --- SETTINGS LOGIC ---
-    const settingsForm = document.getElementById('settingsForm');
-    const btcInput = document.getElementById('btc');
-    const ethInput = document.getElementById('eth');
-    const usdtInput = document.getElementById('usdt');
-    function loadSettings(){
-      const s = JSON.parse(localStorage.getItem('paymentSettings') || '{}');
-      btcInput.value  = s.btc  || '';
-      ethInput.value  = s.eth  || '';
-      usdtInput.value = s.usdt || '';
-    }
-    settingsForm.addEventListener('submit', e => {
-      e.preventDefault();
-      const newS = { btc:btcInput.value.trim(), eth:ethInput.value.trim(), usdt:usdtInput.value.trim() };
-      localStorage.setItem('paymentSettings', JSON.stringify(newS));
-      addLog('Updated wallet settings');
-      alert('Wallet addresses saved!');
-    });
-
-    // --- LOGS ---
-    function renderLogs(){
-      const ul = document.getElementById('log-list');
-      const logs = JSON.parse(localStorage.getItem('adminLogs')||'[]');
-      ul.innerHTML='';
-      logs.forEach(entry => {
-        const li=document.createElement('li');
-        li.textContent=`[${new Date(entry.time||Date.now()).toLocaleString()}] ${entry}`;
-        ul.appendChild(li);
-      });
-    }
-    function addLog(action){
-      const logs = JSON.parse(localStorage.getItem('adminLogs')||'[]');
-      logs.unshift({ time:Date.now(), action });
-      localStorage.setItem('adminLogs', JSON.stringify(logs));
-    }
-
-    // Initialize on load
-    window.addEventListener('DOMContentLoaded', () => {
-      loadPayments();
-      renderSignals();
-      loadSettings();
-      renderLogs();
-    });
-  </script>
-</body>
-</html>
