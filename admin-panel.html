@@ -1,0 +1,354 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Admin Panel - Chukwuemeka Bullion Exchange</title>
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;500;700&display=swap" rel="stylesheet">
+  <style>
+    body {
+      margin: 0;
+      font-family: 'Poppins', sans-serif;
+      background-color: #0b0b0b;
+      color: #f5f5f5;
+    }
+    .video-background {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      z-index: -2;
+    }
+    .overlay {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(0, 0, 0, 0.5);
+      z-index: -1;
+    }
+    .menu-container {
+      position: fixed;
+      top: 0;
+      width: 100%;
+      z-index: 2000;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 20px 20px;
+      background: rgba(0, 0, 0, 0.8);
+      border-bottom: 1px solid #333;
+      box-shadow: 0 0 10px gold;
+    }
+    .logo {
+      font-size: 20px;
+      font-weight: bold;
+      color: gold;
+      text-decoration: none;
+    }
+    .logo img {
+      height: 40px;
+      vertical-align: middle;
+      margin-right: 10px;
+    }
+    .menu-icon {
+      position: fixed;
+      top: 20px;
+      right: 20px;
+      width: 48px;
+      height: 48px;
+      background: rgba(255,215,0,0.25);
+      border-radius: 50%;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      cursor: pointer;
+      box-shadow: 0 0 14px rgba(255,215,0,0.8);
+      transition: box-shadow 0.3s ease, transform 0.3s ease;
+      animation: pulse 2s infinite ease-in-out;
+      z-index: 2001;
+    }
+    .menu-icon:hover {
+      box-shadow: 0 0 20px rgba(255,215,0,1);
+      transform: scale(1.1);
+    }
+    .menu-icon span {
+      display: block;
+      width: 10px;
+      height: 10px;
+      background: gold;
+      border-radius: 50%;
+      margin: 5px 0;
+      transition: transform 0.3s ease, opacity 0.3s ease;
+    }
+    .menu-icon.active span:nth-child(1) {
+      transform: translateY(15px);
+    }
+    .menu-icon.active span:nth-child(2) {
+      opacity: 0;
+    }
+    .menu-icon.active span:nth-child(3) {
+      transform: translateY(-15px);
+    }
+    @keyframes pulse {
+      0% { box-shadow: 0 0 14px rgba(255,215,0,0.8); }
+      50% { box-shadow: 0 0 24px rgba(255,215,0,1); }
+      100% { box-shadow: 0 0 14px rgba(255,215,0,0.8); }
+    }
+    .menu-overlay {
+      position: fixed;
+      top: 0;
+      right: -100%;
+      width: 280px;
+      height: 100%;
+      background: #0b0b1f;
+      z-index: 1500;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      transition: right 0.4s ease;
+      box-shadow: -5px 0 15px rgba(0, 0, 0, 0.5);
+    }
+    .menu-overlay.active {
+      right: 0;
+    }
+    .menu-overlay ul {
+      list-style: none;
+      padding: 0;
+      margin: 0;
+    }
+    .menu-overlay li {
+      margin: 20px 0;
+    }
+    .menu-overlay a {
+      color: gold;
+      text-decoration: none;
+      font-size: 1.2rem;
+      position: relative;
+      transition: all 0.3s ease;
+    }
+    .menu-overlay a:hover {
+      color: #e6c200;
+      text-shadow: 0 0 10px gold;
+    }
+    .menu-overlay a::after {
+      content: '';
+      position: absolute;
+      left: 0;
+      bottom: -2px;
+      width: 100%;
+      height: 2px;
+      background: gold;
+      transform: scaleX(0);
+      transform-origin: left;
+      transition: transform 0.3s ease;
+    }
+    .menu-overlay a:hover::after {
+      transform: scaleX(1);
+    }
+    .container {
+      display: flex;
+      min-height: calc(100vh - 90px);
+      margin-top: 90px;
+    }
+    .sidebar {
+      width: 250px;
+      background: #111;
+      padding: 20px;
+      border-right: 1px solid #333;
+      position: fixed;
+      height: calc(100vh - 90px);
+      overflow-y: auto;
+    }
+    .sidebar h3 {
+      color: gold;
+      font-size: 24px;
+      margin-bottom: 20px;
+      text-align: center;
+    }
+    .sidebar ul {
+      list-style: none;
+      padding: 0;
+    }
+    .sidebar li {
+      margin: 15px 0;
+    }
+    .sidebar a {
+      color: #ddd;
+      text-decoration: none;
+      font-size: 18px;
+      display: block;
+      padding: 10px;
+    }
+    .sidebar a:hover {
+      color: gold;
+      background: #222;
+      border-radius: 5px;
+    }
+    .main-content {
+      margin-left: 250px;
+      padding: 40px;
+      flex: 1;
+    }
+    .main-content h1 {
+      font-size: 36px;
+      color: gold;
+      margin-bottom: 30px;
+    }
+    .dashboard-section {
+      background: #1c1c1c;
+      padding: 20px;
+      border-radius: 10px;
+      margin-bottom: 20px;
+    }
+    .dashboard-section h2 {
+      font-size: 24px;
+      color: #ffd700;
+      margin-bottom: 15px;
+    }
+    .dashboard-section p {
+      font-size: 16px;
+      color: #ddd;
+    }
+    .contact {
+      background-color: #111;
+      padding: 50px 20px;
+      text-align: center;
+      border-top: 1px solid #333;
+      margin-left: 250px;
+    }
+    .contact a {
+      color: #ffd700;
+      text-decoration: none;
+      font-weight: 500;
+    }
+    .cta-button {
+      display: inline-block;
+      padding: 15px 35px;
+      background-color: gold;
+      color: #fff;
+      font-weight: 600;
+      text-decoration: none;
+      border-radius: 30px;
+      transition: background-color 0.3s ease;
+    }
+    .cta-button:hover {
+      background-color: #ffd700;
+    }
+    footer {
+      text-align: center;
+      padding: 20px;
+      font-size: 14px;
+      color: #888;
+      background-color: #0b0b0b;
+      border-top: 1px solid #222;
+      margin-left: 250px;
+    }
+    @media (max-width: 600px) {
+      .menu-icon { right: 15px; }
+      .logo img { height: 30px; }
+      .sidebar {
+        width: 100%;
+        height: auto;
+        position: relative;
+        margin-top: 20px;
+      }
+      .main-content, .contact, footer {
+        margin-left: 0;
+      }
+    }
+  </style>
+</head>
+<body>
+  <video class="video-background" autoplay muted loop playsinline>
+    <source src="star-video.mp4" type="video/mp4">
+    Your browser does not support the video tag.
+  </video>
+  <div class="overlay"></div>
+  <div class="menu-container">
+    <a href="index.html" class="logo">
+      <img src="CBE_logo.png" alt="CBE Logo">
+    </a>
+    <div class="menu-icon" id="menuToggle">
+      <span></span><span></span><span></span>
+    </div>
+  </div>
+  <div class="menu-overlay" id="menuOverlay">
+    <ul>
+      <li><a href="index.html">Home</a></li>
+      <li><a href="about.html">About</a></li>
+      <li><a href="services.html">Services</a></li>
+      <li><a href="CBE_trade_insights_public.html">Trade Insights</a></li>
+      <li><a href="FAQ.html">FAQ</a></li>
+      <li><a href="vip-subscription.html">VIP Subscription</a></li>
+      <li><a href="payment-options.html">Payment Options</a></li>
+      <li><a href="CBE_apply.html">Apply</a></li>
+      <li><a href="CBE_contact.html">Contact</a></li>
+      <li><a href="terms.html">Terms & Conditions</a></li>
+      <li><a href="privacy.html">Privacy Policy</a></li>
+      <li><a href="vip-dashboard.html">Dashboard</a></li>
+      <li><a href="login.html">Login</a></li>
+      <li><a href="CBE_apex_income_options.html">Apex Income Options</a></li>
+      <li><a href="admin-panel.html">Admin Panel</a></li>
+    </ul>
+  </div>
+  <div style="height: 90px;"></div>
+  <div class="container">
+    <div class="sidebar">
+      <h3>Admin Menu</h3>
+      <ul>
+        <li><a href="#user-management">User Management</a></li>
+        <li><a href="#application-approval">Application Approval</a></li>
+        <li><a href="#trading-oversight">Trading Oversight</a></li>
+        <li><a href="#site-settings">Site Settings</a></li>
+      </ul>
+    </div>
+    <div class="main-content">
+      <h1>Admin Panel</h1>
+      <div class="dashboard-section" id="user-management">
+        <h2>User Management</h2>
+        <p>View and edit user accounts. Total users: 150.</p>
+        <!-- Add table or form here for user management -->
+      </div>
+      <div class="dashboard-section" id="application-approval">
+        <h2>Application Approval</h2>
+        <p>Review and approve applications from CBE_apply.html. Pending: 25.</p>
+        <!-- Add table or list here for applications -->
+      </div>
+      <div class="dashboard-section" id="trading-oversight">
+        <h2>Trading Oversight</h2>
+        <p>Monitor trading activities. Profit this week: $10,000.</p>
+        <!-- Add charts or metrics here -->
+      </div>
+      <div class="dashboard-section" id="site-settings">
+        <h2>Site Settings</h2>
+        <p>Configure site options and updates.</p>
+        <!-- Add form or settings controls here -->
+      </div>
+    </div>
+  </div>
+  <div class="contact" id="contact">
+    <h2>Contact Us</h2>
+    <p><a href="https://wa.me/2349133957084" target="_blank">WhatsApp</a></p>
+    <p><a href="https://t.me/apexincomeoptions" target="_blank">Telegram</a></p>
+    <p><a href="mailto:support@chukwuemekabullionexchange.com" target="_blank">Email</a></p>
+    <p style="margin-top: 30px;"><a href="CBE_apply.html" class="cta-button">Apply to Join Now</a></p>
+  </div>
+  <footer>
+    © 2025 CBE - Chukwuemeka Bullion Exchange. All rights reserved.
+  </footer>
+  <script>
+    const menuToggle = document.getElementById('menuToggle');
+    const menuOverlay = document.getElementById('menuOverlay');
+    menuToggle.addEventListener('click', () => {
+      menuToggle.classList.toggle('active');
+      menuOverlay.classList.toggle('active');
+    });
+  </script>
+</body>
+</html>
