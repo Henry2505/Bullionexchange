@@ -3,328 +3,167 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Admin Panel - CBE</title>
+  <title>CBE Admin Panel</title>
   <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;600&display=swap" rel="stylesheet">
   <style>
     body {
-      margin: 0;
-      font-family: 'Poppins', sans-serif;
-      background-color: #0b0b0b;
-      color: #f5f5f5;
+      margin: 0; font-family: 'Poppins', sans-serif;
+      background-color: #0b0b0b; color: #f5f5f5;
     }
-
-    .admin-container {
-      display: flex;
-      min-height: 100vh;
-    }
-
     .sidebar {
-      width: 260px;
-      background: #111;
-      padding: 30px 20px;
-      transition: width 0.3s ease;
-      overflow: hidden;
+      position: fixed; top: 0; left: 0;
+      width: 260px; height: 100%;
+      background: #111; padding-top: 80px;
+      overflow-y: auto; box-shadow: 2px 0 10px rgba(0,0,0,0.5);
     }
-
-    .sidebar.collapsed {
-      width: 70px;
-    }
-
     .sidebar h2 {
-      font-size: 22px;
-      color: gold;
-      margin-bottom: 30px;
+      text-align: center; color: gold; margin-bottom: 30px;
     }
-
     .sidebar a {
-      display: block;
-      color: #ccc;
-      text-decoration: none;
-      margin: 12px 0;
-      transition: color 0.3s;
+      display: block; color: #ccc;
+      padding: 15px 20px; text-decoration: none;
+      border-bottom: 1px solid #222;
+      transition: background 0.3s;
     }
-
     .sidebar a:hover {
-      color: gold;
+      background: #1a1a1a; color: gold;
     }
-
-    .toggle-btn {
-      background: none;
+    .main {
+      margin-left: 260px; padding: 40px;
+    }
+    h1 {
+      font-size: 24px; color: gold;
+    }
+    .section {
+      margin-bottom: 40px;
+      padding: 30px;
+      background: #1c1c1c;
+      border-radius: 10px;
+      box-shadow: 0 0 12px rgba(255, 215, 0, 0.1);
+    }
+    label {
+      display: block; margin-top: 15px;
+      color: #ccc;
+    }
+    input[type="file"], textarea {
+      width: 100%;
+      padding: 12px;
+      background: #111; color: #fff;
+      border: 1px solid #444;
+      border-radius: 6px;
+    }
+    button {
+      margin-top: 15px;
+      background: gold; color: #000;
+      font-weight: bold;
       border: none;
-      color: gold;
-      font-size: 22px;
+      padding: 10px 20px;
+      border-radius: 6px;
       cursor: pointer;
-      margin-bottom: 30px;
     }
-
-    .content {
-      flex: 1;
-      padding: 40px;
-      background: linear-gradient(to right, #0b0b0b, #1c1c1c);
-    }
-
-    .content h1 {
-      font-size: 28px;
-      color: gold;
-      margin-bottom: 20px;
-    }
-
-    .user-card {
-      background: #141414;
-      padding: 20px;
-      margin-bottom: 20px;
-      border-left: 4px solid gold;
-      border-radius: 8px;
-    }
-
-    .user-card p {
-      margin: 8px 0;
-      font-size: 16px;
-    }
-
-    .user-card button {
-      margin-right: 10px;
-      padding: 6px 12px;
-      font-size: 14px;
-      border: none;
-      border-radius: 4px;
-      cursor: pointer;
-      background-color: gold;
-      color: #000;
-    }
-
-    .user-card button:hover {
-      background-color: #e6c200;
+    button:hover {
+      background: #e6c200;
     }
   </style>
 </head>
 <body>
-<div class="admin-container">
-  <div class="sidebar" id="adminSidebar">
-    <button class="toggle-btn" onclick="toggleSidebar()">&#8942;</button>
+  <div class="sidebar">
     <h2>CBE Admin</h2>
-    <a href="#" onclick="loadSection('dashboard')">Dashboard</a>
-    <a href="#" onclick="loadSection('users')">Users</a>
-    <a href="#" onclick="loadSection('payments')">Payments</a>
-    <a href="#" onclick="loadSection('signals')">Signals</a>
-    <a href="#" onclick="loadSection('broadcasts')">Broadcasts</a>
-    <a href="#" onclick="loadSection('messages')">Messages</a>
-    <a href="#" onclick="loadSection('settings')">Settings</a>
-    <a href="index.html">Return to Site</a>
+    <a href="#dashboard">Dashboard</a>
+    <a href="#users">Users</a>
+    <a href="#payments">Payments</a>
+    <a href="#signals">Post Signals</a>
+    <a href="#insights">Trade Insights</a>
+    <a href="#history">Trade History</a>
+    <a href="#messages">Messages</a>
+    <a href="#settings">Settings</a>
   </div>
-  <div class="content" id="adminContent">
-    <h1>Welcome to Admin Panel</h1>
-    <p>Select a section from the sidebar.</p>
+
+  <div class="main">
+    <div id="insights" class="section">
+      <h1>Upload Trade Insights</h1>
+      <label for="insightNote">Brief Note:</label>
+      <textarea id="insightNote" rows="4" placeholder="Enter brief notes about the trade insight..."></textarea>
+      <label for="insightImage">Upload Screenshot:</label>
+      <input type="file" id="insightImage" accept="image/*" />
+      <button onclick="saveInsight()">Upload Insight</button>
+    </div>
+
+    <div id="history" class="section">
+      <h1>Upload Trade History</h1>
+      <label for="historyMonth">Select Month:</label>
+      <select id="historyMonth">
+        <option value="">Select</option>
+        <option>January</option><option>February</option><option>March</option>
+        <option>April</option><option>May</option><option>June</option>
+        <option>July</option><option>August</option><option>September</option>
+        <option>October</option><option>November</option><option>December</option>
+      </select>
+      <label for="historyNote">Note:</label>
+      <textarea id="historyNote" rows="4" placeholder="Describe the trade history..."></textarea>
+      <label for="historyImage">Upload Screenshot:</label>
+      <input type="file" id="historyImage" accept="image/*" />
+      <button onclick="saveHistory()">Upload History</button>
+    </div>
+        <script>
+      // Utility: Read image and return as Base64
+      function readImageAsBase64(file, callback) {
+        const reader = new FileReader();
+        reader.onload = () => callback(reader.result);
+        reader.onerror = () => alert('Error reading image file.');
+        reader.readAsDataURL(file);
+      }
+
+      // Save Trade Insight
+      function saveInsight() {
+        const note = document.getElementById('insightNote').value.trim();
+        const imageFile = document.getElementById('insightImage').files[0];
+
+        if (!note || !imageFile) {
+          alert('Please provide a note and upload an image.');
+          return;
+        }
+
+        readImageAsBase64(imageFile, base64Image => {
+          const insights = JSON.parse(localStorage.getItem('tradeInsights') || '[]');
+          insights.push({
+            note,
+            screenshot: base64Image,
+            date: new Date().toISOString()
+          });
+          localStorage.setItem('tradeInsights', JSON.stringify(insights));
+          alert('Insight uploaded successfully!');
+          document.getElementById('insightNote').value = '';
+          document.getElementById('insightImage').value = '';
+        });
+      }
+
+      // Save Trade History
+      function saveHistory() {
+        const month = document.getElementById('historyMonth').value;
+        const note = document.getElementById('historyNote').value.trim();
+        const imageFile = document.getElementById('historyImage').files[0];
+
+        if (!month || !note || !imageFile) {
+          alert('Please select a month, write a note, and upload an image.');
+          return;
+        }
+
+        readImageAsBase64(imageFile, base64Image => {
+          const historyData = JSON.parse(localStorage.getItem('tradeHistory') || '{}');
+          if (!Array.isArray(historyData[month])) historyData[month] = [];
+          historyData[month].push({
+            note,
+            screenshot: base64Image,
+            date: new Date().toISOString()
+          });
+          localStorage.setItem('tradeHistory', JSON.stringify(historyData));
+          alert(`History for ${month} uploaded successfully!`);
+          document.getElementById('historyNote').value = '';
+          document.getElementById('historyImage').value = '';
+        });
+      }
+    </script>
   </div>
-</div>
-
-<script>
-  function toggleSidebar() {
-    document.getElementById('adminSidebar').classList.toggle('collapsed');
-  }
-
-  function loadSection(section) {
-    const container = document.getElementById('adminContent');
-    container.innerHTML = '<h1>Loading ' + section + '...</h1>';
-
-    if (section === 'users') {
-      renderUsers();
-    }
-  }
-
-  function renderUsers() {
-    const users = JSON.parse(localStorage.getItem('applications') || '[]');
-    let html = '<h1>Users</h1>';
-    if (users.length === 0) {
-      html += '<p>No users found.</p>';
-    } else {
-      users.forEach((user, i) => {
-        html += `
-        <div class="user-card">
-          <p><strong>Name:</strong> ${user.name}</p>
-          <p><strong>Email:</strong> ${user.email}</p>
-          <p><strong>Phone:</strong> ${user.phone || 'N/A'}</p>
-          <p><strong>Status:</strong> ${user.status}</p>
-          <p><strong>Joined:</strong> ${new Date(user.date).toLocaleString()}</p>
-          <button onclick="approveUser(${i})">Approve</button>
-          <button onclick="deactivateUser(${i})">Deactivate</button>
-          <button onclick="deleteUser(${i})">Delete</button>
-        </div>`;
-      });
-    }
-    document.getElementById('adminContent').innerHTML = html;
-  }
-
-  function approveUser(index) {
-    const users = JSON.parse(localStorage.getItem('applications') || '[]');
-    users[index].status = 'approved';
-    localStorage.setItem('applications', JSON.stringify(users));
-    alert('User approved');
-    renderUsers();
-  }
-
-  function deactivateUser(index) {
-    const users = JSON.parse(localStorage.getItem('applications') || '[]');
-    users[index].status = 'inactive';
-    localStorage.setItem('applications', JSON.stringify(users));
-    alert('User deactivated');
-    renderUsers();
-  }
-
-  function deleteUser(index) {
-    if (!confirm('Are you sure you want to delete this user?')) return;
-    const users = JSON.parse(localStorage.getItem('applications') || '[]');
-    users.splice(index, 1);
-    localStorage.setItem('applications', JSON.stringify(users));
-    alert('User deleted');
-    renderUsers();
-  }
-</script>
-<script>
-  function loadSection(section) {
-    const container = document.getElementById('adminContent');
-    if (section === 'users') return renderUsers();
-    if (section === 'payments') return renderPayments();
-    if (section === 'signals') return renderSignalPublisher();
-    if (section === 'broadcasts') return renderBroadcasts();
-    if (section === 'messages') return renderMessages();
-    if (section === 'settings') return renderSettings();
-
-    container.innerHTML = '<h1>' + section + '</h1><p>Section under construction.</p>';
-  }
-
-  function renderPayments() {
-    const records = JSON.parse(localStorage.getItem('paymentRecords') || '[]');
-    let html = '<h1>Payment Records</h1>';
-    if (records.length === 0) {
-      html += '<p>No payment records found.</p>';
-    } else {
-      records.forEach((rec, i) => {
-        html += `
-        <div class="user-card">
-          <p><strong>Name:</strong> ${rec.name}</p>
-          <p><strong>Email:</strong> ${rec.email}</p>
-          <p><strong>Plan:</strong> ${rec.amount}</p>
-          <p><strong>Status:</strong> ${rec.status}</p>
-          <img src="${rec.proof}" alt="Proof" style="max-width:100%;border-radius:6px;margin:10px 0;">
-          <button onclick="approvePayment(${i})">Approve</button>
-          <button onclick="expirePayment(${i})">Expire</button>
-        </div>`;
-      });
-    }
-    document.getElementById('adminContent').innerHTML = html;
-  }
-
-  function approvePayment(index) {
-    const records = JSON.parse(localStorage.getItem('paymentRecords') || '[]');
-    records[index].status = 'approved';
-    localStorage.setItem('paymentRecords', JSON.stringify(records));
-    alert('Payment approved!');
-    renderPayments();
-  }
-
-  function expirePayment(index) {
-    const records = JSON.parse(localStorage.getItem('paymentRecords') || '[]');
-    records[index].status = 'expired';
-    localStorage.setItem('paymentRecords', JSON.stringify(records));
-    alert('Payment marked as expired.');
-    renderPayments();
-  }
-
-  function renderSignalPublisher() {
-    const container = document.getElementById('adminContent');
-    container.innerHTML = `
-      <h1>Publish Forex Signal</h1>
-      <form id="signalForm">
-        <input type="text" id="pair" placeholder="e.g. BUY EUR/USD @ 1.07250" required><br><br>
-        <input type="text" id="tp" placeholder="Take Profit" required><br><br>
-        <input type="text" id="sl" placeholder="Stop Loss" required><br><br>
-        <textarea id="note" placeholder="Optional Note"></textarea><br><br>
-        <button type="submit">Publish</button>
-      </form>
-    `;
-
-    document.getElementById('signalForm').addEventListener('submit', function(e) {
-      e.preventDefault();
-      const pair = document.getElementById('pair').value;
-      const tp = document.getElementById('tp').value;
-      const sl = document.getElementById('sl').value;
-      const note = document.getElementById('note').value;
-      const timestamp = new Date().toISOString();
-      const signals = JSON.parse(localStorage.getItem('forexSignals') || '[]');
-
-      signals.unshift({ pair, tp, sl, note, time: timestamp });
-      localStorage.setItem('forexSignals', JSON.stringify(signals));
-      alert('Signal published successfully!');
-      this.reset();
-    });
-  }
-
-  function renderBroadcasts() {
-    const container = document.getElementById('adminContent');
-    container.innerHTML = `
-      <h1>Broadcast Message</h1>
-      <form id="broadcastForm">
-        <textarea id="broadcastMsg" placeholder="Type your message to all users" rows="6" style="width:100%;"></textarea><br><br>
-        <button type="submit">Send Broadcast</button>
-      </form>
-    `;
-
-    document.getElementById('broadcastForm').addEventListener('submit', function(e) {
-      e.preventDefault();
-      const msg = document.getElementById('broadcastMsg').value;
-      if (!msg.trim()) return alert('Please type a message.');
-      alert('Broadcast sent to all users:\n\n' + msg);
-      this.reset();
-    });
-  }
-
-  function renderMessages() {
-    const container = document.getElementById('adminContent');
-    const inbox = JSON.parse(localStorage.getItem('contactMessages') || '[]');
-    let html = '<h1>Inbox Messages</h1>';
-    if (inbox.length === 0) {
-      html += '<p>No messages received yet.</p>';
-    } else {
-      inbox.forEach((msg, i) => {
-        html += `
-          <div class="user-card">
-            <p><strong>Name:</strong> ${msg.name}</p>
-            <p><strong>Email:</strong> ${msg.email}</p>
-            <p><strong>Message:</strong> ${msg.message}</p>
-            <p><strong>Date:</strong> ${new Date(msg.date).toLocaleString()}</p>
-          </div>
-        `;
-      });
-    }
-    container.innerHTML = html;
-  }
-
-  function renderSettings() {
-    const container = document.getElementById('adminContent');
-    const settings = JSON.parse(localStorage.getItem('paymentSettings') || '{}');
-
-    container.innerHTML = `
-      <h1>Payment Wallet Settings</h1>
-      <form id="walletForm">
-        <input type="text" id="btc" placeholder="Bitcoin Wallet" value="${settings.btc || ''}"><br><br>
-        <input type="text" id="eth" placeholder="Ethereum Wallet" value="${settings.eth || ''}"><br><br>
-        <input type="text" id="usdt" placeholder="USDT Wallet" value="${settings.usdt || ''}"><br><br>
-        <input type="text" id="paystackKey" placeholder="Paystack Public Key" value="${settings.paystackKey || ''}"><br><br>
-        <button type="submit">Save Settings</button>
-      </form>
-    `;
-
-    document.getElementById('walletForm').addEventListener('submit', function(e) {
-      e.preventDefault();
-      const newSettings = {
-        btc: document.getElementById('btc').value,
-        eth: document.getElementById('eth').value,
-        usdt: document.getElementById('usdt').value,
-        paystackKey: document.getElementById('paystackKey').value
-      };
-      localStorage.setItem('paymentSettings', JSON.stringify(newSettings));
-      alert('Wallet settings saved successfully.');
-    });
-  }
-</script>
+</body>
+</html>
