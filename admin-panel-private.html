@@ -2,392 +2,131 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Admin Panel – CBE</title>
-  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;500;700&display=swap" rel="stylesheet" />
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;500;700&display=swap" rel="stylesheet">
   <style>
-    /* --- Your existing CSS (unchanged) --- */
-    * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Poppins', sans-serif; }
-    html, body { height: 100%; background: #0b0b0b; color: #f5f5f5; }
-    video#bg-video { position: fixed; top:0; left:0; width:100%; height:100%; object-fit:cover; z-index:-2; }
-    #overlay { position: fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.6); z-index:-1; }
-    #toggleSidebar { position:fixed; top:15px; left:15px; background:gold; border:none; color:#000; font-size:1.5rem; border-radius:5px; width:36px; height:36px; cursor:pointer; z-index:1001; }
-    .container { display:flex; height:100%; }
-    .sidebar { width:220px; background:#111; padding-top:70px; position:fixed; height:100%; border-right:1px solid #333; transition:transform .3s ease; z-index:1000; }
-    .sidebar a { display:block; padding:12px 20px; color:#ccc; text-decoration:none; border-left:4px solid transparent; }
-    .sidebar a:hover, .sidebar a.active { color:gold; background:#1c1c1c; border-left-color:gold; }
-    .content { margin-left:220px; padding:20px 30px; flex:1; overflow-y:auto; transition:margin-left .3s ease; }
-    body.collapsed-sidebar .sidebar { transform:translateX(-100%); }
-    body.collapsed-sidebar .content { margin-left:0; }
-    h2 { color:gold; margin-bottom:20px; }
-    table { width:100%; border-collapse:collapse; margin-bottom:30px; }
-    th, td { padding:10px; border-bottom:1px solid #333; }
-    th { background:#222; color:#ccc; }
-    tr:hover { background:#1e1e1e; }
-    .btn { background:gold; border:none; color:#000; padding:6px 12px; border-radius:4px; font-weight:bold; cursor:pointer; }
-    .btn:hover { background:#e6c200; }
-    .hidden { display:none; }
-    form { background:#1c1c1c; padding:20px; border-radius:10px; margin-bottom:30px; }
-    .form-group { margin-bottom:16px; }
-    .form-group label { display:block; margin-bottom:6px; color:#ccc; }
-    .form-group input, .form-group textarea { width:100%; padding:10px; background:#111; border:1px solid #333; color:#f5f5f5; border-radius:6px; }
-    .download-btn { margin-bottom:10px; background:#0b0b0b; border:1px solid gold; color:gold; padding:8px 12px; border-radius:4px; cursor:pointer; }
-    .download-btn:hover { background:gold; color:#000; }
+    body {
+      margin: 0;
+      font-family: 'Poppins', sans-serif;
+      background-color: #0b0b0b;
+      color: #fff;
+    }
+    .sidebar {
+      width: 250px;
+      height: 100vh;
+      background-color: #111;
+      position: fixed;
+      left: 0;
+      top: 0;
+      overflow-y: auto;
+      padding-top: 60px;
+      box-shadow: 2px 0 10px rgba(255,215,0,0.2);
+      transition: transform 0.4s ease;
+    }
+    .sidebar.hidden {
+      transform: translateX(-100%);
+    }
+    .sidebar h2 {
+      color: gold;
+      text-align: center;
+      margin-bottom: 30px;
+    }
+    .sidebar a {
+      display: block;
+      padding: 15px 20px;
+      color: #fff;
+      text-decoration: none;
+      transition: background 0.3s;
+    }
+    .sidebar a:hover {
+      background-color: #333;
+    }
+    .main {
+      margin-left: 250px;
+      padding: 40px 30px;
+    }
+    .main.full-width {
+      margin-left: 0;
+    }
+    .topbar {
+      position: fixed;
+      left: 250px;
+      right: 0;
+      height: 60px;
+      background-color: #111;
+      display: flex;
+      align-items: center;
+      padding: 0 20px;
+      color: gold;
+      box-shadow: 0 2px 10px rgba(255,215,0,0.1);
+      z-index: 1000;
+    }
+    .topbar.full-width {
+      left: 0;
+    }
+    .toggle-sidebar {
+      cursor: pointer;
+      margin-right: 20px;
+    }
+    .hidden-section {
+      display: none;
+    }
+    .video-background {
+      position: fixed;
+      top: 0; left: 0;
+      width: 100%; height: 100%;
+      object-fit: cover;
+      z-index: -1;
+    }
+    .overlay {
+      position: fixed;
+      top: 0; left: 0;
+      width: 100%; height: 100%;
+      background: rgba(0,0,0,0.7);
+      z-index: -1;
+    }
   </style>
 </head>
 <body>
-  <script>
-    if (sessionStorage.getItem('adminAuthenticated') !== 'true') {
-      window.location.href = 'admin-login.html';
-    }
-  </script>
-
-  <video id="bg-video" autoplay muted loop playsinline>
-    <source src="star-video.MP4" type="video/mp4" />
+  <video class="video-background" autoplay muted loop playsinline>
+    <source src="star-video.MP4" type="video/mp4">
   </video>
-  <div id="overlay"></div>
+  <div class="overlay"></div>
 
-  <button id="toggleSidebar">⋮</button>
-
-  <div class="container">
-    <nav class="sidebar">
-      <a href="#" class="active" data-section="dashboard">Dashboard</a>
-      <a href="#" data-section="payments">Payments</a>
-      <a href="#" data-section="users">Users</a>
-      <a href="#" data-section="trades-current">Current Trades</a>
-      <a href="#" data-section="trades-history">Trade History</a>
-      <a href="#" data-section="signals">Signals</a>
-      <a href="#" data-section="broadcasts">Broadcasts</a>
-      <a href="#" data-section="messages">Messages</a>
-      <a href="#" data-section="settings">Settings</a>
-      <a href="#" data-section="logs">Logs</a>
-      <a href="index.html" target="_blank">Visit Site</a>
-      <a href="admin-login.html" class="btn">Logout</a>
-    </nav>
-
-    <div class="content">
-      <!-- Dashboard -->
-      <section id="dashboard">
-        <h2>Welcome Admin</h2>
-        <p>Use the menu to manage your site.</p>
-      </section>
-
-      <!-- Payments -->
-      <section id="payments" class="hidden">
-        <h2>Payment Records</h2>
-        <button class="download-btn" onclick="downloadPayments()">Download CSV</button>
-        <table>
-          <thead>
-            <tr>
-              <th>Name</th><th>Email</th><th>Username</th><th>Amount</th>
-              <th>Method</th><th>Wallet</th><th>Proof</th><th>Status</th><th>Action</th>
-            </tr>
-          </thead>
-          <tbody id="paymentTableBody"></tbody>
-        </table>
-      </section>
-
-      <!-- Users -->
-      <section id="users" class="hidden">
-        <h2>Registered Users</h2>
-        <table>
-          <thead>
-            <tr><th>Name</th><th>Email</th><th>VIP</th><th>Active</th><th>Actions</th></tr>
-          </thead>
-          <tbody id="usersTable"></tbody>
-        </table>
-      </section>
-
-      <!-- Current Trades -->
-      <section id="trades-current" class="hidden">
-        <h2>Current Trades</h2>
-        <form id="currentTradeForm">
-          <div class="form-group">
-            <label>Upload Trade Screenshot</label>
-            <input type="file" id="tradeScreenshot" accept="image/*" />
-          </div>
-          <button type="submit" class="btn">Upload</button>
-        </form>
-        <div id="currentTradesList"></div>
-      </section>
-
-      <!-- Trade History -->
-      <section id="trades-history" class="hidden">
-        <h2>Trade History</h2>
-        <form id="historyForm">
-          <div class="form-group"><label>Date</label><input type="date" id="historyDate" required></div>
-          <div class="form-group"><label>Description</label><textarea id="historyDesc" rows="3" required></textarea></div>
-          <button type="submit" class="btn">Add Entry</button>
-        </form>
-        <ul id="historyList" style="list-style:none; color:#ccc; line-height:1.6;"></ul>
-      </section>
-
-      <!-- Signals -->
-      <section id="signals" class="hidden">
-        <h2>Publish Signal</h2>
-        <form id="signalForm">
-          <div class="form-group"><label>Currency Pair</label><input type="text" id="pair" required></div>
-          <div class="form-group"><label>Type (BUY/SELL)</label><input type="text" id="type" required></div>
-          <div class="form-group"><label>Entry Price</label><input type="text" id="entry" required></div>
-          <div class="form-group"><label>Take Profit</label><input type="text" id="tp" required></div>
-          <div class="form-group"><label>Stop Loss</label><input type="text" id="sl" required></div>
-          <div class="form-group"><label>Time</label><input type="text" id="time" placeholder="e.g. 10:30 AM" required></div>
-          <div class="form-group"><label>Note</label><input type="text" id="note" placeholder="Optional note"></div>
-          <button type="submit" class="btn">Publish</button>
-        </form>
-        <h3>Published Signals</h3>
-        <table>
-          <thead><tr><th>Date</th><th>Pair</th><th>Type</th><th>TP</th><th>SL</th><th>Action</th></tr></thead>
-          <tbody id="signalList"></tbody>
-        </table>
-      </section>
-
-      <!-- Broadcasts -->
-      <section id="broadcasts" class="hidden">
-        <h2>Send Broadcast</h2>
-        <form id="broadcastForm">
-          <div class="form-group"><label>Message</label><textarea id="broadcastMsg" rows="4" required></textarea></div>
-          <button type="submit" class="btn">Send to All VIPs</button>
-        </form>
-        <h3>Sent Broadcasts</h3>
-        <ul id="broadcastList" style="list-style:none; color:#ccc; line-height:1.6;"></ul>
-      </section>
-
-      <!-- Messages -->
-      <section id="messages" class="hidden">
-        <h2>Contact Messages</h2>
-        <table>
-          <thead><tr><th>Name</th><th>Email</th><th>Message</th><th>Date</th></tr></thead>
-          <tbody id="messagesTable"></tbody>
-        </table>
-      </section>
-
-      <!-- Settings -->
-      <section id="settings" class="hidden">
-        <h2>Payment & API Settings</h2>
-        <form id="settingsForm">
-          <div class="form-group"><label>Bitcoin Wallet Address</label><input type="text" id="btc" placeholder="e.g. bc1q…" /></div>
-          <div class="form-group"><label>Ethereum Wallet Address</label><input type="text" id="eth" placeholder="e.g. 0x…" /></div>
-          <div class="form-group"><label>USDT Wallet Address</label><input type="text" id="usdt" placeholder="e.g. T…" /></div>
-          <div class="form-group"><label>Paystack Public Key</label><input type="text" id="paystackKey" placeholder="pk_live_xxx…" /></div>
-          <button type="submit" class="btn">Save Settings</button>
-        </form>
-      </section>
-
-      <!-- Logs -->
-      <section id="logs" class="hidden">
-        <h2>Admin Logs</h2>
-        <ul id="log-list" style="color:#ccc; line-height:1.6;"></ul>
-      </section>
-
-    </div> <!-- /.content -->
-  </div> <!-- /.container -->
-    <script>
-    // Sidebar toggle
-    document.getElementById("toggleSidebar").addEventListener("click", () => {
-      document.body.classList.toggle("collapsed-sidebar");
-    });
-
-    // Section navigation
-    document.querySelectorAll(".sidebar a[data-section]").forEach(link => {
-      link.addEventListener("click", e => {
-        e.preventDefault();
-        document.querySelectorAll(".sidebar a").forEach(a => a.classList.remove("active"));
-        link.classList.add("active");
-        const sec = link.getAttribute("data-section");
-        document.querySelectorAll(".content section").forEach(s => s.classList.add("hidden"));
-        document.getElementById(sec).classList.remove("hidden");
-
-        // load data as needed
-        if (sec === "payments") loadPayments();
-        if (sec === "users")    renderUsers();
-        if (sec === "trades-current") renderCurrentTrades();
-        if (sec === "trades-history") renderTradeHistory();
-        if (sec === "signals")  renderSignals();
-        if (sec === "broadcasts") renderBroadcasts();
-        if (sec === "messages") renderMessages();
-        if (sec === "settings") loadSettings();
-        if (sec === "logs")     renderLogs();
-      });
-    });
-
-    // --- PAYMENTS (unchanged) ---
-    /* loadPayments, approvePayment, downloadPayments as before */
-
-    // --- USERS ---
-    function renderUsers() {
-      const table = document.getElementById("usersTable");
-      const users = JSON.parse(localStorage.getItem("users") || "[]");
-      table.innerHTML = "";
-      users.forEach((u,i) => {
-        const tr = document.createElement("tr");
-        tr.innerHTML = `
-          <td>${u.name}</td>
-          <td>${u.email}</td>
-          <td>${u.vip ? 'Yes' : 'No'}</td>
-          <td>${u.active ? 'Active' : 'Inactive'}</td>
-          <td>
-            <button class="btn" onclick="toggleUser(${i})">${u.active ? 'Deactivate' : 'Activate'}</button>
-            <button class="btn" onclick="deleteUser(${i})">Delete</button>
-          </td>`;
-        table.appendChild(tr);
-      });
+  <!-- Password Prompt -->
+  <script>
+    if (sessionStorage.getItem('adminAuth') !== 'granted') {
+      const pass = prompt("Enter admin password:");
+      if (pass !== 'Blessed@123') {
+        alert("Access Denied.");
+        location.href = 'index.html';
+      } else {
+        sessionStorage.setItem('adminAuth', 'granted');
+      }
     }
-    function toggleUser(i) {
-      const users = JSON.parse(localStorage.getItem("users")||"[]");
-      users[i].active = !users[i].active;
-      localStorage.setItem("users", JSON.stringify(users));
-      renderUsers();
-    }
-    function deleteUser(i) {
-      if (!confirm("Delete this user?")) return;
-      const users = JSON.parse(localStorage.getItem("users")||"[]");
-      users.splice(i,1);
-      localStorage.setItem("users", JSON.stringify(users));
-      renderUsers();
-    }
-
-    // --- CURRENT TRADES ---
-    function renderCurrentTrades() {
-      const list = document.getElementById("currentTradesList");
-      const arr = JSON.parse(localStorage.getItem("currentTrades")||"[]");
-      list.innerHTML = "";
-      arr.forEach((t,i) => {
-        const img = document.createElement("img");
-        img.src = t.data;
-        img.style.maxWidth = "200px";
-        img.style.margin = "5px";
-        list.appendChild(img);
-      });
-    }
-    document.getElementById("currentTradeForm").addEventListener("submit", e => {
-      e.preventDefault();
-      const file = document.getElementById("tradeScreenshot").files[0];
-      if (!file) return alert("Select an image.");
-      const reader = new FileReader();
-      reader.onload = e2 => {
-        const arr = JSON.parse(localStorage.getItem("currentTrades")||"[]");
-        arr.unshift({ data: e2.target.result, date: new Date().toISOString() });
-        localStorage.setItem("currentTrades", JSON.stringify(arr));
-        renderCurrentTrades();
-      };
-      reader.readAsDataURL(file);
-    });
-
-    // --- TRADE HISTORY ---
-    function renderTradeHistory() {
-      const ul = document.getElementById("historyList");
-      const arr = JSON.parse(localStorage.getItem("tradeHistory")||"[]");
-      ul.innerHTML = "";
-      arr.forEach(h => {
-        const li = document.createElement("li");
-        li.textContent = `${h.date}: ${h.desc}`;
-        ul.appendChild(li);
-      });
-    }
-    document.getElementById("historyForm").addEventListener("submit", e => {
-      e.preventDefault();
-      const date = document.getElementById("historyDate").value;
-      const desc = document.getElementById("historyDesc").value;
-      const arr = JSON.parse(localStorage.getItem("tradeHistory")||"[]");
-      arr.unshift({ date, desc });
-      localStorage.setItem("tradeHistory", JSON.stringify(arr));
-      renderTradeHistory();
-      e.target.reset();
-    });
-
-    // --- SIGNALS ---
-    /* renderSignals, signalForm logic as before */
-
-    // --- BROADCASTS ---
-    function renderBroadcasts() {
-      const ul = document.getElementById("broadcastList");
-      const arr = JSON.parse(localStorage.getItem("broadcasts")||"[]");
-      ul.innerHTML = "";
-      arr.forEach(b => {
-        const li = document.createElement("li");
-        li.textContent = `[${new Date(b.time).toLocaleString()}] ${b.msg}`;
-        ul.appendChild(li);
-      });
-    }
-    document.getElementById("broadcastForm").addEventListener("submit", e => {
-      e.preventDefault();
-      const msg = document.getElementById("broadcastMsg").value.trim();
-      if (!msg) return alert("Enter a message.");
-      const arr = JSON.parse(localStorage.getItem("broadcasts")||"[]");
-      arr.unshift({ msg, time: Date.now() });
-      localStorage.setItem("broadcasts", JSON.stringify(arr));
-      alert("Broadcast sent to all VIP users!");
-      renderBroadcasts();
-      e.target.reset();
-    });
-
-    // --- MESSAGES ---
-    function renderMessages() {
-      const tbody = document.getElementById("messagesTable");
-      const msgs = JSON.parse(localStorage.getItem("applications")||"[]");
-      tbody.innerHTML = "";
-      msgs.forEach(m => {
-        const tr = document.createElement("tr");
-        tr.innerHTML = `
-          <td>${m.name}</td>
-          <td>${m.email}</td>
-          <td>${m.message}</td>
-          <td>${new Date(m.date).toLocaleString()}</td>`;
-        tbody.appendChild(tr);
-      });
-    }
-
-    // --- SETTINGS ---
-    function loadSettings() {
-      const s = JSON.parse(localStorage.getItem("paymentSettings")||"{}");
-      document.getElementById("btc").value  = s.btc  || "";
-      document.getElementById("eth").value  = s.eth  || "";
-      document.getElementById("usdt").value = s.usdt || "";
-      document.getElementById("paystackKey").value = s.paystackKey || "";
-    }
-    document.getElementById("settingsForm").addEventListener("submit", e => {
-      e.preventDefault();
-      const newS = {
-        btc: document.getElementById("btc").value.trim(),
-        eth: document.getElementById("eth").value.trim(),
-        usdt: document.getElementById("usdt").value.trim(),
-        paystackKey: document.getElementById("paystackKey").value.trim()
-      };
-      localStorage.setItem("paymentSettings", JSON.stringify(newS));
-      addLog("Updated payment & API settings");
-      alert("Settings saved successfully!");
-    });
-
-    // --- LOGS ---
-    function renderLogs() {
-      const ul = document.getElementById("log-list");
-      const logs = JSON.parse(localStorage.getItem("adminLogs")||"[]");
-      ul.innerHTML = "";
-      logs.forEach(l => {
-        const li = document.createElement("li");
-        li.textContent = `[${new Date(l.time).toLocaleString()}] ${l.action}`;
-        ul.appendChild(li);
-      });
-    }
-    function addLog(action) {
-      const logs = JSON.parse(localStorage.getItem("adminLogs")||"[]");
-      logs.unshift({ time: Date.now(), action });
-      localStorage.setItem("adminLogs", JSON.stringify(logs));
-    }
-
-    // Initialize
-    window.addEventListener("DOMContentLoaded", () => {
-      renderUsers();
-      renderCurrentTrades();
-      renderTradeHistory();
-      renderSignals();
-      renderBroadcasts();
-      renderMessages();
-      loadSettings();
-      renderLogs();
-      loadPayments();
-    });
   </script>
-</body>
-</html>
+
+  <div class="sidebar" id="sidebar">
+    <h2>CBE Admin</h2>
+    <a href="#" onclick="loadSection('dashboard')">Dashboard</a>
+    <a href="#" onclick="loadSection('payments')">Payments</a>
+    <a href="#" onclick="loadSection('users')">Users</a>
+    <a href="#" onclick="loadSection('trades')">Trades</a>
+    <a href="#" onclick="loadSection('tradeHistory')">Trade History</a>
+    <a href="#" onclick="loadSection('signals')">Signals</a>
+    <a href="#" onclick="loadSection('broadcasts')">Broadcasts</a>
+    <a href="#" onclick="loadSection('messages')">Messages</a>
+    <a href="#" onclick="loadSection('settings')">Settings</a>
+    <a href="#" onclick="loadSection('logs')">Logs</a>
+  </div>
+
+  <div class="topbar" id="topbar">
+    <span class="toggle-sidebar" onclick="toggleSidebar()">☰</span>
+    <strong>Admin Panel</strong>
+  </div>
+
+  <div class="main" id="mainContent">
+    <h1>Welcome to CBE Admin Panel</h1>
+    <p>Select a section from the sidebar to begin.</p>
+  </div>
