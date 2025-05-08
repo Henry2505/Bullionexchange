@@ -243,8 +243,8 @@
     <h1>Make a Payment</h1>
     <form id="payment-form">
       <input type="email" id="payment-email" placeholder="Your Email" required>
-      <select id="payment-plan" required>
-        <option value="" disabled selected>Select a Plan</option>
+      <select id="payment-method" required>
+        <option value="" disabled selected>Select a Payment Method</option>
       </select>
       <textarea id="payment-details" rows="3" placeholder="Payment Details (e.g., Transaction ID)" required></textarea>
       <button type="submit">Submit Payment</button>
@@ -263,28 +263,24 @@
 
     window.onload = function() {
       const siteData = JSON.parse(localStorage.getItem('siteData') || '{}');
-      const paymentPlans = siteData.paymentPlans || [
-        { name: 'Weekly', price: 50 },
-        { name: 'Monthly', price: 150 },
-        { name: 'Yearly', price: 1500 }
-      ];
-      const paymentPlanSelect = document.getElementById('payment-plan');
-      paymentPlans.forEach(plan => {
+      const paymentMethods = siteData.paymentMethods || [];
+      const paymentMethodSelect = document.getElementById('payment-method');
+      paymentMethods.forEach(method => {
         const option = document.createElement('option');
-        option.value = plan.name.toLowerCase();
-        option.textContent = `${plan.name} ($${plan.price})`;
-        paymentPlanSelect.appendChild(option);
+        option.value = method.name;
+        option.textContent = `${method.name}: ${method.details}`;
+        paymentMethodSelect.appendChild(option);
       });
     };
 
     document.getElementById('payment-form').addEventListener('submit', function(e) {
       e.preventDefault();
       const email = document.getElementById('payment-email').value;
-      const plan = document.getElementById('payment-plan').value;
+      const method = document.getElementById('payment-method').value;
       const details = document.getElementById('payment-details').value;
 
-      if (email && plan && details) {
-        const payment = { email, plan, details, status: 'pending', date: new Date().toISOString() };
+      if (email && method && details) {
+        const payment = { email, method, details, status: 'pending', date: new Date().toISOString() };
         let payments = JSON.parse(localStorage.getItem('payments') || '[]');
         payments.push(payment);
         localStorage.setItem('payments', JSON.stringify(payments));
