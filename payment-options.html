@@ -6,7 +6,7 @@
   <title>Payment Options – CBE</title>
   <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;500;700&display=swap" rel="stylesheet">
   <style>
-    /* ← all your existing styles untouched → */
+    /* ← your existing styles, unchanged → */
     body { margin:0; font-family:'Poppins',sans-serif; background:#0b0b0b; color:#f5f5f5; }
     .container { max-width:700px; margin:120px auto 40px; padding:30px; background:rgba(0,0,0,0.7); border-radius:10px; box-shadow:0 0 20px gold; }
     h1 { color:gold; text-align:center; margin-bottom:30px; }
@@ -33,7 +33,6 @@
     <h1>Payment Options</h1>
     <p class="info" id="selectedPlanInfo">Loading...</p>
 
-    <!-- form wrapper -->
     <form id="paymentForm">
       <input type="email" id="userEmail" placeholder="Enter your email" required />
 
@@ -65,7 +64,10 @@
     document.addEventListener('DOMContentLoaded', () => {
       // Load admin settings
       let settings = {};
-      try { settings = JSON.parse(localStorage.getItem('paymentSettings')) || {}; } catch {}
+      try {
+        settings = JSON.parse(localStorage.getItem('paymentSettings')) || {};
+      } catch {}
+
       const walletMap   = { Bitcoin: settings.btc, Ethereum: settings.eth, USDT: settings.usdt };
       const paystackKey = settings.paystackKey || '';
 
@@ -84,8 +86,8 @@
         document.getElementById('cryptoOptions').style.display = 'block';
       });
 
-      // Update wallet display
-      document.getElementById('cryptoType').addEventListener('change', function(){
+      // Update wallet address
+      document.getElementById('cryptoType').addEventListener('change', function() {
         document.getElementById('walletAddress').textContent =
           walletMap[this.value] || 'Not set';
       });
@@ -96,30 +98,32 @@
         if (w && w !== 'Not set') {
           navigator.clipboard.writeText(w).then(() => alert('Wallet address copied'));
         } else {
-          alert('No wallet to copy');
+          alert('No wallet address to copy');
         }
       });
 
       // Simulate Paystack
       document.getElementById('paystackBtn').addEventListener('click', () => {
-        if (!paystackKey) return alert('Paystack key missing in Admin Settings.');
-        alert('Simulated Paystack payment – then submit below.');
+        if (!paystackKey) {
+          return alert('Paystack key not set in Admin Settings');
+        }
+        alert('Simulated Paystack payment – then press Submit Payment');
       });
 
-      // Handle form submit
+      // Form submission
       document.getElementById('paymentForm').addEventListener('submit', e => {
         e.preventDefault();
 
-        const email     = document.getElementById('userEmail').value.trim().toLowerCase();
-        const cryptoType= document.getElementById('cryptoType').value;
-        const wallet    = walletMap[cryptoType] || '';
-        let records     = JSON.parse(localStorage.getItem('paymentRecords')||'[]');
+        const email      = document.getElementById('userEmail').value.trim().toLowerCase();
+        const cryptoType = document.getElementById('cryptoType').value;
+        const wallet     = walletMap[cryptoType] || '';
+        let records      = JSON.parse(localStorage.getItem('paymentRecords') || '[]');
 
         // Validations
         if (!email || !email.includes('@')) {
-          return alert('Please enter a valid email.');
+          return alert('Enter a valid email.');
         }
-        if (document.getElementById('cryptoOptions').style.display==='block' && !cryptoType) {
+        if (document.getElementById('cryptoOptions').style.display === 'block' && !cryptoType) {
           return alert('Please select a cryptocurrency.');
         }
         if (!pkg || !planNames[pkg]) {
@@ -128,28 +132,30 @@
 
         // Build record
         const rec = {
-          name:       email.split('@')[0],
+          name:        email.split('@')[0],
           email,
-          username:   email.split('@')[0],
-          amount:     pkg==='weekly'?50:pkg==='monthly'?150:pkg==='yearly'?1500:0,
-          method:     wallet ? cryptoType : 'Paystack',
-          walletType: cryptoType || 'Paystack',
-          proof:      '',           // proof removed
-          status:     'pending',
-          submittedAt:new Date().toISOString()
+          username:    email.split('@')[0],
+          amount:      pkg === 'weekly' ? 50 : pkg === 'monthly' ? 150 : pkg === 'yearly' ? 1500 : 0,
+          method:      wallet ? cryptoType : 'Paystack',
+          walletType:  cryptoType || 'Paystack',
+          proof:       '',
+          status:      'pending',
+          submittedAt: new Date().toISOString()
         };
 
         // Prevent duplicate
-        if (records.some(r=>r.email===email && r.method===rec.method && r.status!=='expired')) {
+        if (records.some(r => r.email === email && r.method === rec.method && r.status !== 'expired')) {
           return alert('You already submitted this payment.');
         }
 
+        // Save and redirect
         records.push(rec);
         localStorage.setItem('paymentRecords', JSON.stringify(records));
-        sessionStorage.setItem('paymentApproved','false');
+        sessionStorage.setItem('paymentApproved', 'false');
 
-        alert('Payment submitted successfully! Await approval.');
-        window.location.href = 'CBE_login.html';
+        alert('Payment submitted successfully! Awaiting approval.');
+        // ← redirect to homepage
+        window.location.href = 'index.html';
       });
     });
   </script>
