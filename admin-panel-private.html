@@ -76,10 +76,13 @@
       background: #222;
       min-width: 200px;
       box-shadow: 0 8px 16px rgba(0, 0, 0, 0.5);
-      z-index: 1;
+      z-index: 1001;
       border-radius: 5px;
       top: 100%;
       right: 0;
+    }
+    .dropdown:hover .dropdown-content {
+      display: block;
     }
     .dropdown-content a {
       color: #ccc;
@@ -87,13 +90,11 @@
       text-decoration: none;
       display: block;
       transition: all 0.3s;
+      cursor: pointer;
     }
     .dropdown-content a:hover {
       background: rgba(255, 215, 0, 0.2);
       color: #fff;
-    }
-    .dropdown:hover .dropdown-content {
-      display: block;
     }
     .login-container {
       position: fixed;
@@ -105,9 +106,9 @@
       border-radius: 15px;
       box-shadow: 0 0 20px rgba(255, 215, 0, 0.5);
       text-align: center;
-      z-index: 1000;
-      display: none;
+      z-index: 1002;
       width: 300px;
+      display: none;
     }
     .login-container.active {
       display: block;
@@ -133,10 +134,11 @@
       border: none;
       border-radius: 5px;
       cursor: pointer;
-      transition: background 0.3s;
+      transition: background 0.3s, transform 0.2s;
     }
     .login-container button:hover {
       background: #ffd700;
+      transform: scale(1.05);
     }
     .container {
       min-height: calc(100vh - 90px);
@@ -370,14 +372,14 @@
     <h3>Admin Control</h3>
     <div class="dropdown">
       <button class="dropbtn">Sections ▼</button>
-      <div class="dropdown-content">
-        <a href="#application-verification">Application Verification</a>
-        <a href="#user-management">User Management</a>
-        <a href="#signal-management">Signal Management</a>
-        <a href="#trade-history">Trade History</a>
-        <a href="#market-analysis">Market Analysis</a>
-        <a href="#content-editing">Content Editing</a>
-        <a href="#settings">Settings</a>
+      <div class="dropdown-content" id="dropdownMenu">
+        <a onclick="navigateToSection('application-verification')">Application Verification</a>
+        <a onclick="navigateToSection('user-management')">User Management</a>
+        <a onclick="navigateToSection('signal-management')">Signal Management</a>
+        <a onclick="navigateToSection('trade-history')">Trade History</a>
+        <a onclick="navigateToSection('market-analysis')">Market Analysis</a>
+        <a onclick="navigateToSection('content-editing')">Content Editing</a>
+        <a onclick="navigateToSection('settings')">Settings</a>
       </div>
     </div>
   </div>
@@ -543,6 +545,12 @@
     let tradeHistory = [];
     let marketInsights = [];
 
+    // Ensure login screen is shown on page load
+    document.addEventListener('DOMContentLoaded', () => {
+      loginContainer.classList.add('active');
+      adminPanel.classList.remove('active');
+    });
+
     function login() {
       const password = document.getElementById('adminPassword').value;
       if (password === ADMIN_PASSWORD) {
@@ -551,6 +559,7 @@
         loadData();
       } else {
         alert('Incorrect password. Access denied.');
+        document.getElementById('adminPassword').value = '';
       }
     }
 
@@ -573,6 +582,20 @@
       updateTradeHistory();
       updateMarketInsights();
       updateContentDisplay();
+    }
+
+    function navigateToSection(sectionId) {
+      const section = document.getElementById(sectionId);
+      if (section) {
+        // Close all sections
+        document.querySelectorAll('.dashboard-section').forEach(sec => {
+          sec.classList.remove('active');
+        });
+        // Open the selected section
+        section.classList.add('active');
+        // Scroll to the section smoothly
+        section.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      }
     }
 
     function toggleSection(sectionId) {
@@ -607,4 +630,172 @@
         if (user) {
           user.status = 'active';
         } else {
-          usersData.users.push({ id: usersData.users.length + 1, email, name: app.name, status: 'active'
+          usersData.users.push({ id: usersData.users.length + 1, email, name: app.name, status: 'active' });
+          usersData.totalUsers = usersData.users.length;
+        }
+        updateApplicationList();
+        updateUserTable();
+        saveData();
+        alert('Application approved and user activated.');
+      }
+    }
+
+    function rejectApplication(email) {
+      applications = applications.filter(a => a.email !== email);
+      updateApplicationList();
+      saveData();
+      alert('Application rejected.');
+    }
+
+    // User Management
+    function updateUserTable() {
+      const userTable = document.getElementById('user-table');
+      document.getElementById('total-users').textContent = usersData.totalUsers;
+      userTable.innerHTML = usersData.users.length ? usersData.users.map(user => `
+        <tr>
+          <td style="padding: 10px; border: 1px solid #555;">${user.id}</td>
+          <td style="padding: 10px; border: 1px solid #555;">${user.name || 'N/A'}</td>
+          <td style="padding: 10px; border: 1px solid #555;">${user.email}</td>
+          <td style="padding: 10px; border: 1px solid #555;">${user.status}</td>
+          <td style="padding: 10px; border: 1px solid #555;">
+            <button onclick="deleteUser(${user.id})" style="background: #f44336; color: #fff; padding: 5px 10px; border: none; border-radius: 5px;">Delete</button>
+          </td>
+        </tr>
+      `).join('') : '<tr><td colspan="5" style="padding: 10px; text-align: center; color: #ddd;">No users yet.</td></tr>';
+    }
+
+    function verifyUser() {
+      const email = document.getElementById('verify-email').value;
+      if (email) {
+        const newUser = { id: usersData.users.length + 1, email, status: 'pending', name: 'New User' };
+        usersData.users.push(newUser);
+        usersData.totalUsers = usersData.users.length;
+        updateUserTable();
+        saveData();
+        document.getElementById('verify-email').value = '';
+        alert('User verification submitted. Check status later.');
+      }
+    }
+
+    function updateUserStatus() {
+      const email = document.getElementById('update-email').value;
+      const status = document.getElementById('update-status').value;
+      if (email) {
+        const user = usersData.users.find(u => u.email === email);
+        if (user) {
+          user.status = status;
+          updateUserTable();
+          saveData();
+          alert('User status updated.');
+        } else {
+          alert('User not found.');
+        }
+        document.getElementById('update-email').value = '';
+      }
+    }
+
+    function deleteUser(id) {
+      usersData.users = usersData.users.filter(user => user.id !== id);
+      usersData.totalUsers = usersData.users.length;
+      updateUserTable();
+      saveData();
+    }
+
+    // Signal Management
+    function sendSignal() {
+      const signal = document.getElementById('signal-content').value;
+      if (signal) {
+        signals.unshift({ id: signals.length + 1, content: signal, date: new Date().toISOString() });
+        document.getElementById('signal-status').textContent = 'Signal sent successfully!';
+        updateSignalHistory();
+        saveData();
+        setTimeout(() => document.getElementById('signal-status').textContent = '', 3000);
+        document.getElementById('signal-content').value = '';
+      }
+    }
+
+    function updateSignalHistory() {
+      const signalHistory = document.getElementById('signal-history');
+      signalHistory.innerHTML = signals.length ? signals.map(s => `<p>${s.content} <small>(${new Date(s.date).toLocaleString()})</small></p>`).join('') : '<p>No signals yet.</p>';
+    }
+
+    // Trade History
+    document.getElementById('trade-file').addEventListener('change', function(e) {
+      const file = e.target.files[0];
+      if (file) {
+        tradeHistory.unshift({ id: tradeHistory.length + 1, fileName: file.name, date: new Date().toISOString() });
+        document.getElementById('upload-status').textContent = 'Trade history uploaded successfully!';
+        updateTradeHistory();
+        saveData();
+        setTimeout(() => document.getElementById('upload-status').textContent = '', 3000);
+        e.target.value = '';
+      }
+    });
+
+    function updateTradeHistory() {
+      const tradeHistoryList = document.getElementById('trade-history-list');
+      tradeHistoryList.innerHTML = tradeHistory.length ? tradeHistory.map(t => `<p>${t.fileName} <small>(${new Date(t.date).toLocaleString()})</small></p>`).join('') : '<p>No trade history uploaded.</p>';
+    }
+
+    // Market Analysis
+    function addMarketInsight() {
+      const insight = document.getElementById('market-insight').value;
+      if (insight) {
+        marketInsights.unshift({ id: marketInsights.length + 1, content: insight, date: new Date().toISOString() });
+        document.getElementById('market-insights').textContent = '';
+        updateMarketInsights();
+        saveData();
+        document.getElementById('market-insight').value = '';
+      }
+    }
+
+    function updateMarketInsights() {
+      const insightsDiv = document.getElementById('market-insights');
+      insightsDiv.innerHTML = marketInsights.length ? marketInsights.map(i => `<p>${i.content} <small>(${new Date(i.date).toLocaleString()})</small></p>`).join('') : '<p>No insights yet.</p>';
+    }
+
+    // Content Editing
+    function updateContentDisplay() {
+      const page = document.getElementById('edit-page').value;
+      document.getElementById('current-content').value = siteData.content[page];
+    }
+
+    function updateContent() {
+      const page = document.getElementById('edit-page').value;
+      const content = document.getElementById('edit-content').value;
+      if (content) {
+        siteData.content[page] = content;
+        document.getElementById('content-status').textContent = `Content updated for ${page} page!`;
+        updateContentDisplay();
+        saveData();
+        setTimeout(() => document.getElementById('content-status').textContent = '', 3000);
+        document.getElementById('edit-content').value = '';
+      }
+    }
+
+    // Settings
+    function updateAnnouncement() {
+      const announcement = document.getElementById('site-announcement').value;
+      if (announcement) {
+        siteData.announcement = announcement;
+        document.getElementById('announcement-status').textContent = 'Announcement updated!';
+        saveData();
+        setTimeout(() => document.getElementById('announcement-status').textContent = '', 3000);
+        document.getElementById('site-announcement').value = '';
+      }
+    }
+
+    // Save all data to localStorage
+    function saveData() {
+      localStorage.setItem('usersData', JSON.stringify(usersData));
+      localStorage.setItem('applications', JSON.stringify(applications));
+      localStorage.setItem('siteData', JSON.stringify(siteData));
+      localStorage.setItem('signals', JSON.stringify(signals));
+      localStorage.setItem('tradeHistory', JSON.stringify(tradeHistory));
+      localStorage.setItem('marketInsights', JSON.stringify(marketInsights));
+    }
+
+    document.getElementById('edit-page').addEventListener('change', updateContentDisplay);
+  </script>
+</body>
+</html>
