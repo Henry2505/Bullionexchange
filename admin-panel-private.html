@@ -140,6 +140,21 @@
       color: #f5f5f5;
       border-radius: 6px;
     }
+
+    .download-btn {
+      margin-bottom: 10px;
+      background: #0b0b0b;
+      border: 1px solid gold;
+      color: gold;
+      padding: 8px 12px;
+      border-radius: 4px;
+      cursor: pointer;
+    }
+
+    .download-btn:hover {
+      background: gold;
+      color: #000;
+    }
   </style>
 </head>
 <body>
@@ -160,7 +175,13 @@
     <nav class="sidebar">
       <a href="#" class="active" data-section="dashboard">Dashboard</a>
       <a href="#" data-section="payments">Payments</a>
+      <a href="#" data-section="users">Users</a>
+      <a href="#" data-section="trades">Trades</a>
+      <a href="#" data-section="signals">Signals</a>
+      <a href="#" data-section="broadcasts">Broadcasts</a>
+      <a href="#" data-section="messages">Inbox</a>
       <a href="#" data-section="settings">Settings</a>
+      <a href="#" data-section="logs">Logs</a>
       <a href="index.html" target="_blank">Visit Site</a>
       <a href="admin-login.html" class="btn">Logout</a>
     </nav>
@@ -173,15 +194,22 @@
 
       <section id="payments" class="hidden">
         <h2>Payment Approvals</h2>
+        <button class="download-btn" onclick="exportPayments()">Download Payment CSV</button>
         <table>
           <thead>
-            <tr><th>Method</th><th>Plan</th><th>Proof</th><th>Action</th></tr>
+            <tr><th>Email</th><th>Method</th><th>Plan</th><th>Proof</th><th>Action</th></tr>
           </thead>
           <tbody id="payments-list"></tbody>
         </table>
       </section>
 
-      <section id="settings" class="hidden">
+      <!-- Placeholder sections for restored pages -->
+      <section id="users" class="hidden"><h2>Users</h2><p>User management coming soon.</p></section>
+      <section id="trades" class="hidden"><h2>Trades</h2><p>Trade records management.</p></section>
+      <section id="signals" class="hidden"><h2>Signals</h2><p>Publish or edit signal alerts.</p></section>
+      <section id="broadcasts" class="hidden"><h2>Broadcasts</h2><p>Send messages to all VIP users.</p></section>
+      <section id="messages" class="hidden"><h2>Inbox</h2><p>Contact form messages will appear here.</p></section>
+            <section id="settings" class="hidden">
         <h2>Wallet Settings</h2>
         <form id="settingsForm">
           <div class="form-group"><label>Bitcoin Wallet</label><input type="text" id="btc" /></div>
@@ -190,21 +218,24 @@
           <button type="submit" class="btn">Save Settings</button>
         </form>
       </section>
-          </div> <!-- end .content -->
-  </div> <!-- end .container -->
+
+      <section id="logs" class="hidden">
+        <h2>Admin Logs</h2>
+        <ul id="log-list" style="line-height: 1.8; color: #ccc;"></ul>
+      </section>
+    </div> <!-- end content -->
+  </div> <!-- end container -->
 
   <script>
     document.getElementById("toggleSidebar").addEventListener("click", () => {
       document.body.classList.toggle("collapsed-sidebar");
     });
 
-    // Section Switching
     document.querySelectorAll('.sidebar a[data-section]').forEach(link => {
       link.addEventListener('click', e => {
         e.preventDefault();
         document.querySelectorAll('.sidebar a').forEach(a => a.classList.remove('active'));
         link.classList.add('active');
-
         const sectionId = link.getAttribute('data-section');
         document.querySelectorAll('.content section').forEach(sec => {
           sec.classList.add('hidden');
@@ -213,46 +244,82 @@
       });
     });
 
-    // Show Payment Records
     const payments = JSON.parse(localStorage.getItem('payments') || '[]');
     const table = document.getElementById('payments-list');
     payments.forEach((payment, index) => {
       const row = document.createElement('tr');
       row.innerHTML = `
+        <td>${payment.email || ''}</td>
         <td>${payment.method}</td>
         <td>${payment.plan}</td>
         <td><img src="${payment.proof}" alt="Proof" style="max-height:60px;"></td>
-        <td>
-          <button class="btn" onclick="approvePayment(${index})">Approve</button>
-        </td>
+        <td><button class="btn" onclick="approvePayment(${index})">Approve</button></td>
       `;
       table.appendChild(row);
     });
 
     function approvePayment(index) {
       const payments = JSON.parse(localStorage.getItem('payments') || '[]');
+      const payment = payments[index];
       payments[index].status = "approved";
       localStorage.setItem('payments', JSON.stringify(payments));
-      alert("Payment approved!");
+
+      let vipUsers = JSON.parse(localStorage.getItem('vipUsers') || '[]');
+      if (payment.email && !vipUsers.includes(payment.email)) {
+        vipUsers.push(payment.email);
+        localStorage.setItem('vipUsers', JSON.stringify(vipUsers));
+      }
+
+      addLog(`Approved payment for ${payment.email} (${payment.plan})`);
+      alert("Payment approved and VIP access granted.");
       location.reload();
     }
 
-    // Load Wallet Settings
-    const settings = JSON.parse(localStorage.getItem('settings') || '{}');
-    document.getElementById('btc').value = settings.btc || '';
-    document.getElementById('eth').value = settings.eth || '';
-    document.getElementById('usdt').value = settings.usdt || '';
+    // Load and save settings
+    const savedSettings = JSON.parse(localStorage.getItem('settings') || '{}');
+    document.getElementById('btc').value = savedSettings.btc || '';
+    document.getElementById('eth').value = savedSettings.eth || '';
+    document.getElementById('usdt').value = savedSettings.usdt || '';
 
-    // Save Wallet Settings
     document.getElementById('settingsForm').addEventListener('submit', function(e) {
       e.preventDefault();
       const btc = document.getElementById('btc').value;
       const eth = document.getElementById('eth').value;
       const usdt = document.getElementById('usdt').value;
-      const walletData = { btc, eth, usdt };
-      localStorage.setItem('settings', JSON.stringify(walletData));
-      alert('Wallet addresses saved successfully!');
+      const settings = { btc, eth, usdt };
+      localStorage.setItem('settings', JSON.stringify(settings));
+      addLog('Updated wallet settings.');
+      alert('Wallet settings saved.');
     });
+
+    // Logs
+    const logs = JSON.parse(localStorage.getItem('logs') || '[]');
+    const logList = document.getElementById('log-list');
+    logs.forEach(log => {
+      const li = document.createElement('li');
+      li.textContent = `[${new Date(log.time).toLocaleString()}] ${log.action}`;
+      logList.appendChild(li);
+    });
+
+    function addLog(action) {
+      const logs = JSON.parse(localStorage.getItem('logs') || '[]');
+      logs.unshift({ time: Date.now(), action });
+      localStorage.setItem('logs', JSON.stringify(logs));
+    }
+
+    function exportPayments() {
+      const payments = JSON.parse(localStorage.getItem('payments') || '[]');
+      let csv = "Email,Method,Plan,Status,SubmittedAt\n";
+      payments.forEach(p => {
+        csv += `${p.email || ''},${p.method},${p.plan},${p.status},${p.submittedAt}\n`;
+      });
+      const blob = new Blob([csv], { type: "text/csv" });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = "payments.csv";
+      a.click();
+    }
   </script>
 </body>
 </html>
