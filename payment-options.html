@@ -51,16 +51,13 @@
   </header>
 
   <main>
-    <div class="package-info" id="pkgInfo">
-      <!-- filled by JS -->
-    </div>
+    <div class="package-info" id="pkgInfo"></div>
 
     <div class="payment-methods">
       <button class="method-btn" id="paystackBtn">Paystack</button>
       <button class="method-btn" id="cryptoBtn">Cryptocurrency</button>
     </div>
 
-    <!-- Crypto flow -->
     <div id="cryptoOptions">
       <label><input type="radio" name="crypto" value="bitcoin"> Bitcoin</label>
       <label><input type="radio" name="crypto" value="ethereum"> Ethereum</label>
@@ -85,18 +82,28 @@
     © 2025 CBE – Chukwuemeka Bullion Exchange
   </footer>
 
-  <!-- Script: Fixed logic -->
   <script src="https://js.paystack.co/v1/inline.js"></script>
   <script>
-    // Display correct package
-    const pkg = sessionStorage.getItem('selectedPackage') || 'weekly';
-    const prices = { weekly: 50, monthly: 150, yearly: 1500 };
-    const names = { weekly: 'Weekly Plan', monthly: 'Monthly Plan', yearly: 'Yearly Plan' };
-    const amt = prices[pkg] || 0;
-    const name = names[pkg] || 'Unknown Plan';
-    document.getElementById('pkgInfo').textContent = `You selected the ${name} — $${amt}`;
+    const selectedPackage = sessionStorage.getItem('selectedPackage');
+    const prices = {
+      weekly: 50,
+      monthly: 150,
+      yearly: 1500
+    };
+    const labels = {
+      weekly: 'Weekly Plan',
+      monthly: 'Monthly Plan',
+      yearly: 'Yearly Plan'
+    };
 
-    // Prevent login if not approved
+    if (selectedPackage && prices[selectedPackage]) {
+      const price = prices[selectedPackage];
+      const label = labels[selectedPackage];
+      document.getElementById('pkgInfo').textContent = `You selected the ${label} — $${price}`;
+    } else {
+      document.getElementById('pkgInfo').textContent = 'No valid package selected.';
+    }
+
     document.getElementById('loginLink').addEventListener('click', e => {
       if (sessionStorage.getItem('paymentApproved') !== 'true') {
         e.preventDefault();
@@ -104,13 +111,13 @@
       }
     });
 
-    // Paystack button logic
     document.getElementById('paystackBtn').onclick = () => {
       document.getElementById('cryptoOptions').style.display = 'none';
+      const amount = prices[selectedPackage] * 100 || 0;
       PaystackPop.setup({
         key: 'REPLACE_WITH_YOUR_PAYSTACK_PUBLIC_KEY',
         email: sessionStorage.getItem('cbeEmail') || '',
-        amount: amt * 100,
+        amount: amount,
         currency: 'USD',
         callback: function(resp){
           alert('Payment successful! Ref: ' + resp.reference);
@@ -120,7 +127,6 @@
       }).openIframe();
     };
 
-    // Crypto selection logic
     document.getElementById('cryptoBtn').onclick = () => {
       document.getElementById('cryptoOptions').style.display = 'block';
       document.getElementById('walletInfo').style.display = 'none';
@@ -142,7 +148,6 @@
       });
     });
 
-    // Proof submission
     document.getElementById('submitProof').onclick = () => {
       const file = document.getElementById('proofFile').files[0];
       if (!file) return alert('Please upload proof of payment.');
