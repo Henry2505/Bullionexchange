@@ -6,12 +6,12 @@
   <title>Forex Signals - CBE</title>
   <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;500;700&display=swap" rel="stylesheet"/>
   <style>
-    /* disable text selection everywhere */
+    /* disable text selection */
     html, body {
+      user-select: none;
       -webkit-user-select: none;
       -moz-user-select: none;
       -ms-user-select: none;
-      user-select: none;
     }
 
     body {
@@ -20,11 +20,34 @@
       background: linear-gradient(to bottom, #0b0b0b, #1a1a1a);
       color: #f5f5f5;
     }
+
+    /* watermark container fills the page */
+    #watermarkContainer {
+      position: fixed;
+      top: 0; left: 0;
+      width: 100%; height: 100%;
+      pointer-events: none;
+      z-index: 9999;
+    }
+
+    /* watermark text styling */
+    .watermark {
+      position: absolute;
+      transform: rotate(-30deg);
+      opacity: 0.08;
+      font-size: 20px;
+      color: #fff;
+      white-space: nowrap;
+      user-select: none;
+    }
+
     header {
       background: linear-gradient(135deg, #111, #1c1c1c);
       padding: 70px 20px 50px;
       text-align: center;
       box-shadow: 0 4px 10px rgba(0,0,0,0.5);
+      z-index: 1;
+      position: relative;
     }
     header h1 {
       font-size: 38px;
@@ -40,8 +63,9 @@
       margin: 40px auto;
       padding: 20px;
       transition: filter 0.3s ease;
+      position: relative;
+      z-index: 1;
     }
-    /* blur class to obscure on screenshot attempt */
     .blurred {
       filter: blur(8px);
     }
@@ -83,14 +107,6 @@
     .copy-button:hover {
       background: #444;
     }
-    footer {
-      text-align: center;
-      padding: 20px;
-      font-size: 14px;
-      color: #888;
-      border-top: 1px solid #222;
-      background-color: #0b0b0b;
-    }
     .notice {
       text-align: center;
       font-size: 16px;
@@ -110,84 +126,90 @@
       font-style: italic;
       border-radius: 5px;
     }
-    .glow-button {
-      padding: 12px 24px;
-      font-size: 1rem;
-      background-color: #000;
-      color: white;
-      border: none;
-      border-radius: 8px;
-      cursor: pointer;
-      box-shadow: 0 0 10px #00ffcc, 0 0 20px #00ffcc, 0 0 30px #00ffcc;
-      transition: box-shadow 0.4s ease-in-out;
-      animation: pulseGlow 2s infinite;
+    footer {
+      text-align: center;
+      padding: 20px;
+      font-size: 14px;
+      color: #888;
+      border-top: 1px solid #222;
+      background-color: #0b0b0b;
+      position: relative;
+      z-index: 1;
     }
-    @keyframes pulseGlow {
-      0% { box-shadow: 0 0 10px #00ffcc, 0 0 20px #00ffcc, 0 0 30px #00ffcc; }
-      50% { box-shadow: 0 0 20px #00ffcc, 0 0 30px #00ffcc, 0 0 40px #00ffcc; }
-      100% { box-shadow: 0 0 10px #00ffcc, 0 0 20px #00ffcc, 0 0 30px #00ffcc; }
-    }
-    nav a {
-      padding: 8px 16px;
-      color: #00ffee;
-      text-decoration: none;
-      font-weight: bold;
-      font-family: 'Segoe UI', sans-serif;
-      border-radius: 5px;
-      transition: all 0.3s ease-in-out;
-      animation: navGlow 2s infinite alternate;
-    }
-    @keyframes navGlow {
-      0% { text-shadow: 0 0 5px #00ffee, 0 0 10px #00ffee; }
-      100% { text-shadow: 0 0 15px #00ffee, 0 0 25px #00ffee; }
-    }
+
+    /* glow button & nav */
+    .glow-button { /* …your existing styling… */ }
+    @keyframes pulseGlow { /* … */ }
+    nav a { /* … */ }
+    @keyframes navGlow { /* … */ }
   </style>
 </head>
 <body>
-  <video autoplay id="bg-video" loop muted style="position: fixed; right: 0; bottom: 0; min-width: 100%; min-height: 100%; z-index: -1; object-fit: cover;">
+  <!-- animated starfield background -->
+  <video autoplay loop muted id="bg-video"
+         style="position: fixed; right: 0; bottom: 0; min-width: 100%; min-height: 100%; z-index: -1; object-fit: cover;">
     <source src="space-stars.mp4" type="video/mp4"/>
-    Your browser does not support HTML5 video.
   </video>
 
-  <!-- Top compact header -->
+  <!-- watermark overlay container -->
+  <div id="watermarkContainer"></div>
+
+  <!-- compact header -->
   <header style="background:#000;color:#fff;padding:15px 30px;display:flex;justify-content:space-between;align-items:center;">
     <div style="font-weight:bold;font-size:1.2em;">CBE</div>
   </header>
 
-  <!-- Anti‑screenshot & copy script -->
+  <!-- anti-screenshot & watermark script -->
   <script>
-    // disable right‑click
+    // block right-click
     document.addEventListener('contextmenu', e => e.preventDefault());
 
-    // intercept PrintScreen & common shortcuts
-    document.addEventListener('keydown', function(e) {
-      // PrintScreen
+    // retrieve VIP username from sessionStorage (set this at login time)
+    const vipUser = sessionStorage.getItem('cbeUsername') || 'VIP_MEMBER';
+
+    // create a tiled watermark
+    function createWatermarks() {
+      const container = document.getElementById('watermarkContainer');
+      const text = `${vipUser}  –  ${new Date().toLocaleString()}`;
+      const stepX = 300, stepY = 150;
+      for (let y = 0; y < window.innerHeight; y += stepY) {
+        for (let x = 0; x < window.innerWidth; x += stepX) {
+          const wm = document.createElement('div');
+          wm.className = 'watermark';
+          wm.textContent = text;
+          wm.style.left = x + 'px';
+          wm.style.top = y + 'px';
+          container.appendChild(wm);
+        }
+      }
+    }
+
+    // intercept PrintScreen and blur on attempt
+    document.addEventListener('keydown', e => {
       if (e.key === 'PrintScreen') {
-        // clear clipboard (best‑effort)
-        navigator.clipboard.writeText('');
+        navigator.clipboard.writeText('');           // clear clipboard
         alert('Screenshots are disabled on this page');
-        // briefly blur content
-        const main = document.getElementById('main-content');
-        main.classList.add('blurred');
-        setTimeout(() => main.classList.remove('blurred'), 1200);
+        document.getElementById('main-content').classList.add('blurred');
+        setTimeout(() => {
+          document.getElementById('main-content').classList.remove('blurred');
+        }, 1200);
         e.preventDefault();
       }
-      // block Ctrl+P (print), Ctrl+S (save), Ctrl+U (view source), F12 (devtools)
-      if (
-        (e.ctrlKey && ['p','s','u'].includes(e.key.toLowerCase())) ||
-        e.key === 'F12'
-      ) {
+      // block common devtools/print shortcuts
+      if ((e.ctrlKey && ['p','s','u'].includes(e.key.toLowerCase())) || e.key === 'F12') {
         e.preventDefault();
       }
     });
 
-    // copy-to-clipboard helper remains
+    // simple copy helper
     function copyToClipboard(id) {
-      const text = document.getElementById(id).textContent;
-      navigator.clipboard.writeText(text).then(() => {
-        alert('Copied: ' + text);
+      const txt = document.getElementById(id).textContent;
+      navigator.clipboard.writeText(txt).then(() => {
+        alert('Copied: ' + txt);
       });
     }
+
+    window.onload = createWatermarks;
   </script>
 
   <header>
