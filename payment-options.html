@@ -156,9 +156,6 @@
       max-width: 600px;
       margin: 90px auto;
       text-align: center;
-      background: rgba(34, 34, 34, 0.9);
-      border-radius: 15px;
-      box-shadow: 0 0 25px rgba(255, 215, 0, 0.2);
     }
     .payment-section h1 {
       font-size: 36px;
@@ -170,7 +167,7 @@
       flex-direction: column;
       gap: 15px;
     }
-    .payment-section input, .payment-section select, .payment-section textarea {
+    .payment-section input, .payment-section textarea {
       padding: 10px;
       border: none;
       border-radius: 5px;
@@ -243,8 +240,11 @@
     <h1>Make a Payment</h1>
     <form id="payment-form">
       <input type="email" id="payment-email" placeholder="Your Email" required>
-      <select id="payment-method" required>
-        <option value="" disabled selected>Select a Payment Method</option>
+      <select id="payment-plan" required>
+        <option value="" disabled selected>Select a Plan</option>
+        <option value="weekly">Weekly ($50)</option>
+        <option value="monthly">Monthly ($150)</option>
+        <option value="yearly">Yearly ($1500)</option>
       </select>
       <textarea id="payment-details" rows="3" placeholder="Payment Details (e.g., Transaction ID)" required></textarea>
       <button type="submit">Submit Payment</button>
@@ -261,26 +261,14 @@
       menuOverlay.classList.toggle('active');
     });
 
-    window.onload = function() {
-      const siteData = JSON.parse(localStorage.getItem('siteData') || '{}');
-      const paymentMethods = siteData.paymentMethods || [];
-      const paymentMethodSelect = document.getElementById('payment-method');
-      paymentMethods.forEach(method => {
-        const option = document.createElement('option');
-        option.value = method.name;
-        option.textContent = `${method.name}: ${method.details}`;
-        paymentMethodSelect.appendChild(option);
-      });
-    };
-
     document.getElementById('payment-form').addEventListener('submit', function(e) {
       e.preventDefault();
       const email = document.getElementById('payment-email').value;
-      const method = document.getElementById('payment-method').value;
+      const plan = document.getElementById('payment-plan').value;
       const details = document.getElementById('payment-details').value;
 
-      if (email && method && details) {
-        const payment = { email, method, details, status: 'pending', date: new Date().toISOString() };
+      if (email && plan && details) {
+        const payment = { email, method: plan, details, status: 'pending', date: new Date().toISOString() };
         let payments = JSON.parse(localStorage.getItem('payments') || '[]');
         payments.push(payment);
         localStorage.setItem('payments', JSON.stringify(payments));
