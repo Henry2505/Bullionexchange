@@ -12,7 +12,6 @@
     header h1, footer { color:#bbb; }
     header h1 { font-size:2rem; margin-bottom:5px; color:gold; }
     main { max-width:600px; margin:60px auto; padding:20px; background:rgba(21,21,21,0.9); border-radius:10px; box-shadow:0 0 20px rgba(0,0,0,0.7); position:relative; z-index:1; }
-    .package-info { font-size:1.1rem; margin-bottom:30px; color:#ffcc00; text-align:center; }
     .payment-methods { display:flex; justify-content:space-around; margin-bottom:30px; }
     .method-btn { padding:15px 25px; border:none; border-radius:8px; font-size:1rem; cursor:pointer;
                   box-shadow:0 0 10px #00ffcc,0 0 20px #00ffcc; animation:pulseGlow 2s infinite ease-in-out; background:#000; color:#fff; }
@@ -51,7 +50,7 @@
   </header>
 
   <main>
-    <div class="package-info" id="pkgInfo"></div>
+    <!-- Package message removed -->
 
     <div class="payment-methods">
       <button class="method-btn" id="paystackBtn">Paystack</button>
@@ -84,25 +83,7 @@
 
   <script src="https://js.paystack.co/v1/inline.js"></script>
   <script>
-    const selectedPackage = sessionStorage.getItem('selectedPackage');
-    const prices = {
-      weekly: 50,
-      monthly: 150,
-      yearly: 1500
-    };
-    const labels = {
-      weekly: 'Weekly Plan',
-      monthly: 'Monthly Plan',
-      yearly: 'Yearly Plan'
-    };
-
-    if (selectedPackage && prices[selectedPackage]) {
-      const price = prices[selectedPackage];
-      const label = labels[selectedPackage];
-      document.getElementById('pkgInfo').textContent = `You selected the ${label} — $${price}`;
-    } else {
-      document.getElementById('pkgInfo').textContent = 'No valid package selected.';
-    }
+    const defaultAmount = 50; // You can update this manually if needed
 
     document.getElementById('loginLink').addEventListener('click', e => {
       if (sessionStorage.getItem('paymentApproved') !== 'true') {
@@ -113,11 +94,10 @@
 
     document.getElementById('paystackBtn').onclick = () => {
       document.getElementById('cryptoOptions').style.display = 'none';
-      const amount = prices[selectedPackage] * 100 || 0;
       PaystackPop.setup({
         key: 'REPLACE_WITH_YOUR_PAYSTACK_PUBLIC_KEY',
         email: sessionStorage.getItem('cbeEmail') || '',
-        amount: amount,
+        amount: defaultAmount * 100,
         currency: 'USD',
         callback: function(resp){
           alert('Payment successful! Ref: ' + resp.reference);
