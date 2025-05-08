@@ -44,6 +44,7 @@
       text-align: center;
       z-index: 1000;
       display: none;
+      width: 300px;
     }
     .login-container.active {
       display: block;
@@ -93,6 +94,9 @@
       height: calc(100vh - 90px);
       overflow-y: auto;
       box-shadow: 5px 0 15px rgba(0, 0, 0, 0.5);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
     }
     .sidebar h3 {
       color: #ffd700;
@@ -104,9 +108,11 @@
     .sidebar ul {
       list-style: none;
       padding: 0;
+      width: 100%;
     }
     .sidebar li {
       margin: 15px 0;
+      width: 100%;
     }
     .sidebar a {
       color: #ccc;
@@ -116,6 +122,7 @@
       padding: 10px 15px;
       border-radius: 5px;
       transition: all 0.3s;
+      text-align: center;
     }
     .sidebar a:hover {
       color: #fff;
@@ -126,9 +133,10 @@
       margin-left: 250px;
       padding: 50px;
       flex: 1;
-      background: rgba(28, 28, 28, 0.9);
-      border-radius: 10px;
-      box-shadow: 0 0 30px rgba(0, 0, 0, 0.7);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
     }
     .main-content h1 {
       font-size: 40px;
@@ -143,12 +151,32 @@
       border-radius: 10px;
       margin-bottom: 30px;
       border: 1px solid #444;
+      width: 90%;
+      max-width: 1000px;
+      box-shadow: 0 0 20px rgba(0, 0, 0, 0.5);
+      overflow: hidden;
+      transition: max-height 0.3s ease;
+      max-height: 60px;
+    }
+    .dashboard-section.active {
+      max-height: 1000px; /* Adjust based on content */
     }
     .dashboard-section h2 {
       font-size: 26px;
       color: #ffd700;
       margin-bottom: 20px;
       text-shadow: 0 0 10px rgba(255, 215, 0, 0.5);
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+    }
+    .dashboard-section h2::after {
+      content: ' ▼';
+      margin-left: 10px;
+      transition: transform 0.3s;
+    }
+    .dashboard-section.active h2::after {
+      transform: rotate(180deg);
     }
     .dashboard-section p {
       font-size: 16px;
@@ -157,6 +185,7 @@
     }
     .form-group {
       margin-bottom: 20px;
+      width: 100%;
     }
     .form-group label {
       display: block;
@@ -180,6 +209,8 @@
       border-radius: 5px;
       cursor: pointer;
       transition: background 0.3s;
+      width: auto;
+      display: inline-block;
     }
     .form-group button:hover {
       background: #45a049;
@@ -207,6 +238,7 @@
       text-align: center;
       border-top: 1px solid #333;
       margin-left: 250px;
+      width: calc(100% - 250px);
     }
     .contact a {
       color: #ffd700;
@@ -241,6 +273,7 @@
       background: #0b0b0b;
       border-top: 1px solid #222;
       margin-left: 250px;
+      width: calc(100% - 250px);
     }
     @media (max-width: 600px) {
       .sidebar {
@@ -251,10 +284,14 @@
       }
       .main-content, .contact, footer {
         margin-left: 0;
+        width: 100%;
       }
       .login-container {
         width: 90%;
         padding: 20px;
+      }
+      .dashboard-section {
+        width: 100%;
       }
     }
   </style>
@@ -277,69 +314,129 @@
         <li><a href="#user-management">User Management</a></li>
         <li><a href="#signal-management">Signal Management</a></li>
         <li><a href="#trade-history">Trade History</a></li>
+        <li><a href="#market-analysis">Market Analysis</a></li>
         <li><a href="#content-editing">Content Editing</a></li>
+        <li><a href="#settings">Settings</a></li>
       </ul>
     </div>
     <div class="main-content">
       <h1>Admin Panel</h1>
       <div class="dashboard-section" id="user-management">
-        <h2>User Management</h2>
-        <p>Total users: <span id="total-users">Loading...</span></p>
-        <div class="form-group">
-          <label>Verify New User (Email)</label>
-          <input type="email" id="verify-email" placeholder="Enter user email">
-          <button onclick="verifyUser()">Verify User</button>
+        <h2 onclick="toggleSection('user-management')">User Management</h2>
+        <div class="section-content">
+          <p>Total users: <span id="total-users">Loading...</span></p>
+          <div class="form-group">
+            <label>Verify New User (Email)</label>
+            <input type="email" id="verify-email" placeholder="Enter user email">
+            <button onclick="verifyUser()">Verify User</button>
+          </div>
+          <div class="form-group">
+            <label>Update User Status</label>
+            <input type="email" id="update-email" placeholder="Enter user email">
+            <select id="update-status">
+              <option value="active">Active</option>
+              <option value="pending">Pending</option>
+              <option value="inactive">Inactive</option>
+            </select>
+            <button onclick="updateUserStatus()">Update Status</button>
+          </div>
+          <table style="width: 100%; border-collapse: collapse; margin-top: 20px;">
+            <thead>
+              <tr style="background: #333; color: gold;">
+                <th style="padding: 10px; border: 1px solid #555;">ID</th>
+                <th style="padding: 10px; border: 1px solid #555;">Name</th>
+                <th style="padding: 10px; border: 1px solid #555;">Email</th>
+                <th style="padding: 10px; border: 1px solid #555;">Status</th>
+                <th style="padding: 10px; border: 1px solid #555;">Actions</th>
+              </tr>
+            </thead>
+            <tbody id="user-table">
+              <tr>
+                <td colspan="5" style="padding: 10px; text-align: center; color: #ddd;">Loading users...</td>
+              </tr>
+            </tbody>
+          </table>
         </div>
-        <table style="width: 100%; border-collapse: collapse; margin-top: 20px;">
-          <thead>
-            <tr style="background: #333; color: gold;">
-              <th style="padding: 10px; border: 1px solid #555;">ID</th>
-              <th style="padding: 10px; border: 1px solid #555;">Name</th>
-              <th style="padding: 10px; border: 1px solid #555;">Email</th>
-              <th style="padding: 10px; border: 1px solid #555;">Status</th>
-              <th style="padding: 10px; border: 1px solid #555;">Actions</th>
-            </tr>
-          </thead>
-          <tbody id="user-table">
-            <tr>
-              <td colspan="5" style="padding: 10px; text-align: center; color: #ddd;">Loading users...</td>
-            </tr>
-          </tbody>
-        </table>
       </div>
       <div class="dashboard-section" id="signal-management">
-        <h2>Signal Management</h2>
-        <div class="form-group">
-          <label>Send Signal</label>
-          <textarea id="signal-content" rows="4" placeholder="Enter signal details (e.g., Buy/Sell, Price, Time)"></textarea>
-          <button onclick="sendSignal()">Send Signal</button>
+        <h2 onclick="toggleSection('signal-management')">Signal Management</h2>
+        <div class="section-content">
+          <div class="form-group">
+            <label>Send Trading Signal</label>
+            <textarea id="signal-content" rows="4" placeholder="e.g., Buy GOLD at $2000, Sell at $2050, 2025-05-10 14:00"></textarea>
+            <button onclick="sendSignal()">Send Signal</button>
+          </div>
+          <p id="signal-status" style="color: #4CAF50;"></p>
+          <div class="form-group">
+            <label>View Recent Signals</label>
+            <div id="signal-history" style="max-height: 200px; overflow-y: auto; background: #1c1c1c; padding: 10px; border-radius: 5px;">
+              <p>No signals yet.</p>
+            </div>
+          </div>
         </div>
-        <p id="signal-status" style="color: #4CAF50;"></p>
       </div>
       <div class="dashboard-section" id="trade-history">
-        <h2>Trade History</h2>
-        <div class="trade-history-upload">
-          <input type="file" id="trade-file" accept=".txt,.pdf,.jpg,.png">
-          <label for="trade-file">Upload Trade History</label>
-          <p id="upload-status" style="color: #2196F3; margin-top: 10px;"></p>
+        <h2 onclick="toggleSection('trade-history')">Trade History</h2>
+        <div class="section-content">
+          <div class="trade-history-upload">
+            <input type="file" id="trade-file" accept=".txt,.pdf,.jpg,.png">
+            <label for="trade-file">Upload Trade History</label>
+            <p id="upload-status" style="color: #2196F3; margin-top: 10px;"></p>
+          </div>
+          <div class="form-group">
+            <label>View Trade History</label>
+            <div id="trade-history-list" style="max-height: 200px; overflow-y: auto; background: #1c1c1c; padding: 10px; border-radius: 5px;">
+              <p>No trade history uploaded.</p>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="dashboard-section" id="market-analysis">
+        <h2 onclick="toggleSection('market-analysis')">Market Analysis</h2>
+        <div class="section-content">
+          <div class="form-group">
+            <label>Add Market Insight</label>
+            <textarea id="market-insight" rows="4" placeholder="e.g., Market trend: Bullish, Gold up 5% this week"></textarea>
+            <button onclick="addMarketInsight()">Add Insight</button>
+          </div>
+          <div id="market-insights" style="max-height: 200px; overflow-y: auto; background: #1c1c1c; padding: 10px; border-radius: 5px;">
+            <p>No insights yet.</p>
+          </div>
         </div>
       </div>
       <div class="dashboard-section" id="content-editing">
-        <h2>Content Editing</h2>
-        <div class="form-group">
-          <label>Page to Edit</label>
-          <select id="edit-page">
-            <option value="index">Homepage</option>
-            <option value="services">Services</option>
-            <option value="about">About</option>
-          </select>
+        <h2 onclick="toggleSection('content-editing')">Content Editing</h2>
+        <div class="section-content">
+          <div class="form-group">
+            <label>Page to Edit</label>
+            <select id="edit-page">
+              <option value="index">Homepage</option>
+              <option value="services">Services</option>
+              <option value="about">About</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label>Current Content</label>
+            <textarea id="current-content" rows="6" readonly style="background: #2c2c2c;"></textarea>
+          </div>
+          <div class="form-group">
+            <label>New Content</label>
+            <textarea id="edit-content" rows="6" placeholder="Enter new content"></textarea>
+          </div>
+          <button onclick="updateContent()">Update Content</button>
+          <p id="content-status" style="color: #4CAF50;"></p>
         </div>
-        <div class="form-group">
-          <label>Content</label>
-          <textarea id="edit-content" rows="6" placeholder="Enter new content"></textarea>
+      </div>
+      <div class="dashboard-section" id="settings">
+        <h2 onclick="toggleSection('settings')">Settings</h2>
+        <div class="section-content">
+          <div class="form-group">
+            <label>Update Site Announcement</label>
+            <textarea id="site-announcement" rows="4" placeholder="e.g., New trading feature available!"></textarea>
+            <button onclick="updateAnnouncement()">Update Announcement</button>
+          </div>
+          <p id="announcement-status" style="color: #4CAF50;"></p>
         </div>
-        <button onclick="updateContent()">Update Content</button>
-        <p id="content-status" style="color: #4CAF50;"></p>
       </div>
     </div>
   </div>
@@ -356,28 +453,53 @@
     const loginContainer = document.getElementById('loginContainer');
     const adminPanel = document.getElementById('adminPanel');
     let usersData = { totalUsers: 0, users: [] };
+    let siteData = { 
+      content: { 
+        index: 'Welcome to Chukwuemeka Bullion Exchange!', 
+        services: 'Explore our trading services.', 
+        about: 'Learn about our mission.' 
+      }, 
+      announcement: 'Stay tuned for updates!' 
+    };
+    let signals = [];
+    let tradeHistory = [];
+    let marketInsights = [];
 
     function login() {
       const password = document.getElementById('adminPassword').value;
       if (password === ADMIN_PASSWORD) {
         loginContainer.classList.remove('active');
         adminPanel.classList.add('active');
-        loadUsers();
+        loadData();
       } else {
         alert('Incorrect password. Access denied.');
       }
     }
 
-    // Load users from localStorage or initialize
-    function loadUsers() {
-      const savedData = localStorage.getItem('usersData');
-      if (savedData) {
-        usersData = JSON.parse(savedData);
-      }
+    function loadData() {
+      const savedUsers = localStorage.getItem('usersData');
+      if (savedUsers) usersData = JSON.parse(savedUsers);
+      const savedSite = localStorage.getItem('siteData');
+      if (savedSite) siteData = JSON.parse(savedSite);
+      const savedSignals = localStorage.getItem('signals');
+      if (savedSignals) signals = JSON.parse(savedSignals);
+      const savedTrades = localStorage.getItem('tradeHistory');
+      if (savedTrades) tradeHistory = JSON.parse(savedTrades);
+      const savedInsights = localStorage.getItem('marketInsights');
+      if (savedInsights) marketInsights = JSON.parse(savedInsights);
       updateUserTable();
+      updateSignalHistory();
+      updateTradeHistory();
+      updateMarketInsights();
+      updateContentDisplay();
     }
 
-    // Update user table
+    function toggleSection(sectionId) {
+      const section = document.getElementById(sectionId);
+      section.classList.toggle('active');
+    }
+
+    // User Management
     function updateUserTable() {
       const userTable = document.getElementById('user-table');
       document.getElementById('total-users').textContent = usersData.totalUsers;
@@ -397,70 +519,138 @@
       });
     }
 
-    // Verify new user (simulated)
     function verifyUser() {
       const email = document.getElementById('verify-email').value;
       if (email) {
-        const newUser = {
-          id: usersData.users.length + 1,
-          email: email,
-          status: 'pending',
-          name: 'New User'
-        };
+        const newUser = { id: usersData.users.length + 1, email, status: 'pending', name: 'New User' };
         usersData.users.push(newUser);
         usersData.totalUsers = usersData.users.length;
         updateUserTable();
-        saveUsers();
+        saveData();
         document.getElementById('verify-email').value = '';
         alert('User verification submitted. Check status later.');
       }
     }
 
-    // Send signal (simulated)
+    function updateUserStatus() {
+      const email = document.getElementById('update-email').value;
+      const status = document.getElementById('update-status').value;
+      if (email) {
+        const user = usersData.users.find(u => u.email === email);
+        if (user) {
+          user.status = status;
+          updateUserTable();
+          saveData();
+          alert('User status updated.');
+        } else {
+          alert('User not found.');
+        }
+        document.getElementById('update-email').value = '';
+      }
+    }
+
+    function deleteUser(id) {
+      usersData.users = usersData.users.filter(user => user.id !== id);
+      usersData.totalUsers = usersData.users.length;
+      updateUserTable();
+      saveData();
+    }
+
+    // Signal Management
     function sendSignal() {
       const signal = document.getElementById('signal-content').value;
       if (signal) {
+        signals.unshift({ id: signals.length + 1, content: signal, date: new Date().toISOString() });
         document.getElementById('signal-status').textContent = 'Signal sent successfully!';
+        updateSignalHistory();
+        saveData();
         setTimeout(() => document.getElementById('signal-status').textContent = '', 3000);
         document.getElementById('signal-content').value = '';
       }
     }
 
-    // Upload trade history (simulated)
+    function updateSignalHistory() {
+      const signalHistory = document.getElementById('signal-history');
+      signalHistory.innerHTML = signals.length ? signals.map(s => `<p>${s.content} <small>(${new Date(s.date).toLocaleString()})</small></p>`).join('') : '<p>No signals yet.</p>';
+    }
+
+    // Trade History
     document.getElementById('trade-file').addEventListener('change', function(e) {
       const file = e.target.files[0];
       if (file) {
+        tradeHistory.unshift({ id: tradeHistory.length + 1, fileName: file.name, date: new Date().toISOString() });
         document.getElementById('upload-status').textContent = 'Trade history uploaded successfully!';
+        updateTradeHistory();
+        saveData();
         setTimeout(() => document.getElementById('upload-status').textContent = '', 3000);
         e.target.value = '';
       }
     });
 
-    // Update content (simulated)
+    function updateTradeHistory() {
+      const tradeHistoryList = document.getElementById('trade-history-list');
+      tradeHistoryList.innerHTML = tradeHistory.length ? tradeHistory.map(t => `<p>${t.fileName} <small>(${new Date(t.date).toLocaleString()})</small></p>`).join('') : '<p>No trade history uploaded.</p>';
+    }
+
+    // Market Analysis
+    function addMarketInsight() {
+      const insight = document.getElementById('market-insight').value;
+      if (insight) {
+        marketInsights.unshift({ id: marketInsights.length + 1, content: insight, date: new Date().toISOString() });
+        document.getElementById('market-insights').textContent = '';
+        updateMarketInsights();
+        saveData();
+        document.getElementById('market-insight').value = '';
+      }
+    }
+
+    function updateMarketInsights() {
+      const insightsDiv = document.getElementById('market-insights');
+      insightsDiv.innerHTML = marketInsights.length ? marketInsights.map(i => `<p>${i.content} <small>(${new Date(i.date).toLocaleString()})</small></p>`).join('') : '<p>No insights yet.</p>';
+    }
+
+    // Content Editing
+    function updateContentDisplay() {
+      const page = document.getElementById('edit-page').value;
+      document.getElementById('current-content').value = siteData.content[page];
+    }
+
     function updateContent() {
       const page = document.getElementById('edit-page').value;
       const content = document.getElementById('edit-content').value;
       if (content) {
+        siteData.content[page] = content;
         document.getElementById('content-status').textContent = `Content updated for ${page} page!`;
+        updateContentDisplay();
+        saveData();
         setTimeout(() => document.getElementById('content-status').textContent = '', 3000);
         document.getElementById('edit-content').value = '';
       }
     }
 
-    // Delete user
-    function deleteUser(id) {
-      usersData.users = usersData.users.filter(user => user.id !== id);
-      usersData.totalUsers = usersData.users.length;
-      updateUserTable();
-      saveUsers();
+    // Settings
+    function updateAnnouncement() {
+      const announcement = document.getElementById('site-announcement').value;
+      if (announcement) {
+        siteData.announcement = announcement;
+        document.getElementById('announcement-status').textContent = 'Announcement updated!';
+        saveData();
+        setTimeout(() => document.getElementById('announcement-status').textContent = '', 3000);
+        document.getElementById('site-announcement').value = '';
+      }
     }
 
-    // Save data to localStorage
-    function saveUsers() {
+    // Save all data to localStorage
+    function saveData() {
       localStorage.setItem('usersData', JSON.stringify(usersData));
+      localStorage.setItem('siteData', JSON.stringify(siteData));
+      localStorage.setItem('signals', JSON.stringify(signals));
+      localStorage.setItem('tradeHistory', JSON.stringify(tradeHistory));
+      localStorage.setItem('marketInsights', JSON.stringify(marketInsights));
     }
 
-    // Initial load
+    // Sync with main website (simulated)
+    document.getElementById('edit-page').addEventListener('change', updateContentDisplay);
     loginContainer.classList.add('active');
   </script>
 </body>
