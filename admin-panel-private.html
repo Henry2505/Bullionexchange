@@ -182,3 +182,212 @@
 
     </div> <!-- /.content -->
   </div> <!-- /.container -->
+    <script>
+    // Sidebar toggle
+    document.getElementById("toggleSidebar").addEventListener("click", () => {
+      document.body.classList.toggle("collapsed-sidebar");
+    });
+
+    // Section navigation
+    document.querySelectorAll(".sidebar a[data-section]").forEach(link => {
+      link.addEventListener("click", e => {
+        e.preventDefault();
+        document.querySelectorAll(".sidebar a").forEach(a => a.classList.remove("active"));
+        link.classList.add("active");
+        const sec = link.getAttribute("data-section");
+        document.querySelectorAll(".content section").forEach(s => s.classList.add("hidden"));
+        document.getElementById(sec).classList.remove("hidden");
+
+        // load data as needed
+        if (sec === "payments") loadPayments();
+        if (sec === "users")    renderUsers();
+        if (sec === "trades-current") renderCurrentTrades();
+        if (sec === "trades-history") renderTradeHistory();
+        if (sec === "signals")  renderSignals();
+        if (sec === "broadcasts") renderBroadcasts();
+        if (sec === "messages") renderMessages();
+        if (sec === "settings") loadSettings();
+        if (sec === "logs")     renderLogs();
+      });
+    });
+
+    // --- PAYMENTS (unchanged) ---
+    /* loadPayments, approvePayment, downloadPayments as before */
+
+    // --- USERS ---
+    function renderUsers() {
+      const table = document.getElementById("usersTable");
+      const users = JSON.parse(localStorage.getItem("users") || "[]");
+      table.innerHTML = "";
+      users.forEach((u,i) => {
+        const tr = document.createElement("tr");
+        tr.innerHTML = `
+          <td>${u.name}</td>
+          <td>${u.email}</td>
+          <td>${u.vip ? 'Yes' : 'No'}</td>
+          <td>${u.active ? 'Active' : 'Inactive'}</td>
+          <td>
+            <button class="btn" onclick="toggleUser(${i})">${u.active ? 'Deactivate' : 'Activate'}</button>
+            <button class="btn" onclick="deleteUser(${i})">Delete</button>
+          </td>`;
+        table.appendChild(tr);
+      });
+    }
+    function toggleUser(i) {
+      const users = JSON.parse(localStorage.getItem("users")||"[]");
+      users[i].active = !users[i].active;
+      localStorage.setItem("users", JSON.stringify(users));
+      renderUsers();
+    }
+    function deleteUser(i) {
+      if (!confirm("Delete this user?")) return;
+      const users = JSON.parse(localStorage.getItem("users")||"[]");
+      users.splice(i,1);
+      localStorage.setItem("users", JSON.stringify(users));
+      renderUsers();
+    }
+
+    // --- CURRENT TRADES ---
+    function renderCurrentTrades() {
+      const list = document.getElementById("currentTradesList");
+      const arr = JSON.parse(localStorage.getItem("currentTrades")||"[]");
+      list.innerHTML = "";
+      arr.forEach((t,i) => {
+        const img = document.createElement("img");
+        img.src = t.data;
+        img.style.maxWidth = "200px";
+        img.style.margin = "5px";
+        list.appendChild(img);
+      });
+    }
+    document.getElementById("currentTradeForm").addEventListener("submit", e => {
+      e.preventDefault();
+      const file = document.getElementById("tradeScreenshot").files[0];
+      if (!file) return alert("Select an image.");
+      const reader = new FileReader();
+      reader.onload = e2 => {
+        const arr = JSON.parse(localStorage.getItem("currentTrades")||"[]");
+        arr.unshift({ data: e2.target.result, date: new Date().toISOString() });
+        localStorage.setItem("currentTrades", JSON.stringify(arr));
+        renderCurrentTrades();
+      };
+      reader.readAsDataURL(file);
+    });
+
+    // --- TRADE HISTORY ---
+    function renderTradeHistory() {
+      const ul = document.getElementById("historyList");
+      const arr = JSON.parse(localStorage.getItem("tradeHistory")||"[]");
+      ul.innerHTML = "";
+      arr.forEach(h => {
+        const li = document.createElement("li");
+        li.textContent = `${h.date}: ${h.desc}`;
+        ul.appendChild(li);
+      });
+    }
+    document.getElementById("historyForm").addEventListener("submit", e => {
+      e.preventDefault();
+      const date = document.getElementById("historyDate").value;
+      const desc = document.getElementById("historyDesc").value;
+      const arr = JSON.parse(localStorage.getItem("tradeHistory")||"[]");
+      arr.unshift({ date, desc });
+      localStorage.setItem("tradeHistory", JSON.stringify(arr));
+      renderTradeHistory();
+      e.target.reset();
+    });
+
+    // --- SIGNALS ---
+    /* renderSignals, signalForm logic as before */
+
+    // --- BROADCASTS ---
+    function renderBroadcasts() {
+      const ul = document.getElementById("broadcastList");
+      const arr = JSON.parse(localStorage.getItem("broadcasts")||"[]");
+      ul.innerHTML = "";
+      arr.forEach(b => {
+        const li = document.createElement("li");
+        li.textContent = `[${new Date(b.time).toLocaleString()}] ${b.msg}`;
+        ul.appendChild(li);
+      });
+    }
+    document.getElementById("broadcastForm").addEventListener("submit", e => {
+      e.preventDefault();
+      const msg = document.getElementById("broadcastMsg").value.trim();
+      if (!msg) return alert("Enter a message.");
+      const arr = JSON.parse(localStorage.getItem("broadcasts")||"[]");
+      arr.unshift({ msg, time: Date.now() });
+      localStorage.setItem("broadcasts", JSON.stringify(arr));
+      alert("Broadcast sent to all VIP users!");
+      renderBroadcasts();
+      e.target.reset();
+    });
+
+    // --- MESSAGES ---
+    function renderMessages() {
+      const tbody = document.getElementById("messagesTable");
+      const msgs = JSON.parse(localStorage.getItem("applications")||"[]");
+      tbody.innerHTML = "";
+      msgs.forEach(m => {
+        const tr = document.createElement("tr");
+        tr.innerHTML = `
+          <td>${m.name}</td>
+          <td>${m.email}</td>
+          <td>${m.message}</td>
+          <td>${new Date(m.date).toLocaleString()}</td>`;
+        tbody.appendChild(tr);
+      });
+    }
+
+    // --- SETTINGS ---
+    function loadSettings() {
+      const s = JSON.parse(localStorage.getItem("paymentSettings")||"{}");
+      document.getElementById("btc").value  = s.btc  || "";
+      document.getElementById("eth").value  = s.eth  || "";
+      document.getElementById("usdt").value = s.usdt || "";
+      document.getElementById("paystackKey").value = s.paystackKey || "";
+    }
+    document.getElementById("settingsForm").addEventListener("submit", e => {
+      e.preventDefault();
+      const newS = {
+        btc: document.getElementById("btc").value.trim(),
+        eth: document.getElementById("eth").value.trim(),
+        usdt: document.getElementById("usdt").value.trim(),
+        paystackKey: document.getElementById("paystackKey").value.trim()
+      };
+      localStorage.setItem("paymentSettings", JSON.stringify(newS));
+      addLog("Updated payment & API settings");
+      alert("Settings saved successfully!");
+    });
+
+    // --- LOGS ---
+    function renderLogs() {
+      const ul = document.getElementById("log-list");
+      const logs = JSON.parse(localStorage.getItem("adminLogs")||"[]");
+      ul.innerHTML = "";
+      logs.forEach(l => {
+        const li = document.createElement("li");
+        li.textContent = `[${new Date(l.time).toLocaleString()}] ${l.action}`;
+        ul.appendChild(li);
+      });
+    }
+    function addLog(action) {
+      const logs = JSON.parse(localStorage.getItem("adminLogs")||"[]");
+      logs.unshift({ time: Date.now(), action });
+      localStorage.setItem("adminLogs", JSON.stringify(logs));
+    }
+
+    // Initialize
+    window.addEventListener("DOMContentLoaded", () => {
+      renderUsers();
+      renderCurrentTrades();
+      renderTradeHistory();
+      renderSignals();
+      renderBroadcasts();
+      renderMessages();
+      loadSettings();
+      renderLogs();
+      loadPayments();
+    });
+  </script>
+</body>
+</html>
