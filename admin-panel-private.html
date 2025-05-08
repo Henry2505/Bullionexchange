@@ -12,6 +12,7 @@
       background: linear-gradient(135deg, #0b0b0b, #1c1c1c);
       color: #f5f5f5;
       line-height: 1.6;
+      overflow-x: hidden;
     }
     .sidebar {
       width: 250px;
@@ -20,12 +21,17 @@
       position: fixed;
       padding: 20px;
       box-shadow: 2px 0 10px rgba(0,0,0,0.5);
+      transition: transform 0.3s ease;
+    }
+    .sidebar:hover {
+      transform: translateX(5px);
     }
     .sidebar h2 {
       color: gold;
       text-align: center;
       margin-bottom: 30px;
       font-size: 1.5rem;
+      text-shadow: 0 0 5px rgba(255,215,0,0.5);
     }
     .sidebar ul {
       list-style: none;
@@ -38,14 +44,16 @@
       color: #ccc;
       text-decoration: none;
       font-size: 1rem;
-      transition: color 0.3s;
+      transition: color 0.3s, padding-left 0.3s;
     }
     .sidebar ul li a:hover {
       color: gold;
+      padding-left: 10px;
     }
     .content {
       margin-left: 270px;
       padding: 20px;
+      min-height: 100vh;
     }
     .card {
       background: #141414;
@@ -69,13 +77,13 @@
       flex-direction: column;
       gap: 10px;
     }
-    .card input, .card button {
+    .card input, .card select, .card button {
       padding: 10px;
       border: none;
       border-radius: 5px;
       font-size: 1rem;
     }
-    .card input {
+    .card input, .card select {
       background: #1f1f1f;
       color: #f5f5f5;
     }
@@ -83,12 +91,13 @@
       background: gold;
       color: #000;
       cursor: pointer;
-      transition: background 0.3s;
+      transition: background 0.3s, transform 0.3s;
     }
     .card button:hover {
       background: #d4af37;
+      transform: scale(1.05);
     }
-    #paymentList div {
+    .list div {
       display: flex;
       justify-content: space-between;
       align-items: center;
@@ -96,40 +105,55 @@
       background: #1f1f1f;
       margin: 5px 0;
       border-radius: 5px;
+      transition: background 0.3s;
     }
-    #paymentList button {
+    .list div:hover {
+      background: #252525;
+    }
+    .list button {
       background: #ff4444;
       color: #fff;
       padding: 5px 10px;
     }
-    #paymentList button:hover {
+    .list button:hover {
       background: #cc0000;
     }
-    #userList div {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      padding: 10px;
-      background: #1f1f1f;
-      margin: 5px 0;
-      border-radius: 5px;
-    }
-    #userList button {
+    .verify-button {
       background: #4CAF50;
       color: #fff;
-      padding: 5px 10px;
     }
-    #userList button:hover {
+    .verify-button:hover {
       background: #45a049;
+    }
+    #tradeHistory table {
+      width: 100%;
+      border-collapse: collapse;
+      background: #1f1f1f;
+      border-radius: 5px;
+      overflow: hidden;
+    }
+    #tradeHistory th, #tradeHistory td {
+      padding: 10px;
+      text-align: left;
+      border-bottom: 1px solid #222;
+    }
+    #tradeHistory th {
+      background: #141414;
+      color: gold;
+    }
+    #tradeHistory tr:hover {
+      background: #252525;
     }
   </style>
 </head>
 <body>
   <div class="sidebar">
-    <h2>Admin Panel</h2>
+    <h2>CBE Admin Panel</h2>
     <ul>
       <li><a href="#payments">Manage Payments</a></li>
-      <li><a href="#users">Verify Users</a></li>
+      <li><a href="#verify">Verify Payments</a></li>
+      <li><a href="#signals">Manage Signals</a></li>
+      <li><a href="#tradeHistory">Trade History</a></li>
       <li><a href="login.html">Logout</a></li>
     </ul>
   </div>
@@ -141,18 +165,54 @@
         <input type="text" name="details" placeholder="Details (e.g., Wallet Address, Paystack Key)" required>
         <button type="submit">Add Payment Method</button>
       </form>
-      <div id="paymentList"></div>
+      <div class="list" id="paymentList"></div>
     </div>
-    <div class="card" id="users">
+    <div class="card" id="verify">
       <h3>Verify User Payments</h3>
-      <div id="userList"></div>
+      <div class="list" id="verifyList"></div>
+    </div>
+    <div class="card" id="signals">
+      <h3>Manage Trading Signals</h3>
+      <form id="signalForm">
+        <input type="text" name="asset" placeholder="Asset (e.g., BTC/USD)" required>
+        <select name="direction" required>
+          <option value="buy">Buy</option>
+          <option value="sell">Sell</option>
+        </select>
+        <input type="number" name="price" placeholder="Price" step="0.01" required>
+        <input type="text" name="notes" placeholder="Notes (optional)">
+        <button type="submit">Add Signal</button>
+      </form>
+      <div class="list" id="signalList"></div>
+    </div>
+    <div class="card" id="tradeHistory">
+      <h3>Trade History (Jan - Dec 2025)</h3>
+      <table>
+        <thead>
+          <tr>
+            <th>Date</th>
+            <th>Asset</th>
+            <th>Action</th>
+            <th>Price</th>
+            <th>Quantity</th>
+            <th>User</th>
+          </tr>
+        </thead>
+        <tbody id="tradeTable"></tbody>
+      </table>
     </div>
   </div>
 
   <script>
+    // Authentication check
+    if (!localStorage.getItem('adminToken')) {
+      alert('Please log in as admin.');
+      window.location.href = 'login.html';
+    }
+
     // Fetch and manage payment methods
     function loadPayments() {
-      fetch('/api/payment-methods')
+      fetch('/api/payment-methods', { headers: { 'Authorization': `Bearer ${localStorage.getItem('adminToken')}` } })
         .then(res => res.json())
         .then(methods => {
           const list = document.getElementById('paymentList');
@@ -162,13 +222,18 @@
             div.innerHTML = `${method.method_name}: ${method.details} <button onclick="deletePayment(${method.id})">Delete</button>`;
             list.appendChild(div);
           });
-        });
+        })
+        .catch(err => console.error('Error:', err));
     }
 
     document.getElementById('paymentForm').addEventListener('submit', (e) => {
       e.preventDefault();
       const formData = new FormData(e.target);
-      fetch('/api/payment-methods', { method: 'POST', body: formData })
+      fetch('/api/payment-methods', {
+        method: 'POST',
+        headers: { 'Authorization': `Bearer ${localStorage.getItem('adminToken')}` },
+        body: formData
+      })
         .then(res => res.text())
         .then(() => {
           e.target.reset();
@@ -179,40 +244,126 @@
 
     function deletePayment(id) {
       if (confirm('Are you sure?')) {
-        fetch(`/api/payment-methods/${id}`, { method: 'DELETE' })
+        fetch(`/api/payment-methods/${id}`, {
+          method: 'DELETE',
+          headers: { 'Authorization': `Bearer ${localStorage.getItem('adminToken')}` }
+        })
           .then(() => loadPayments())
           .catch(err => console.error('Error:', err));
       }
     }
 
-    // Fetch and verify users
-    function loadUsers() {
-      fetch('/api/pending-users')
+    // Fetch and verify payments
+    function loadPendingPayments() {
+      fetch('/api/pending-payments', { headers: { 'Authorization': `Bearer ${localStorage.getItem('adminToken')}` } })
         .then(res => res.json())
-        .then(users => {
-          const list = document.getElementById('userList');
+        .then(payments => {
+          const list = document.getElementById('verifyList');
           list.innerHTML = '';
-          users.forEach(user => {
+          payments.forEach(payment => {
             const div = document.createElement('div');
-            div.innerHTML = `${user.username} ($${user.amount}) - Pending <button onclick="verifyUser(${user.id})">Verify</button>`;
+            div.innerHTML = `${payment.username} ($${payment.amount}, ${payment.method}) - <button class="verify-button" onclick="verifyPayment(${payment.id})">Verify</button> <button onclick="rejectPayment(${payment.id})">Reject</button>`;
             list.appendChild(div);
           });
-        });
+        })
+        .catch(err => console.error('Error:', err));
     }
 
-    function verifyUser(id) {
-      if (confirm('Verify this user\'s payment?')) {
-        fetch(`/api/verify-user/${id}`, { method: 'POST' })
-          .then(() => loadUsers())
+    function verifyPayment(id) {
+      if (confirm('Verify this payment?')) {
+        fetch(`/api/verify-payment/${id}`, {
+          method: 'POST',
+          headers: { 'Authorization': `Bearer ${localStorage.getItem('adminToken')}` }
+        })
+          .then(() => loadPendingPayments())
           .catch(err => console.error('Error:', err));
       }
     }
 
+    function rejectPayment(id) {
+      if (confirm('Reject this payment?')) {
+        fetch(`/api/reject-payment/${id}`, {
+          method: 'POST',
+          headers: { 'Authorization': `Bearer ${localStorage.getItem('adminToken')}` }
+        })
+          .then(() => loadPendingPayments())
+          .catch(err => console.error('Error:', err));
+      }
+    }
+
+    // Manage signals
+    function loadSignals() {
+      fetch('/api/signals', { headers: { 'Authorization': `Bearer ${localStorage.getItem('adminToken')}` } })
+        .then(res => res.json())
+        .then(signals => {
+          const list = document.getElementById('signalList');
+          list.innerHTML = '';
+          signals.forEach(signal => {
+            const div = document.createElement('div');
+            div.innerHTML = `${signal.asset} (${signal.direction.toUpperCase()} @ $${signal.price}) - ${signal.notes || 'No notes'} <button onclick="deleteSignal(${signal.id})">Delete</button>`;
+            list.appendChild(div);
+          });
+        })
+        .catch(err => console.error('Error:', err));
+    }
+
+    document.getElementById('signalForm').addEventListener('submit', (e) => {
+      e.preventDefault();
+      const formData = new FormData(e.target);
+      fetch('/api/signals', {
+        method: 'POST',
+        headers: { 'Authorization': `Bearer ${localStorage.getItem('adminToken')}` },
+        body: formData
+      })
+        .then(res => res.text())
+        .then(() => {
+          e.target.reset();
+          loadSignals();
+        })
+        .catch(err => console.error('Error:', err));
+    });
+
+    function deleteSignal(id) {
+      if (confirm('Are you sure?')) {
+        fetch(`/api/signals/${id}`, {
+          method: 'DELETE',
+          headers: { 'Authorization': `Bearer ${localStorage.getItem('adminToken')}` }
+        })
+          .then(() => loadSignals())
+          .catch(err => console.error('Error:', err));
+      }
+    }
+
+    // Load trade history
+    function loadTradeHistory() {
+      fetch('/api/trade-history?year=2025', { headers: { 'Authorization': `Bearer ${localStorage.getItem('adminToken')}` } })
+        .then(res => res.json())
+        .then(trades => {
+          const tbody = document.getElementById('tradeTable');
+          tbody.innerHTML = '';
+          trades.forEach(trade => {
+            const tr = document.createElement('tr');
+            tr.innerHTML = `
+              <td>${new Date(trade.date).toLocaleDateString()}</td>
+              <td>${trade.asset}</td>
+              <td>${trade.action}</td>
+              <td>$${trade.price}</td>
+              <td>${trade.quantity}</td>
+              <td>${trade.username}</td>
+            `;
+            tbody.appendChild(tr);
+          });
+        })
+        .catch(err => console.error('Error:', err));
+    }
+
     // Initial load
     loadPayments();
-    loadUsers();
+    loadPendingPayments();
+    loadSignals();
+    loadTradeHistory();
 
-    // Sidebar navigation (smooth scroll)
+    // Smooth scroll for sidebar navigation
     document.querySelectorAll('.sidebar a').forEach(anchor => {
       anchor.addEventListener('click', function(e) {
         e.preventDefault();
