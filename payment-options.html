@@ -2,11 +2,10 @@
 <html lang="en">
 <head>
   <meta charset="utf-8"/>
-  <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>VIP Subscription Payment • CBE</title>
   <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;500;700&display=swap" rel="stylesheet"/>
   <style>
-    /* disable selection & right‑click */
     html, body { user-select: none; -webkit-user-select: none; }
     body { margin:0; font-family:'Poppins',sans-serif; background:linear-gradient(to bottom, #0b0b0b, #1a1a1a); color:#f5f5f5; }
     header, footer { text-align:center; padding:20px; position:relative; z-index:1; }
@@ -35,18 +34,16 @@
     .continue-btn { padding:12px 24px; border:none; border-radius:8px; font-size:1rem; cursor:pointer;
                     box-shadow:0 0 10px #00ffcc,0 0 20px #00ffcc; animation:pulseGlow 2s infinite; background:#000; color:#fff; }
     .notice { text-align:center; color:#ff6666; font-size:0.9rem; margin-top:10px; }
-    /* background video */
     #bg-video { position:fixed; right:0; bottom:0; min-width:100%; min-height:100%; object-fit:cover; z-index:-1; }
     nav a { position:absolute; top:20px; right:20px; color:#00ffee; text-decoration:none; font-weight:bold; }
   </style>
 </head>
 <body>
-  <!-- starfield background -->
+
   <video autoplay loop muted id="bg-video">
     <source src="space-stars.mp4" type="video/mp4"/>
   </video>
 
-  <!-- (blocked) login link -->
   <nav><a href="login.html" id="loginLink">Login</a></nav>
 
   <header>
@@ -63,85 +60,18 @@
       <button class="method-btn" id="cryptoBtn">Cryptocurrency</button>
     </div>
 
-    <!-- Paystack -->
-    <script src="https://js.paystack.co/v1/inline.js"></script>
-    <script>
-      // determine package & amount
-      <script>
-  const pkg = sessionStorage.getItem('selectedPackage') || 'weekly';
-  const prices = { weekly: 50, monthly: 150, yearly: 1500 };
-  const names = { weekly: 'Weekly Plan', monthly: 'Monthly Plan', yearly: 'Yearly Plan' };
-  const amt = prices[pkg] || 0;
-  const name = names[pkg] || 'Unknown Plan';
-  document.getElementById('pkgInfo').textContent = `You selected the ${name} — $${amt}`;
-</script>
-      const prices = { weekly:50, monthly:150, yearly:1500 };
-      const amt = prices[pkg] || 0;
-      document.getElementById('pkgInfo').textContent = 
-        `You selected the ${pkg.charAt(0).toUpperCase()+pkg.slice(1)} Plan — $${amt}`;
-
-      // block login until approved
-      document.getElementById('loginLink').addEventListener('click', e=>{
-        if (sessionStorage.getItem('paymentApproved')!=='true') {
-          e.preventDefault();
-          alert('Your payment is pending approval. You cannot log in yet.');
-        }
-      });
-
-      // Paystack flow
-      document.getElementById('paystackBtn').onclick = () => {
-        // hide crypto if visible
-        document.getElementById('cryptoOptions').style.display = 'none';
-        PaystackPop.setup({
-          key: 'REPLACE_WITH_YOUR_PAYSTACK_PUBLIC_KEY',
-          email: sessionStorage.getItem('cbeEmail')||'',
-          amount: amt * 100,
-          currency: 'USD',
-          callback: function(resp){
-            alert('Payment successful! Ref: '+resp.reference);
-            document.getElementById('proofSection').style.display = 'block';
-          },
-          onClose: function(){ alert('Payment window closed.'); }
-        }).openIframe();
-      };
-    </script>
-
     <!-- Crypto flow -->
     <div id="cryptoOptions">
       <label><input type="radio" name="crypto" value="bitcoin"> Bitcoin</label>
       <label><input type="radio" name="crypto" value="ethereum"> Ethereum</label>
       <label><input type="radio" name="crypto" value="usdt"> USDT</label>
     </div>
-    <script>
-      document.getElementById('cryptoBtn').onclick = () => {
-        document.getElementById('cryptoOptions').style.display = 'block';
-        document.getElementById('walletInfo').style.display = 'none';
-        document.getElementById('proofSection').style.display = 'none';
-      };
-      const wallets = {
-        bitcoin: '1YourBitcoinWalletAddressHere',
-        ethereum: '0xYourEthereumWalletAddressHere',
-        usdt: 'TYourUSDTWalletAddressHere'
-      };
-      document.getElementsByName('crypto').forEach(radio=>{
-        radio.addEventListener('change', e=>{
-          const addr = wallets[e.target.value]||'';
-          document.getElementById('walletAddress').textContent = addr;
-          document.getElementById('walletInfo').style.display = 'flex';
-          document.getElementById('proofSection').style.display = 'block';
-        });
-      });
-    </script>
 
-    <!-- display & copy wallet -->
     <div id="walletInfo" class="wallet-address">
       <span id="walletAddress"></span>
-      <button class="copy-button" onclick="navigator.clipboard.writeText(
-        document.getElementById('walletAddress').textContent
-      ).then(()=>alert('Copied to clipboard'))">Copy</button>
+      <button class="copy-button" onclick="navigator.clipboard.writeText(document.getElementById('walletAddress').textContent).then(()=>alert('Copied to clipboard'))">Copy</button>
     </div>
 
-    <!-- proof upload -->
     <div id="proofSection">
       <input type="file" id="proofFile" class="file-input" accept="image/*,application/pdf">
       <button class="continue-btn" id="submitProof">Continue</button>
@@ -149,21 +79,77 @@
         Sharing of these signals or illegal resale is strictly prohibited and punishable by law.
       </div>
     </div>
-
-    <script>
-      document.getElementById('submitProof').onclick = () => {
-        const f = document.getElementById('proofFile').files[0];
-        if (!f) return alert('Please upload proof of payment.');
-        // here you’d normally POST to your server. We simulate:
-        sessionStorage.setItem('paymentProofSubmitted','true');
-        alert('Proof submitted. Please wait for admin approval.');
-        window.location.href = 'login.html';
-      };
-    </script>
   </main>
 
   <footer>
     © 2025 CBE – Chukwuemeka Bullion Exchange
   </footer>
+
+  <!-- Script: Fixed logic -->
+  <script src="https://js.paystack.co/v1/inline.js"></script>
+  <script>
+    // Display correct package
+    const pkg = sessionStorage.getItem('selectedPackage') || 'weekly';
+    const prices = { weekly: 50, monthly: 150, yearly: 1500 };
+    const names = { weekly: 'Weekly Plan', monthly: 'Monthly Plan', yearly: 'Yearly Plan' };
+    const amt = prices[pkg] || 0;
+    const name = names[pkg] || 'Unknown Plan';
+    document.getElementById('pkgInfo').textContent = `You selected the ${name} — $${amt}`;
+
+    // Prevent login if not approved
+    document.getElementById('loginLink').addEventListener('click', e => {
+      if (sessionStorage.getItem('paymentApproved') !== 'true') {
+        e.preventDefault();
+        alert('Your payment is pending approval. You cannot log in yet.');
+      }
+    });
+
+    // Paystack button logic
+    document.getElementById('paystackBtn').onclick = () => {
+      document.getElementById('cryptoOptions').style.display = 'none';
+      PaystackPop.setup({
+        key: 'REPLACE_WITH_YOUR_PAYSTACK_PUBLIC_KEY',
+        email: sessionStorage.getItem('cbeEmail') || '',
+        amount: amt * 100,
+        currency: 'USD',
+        callback: function(resp){
+          alert('Payment successful! Ref: ' + resp.reference);
+          document.getElementById('proofSection').style.display = 'block';
+        },
+        onClose: function(){ alert('Payment window closed.'); }
+      }).openIframe();
+    };
+
+    // Crypto selection logic
+    document.getElementById('cryptoBtn').onclick = () => {
+      document.getElementById('cryptoOptions').style.display = 'block';
+      document.getElementById('walletInfo').style.display = 'none';
+      document.getElementById('proofSection').style.display = 'none';
+    };
+
+    const wallets = {
+      bitcoin: '1YourBitcoinWalletAddressHere',
+      ethereum: '0xYourEthereumWalletAddressHere',
+      usdt: 'TYourUSDTWalletAddressHere'
+    };
+
+    document.getElementsByName('crypto').forEach(radio => {
+      radio.addEventListener('change', e => {
+        const selected = e.target.value;
+        document.getElementById('walletAddress').textContent = wallets[selected];
+        document.getElementById('walletInfo').style.display = 'flex';
+        document.getElementById('proofSection').style.display = 'block';
+      });
+    });
+
+    // Proof submission
+    document.getElementById('submitProof').onclick = () => {
+      const file = document.getElementById('proofFile').files[0];
+      if (!file) return alert('Please upload proof of payment.');
+      sessionStorage.setItem('paymentProofSubmitted', 'true');
+      alert('Proof submitted. Please wait for admin approval.');
+      window.location.href = 'login.html';
+    };
+  </script>
 </body>
 </html>
