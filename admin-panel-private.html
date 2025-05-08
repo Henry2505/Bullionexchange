@@ -172,6 +172,20 @@
         <p>Use the navigation on the left to manage your platform.</p>
       </section>
 
+      <section id="payments" class="hidden">
+        <h2>Payment Records</h2>
+        <button class="download-btn" onclick="downloadPayments()">Download CSV</button>
+        <table>
+          <thead>
+            <tr>
+              <th>Name</th><th>Email</th><th>Username</th><th>Amount</th><th>Method</th><th>Wallet</th>
+              <th>Proof</th><th>Status</th><th>Action</th>
+            </tr>
+          </thead>
+          <tbody id="paymentTableBody"></tbody>
+        </table>
+      </section>
+
       <section id="signals" class="hidden">
         <h2>Publish Signal</h2>
         <form id="signalForm">
@@ -180,8 +194,8 @@
           <div class="form-group"><label>Entry Price</label><input type="text" id="entry" required></div>
           <div class="form-group"><label>Take Profit</label><input type="text" id="tp" required></div>
           <div class="form-group"><label>Stop Loss</label><input type="text" id="sl" required></div>
-          <div class="form-group"><label>Time</label><input type="text" id="time" placeholder="e.g. 10:30 AM" required></div>
-          <div class="form-group"><label>Note</label><input type="text" id="note" placeholder="Optional note (e.g. Trade at your own risk)"></div>
+          <div class="form-group"><label>Time</label><input type="text" id="time" required></div>
+          <div class="form-group"><label>Note</label><input type="text" id="note" placeholder="Optional note"></div>
           <button type="submit" class="btn">Publish</button>
         </form>
         <h3 style="margin-top: 30px;">Published Signals</h3>
@@ -191,31 +205,36 @@
         </table>
       </section>
             <script>
+        // Sidebar toggle
         document.getElementById("toggleSidebar").addEventListener("click", () => {
           document.body.classList.toggle("collapsed-sidebar");
         });
 
-        document.querySelectorAll('.sidebar a[data-section]').forEach(link => {
-          link.addEventListener('click', e => {
+        // Navigation section switching
+        document.querySelectorAll(".sidebar a[data-section]").forEach(link => {
+          link.addEventListener("click", e => {
             e.preventDefault();
-            document.querySelectorAll('.sidebar a').forEach(a => a.classList.remove('active'));
-            link.classList.add('active');
-            const sectionId = link.getAttribute('data-section');
-            document.querySelectorAll('.content section').forEach(sec => {
-              sec.classList.add('hidden');
-              if (sec.id === sectionId) sec.classList.remove('hidden');
+            document.querySelectorAll(".sidebar a").forEach(a => a.classList.remove("active"));
+            link.classList.add("active");
+            const sectionId = link.getAttribute("data-section");
+            document.querySelectorAll(".content section").forEach(sec => {
+              sec.classList.add("hidden");
+              if (sec.id === sectionId) sec.classList.remove("hidden");
             });
+            if (sectionId === "payments") loadPayments();
+            if (sectionId === "signals") renderSignals();
           });
         });
 
-        const signalForm = document.getElementById('signalForm');
-        const signalList = document.getElementById('signalList');
-        const signalStore = JSON.parse(localStorage.getItem('signals') || '[]');
+        // --- SIGNAL PUBLISHER ---
+        const signalForm = document.getElementById("signalForm");
+        const signalList = document.getElementById("signalList");
+        const signalStore = JSON.parse(localStorage.getItem("signals") || "[]");
 
         function renderSignals() {
           signalList.innerHTML = '';
           signalStore.forEach((s, index) => {
-            const row = document.createElement('tr');
+            const row = document.createElement("tr");
             row.innerHTML = `
               <td>${s.date}</td>
               <td>${s.pair}</td>
@@ -228,22 +247,20 @@
           });
         }
 
-        renderSignals();
-
-        signalForm.addEventListener('submit', e => {
+        signalForm.addEventListener("submit", e => {
           e.preventDefault();
           const date = new Date().toLocaleDateString();
-          const pair = document.getElementById('pair').value;
-          const type = document.getElementById('type').value.toUpperCase();
-          const entry = document.getElementById('entry').value;
-          const tp = document.getElementById('tp').value;
-          const sl = document.getElementById('sl').value;
-          const time = document.getElementById('time').value;
-          const note = document.getElementById('note').value;
+          const pair = document.getElementById("pair").value;
+          const type = document.getElementById("type").value.toUpperCase();
+          const entry = document.getElementById("entry").value;
+          const tp = document.getElementById("tp").value;
+          const sl = document.getElementById("sl").value;
+          const time = document.getElementById("time").value;
+          const note = document.getElementById("note").value;
 
           const signal = { date, pair, type, entry, tp, sl, time, note };
           signalStore.unshift(signal);
-          localStorage.setItem('signals', JSON.stringify(signalStore));
+          localStorage.setItem("signals", JSON.stringify(signalStore));
           renderSignals();
           signalForm.reset();
           alert("Signal published.");
@@ -252,10 +269,84 @@
         function deleteSignal(index) {
           if (confirm("Delete this signal?")) {
             signalStore.splice(index, 1);
-            localStorage.setItem('signals', JSON.stringify(signalStore));
+            localStorage.setItem("signals", JSON.stringify(signalStore));
             renderSignals();
           }
         }
+
+        // --- PAYMENTS ---
+        function loadPayments() {
+          const table = document.getElementById("paymentTableBody");
+          const records = JSON.parse(localStorage.getItem("paymentRecords") || "[]");
+          table.innerHTML = '';
+
+          records.forEach((rec, i) => {
+            const row = document.createElement("tr");
+            row.innerHTML = `
+              <td>${rec.name}</td>
+              <td>${rec.email}</td>
+              <td>${rec.username}</td>
+              <td>$${rec.amount}</td>
+              <td>${rec.method}</td>
+              <td>${rec.walletType}</td>
+              <td><a href="${rec.proof}" target="_blank">View</a></td>
+              <td>${rec.status || "Pending"}</td>
+              <td>${rec.status === "Approved" ? "✓" : `<button class="btn" onclick="approvePayment(${i})">Approve</button>`}</td>
+            `;
+            table.appendChild(row);
+          });
+        }
+
+        function approvePayment(index) {
+          const records = JSON.parse(localStorage.getItem("paymentRecords") || "[]");
+          if (!records[index]) return;
+
+          records[index].status = "Approved";
+          localStorage.setItem("paymentRecords", JSON.stringify(records));
+
+          // Grant VIP access to matching user
+          const users = JSON.parse(localStorage.getItem("users") || "[]");
+          const user = users.find(u => u.email === records[index].email);
+          if (user) user.vip = true;
+          localStorage.setItem("users", JSON.stringify(users));
+
+          // Log it
+          const logs = JSON.parse(localStorage.getItem("adminLogs") || "[]");
+          logs.unshift(`Approved VIP for ${records[index].username} on ${new Date().toLocaleString()}`);
+          localStorage.setItem("adminLogs", JSON.stringify(logs));
+
+          alert("VIP access granted.");
+          loadPayments();
+        }
+
+        function downloadPayments() {
+          const data = JSON.parse(localStorage.getItem("paymentRecords") || "[]");
+          if (!data.length) return alert("No records found.");
+
+          const csv = [
+            ["Name", "Email", "Username", "Amount", "Method", "Wallet", "Proof", "Status"]
+          ];
+          data.forEach(d => {
+            csv.push([
+              d.name, d.email, d.username, d.amount, d.method, d.walletType, d.proof, d.status || "Pending"
+            ]);
+          });
+
+          const csvContent = "data:text/csv;charset=utf-8," + csv.map(e => e.join(",")).join("\n");
+          const encoded = encodeURI(csvContent);
+          const link = document.createElement("a");
+          link.setAttribute("href", encoded);
+          link.setAttribute("download", "payment_records.csv");
+          document.body.appendChild(link);
+          link.click();
+          document.body.removeChild(link);
+        }
+
+        // Auto-load dashboard or payments section
+        window.addEventListener("DOMContentLoaded", () => {
+          loadPayments();
+          renderSignals();
+        });
       </script>
     </div>
   </div>
