@@ -1,179 +1,133 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Payment Options – CBE</title>
-  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;500;700&display=swap" rel="stylesheet">
-  <style>
-    /* ← your existing styles exactly unchanged → */
-    body { margin:0; font-family:'Poppins',sans-serif; background:#0b0b0b; color:#f5f5f5; }
-    .container { max-width:700px; margin:120px auto 40px; padding:30px; background:rgba(0,0,0,0.7); border-radius:10px; box-shadow:0 0 20px gold; }
-    h1 { color:gold; text-align:center; margin-bottom:30px; }
-    .info { font-size:18px; text-align:center; margin-bottom:20px; }
-    .method-select { display:flex; justify-content:center; gap:20px; margin-bottom:30px; }
-    button { background:gold; color:#000; border:none; padding:12px 20px; border-radius:6px; font-weight:bold; cursor:pointer; transition:0.3s; }
-    button:hover { background:#e6c200; box-shadow:0 0 15px gold; }
-    #cryptoOptions { display:none; margin-bottom:20px; }
-    input[type="file"], input[type="email"], select { width:100%; padding:10px; background:#111; border:1px solid #444; color:#f5f5f5; border-radius:6px; margin-bottom:20px; }
-    .wallet-box { text-align:center; margin-top:10px; }
-    .wallet-box p { display:inline-block; font-size:14px; color:gold; margin-right:10px; }
-    .video-background { position:fixed; top:0; left:0; width:100%; height:100%; object-fit:cover; z-index:-2; }
-    .overlay { position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.5); z-index:-1; }
-  </style>
-</head>
-<body>
-  <video class="video-background" autoplay muted loop playsinline>
-    <source src="star-video.MP4" type="video/mp4"/>
-  </video>
-  <div class="overlay"></div>
+<script>
+  document.addEventListener('DOMContentLoaded', () => {
+    console.log('Payment page initialized');
 
-  <div class="container">
-    <h1>Payment Options</h1>
-    <p class="info" id="selectedPlanInfo">Loading...</p>
+    // 1) Load admin settings
+    let settings = {};
+    try {
+      settings = JSON.parse(localStorage.getItem('paymentSettings')) || {};
+    } catch (e) {
+      console.error('Error parsing paymentSettings:', e);
+    }
 
-    <!-- Wrap everything in a form -->
-    <form id="paymentForm">
-      <input type="email" id="userEmail" placeholder="Enter your email (same as application)" required />
+    const walletMap = { Bitcoin: settings.btc, Ethereum: settings.eth, USDT: settings.usdt };
+    const paystackKey = settings.paystackKey || '';
 
-      <div class="method-select">
-        <button type="button" id="paystackBtn">Pay with Paystack</button>
-        <button type="button" id="cryptoBtn">Pay with Crypto</button>
-      </div>
+    // 2) Show selected plan
+    const pkg = sessionStorage.getItem('selectedPackage') || '';
+    const planNames = {
+      weekly: 'Weekly VIP Plan – $50',
+      monthly: 'Monthly VIP Plan – $150',
+      yearly: 'Yearly VIP Plan – $1500'
+    };
+    document.getElementById('selectedPlanInfo').textContent = planNames[pkg] || 'No valid package selected.';
 
-      <div id="cryptoOptions">
-        <select id="cryptoType">
-          <option value="">Select Crypto</option>
-          <option value="Bitcoin">Bitcoin</option>
-          <option value="Ethereum">Ethereum</option>
-          <option value="USDT">USDT</option>
-        </select>
-        <div class="wallet-box">
-          <p id="walletAddress">Not set</p>
-          <button type="button" id="copyWalletBtn">Copy</button>
-        </div>
-      </div>
+    // 3) Crypto reveal
+    document.getElementById('cryptoBtn').addEventListener('click', () => {
+      console.log('Crypto reveal');
+      document.getElementById('cryptoOptions').style.display = 'block';
+    });
 
-      <label for="proof">Upload Proof of Payment:</label>
-      <input type="file" id="proof" accept="image/*" required />
+    // 4) Update wallet address
+    document.getElementById('cryptoType').addEventListener('change', function () {
+      const addr = walletMap[this.value] || 'Not set';
+      console.log('Crypto type:', this.value, 'Address:', addr);
+      document.getElementById('walletAddress').textContent = addr;
+    });
 
-      <div class="submit-btn">
-        <button type="submit" id="submitBtn">Submit Payment</button>
-      </div>
-    </form>
-  </div>
+    // 5) Copy wallet
+    document.getElementById('copyWalletBtn').addEventListener('click', () => {
+      const w = document.getElementById('walletAddress').textContent;
+      if (w && w !== 'Not set') {
+        navigator.clipboard.writeText(w).then(() => alert('Wallet copied'));
+      } else {
+        alert('No wallet to copy');
+      }
+    });
 
-  <script>
-    document.addEventListener('DOMContentLoaded', () => {
-      console.log('Payment page initialized');
+    // 6) Simulate Paystack
+    document.getElementById('paystackBtn').addEventListener('click', () => {
+      if (!paystackKey) {
+        return alert('Paystack key missing in Admin Settings');
+      }
+      console.log('Simulated Paystack flow');
+      alert('Simulated Paystack – upload proof & submit');
+    });
 
-      // 1) Load admin settings
-      let settings = {};
-      try {
-        settings = JSON.parse(localStorage.getItem('paymentSettings')) || {};
-      } catch {}
+    // 7) Form submit — always fires
+    document.getElementById('paymentForm').addEventListener('submit', (e) => {
+      e.preventDefault();
+      console.log('Form submission triggered');
 
-      const walletMap   = { Bitcoin: settings.btc, Ethereum: settings.eth, USDT: settings.usdt };
-      const paystackKey = settings.paystackKey || '';
+      const email = document.getElementById('userEmail').value.trim().toLowerCase();
+      const proofFile = document.getElementById('proof').files[0];
+      const cryptoType = document.getElementById('cryptoType').value;
+      const wallet = walletMap[cryptoType] || '';
+      let records = JSON.parse(localStorage.getItem('paymentRecords') || '[]');
 
-      // 2) Show selected plan
-      const pkg = sessionStorage.getItem('selectedPackage') || '';
-      const planNames = {
-        weekly: 'Weekly VIP Plan – $50',
-        monthly: 'Monthly VIP Plan – $150',
-        yearly: 'Yearly VIP Plan – $1500'
-      };
-      document.getElementById('selectedPlanInfo').textContent = planNames[pkg] || 'No valid package selected.';
+      // Validations
+      if (!pkg || !planNames[pkg]) {
+        console.warn('Validation failed: No plan selected');
+        return alert('No plan selected. Please select a plan.');
+      }
+      if (!email || !email.includes('@')) {
+        console.warn('Validation failed: Invalid email');
+        return alert('Enter a valid email address.');
+      }
+      if (!proofFile) {
+        console.warn('Validation failed: No proof file');
+        return alert('Please upload proof of payment.');
+      }
+      if (document.getElementById('cryptoOptions').style.display === 'block' && !cryptoType) {
+        console.warn('Validation failed: No crypto type selected');
+        return alert('Please select a crypto type.');
+      }
+      if (proofFile.size > 5 * 1024 * 1024) {
+        console.warn('Validation failed: Proof file too large');
+        return alert('Proof file must be under 5MB.');
+      }
+      if (records.some((r) => r.email === email && r.status !== 'expired')) {
+        console.warn('Validation failed: Duplicate payment');
+        return alert('A payment for this email is already submitted.');
+      }
 
-      // 3) Crypto reveal
-      document.getElementById('cryptoBtn').addEventListener('click', () => {
-        console.log('Crypto reveal');
-        document.getElementById('cryptoOptions').style.display = 'block';
-      });
-
-      // 4) Update wallet address
-      document.getElementById('cryptoType').addEventListener('change', function() {
-        const addr = walletMap[this.value] || 'Not set';
-        console.log('Crypto type:', this.value, 'Address:', addr);
-        document.getElementById('walletAddress').textContent = addr;
-      });
-
-      // 5) Copy wallet
-      document.getElementById('copyWalletBtn').addEventListener('click', () => {
-        const w = document.getElementById('walletAddress').textContent;
-        if (w && w !== 'Not set') {
-          navigator.clipboard.writeText(w).then(() => alert('Wallet copied'));
-        } else {
-          alert('No wallet to copy');
-        }
-      });
-
-      // 6) Simulate Paystack
-      document.getElementById('paystackBtn').addEventListener('click', () => {
-        if (!paystackKey) {
-          return alert('Paystack key missing in Admin Settings');
-        }
-        console.log('Simulated Paystack flow');
-        alert('Simulated Paystack – upload proof & submit');
-      });
-
-      // 7) Form submit — always fires
-      document.getElementById('paymentForm').addEventListener('submit', e => {
-        e.preventDefault();
-        console.log('Form submitted');
-
-        const email      = document.getElementById('userEmail').value.trim().toLowerCase();
-        const proofFile  = document.getElementById('proof').files[0];
-        const cryptoType = document.getElementById('cryptoType').value;
-        const wallet     = walletMap[cryptoType] || '';
-        let records      = JSON.parse(localStorage.getItem('paymentRecords') || '[]');
-
-        // Validations
-        if (!pkg || !planNames[pkg]) {
-          return alert('No plan selected.');
-        }
-        if (!email || !email.includes('@')) {
-          return alert('Enter valid email.');
-        }
-        if (!proofFile) {
-          return alert('Upload proof of payment.');
-        }
-        if (document.getElementById('cryptoOptions').style.display === 'block' && !cryptoType) {
-          return alert('Select crypto type.');
-        }
-        if (proofFile.size > 5 * 1024 * 1024) {
-          return alert('Max proof size 5 MB.');
-        }
-        if (records.some(r => r.email === email && r.status !== 'expired')) {
-          return alert('Payment already submitted.');
-        }
-
-        // Read & save
-        const reader = new FileReader();
-        reader.onload = function(ev) {
+      // Read & save
+      const reader = new FileReader();
+      reader.onload = function (ev) {
+        try {
           console.log('Proof read, saving record');
           records.push({
-            name:       email.split('@')[0],
-            email, username: email.split('@')[0],
-            amount: (pkg === 'weekly' ? 50 : pkg === 'monthly' ? 150 : pkg === 'yearly' ? 1500 : 0),
-            method:     wallet ? cryptoType : 'Paystack',
+            name: email.split('@')[0],
+            email,
+            username: email.split('@')[0],
+            amount: pkg === 'weekly' ? 50 : pkg === 'monthly' ? 150 : pkg === 'yearly' ? 1500 : 0,
+            method: wallet ? cryptoType : 'Paystack',
             walletType: cryptoType || 'Paystack',
-            proof:      ev.target.result,
-            status:     'pending',
-            submittedAt:new Date().toISOString()
+            proof: ev.target.result,
+            status: 'pending',
+            submittedAt: new Date().toISOString()
           });
           localStorage.setItem('paymentRecords', JSON.stringify(records));
           sessionStorage.setItem('paymentApproved', 'false');
-          alert('Payment submitted! Await approval.');
-          window.location.href = 'CBE_login.html';
-        };
-        reader.onerror = () => {
-          console.error('FileReader error');
-          alert('Error reading proof file.');
-        };
-        reader.readAsDataURL(proofFile);
-      });
+          alert('Payment submitted! Awaiting approval.');
+          
+          // Attempt navigation with fallback
+          try {
+            window.location.href = 'CBE_login.html';
+          } catch (navError) {
+            console.error('Navigation failed:', navError);
+            alert('Submission successful, but redirect failed. Please navigate to the login page manually.');
+          }
+        } catch (error) {
+          console.error('Error saving record:', error);
+          alert('Error saving payment. Please try again.');
+        }
+      };
+      reader.onerror = () => {
+        console.error('FileReader error:', reader.error);
+        alert('Error reading proof file. Please try a different file.');
+      };
+      reader.readAsDataURL(proofFile);
     });
-  </script>
-</body>
-</html>
+  });
+</script>
