@@ -44,7 +44,6 @@
       box-shadow: 0 2px 6px rgba(0,0,0,0.5);
       text-align: center; font-size: 1.4rem; color: gold;
     }
-    /* Back to Site link */
     #backHome {
       position: absolute; left: 20px; top: 20px;
       font-size: 0.9rem;
@@ -174,8 +173,7 @@
       <h2>Signals</h2>
       <div id="signalContainer"></div>
     </div>
-
-    <!-- BROADCASTS -->
+        <!-- BROADCASTS -->
     <div class="section" id="broadcast">
       <h2>Broadcast Message</h2>
       <textarea id="broadcastText" rows="4" style="width:100%;"></textarea>
@@ -212,17 +210,17 @@
     function checkPw() {
       const pw = document.getElementById('adminPw').value;
       if (pw === 'Blessed@123') {
-        sessionStorage.setItem('adminAuth', 'true');
-        document.getElementById('pwModal').style.display = 'none';
+        sessionStorage.setItem('adminAuth','true');
+        document.getElementById('pwModal').style.display='none';
       } else {
         alert('Incorrect password.');
       }
     }
-    if (sessionStorage.getItem('adminAuth') !== 'true') {
-      document.getElementById('adminMain').style.display = 'none';
-      document.getElementById('adminSidebar').style.display = 'none';
+    if (sessionStorage.getItem('adminAuth')!=='true') {
+      document.getElementById('adminMain').style.display='none';
+      document.getElementById('adminSidebar').style.display='none';
     } else {
-      document.getElementById('pwModal').style.display = 'none';
+      document.getElementById('pwModal').style.display='none';
     }
 
     // Sidebar Toggle
@@ -231,96 +229,131 @@
       document.getElementById('adminMain').classList.toggle('shifted');
     }
 
-    // Users
+    // USERS
     function loadUsers() {
-      const users = JSON.parse(localStorage.getItem('users')||'[]'), c=document.getElementById('userContainer');
-      c.innerHTML=''; if(!users.length) return c.innerHTML='<p>No users yet.</p>';
-      users.forEach((u,i)=>{const d=document.createElement('div');d.className='record-box';
-        d.innerHTML=`<p><strong>${u.name}</strong> (${u.email})</p><p>Status: ${u.status||'pending'}</p>
-          <button onclick="approveUser(${i})">Approve</button>
-          <button onclick="deactivateUser(${i})">Deactivate</button>
-          <button onclick="deleteUser(${i})">Delete</button>`; c.appendChild(d);
-      });
+      const users = JSON.parse(localStorage.getItem('users')||'[]'),
+            c = document.getElementById('userContainer');
+      c.innerHTML = users.length
+        ? users.map((u,i)=>`
+            <div class="record-box">
+              <p><strong>${u.name}</strong> (${u.email})</p>
+              <p>Status: ${u.status||'pending'}</p>
+              <button onclick="approveUser(${i})">Approve</button>
+              <button onclick="deactivateUser(${i})">Deactivate</button>
+              <button onclick="deleteUser(${i})">Delete</button>
+            </div>`
+          ).join('')
+        : '<p>No users yet.</p>';
     }
     function approveUser(i){let u=JSON.parse(localStorage.getItem('users'));u[i].status='approved';localStorage.setItem('users',JSON.stringify(u));loadUsers();}
     function deactivateUser(i){let u=JSON.parse(localStorage.getItem('users'));u[i].status='inactive';localStorage.setItem('users',JSON.stringify(u));loadUsers();}
     function deleteUser(i){let u=JSON.parse(localStorage.getItem('users'));u.splice(i,1);localStorage.setItem('users',JSON.stringify(u));loadUsers();}
 
-    // Payments
+    // PAYMENTS
     function loadPayments() {
-      const r=JSON.parse(localStorage.getItem('paymentRecords')||'[]'), c=document.getElementById('paymentContainer');
-      c.innerHTML=''; if(!r.length) return c.innerHTML='<p>No payments yet.</p>';
-      r.forEach((p,i)=>{const d=document.createElement('div');d.className='record-box';
-        d.innerHTML=`<p><strong>${p.email}</strong> – ${p.plan}</p><p>Status: ${p.status}</p>
-          <button onclick="approvePayment(${i})">Approve</button>`; c.appendChild(d);
-      });
+      const r=JSON.parse(localStorage.getItem('paymentRecords')||'[]'),
+            c=document.getElementById('paymentContainer');
+      c.innerHTML = r.length
+        ? r.map((p,i)=>`
+            <div class="record-box">
+              <p><strong>${p.email}</strong> – ${p.plan}</p>
+              <p>Status: ${p.status}</p>
+              <button onclick="approvePayment(${i})">Approve</button>
+            </div>`
+          ).join('')
+        : '<p>No payments yet.</p>';
     }
     function approvePayment(i){
-      let r=JSON.parse(localStorage.getItem('paymentRecords')), u=JSON.parse(localStorage.getItem('users')||'[]');
+      let r=JSON.parse(localStorage.getItem('paymentRecords')),
+          u=JSON.parse(localStorage.getItem('users')||'[]');
       r[i].status='approved';localStorage.setItem('paymentRecords',JSON.stringify(r));
-      const idx=u.findIndex(x=>x.email===r[i].email); if(idx>=0){u[idx].status='approved';localStorage.setItem('users',JSON.stringify(u));loadUsers();}
+      const idx=u.findIndex(x=>x.email===r[i].email);
+      if(idx>=0){u[idx].status='approved';localStorage.setItem('users',JSON.stringify(u));loadUsers();}
       loadPayments();
     }
 
-    // Trade Insights
+    // TRADE INSIGHTS
     function loadInsights() {
-      const a=JSON.parse(localStorage.getItem('tradeInsights')||'[]'), c=document.getElementById('insightContainer');
-      c.innerHTML=''; if(!a.length) return c.innerHTML='<p>No insights yet.</p>';
-      a.forEach((it,i)=>{const d=document.createElement('div');d.className='insight-box';
-        d.innerHTML=`<img src="${it.image}" alt="Insight"/><button onclick="deleteInsight(${i})">Delete</button>
-          <p><strong>${it.date}</strong></p><p>${it.note}</p>`; c.appendChild(d);
-      });
+      const a=JSON.parse(localStorage.getItem('tradeInsights')||'[]'),
+            c=document.getElementById('insightContainer');
+      c.innerHTML = a.length
+        ? a.map((it,i)=>`
+            <div class="insight-box">
+              <img src="${it.image}" alt="Insight"/>
+              <button onclick="deleteInsight(${i})">Delete</button>
+              <p><strong>${it.date}</strong></p>
+              <p>${it.note}</p>
+            </div>`
+          ).join('')
+        : '<p>No insights yet.</p>';
     }
     function deleteInsight(i){let a=JSON.parse(localStorage.getItem('tradeInsights')||'[]');
       if(confirm('Delete this insight?')){a.splice(i,1);localStorage.setItem('tradeInsights',JSON.stringify(a));loadInsights();}
     }
 
-    // Trade History
+    // TRADE HISTORY
     function loadHistory() {
-      const a=JSON.parse(localStorage.getItem('tradeHistory')||'[]'), c=document.getElementById('historyContainer');
-      c.innerHTML=''; if(!a.length) return c.innerHTML='<p>No history yet.</p>';
-      a.forEach((h,i)=>{const d=document.createElement('div');d.className='insight-box';
-        d.innerHTML=`<img src="${h.image}" alt="History"/><button onclick="deleteHistory(${i})">Delete</button>
-          <p><strong>${h.date}</strong></p><p>${h.note}</p>`; c.appendChild(d);
-      });
+      const a=JSON.parse(localStorage.getItem('tradeHistory')||'[]'),
+            c=document.getElementById('historyContainer');
+      c.innerHTML = a.length
+        ? a.map((h,i)=>`
+            <div class="insight-box">
+              <img src="${h.image}" alt="History"/>
+              <button onclick="deleteHistory(${i})">Delete</button>
+              <p><strong>${h.date}</strong></p>
+              <p>${h.note}</p>
+            </div>`
+          ).join('')
+        : '<p>No history yet.</p>';
     }
     function deleteHistory(i){let a=JSON.parse(localStorage.getItem('tradeHistory')||'[]');
       if(confirm('Delete this record?')){a.splice(i,1);localStorage.setItem('tradeHistory',JSON.stringify(a));loadHistory();}
     }
 
-    // Signals
+    // SIGNALS
     function loadSignals() {
-      const a=JSON.parse(localStorage.getItem('vipSignals')||'[]'), c=document.getElementById('signalContainer');
-      c.innerHTML=''; if(!a.length) return c.innerHTML='<p>No signals published.</p>';
-      a.forEach((s,i)=>{const d=document.createElement('div');d.className='insight-box';
-        d.innerHTML=`<p><strong>${s.date} ${s.time}</strong></p>
-          <p>${s.direction} ${s.pair} @ ${s.entry}</p><p>TP: ${s.tp}  SL: ${s.sl}</p>
-          <p><em>${s.note}</em></p><button onclick="deleteSignal(${i})">Delete</button>`; c.appendChild(d);
-      });
+      const a=JSON.parse(localStorage.getItem('vipSignals')||'[]'),
+            c=document.getElementById('signalContainer');
+      c.innerHTML = a.length
+        ? a.map((s,i)=>`
+            <div class="insight-box">
+              <p><strong>${s.date} ${s.time}</strong></p>
+              <p>${s.direction} ${s.pair} @ ${s.entry}</p>
+              <p>TP: ${s.tp}  SL: ${s.sl}</p>
+              <p><em>${s.note}</em></p>
+              <button onclick="deleteSignal(${i})">Delete</button>
+            </div>`
+          ).join('')
+        : '<p>No signals published.</p>';
     }
     function deleteSignal(i){let a=JSON.parse(localStorage.getItem('vipSignals')||'[]');
       if(confirm('Delete this signal?')){a.splice(i,1);localStorage.setItem('vipSignals',JSON.stringify(a));loadSignals();}
     }
 
-    // Broadcast
-    function broadcastMessage() {
+    // BROADCAST
+    function broadcastMessage(){
       const msg=document.getElementById('broadcastText').value.trim();
       if(!msg) return alert('Enter a message.');
-      localStorage.setItem('broadcastMessage', msg);
+      localStorage.setItem('broadcastMessage',msg);
       alert('Broadcast saved.');
-      document.getElementById('broadcastText').value = '';
+      document.getElementById('broadcastText').value='';
     }
 
-    // Inbox
-    function loadInbox() {
-      const a=JSON.parse(localStorage.getItem('inboxMessages')||'[]'), c=document.getElementById('inboxContainer');
-      c.innerHTML=''; if(!a.length) return c.innerHTML='<p>No messages.</p>';
-      a.forEach(m=>{const d=document.createElement('div');d.className='record-box';
-        d.innerHTML=`<p><strong>${m.name}</strong> (${m.email})</p><p>${m.message}</p>`; c.appendChild(d);
-      });
+    // INBOX
+    function loadInbox(){
+      const a=JSON.parse(localStorage.getItem('inboxMessages')||'[]'),
+            c=document.getElementById('inboxContainer');
+      c.innerHTML = a.length
+        ? a.map(m=>`
+            <div class="record-box">
+              <p><strong>${m.name}</strong> (${m.email})</p>
+              <p>${m.message}</p>
+            </div>`
+          ).join('')
+        : '<p>No messages.</p>';
     }
 
-    // Settings
+    // SETTINGS
     document.getElementById('settingsForm').addEventListener('submit', e=>{
       e.preventDefault();
       const obj={
@@ -329,20 +362,22 @@
         usdt:document.getElementById('usdt').value.trim(),
         paystackKey:document.getElementById('paystackKey').value.trim()
       };
-      localStorage.setItem('paymentSettings', JSON.stringify(obj));
+      localStorage.setItem('paymentSettings',JSON.stringify(obj));
       alert('Settings saved.');
     });
 
-    // Logs
-    function log(msg) {
+    // LOGS
+    function log(msg){
       const arr=JSON.parse(localStorage.getItem('adminLogs')||'[]');
       arr.push(`${new Date().toLocaleString()}: ${msg}`);
-      localStorage.setItem('adminLogs', JSON.stringify(arr));
+      localStorage.setItem('adminLogs',JSON.stringify(arr));
     }
-    function loadLogs() {
-      const a=JSON.parse(localStorage.getItem('adminLogs')||'[]'), c=document.getElementById('logContainer');
-      c.innerHTML=''; if(!a.length) return c.innerHTML='<p>No logs yet.</p>';
-      a.forEach(l=>c.innerHTML+=`<p>${l}</p>`);
+    function loadLogs(){
+      const a=JSON.parse(localStorage.getItem('adminLogs')||'[]'),
+            c=document.getElementById('logContainer');
+      c.innerHTML = a.length
+        ? a.map(l=>`<p>${l}</p>`).join('')
+        : '<p>No logs yet.</p>';
     }
 
     // Initialize
