@@ -1,178 +1,164 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="utf-8"/>
+  <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>VIP Signal – CBE</title>
-  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&display=swap" rel="stylesheet"/>
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap" rel="stylesheet"/>
   <style>
     body {
-      margin: 0;
+      margin: 0; padding: 0;
       font-family: 'Poppins', sans-serif;
       background: #0b0b0b;
-      color: #f5f5f5;
+      color: #fff;
       user-select: none;
     }
-
-    video.bg {
+    .video-bg {
       position: fixed;
       top: 0; left: 0;
       width: 100%; height: 100%;
       object-fit: cover;
       z-index: -2;
     }
-
     .overlay {
       position: fixed;
       top: 0; left: 0;
       width: 100%; height: 100%;
-      background: rgba(0, 0, 0, 0.7);
+      background: rgba(0,0,0,0.6);
       z-index: -1;
     }
-
     header {
       text-align: center;
-      padding: 80px 20px 40px;
+      padding: 60px 20px 30px;
     }
-
     header h1 {
-      color: gold;
       font-size: 36px;
-    }
-
-    .notice {
-      text-align: center;
-      color: #ffc107;
-      font-size: 14px;
-      margin-top: 10px;
-    }
-
-    .signal-box {
-      max-width: 680px;
-      margin: 30px auto;
-      background: #141414;
-      padding: 25px;
-      border-radius: 12px;
-      box-shadow: 0 0 25px rgba(255, 215, 0, 0.15);
-    }
-
-    .signal-box h2 {
       color: gold;
+      margin-bottom: 10px;
+    }
+    header p {
+      font-size: 16px;
+      color: #ccc;
+    }
+    .signal-container {
+      max-width: 700px;
+      margin: 30px auto;
+      background: rgba(255,255,255,0.02);
+      padding: 30px;
+      border-radius: 12px;
+      box-shadow: 0 0 18px rgba(255,215,0,0.3);
+    }
+    .signal-title {
       font-size: 22px;
-      margin-bottom: 8px;
+      color: gold;
+      margin-bottom: 10px;
     }
-
-    .signal-box .time {
-      color: #999;
+    .time {
       font-size: 14px;
-      margin-bottom: 12px;
+      color: #aaa;
+      margin-bottom: 20px;
     }
-
-    .signal-content {
-      background: #1d1d1d;
+    .signal-detail {
+      font-size: 18px;
+      line-height: 1.8;
+      background: #111;
       padding: 18px;
       border-radius: 10px;
     }
-
-    .copy-line {
-      margin-bottom: 14px;
-      font-size: 16px;
+    .signal-detail span {
+      color: #fff;
     }
-
     .copy-button {
-      margin-left: 10px;
-      background: #222;
-      color: gold;
+      background: #ffd700;
       border: none;
       padding: 5px 10px;
-      border-radius: 6px;
+      font-size: 14px;
+      font-weight: bold;
+      color: #000;
+      margin-left: 10px;
+      border-radius: 5px;
       cursor: pointer;
-      animation: glow 2s infinite;
+      animation: blink 2s infinite;
     }
-
-    @keyframes glow {
-      0% { box-shadow: 0 0 5px gold; }
+    @keyframes blink {
+      0%, 100% { box-shadow: 0 0 5px gold; }
       50% { box-shadow: 0 0 15px gold; }
-      100% { box-shadow: 0 0 5px gold; }
     }
-
     .admin-note {
-      margin-top: 15px;
+      margin-top: 20px;
+      font-size: 14px;
+      padding: 12px;
       background: #222;
-      border-left: 4px solid gold;
-      padding: 10px;
+      border-left: 5px solid gold;
       color: #ffcc00;
       font-style: italic;
-      font-size: 14px;
       border-radius: 6px;
     }
-
-    footer {
+    .footer {
       text-align: center;
-      font-size: 13px;
-      color: #aaa;
-      padding: 30px 20px;
-      margin-top: 50px;
+      padding: 25px;
+      font-size: 14px;
+      color: #888;
     }
   </style>
 </head>
-<body oncontextmenu="return false" onkeydown="return !(event.key==='F12' || (event.ctrlKey && ['u','s','p'].includes(event.key.toLowerCase())))">
-  <video class="bg" autoplay muted loop>
-    <source src="star-video.MP4" type="video/mp4" />
+<body oncontextmenu="return false">
+  <video class="video-bg" autoplay muted loop>
+    <source src="star-video.MP4" type="video/mp4">
   </video>
   <div class="overlay"></div>
 
   <header>
-    <h1>Latest VIP Signal</h1>
-    <div class="notice">
-      Unauthorized sharing or reselling of this signal is strictly prohibited and punishable by law.
-    </div>
+    <h1>VIP Forex Signal</h1>
+    <p>Reselling or unauthorized use of these signals is punishable by law</p>
   </header>
 
-  <main id="signalsContainer">
-    <!-- Signal box will load here -->
-  </main>
+  <div class="signal-container" id="signalBox">
+    <div class="signal-title" id="signalDate">Loading...</div>
+    <div class="time" id="signalTime"></div>
+    <div class="signal-detail" id="signalContent">
+      <!-- Populated by script -->
+    </div>
+    <div class="admin-note" id="adminNote"></div>
+  </div>
 
-  <footer>
-    &copy; 2025 CBE – Chukwuemeka Bullion Exchange
-  </footer>
+  <div class="footer">© 2025 CBE – Chukwuemeka Bullion Exchange. All rights reserved.</div>
 
   <script>
-    const signals = JSON.parse(localStorage.getItem('vipSignals') || '[]');
-    const latest = signals.length > 0 ? signals[signals.length - 1] : null;
-    const container = document.getElementById('signalsContainer');
+    const signalData = JSON.parse(localStorage.getItem('vipSignals') || '[]');
+    const latest = signalData.length ? signalData[signalData.length - 1] : null;
 
     if (!latest) {
-      container.innerHTML = '<div style="text-align:center;color:#ccc;">No signals available yet.</div>';
+      document.getElementById('signalBox').innerHTML = '<p style="text-align:center;color:#aaa;">No signal available yet.</p>';
     } else {
-      container.innerHTML = `
-        <div class="signal-box">
-          <h2>${latest.date || 'Date Unavailable'}</h2>
-          <div class="time">Time: ${latest.time || '—'}</div>
-          <div class="signal-content">
-            <div class="copy-line">
-              ${latest.direction || 'BUY'} ${latest.pair || 'PAIR'} @ 
-              <span id="entry">${latest.price || ''}</span>
-              <button class="copy-button" onclick="copy('entry')">Copy</button>
-            </div>
-            <div class="copy-line">
-              TP: <span id="tp">${latest.tp || ''}</span>
-              <button class="copy-button" onclick="copy('tp')">Copy</button>
-            </div>
-            <div class="copy-line">
-              SL: <span id="sl">${latest.sl || ''}</span>
-              <button class="copy-button" onclick="copy('sl')">Copy</button>
-            </div>
-          </div>
-          ${latest.note ? `<div class="admin-note">Note: ${latest.note}</div>` : ''}
-        </div>
+      document.getElementById('signalDate').textContent = latest.date || 'No Date';
+      document.getElementById('signalTime').textContent = latest.time || '';
+      document.getElementById('signalContent').innerHTML = `
+        <div>Pair: <span>${latest.pair}</span></div>
+        <div>Type: <span>${latest.type}</span></div>
+        <div>Entry: <span id="entry">${latest.entry}</span> <button class="copy-button" onclick="copy('entry')">Copy</button></div>
+        <div>TP: <span id="tp">${latest.tp}</span> <button class="copy-button" onclick="copy('tp')">Copy</button></div>
+        <div>SL: <span id="sl">${latest.sl}</span> <button class="copy-button" onclick="copy('sl')">Copy</button></div>
       `;
+      document.getElementById('adminNote').textContent = latest.note || '';
     }
 
     function copy(id) {
-      const txt = document.getElementById(id).textContent;
-      navigator.clipboard.writeText(txt).then(() => alert('Copied: ' + txt));
+      const text = document.getElementById(id).textContent;
+      navigator.clipboard.writeText(text).then(() => alert(`Copied: ${text}`));
     }
+
+    // Prevent PrintScreen and DevTools
+    document.addEventListener('keydown', e => {
+      if (e.key === 'PrintScreen') {
+        navigator.clipboard.writeText('');
+        alert('Screenshots are disabled');
+        e.preventDefault();
+      }
+      if ((e.ctrlKey && ['u','s','p'].includes(e.key.toLowerCase())) || e.key === 'F12') {
+        e.preventDefault();
+      }
+    });
   </script>
 </body>
 </html>
