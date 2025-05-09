@@ -4,64 +4,65 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>CBE Admin Panel</title>
-  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;500;700&display=swap" rel="stylesheet" />
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;500;700&display=swap" rel="stylesheet"/>
   <style>
-    body { margin:0; font-family:'Poppins',sans-serif; background:#0b0b0b; color:#f5f5f5; }
+    body {
+      margin: 0; font-family: 'Poppins', sans-serif;
+      background: #0b0b0b; color: #f5f5f5; overflow-x: hidden;
+    }
+    /* Sidebar */
     .sidebar {
-      width: 260px;
-      background-color: #111;
-      height: 100vh;
-      position: fixed;
-      top: 0; left: 0;
-      overflow-y: auto;
-      transition: all 0.3s ease;
-      box-shadow: 0 0 12px gold;
+      position: fixed; top: 0; left: 0;
+      width: 240px; height: 100vh;
+      background: #111; padding-top: 80px;
+      box-shadow: 2px 0 12px rgba(0,0,0,0.7);
+      transition: transform 0.3s ease;
+      z-index: 1000;
     }
     .sidebar.collapsed {
-      width: 60px;
-    }
-    .sidebar h2 {
-      padding: 20px;
-      font-size: 22px;
-      background: gold;
-      color: #000;
-      margin: 0;
-      text-align: center;
+      transform: translateX(-240px);
     }
     .sidebar ul {
-      list-style: none;
-      padding: 0;
+      list-style: none; padding: 0; margin: 0;
     }
     .sidebar ul li {
-      padding: 14px 20px;
-      cursor: pointer;
+      margin: 0;
+    }
+    .sidebar ul li a {
+      display: block; padding: 14px 20px;
+      color: #ddd; text-decoration: none;
       border-bottom: 1px solid #222;
+      transition: background 0.3s, color 0.3s;
     }
-    .sidebar ul li:hover {
-      background: rgba(255, 215, 0, 0.1);
-    }
-    .sidebar ul li.active {
-      background: rgba(255, 215, 0, 0.2);
+    .sidebar ul li a:hover {
+      background: gold; color: #000;
     }
 
+    /* Three-dot Toggle */
     .toggle-btn {
-      position: absolute;
-      top: 15px;
-      right: -25px;
-      background: gold;
-      color: #000;
-      padding: 8px 10px;
-      border-radius: 50%;
-      cursor: pointer;
+      position: fixed; top: 20px; left: 20px;
+      width: 40px; height: 40px;
+      background: #111; border: none; border-radius: 50%;
+      display: flex; flex-direction: column;
+      justify-content: center; align-items: center;
+      cursor: pointer; z-index: 1001;
+      animation: pulse 2s infinite alternate;
+    }
+    .toggle-btn span {
+      width: 6px; height: 6px; background: gold;
+      border-radius: 50%; margin: 2px 0;
+    }
+    @keyframes pulse {
+      to { box-shadow: 0 0 10px gold; }
     }
 
+    /* Main content */
     .main-content {
-      margin-left: 260px;
-      padding: 30px;
+      margin-left: 240px; padding: 30px;
       transition: margin-left 0.3s ease;
     }
-    .main-content.collapsed {
-      margin-left: 60px;
+    .sidebar.collapsed + .main-content {
+      margin-left: 0;
     }
 
     .section {
@@ -71,172 +72,349 @@
       display: block;
     }
 
-    .signal-form input,
-    .signal-form textarea {
-      width: 100%;
-      padding: 10px;
-      margin: 10px 0;
-      background: #222;
-      color: #fff;
-      border: 1px solid #444;
+    h1 { color: gold; margin-top: 0; }
+
+    table {
+      width: 100%; border-collapse: collapse; margin: 20px 0;
+    }
+    th, td {
+      padding: 10px; border-bottom: 1px solid #333;
+      text-align: left;
+    }
+    th { background: #222; color: gold; }
+    tr:hover { background: #1a1a1a; }
+
+    input, textarea, select, button {
+      width: 100%; padding: 10px; margin: 8px 0;
+      background: #222; color: #fff; border: 1px solid #444;
       border-radius: 5px;
     }
-    .signal-form button {
-      background: gold;
-      color: #000;
-      padding: 12px 24px;
-      border: none;
-      font-weight: bold;
-      border-radius: 6px;
-      cursor: pointer;
+    button {
+      background: gold; color: #000; font-weight: bold;
+      cursor: pointer; transition: background 0.3s;
     }
-    .signal-form button:hover {
-      background: #e6c200;
+    button:hover { background: #e6c200; }
+
+    .signal-form input, .signal-form textarea {
+      width: auto; display: block; margin: 8px 0;
     }
   </style>
 </head>
 <body>
+
+  <!-- Three-dot Toggle -->
+  <button class="toggle-btn" id="toggleBtn">
+    <span></span><span></span><span></span>
+  </button>
+
+  <!-- Sidebar -->
   <div class="sidebar" id="sidebar">
-    <h2>CBE Admin</h2>
-    <div class="toggle-btn" onclick="toggleSidebar()">☰</div>
     <ul>
-      <li onclick="showSection('dashboard')">Dashboard</li>
-      <li onclick="showSection('users')">Users</li>
-      <li onclick="showSection('payments')">Payments</li>
-      <li onclick="showSection('settings')">Settings</li>
-      <li onclick="showSection('signals')" class="active">Signals</li>
-      <li onclick="showSection('broadcast')">Broadcast</li>
-      <li onclick="showSection('messages')">Messages</li>
-      <li onclick="showSection('tradeInsights')">Trade Insights</li>
-      <li onclick="showSection('tradeHistory')">Trade History</li>
+      <li><a href="#" onclick="showSection('dashboard');return false;">Dashboard</a></li>
+      <li><a href="#" onclick="showSection('users');return false;">Users</a></li>
+      <li><a href="#" onclick="showSection('applications');return false;">Applications</a></li>
+      <li><a href="#" onclick="showSection('payments');return false;">Payments</a></li>
+      <li><a href="#" onclick="showSection('signals');return false;">Publish Signals</a></li>
+      <li><a href="#" onclick="showSection('tradeInsights');return false;">Trade Insights</a></li>
+      <li><a href="#" onclick="showSection('tradeHistory');return false;">Trade History</a></li>
+      <li><a href="#" onclick="showSection('broadcast');return false;">Broadcast</a></li>
+      <li><a href="#" onclick="showSection('messages');return false;">Messages</a></li>
+      <li><a href="#" onclick="showSection('settings');return false;">Settings</a></li>
+      <li><a href="#" onclick="showSection('logs');return false;">Admin Logs</a></li>
     </ul>
   </div>
 
+  <!-- Main Content -->
   <div class="main-content" id="mainContent">
-    <div id="signals" class="section active">
-      <h1>Signal Publisher</h1>
+
+    <!-- Dashboard -->
+    <div id="dashboard" class="section active">
+      <h1>Admin Dashboard</h1>
+      <p>Use the sidebar to navigate all sections.</p>
+    </div>
+
+    <!-- Users -->
+    <div id="users" class="section">
+      <h1>Registered Users</h1>
+      <table id="userTable">
+        <thead><tr><th>Name</th><th>Email</th><th>Status</th><th>Actions</th></tr></thead>
+        <tbody></tbody>
+      </table>
+    </div>
+
+    <!-- Applications -->
+    <div id="applications" class="section">
+      <h1>Applications</h1>
+      <table id="applicationTable">
+        <thead><tr><th>Name</th><th>Email</th><th>Phone</th><th>Message</th><th>Status</th></tr></thead>
+        <tbody></tbody>
+      </table>
+    </div>
+
+    <!-- Payments -->
+    <div id="payments" class="section">
+      <h1>Payment Records</h1>
+      <table id="paymentTable">
+        <thead><tr><th>Email</th><th>Amount</th><th>Method</th><th>Status</th><th>Actions</th></tr></thead>
+        <tbody></tbody>
+      </table>
+    </div>
+
+    <!-- Publish Signals -->
+    <div id="signals" class="section">
+      <h1>Publish Signals</h1>
       <form id="signalForm" class="signal-form">
-        <input type="text" id="pair" placeholder="Currency Pair e.g., EUR/USD" required />
-        <input type="text" id="entry" placeholder="Entry Price e.g., 1.07250" required />
-        <input type="text" id="tp" placeholder="Take Profit e.g., 1.07700" required />
-        <input type="text" id="sl" placeholder="Stop Loss e.g., 1.06950" required />
-        <textarea id="note" placeholder="Note or Strategy (optional)"></textarea>
+        <input id="pair" placeholder="Currency Pair e.g., EUR/USD" required />
+        <input id="entry" placeholder="Entry Price" required />
+        <input id="tp" placeholder="Take Profit" required />
+        <input id="sl" placeholder="Stop Loss" required />
+        <textarea id="note" placeholder="Note (optional)"></textarea>
         <button type="submit">Publish Signal</button>
       </form>
     </div>
 
-<!-- Part 1 ends here -->
-        <!-- other admin sections -->
-    <div id="dashboard" class="section">
-      <h1>Admin Dashboard</h1>
-      <p>Welcome to the CBE Admin Panel</p>
+    <!-- Trade Insights -->
+    <div id="tradeInsights" class="section">
+      <h1>Trade Insights Upload</h1>
+      <input type="date" id="insightDate" required />
+      <input type="file" id="insightImage" accept="image/*" required />
+      <textarea id="insightNote" placeholder="Insight Notes" required></textarea>
+      <button onclick="uploadInsight()">Upload Insight</button>
     </div>
 
-    <div id="users" class="section">
-      <h1>Registered Users</h1>
-      <div id="userList">Loading users...</div>
+    <!-- Trade History -->
+    <div id="tradeHistory" class="section">
+      <h1>Trade History Upload</h1>
+      <input type="month" id="historyMonth" required />
+      <input type="file" id="historyImage" accept="image/*" required />
+      <textarea id="historyNote" placeholder="History Note" required></textarea>
+      <button onclick="uploadHistory()">Upload History</button>
     </div>
 
-    <div id="payments" class="section">
-      <h1>Payment Records</h1>
-      <div id="paymentList">Loading payments...</div>
+    <!-- Broadcast -->
+    <div id="broadcast" class="section">
+      <h1>Broadcast Message</h1>
+      <textarea id="broadcastText" placeholder="Message to all users"></textarea>
+      <button onclick="sendBroadcast()">Send Broadcast</button>
     </div>
 
+    <!-- Messages -->
+    <div id="messages" class="section">
+      <h1>Inbox Messages</h1>
+      <table id="messageTable">
+        <thead><tr><th>Email</th><th>Message</th><th>Date</th></tr></thead>
+        <tbody></tbody>
+      </table>
+    </div>
+
+    <!-- Settings -->
     <div id="settings" class="section">
       <h1>Payment Settings</h1>
-      <input type="text" id="btc" placeholder="BTC Address" />
-      <input type="text" id="eth" placeholder="ETH Address" />
-      <input type="text" id="usdt" placeholder="USDT Address" />
-      <input type="text" id="paystackKey" placeholder="Paystack Key" />
+      <input id="btc" placeholder="Bitcoin Wallet Address" />
+      <input id="eth" placeholder="Ethereum Wallet Address" />
+      <input id="usdt" placeholder="USDT Wallet Address" />
+      <input id="paystackKey" placeholder="Paystack Public Key" />
       <button onclick="saveSettings()">Save Settings</button>
     </div>
 
-    <div id="broadcast" class="section">
-      <h1>Broadcast Message</h1>
-      <textarea id="broadcastMsg" placeholder="Message to all users"></textarea>
-      <button onclick="sendBroadcast()">Send</button>
+    <!-- Admin Logs -->
+    <div id="logs" class="section">
+      <h1>Admin Log History</h1>
+      <pre id="logOutput"></pre>
     </div>
 
-    <div id="messages" class="section">
-      <h1>Inbox</h1>
-      <div id="messageList">No messages yet.</div>
-    </div>
-
-    <div id="tradeInsights" class="section">
-      <h1>Trade Insights Upload</h1>
-      <input type="file" id="insightUpload" accept="image/*" />
-      <textarea placeholder="Insight Note"></textarea>
-      <button>Upload Insight</button>
-    </div>
-
-    <div id="tradeHistory" class="section">
-      <h1>Trade History Upload (Jan - Dec)</h1>
-      <input type="file" id="historyUpload" accept="image/*" />
-      <textarea placeholder="History Note"></textarea>
-      <button>Upload History</button>
-    </div>
-  </div>
+  </div> <!-- End .main-content -->
 
   <script>
-    const sections = document.querySelectorAll('.section');
-
+    // Sidebar toggle
+    document.getElementById('toggleBtn').onclick = () => {
+      document.getElementById('sidebar').classList.toggle('collapsed');
+      document.getElementById('mainContent').classList.toggle('collapsed');
+    };
+    // Section navigation
     function showSection(id) {
-      sections.forEach(sec => sec.classList.remove('active'));
+      document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
       document.getElementById(id).classList.add('active');
     }
 
-    function toggleSidebar() {
-      document.getElementById('sidebar').classList.toggle('collapsed');
-      document.getElementById('mainContent').classList.toggle('collapsed');
+    // Logging utility
+    function log(action) {
+      const logs = JSON.parse(localStorage.getItem('adminLogs')||'[]');
+      logs.unshift(`[${new Date().toLocaleString()}] ${action}`);
+      localStorage.setItem('adminLogs', JSON.stringify(logs));
+      renderLogs();
+    }
+    function renderLogs() {
+      document.getElementById('logOutput').textContent =
+        (JSON.parse(localStorage.getItem('adminLogs')||'[]')).join('\n\n');
     }
 
-    // Signal form save to localStorage
-    document.getElementById('signalForm').addEventListener('submit', function (e) {
-      e.preventDefault();
-      const pair = document.getElementById('pair').value.trim();
-      const entry = document.getElementById('entry').value.trim();
-      const tp = document.getElementById('tp').value.trim();
-      const sl = document.getElementById('sl').value.trim();
-      const note = document.getElementById('note').value.trim();
+    // On load: populate tables & settings & logs
+    window.onload = () => {
+      renderLogs();
 
-      if (!pair || !entry || !tp || !sl) {
-        alert("Please fill in all required fields.");
-        return;
+      // Users
+      const userTable = document.querySelector('#userTable tbody');
+      userTable.innerHTML = '';
+      JSON.parse(localStorage.getItem('users')||'[]').forEach((u,i) => {
+        const tr = document.createElement('tr');
+        tr.innerHTML = `<td>${u.name}</td>
+                        <td>${u.email}</td>
+                        <td>${u.status}</td>
+                        <td>
+                          <button onclick="updateUser(${i},'approved')">Approve</button>
+                          <button onclick="updateUser(${i},'deactivated')">Deactivate</button>
+                          <button onclick="deleteUser(${i})">Delete</button>
+                        </td>`;
+        userTable.appendChild(tr);
+      });
+
+      // Applications
+      const appTable = document.querySelector('#applicationTable tbody');
+      appTable.innerHTML = '';
+      JSON.parse(localStorage.getItem('applications')||'[]').forEach(a => {
+        const row = `<tr>
+          <td>${a.name}</td><td>${a.email}</td><td>${a.phone}</td>
+          <td>${a.message}</td><td>${a.status}</td>
+        </tr>`;
+        appTable.innerHTML += row;
+      });
+
+      // Payments
+      const payTable = document.querySelector('#paymentTable tbody');
+      payTable.innerHTML = '';
+      JSON.parse(localStorage.getItem('paymentRecords')||'[]').forEach((p,i) => {
+        payTable.innerHTML += `<tr>
+          <td>${p.email}</td><td>$${p.amount}</td><td>${p.method}</td>
+          <td>${p.status}</td>
+          <td>
+            <button onclick="approvePayment(${i})">Approve</button>
+          </td>
+        </tr>`;
+      });
+
+      // Messages
+      const msgTable = document.querySelector('#messageTable tbody');
+      msgTable.innerHTML = '';
+      JSON.parse(localStorage.getItem('messages')||'[]').forEach(m => {
+        msgTable.innerHTML += `<tr>
+          <td>${m.email}</td><td>${m.message}</td><td>${m.date}</td>
+        </tr>`;
+      });
+
+      // Load settings
+      const s = JSON.parse(localStorage.getItem('paymentSettings')||'{}');
+      ['btc','eth','usdt','paystackKey'].forEach(id => {
+        if(s[id]) document.getElementById(id).value = s[id];
+      });
+
+      // Render logs
+      renderLogs();
+    };
+
+    // User actions
+    function updateUser(i,status) {
+      const users = JSON.parse(localStorage.getItem('users')||'[]');
+      users[i].status = status;
+      localStorage.setItem('users', JSON.stringify(users));
+      log(`User ${users[i].email} set to ${status}`);
+      window.onload();
+    }
+    function deleteUser(i) {
+      const users = JSON.parse(localStorage.getItem('users')||'[]');
+      log(`User ${users[i].email} deleted`);
+      users.splice(i,1);
+      localStorage.setItem('users', JSON.stringify(users));
+      window.onload();
+    }
+
+    // Approve payment
+    function approvePayment(i) {
+      const pays = JSON.parse(localStorage.getItem('paymentRecords')||'[]');
+      const rec = pays[i];
+      rec.status = 'approved';
+      localStorage.setItem('paymentRecords', JSON.stringify(pays));
+
+      // auto-add user
+      let users = JSON.parse(localStorage.getItem('users')||'[]');
+      if(!users.find(u=>u.email===rec.email)) {
+        users.push({ name:rec.username,email:rec.email,status:'approved' });
+      } else {
+        users = users.map(u=>u.email===rec.email?{...u,status:'approved'}:u);
       }
-
-      const signal = {
-        date: new Date().toLocaleDateString(),
-        time: new Date().toLocaleTimeString(),
-        pair, entry, tp, sl, note
-      };
-
-      const signals = JSON.parse(localStorage.getItem('vipSignals') || '[]');
-      signals.unshift(signal);
-      localStorage.setItem('vipSignals', JSON.stringify(signals));
-      alert("Signal published successfully!");
-      this.reset();
-    });
-
-    // Save payment settings
-    function saveSettings() {
-      const settings = {
-        btc: document.getElementById('btc').value.trim(),
-        eth: document.getElementById('eth').value.trim(),
-        usdt: document.getElementById('usdt').value.trim(),
-        paystackKey: document.getElementById('paystackKey').value.trim()
-      };
-      localStorage.setItem('paymentSettings', JSON.stringify(settings));
-      alert("Settings saved!");
+      localStorage.setItem('users', JSON.stringify(users));
+      log(`Payment approved for ${rec.email}`);
+      window.onload();
     }
 
-    // Load settings into fields
-    (function loadSettings() {
-      const s = JSON.parse(localStorage.getItem('paymentSettings') || '{}');
-      document.getElementById('btc').value = s.btc || '';
-      document.getElementById('eth').value = s.eth || '';
-      document.getElementById('usdt').value = s.usdt || '';
-      document.getElementById('paystackKey').value = s.paystackKey || '';
-    })();
+    // Publish signal
+    document.getElementById('signalForm').onsubmit = e => {
+      e.preventDefault();
+      const pair  = pair.value.trim(),
+            entry = entry.value.trim(),
+            tp    = tp.value.trim(),
+            sl    = sl.value.trim(),
+            note  = note.value.trim();
+      if(!pair||!entry||!tp||!sl) return alert('Fill all fields');
+      const signals = JSON.parse(localStorage.getItem('vipSignals')||'[]');
+      signals.unshift({
+        date:new Date().toLocaleDateString(),
+        time:new Date().toLocaleTimeString(),
+        pair,entry,tp,sl,note
+      });
+      localStorage.setItem('vipSignals', JSON.stringify(signals));
+      alert('Signal published!');
+      log(`Signal published: ${pair}`);
+      signalForm.reset();
+    };
+
+    // Upload insight
+    function uploadInsight() {
+      const img = insightImage.files[0], note=insightNote.value.trim();
+      if(!img||!note) return alert('Select image and note');
+      const reader=new FileReader();
+      reader.onload=()=> {
+        const arr = JSON.parse(localStorage.getItem('insights')||'[]');
+        arr.unshift({ date:insightDate.value,image:reader.result,note });
+        localStorage.setItem('insights', JSON.stringify(arr));
+        alert('Insight uploaded'); log('Insight uploaded');
+      };
+      reader.readAsDataURL(img);
+    }
+
+    // Upload history
+    function uploadHistory() {
+      const img=historyImage.files[0], note=historyNote.value.trim(), m=historyMonth.value;
+      if(!img||!note||!m) return alert('Select month, image, note');
+      const reader=new FileReader();
+      reader.onload=()=> {
+        const arr=JSON.parse(localStorage.getItem('tradeHistory')||'[]');
+        arr.unshift({ month:m,image:reader.result,note });
+        localStorage.setItem('tradeHistory', JSON.stringify(arr));
+        alert('History uploaded'); log('History uploaded');
+      };
+      reader.readAsDataURL(img);
+    }
+
+    // Broadcast
+    function sendBroadcast() {
+      const txt=broadcastText.value.trim();
+      if(!txt) return alert('Enter a message');
+      const msgs=JSON.parse(localStorage.getItem('messages')||'[]');
+      msgs.unshift({ email:'ALL_USERS',message:txt,date:new Date().toISOString() });
+      localStorage.setItem('messages',JSON.stringify(msgs));
+      alert('Broadcast sent'); log('Broadcast sent');
+      window.onload();
+    }
+
+    // Save settings
+    function saveSettings() {
+      const s = {
+        btc:btc.value, eth:eth.value, usdt:usdt.value, paystackKey:paystackKey.value
+      };
+      localStorage.setItem('paymentSettings',JSON.stringify(s));
+      alert('Settings saved'); log('Settings updated');
+    }
   </script>
 </body>
 </html>
