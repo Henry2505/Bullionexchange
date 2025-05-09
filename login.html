@@ -18,16 +18,14 @@
       position: fixed; top: 0; width: 100%; z-index: 1000;
       border-bottom: 1px solid #333; box-shadow: 0 0 10px gold;
     }
-    nav a {
-      color: gold; text-decoration: none; margin: 0 15px; font-size: 16px;
-    }
+    nav a { color: gold; text-decoration: none; margin: 0 15px; }
     .video-background {
       position: fixed; top: 0; left: 0; width: 100%; height: 100%;
       object-fit: cover; z-index: -2;
     }
     .overlay {
       position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-      background: rgba(0, 0, 0, 0.5); z-index: -1;
+      background: rgba(0,0,0,0.5); z-index: -1;
     }
     header {
       background: linear-gradient(135deg, #111, #1c1c1c);
@@ -42,35 +40,29 @@
       background-color: #141414; padding: 30px;
       border-radius: 10px; border-left: 4px solid gold;
     }
-    .login-form h2 {
-      color: gold; font-size: 26px; margin-bottom: 20px;
-    }
+    .login-form h2 { color: gold; font-size: 26px; margin-bottom: 20px; }
     .form-group { margin-bottom: 20px; }
-    .form-group label {
-      display: block; font-size: 16px; color: #ddd; margin-bottom: 8px;
-    }
+    .form-group label { color: #ddd; margin-bottom: 8px; display: block; }
     .form-group input {
-      width: 100%; padding: 10px; font-size: 16px;
-      background: #1c1c1c; border: 1px solid #333; border-radius: 5px;
-      color: #f5f5f5;
+      width: 100%; padding: 10px; background: #1c1c1c; border: 1px solid #333;
+      border-radius: 5px; color: #f5f5f5;
     }
-    .form-group input:focus {
-      outline: none; border-color: gold;
-    }
+    .form-group input:focus { outline: none; border-color: gold; }
     .submit-btn {
-      width: 100%; padding: 15px 0; font-size: 18px; font-weight: bold;
-      color: #000; background: gold; border: none; border-radius: 5px;
+      width: 100%; padding: 15px; font-size: 18px; font-weight: bold;
+      background: gold; color: #000; border: none; border-radius: 5px;
       cursor: pointer; position: relative; overflow: hidden;
       transition: all 0.3s ease;
     }
     .submit-btn:hover {
-      background: #e6c200;
-      box-shadow: 0 0 15px gold, 0 0 30px #ffd700;
+      background: #e6c200; box-shadow: 0 0 15px gold, 0 0 30px #ffd700;
     }
+    .submit-btn span { position: relative; z-index: 1; }
     .submit-btn::before {
       content: '';
       position: absolute; top:50%; left:50%;
-      width:0; height:0; background: radial-gradient(circle, rgba(255,215,0,0.3) 0%, transparent 70%);
+      width:0; height:0;
+      background: radial-gradient(circle, rgba(255,215,0,0.3) 0%, transparent 70%);
       border-radius:50%; transform:translate(-50%,-50%);
       transition: width 0.6s ease, height 0.6s ease;
       z-index:0;
@@ -78,20 +70,12 @@
     .submit-btn:hover::before {
       width:300px; height:300px;
     }
-    .submit-btn span { position: relative; z-index: 1; }
-    .contact-info {
-      text-align: center; margin-top: 40px;
-    }
-    .contact-info p {
-      font-size: 16px; color: #ddd; margin: 10px 0;
-    }
-    .contact-info a {
-      color: gold; text-decoration: none; font-weight: 500;
-    }
+    .contact-info { text-align: center; margin-top: 40px; }
+    .contact-info a { color: gold; text-decoration: none; }
     .contact-info a:hover { text-decoration: underline; }
     footer {
-      text-align: center; padding: 20px; font-size: 14px;
-      color: #888; border-top: 1px solid #222; background: #0b0b0b;
+      text-align: center; padding: 20px; color: #888;
+      border-top: 1px solid #222; background: #0b0b0b;
     }
   </style>
 </head>
@@ -113,7 +97,7 @@
     </div>
   </nav>
 
-  <!-- Login Header -->
+  <!-- Header -->
   <header>
     <h1>Login to CBE</h1>
     <p>Access your VIP dashboard and premium forex signals</p>
@@ -145,37 +129,32 @@
     </div>
   </section>
 
-  <!-- Footer -->
-  <footer>
-    © 2025 CBE - Chukwuemeka Bullion Exchange. All rights reserved.
-  </footer>
+  <footer>© 2025 CBE - Chukwuemeka Bullion Exchange. All rights reserved.</footer>
 
   <script>
     document.getElementById('loginForm').addEventListener('submit', function(e) {
       e.preventDefault();
 
-      const email = document.getElementById('email').value.trim().toLowerCase();
+      const email    = document.getElementById('email').value.trim().toLowerCase();
       const password = document.getElementById('password').value.trim();
 
-      // 1) Ensure both fields are filled
       if (!email || !password) {
-        return alert('Please enter both your email and password.');
+        return alert('Please enter both email and password.');
       }
 
-      // 2) Check payment approval
-      if (sessionStorage.getItem('paymentApproved') !== 'true') {
-        alert('🚫 Your payment is still pending approval. Please complete payment first.');
-        window.location.href = 'payment-options.html';
-        return;
+      // Check localStorage users for approval
+      const users = JSON.parse(localStorage.getItem('users')||'[]');
+      const user  = users.find(u => u.email === email);
+
+      if (!user) {
+        return alert('🚫 No account found. Please apply first.');
+      }
+      if (user.status !== 'approved') {
+        return alert('🚫 Your payment is pending approval. Please complete payment first.');
       }
 
-      // 3) (Optional) Check against stored users—if you have saved passwords in localStorage
-      //    Example: let users = JSON.parse(localStorage.getItem('users')||'[]');
-      //             let match = users.find(u=>u.email===email && u.password===password);
-      //             if(!match){ alert('Invalid credentials'); return; }
-
-      // 4) Grant access
-      sessionStorage.setItem('cbeLoggedIn', 'true');
+      // (Optional) password match skim—for now we accept any password once approved
+      sessionStorage.setItem('cbeLoggedIn','true');
       window.location.href = 'vip-dashboard.html';
     });
   </script>
