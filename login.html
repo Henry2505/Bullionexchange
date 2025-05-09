@@ -67,6 +67,17 @@
       background: #e6c200;
       box-shadow: 0 0 15px gold, 0 0 30px #ffd700;
     }
+    .submit-btn::before {
+      content: '';
+      position: absolute; top:50%; left:50%;
+      width:0; height:0; background: radial-gradient(circle, rgba(255,215,0,0.3) 0%, transparent 70%);
+      border-radius:50%; transform:translate(-50%,-50%);
+      transition: width 0.6s ease, height 0.6s ease;
+      z-index:0;
+    }
+    .submit-btn:hover::before {
+      width:300px; height:300px;
+    }
     .submit-btn span { position: relative; z-index: 1; }
     .contact-info {
       text-align: center; margin-top: 40px;
@@ -85,11 +96,14 @@
   </style>
 </head>
 <body>
+
+  <!-- Video & Overlay -->
   <video class="video-background" autoplay muted loop playsinline>
     <source src="star-video.mp4" type="video/mp4">
   </video>
   <div class="overlay"></div>
 
+  <!-- Navigation -->
   <nav>
     <a href="index.html"><img src="CBE_logo.png" alt="CBE Logo" style="height:40px;"></a>
     <div>
@@ -99,18 +113,24 @@
     </div>
   </nav>
 
+  <!-- Login Header -->
   <header>
     <h1>Login to CBE</h1>
     <p>Access your VIP dashboard and premium forex signals</p>
   </header>
 
+  <!-- Login Form -->
   <section>
     <div class="login-form">
       <h2>Sign In</h2>
       <form id="loginForm">
         <div class="form-group">
           <label for="email">Email Address</label>
-          <input type="email" id="email" required>
+          <input type="email" id="email" placeholder="you@example.com" required>
+        </div>
+        <div class="form-group">
+          <label for="password">Password</label>
+          <input type="password" id="password" placeholder="Your password" required>
         </div>
         <button type="submit" class="submit-btn"><span>Login</span></button>
       </form>
@@ -125,48 +145,38 @@
     </div>
   </section>
 
-  <footer>© 2025 CBE – Chukwuemeka Bullion Exchange</footer>
-    <script>
+  <!-- Footer -->
+  <footer>
+    © 2025 CBE - Chukwuemeka Bullion Exchange. All rights reserved.
+  </footer>
+
+  <script>
     document.getElementById('loginForm').addEventListener('submit', function(e) {
       e.preventDefault();
+
       const email = document.getElementById('email').value.trim().toLowerCase();
-      const records = JSON.parse(localStorage.getItem('paymentRecords') || '[]');
+      const password = document.getElementById('password').value.trim();
 
-      if (!email) {
-        alert('Please enter a valid email.');
-        return;
+      // 1) Ensure both fields are filled
+      if (!email || !password) {
+        return alert('Please enter both your email and password.');
       }
 
-      const user = records.find(record => record.email === email);
-
-      if (!user) {
-        alert('No record found for this email. Please apply first.');
-        window.location.href = 'CBE_apply.html';
-        return;
-      }
-
-      if (user.status === 'pending') {
+      // 2) Check payment approval
+      if (sessionStorage.getItem('paymentApproved') !== 'true') {
         alert('🚫 Your payment is still pending approval. Please complete payment first.');
         window.location.href = 'payment-options.html';
         return;
       }
 
-      if (user.status === 'expired') {
-        alert('🚫 Your VIP subscription has expired. Please renew your subscription.');
-        window.location.href = 'vip-subscription.html';
-        return;
-      }
+      // 3) (Optional) Check against stored users—if you have saved passwords in localStorage
+      //    Example: let users = JSON.parse(localStorage.getItem('users')||'[]');
+      //             let match = users.find(u=>u.email===email && u.password===password);
+      //             if(!match){ alert('Invalid credentials'); return; }
 
-      if (user.status === 'approved') {
-        sessionStorage.setItem('cbeLoggedIn', 'true');
-        sessionStorage.setItem('cbeUsername', user.username || user.email.split('@')[0]);
-        sessionStorage.setItem('paymentApproved', 'true');
-        alert('Login successful!');
-        window.location.href = 'vip-dashboard.html';
-        return;
-      }
-
-      alert('Access denied. Please contact support.');
+      // 4) Grant access
+      sessionStorage.setItem('cbeLoggedIn', 'true');
+      window.location.href = 'vip-dashboard.html';
     });
   </script>
 </body>
