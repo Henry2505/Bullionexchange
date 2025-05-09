@@ -3,455 +3,375 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Admin Panel – CBE</title>
+  <title>Admin Dashboard – CBE</title>
   <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;500;700&display=swap" rel="stylesheet">
   <style>
-    /* ─── Reset & Base ─── */
-    * { margin:0; padding:0; box-sizing:border-box; }
-    html, body {
-      width:100%; height:100%;
-      font-family:'Poppins',sans-serif;
-      background:#000; color:#fff;
-      overflow-x:hidden;
+    body {
+      margin: 0;
+      font-family: 'Poppins', sans-serif;
+      background-color: #000;
+      color: white;
+      overflow-x: hidden;
     }
-    a { color: gold; text-decoration: none; }
-    a:hover { text-decoration: underline; }
-
-    /* ─── Video Background & Overlay ─── */
-    video#bg {
-      position: fixed; top:0; left:0;
-      width:100%; height:100%;
-      object-fit: cover; z-index: -2;
+    .video-background {
+      position: fixed;
+      top: 0; left: 0;
+      width: 100%; height: 100%;
+      object-fit: cover;
+      z-index: -2;
     }
     .overlay {
-      position: fixed; top:0; left:0;
-      width:100%; height:100%;
+      position: fixed;
+      top: 0; left: 0;
+      width: 100%; height: 100%;
       background: rgba(0,0,0,0.6);
       z-index: -1;
     }
-
-    /* ─── Password Modal ─── */
-    #pwModal {
-      position: fixed; top:0; left:0;
-      width:100%; height:100%;
-      background: rgba(0,0,0,0.85);
-      display:flex; align-items:center; justify-content:center;
-      z-index:2000;
+    .top-bar {
+      background: rgba(0,0,0,0.8);
+      padding: 15px 20px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      border-bottom: 1px solid gold;
     }
-    #pwModal .box {
-      background:#111; padding:30px; border-radius:8px;
-      text-align:center; box-shadow:0 0 20px rgba(255,215,0,0.3);
+    .top-bar h1 {
+      font-size: 20px;
+      color: gold;
     }
-    #pwModal input {
-      width:200px; padding:10px; margin-top:15px;
-      border:1px solid #333; border-radius:4px;
-      background:#1c1c1c; color:#f5f5f5;
-    }
-    #pwModal button {
-      margin-top:20px; padding:10px 20px;
-      background:gold; border:none; color:#000;
-      cursor:pointer; border-radius:4px;
-    }
-
-    /* ─── Header & Toggle ─── */
-    header {
-      position: relative; text-align:center;
-      padding:20px 0; background:rgba(0,0,0,0.7);
-      box-shadow:0 2px 6px rgba(0,0,0,0.5);
-    }
-    header h1 {
-      color: gold; font-size:1.8rem;
-    }
-    #navToggle {
-      position:absolute; top:20px; right:20px;
-      width:36px; height:36px; background:gold;
-      border:none; border-radius:50%; cursor:pointer;
-      animation:blink 2s infinite;
+    .menu-toggle {
+      width: 35px;
+      height: 35px;
+      background: #111;
+      border-radius: 50%;
+      box-shadow: 0 0 10px gold;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      animation: blink 2s infinite;
     }
     @keyframes blink {
-      0%,100%{box-shadow:0 0 6px gold}
-      50%{box-shadow:0 0 18px gold}
+      0%, 100% { box-shadow: 0 0 10px gold; }
+      50% { box-shadow: 0 0 20px gold; }
     }
-    #navToggle span {
-      display:block; width:6px; height:6px;
-      background:#000; margin:4px auto;
-      border-radius:50%;
+    .sidebar {
+      position: fixed;
+      top: 60px;
+      left: 0;
+      width: 230px;
+      background: rgba(0, 0, 0, 0.9);
+      height: 100%;
+      overflow-y: auto;
+      transition: transform 0.3s ease;
+      transform: translateX(-100%);
+      z-index: 2;
     }
-
-    /* ─── Nav Dropdown ─── */
-    #navDropdown {
-      position:absolute; top:70px; right:20px;
-      background:rgba(20,20,20,0.9); border-radius:6px;
-      overflow:hidden; max-height:0; transition:max-height 0.3s ease;
-      z-index:1500; width:200px;
+    .sidebar.show {
+      transform: translateX(0);
     }
-    #navDropdown.active { max-height:600px; }
-    #navDropdown a {
-      display:block; padding:12px 16px;
-      border-bottom:1px solid #333;
-      color:gold;
+    .sidebar a {
+      display: block;
+      padding: 15px 20px;
+      color: white;
+      text-decoration: none;
+      border-bottom: 1px solid #111;
     }
-    #navDropdown a:last-child { border-bottom:none; }
-
-    /* ─── Main Content ─── */
-    .main {
-      padding:100px 30px 30px; max-width:1000px;
-      margin:0 auto; position:relative; z-index:1;
+    .sidebar a:hover {
+      background: gold;
+      color: black;
     }
-
-    .section {
-      background:rgba(20,20,20,0.8); margin-bottom:30px;
-      padding:20px; border-radius:8px;
-      box-shadow:0 0 15px rgba(255,215,0,0.2);
+    .content-section {
+      display: none;
+      padding: 30px 20px;
+      max-width: 1000px;
+      margin: auto;
+      background: rgba(0,0,0,0.6);
+      border-radius: 10px;
+      box-shadow: 0 0 20px gold;
     }
-    .section h2 {
-      margin-bottom:15px; color:gold;
+    .content-section.active {
+      display: block;
     }
-
-    .record-box, .insight-box {
-      background:#141414; padding:12px 16px;
-      margin-bottom:12px; border-radius:6px;
-      position:relative;
+    h2 {
+      color: gold;
     }
-    .record-box button, .insight-box button {
-      position:absolute; top:12px; right:12px;
-      background:crimson; border:none; padding:6px 10px;
-      color:#fff; border-radius:4px; cursor:pointer;
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 20px;
+    }
+    th, td {
+      padding: 10px;
+      border: 1px solid #333;
+      text-align: left;
+    }
+    th {
+      background: #222;
+      color: gold;
+    }
+    td {
+      background: #111;
+    }
+    .btn {
+      background: gold;
+      color: black;
+      padding: 8px 12px;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+    }
+    .btn:hover {
+      background: #e6c200;
+    }
+    .form-group {
+      margin-bottom: 15px;
+    }
+    input, textarea, select {
+      width: 100%;
+      padding: 10px;
+      background: #111;
+      color: white;
+      border: 1px solid #444;
+      border-radius: 5px;
+    }
+    label {
+      font-weight: 600;
+      margin-bottom: 6px;
+      display: block;
     }
   </style>
 </head>
 <body>
 
-  <!-- Video & Overlay -->
-  <video id="bg" autoplay muted loop>
-    <source src="star-video.MP4" type="video/mp4"/>
+  <!-- VIDEO BACKGROUND -->
+  <video autoplay muted loop class="video-background">
+    <source src="star-video.MP4" type="video/mp4">
   </video>
   <div class="overlay"></div>
 
-  <!-- Password Modal -->
-  <div id="pwModal">
-    <div class="box">
-      <h3>Enter Admin Password</h3>
-      <input type="password" id="adminPw" placeholder="Password"/>
-      <br/>
-      <button onclick="checkPw()">Unlock</button>
+  <!-- TOP BAR -->
+  <div class="top-bar">
+    <h1>Admin Panel – Chukwuemeka Bullion Exchange</h1>
+    <div class="menu-toggle" onclick="toggleSidebar()">≡</div>
+  </div>
+
+  <!-- SIDEBAR -->
+  <div class="sidebar" id="sidebar">
+    <a href="#" onclick="showSection('payments')">Payment Records</a>
+    <a href="#" onclick="showSection('applications')">Applications</a>
+    <a href="#" onclick="showSection('users')">User Approvals</a>
+    <a href="#" onclick="showSection('settings')">Settings</a>
+    <a href="#" onclick="showSection('signals')">Signal Publisher</a>
+    <a href="#" onclick="showSection('broadcast')">Broadcast</a>
+    <a href="#" onclick="showSection('messages')">Inbox</a>
+    <a href="#" onclick="showSection('tradeInsights')">Trade Insights</a>
+    <a href="#" onclick="showSection('tradeHistory')">Trade History</a>
+    <a href="#" onclick="showSection('logs')">Admin Logs</a>
+  </div>
+
+  <!-- CONTENT WRAPPER -->
+  <div id="main-content">
+    <div class="content-section" id="payments">
+      <h2>Payment Records</h2>
+      <!-- Content will be added in Part 2 -->
+    </div>
+
+    <div class="content-section" id="applications">
+      <h2>Applications</h2>
+      <!-- Content will be added in Part 2 -->
+    </div>
+
+    <div class="content-section" id="users">
+      <h2>Registered Users</h2>
+      <!-- Content will be added in Part 2 -->
+    </div>
+        </div>
+
+    <div class="content-section" id="settings">
+      <h2>Admin Settings</h2>
+      <div class="form-group">
+        <label>Bitcoin Wallet</label>
+        <input type="text" id="btcWallet">
+      </div>
+      <div class="form-group">
+        <label>Ethereum Wallet</label>
+        <input type="text" id="ethWallet">
+      </div>
+      <div class="form-group">
+        <label>USDT Wallet</label>
+        <input type="text" id="usdtWallet">
+      </div>
+      <div class="form-group">
+        <label>Paystack Public Key</label>
+        <input type="text" id="paystackKey">
+      </div>
+      <button class="btn" onclick="saveSettings()">Save Settings</button>
+    </div>
+
+    <div class="content-section" id="signals">
+      <h2>Publish New Signal</h2>
+      <div class="form-group">
+        <label>Currency Pair</label>
+        <input type="text" id="pair">
+      </div>
+      <div class="form-group">
+        <label>Type (Buy/Sell)</label>
+        <select id="type">
+          <option value="BUY">BUY</option>
+          <option value="SELL">SELL</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label>Entry Price</label>
+        <input type="text" id="entry">
+      </div>
+      <div class="form-group">
+        <label>Take Profit</label>
+        <input type="text" id="tp">
+      </div>
+      <div class="form-group">
+        <label>Stop Loss</label>
+        <input type="text" id="sl">
+      </div>
+      <div class="form-group">
+        <label>Note</label>
+        <textarea id="signalNote"></textarea>
+      </div>
+      <button class="btn" onclick="publishSignal()">Publish Signal</button>
+    </div>
+
+    <div class="content-section" id="broadcast">
+      <h2>Broadcast Message</h2>
+      <div class="form-group">
+        <label>Message to all users</label>
+        <textarea id="broadcastText"></textarea>
+      </div>
+      <button class="btn" onclick="sendBroadcast()">Send Broadcast</button>
+    </div>
+
+    <div class="content-section" id="messages">
+      <h2>Inbox Messages</h2>
+      <div id="inbox"></div>
+    </div>
+
+    <div class="content-section" id="tradeInsights">
+      <h2>Upload Trade Insight</h2>
+      <div class="form-group">
+        <label>Date</label>
+        <input type="date" id="insightDate">
+      </div>
+      <div class="form-group">
+        <label>Screenshot (base64)</label>
+        <textarea id="insightImage"></textarea>
+      </div>
+      <div class="form-group">
+        <label>Brief Note</label>
+        <textarea id="insightNote"></textarea>
+      </div>
+      <button class="btn" onclick="uploadInsight()">Upload</button>
+    </div>
+
+    <div class="content-section" id="tradeHistory">
+      <h2>Upload Trade History</h2>
+      <div class="form-group">
+        <label>Month</label>
+        <select id="tradeMonth">
+          <option value="">Select</option>
+          <option>January</option><option>February</option><option>March</option>
+          <option>April</option><option>May</option><option>June</option>
+          <option>July</option><option>August</option><option>September</option>
+          <option>October</option><option>November</option><option>December</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label>Screenshot</label>
+        <textarea id="historyImage"></textarea>
+      </div>
+      <div class="form-group">
+        <label>Strategy Note</label>
+        <textarea id="historyNote"></textarea>
+      </div>
+      <button class="btn" onclick="uploadHistory()">Upload History</button>
+    </div>
+
+    <div class="content-section" id="logs">
+      <h2>Admin Logs</h2>
+      <div id="adminLogs"></div>
     </div>
   </div>
 
-  <!-- Header & Nav Toggle -->
-  <header>
-    <h1>CBE Admin Panel</h1>
-    <button id="navToggle" onclick="toggleNav()">
-      <span></span><span></span><span></span>
-    </button>
-    <div id="navDropdown">
-      <a href="#payments">Payment Records</a>
-      <a href="#applications">Applications</a>
-      <a href="#users">User Approvals</a>
-      <a href="#settings">Settings Sync</a>
-      <a href="#vipAccess">VIP Access</a>
-      <a href="#broadcast">Broadcast</a>
-      <a href="#messages">Inbox Messages</a>
-      <a href="#signals">Signal Publishing</a>
-      <a href="#history">Trade History</a>
-      <a href="#insights">Trade Insights</a>
-      <a href="#logs">Log Tracking</a>
-    </div>
-
-  <!-- Main Content -->
-  <div class="main" id="adminMain">
-
-    <!-- PAYMENT RECORDS -->
-    <div class="section" id="payments">
-      <h2>Payment Records</h2>
-      <div id="paymentContainer"></div>
-    </div>
-
-    <!-- APPLICATIONS -->
-    <div class="section" id="applications">
-      <h2>Application Submissions</h2>
-      <div id="applicationContainer"></div>
-    </div>
-
-    <!-- USER APPROVALS -->
-    <div class="section" id="users">
-      <h2>User Management</h2>
-      <div id="userContainer"></div>
-    </div>
-        <!-- SETTINGS SYNC -->
-    <div class="section" id="settings">
-      <h2>Settings (BTC/ETH/USDT/Paystack)</h2>
-      <form id="settingsForm">
-        <input type="text" id="btc" placeholder="Bitcoin Address"/><br>
-        <input type="text" id="eth" placeholder="Ethereum Address"/><br>
-        <input type="text" id="usdt" placeholder="USDT Address"/><br>
-        <input type="text" id="paystackKey" placeholder="Paystack Public Key"/><br>
-        <button type="submit">Save Settings</button>
-      </form>
-    </div>
-
-    <!-- VIP ACCESS -->
-    <div class="section" id="vipAccess">
-      <h2>VIP Access Auto‑Grant</h2>
-      <p>Automatically grants VIP status when payment is approved.</p>
-    </div>
-
-    <!-- BROADCAST -->
-    <div class="section" id="broadcast">
-      <h2>Broadcast Message</h2>
-      <textarea id="broadcastText" rows="4" style="width:100%;"></textarea>
-      <button onclick="broadcastMessage()">Send</button>
-    </div>
-
-    <!-- INBOX MESSAGES -->
-    <div class="section" id="messages">
-      <h2>Inbox Messages</h2>
-      <div id="inboxContainer"></div>
-    </div>
-
-    <!-- SIGNAL PUBLISHING -->
-    <div class="section" id="signals">
-      <h2>Signal Publishing</h2>
-      <form id="signalForm">
-        <input type="text" id="pair" placeholder="Pair (EUR/USD)" required/>
-        <input type="text" id="direction" placeholder="BUY or SELL" required/>
-        <input type="text" id="entry" placeholder="Entry Price" required/>
-        <input type="text" id="tp" placeholder="Take Profit" required/>
-        <input type="text" id="sl" placeholder="Stop Loss" required/>
-        <input type="date" id="signalDate" required/>
-        <input type="time" id="signalTime" required/>
-        <textarea id="signalNote" placeholder="Admin Note"></textarea>
-        <button type="submit">Publish Signal</button>
-      </form>
-    </div>
-
-    <!-- TRADE HISTORY -->
-    <div class="section" id="history">
-      <h2>Trade History</h2>
-      <div id="historyContainer"></div>
-    </div>
-
-    <!-- TRADE INSIGHTS -->
-    <div class="section" id="insights">
-      <h2>Trade Insights</h2>
-      <div id="insightContainer"></div>
-    </div>
-
-    <!-- LOG TRACKING -->
-    <div class="section" id="logs">
-      <h2>Log Tracking</h2>
-      <div id="logContainer"></div>
-    </div>
-
-  </div> <!-- /.main -->
-
   <script>
-    // ─── Password Protection ───
-    function checkPw() {
-      if (document.getElementById('adminPw').value === 'Blessed@123') {
-        sessionStorage.setItem('adminAuth','true');
-        document.getElementById('pwModal').style.display = 'none';
-        initAll();
-      } else {
-        alert('Incorrect password.');
-      }
-    }
-    if (sessionStorage.getItem('adminAuth')==='true') {
-      document.getElementById('pwModal').style.display='none';
-      initAll();
+    function toggleSidebar() {
+      document.getElementById("sidebar").classList.toggle("show");
     }
 
-    // ─── Nav Toggle ───
-    function toggleNav() {
-      document.getElementById('navDropdown').classList.toggle('active');
+    function showSection(id) {
+      document.querySelectorAll(".content-section").forEach(el => el.classList.remove("active"));
+      document.getElementById(id).classList.add("active");
     }
 
-    // ─── Initialization ───
-    function initAll() {
-      loadPayments();
-      loadApplications();
-      loadUsers();
-      loadSettings();
-      loadInbox();
-      loadLogs();
-      loadSignals();
-      loadHistory();
-      loadInsights();
-    }
-
-    // ─── PAYMENTS ───
-    function loadPayments() {
-      const r = JSON.parse(localStorage.getItem('paymentRecords')||'[]'),
-            c = document.getElementById('paymentContainer');
-      c.innerHTML = r.length
-        ? r.map((p,i)=>`
-            <div class="record-box">
-              <p><strong>${p.email}</strong> – ${p.plan}</p>
-              <p>Status: ${p.status}</p>
-              <button onclick="approvePayment(${i})">Approve</button>
-            </div>`).join('')
-        : '<p>No payments yet.</p>';
-    }
-    function approvePayment(i){
-      let r=JSON.parse(localStorage.getItem('paymentRecords')),u=JSON.parse(localStorage.getItem('users')||'[]');
-      r[i].status='approved'; localStorage.setItem('paymentRecords',JSON.stringify(r));
-      const idx=u.findIndex(x=>x.email===r[i].email);
-      if(idx>=0){u[idx].status='approved'; localStorage.setItem('users',JSON.stringify(u));}
-      loadPayments(); loadUsers();
-    }
-
-    // ─── APPLICATIONS ───
-    function loadApplications() {
-      const a = JSON.parse(localStorage.getItem('applications')||'[]'),
-            c = document.getElementById('applicationContainer');
-      c.innerHTML = a.length
-        ? a.map((app,i)=>`
-            <div class="record-box">
-              <p><strong>${app.name}</strong> (${app.email})</p>
-              <p>Status: ${app.status}</p>
-            </div>`).join('')
-        : '<p>No applications yet.</p>';
-    }
-
-    // ─── USERS ───
-    function loadUsers() {
-      const u = JSON.parse(localStorage.getItem('users')||'[]'),
-            c = document.getElementById('userContainer');
-      c.innerHTML = u.length
-        ? u.map((usr,i)=>`
-            <div class="record-box">
-              <p><strong>${usr.name}</strong> (${usr.email})</p>
-              <p>Status: ${usr.status}</p>
-              <button onclick="approveUser(${i})">Approve</button>
-              <button onclick="deactivateUser(${i})">Deactivate</button>
-              <button onclick="deleteUser(${i})">Delete</button>
-            </div>`).join('')
-        : '<p>No users yet.</p>';
-    }
-    function approveUser(i){let u=JSON.parse(localStorage.getItem('users'));u[i].status='approved';localStorage.setItem('users',JSON.stringify(u));loadUsers();}
-    function deactivateUser(i){let u=JSON.parse(localStorage.getItem('users'));u[i].status='inactive';localStorage.setItem('users',JSON.stringify(u));loadUsers();}
-    function deleteUser(i){let u=JSON.parse(localStorage.getItem('users'));u.splice(i,1);localStorage.setItem('users',JSON.stringify(u));loadUsers();}
-
-    // ─── SETTINGS ───
-    function loadSettings(){
-      const s=JSON.parse(localStorage.getItem('paymentSettings')||'{}');
-      document.getElementById('btc').value = s.btc||'';
-      document.getElementById('eth').value = s.eth||'';
-      document.getElementById('usdt').value= s.usdt||'';
-      document.getElementById('paystackKey').value = s.paystackKey||'';
-    }
-    document.getElementById('settingsForm').addEventListener('submit',e=>{
-      e.preventDefault();
-      const obj={
-        btc:document.getElementById('btc').value.trim(),
-        eth:document.getElementById('eth').value.trim(),
-        usdt:document.getElementById('usdt').value.trim(),
-        paystackKey:document.getElementById('paystackKey').value.trim()
+    function saveSettings() {
+      const settings = {
+        btc: document.getElementById("btcWallet").value.trim(),
+        eth: document.getElementById("ethWallet").value.trim(),
+        usdt: document.getElementById("usdtWallet").value.trim(),
+        paystackKey: document.getElementById("paystackKey").value.trim()
       };
-      localStorage.setItem('paymentSettings',JSON.stringify(obj));
-      alert('Settings saved.');
-    });
-
-    // ─── BROADCAST ───
-    function broadcastMessage(){
-      const msg=document.getElementById('broadcastText').value.trim();
-      if(!msg) return alert('Enter a message.');
-      localStorage.setItem('broadcastMessage',msg);
-      alert('Broadcast saved.');
-      document.getElementById('broadcastText').value='';
+      localStorage.setItem("paymentSettings", JSON.stringify(settings));
+      alert("Settings saved!");
     }
 
-    // ─── INBOX ───
-    function loadInbox(){
-      const msgs=JSON.parse(localStorage.getItem('inboxMessages')||'[]'),
-            c   =document.getElementById('inboxContainer');
-      c.innerHTML = msgs.length
-        ? msgs.map(m=>`
-            <div class="record-box">
-              <p><strong>${m.name}</strong> (${m.email})</p>
-              <p>${m.message}</p>
-            </div>`).join('')
-        : '<p>No messages.</p>';
+    function publishSignal() {
+      const data = {
+        pair: document.getElementById("pair").value,
+        type: document.getElementById("type").value,
+        entry: document.getElementById("entry").value,
+        tp: document.getElementById("tp").value,
+        sl: document.getElementById("sl").value,
+        note: document.getElementById("signalNote").value,
+        time: new Date().toLocaleString()
+      };
+      localStorage.setItem("latestSignal", JSON.stringify(data));
+      alert("Signal published!");
     }
 
-    // ─── SIGNALS ───
-    function loadSignals(){
-      const sigs=JSON.parse(localStorage.getItem('vipSignals')||'[]'),
-            c   =document.getElementById('signalContainer');
-      c.innerHTML = sigs.length
-        ? sigs.map((s,i)=>`
-            <div class="insight-box">
-              <p><strong>${s.date} ${s.time}</strong></p>
-              <p>${s.direction} ${s.pair} @ ${s.entry}</p>
-              <p>TP: ${s.tp}  SL: ${s.sl}</p>
-              <p><em>${s.note}</em></p>
-              <button onclick="deleteSignal(${i})">Delete</button>
-            </div>`).join('')
-        : '<p>No signals published.</p>';
-    }
-    function deleteSignal(i){let a=JSON.parse(localStorage.getItem('vipSignals')||'[]');
-      if(confirm('Delete this signal?')){a.splice(i,1);localStorage.setItem('vipSignals',JSON.stringify(a));loadSignals();}
+    function sendBroadcast() {
+      const msg = document.getElementById("broadcastText").value.trim();
+      if (!msg) return alert("Message is empty");
+      const history = JSON.parse(localStorage.getItem("broadcasts") || "[]");
+      history.push({ message: msg, time: new Date().toLocaleString() });
+      localStorage.setItem("broadcasts", JSON.stringify(history));
+      alert("Message broadcasted!");
     }
 
-    // ─── TRADE HISTORY & INSIGHTS ───
-    function loadHistory(){
-      const a=JSON.parse(localStorage.getItem('tradeHistory')||'[]'),
-            c=document.getElementById('historyContainer');
-      c.innerHTML = a.length
-        ? a.map((h,i)=>`
-            <div class="insight-box">
-              <img src="${h.image}" alt="History"/>
-              <button onclick="deleteHistory(${i})">Delete</button>
-              <p><strong>${h.date}</strong></p><p>${h.note}</p>
-            </div>`).join('')
-        : '<p>No history yet.</p>';
-    }
-    function deleteHistory(i){let a=JSON.parse(localStorage.getItem('tradeHistory')||'[]');
-      if(confirm('Delete this record?')){a.splice(i,1);localStorage.setItem('tradeHistory',JSON.stringify(a));loadHistory();}
+    function uploadInsight() {
+      const data = {
+        date: document.getElementById("insightDate").value,
+        image: document.getElementById("insightImage").value,
+        note: document.getElementById("insightNote").value
+      };
+      const history = JSON.parse(localStorage.getItem("tradeInsights") || "[]");
+      history.push(data);
+      localStorage.setItem("tradeInsights", JSON.stringify(history));
+      alert("Insight uploaded!");
     }
 
-    function loadInsights(){
-      const a=JSON.parse(localStorage.getItem('tradeInsights')||'[]'),
-            c=document.getElementById('insightContainer');
-      c.innerHTML = a.length
-        ? a.map((it,i)=>`
-            <div class="insight-box">
-              <img src="${it.image}" alt="Insight"/>
-              <button onclick="deleteInsight(${i})">Delete</button>
-              <p><strong>${it.date}</strong></p><p>${it.note}</p>
-            </div>`).join('')
-        : '<p>No insights yet.</p>';
-    }
-    function deleteInsight(i){let a=JSON.parse(localStorage.getItem('tradeInsights')||'[]');
-      if(confirm('Delete this insight?')){a.splice(i,1);localStorage.setItem('tradeInsights',JSON.stringify(a));loadInsights();}
+    function uploadHistory() {
+      const data = {
+        month: document.getElementById("tradeMonth").value,
+        image: document.getElementById("historyImage").value,
+        note: document.getElementById("historyNote").value
+      };
+      const history = JSON.parse(localStorage.getItem("tradeHistory") || "[]");
+      history.push(data);
+      localStorage.setItem("tradeHistory", JSON.stringify(history));
+      alert("Trade history uploaded!");
     }
 
-    // ─── LOG TRACKING ───
-    function log(msg){
-      const arr=JSON.parse(localStorage.getItem('adminLogs')||'[]');
-      arr.push(`${new Date().toLocaleString()}: ${msg}`);
-      localStorage.setItem('adminLogs',JSON.stringify(arr));
-    }
-    function loadLogs(){
-      const a=JSON.parse(localStorage.getItem('adminLogs')||'[]'),
-            c=document.getElementById('logContainer');
-      c.innerHTML = a.length
-        ? a.map(l=>`<p>${l}</p>`).join('')
-        : '<p>No logs yet.</p>';
-    }
-
-    // ─── INIT ───
-    function initAll(){
-      loadPayments(); loadApplications(); loadUsers();
-      loadSettings(); loadInbox(); loadSignals();
-      loadHistory(); loadInsights(); loadLogs();
-    }
-    window.addEventListener('load', ()=> {
-      if(sessionStorage.getItem('adminAuth')==='true') {
-        document.getElementById('navDropdown').style.display='block';
-        initAll();
-      }
-    });
+    window.onload = () => {
+      showSection("payments");
+    };
   </script>
 </body>
 </html>
