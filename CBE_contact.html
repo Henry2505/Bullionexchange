@@ -256,7 +256,7 @@
       menuOverlay.classList.toggle('active');
     });
 
-    document.getElementById('contact-form').addEventListener('submit', function(e) {
+    document.getElementById('contact-form').addEventListener('submit', async function(e) {
       e.preventDefault();
       const name = document.getElementById('contact-name').value;
       const email = document.getElementById('contact-email').value;
@@ -264,11 +264,25 @@
 
       if (name && email && message) {
         const msg = { name, email, message, date: new Date().toISOString() };
-        let messages = JSON.parse(localStorage.getItem('messages') || '[]');
-        messages.push(msg);
-        localStorage.setItem('messages', JSON.stringify(messages));
-        alert('Message sent successfully! We will respond soon.');
-        this.reset();
+        try {
+          const response = await fetch('/api/messages', { // Replace with your actual API endpoint
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify(msg),
+          });
+
+          if (response.ok) {
+            alert('Message sent successfully! We will respond soon.');
+            this.reset();
+          } else {
+            alert('Failed to send message. Please try again later.');
+          }
+        } catch (error) {
+          console.error('Error sending message:', error);
+          alert('An error occurred. Please try again later.');
+        }
       } else {
         alert('Please fill all fields.');
       }
