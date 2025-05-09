@@ -1,20 +1,20 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="utf-8" />
+  <meta charset="utf-8"/>
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>VIP Signals – CBE</title>
-  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;500;700&display=swap" rel="stylesheet">
+  <title>VIP Signal – CBE</title>
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&display=swap" rel="stylesheet"/>
   <style>
-    html, body {
+    body {
       margin: 0;
       font-family: 'Poppins', sans-serif;
-      background: linear-gradient(to bottom, #0b0b0b, #1a1a1a);
+      background: #0b0b0b;
       color: #f5f5f5;
       user-select: none;
     }
 
-    video.bg-video {
+    video.bg {
       position: fixed;
       top: 0; left: 0;
       width: 100%; height: 100%;
@@ -26,166 +26,152 @@
       position: fixed;
       top: 0; left: 0;
       width: 100%; height: 100%;
-      background: rgba(0,0,0,0.6);
+      background: rgba(0, 0, 0, 0.7);
       z-index: -1;
     }
 
     header {
       text-align: center;
       padding: 80px 20px 40px;
-      background: rgba(0,0,0,0.8);
     }
 
     header h1 {
-      font-size: 36px;
       color: gold;
-      margin-bottom: 10px;
+      font-size: 36px;
     }
 
-    header p {
-      font-size: 16px;
-      color: #ccc;
-    }
-
-    .warning {
+    .notice {
       text-align: center;
+      color: #ffc107;
       font-size: 14px;
-      color: #ffcc00;
-      margin-bottom: 20px;
+      margin-top: 10px;
     }
 
     .signal-box {
-      max-width: 700px;
-      margin: 20px auto;
-      padding: 25px;
-      border-radius: 10px;
+      max-width: 680px;
+      margin: 30px auto;
       background: #141414;
-      box-shadow: 0 0 15px rgba(0,0,0,0.6);
+      padding: 25px;
+      border-radius: 12px;
+      box-shadow: 0 0 25px rgba(255, 215, 0, 0.15);
     }
 
     .signal-box h2 {
       color: gold;
-      margin-bottom: 10px;
+      font-size: 22px;
+      margin-bottom: 8px;
     }
 
     .signal-box .time {
+      color: #999;
       font-size: 14px;
-      color: #888;
-      margin-bottom: 10px;
+      margin-bottom: 12px;
     }
 
     .signal-content {
-      background: #1e1e1e;
-      padding: 15px;
-      border-radius: 8px;
-      color: #eee;
+      background: #1d1d1d;
+      padding: 18px;
+      border-radius: 10px;
     }
 
     .copy-line {
-      margin-bottom: 10px;
+      margin-bottom: 14px;
+      font-size: 16px;
     }
 
     .copy-button {
-      background: #333;
+      margin-left: 10px;
+      background: #222;
       color: gold;
       border: none;
       padding: 5px 10px;
-      margin-left: 10px;
-      border-radius: 4px;
+      border-radius: 6px;
       cursor: pointer;
-      animation: blinkGlow 2s infinite;
+      animation: glow 2s infinite;
     }
 
-    @keyframes blinkGlow {
-      0%, 100% { box-shadow: 0 0 5px gold; }
+    @keyframes glow {
+      0% { box-shadow: 0 0 5px gold; }
       50% { box-shadow: 0 0 15px gold; }
+      100% { box-shadow: 0 0 5px gold; }
     }
 
     .admin-note {
       margin-top: 15px;
+      background: #222;
+      border-left: 4px solid gold;
+      padding: 10px;
+      color: #ffcc00;
       font-style: italic;
-      color: #ffa;
       font-size: 14px;
+      border-radius: 6px;
     }
 
     footer {
       text-align: center;
-      padding: 20px;
       font-size: 13px;
       color: #aaa;
+      padding: 30px 20px;
+      margin-top: 50px;
     }
   </style>
 </head>
 <body oncontextmenu="return false" onkeydown="return !(event.key==='F12' || (event.ctrlKey && ['u','s','p'].includes(event.key.toLowerCase())))">
-
-  <!-- Background -->
-  <video class="bg-video" autoplay muted loop>
+  <video class="bg" autoplay muted loop>
     <source src="star-video.MP4" type="video/mp4" />
   </video>
   <div class="overlay"></div>
 
   <header>
-    <h1>VIP Forex Signals</h1>
-    <p>Strictly for paid VIP members only</p>
+    <h1>Latest VIP Signal</h1>
+    <div class="notice">
+      Unauthorized sharing or reselling of this signal is strictly prohibited and punishable by law.
+    </div>
   </header>
 
-  <div class="warning">
-    Sharing or reselling these signals is prohibited and punishable by law.
-  </div>
-
   <main id="signalsContainer">
-    <div style="text-align:center; margin-top:40px; font-size:16px; color:#ccc;">Loading signals...</div>
+    <!-- Signal box will load here -->
   </main>
 
-  <footer>© 2025 CBE – Chukwuemeka Bullion Exchange</footer>
+  <footer>
+    &copy; 2025 CBE – Chukwuemeka Bullion Exchange
+  </footer>
 
   <script>
-    // Prevent text selection
-    document.addEventListener('mousedown', e => {
-      if (e.detail > 1) e.preventDefault();
-    });
-
+    const signals = JSON.parse(localStorage.getItem('vipSignals') || '[]');
+    const latest = signals.length > 0 ? signals[signals.length - 1] : null;
     const container = document.getElementById('signalsContainer');
-    const signals = JSON.parse(localStorage.getItem('vipSignals') || '[]').reverse();
 
-    function renderSignal(signal, index) {
-      return `
+    if (!latest) {
+      container.innerHTML = '<div style="text-align:center;color:#ccc;">No signals available yet.</div>';
+    } else {
+      container.innerHTML = `
         <div class="signal-box">
-          <h2>${signal.date || 'No Date'}</h2>
-          <div class="time">Time: ${signal.time || '—'}</div>
+          <h2>${latest.date || 'Date Unavailable'}</h2>
+          <div class="time">Time: ${latest.time || '—'}</div>
           <div class="signal-content">
             <div class="copy-line">
-              ${signal.direction || 'BUY'} ${signal.pair || 'PAIR'} @ 
-              <span id="price${index}">${signal.price || ''}</span>
-              <button class="copy-button" onclick="copyToClipboard('price${index}')">Copy</button>
+              ${latest.direction || 'BUY'} ${latest.pair || 'PAIR'} @ 
+              <span id="entry">${latest.price || ''}</span>
+              <button class="copy-button" onclick="copy('entry')">Copy</button>
             </div>
             <div class="copy-line">
-              TP: <span id="tp${index}">${signal.tp || ''}</span>
-              <button class="copy-button" onclick="copyToClipboard('tp${index}')">Copy</button>
+              TP: <span id="tp">${latest.tp || ''}</span>
+              <button class="copy-button" onclick="copy('tp')">Copy</button>
             </div>
             <div class="copy-line">
-              SL: <span id="sl${index}">${signal.sl || ''}</span>
-              <button class="copy-button" onclick="copyToClipboard('sl${index}')">Copy</button>
+              SL: <span id="sl">${latest.sl || ''}</span>
+              <button class="copy-button" onclick="copy('sl')">Copy</button>
             </div>
           </div>
-          ${signal.note ? `<div class="admin-note">Note: ${signal.note}</div>` : ''}
+          ${latest.note ? `<div class="admin-note">Note: ${latest.note}</div>` : ''}
         </div>
       `;
     }
 
-    function copyToClipboard(id) {
-      const text = document.getElementById(id)?.textContent || '';
-      if (text) {
-        navigator.clipboard.writeText(text).then(() => {
-          alert('Copied: ' + text);
-        });
-      }
-    }
-
-    if (signals.length === 0) {
-      container.innerHTML = `<div style="text-align:center; font-size:16px; color:#888;">No signals available yet.</div>`;
-    } else {
-      container.innerHTML = signals.map(renderSignal).join('');
+    function copy(id) {
+      const txt = document.getElementById(id).textContent;
+      navigator.clipboard.writeText(txt).then(() => alert('Copied: ' + txt));
     }
   </script>
 </body>
