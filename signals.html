@@ -6,15 +6,18 @@
  <title>VIP Forex Signal • CBE</title>
  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700&display=swap" rel="stylesheet"/>
  <style>
+   /* --- Reset & Base --- */
    * { margin:0; padding:0; box-sizing:border-box; }
    html, body {
      width:100%; height:100%;
      font-family:'Poppins',sans-serif;
      background:#000; color:#fff;
-     user-select:none;
+     user-select:none; /* disable text selection */
      overflow-x:hidden;
    }
    a { text-decoration:none; color:inherit; }
+
+   /* --- Video Background & Overlay --- */
    video#bg {
      position:fixed; top:0; left:0;
      width:100%; height:100%;
@@ -26,6 +29,8 @@
      background:rgba(0,0,0,0.6);
      z-index:-1;
    }
+
+   /* --- Header --- */
    header {
      text-align:center;
      padding:60px 20px 20px;
@@ -38,10 +43,14 @@
      margin-top:8px;
      font-size:1rem; color:#ccc;
    }
+
+   /* --- Notice --- */
    .notice {
      text-align:center; font-size:0.9rem;
      color:#ff4444; margin:10px 0 30px;
    }
+
+   /* --- Signal Card --- */
    .signal-card {
      max-width:720px; margin:0 auto 60px;
      background:rgba(20,20,20,0.8);
@@ -51,6 +60,8 @@
      animation:fadeIn 1s ease;
    }
    @keyframes fadeIn { from{opacity:0;transform:scale(0.95)} to{opacity:1;transform:scale(1)} }
+
+   /* Date & Time */
    .signal-header {
      background:linear-gradient(90deg,#111,#222);
      padding:18px 24px;
@@ -62,6 +73,8 @@
    .signal-header .time {
      font-size:0.9rem; color:#aaa;
    }
+
+   /* Details Grid */
    .signal-body {
      display:grid; grid-template-columns:1fr auto;
      gap:12px; padding:24px;
@@ -75,6 +88,8 @@
    .signal-body .detail span {
      font-weight:600;
    }
+
+   /* Copy Button */
    .copy-btn {
      background:#ffd700; color:#000;
      border:none; padding:6px 12px; font-size:0.9rem;
@@ -87,6 +102,8 @@
      0%,100% { box-shadow:0 0 6px #ffd700; }
      50%   { box-shadow:0 0 20px #ffd700; }
    }
+
+   /* Admin Note */
    .admin-note {
      margin:20px 24px 30px;
      background:#222; padding:14px;
@@ -94,6 +111,8 @@
      font-style:italic; color:#ffcc00;
      border-radius:6px;
    }
+
+   /* Footer */
    footer {
      text-align:center; padding:20px;
      font-size:0.9rem; color:#888;
@@ -104,7 +123,7 @@
 </head>
 <body oncontextmenu="return false" onkeydown="if(event.key==='PrintScreen'){navigator.clipboard.writeText('');alert('Screenshots disabled');}">
 
- <!-- Video Background -->
+ <!-- Video BG -->
  <video id="bg" autoplay muted loop>
    <source src="star-video.MP4" type="video/mp4"/>
  </video>
@@ -118,58 +137,58 @@
 
  <!-- Notice -->
  <div class="notice">
-   🔒 Do&nbsp;not&nbsp;share, resell, or screenshot these signals.
+   🔒 Do not share, resell, or screenshot these signals.
  </div>
 
- <!-- Signal Output -->
+ <!-- Signal Card -->
  <div class="signal-card" id="signalCard">
-   <!-- populated by JavaScript -->
+   <!-- populated by JS -->
  </div>
 
  <!-- Footer -->
  <footer>
-   © 2025 CBE – Chukwuemeka Bullion Exchange
+   © 2025 CBE – Chukwuemeka Bullion Exchange
  </footer>
 
- <!-- Script -->
  <script>
+   // ensure VIP logged in
    if (!sessionStorage.getItem('cbeLoggedIn')) {
      alert('Please log in to view signals.');
      window.location.href = 'login.html';
    }
 
-   const signals = JSON.parse(localStorage.getItem('vipSignals') || '[]');
-   const latest = signals.length ? signals[signals.length - 1] : null;
-   const card = document.getElementById('signalCard');
+   // load latest signal
+   const signals = JSON.parse(localStorage.getItem('vipSignals')||'[]');
+   const latest  = signals.length ? signals[signals.length-1] : null;
+   const card    = document.getElementById('signalCard');
 
    if (!latest) {
      card.innerHTML = '<p style="text-align:center;color:#aaa;padding:40px;">No signals published yet.</p>';
    } else {
-     card.innerHTML = \`
+     card.innerHTML = `
        <div class="signal-header">
-         <h2>\${latest.date}</h2>
-         <div class="time">\${latest.time}</div>
+         <h2>${latest.date}</h2>
+         <div class="time">${latest.time}</div>
        </div>
        <div class="signal-body">
-         <div class="detail">Pair: <span>\${latest.pair}</span> <button class="copy-btn" onclick="copyText('\${latest.pair}')">Copy</button></div>
-         <div class="detail">Type: <span>\${latest.type}</span></div>
-         <div class="detail">Entry: <span id="entry">\${latest.entry}</span> <button class="copy-btn" onclick="copyID('entry')">Copy</button></div>
-         <div class="detail">TP: <span id="tp">\${latest.tp}</span> <button class="copy-btn" onclick="copyID('tp')">Copy</button></div>
-         <div class="detail">SL: <span id="sl">\${latest.sl}</span> <button class="copy-btn" onclick="copyID('sl')">Copy</button></div>
+         <div class="detail">Pair: <span>${latest.pair}</span> <button class="copy-btn" onclick="copyText('${latest.pair}')">Copy</button></div>
+         <div class="detail">Type: <span>${latest.direction}</span></div>
+         <div class="detail">Entry: <span id="entry">${latest.entry}</span> <button class="copy-btn" onclick="copyID('entry')">Copy</button></div>
+         <div class="detail">SL: <span id="sl">${latest.sl}</span> <button class="copy-btn" onclick="copyID('sl')">Copy</button></div>
+         <div class="detail">TP: <span id="tp">${latest.tp}</span> <button class="copy-btn" onclick="copyID('tp')">Copy</button></div>
        </div>
        <div class="admin-note">
-         Note: \${latest.note || 'Trade at your own risk — always manage your risk!'}
+         Note: ${latest.note || 'Trade at your own risk — always manage your risk!'}
        </div>
-     \`;
+     `;
    }
 
    function copyID(id) {
      const txt = document.getElementById(id).textContent;
-     navigator.clipboard.writeText(txt).then(() => alert('Copied: ' + txt));
+     navigator.clipboard.writeText(txt).then(_=>alert('Copied: '+txt));
    }
-
    function copyText(txt) {
-     navigator.clipboard.writeText(txt).then(() => alert('Copied: ' + txt));
+     navigator.clipboard.writeText(txt).then(_=>alert('Copied: '+txt));
    }
  </script>
 </body>
