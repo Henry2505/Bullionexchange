@@ -13,36 +13,25 @@
     /* Sidebar */
     .sidebar {
       position: fixed; top: 0; left: 0;
-      width: 240px; height: 100vh;
-      background: #111; padding-top: 80px;
-      box-shadow: 2px 0 12px rgba(0,0,0,0.7);
-      transition: transform 0.3s ease;
-      z-index: 1000;
+      width: 240px; height: 100vh; background: #111;
+      padding-top: 80px; box-shadow: 2px 0 12px rgba(0,0,0,0.7);
+      transition: transform 0.3s ease; z-index: 1000;
     }
-    .sidebar.collapsed {
-      transform: translateX(-240px);
-    }
-    .sidebar ul {
-      list-style: none; padding: 0; margin: 0;
-    }
-    .sidebar ul li {
-      margin: 0;
-    }
+    .sidebar.collapsed { transform: translateX(-240px); }
+    .sidebar ul { list-style: none; padding: 0; margin: 0; }
     .sidebar ul li a {
       display: block; padding: 14px 20px;
       color: #ddd; text-decoration: none;
       border-bottom: 1px solid #222;
       transition: background 0.3s, color 0.3s;
     }
-    .sidebar ul li a:hover {
-      background: gold; color: #000;
-    }
+    .sidebar ul li a:hover { background: gold; color: #000; }
 
-    /* Three-dot Toggle */
+    /* Toggle button */
     .toggle-btn {
       position: fixed; top: 20px; left: 20px;
-      width: 40px; height: 40px;
-      background: #111; border: none; border-radius: 50%;
+      width: 40px; height: 40px; background: #111;
+      border: none; border-radius: 50%;
       display: flex; flex-direction: column;
       justify-content: center; align-items: center;
       cursor: pointer; z-index: 1001;
@@ -52,28 +41,19 @@
       width: 6px; height: 6px; background: gold;
       border-radius: 50%; margin: 2px 0;
     }
-    @keyframes pulse {
-      to { box-shadow: 0 0 10px gold; }
-    }
+    @keyframes pulse { to { box-shadow: 0 0 10px gold; } }
 
     /* Main content */
     .main-content {
       margin-left: 240px; padding: 30px;
       transition: margin-left 0.3s ease;
     }
-    .sidebar.collapsed + .main-content {
-      margin-left: 0;
-    }
+    .sidebar.collapsed + .main-content { margin-left: 0; }
 
-    .section {
-      display: none;
-    }
-    .section.active {
-      display: block;
-    }
+    .section { display: none; }
+    .section.active { display: block; }
 
     h1 { color: gold; margin-top: 0; }
-
     table {
       width: 100%; border-collapse: collapse; margin: 20px 0;
     }
@@ -95,7 +75,8 @@
     }
     button:hover { background: #e6c200; }
 
-    .signal-form input, .signal-form textarea {
+    .signal-form input, .signal-form textarea,
+    .signal-form select {
       width: auto; display: block; margin: 8px 0;
     }
   </style>
@@ -130,7 +111,7 @@
     <!-- Dashboard -->
     <div id="dashboard" class="section active">
       <h1>Admin Dashboard</h1>
-      <p>Use the sidebar to navigate all sections.</p>
+      <p>Use the sidebar to navigate.</p>
     </div>
 
     <!-- Users -->
@@ -155,7 +136,7 @@
     <div id="payments" class="section">
       <h1>Payment Records</h1>
       <table id="paymentTable">
-        <thead><tr><th>Email</th><th>Amount</th><th>Method</th><th>Status</th><th>Actions</th></tr></thead>
+        <thead><tr><th>Email</th><th>Amount</th><th>Method</th><th>Status</th><th>Action</th></tr></thead>
         <tbody></tbody>
       </table>
     </div>
@@ -164,10 +145,16 @@
     <div id="signals" class="section">
       <h1>Publish Signals</h1>
       <form id="signalForm" class="signal-form">
-        <input id="pair" placeholder="Currency Pair e.g., EUR/USD" required />
-        <input id="entry" placeholder="Entry Price" required />
-        <input id="tp" placeholder="Take Profit" required />
-        <input id="sl" placeholder="Stop Loss" required />
+        <!-- New Trade Type Select -->
+        <select id="tradeType" required>
+          <option value="">-- Select Trade Type --</option>
+          <option value="BUY">BUY</option>
+          <option value="SELL">SELL</option>
+        </select>
+        <input id="pair"  placeholder="Currency Pair e.g., EUR/USD" required />
+        <input id="entry" placeholder="Entry Price"               required />
+        <input id="tp"    placeholder="Take Profit"               required />
+        <input id="sl"    placeholder="Stop Loss"                 required />
         <textarea id="note" placeholder="Note (optional)"></textarea>
         <button type="submit">Publish Signal</button>
       </form>
@@ -223,21 +210,21 @@
       <pre id="logOutput"></pre>
     </div>
 
-  </div> <!-- End .main-content -->
+  </div> <!-- /.main-content -->
 
   <script>
-    // Sidebar toggle
+    // Toggle sidebar
     document.getElementById('toggleBtn').onclick = () => {
       document.getElementById('sidebar').classList.toggle('collapsed');
       document.getElementById('mainContent').classList.toggle('collapsed');
     };
-    // Section navigation
+    // Navigation
     function showSection(id) {
       document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
       document.getElementById(id).classList.add('active');
     }
 
-    // Logging utility
+    // Logging
     function log(action) {
       const logs = JSON.parse(localStorage.getItem('adminLogs')||'[]');
       logs.unshift(`[${new Date().toLocaleString()}] ${action}`);
@@ -246,58 +233,53 @@
     }
     function renderLogs() {
       document.getElementById('logOutput').textContent =
-        (JSON.parse(localStorage.getItem('adminLogs')||'[]')).join('\n\n');
+        JSON.parse(localStorage.getItem('adminLogs')||'[]').join('\n\n');
     }
 
-    // On load: populate tables & settings & logs
+    // On load: populate data & settings
     window.onload = () => {
       renderLogs();
 
       // Users
-      const userTable = document.querySelector('#userTable tbody');
-      userTable.innerHTML = '';
+      const uBody = document.querySelector('#userTable tbody');
+      uBody.innerHTML = '';
       JSON.parse(localStorage.getItem('users')||'[]').forEach((u,i) => {
-        const tr = document.createElement('tr');
-        tr.innerHTML = `<td>${u.name}</td>
-                        <td>${u.email}</td>
-                        <td>${u.status}</td>
-                        <td>
-                          <button onclick="updateUser(${i},'approved')">Approve</button>
-                          <button onclick="updateUser(${i},'deactivated')">Deactivate</button>
-                          <button onclick="deleteUser(${i})">Delete</button>
-                        </td>`;
-        userTable.appendChild(tr);
-      });
-
-      // Applications
-      const appTable = document.querySelector('#applicationTable tbody');
-      appTable.innerHTML = '';
-      JSON.parse(localStorage.getItem('applications')||'[]').forEach(a => {
-        const row = `<tr>
-          <td>${a.name}</td><td>${a.email}</td><td>${a.phone}</td>
-          <td>${a.message}</td><td>${a.status}</td>
-        </tr>`;
-        appTable.innerHTML += row;
-      });
-
-      // Payments
-      const payTable = document.querySelector('#paymentTable tbody');
-      payTable.innerHTML = '';
-      JSON.parse(localStorage.getItem('paymentRecords')||'[]').forEach((p,i) => {
-        payTable.innerHTML += `<tr>
-          <td>${p.email}</td><td>$${p.amount}</td><td>${p.method}</td>
-          <td>${p.status}</td>
+        uBody.innerHTML += `<tr>
+          <td>${u.name}</td><td>${u.email}</td><td>${u.status}</td>
           <td>
-            <button onclick="approvePayment(${i})">Approve</button>
+            <button onclick="updateUser(${i},'approved')">Approve</button>
+            <button onclick="updateUser(${i},'deactivated')">Deactivate</button>
+            <button onclick="deleteUser(${i})">Delete</button>
           </td>
         </tr>`;
       });
 
+      // Applications
+      const aBody = document.querySelector('#applicationTable tbody');
+      aBody.innerHTML = '';
+      JSON.parse(localStorage.getItem('applications')||'[]').forEach(a => {
+        aBody.innerHTML += `<tr>
+          <td>${a.name}</td><td>${a.email}</td><td>${a.phone}</td>
+          <td>${a.message}</td><td>${a.status}</td>
+        </tr>`;
+      });
+
+      // Payments
+      const pBody = document.querySelector('#paymentTable tbody');
+      pBody.innerHTML = '';
+      JSON.parse(localStorage.getItem('paymentRecords')||'[]').forEach((p,i) => {
+        pBody.innerHTML += `<tr>
+          <td>${p.email}</td><td>$${p.amount}</td><td>${p.method}</td>
+          <td>${p.status}</td>
+          <td><button onclick="approvePayment(${i})">Approve</button></td>
+        </tr>`;
+      });
+
       // Messages
-      const msgTable = document.querySelector('#messageTable tbody');
-      msgTable.innerHTML = '';
+      const mBody = document.querySelector('#messageTable tbody');
+      mBody.innerHTML = '';
       JSON.parse(localStorage.getItem('messages')||'[]').forEach(m => {
-        msgTable.innerHTML += `<tr>
+        mBody.innerHTML += `<tr>
           <td>${m.email}</td><td>${m.message}</td><td>${m.date}</td>
         </tr>`;
       });
@@ -307,9 +289,6 @@
       ['btc','eth','usdt','paystackKey'].forEach(id => {
         if(s[id]) document.getElementById(id).value = s[id];
       });
-
-      // Render logs
-      renderLogs();
     };
 
     // User actions
@@ -331,51 +310,61 @@
     // Approve payment
     function approvePayment(i) {
       const pays = JSON.parse(localStorage.getItem('paymentRecords')||'[]');
-      const rec = pays[i];
-      rec.status = 'approved';
+      pays[i].status = 'approved';
       localStorage.setItem('paymentRecords', JSON.stringify(pays));
 
-      // auto-add user
+      // auto-add or update user
       let users = JSON.parse(localStorage.getItem('users')||'[]');
-      if(!users.find(u=>u.email===rec.email)) {
+      const rec = pays[i];
+      const idx = users.findIndex(u=>u.email===rec.email);
+      if(idx===-1) {
         users.push({ name:rec.username,email:rec.email,status:'approved' });
       } else {
-        users = users.map(u=>u.email===rec.email?{...u,status:'approved'}:u);
+        users[idx].status = 'approved';
       }
       localStorage.setItem('users', JSON.stringify(users));
+
       log(`Payment approved for ${rec.email}`);
       window.onload();
     }
 
-    // Publish signal
-    document.getElementById('signalForm').onsubmit = e => {
+    // Publish signal (patched)
+    document.getElementById('signalForm').onsubmit = function(e) {
       e.preventDefault();
-      const pair  = pair.value.trim(),
-            entry = entry.value.trim(),
-            tp    = tp.value.trim(),
-            sl    = sl.value.trim(),
-            note  = note.value.trim();
-      if(!pair||!entry||!tp||!sl) return alert('Fill all fields');
+      const type  = document.getElementById('tradeType').value;
+      const pair  = document.getElementById('pair').value.trim();
+      const entry = document.getElementById('entry').value.trim();
+      const tp    = document.getElementById('tp').value.trim();
+      const sl    = document.getElementById('sl').value.trim();
+      const note  = document.getElementById('note').value.trim();
+
+      if (!type || !pair || !entry || !tp || !sl) {
+        alert('Please select trade type and fill all required fields.');
+        return;
+      }
+
       const signals = JSON.parse(localStorage.getItem('vipSignals')||'[]');
       signals.unshift({
-        date:new Date().toLocaleDateString(),
-        time:new Date().toLocaleTimeString(),
-        pair,entry,tp,sl,note
+        date: new Date().toLocaleDateString(),
+        time: new Date().toLocaleTimeString(),
+        type, pair, entry, tp, sl, note
       });
       localStorage.setItem('vipSignals', JSON.stringify(signals));
-      alert('Signal published!');
-      log(`Signal published: ${pair}`);
-      signalForm.reset();
+      alert('Signal published successfully!');
+      log(`Signal published: ${type} ${pair}`);
+      this.reset();
     };
 
     // Upload insight
     function uploadInsight() {
-      const img = insightImage.files[0], note=insightNote.value.trim();
-      if(!img||!note) return alert('Select image and note');
-      const reader=new FileReader();
-      reader.onload=()=> {
+      const img  = document.getElementById('insightImage').files[0],
+            note = document.getElementById('insightNote').value.trim(),
+            dt   = document.getElementById('insightDate').value;
+      if (!img||!note||!dt) return alert('Select date, image & note');
+      const reader = new FileReader();
+      reader.onload = () => {
         const arr = JSON.parse(localStorage.getItem('insights')||'[]');
-        arr.unshift({ date:insightDate.value,image:reader.result,note });
+        arr.unshift({ date:dt,image:reader.result,note });
         localStorage.setItem('insights', JSON.stringify(arr));
         alert('Insight uploaded'); log('Insight uploaded');
       };
@@ -384,12 +373,14 @@
 
     // Upload history
     function uploadHistory() {
-      const img=historyImage.files[0], note=historyNote.value.trim(), m=historyMonth.value;
-      if(!img||!note||!m) return alert('Select month, image, note');
+      const img  = document.getElementById('historyImage').files[0],
+            note = document.getElementById('historyNote').value.trim(),
+            mnth = document.getElementById('historyMonth').value;
+      if (!img||!note||!mnth) return alert('Select month, image & note');
       const reader=new FileReader();
-      reader.onload=()=> {
-        const arr=JSON.parse(localStorage.getItem('tradeHistory')||'[]');
-        arr.unshift({ month:m,image:reader.result,note });
+      reader.onload=() => {
+        const arr = JSON.parse(localStorage.getItem('tradeHistory')||'[]');
+        arr.unshift({ month:mnth,image:reader.result,note });
         localStorage.setItem('tradeHistory', JSON.stringify(arr));
         alert('History uploaded'); log('History uploaded');
       };
@@ -398,11 +389,11 @@
 
     // Broadcast
     function sendBroadcast() {
-      const txt=broadcastText.value.trim();
-      if(!txt) return alert('Enter a message');
-      const msgs=JSON.parse(localStorage.getItem('messages')||'[]');
+      const txt = document.getElementById('broadcastText').value.trim();
+      if (!txt) return alert('Enter a message');
+      const msgs = JSON.parse(localStorage.getItem('messages')||'[]');
       msgs.unshift({ email:'ALL_USERS',message:txt,date:new Date().toISOString() });
-      localStorage.setItem('messages',JSON.stringify(msgs));
+      localStorage.setItem('messages', JSON.stringify(msgs));
       alert('Broadcast sent'); log('Broadcast sent');
       window.onload();
     }
@@ -410,9 +401,12 @@
     // Save settings
     function saveSettings() {
       const s = {
-        btc:btc.value, eth:eth.value, usdt:usdt.value, paystackKey:paystackKey.value
+        btc:document.getElementById('btc').value.trim(),
+        eth:document.getElementById('eth').value.trim(),
+        usdt:document.getElementById('usdt').value.trim(),
+        paystackKey:document.getElementById('paystackKey').value.trim()
       };
-      localStorage.setItem('paymentSettings',JSON.stringify(s));
+      localStorage.setItem('paymentSettings', JSON.stringify(s));
       alert('Settings saved'); log('Settings updated');
     }
   </script>
