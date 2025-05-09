@@ -2,8 +2,8 @@
 <html lang="en">
 <head>
   <meta charset="utf-8"/>
-  <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
-  <title>Forex Signals - CBE</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Forex Signals • CBE VIP</title>
   <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;500;700&display=swap" rel="stylesheet"/>
   <style>
     body {
@@ -32,6 +32,7 @@
       max-width: 1000px;
       margin: 40px auto;
       padding: 20px;
+      position: relative;
     }
     .notice {
       text-align: center;
@@ -90,7 +91,7 @@
     }
     @keyframes blinkGlow {
       0%, 100% { box-shadow: 0 0 5px #ffd700; }
-      50% { box-shadow: 0 0 15px #ffd700; }
+      50%     { box-shadow: 0 0 15px #ffd700; }
     }
     .copy-button:hover {
       background: #444;
@@ -113,58 +114,70 @@
   </header>
 
   <main id="main-content">
-    <div class="notice">
-      Sharing these signals is strictly prohibited. Unauthorized access is punishable.
-    </div>
-    <!-- Signal data will be loaded here -->
+    <div id="signalsContainer"></div>
   </main>
 
   <footer>
-    © 2025 CBE - Chukwuemeka Bullion Exchange. All rights reserved.
+    © 2025 CBE – Chukwuemeka Bullion Exchange. All rights reserved.
   </footer>
 
   <script>
-    // Watermark user
-    const vipUser = sessionStorage.getItem('cbeUsername') || 'VIP_MEMBER';
+    // Utility to copy text
     function copyToClipboard(id) {
       const txt = document.getElementById(id).textContent;
       navigator.clipboard.writeText(txt).then(() => alert('Copied: ' + txt));
     }
 
-    window.addEventListener('DOMContentLoaded', () => {
-      const container = document.getElementById('main-content');
-      const signals = JSON.parse(localStorage.getItem('vipSignals') || '[]');
+    window.onload = () => {
+      const container = document.getElementById('signalsContainer');
+      container.innerHTML = '';
+
+      // **1. Retrieve signals from localStorage**
+      let signals;
+      try {
+        signals = JSON.parse(localStorage.getItem('vipSignals') || '[]');
+      } catch (e) {
+        console.error('Failed to parse vipSignals:', e);
+        signals = [];
+      }
+
+      console.log('VIP Signals loaded:', signals);  // <— check in Console
 
       if (!signals.length) {
-        container.innerHTML += '<p class="notice">No signals available yet.</p>';
+        container.innerHTML = '<p class="notice">No signals available yet.</p>';
         return;
       }
 
-      signals.reverse().forEach((s, i) => {
+      // **2. Render each signal**
+      signals.forEach((s, i) => {
         const box = document.createElement('div');
         box.className = 'signal-box';
         box.innerHTML = `
-          <h2>${s.date || 'Date not set'}</h2>
-          <div class="time">Time: ${s.time || 'Not set'}</div>
+          <h2>${s.date || '—'}</h2>
+          <div class="time">Time: ${s.time || '—'}</div>
           <div class="signal-content">
             <div class="copy-line">
-              ${s.type} ${s.pair} @ <span id="price${i}">${s.entry}</span>
+              ${s.type || ''} ${s.pair || ''} @ 
+              <span id="price${i}">${s.entry || ''}</span>
               <button class="copy-button" onclick="copyToClipboard('price${i}')">Copy</button>
             </div>
             <div class="copy-line">
-              TP: <span id="tp${i}">${s.tp}</span>
+              TP: <span id="tp${i}">${s.tp || ''}</span>
               <button class="copy-button" onclick="copyToClipboard('tp${i}')">Copy</button>
             </div>
             <div class="copy-line">
-              SL: <span id="sl${i}">${s.sl}</span>
+              SL: <span id="sl${i}">${s.sl || ''}</span>
               <button class="copy-button" onclick="copyToClipboard('sl${i}')">Copy</button>
             </div>
           </div>
-          ${s.note ? `<div class="admin-note">Note: ${s.note}</div>` : ''}
+          ${s.note
+            ? `<div class="admin-note">Note: ${s.note}</div>`
+            : ''
+          }
         `;
         container.appendChild(box);
       });
-    });
+    };
   </script>
 </body>
 </html>
