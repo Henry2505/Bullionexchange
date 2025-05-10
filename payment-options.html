@@ -154,18 +154,26 @@
   </div>
 
   <script>
-    document.addEventListener('DOMContentLoaded', () => {
-      // 1) Load admin settings
+    document.addEventListener('DOMContentLoaded', async () => {
+      // 1) FETCH ADMIN SETTINGS FROM YOUR SERVER
       let settings = {};
       try {
-        settings = JSON.parse(localStorage.getItem('paymentSettings')) || {};
-      } catch (e) {
-        console.error('Error loading paymentSettings:', e);
+        const res = await fetch('/api/payment-settings');
+        if (!res.ok) throw new Error(res.statusText);
+        settings = await res.json();
+      } catch (err) {
+        console.error('Could not load payment settings:', err);
+        return alert('Payment settings unavailable. Please try again later.');
       }
-      const walletMap   = { Bitcoin: settings.btc, Ethereum: settings.eth, USDT: settings.usdt };
+
+      const walletMap = {
+        Bitcoin:  settings.btc   || '',
+        Ethereum: settings.eth   || '',
+        USDT:     settings.usdt  || ''
+      };
       const paystackKey = settings.paystackKey || '';
 
-      // 2) Display selected package
+      // 2) DISPLAY SELECTED PACKAGE
       const selectedPackage = sessionStorage.getItem('selectedPackage') || '';
       const planNames = {
         weekly:  'Weekly VIP Plan – $50',
@@ -175,18 +183,18 @@
       document.getElementById('selectedPlanInfo').textContent =
         planNames[selectedPackage] || 'No valid package selected.';
 
-      // 3) Show crypto options
+      // 3) SHOW CRYPTO OPTIONS
       document.getElementById('cryptoBtn').addEventListener('click', () => {
         document.getElementById('cryptoOptions').style.display = 'block';
       });
 
-      // 4) Update wallet address on crypto type change
+      // 4) UPDATE WALLET ADDRESS ON SELECTION
       document.getElementById('cryptoType').addEventListener('change', function () {
         document.getElementById('walletAddress').textContent =
           walletMap[this.value] || 'Not set';
       });
 
-      // 5) Copy wallet button
+      // 5) COPY WALLET TO CLIPBOARD
       document.getElementById('copyWalletBtn').addEventListener('click', () => {
         const w = document.getElementById('walletAddress').textContent;
         if (w && w !== 'Not set') {
@@ -196,15 +204,15 @@
         }
       });
 
-      // 6) Simulate Paystack flow
+      // 6) PAYSTACK SIMULATION
       document.getElementById('paystackBtn').addEventListener('click', () => {
         if (!paystackKey) {
-          return alert('Paystack key not set in Admin Settings.');
+          return alert('Paystack key not set. Please contact admin.');
         }
         alert('Simulated Paystack payment – then click Submit Payment.');
       });
 
-      // 7) Handle form submission
+      // 7) FORM SUBMISSION
       document.getElementById('paymentForm').addEventListener('submit', e => {
         e.preventDefault();
 
@@ -213,31 +221,27 @@
         const wallet     = walletMap[cryptoType] || '';
         const isCrypto   = document.getElementById('cryptoOptions').style.display === 'block';
 
-        // Validations
-        if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+        // VALIDATION
+        if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email))
           return alert('Please enter a valid email address.');
-        }
-        if (isCrypto && !cryptoType) {
+        if (isCrypto && !cryptoType)
           return alert('Please select a cryptocurrency.');
-        }
-        if (!selectedPackage || !planNames[selectedPackage]) {
+        if (!selectedPackage || !planNames[selectedPackage])
           return alert('No plan selected.');
-        }
 
-        // Prevent duplicate submissions
-        const records = JSON.parse(localStorage.getItem('paymentRecords')||'[]');
-        if (records.some(r => r.email===email && r.status!=='expired')) {
-          return alert('You already submitted a payment. Wait for approval or expiration before paying again.');
-        }
+        // RECORD PAYMENT (localStorage example)
+        const records = JSON.parse(localStorage.getItem('paymentRecords') || '[]');
+        if (records.some(r => r.email === email && r.status !== 'expired'))
+          return alert('You already submitted a payment. Await approval or expiry.');
 
-        // Build record (no proof)
         const rec = {
           name:       email.split('@')[0],
-          email, username: email.split('@')[0],
-          amount:     selectedPackage==='weekly'?50:selectedPackage==='monthly'?150:1500,
-          method:     isCrypto?cryptoType:'Paystack',
-          walletType: isCrypto?cryptoType:'Paystack',
-          wallet:     wallet||'',
+          email,
+          username:   email.split('@')[0],
+          amount:     selectedPackage === 'weekly' ? 50 : selectedPackage === 'monthly' ? 150 : 1500,
+          method:     isCrypto ? cryptoType : 'Paystack',
+          walletType: isCrypto ? cryptoType : 'Paystack',
+          wallet:     wallet || '',
           proof:      '',
           status:     'pending',
           submittedAt:new Date().toISOString()
