@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Apply • Chukwuemeka Bullion Exchange</title>
+  <title>Apply • Chukwuemeka Bullion Exchange (Debug)</title>
   <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700&display=swap" rel="stylesheet">
   <style>
     body {
@@ -21,43 +21,44 @@
       background: rgba(0,0,0,0.6); z-index: -1;
     }
     .apply-section {
-      max-width: 500px; margin: 120px auto;
-      background: rgba(20,20,20,0.8);
-      padding: 40px; border-radius: 12px;
-      box-shadow: 0 0 20px rgba(255, 215, 0, 0.2);
+      max-width: 500px; margin: 80px auto;
+      background: rgba(20,20,20,0.8); padding: 40px; border-radius: 12px;
+      box-shadow: 0 0 20px rgba(255, 215, 0, 0.2); position: relative; z-index: 1;
     }
     .apply-section h1 {
-      font-size: 2rem; color: gold;
-      margin-bottom: 20px; text-align: center;
+      font-size: 2rem; color: gold; margin-bottom: 20px; text-align: center;
     }
     .apply-section form {
       display: flex; flex-direction: column; gap: 15px;
     }
     input, textarea {
-      padding: 12px; border: none;
-      border-radius: 8px;
-      background: #1c1c1c;
-      color: #f5f5f5; font-size: 1rem;
+      padding: 12px; border: none; border-radius: 8px;
+      background: #1c1c1c; color: #f5f5f5; font-size: 1rem;
     }
-    input::placeholder, textarea::placeholder {
-      color: #888;
-    }
-    input:focus, textarea:focus {
-      outline: none; box-shadow: 0 0 8px gold;
-    }
+    input::placeholder, textarea::placeholder { color: #888; }
+    input:focus, textarea:focus { outline: none; box-shadow: 0 0 8px gold; }
     button {
-      background: gold; color: #000;
-      font-weight: bold; padding: 14px;
-      border: none; border-radius: 6px;
-      cursor: pointer; transition: 0.3s;
+      background: gold; color: #000; font-weight: bold; padding: 14px;
+      border: none; border-radius: 6px; cursor: pointer; transition: 0.3s;
     }
-    button:hover {
-      background: #e6c200;
-      box-shadow: 0 0 15px gold;
+    button:hover { background: #e6c200; box-shadow: 0 0 15px gold; }
+
+    /* Debug Box */
+    .debug-box {
+      background: rgba(0,0,0,0.9);
+      border: 1px solid gold;
+      color: #fff;
+      padding: 10px;
+      margin: 20px auto;
+      max-width: 500px;
+      white-space: pre-wrap;
+      font-family: monospace;
+      font-size: 0.9em;
+      position: relative; z-index: 1;
     }
+
     footer {
-      text-align: center; padding: 20px;
-      color: #888;
+      text-align: center; padding: 20px; color: #888; position: relative; z-index: 1;
     }
   </style>
 </head>
@@ -66,6 +67,9 @@
     <source src="star-video.MP4" type="video/mp4" />
   </video>
   <div class="overlay"></div>
+
+  <!-- Debug Output -->
+  <div class="debug-box" id="usersDebug">Current users will appear here...</div>
 
   <!-- Apply Form -->
   <div class="apply-section">
@@ -83,44 +87,55 @@
   <footer>© 2025 CBE – Chukwuemeka Bullion Exchange</footer>
 
   <script>
+    function refreshUsersDebug() {
+      let users = [];
+      try {
+        users = JSON.parse(localStorage.getItem('users') || '[]');
+      } catch (e) {
+        console.error(e);
+      }
+      document.getElementById('usersDebug').textContent =
+        'localStorage.users:\n' + JSON.stringify(users, null, 2);
+      console.log('DEBUG localStorage.users:', users);
+    }
+
+    // Initial load
+    refreshUsersDebug();
+
     document.getElementById('apply-form').addEventListener('submit', function (e) {
       e.preventDefault();
-
       const name     = document.getElementById('apply-name').value.trim();
       const email    = document.getElementById('apply-email').value.trim().toLowerCase();
       const password = document.getElementById('apply-password').value;
       const phone    = document.getElementById('apply-phone').value.trim();
       const message  = document.getElementById('apply-message').value.trim();
-
       if (!name || !email || !password || !phone || !message) {
         alert("Please complete all fields.");
         return;
       }
 
-      let users = JSON.parse(localStorage.getItem('users') || '[]');
+      let users = [];
+      try {
+        users = JSON.parse(localStorage.getItem('users') || '[]');
+      } catch (e) {
+        console.error(e);
+      }
+      if (!Array.isArray(users)) users = [users];
 
-      const alreadyExists = users.some(user => user.email === email);
-      if (alreadyExists) {
+      if (users.some(u => u.email === email)) {
         alert("You’ve already applied. Please proceed to the VIP Subscription.");
         window.location.href = 'vip-subscription.html';
         return;
       }
 
-      const newUser = {
-        name,
-        email,
-        password,
-        phone,
-        message,
-        status: 'pending',
-        date: new Date().toISOString()
-      };
-
+      const newUser = { name, email, password, phone, message, status: 'pending', date: new Date().toISOString() };
       users.push(newUser);
       localStorage.setItem('users', JSON.stringify(users));
 
-      alert("Application submitted successfully! Please proceed to VIP Subscription.");
-      window.location.href = 'vip-subscription.html';
+      refreshUsersDebug();
+
+      alert("Application submitted successfully!");
+      // stay on page so you can see the debug output
     });
   </script>
 </body>
