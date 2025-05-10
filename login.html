@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Login – CBE (Debug View)</title>
+  <title>Login – CBE</title>
   <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;500;700&display=swap" rel="stylesheet">
   <style>
     body {
@@ -12,24 +12,6 @@
       background-color: #0b0b0b;
       color: #f5f5f5;
     }
-    /* Debug boxes */
-    .debug-box {
-      position: relative;
-      z-index: 1001;
-      background: rgba(30,30,30,0.9);
-      border: 1px solid gold;
-      padding: 10px;
-      margin: 100px auto 20px;
-      width: 90%;
-      max-width: 600px;
-      white-space: pre-wrap;
-      font-family: monospace;
-      font-size: 0.9em;
-      max-height: 200px;
-      overflow: auto;
-    }
-
-    /* Keep your existing CSS below unchanged */
     nav {
       display: flex; justify-content: space-between; align-items: center;
       padding: 20px 40px; background: rgba(0,0,0,0.8);
@@ -52,7 +34,7 @@
     header h1 { font-size: 42px; color: gold; margin-bottom: 10px; }
     header p  { font-size: 18px; color: #ccc; }
     section {
-      max-width: 500px; margin: 20px auto; padding: 0 20px; position: relative; z-index: 1000;
+      max-width: 500px; margin: 40px auto; padding: 0 20px;
     }
     .login-form {
       background-color: #141414; padding: 30px;
@@ -83,24 +65,30 @@
       background: #e6c200;
       box-shadow: 0 0 15px gold, 0 0 30px #ffd700;
     }
+    .submit-btn::before {
+      content: '';
+      position: absolute; top:50%; left:50%;
+      width:0; height:0; background: radial-gradient(circle, rgba(255,215,0,0.3) 0%, transparent 70%);
+      border-radius:50%; transform:translate(-50%,-50%);
+      transition: width 0.6s ease, height 0.6s ease;
+      z-index:0;
+    }
+    .submit-btn:hover::before {
+      width:300px; height:300px;
+    }
+    .submit-btn span { position: relative; z-index: 1; }
     .contact-info {
       text-align: center; margin-top: 40px;
-      position: relative; z-index: 1000;
     }
     .contact-info a { color: gold; text-decoration: none; }
     .contact-info a:hover { text-decoration: underline; }
     footer {
       text-align: center; padding: 20px; font-size: 14px;
       color: #888; border-top: 1px solid #222; background: #0b0b0b;
-      position: relative; z-index: 1000;
     }
   </style>
 </head>
 <body>
-
-  <!-- Debug Output Above the Form -->
-  <div class="debug-box" id="usersDebug"></div>
-  <div class="debug-box" id="paymentsDebug"></div>
 
   <!-- Video & Overlay -->
   <video class="video-background" autoplay muted loop playsinline>
@@ -140,48 +128,53 @@
         <button type="submit" class="submit-btn"><span>Login</span></button>
       </form>
     </div>
+    <div class="contact-info">
+      <p>Need assistance?</p>
+      <p>
+        <a href="https://wa.me/2349133957084" target="_blank">WhatsApp</a> |
+        <a href="https://t.me/apexincomeoptions" target="_blank">Telegram</a> |
+        <a href="mailto:support@chukwuemekabullionexchange.com">Email</a>
+      </p>
+    </div>
   </section>
-
-  <div class="contact-info">
-    <p>Need assistance?</p>
-    <p>
-      <a href="https://wa.me/2349133957084" target="_blank">WhatsApp</a> |
-      <a href="https://t.me/apexincomeoptions" target="_blank">Telegram</a> |
-      <a href="mailto:support@chukwuemekabullionexchange.com">Email</a>
-    </p>
-  </div>
 
   <footer>© 2025 CBE - Chukwuemeka Bullion Exchange. All rights reserved.</footer>
 
   <script>
-    function refreshDebug() {
-      let users = [], payments = [];
-      try { users = JSON.parse(localStorage.getItem('users') || '[]'); } catch{}
-      try { payments = JSON.parse(localStorage.getItem('paymentRecords') || '[]'); } catch{}
-      document.getElementById('usersDebug').textContent =
-        "localStorage.users:\n" + JSON.stringify(users, null, 2);
-      document.getElementById('paymentsDebug').textContent =
-        "localStorage.paymentRecords:\n" + JSON.stringify(payments, null, 2);
-    }
-    // Initial load
-    refreshDebug();
-    // Also refresh if storage changes in another tab
-    window.addEventListener('storage', refreshDebug);
-
     document.getElementById('loginForm').addEventListener('submit', function(e) {
       e.preventDefault();
+
       const rawEmail = document.getElementById('email').value.trim();
-      const email = rawEmail.toLowerCase();
+      const email    = rawEmail.toLowerCase();
       const password = document.getElementById('password').value.trim();
 
       if (!email || !password) {
         return alert('Please enter both email and password.');
       }
 
-      // Reload storage fresh
-      const users = JSON.parse(localStorage.getItem('users') || '[]');
-      const payments = JSON.parse(localStorage.getItem('paymentRecords') || '[]');
+      // Load and normalize users
+      let users = [];
+      try {
+        users = JSON.parse(localStorage.getItem('users') || '[]');
+      } catch(err) {
+        console.error('Users parse error:', err);
+      }
+      if (!Array.isArray(users)) {
+        users = [users];
+      }
 
+      // Load and normalize payments
+      let payments = [];
+      try {
+        payments = JSON.parse(localStorage.getItem('paymentRecords') || '[]');
+      } catch(err) {
+        console.error('Payments parse error:', err);
+      }
+      if (!Array.isArray(payments)) {
+        payments = [payments];
+      }
+
+      // Find the user (case‐insensitive)
       const user = users.find(u =>
         u.email && u.email.trim().toLowerCase() === email
       );
@@ -189,6 +182,7 @@
         return alert('🚫 No account found. Please apply first.');
       }
 
+      // Find the payment
       const payment = payments.find(p =>
         p.email && p.email.trim().toLowerCase() === email
       );
@@ -196,11 +190,17 @@
         return alert('🚫 Your payment has not been approved yet. Please wait for payment approval.');
       }
 
+      // Check admin approval
       if (user.status !== 'approved') {
         return alert('🚫 Your account is not approved yet. Please wait for admin approval.');
       }
 
-      // Success
+      // (Optional) Password check
+      // if (user.password && user.password !== password) {
+      //   return alert('🚫 Incorrect password.');
+      // }
+
+      // Success!
       sessionStorage.setItem('cbeLoggedIn', 'true');
       sessionStorage.setItem('cbeUsername', user.username || user.name || rawEmail);
       window.location.href = 'vip-dashboard.html';
