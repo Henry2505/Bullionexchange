@@ -3,19 +3,104 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Login – CBE (Debug)</title>
+  <title>Login – CBE (Debug View)</title>
   <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;500;700&display=swap" rel="stylesheet">
   <style>
-    body { margin:0; font-family:'Poppins',sans-serif; background:#0b0b0b; color:#f5f5f5; }
-    .debug-box { background:#222; border:1px solid #444; padding:10px; margin:20px; white-space:pre; font-family:monospace; max-height:150px; overflow:auto; }
-    /* … keep all your existing CSS below as‐is … */
+    body {
+      margin: 0;
+      font-family: 'Poppins', sans-serif;
+      background-color: #0b0b0b;
+      color: #f5f5f5;
+    }
+    /* Debug boxes */
+    .debug-box {
+      position: relative;
+      z-index: 1001;
+      background: rgba(30,30,30,0.9);
+      border: 1px solid gold;
+      padding: 10px;
+      margin: 100px auto 20px;
+      width: 90%;
+      max-width: 600px;
+      white-space: pre-wrap;
+      font-family: monospace;
+      font-size: 0.9em;
+      max-height: 200px;
+      overflow: auto;
+    }
+
+    /* Keep your existing CSS below unchanged */
+    nav {
+      display: flex; justify-content: space-between; align-items: center;
+      padding: 20px 40px; background: rgba(0,0,0,0.8);
+      position: fixed; top: 0; width: 100%; z-index: 1000;
+      border-bottom: 1px solid #333; box-shadow: 0 0 10px gold;
+    }
+    nav a { color: gold; text-decoration: none; margin: 0 15px; }
+    .video-background {
+      position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+      object-fit: cover; z-index: -2;
+    }
+    .overlay {
+      position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+      background: rgba(0, 0, 0, 0.5); z-index: -1;
+    }
+    header {
+      background: linear-gradient(135deg, #111, #1c1c1c);
+      padding: 80px 20px; text-align: center; margin-top: 90px;
+    }
+    header h1 { font-size: 42px; color: gold; margin-bottom: 10px; }
+    header p  { font-size: 18px; color: #ccc; }
+    section {
+      max-width: 500px; margin: 20px auto; padding: 0 20px; position: relative; z-index: 1000;
+    }
+    .login-form {
+      background-color: #141414; padding: 30px;
+      border-radius: 10px; border-left: 4px solid gold;
+    }
+    .login-form h2 {
+      color: gold; font-size: 26px; margin-bottom: 20px;
+    }
+    .form-group { margin-bottom: 20px; }
+    .form-group label {
+      display: block; font-size: 16px; color: #ddd; margin-bottom: 8px;
+    }
+    .form-group input {
+      width: 100%; padding: 10px; font-size: 16px;
+      background: #1c1c1c; border: 1px solid #333; border-radius: 5px;
+      color: #f5f5f5;
+    }
+    .form-group input:focus {
+      outline: none; border-color: gold;
+    }
+    .submit-btn {
+      width: 100%; padding: 15px 0; font-size: 18px; font-weight: bold;
+      color: #000; background: gold; border: none; border-radius: 5px;
+      cursor: pointer; position: relative; overflow: hidden;
+      transition: all 0.3s ease;
+    }
+    .submit-btn:hover {
+      background: #e6c200;
+      box-shadow: 0 0 15px gold, 0 0 30px #ffd700;
+    }
+    .contact-info {
+      text-align: center; margin-top: 40px;
+      position: relative; z-index: 1000;
+    }
+    .contact-info a { color: gold; text-decoration: none; }
+    .contact-info a:hover { text-decoration: underline; }
+    footer {
+      text-align: center; padding: 20px; font-size: 14px;
+      color: #888; border-top: 1px solid #222; background: #0b0b0b;
+      position: relative; z-index: 1000;
+    }
   </style>
 </head>
 <body>
 
-  <!-- Debug Output -->
-  <div class="debug-box" id="usersDebug">Loading users…</div>
-  <div class="debug-box" id="paymentsDebug">Loading payments…</div>
+  <!-- Debug Output Above the Form -->
+  <div class="debug-box" id="usersDebug"></div>
+  <div class="debug-box" id="paymentsDebug"></div>
 
   <!-- Video & Overlay -->
   <video class="video-background" autoplay muted loop playsinline>
@@ -55,58 +140,58 @@
         <button type="submit" class="submit-btn"><span>Login</span></button>
       </form>
     </div>
-    <div class="contact-info">
-      <p>Need assistance?</p>
-      <p>
-        <a href="https://wa.me/2349133957084" target="_blank">WhatsApp</a> |
-        <a href="https://t.me/apexincomeoptions" target="_blank">Telegram</a> |
-        <a href="mailto:support@chukwuemekabullionexchange.com">Email</a>
-      </p>
-    </div>
   </section>
+
+  <div class="contact-info">
+    <p>Need assistance?</p>
+    <p>
+      <a href="https://wa.me/2349133957084" target="_blank">WhatsApp</a> |
+      <a href="https://t.me/apexincomeoptions" target="_blank">Telegram</a> |
+      <a href="mailto:support@chukwuemekabullionexchange.com">Email</a>
+    </p>
+  </div>
 
   <footer>© 2025 CBE - Chukwuemeka Bullion Exchange. All rights reserved.</footer>
 
   <script>
-    // Immediately load & display storage contents for debugging
-    function loadDebugData() {
+    function refreshDebug() {
       let users = [], payments = [];
-      try { users = JSON.parse(localStorage.getItem('users') || '[]'); }
-      catch(e){ console.error(e); }
-      try { payments = JSON.parse(localStorage.getItem('paymentRecords') || '[]'); }
-      catch(e){ console.error(e); }
-
-      document.getElementById('usersDebug').textContent = 
-        'localStorage.users:\n' + JSON.stringify(users, null, 2);
-      document.getElementById('paymentsDebug').textContent = 
-        'localStorage.paymentRecords:\n' + JSON.stringify(payments, null, 2);
-
-      console.log('DEBUG users:', users);
-      console.log('DEBUG payments:', payments);
+      try { users = JSON.parse(localStorage.getItem('users') || '[]'); } catch{}
+      try { payments = JSON.parse(localStorage.getItem('paymentRecords') || '[]'); } catch{}
+      document.getElementById('usersDebug').textContent =
+        "localStorage.users:\n" + JSON.stringify(users, null, 2);
+      document.getElementById('paymentsDebug').textContent =
+        "localStorage.paymentRecords:\n" + JSON.stringify(payments, null, 2);
     }
-    loadDebugData();
+    // Initial load
+    refreshDebug();
+    // Also refresh if storage changes in another tab
+    window.addEventListener('storage', refreshDebug);
 
     document.getElementById('loginForm').addEventListener('submit', function(e) {
       e.preventDefault();
-      const emailRaw = document.getElementById('email').value.trim();
-      const email    = emailRaw.toLowerCase();
+      const rawEmail = document.getElementById('email').value.trim();
+      const email = rawEmail.toLowerCase();
       const password = document.getElementById('password').value.trim();
 
       if (!email || !password) {
         return alert('Please enter both email and password.');
       }
 
-      // Reload storage in case it changed since page load
-      let users = JSON.parse(localStorage.getItem('users') || '[]');
-      let payments = JSON.parse(localStorage.getItem('paymentRecords') || '[]');
+      // Reload storage fresh
+      const users = JSON.parse(localStorage.getItem('users') || '[]');
+      const payments = JSON.parse(localStorage.getItem('paymentRecords') || '[]');
 
-      // Case‐insensitive find
-      const user = users.find(u => u.email && u.email.trim().toLowerCase() === email);
+      const user = users.find(u =>
+        u.email && u.email.trim().toLowerCase() === email
+      );
       if (!user) {
         return alert('🚫 No account found. Please apply first.');
       }
 
-      const payment = payments.find(p => p.email && p.email.trim().toLowerCase() === email);
+      const payment = payments.find(p =>
+        p.email && p.email.trim().toLowerCase() === email
+      );
       if (!payment || payment.status !== 'approved') {
         return alert('🚫 Your payment has not been approved yet. Please wait for payment approval.');
       }
@@ -115,9 +200,9 @@
         return alert('🚫 Your account is not approved yet. Please wait for admin approval.');
       }
 
-      // Success!
+      // Success
       sessionStorage.setItem('cbeLoggedIn', 'true');
-      sessionStorage.setItem('cbeUsername', user.username || user.name || emailRaw);
+      sessionStorage.setItem('cbeUsername', user.username || user.name || rawEmail);
       window.location.href = 'vip-dashboard.html';
     });
   </script>
