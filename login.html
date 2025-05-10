@@ -144,50 +144,61 @@
     document.getElementById('loginForm').addEventListener('submit', function(e) {
       e.preventDefault();
 
-      const email    = document.getElementById('email').value.trim().toLowerCase();
+      const emailInput = document.getElementById('email').value.trim();
+      const email = emailInput.toLowerCase();
       const password = document.getElementById('password').value.trim();
 
       if (!email || !password) {
         return alert('Please enter both email and password.');
       }
 
-      // Look up user in localStorage.users
+      // Load users
       let users = [];
       try {
         users = JSON.parse(localStorage.getItem('users') || '[]');
       } catch(err) {
         console.error('Failed to parse users:', err);
       }
-      const user = users.find(u => u.email === email);
+      console.log('Loaded users:', users);
+
+      // Find matching user (case-insensitive)
+      const user = users.find(u => 
+        u.email && u.email.trim().toLowerCase() === email
+      );
       if (!user) {
         return alert('🚫 No account found. Please apply first.');
       }
 
-      // Check payment record for this email
+      // Load payments
       let payments = [];
       try {
         payments = JSON.parse(localStorage.getItem('paymentRecords') || '[]');
       } catch(err) {
         console.error('Failed to parse payment records:', err);
       }
-      const payment = payments.find(p => p.email === email);
+      console.log('Loaded payments:', payments);
+
+      // Find matching payment (case-insensitive)
+      const payment = payments.find(p =>
+        p.email && p.email.trim().toLowerCase() === email
+      );
       if (!payment || payment.status !== 'approved') {
         return alert('🚫 Your payment has not been approved yet. Please wait for payment approval.');
       }
 
-      // Check user.status
+      // Finally, check admin approval
       if (user.status !== 'approved') {
         return alert('🚫 Your account is not approved yet. Please wait for admin approval.');
       }
 
-      // (Optional) if you stored a password: compare here
+      // (Optional) Password check
       // if (user.password && user.password !== password) {
       //   return alert('🚫 Incorrect password.');
       // }
 
       // Success!
       sessionStorage.setItem('cbeLoggedIn', 'true');
-      sessionStorage.setItem('cbeUsername', user.username);
+      sessionStorage.setItem('cbeUsername', user.username || user.name);
       window.location.href = 'vip-dashboard.html';
     });
   </script>
