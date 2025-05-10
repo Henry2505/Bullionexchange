@@ -1,354 +1,109 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8">
-<title>Admin Panel</title>
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<style>
-/* Add your CSS styling here (video background, sidebar, layout, etc.) */
-body, html { margin: 0; padding: 0; height: 100%; overflow: hidden; }
-#bg-video { position: fixed; right: 0; bottom: 0; min-width: 100%; min-height: 100%; z-index: -1; }
-#sidebar { position: fixed; top: 0; left: 0; width: 250px; height: 100%; background: rgba(0,0,0,0.7); color: white; transition: transform 0.3s ease; transform: translateX(0); overflow-y: auto; }
-#sidebar.collapsed { transform: translateX(-250px); }
-#menu-toggle { position: fixed; top: 10px; left: 260px; cursor: pointer; font-size: 24px; color: #fff; z-index: 1; }
-#main-content { margin-left: 260px; padding: 20px; color: white; height: 100%; overflow-y: auto; }
-.section { display: none; }
-.section.active { display: block; }
-form, input, button, textarea { display: block; margin: 10px 0; }
-button { padding: 10px; cursor: pointer; }
-@media (max-width: 600px) {
-  #sidebar { transform: translateX(-250px); }
-  #main-content { margin-left: 20px; }
-  #menu-toggle { left: 10px; }
-}
-</style>
-<!-- Firebase JS SDK (CDN) -->
-<script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-auth-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-firestore-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-storage-compat.js"></script>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Admin Panel</title>
+  <!-- Include your CSS and any required libraries here -->
 </head>
 <body>
-<!-- Video Background -->
-<video id="bg-video" autoplay loop muted>
-  <source src="background.mp4" type="video/mp4">
-  Your browser does not support the video tag.
-</video>
-<!-- Sidebar Navigation -->
-<div id="sidebar">
-  <ul style="list-style: none; padding: 20px;">
-    <li style="padding: 10px; cursor: pointer;" data-section="settings">Settings</li>
-    <li style="padding: 10px; cursor: pointer;" data-section="signals">VIP Signals</li>
-    <li style="padding: 10px; cursor: pointer;" data-section="approvals">User Approvals</li>
-    <li style="padding: 10px; cursor: pointer;" data-section="payments">Payment Records</li>
-    <li style="padding: 10px; cursor: pointer;" data-section="messages">Broadcast Messages</li>
-    <li style="padding: 10px; cursor: pointer;" data-section="trade-history">Trade History</li>
-  </ul>
-</div>
-<div id="menu-toggle">&#9776; Menu</div>
-<!-- Main Content -->
-<div id="main-content">
-  <!-- Login Section -->
-  <div id="login-section" class="section active">
-    <h2>Admin Login</h2>
-    <input id="login-email" type="email" placeholder="Email" required>
-    <input id="login-password" type="password" placeholder="Password" required>
-    <button id="login-button">Login</button>
-    <button id="signup-button">Sign Up</button>
-  </div>
-  <!-- Settings Section -->
-  <div id="settings-section" class="section">
-    <h2>Settings</h2>
-    <!-- Example Settings fields -->
-    <input id="setting1" type="text" placeholder="Setting 1">
-    <input id="setting2" type="text" placeholder="Setting 2">
-    <button id="save-settings">Save Settings</button>
-  </div>
-  <!-- VIP Signals Section -->
-  <div id="signals-section" class="section">
-    <h2>VIP Signals</h2>
-    <div id="signals-list"></div>
-    <input id="new-signal" type="text" placeholder="Enter new signal">
-    <button id="publish-signal">Publish Signal</button>
-  </div>
-  <!-- User Approvals Section -->
-  <div id="approvals-section" class="section">
-    <h2>User Approvals</h2>
-    <ul id="approvals-list"></ul>
-  </div>
-  <!-- Payment Records Section -->
-  <div id="payments-section" class="section">
-    <h2>Payment Records</h2>
-    <div id="payments-list"></div>
-  </div>
-  <!-- Broadcast Messages Section -->
-  <div id="messages-section" class="section">
-    <h2>Broadcast Messages</h2>
-    <textarea id="broadcast-text" placeholder="Type message"></textarea>
-    <button id="send-broadcast">Send Message</button>
-    <ul id="messages-list"></ul>
-  </div>
-  <!-- Trade History Section -->
-  <div id="trade-history-section" class="section">
-    <h2>Trade History</h2>
-    <input id="trade-note" type="text" placeholder="Trade note">
-    <input id="trade-image" type="file">
-    <button id="add-trade">Add Trade</button>
-    <div id="trade-list"></div>
-  </div>
-</div>
-<script>
-// Firebase configuration placeholder
-// TODO: Replace with your Firebase project configuration
-const firebaseConfig = {
-  apiKey: "YOUR_API_KEY",
-  authDomain: "YOUR_AUTH_DOMAIN",
-  projectId: "YOUR_PROJECT_ID",
-  storageBucket: "YOUR_STORAGE_BUCKET",
-  // ... other config fields ...
-};
-firebase.initializeApp(firebaseConfig);
-const auth = firebase.auth();
-const db = firebase.firestore();
-const storage = firebase.storage();
+  <!-- Your existing HTML structure for the admin panel -->
 
-// DOM elements
-const loginSection = document.getElementById('login-section');
-const loginButton = document.getElementById('login-button');
-const signupButton = document.getElementById('signup-button');
-const loginEmail = document.getElementById('login-email');
-const loginPassword = document.getElementById('login-password');
+  <!-- Firebase SDKs -->
+  <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-firestore-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-storage-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-analytics-compat.js"></script>
 
-const sections = document.querySelectorAll('.section');
-const sidebarLinks = document.querySelectorAll('#sidebar li');
-sidebarLinks.forEach(link => {
-  link.addEventListener('click', () => {
-    const sectionId = link.getAttribute('data-section') + '-section';
-    sections.forEach(sec => {
-      if (sec.id === sectionId) {
-        sec.classList.add('active');
-      } else {
-        sec.classList.remove('active');
-      }
-    });
-  });
-});
+  <script>
+    // Your web app's Firebase configuration
+    const firebaseConfig = {
+      apiKey: "AIzaSyDW5MAHUa8ixjtQU-ccOexinkzaVhMFGwc",
+      authDomain: "apex-income-options.firebaseapp.com",
+      projectId: "apex-income-options",
+      storageBucket: "apex-income-options.appspot.com",
+      messagingSenderId: "1097313441508",
+      appId: "1:1097313441508:web:e789f7a217e05e93293ef1",
+      measurementId: "G-4SLZQEWEMP"
+    };
 
-// Sidebar toggle
-const menuToggle = document.getElementById('menu-toggle');
-const sidebar = document.getElementById('sidebar');
-menuToggle.addEventListener('click', () => {
-  sidebar.classList.toggle('collapsed');
-});
+    // Initialize Firebase
+    firebase.initializeApp(firebaseConfig);
+    firebase.analytics();
 
-// Auth state observer
-auth.onAuthStateChanged(user => {
-  if (user) {
-    // User is signed in, hide login, show settings
-    loginSection.classList.remove('active');
-    document.getElementById('settings-section').classList.add('active');
-    // Load initial data for admin
-    loadSettings();
-    loadSignals();
-    loadApprovals();
-    loadPayments();
-    loadMessages();
-    loadTradeHistory();
-  } else {
-    // No user, show login section only
-    sections.forEach(sec => sec.classList.remove('active'));
-    loginSection.classList.add('active');
-  }
-});
+    const auth = firebase.auth();
+    const db = firebase.firestore();
+    const storage = firebase.storage();
 
-// Login
-loginButton.addEventListener('click', () => {
-  const email = loginEmail.value;
-  const password = loginPassword.value;
-  auth.signInWithEmailAndPassword(email, password)
-    .then(userCredential => {
-      console.log('Logged in:', userCredential.user.uid);
-    })
-    .catch(error => {
-      alert(error.message);
-    });
-});
-
-// Sign Up (creates admin and adds to Firestore)
-signupButton.addEventListener('click', () => {
-  const email = loginEmail.value;
-  const password = loginPassword.value;
-  auth.createUserWithEmailAndPassword(email, password)
-    .then(userCredential => {
-      const uid = userCredential.user.uid;
-      // Add user to Firestore as pending approval (admin user)
-      db.collection('users').doc(uid).set({
-        email: email,
-        approved: false
-      }).then(() => {
-        console.log('New admin account created and added to Firestore:', uid);
-      });
-    })
-    .catch(error => {
-      alert(error.message);
-    });
-});
-
-// Load and Save Settings
-function loadSettings() {
-  db.collection('settings').doc('admin').get()
-    .then(doc => {
-      if (doc.exists) {
-        const data = doc.data();
-        document.getElementById('setting1').value = data.setting1 || '';
-        document.getElementById('setting2').value = data.setting2 || '';
-      }
-    });
-}
-document.getElementById('save-settings').addEventListener('click', () => {
-  const setting1 = document.getElementById('setting1').value;
-  const setting2 = document.getElementById('setting2').value;
-  db.collection('settings').doc('admin').set({ setting1, setting2 })
-    .then(() => alert('Settings saved'))
-    .catch(error => alert(error.message));
-});
-
-// VIP Signals (real-time)
-function loadSignals() {
-  db.collection('signals').orderBy('timestamp', 'desc')
-    .onSnapshot(snapshot => {
-      const signalsList = document.getElementById('signals-list');
-      signalsList.innerHTML = '';
-      snapshot.forEach(doc => {
-        const signalData = doc.data();
-        const signalText = signalData.text || '';
-        const div = document.createElement('div');
-        div.textContent = signalText;
-        signalsList.appendChild(div);
-      });
-    });
-}
-document.getElementById('publish-signal').addEventListener('click', () => {
-  const text = document.getElementById('new-signal').value;
-  if (text) {
-    db.collection('signals').add({
-      text: text,
-      timestamp: firebase.firestore.FieldValue.serverTimestamp()
-    }).then(() => {
-      document.getElementById('new-signal').value = '';
-    }).catch(error => alert(error.message));
-  }
-});
-
-// User Approvals
-function loadApprovals() {
-  db.collection('users').where('approved', '==', false)
-    .onSnapshot(snapshot => {
-      const approvalsList = document.getElementById('approvals-list');
-      approvalsList.innerHTML = '';
-      snapshot.forEach(doc => {
-        const user = doc.data();
-        const li = document.createElement('li');
-        li.textContent = user.email || 'No email';
-        const approveBtn = document.createElement('button');
-        approveBtn.textContent = 'Approve';
-        approveBtn.addEventListener('click', () => {
-          db.collection('users').doc(doc.id).update({ approved: true })
-            .then(() => li.remove())
-            .catch(error => alert(error.message));
+    // Authentication state observer
+    auth.onAuthStateChanged(user => {
+      if (user) {
+        // User is signed in
+        // Check if user is approved
+        db.collection('users').doc(user.uid).get().then(doc => {
+          if (doc.exists && doc.data().approved) {
+            // Load admin panel
+          } else {
+            // Show not approved message
+          }
         });
-        li.appendChild(approveBtn);
-        approvalsList.appendChild(li);
-      });
+      } else {
+        // No user is signed in
+        // Show login form
+      }
     });
-}
 
-// Payment Records (real-time)
-function loadPayments() {
-  db.collection('payments').orderBy('timestamp', 'desc')
-    .onSnapshot(snapshot => {
-      const paymentsList = document.getElementById('payments-list');
-      paymentsList.innerHTML = '';
-      snapshot.forEach(doc => {
-        const payment = doc.data();
-        const user = payment.user || 'Unknown';
-        const amount = payment.amount || '';
-        let date = '';
-        if (payment.timestamp && payment.timestamp.seconds) {
-          date = new Date(payment.timestamp.seconds * 1000).toLocaleString();
+    // File upload handling
+    function uploadFile(file) {
+      const storageRef = storage.ref('uploads/' + file.name);
+      const uploadTask = storageRef.put(file);
+
+      uploadTask.on('state_changed',
+        (snapshot) => {
+          // Progress function
+          const progress = (snapshot.bytesTransferred / snapshot.totalBytes) * 100;
+          console.log('Upload is ' + progress + '% done');
+        },
+        (error) => {
+          // Error function
+          console.error('Upload failed:', error);
+        },
+        () => {
+          // Complete function
+          uploadTask.snapshot.ref.getDownloadURL().then((downloadURL) => {
+            console.log('File available at', downloadURL);
+            // Save file info to Firestore or update UI accordingly
+          });
         }
-        const div = document.createElement('div');
-        div.textContent = `${user}: ${amount} on ${date}`;
-        paymentsList.appendChild(div);
-      });
-    });
-}
+      );
+    }
 
-// Broadcast Messages
-document.getElementById('send-broadcast').addEventListener('click', () => {
-  const message = document.getElementById('broadcast-text').value;
-  if (message) {
-    db.collection('messages').add({
-      text: message,
-      timestamp: firebase.firestore.FieldValue.serverTimestamp()
-    }).then(() => {
-      document.getElementById('broadcast-text').value = '';
-    }).catch(error => alert(error.message));
-  }
-});
-function loadMessages() {
-  db.collection('messages').orderBy('timestamp', 'desc').limit(50)
-    .onSnapshot(snapshot => {
-      const messagesList = document.getElementById('messages-list');
-      messagesList.innerHTML = '';
-      snapshot.forEach(doc => {
-        const msg = doc.data();
-        let date = '';
-        if (msg.timestamp && msg.timestamp.seconds) {
-          date = new Date(msg.timestamp.seconds * 1000).toLocaleString();
+    // Data synchronization example
+    db.collection('signals').onSnapshot(snapshot => {
+      snapshot.docChanges().forEach(change => {
+        if (change.type === 'added') {
+          // Add new signal to UI
         }
-        const li = document.createElement('li');
-        li.textContent = `${date}: ${msg.text}`;
-        messagesList.appendChild(li);
+        if (change.type === 'modified') {
+          // Update existing signal in UI
+        }
+        if (change.type === 'removed') {
+          // Remove signal from UI
+        }
       });
     });
-}
 
-// Trade History with Image Upload
-document.getElementById('add-trade').addEventListener('click', () => {
-  const note = document.getElementById('trade-note').value;
-  const file = document.getElementById('trade-image').files[0];
-  if (note && file) {
-    const storageRef = storage.ref('trade_images/' + file.name);
-    storageRef.put(file).then(snapshot => {
-      snapshot.ref.getDownloadURL().then(url => {
-        db.collection('trades').add({
-          note: note,
-          imageUrl: url,
-          timestamp: firebase.firestore.FieldValue.serverTimestamp()
-        }).then(() => {
-          document.getElementById('trade-note').value = '';
-          document.getElementById('trade-image').value = '';
-        }).catch(error => alert(error.message));
-      });
-    }).catch(error => alert(error.message));
-  }
-});
-function loadTradeHistory() {
-  db.collection('trades').orderBy('timestamp', 'desc')
-    .onSnapshot(snapshot => {
-      const tradeList = document.getElementById('trade-list');
-      tradeList.innerHTML = '';
-      snapshot.forEach(doc => {
-        const trade = doc.data();
-        const div = document.createElement('div');
-        div.style.marginBottom = '20px';
-        div.innerHTML = `<p>${trade.note}</p>
-                         <img src="${trade.imageUrl}" style="max-width:200px; max-height:200px;" />`;
-        tradeList.appendChild(div);
+    // Navigation and three-dot menu functionality
+    document.querySelectorAll('.three-dot-menu').forEach(menu => {
+      menu.addEventListener('click', () => {
+        // Toggle menu visibility
+        const dropdown = menu.nextElementSibling;
+        dropdown.classList.toggle('show');
       });
     });
-}
-</script>
+
+    // Additional functions to handle navigation and other UI interactions
+  </script>
 </body>
 </html>
