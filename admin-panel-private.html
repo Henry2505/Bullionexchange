@@ -1,534 +1,354 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8"/>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Admin Panel – CBE</title>
-  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;500;700&display=swap" rel="stylesheet"/>
-  <style>
-    /* Reset & Base */
-    * { margin:0; padding:0; box-sizing:border-box; }
-    html, body {
-      width:100%; height:100%;
-      font-family:'Poppins',sans-serif;
-      background:#000; color:#fff;
-      overflow:hidden;
-    }
-    a { color: gold; text-decoration: none; }
-    a:hover { text-decoration: underline; }
-
-    /* Video BG & overlay */
-    video#bg {
-      position:fixed; top:0; left:0;
-      width:100%; height:100%; object-fit:cover; z-index:-2;
-    }
-    .overlay {
-      position:fixed; top:0; left:0;
-      width:100%; height:100%; background:rgba(0,0,0,0.6);
-      z-index:-1;
-    }
-
-    /* Password Modal */
-    #pwModal {
-      position:fixed; top:0; left:0; width:100%; height:100%;
-      background:rgba(0,0,0,0.85); display:flex;
-      align-items:center; justify-content:center; z-index:2000;
-    }
-    #pwModal .box {
-      background:#111; padding:30px; border-radius:8px;
-      text-align:center; box-shadow:0 0 20px rgba(255,215,0,0.3);
-    }
-    #pwModal input {
-      width:200px; padding:10px; margin-top:15px;
-      border:1px solid #333; border-radius:4px;
-      background:#1c1c1c; color:#f5f5f5;
-    }
-    #pwModal button {
-      margin-top:20px; padding:10px 20px;
-      background:gold; border:none; color:#000;
-      cursor:pointer; border-radius:4px;
-    }
-
-    /* Top Bar */
-    .top-bar {
-      position:relative; background:rgba(0,0,0,0.8);
-      padding:15px 20px; display:flex;
-      justify-content:space-between; align-items:center;
-      border-bottom:1px solid gold;
-    }
-    .top-bar h1 {
-      font-size:1.2rem; color:gold;
-    }
-    .logoutBtn {
-      background:crimson; color:#fff;
-      border:none; padding:6px 12px;
-      border-radius:4px; cursor:pointer;
-    }
-
-    /* Sidebar & Toggle */
-    .menu-toggle {
-      width:30px; height:30px; background:gold;
-      border:none; border-radius:50%; cursor:pointer;
-      display:flex; flex-direction:column;
-      justify-content:space-around; align-items:center;
-      padding:4px; box-shadow:0 0 8px gold;
-      animation:blink 2s infinite;
-    }
-    @keyframes blink {0%,100%{box-shadow:0 0 6px gold}50%{box-shadow:0 0 18px gold}}
-    .menu-toggle span {
-      display:block; width:6px; height:6px; background:#000; border-radius:50%;
-    }
-    .sidebar {
-      position:fixed; top:60px; left:0;
-      width:220px; height:calc(100% - 60px);
-      background:rgba(0,0,0,0.9); overflow-y:auto;
-      transform:translateX(-100%); transition:transform 0.3s ease;
-      z-index:2;
-    }
-    .sidebar.show { transform:translateX(0); }
-    .sidebar a {
-      display:block; padding:12px 18px;
-      border-bottom:1px solid #111;
-    }
-    .sidebar a:hover { background:gold; color:black; }
-
-    /* Main Content */
-    #main-content {
-      margin-top:60px; padding:20px;
-      height:calc(100% - 60px); overflow-y:auto;
-    }
-    .content-section {
-      display:none;
-      background:rgba(20,20,20,0.8);
-      padding:20px; margin-bottom:20px;
-      border-radius:8px; box-shadow:0 0 15px rgba(255,215,0,0.2);
-    }
-    .content-section.active { display:block; }
-    h2 { color:gold; margin-bottom:15px; }
-
-    /* Tables & Buttons */
-    table { width:100%; border-collapse:collapse; margin-top:10px; }
-    th, td {
-      padding:8px; border:1px solid #333; text-align:left;
-    }
-    th { background:#222; color:gold; }
-    td { background:#111; }
-    .btn { background:gold; color:black; border:none; padding:6px 10px; border-radius:4px; cursor:pointer; }
-    .btn:hover { background:#e6c200; }
-
-    /* Forms */
-    .form-group { margin-bottom:12px; }
-    .form-group label {
-      display:block; margin-bottom:4px; font-weight:600;
-    }
-    input, select, textarea {
-      width:100%; padding:8px; background:#111; color:#fff;
-      border:1px solid #444; border-radius:4px;
-    }
-    textarea { resize:vertical; }
-  </style>
+<meta charset="UTF-8">
+<title>Admin Panel</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<style>
+/* Add your CSS styling here (video background, sidebar, layout, etc.) */
+body, html { margin: 0; padding: 0; height: 100%; overflow: hidden; }
+#bg-video { position: fixed; right: 0; bottom: 0; min-width: 100%; min-height: 100%; z-index: -1; }
+#sidebar { position: fixed; top: 0; left: 0; width: 250px; height: 100%; background: rgba(0,0,0,0.7); color: white; transition: transform 0.3s ease; transform: translateX(0); overflow-y: auto; }
+#sidebar.collapsed { transform: translateX(-250px); }
+#menu-toggle { position: fixed; top: 10px; left: 260px; cursor: pointer; font-size: 24px; color: #fff; z-index: 1; }
+#main-content { margin-left: 260px; padding: 20px; color: white; height: 100%; overflow-y: auto; }
+.section { display: none; }
+.section.active { display: block; }
+form, input, button, textarea { display: block; margin: 10px 0; }
+button { padding: 10px; cursor: pointer; }
+@media (max-width: 600px) {
+  #sidebar { transform: translateX(-250px); }
+  #main-content { margin-left: 20px; }
+  #menu-toggle { left: 10px; }
+}
+</style>
+<!-- Firebase JS SDK (CDN) -->
+<script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-firestore-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-storage-compat.js"></script>
 </head>
-<body oncontextmenu="return false;">
-
-  <!-- Video & Overlay -->
-  <video id="bg" class="video-background" autoplay muted loop playsinline>
-    <source src="star-video.MP4" type="video/mp4"/>
-  </video>
-  <div class="overlay"></div>
-
-  <!-- Password Modal -->
-  <div id="pwModal">
-    <div class="box">
-      <h3>Enter Admin Password</h3>
-      <input type="password" id="adminPw" placeholder="Password"/>
-      <br/>
-      <button onclick="checkPw()">Unlock</button>
-    </div>
+<body>
+<!-- Video Background -->
+<video id="bg-video" autoplay loop muted>
+  <source src="background.mp4" type="video/mp4">
+  Your browser does not support the video tag.
+</video>
+<!-- Sidebar Navigation -->
+<div id="sidebar">
+  <ul style="list-style: none; padding: 20px;">
+    <li style="padding: 10px; cursor: pointer;" data-section="settings">Settings</li>
+    <li style="padding: 10px; cursor: pointer;" data-section="signals">VIP Signals</li>
+    <li style="padding: 10px; cursor: pointer;" data-section="approvals">User Approvals</li>
+    <li style="padding: 10px; cursor: pointer;" data-section="payments">Payment Records</li>
+    <li style="padding: 10px; cursor: pointer;" data-section="messages">Broadcast Messages</li>
+    <li style="padding: 10px; cursor: pointer;" data-section="trade-history">Trade History</li>
+  </ul>
+</div>
+<div id="menu-toggle">&#9776; Menu</div>
+<!-- Main Content -->
+<div id="main-content">
+  <!-- Login Section -->
+  <div id="login-section" class="section active">
+    <h2>Admin Login</h2>
+    <input id="login-email" type="email" placeholder="Email" required>
+    <input id="login-password" type="password" placeholder="Password" required>
+    <button id="login-button">Login</button>
+    <button id="signup-button">Sign Up</button>
   </div>
-
-  <!-- Top Bar -->
-  <div class="top-bar">
-    <button class="logoutBtn" onclick="logout()">Logout</button>
-    <h1>CBE Admin Panel</h1>
-    <button class="menu-toggle" onclick="toggleSidebar()">
-      <span></span><span></span><span></span>
-    </button>
+  <!-- Settings Section -->
+  <div id="settings-section" class="section">
+    <h2>Settings</h2>
+    <!-- Example Settings fields -->
+    <input id="setting1" type="text" placeholder="Setting 1">
+    <input id="setting2" type="text" placeholder="Setting 2">
+    <button id="save-settings">Save Settings</button>
   </div>
-
-  <!-- Sidebar -->
-  <div class="sidebar" id="sidebar">
-    <a href="#" data-target="payments">Payment Records</a>
-    <a href="#" data-target="applications">Applications</a>
-    <a href="#" data-target="users">User Approvals</a>
-    <a href="#" data-target="settings">Settings</a>
-    <a href="#" data-target="signals">Publish Signal</a>
-    <a href="#" data-target="broadcast">Broadcast</a>
-    <a href="#" data-target="messages">Inbox</a>
-    <a href="#" data-target="tradeInsights">Trade Insights</a>
-    <a href="#" data-target="tradeHistory">Trade History</a>
-    <a href="#" data-target="logs">Admin Logs</a>
-    <a href="index.html">← Back to Site</a>
+  <!-- VIP Signals Section -->
+  <div id="signals-section" class="section">
+    <h2>VIP Signals</h2>
+    <div id="signals-list"></div>
+    <input id="new-signal" type="text" placeholder="Enter new signal">
+    <button id="publish-signal">Publish Signal</button>
   </div>
-
-  <!-- Main Content -->
-  <div id="main-content">
-    <!-- Payment Records -->
-    <div class="content-section" id="payments">
-      <h2>Payment Records</h2>
-      <div id="paymentContainer"></div>
-    </div>
-
-    <!-- Applications -->
-    <div class="content-section" id="applications">
-      <h2>Application Submissions</h2>
-      <div id="applicationContainer"></div>
-    </div>
-
-    <!-- User Approvals -->
-    <div class="content-section" id="users">
-      <h2>User Approvals</h2>
-      <button class="btn" onclick="loadUsers()">Refresh</button>
-      <div id="userContainer"></div>
-    </div>
-
-    <!-- Settings -->
-    <div class="content-section" id="settings">
-      <h2>Settings</h2>
-      <div class="form-group">
-        <label>Bitcoin Address</label>
-        <input id="btcWallet">
-      </div>
-      <div class="form-group">
-        <label>Ethereum Address</label>
-        <input id="ethWallet">
-      </div>
-      <div class="form-group">
-        <label>USDT Address</label>
-        <input id="usdtWallet">
-      </div>
-      <div class="form-group">
-        <label>Paystack Public Key</label>
-        <input id="paystackKey">
-      </div>
-      <button class="btn" onclick="saveSettings()">Save Settings</button>
-    </div>
-
-    <!-- Publish Signal -->
-    <div class="content-section" id="signals">
-      <h2>Publish Signal</h2>
-      <div class="form-group"><label>Pair</label><input id="pair"></div>
-      <div class="form-group"><label>Type</label>
-        <select id="type"><option>BUY</option><option>SELL</option></select>
-      </div>
-      <div class="form-group"><label>Entry</label><input id="entry"></div>
-      <div class="form-group"><label>TP</label><input id="tp"></div>
-      <div class="form-group"><label>SL</label><input id="sl"></div>
-      <div class="form-group"><label>Admin Note</label><textarea id="signalNote"></textarea></div>
-      <button class="btn" onclick="publishSignal()">Publish</button>
-    </div>
-
-    <!-- Broadcast -->
-    <div class="content-section" id="broadcast">
-      <h2>Broadcast Message</h2>
-      <div class="form-group"><textarea id="broadcastText" rows="4"></textarea></div>
-      <button class="btn" onclick="sendBroadcast()">Send Broadcast</button>
-    </div>
-
-    <!-- Inbox -->
-    <div class="content-section" id="messages">
-      <h2>Inbox Messages</h2>
-      <div id="inboxContainer"></div>
-    </div>
-
-    <!-- Trade Insights -->
-    <div class="content-section" id="tradeInsights">
-      <h2>Upload Trade Insight</h2>
-      <div class="form-group"><label>Date</label><input type="date" id="insightDate"></div>
-      <div class="form-group"><label>Screenshot</label><input type="file" id="insightFile" accept="image/*"></div>
-      <div class="form-group"><label>Note</label><textarea id="insightNote"></textarea></div>
-      <button class="btn" onclick="uploadInsight()">Upload Insight</button>
-    </div>
-
-    <!-- Trade History -->
-    <div class="content-section" id="tradeHistory">
-      <h2>Upload Trade History</h2>
-      <div class="form-group"><label>Month</label>
-        <select id="tradeMonth">
-          <option>January</option><option>February</option><option>March</option>
-          <option>April</option><option>May</option><option>June</option>
-          <option>July</option><option>August</option><option>September</option>
-          <option>October</option><option>November</option><option>December</option>
-        </select>
-      </div>
-      <div class="form-group"><label>Screenshot</label><input type="file" id="historyFile" accept="image/*"></div>
-      <div class="form-group"><label>Note</label><textarea id="historyNote"></textarea></div>
-      <button class="btn" onclick="uploadHistory()">Upload History</button>
-    </div>
-
-    <!-- Admin Logs -->
-    <div class="content-section" id="logs">
-      <h2>Admin Logs</h2>
-      <div id="logContainer"></div>
-    </div>
+  <!-- User Approvals Section -->
+  <div id="approvals-section" class="section">
+    <h2>User Approvals</h2>
+    <ul id="approvals-list"></ul>
   </div>
+  <!-- Payment Records Section -->
+  <div id="payments-section" class="section">
+    <h2>Payment Records</h2>
+    <div id="payments-list"></div>
+  </div>
+  <!-- Broadcast Messages Section -->
+  <div id="messages-section" class="section">
+    <h2>Broadcast Messages</h2>
+    <textarea id="broadcast-text" placeholder="Type message"></textarea>
+    <button id="send-broadcast">Send Message</button>
+    <ul id="messages-list"></ul>
+  </div>
+  <!-- Trade History Section -->
+  <div id="trade-history-section" class="section">
+    <h2>Trade History</h2>
+    <input id="trade-note" type="text" placeholder="Trade note">
+    <input id="trade-image" type="file">
+    <button id="add-trade">Add Trade</button>
+    <div id="trade-list"></div>
+  </div>
+</div>
+<script>
+// Firebase configuration placeholder
+// TODO: Replace with your Firebase project configuration
+const firebaseConfig = {
+  apiKey: "YOUR_API_KEY",
+  authDomain: "YOUR_AUTH_DOMAIN",
+  projectId: "YOUR_PROJECT_ID",
+  storageBucket: "YOUR_STORAGE_BUCKET",
+  // ... other config fields ...
+};
+firebase.initializeApp(firebaseConfig);
+const auth = firebase.auth();
+const db = firebase.firestore();
+const storage = firebase.storage();
 
-  <script>
-    // Password Protection
-    function checkPw(){
-      if(document.getElementById('adminPw').value==='Blessed@123'){
-        sessionStorage.adminAuth='true';
-        document.getElementById('pwModal').style.display='none';
-        initAll();
-      } else alert('Wrong password');
-    }
-    if(sessionStorage.adminAuth==='true'){
-      document.getElementById('pwModal').style.display='none';
-      initAll();
-    }
+// DOM elements
+const loginSection = document.getElementById('login-section');
+const loginButton = document.getElementById('login-button');
+const signupButton = document.getElementById('signup-button');
+const loginEmail = document.getElementById('login-email');
+const loginPassword = document.getElementById('login-password');
 
-    // Logout
-    function logout(){
-      sessionStorage.removeItem('adminAuth');
-      location.reload();
-    }
-
-    // Sidebar Toggle
-    function toggleSidebar(){
-      document.getElementById('sidebar').classList.toggle('show');
-    }
-
-    // Section Navigation
-    document.querySelectorAll('.sidebar a[data-target]').forEach(a=>{
-      a.onclick=e=>{
-        const tgt=e.currentTarget.dataset.target;
-        document.querySelectorAll('.content-section').forEach(s=>s.classList.remove('active'));
-        document.getElementById(tgt).classList.add('active');
-        toggleSidebar();
-      };
-    });
-
-    // Initialize
-    function initAll(){
-      showSection('payments');
-      loadPayments(); loadApplications(); loadUsers();
-      loadSettings(); loadInbox(); loadLogs();
-    }
-
-    function showSection(id){
-      document.querySelectorAll('.content-section')
-        .forEach(s=>s.classList.remove('active'));
-      document.getElementById(id).classList.add('active');
-    }
-
-    // PAYMENTS
-    function loadPayments(){
-      const rec=JSON.parse(localStorage.getItem('paymentRecords')||'[]'),
-            cont=document.getElementById('paymentContainer');
-      if(!rec.length) return cont.innerHTML='<p>No records.</p>';
-      let html='<table><tr><th>Email</th><th>Plan</th><th>Status</th><th>Action</th></tr>';
-      rec.forEach((p,i)=>{
-        html+=`<tr>
-          <td>${p.email}</td><td>${p.plan}</td><td>${p.status}</td>
-          <td><button class="btn" onclick="approvePayment(${i})">Approve</button></td>
-        </tr>`;
-      });
-      html+='</table>'; cont.innerHTML=html;
-    }
-    function approvePayment(i){
-      const rec=JSON.parse(localStorage.getItem('paymentRecords')||'[]'),
-            users=JSON.parse(localStorage.getItem('users')||'[]');
-      rec[i].status='approved';
-      localStorage.setItem('paymentRecords',JSON.stringify(rec));
-      let u=users.find(u=>u.email===rec[i].email);
-      if(u) u.status='approved', localStorage.setItem('users',JSON.stringify(users));
-      loadPayments(); loadUsers();
-    }
-
-    // APPLICATIONS
-    function loadApplications(){
-      const apps=JSON.parse(localStorage.getItem('applications')||'[]'),
-            cont=document.getElementById('applicationContainer');
-      if(!apps.length) return cont.innerHTML='<p>No applications.</p>';
-      let html='<table><tr><th>Name</th><th>Email</th><th>Status</th></tr>';
-      apps.forEach(a=>{
-        html+=`<tr><td>${a.name}</td><td>${a.email}</td><td>${a.status}</td></tr>`;
-      });
-      html+='</table>'; cont.innerHTML=html;
-    }
-
-    // USERS
-    function loadUsers(){
-      const u=JSON.parse(localStorage.getItem('users')||'[]'),
-            cont=document.getElementById('userContainer');
-      if(!u.length) return cont.innerHTML='<p>No users.</p>';
-      let html='<table><tr><th>Name</th><th>Email</th><th>Status</th><th>Actions</th></tr>';
-      u.forEach((usr,i)=>{
-        html+=`<tr>
-          <td>${usr.name}</td><td>${usr.email}</td><td>${usr.status}</td>
-          <td>
-            <button class="btn" onclick="approveUser(${i})">Approve</button>
-            <button class="btn" onclick="deactivateUser(${i})">Deactivate</button>
-            <button class="btn" onclick="deleteUser(${i})">Delete</button>
-          </td>
-        </tr>`;
-      });
-      html+='</table>'; cont.innerHTML=html;
-    }
-
-    // Storage Event Listener for Automatic Updates
-    window.addEventListener('storage', function(e) {
-      if (e.key === 'users') {
-        loadUsers();
+const sections = document.querySelectorAll('.section');
+const sidebarLinks = document.querySelectorAll('#sidebar li');
+sidebarLinks.forEach(link => {
+  link.addEventListener('click', () => {
+    const sectionId = link.getAttribute('data-section') + '-section';
+    sections.forEach(sec => {
+      if (sec.id === sectionId) {
+        sec.classList.add('active');
+      } else {
+        sec.classList.remove('active');
       }
     });
+  });
+});
 
-    function approveUser(i){
-      const u = JSON.parse(localStorage.getItem('users') || '[]');
-      u[i].status = 'approved';
-      localStorage.setItem('users', JSON.stringify(u));
-      log('Approved user: ' + u[i].email);
-      loadUsers();
-    }
+// Sidebar toggle
+const menuToggle = document.getElementById('menu-toggle');
+const sidebar = document.getElementById('sidebar');
+menuToggle.addEventListener('click', () => {
+  sidebar.classList.toggle('collapsed');
+});
 
-    function deactivateUser(i){
-      const u = JSON.parse(localStorage.getItem('users') || '[]');
-      u[i].status = 'inactive';
-      localStorage.setItem('users', JSON.stringify(u));
-      log('Deactivated user: ' + u[i].email);
-      loadUsers();
-    }
+// Auth state observer
+auth.onAuthStateChanged(user => {
+  if (user) {
+    // User is signed in, hide login, show settings
+    loginSection.classList.remove('active');
+    document.getElementById('settings-section').classList.add('active');
+    // Load initial data for admin
+    loadSettings();
+    loadSignals();
+    loadApprovals();
+    loadPayments();
+    loadMessages();
+    loadTradeHistory();
+  } else {
+    // No user, show login section only
+    sections.forEach(sec => sec.classList.remove('active'));
+    loginSection.classList.add('active');
+  }
+});
 
-    function deleteUser(i){
-      const u = JSON.parse(localStorage.getItem('users') || '[]');
-      const email = u[i].email;
-      u.splice(i, 1);
-      localStorage.setItem('users', JSON.stringify(u));
-      log('Deleted user: ' + email);
-      loadUsers();
-    }
+// Login
+loginButton.addEventListener('click', () => {
+  const email = loginEmail.value;
+  const password = loginPassword.value;
+  auth.signInWithEmailAndPassword(email, password)
+    .then(userCredential => {
+      console.log('Logged in:', userCredential.user.uid);
+    })
+    .catch(error => {
+      alert(error.message);
+    });
+});
 
-    // SETTINGS
-    function loadSettings(){
-      const s=JSON.parse(localStorage.getItem('paymentSettings')||'{}');
-      document.getElementById('btcWallet').value=s.btc||'';
-      document.getElementById('ethWallet').value=s.eth||'';
-      document.getElementById('usdtWallet').value=s.usdt||'';
-      document.getElementById('paystackKey').value=s.paystackKey||'';
-    }
-    function saveSettings(){
-      const obj={
-        btc:document.getElementById('btcWallet').value.trim(),
-        eth:document.getElementById('ethWallet').value.trim(),
-        usdt:document.getElementById('usdtWallet').value.trim(),
-        paystackKey:document.getElementById('paystackKey').value.trim()
-      };
-      localStorage.setItem('paymentSettings',JSON.stringify(obj));
-      alert('Settings saved');
-    }
-
-    // SIGNAL PUBLISH
-    function publishSignal(){
-      const data={
-        pair:document.getElementById('pair').value,
-        type:document.getElementById('type').value,
-        entry:document.getElementById('entry').value,
-        tp:document.getElementById('tp').value,
-        sl:document.getElementById('sl').value,
-        note:document.getElementById('signalNote').value,
-        date:new Date().toLocaleDateString(),
-        time:new Date().toLocaleTimeString()
-      };
-      let arr=JSON.parse(localStorage.getItem('vipSignals')||'[]');
-      arr.push(data);
-      localStorage.setItem('vipSignals',JSON.stringify(arr));
-      alert('Signal published');
-    }
-
-    // BROADCAST
-    function sendBroadcast(){
-      const msg=document.getElementById('broadcastText').value.trim();
-      if(!msg) return alert('Empty');
-      let arr=JSON.parse(localStorage.getItem('broadcasts')||'[]');
-      arr.push({ message: msg, time:new Date().toLocaleString() });
-      localStorage.setItem('broadcasts',JSON.stringify(arr));
-      alert('Broadcast sent');
-    }
-
-    // INBOX
-    function loadInbox(){
-      const msgs=JSON.parse(localStorage.getItem('inboxMessages')||'[]'),
-            cont=document.getElementById('inboxContainer');
-      if(!msgs.length) return cont.innerHTML='<p>No messages.</p>';
-      let html = '<table><tr><th>Name</th><th>Email</th><th>Message</th></tr>';
-      msgs.forEach(m=>{
-        html+=`<tr><td>${m.name}</td><td>${m.email}</td><td>${m.message}</td></tr>`;
+// Sign Up (creates admin and adds to Firestore)
+signupButton.addEventListener('click', () => {
+  const email = loginEmail.value;
+  const password = loginPassword.value;
+  auth.createUserWithEmailAndPassword(email, password)
+    .then(userCredential => {
+      const uid = userCredential.user.uid;
+      // Add user to Firestore as pending approval (admin user)
+      db.collection('users').doc(uid).set({
+        email: email,
+        approved: false
+      }).then(() => {
+        console.log('New admin account created and added to Firestore:', uid);
       });
-      html+='</table>'; cont.innerHTML=html;
-    }
+    })
+    .catch(error => {
+      alert(error.message);
+    });
+});
 
-    // TRADE INSIGHTS
-    function uploadInsight(){
-      const file=document.getElementById('insightFile').files[0];
-      if(!file) return alert('Select file');
-      const reader=new FileReader();
-      reader.onload=e=>{
-        const data={
-          date:document.getElementById('insightDate').value,
-          image:e.target.result,
-          note:document.getElementById('insightNote').value
-        };
-        let arr=JSON.parse(localStorage.getItem('tradeInsights')||'[]');
-        arr.push(data);
-        localStorage.setItem('tradeInsights',JSON.stringify(arr));
-        alert('Insight uploaded');
-      };
-      reader.readAsDataURL(file);
-    }
-
-    // TRADE HISTORY
-    function uploadHistory(){
-      const file=document.getElementById('historyFile').files[0];
-      if(!file) return alert('Select file');
-      const reader=new FileReader();
-      reader.onload=e=>{
-        const data={
-          month:document.getElementById('tradeMonth').value,
-          image:e.target.result,
-          note:document.getElementById('historyNote').value
-        };
-        let arr=JSON.parse(localStorage.getItem('tradeHistory')||'[]');
-        arr.push(data);
-        localStorage.setItem('tradeHistory',JSON.stringify(arr));
-        alert('History uploaded');
-      };
-      reader.readAsDataURL(file);
-    }
-
-    // LOGS
-    function log(msg){
-      const arr=JSON.parse(localStorage.getItem('adminLogs')||'[]');
-      arr.push(`${new Date().toLocaleString()}: ${msg}`);
-      localStorage.setItem('adminLogs',JSON.stringify(arr));
-    }
-    function loadLogs(){
-      const l=JSON.parse(localStorage.getItem('adminLogs')||'[]'),
-            cont=document.getElementById('logContainer');
-      if(!l.length) return cont.innerHTML='<p>No logs.</p>';
-      cont.innerHTML = l.map(e=>`<p>${e}</p>`).join('');
-    }
-
-    // INIT
-    window.onload = ()=>{
-      if(sessionStorage.adminAuth==='true'){
-        document.getElementById('pwModal').style.display='none';
-        initAll();
+// Load and Save Settings
+function loadSettings() {
+  db.collection('settings').doc('admin').get()
+    .then(doc => {
+      if (doc.exists) {
+        const data = doc.data();
+        document.getElementById('setting1').value = data.setting1 || '';
+        document.getElementById('setting2').value = data.setting2 || '';
       }
-    };
-    function initAll(){
-      showSection('payments');
-      loadPayments(); loadApplications(); loadUsers();
-      loadSettings(); loadInbox(); loadLogs();
-    }
-  </script>
+    });
+}
+document.getElementById('save-settings').addEventListener('click', () => {
+  const setting1 = document.getElementById('setting1').value;
+  const setting2 = document.getElementById('setting2').value;
+  db.collection('settings').doc('admin').set({ setting1, setting2 })
+    .then(() => alert('Settings saved'))
+    .catch(error => alert(error.message));
+});
+
+// VIP Signals (real-time)
+function loadSignals() {
+  db.collection('signals').orderBy('timestamp', 'desc')
+    .onSnapshot(snapshot => {
+      const signalsList = document.getElementById('signals-list');
+      signalsList.innerHTML = '';
+      snapshot.forEach(doc => {
+        const signalData = doc.data();
+        const signalText = signalData.text || '';
+        const div = document.createElement('div');
+        div.textContent = signalText;
+        signalsList.appendChild(div);
+      });
+    });
+}
+document.getElementById('publish-signal').addEventListener('click', () => {
+  const text = document.getElementById('new-signal').value;
+  if (text) {
+    db.collection('signals').add({
+      text: text,
+      timestamp: firebase.firestore.FieldValue.serverTimestamp()
+    }).then(() => {
+      document.getElementById('new-signal').value = '';
+    }).catch(error => alert(error.message));
+  }
+});
+
+// User Approvals
+function loadApprovals() {
+  db.collection('users').where('approved', '==', false)
+    .onSnapshot(snapshot => {
+      const approvalsList = document.getElementById('approvals-list');
+      approvalsList.innerHTML = '';
+      snapshot.forEach(doc => {
+        const user = doc.data();
+        const li = document.createElement('li');
+        li.textContent = user.email || 'No email';
+        const approveBtn = document.createElement('button');
+        approveBtn.textContent = 'Approve';
+        approveBtn.addEventListener('click', () => {
+          db.collection('users').doc(doc.id).update({ approved: true })
+            .then(() => li.remove())
+            .catch(error => alert(error.message));
+        });
+        li.appendChild(approveBtn);
+        approvalsList.appendChild(li);
+      });
+    });
+}
+
+// Payment Records (real-time)
+function loadPayments() {
+  db.collection('payments').orderBy('timestamp', 'desc')
+    .onSnapshot(snapshot => {
+      const paymentsList = document.getElementById('payments-list');
+      paymentsList.innerHTML = '';
+      snapshot.forEach(doc => {
+        const payment = doc.data();
+        const user = payment.user || 'Unknown';
+        const amount = payment.amount || '';
+        let date = '';
+        if (payment.timestamp && payment.timestamp.seconds) {
+          date = new Date(payment.timestamp.seconds * 1000).toLocaleString();
+        }
+        const div = document.createElement('div');
+        div.textContent = `${user}: ${amount} on ${date}`;
+        paymentsList.appendChild(div);
+      });
+    });
+}
+
+// Broadcast Messages
+document.getElementById('send-broadcast').addEventListener('click', () => {
+  const message = document.getElementById('broadcast-text').value;
+  if (message) {
+    db.collection('messages').add({
+      text: message,
+      timestamp: firebase.firestore.FieldValue.serverTimestamp()
+    }).then(() => {
+      document.getElementById('broadcast-text').value = '';
+    }).catch(error => alert(error.message));
+  }
+});
+function loadMessages() {
+  db.collection('messages').orderBy('timestamp', 'desc').limit(50)
+    .onSnapshot(snapshot => {
+      const messagesList = document.getElementById('messages-list');
+      messagesList.innerHTML = '';
+      snapshot.forEach(doc => {
+        const msg = doc.data();
+        let date = '';
+        if (msg.timestamp && msg.timestamp.seconds) {
+          date = new Date(msg.timestamp.seconds * 1000).toLocaleString();
+        }
+        const li = document.createElement('li');
+        li.textContent = `${date}: ${msg.text}`;
+        messagesList.appendChild(li);
+      });
+    });
+}
+
+// Trade History with Image Upload
+document.getElementById('add-trade').addEventListener('click', () => {
+  const note = document.getElementById('trade-note').value;
+  const file = document.getElementById('trade-image').files[0];
+  if (note && file) {
+    const storageRef = storage.ref('trade_images/' + file.name);
+    storageRef.put(file).then(snapshot => {
+      snapshot.ref.getDownloadURL().then(url => {
+        db.collection('trades').add({
+          note: note,
+          imageUrl: url,
+          timestamp: firebase.firestore.FieldValue.serverTimestamp()
+        }).then(() => {
+          document.getElementById('trade-note').value = '';
+          document.getElementById('trade-image').value = '';
+        }).catch(error => alert(error.message));
+      });
+    }).catch(error => alert(error.message));
+  }
+});
+function loadTradeHistory() {
+  db.collection('trades').orderBy('timestamp', 'desc')
+    .onSnapshot(snapshot => {
+      const tradeList = document.getElementById('trade-list');
+      tradeList.innerHTML = '';
+      snapshot.forEach(doc => {
+        const trade = doc.data();
+        const div = document.createElement('div');
+        div.style.marginBottom = '20px';
+        div.innerHTML = `<p>${trade.note}</p>
+                         <img src="${trade.imageUrl}" style="max-width:200px; max-height:200px;" />`;
+        tradeList.appendChild(div);
+      });
+    });
+}
+</script>
 </body>
 </html>
