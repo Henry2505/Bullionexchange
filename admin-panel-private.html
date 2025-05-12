@@ -1,806 +1,91 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8"/>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Admin Panel – CBE</title>
-  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;500;700&display=swap" rel="stylesheet"/>
-  <style>
-    * { margin:0; padding:0; box-sizing:border-box; }
-    html, body {
-      width:100%; height:100%;
-      font-family:'Poppins',sans-serif;
-      background:#000; color:#fff;
-      overflow:hidden;
-    }
-    a { color: gold; text-decoration: none; }
-    a:hover { text-decoration: underline; }
-
-    video#bg {
-      position:fixed; top:0; left:0;
-      width:100%; height:100%; object-fit:cover; z-index:-2;
-    }
-    .overlay {
-      position:fixed; top:0; left:0;
-      width:100%; height:100%; background:rgba(0,0,0,0.6);
-      z-index:-1;
-    }
-
-    #pwModal {
-      position:fixed; top:0; left:0; width:100%; height:100%;
-      background:rgba(0,0,0,0.85); display:flex;
-      align-items:center; justify-content:center; z-index:2000;
-    }
-    #pwModal .box {
-      background:#111; padding:30px; border-radius:8px;
-      text-align:center; box-shadow:0 0 20px rgba(255,215,0,0.3);
-    }
-    #pwModal input {
-      width:200px; padding:10px; margin:10px 0;
-      border:1px solid #333; border-radius:4px;
-      background:#1c1c1c; color:#f5f5f5;
-    }
-    #pwModal button {
-      padding:10px 20px; background:gold; border:none; color:#000;
-      cursor:pointer; border-radius:4px;
-    }
-
-    .top-bar {
-      position:relative; background:rgba(0,0,0,0.8);
-      padding:15px 20px; display:flex;
-      justify-content:space-between; align-items:center;
-      border-bottom:1px solid gold;
-    }
-    .top-bar h1 { font-size:1.2rem; color:gold; }
-    .logoutBtn {
-      background:crimson; color:#fff; border:none;
-      padding:6px 12px; border-radius:4px; cursor:pointer;
-    }
-
-    .menu-toggle {
-      width:30px; height:30px; background:gold;
-      border:none; border-radius:50%; cursor:pointer;
-      display:flex; flex-direction:column;
-      justify-content:space-around; align-items:center;
-      padding:4px; box-shadow:0 0 8px gold;
-      animation:blink 2s infinite;
-    }
-    @keyframes blink {0%,100%{box-shadow:0 0 6px gold}50%{box-shadow:0 0 18px gold}}
-    .menu-toggle span {
-      display:block; width:6px; height:6px; background:#000; border-radius:50%;
-    }
-    .sidebar {
-      position:fixed; top:60px; left:0;
-      width:220px; height:calc(100% - 60px);
-      background:rgba(0,0,0,0.9); overflow-y:auto;
-      transform:translateX(-100%); transition:transform 0.3s ease;
-      z-index:2;
-    }
-    .sidebar.show { transform:translateX(0); }
-    .sidebar a {
-      display:block; padding:12px 18px;
-      border-bottom:1px solid #111;
-    }
-    .sidebar a:hover { background:gold; color:black; }
-
-    #main-content {
-      margin-top:60px; padding:20px;
-      height:calc(100% - 60px); overflow-y:auto;
-    }
-    .content-section {
-      display:none; background:rgba(20,20,20,0.8);
-      padding:20px; margin-bottom:20px;
-      border-radius:8px; box-shadow:0 0 15px rgba(255,215,0,0.2);
-    }
-    .content-section.active { display:block; }
-    h2 { color:gold; margin-bottom:15px; }
-
-    table { width:100%; border-collapse:collapse; margin-top:10px; }
-    th, td {
-      padding:8px; border:1px solid #333; text-align:left;
-    }
-    th { background:#222; color:gold; }
-    td { background:#111; }
-    .btn { background:gold; color:black; border:none; padding:6px 10px; border-radius:4px; cursor:pointer; }
-    .btn:hover { background:#e6c200; }
-
-    .form-group { margin-bottom:12px; }
-    .form-group label {
-      display:block; margin-bottom:4px; font-weight:600;
-    }
-    input, select, textarea {
-      width:100%; padding:8px; background:#111; color:#fff;
-      border:1px solid #444; border-radius:4px;
-    }
-    textarea { resize:vertical; }
-
-    .loading { text-align:center; padding:20px; }
-    .error { color:crimson; }
-
-    @media (max-width: 768px) {
-      .sidebar { width:100%; }
-      #main-content { padding:10px; }
-      .top-bar h1 { font-size:1rem; }
-    }
-  </style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Dashboard</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+        }
+        form {
+            margin-bottom: 20px;
+        }
+        input, textarea {
+            display: block;
+            margin-bottom: 10px;
+            width: 300px;
+        }
+        button {
+            padding: 5px 10px;
+        }
+        #signalsList div {
+            border: 1px solid #ccc;
+            padding: 10px;
+            margin-bottom: 10px;
+        }
+    </style>
 </head>
-<body oncontextmenu="return false;">
-  <!-- Video & Overlay -->
-  <video id="bg" class="video-background" autoplay muted loop playsinline poster="fallback-image.jpg">
-    <source src="star-video.mp4" type="video/mp4"/>
-  </video>
-  <div class="overlay"></div>
-
-  <!-- Password Modal -->
-  <div id="pwModal">
-    <div class="box">
-      <h3>Admin Login</h3>
-      <input type="text" id="adminEmail" placeholder="Email"/>
-      <input type="password" id="adminPw" placeholder="Password"/>
-      <button onclick="login()">Login</button>
+<body>
+    <h1>Admin Dashboard</h1>
+    <form id="signalForm">
+        <input type="text" id="title" placeholder="Title" required>
+        <textarea id="description" placeholder="Description" required></textarea>
+        <button type="submit">Create Signal</button>
+    </form>
+    <div id="signalsList">
+        <h2>Signals</h2>
+        <!-- Signals will be displayed here -->
     </div>
-  </div>
 
-  <!-- Top Bar -->
-  <div class="top-bar">
-    <button class="logoutBtn" onclick="logout()">Logout</button>
-    <h1>CBE Admin Panel</h1>
-    <button class="menu-toggle" onclick="toggleSidebar()">
-      <span></span><span></span><span></span>
-    </button>
-  </div>
+    <!-- Include Supabase client library via CDN -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script>
+        // Initialize Supabase client
+        const { createClient } = supabase;
+        const supabase = createClient('https://your-supabase-url.supabase.co', 'your-anon-key');
 
-  <!-- Sidebar -->
-  <div class="sidebar" id="sidebar">
-    <a href="#" data-target="payments">Payment Records</a>
-    <a href="#" data-target="applications">Applications</a>
-    <a href="#" data-target="users">User Approvals</a>
-    <a href="#" data-target="settings">Settings</a>
-    <a href="#" data-target="signals">Publish Signal</a>
-    <a href="#" data-target="broadcast">Broadcast</a>
-    <a href="#" data-target="messages">Inbox</a>
-    <a href="#" data-target="tradeInsights">Trade Insights</a>
-    <a href="#" data-target="tradeHistory">Trade History</a>
-    <a href="#" data-target="logs">Admin Logs</a>
-    <a href="index.html">← Back to Site</a>
-  </div>
-
-  <!-- Main Content -->
-  <div id="main-content">
-    <div class="content-section" id="payments">
-      <h2>Payment Records</h2>
-      <div id="paymentContainer" class="loading">Loading...</div>
-    </div>
-    <div class="content-section" id="applications">
-      <h2>Application Submissions</h2>
-      <div id="applicationContainer" class="loading">Loading...</div>
-    </div>
-    <div class="content-section" id="users">
-      <h2>User Approvals</h2>
-      <button class="btn" onclick="loadUsers()">Refresh</button>
-      <div id="userContainer" class="loading">Loading...</div>
-    </div>
-    <div class="content-section" id="settings">
-      <h2>Settings</h2>
-      <div class="form-group">
-        <label>Bitcoin Address</label>
-        <input id="btcWallet">
-      </div>
-      <div class="form-group">
-        <label>Ethereum Address</label>
-        <input id="ethWallet">
-      </div>
-      <div class="form-group">
-        <label>USDT Address</label>
-        <input id="usdtWallet">
-      </div>
-      <div class="form-group">
-        <label>Paystack Public Key</label>
-        <input id="paystackKey">
-      </div>
-      <button class="btn" onclick="saveSettings()">Save Settings</button>
-    </div>
-    <div class="content-section" id="signals">
-      <h2>Publish Signal</h2>
-      <div class="form-group"><label>Pair</label><input id="pair"></div>
-      <div class="form-group"><label>Type</label>
-        <select id="type"><option>BUY</option><option>SELL</option></select>
-      </div>
-      <div class="form-group"><label>Entry</label><input id="entry" type="number"></div>
-      <div class="form-group"><label>TP</label><input id="tp" type="number"></div>
-      <div class="form-group"><label>SL</label><input id="sl" type="number"></div>
-      <div class="form-group"><label>Admin Note</label><textarea id="signalNote"></textarea></div>
-      <button class="btn" onclick="publishSignal()">Publish</button>
-    </div>
-    <div class="content-section" id="broadcast">
-      <h2>Broadcast Message</h2>
-      <div class="form-group"><textarea id="broadcastText" rows="4"></textarea></div>
-      <button class="btn" onclick="sendBroadcast()">Send Broadcast</button>
-    </div>
-    <div class="content-section" id="messages">
-      <h2>Inbox Messages</h2>
-      <div id="inboxContainer" class="loading">Loading...</div>
-    </div>
-    <div class="content-section" id="tradeInsights">
-      <h2>Upload Trade Insight</h2>
-      <div class="form-group"><label>Date</label><input type="date" id="insightDate"></div>
-      <div class="form-group"><label>Screenshot</label><input type="file" id="insightFile" accept="image/*"></div>
-      <div class="form-group"><label>Note</label><textarea id="insightNote"></textarea></div>
-      <button class="btn" onclick="uploadInsight()">Upload Insight</button>
-    </div>
-    <div class="content-section" id="tradeHistory">
-      <h2>Upload Trade History</h2>
-      <div class="form-group"><label>Month</label>
-        <select id="tradeMonth">
-          <option>January</option><option>February</option><option>March</option>
-          <option>April</option><option>May</option><option>June</option>
-          <option>July</option><option>August</option><option>September</option>
-          <option>October</option><option>November</option><option>December</option>
-        </select>
-      </div>
-      <div class="form-group"><label>Screenshot</label><input type="file" id="historyFile" accept="image/*"></div>
-      <div class="form-group"><label>Note</label><textarea id="historyNote"></textarea></div>
-      <button class="btn" onclick="uploadHistory()">Upload History</button>
-    </div>
-    <div class="content-section" id="logs">
-      <h2>Admin Logs</h2>
-      <div id="logContainer" class="loading">Loading...</div>
-    </div>
-  </div>
-
-  <script>
-    // Utility to escape HTML (prevent XSS)
-    function escapeHTML(str) {
-      return str.replace(/[&<>"']/g, m => ({
-        '&': '&amp;',
-        '<': '&lt;',
-        '>': '&gt;',
-        '"': '&quot;',
-        "'": '&apos;'
-      }[m]));
-    }
-
-    // Check if user is authenticated
-    function isAuthenticated() {
-      return !!sessionStorage.getItem('adminToken');
-    }
-
-    // Login
-    async function login() {
-      const email = document.getElementById('adminEmail').value.trim();
-      const password = document.getElementById('adminPw').value;
-      if (!email || !password) return alert('Email and password are required');
-      try {
-        const response = await fetch('/api/login', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ email, password })
-        });
-        const data = await response.json();
-        if (response.ok) {
-          sessionStorage.setItem('adminToken', data.token);
-          document.getElementById('pwModal').style.display = 'none';
-          initAll();
-        } else {
-          alert(data.message || 'Login failed');
+        // Function to load and display all signals
+        async function loadSignals() {
+            const { data, error } = await supabase.from('signals').select('*');
+            if (error) {
+                console.error('Error fetching signals:', error);
+                return;
+            }
+            const signalsList = document.getElementById('signalsList');
+            signalsList.innerHTML = '<h2>Signals</h2>';
+            if (data.length === 0) {
+                signalsList.innerHTML += '<p>No signals found.</p>';
+            } else {
+                data.forEach(signal => {
+                    const signalDiv = document.createElement('div');
+                    signalDiv.innerHTML = `<h3>${signal.title}</h3><p>${signal.description}</p>`;
+                    signalsList.appendChild(signalDiv);
+                });
+            }
         }
-      } catch (e) {
-        console.error('Login error:', e);
-        alert('Error logging in');
-      }
-    }
 
-    // Logout
-    function logout() {
-      sessionStorage.removeItem('adminToken');
-      location.reload();
-    }
+        // Handle form submission to create a new signal
+        document.getElementById('signalForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const title = document.getElementById('title').value;
+            const description = document.getElementById('description').value;
+            const { data, error } = await supabase.from('signals').insert([
+                { title, description }
+            ]);
+            if (error) {
+                console.error('Error creating signal:', error);
+            } else {
+                // Clear the form and refresh the signal list
+                document.getElementById('title').value = '';
+                document.getElementById('description').value = '';
+                loadSignals();
+            }
+        });
 
-    // Sidebar Toggle
-    function toggleSidebar() {
-      document.getElementById('sidebar').classList.toggle('show');
-    }
-
-    // Section Navigation
-    document.querySelectorAll('.sidebar a[data-target]').forEach(a => {
-      a.onclick = e => {
-        e.preventDefault();
-        const tgt = e.currentTarget.dataset.target;
-        document.querySelectorAll('.content-section').forEach(s => s.classList.remove('active'));
-        document.getElementById(tgt).classList.add('active');
-        toggleSidebar();
-      };
-    });
-
-    // Initialize
-    function initAll() {
-      if (!isAuthenticated()) return;
-      showSection('payments');
-      loadPayments();
-      loadApplications();
-      loadUsers();
-      loadSettings();
-      loadInbox();
-      loadLogs();
-    }
-
-    function showSection(id) {
-      document.querySelectorAll('.content-section').forEach(s => s.classList.remove('active'));
-      document.getElementById(id).classList.add('active');
-    }
-
-    // PAYMENTS
-    async function loadPayments() {
-      const cont = document.getElementById('paymentContainer');
-      cont.innerHTML = '<p class="loading">Loading...</p>';
-      try {
-        const response = await fetch('/api/payments', {
-          headers: { 'Authorization': `Bearer ${sessionStorage.getItem('adminToken')}` }
-        });
-        const rec = await response.json();
-        cont.innerHTML = '';
-        if (!rec.length) {
-          cont.innerHTML = '<p>No records.</p>';
-          return;
-        }
-        const table = document.createElement('table');
-        const header = document.createElement('tr');
-        ['Email', 'Plan', 'Status', 'Action'].forEach(text => {
-          const th = document.createElement('th');
-          th.textContent = text;
-          header.appendChild(th);
-        });
-        table.appendChild(header);
-        rec.forEach((p, i) => {
-          const row = document.createElement('tr');
-          [p.email, p.plan, p.status].forEach(text => {
-            const td = document.createElement('td');
-            td.textContent = escapeHTML(text);
-            row.appendChild(td);
-          });
-          const actionTd = document.createElement('td');
-          const btn = document.createElement('button');
-          btn.className = 'btn';
-          btn.textContent = 'Approve';
-          btn.onclick = () => approvePayment(p._id);
-          actionTd.appendChild(btn);
-          row.appendChild(actionTd);
-          table.appendChild(row);
-        });
-        cont.appendChild(table);
-      } catch (e) {
-        console.error('Error loading payments:', e);
-        cont.innerHTML = '<p class="error">Error loading payments.</p>';
-      }
-    }
-
-    async function approvePayment(id) {
-      try {
-        const response = await fetch(`/api/payments/${id}/approve`, {
-          method: 'POST',
-          headers: { 'Authorization': `Bearer ${sessionStorage.getItem('adminToken')}` }
-        });
-        if (response.ok) {
-          log(`Approved payment ${id}`);
-          loadPayments();
-          loadUsers();
-        } else {
-          alert('Failed to approve payment');
-        }
-      } catch (e) {
-        console.error('Error approving payment:', e);
-        alert('Error approving payment');
-      }
-    }
-
-    // APPLICATIONS
-    async function loadApplications() {
-      const cont = document.getElementById('applicationContainer');
-      cont.innerHTML = '<p class="loading">Loading...</p>';
-      try {
-        const response = await fetch('/api/applications', {
-          headers: { 'Authorization': `Bearer ${sessionStorage.getItem('adminToken')}` }
-        });
-        const apps = await response.json();
-        cont.innerHTML = '';
-        if (!apps.length) {
-          cont.innerHTML = '<p>No applications.</p>';
-          return;
-        }
-        const table = document.createElement('table');
-        const header = document.createElement('tr');
-        ['Name', 'Email', 'Status'].forEach(text => {
-          const th = document.createElement('th');
-          th.textContent = text;
-          header.appendChild(th);
-        });
-        table.appendChild(header);
-        apps.forEach(a => {
-          const row = document.createElement('tr');
-          [a.name, a.email, a.status].forEach(text => {
-            const td = document.createElement('td');
-            td.textContent = escapeHTML(text);
-            row.appendChild(td);
-          });
-          table.appendChild(row);
-        });
-        cont.appendChild(table);
-      } catch (e) {
-        console.error('Error loading applications:', e);
-        cont.innerHTML = '<p class="error">Error loading applications.</p>';
-      }
-    }
-
-    // USERS
-    async function loadUsers() {
-      const cont = document.getElementById('userContainer');
-      cont.innerHTML = '<p class="loading">Loading...</p>';
-      try {
-        const response = await fetch('/api/users', {
-          headers: { 'Authorization': `Bearer ${sessionStorage.getItem('adminToken')}` }
-        });
-        const users = await response.json();
-        cont.innerHTML = '';
-        if (!users.length) {
-          cont.innerHTML = '<p>No users.</p>';
-          return;
-        }
-        const table = document.createElement('table');
-        const header = document.createElement('tr');
-        ['Name', 'Email', 'Status', 'Actions'].forEach(text => {
-          const th = document.createElement('th');
-          th.textContent = text;
-          header.appendChild(th);
-        });
-        table.appendChild(header);
-        users.forEach(u => {
-          const row = document.createElement('tr');
-          [u.name, u.email, u.status].forEach(text => {
-            const td = document.createElement('td');
-            td.textContent = escapeHTML(text);
-            row.appendChild(td);
-          });
-          const actionTd = document.createElement('td');
-          ['Approve', 'Deactivate', 'Delete'].forEach(action => {
-            const btn = document.createElement('button');
-            btn.className = 'btn';
-            btn.textContent = action;
-            btn.onclick = () => {
-              if (action === 'Approve') approveUser(u._id);
-              if (action === 'Deactivate') deactivateUser(u._id);
-              if (action === 'Delete') deleteUser(u._id);
-            };
-            actionTd.appendChild(btn);
-          });
-          row.appendChild(actionTd);
-          table.appendChild(row);
-        });
-        cont.appendChild(table);
-      } catch (e) {
-        console.error('Error loading users:', e);
-        cont.innerHTML = '<p class="error">Error loading users.</p>';
-      }
-    }
-
-    async function approveUser(id) {
-      try {
-        const response = await fetch(`/api/users/${id}/approve`, {
-          method: 'POST',
-          headers: { 'Authorization': `Bearer ${sessionStorage.getItem('adminToken')}` }
-        });
-        if (response.ok) {
-          log(`Approved user ${id}`);
-          loadUsers();
-        } else {
-          alert('Failed to approve user');
-        }
-      } catch (e) {
-        console.error('Error approving user:', e);
-        alert('Error approving user');
-      }
-    }
-
-    async function deactivateUser(id) {
-      try {
-        const response = await fetch(`/api/users/${id}/deactivate`, {
-          method: 'POST',
-          headers: { 'Authorization': `Bearer ${sessionStorage.getItem('adminToken')}` }
-        });
-        if (response.ok) {
-          log(`Deactivated user ${id}`);
-          loadUsers();
-        } else {
-          alert('Failed to deactivate user');
-        }
-      } catch (e) {
-        console.error('Error deactivating user:', e);
-        alert('Error deactivating user');
-      }
-    }
-
-    async function deleteUser(id) {
-      if (!confirm('Are you sure you want to delete this user?')) return;
-      try {
-        const response = await fetch(`/api/users/${id}`, {
-          method: 'DELETE',
-          headers: { 'Authorization': `Bearer ${sessionStorage.getItem('adminToken')}` }
-        });
-        if (response.ok) {
-          log(`Deleted user ${id}`);
-          loadUsers();
-        } else {
-          alert('Failed to delete user');
-        }
-      } catch (e) {
-        console.error('Error deleting user:', e);
-        alert('Error deleting user');
-      }
-    }
-
-    // SETTINGS
-    async function loadSettings() {
-      try {
-        const response = await fetch('/api/settings', {
-          headers: { 'Authorization': `Bearer ${sessionStorage.getItem('adminToken')}` }
-        });
-        const s = await response.json();
-        const maskAddress = addr => addr ? `${addr.slice(0, 6)}...${addr.slice(-4)}` : '';
-        document.getElementById('btcWallet').value = maskAddress(s.btc);
-        document.getElementById('ethWallet').value = maskAddress(s.eth);
-        document.getElementobtained('usdtWallet').value = maskAddress(s.usdt);
-        document.getElementById('paystackKey').value = s.paystackKey ? '****' : '';
-      } catch (e) {
-        console.error('Error loading settings:', e);
-        alert('Error loading settings');
-      }
-    }
-
-    async function saveSettings() {
-      const settings = {
-        btc: document.getElementById('btcWallet').value.trim(),
-        eth: document.getElementById('ethWallet').value.trim(),
-        usdt: document.getElementById('usdtWallet').value.trim(),
-        paystackKey: document.getElementById('paystackKey').value.trim()
-      };
-      if (!settings.btc || !settings.eth || !settings.usdt || !settings.paystackKey) {
-        return alert('All fields are required');
-      }
-      try {
-        const response = await fetch('/api/settings', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${sessionStorage.getItem('adminToken')}`
-          },
-          body: JSON.stringify(settings)
-        });
-        if (response.ok) {
-          alert('Settings saved');
-        } else {
-          alert('Failed to save settings');
-        }
-      } catch (e) {
-        console.error('Error saving settings:', e);
-        alert('Error saving settings');
-      }
-    }
-
-    // SIGNAL PUBLISH
-    async function publishSignal() {
-      const data = {
-        pair: document.getElementById('pair').value.trim(),
-        type: document.getElementById('type').value,
-        entry: document.getElementById('entry').value.trim(),
-        tp: document.getElementById('tp').value.trim(),
-        sl: document.getElementById('sl').value.trim(),
-        note: document.getElementById('signalNote').value.trim(),
-        date: new Date().toLocaleDateString(),
-        time: new Date().toLocaleTimeString()
-      };
-      if (!data.pair || !data.entry || !data.tp || !data.sl) {
-        return alert('Pair, Entry, TP, and SL are required');
-      }
-      if (isNaN(data.entry) || isNaN(data.tp) || isNaN(data.sl)) {
-        return alert('Entry, TP, and SL must be numbers');
-      }
-      try {
-        const response = await fetch('/api/signals', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${sessionStorage.getItem('adminToken')}`
-          },
-          body: JSON.stringify(data)
-        });
-        if (response.ok) {
-          alert('Signal published');
-          document.getElementById('pair').value = '';
-          document.getElementById('type').value = 'BUY';
-          document.getElementById('entry').value = '';
-          document.getElementById('tp').value = '';
-          document.getElementById('sl').value = '';
-          document.getElementById('signalNote').value = '';
-        } else {
-          alert('Failed to publish signal');
-        }
-      } catch (e) {
-        console.error('Error publishing signal:', e);
-        alert('Error publishing signal');
-      }
-    }
-
-    // BROADCAST
-    async function sendBroadcast() {
-      const message = document.getElementById('broadcastText').value.trim();
-      if (!message) return alert('Message is required');
-      try {
-        const response = await fetch('/api/broadcasts', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${sessionStorage.getItem('adminToken')}`
-          },
-          body: JSON.stringify({ message, time: new Date().toLocaleString() })
-        });
-        if (response.ok) {
-          alert('Broadcast sent');
-          document.getElementById('broadcastText').value = '';
-        } else {
-          alert('Failed to send broadcast');
-        }
-      } catch (e) {
-        console.error('Error sending broadcast:', e);
-        alert('Error sending broadcast');
-      }
-    }
-
-    // INBOX
-    async function loadInbox() {
-      const cont = document.getElementById('inboxContainer');
-      cont.innerHTML = '<p class="loading">Loading...</p>';
-      try {
-        const response = await fetch('/api/messages', {
-          headers: { 'Authorization': `Bearer ${sessionStorage.getItem('adminToken')}` }
-        });
-        const msgs = await response.json();
-        cont.innerHTML = '';
-        if (!msgs.length) {
-          cont.innerHTML = '<p>No messages.</p>';
-          return;
-        }
-        const table = document.createElement('table');
-        const header = document.createElement('tr');
-        ['Name', 'Email', 'Message'].forEach(text => {
-          const th = document.createElement('th');
-          th.textContent = text;
-          header.appendChild(th);
-        });
-        table.appendChild(header);
-        msgs.forEach(m => {
-          const row = document.createElement('tr');
-          [m.name, m.email, m.message].forEach(text => {
-            const td = document.createElement('td');
-            td.textContent = escapeHTML(text);
-            row.appendChild(td);
-          });
-          table.appendChild(row);
-        });
-        cont.appendChild(table);
-      } catch (e) {
-        console.error('Error loading inbox:', e);
-        cont.innerHTML = '<p class="error">Error loading messages.</p>';
-      }
-    }
-
-    // TRADE INSIGHTS
-    async function uploadInsight() {
-      const file = document.getElementById('insightFile').files[0];
-      const date = document.getElementById('insightDate').value;
-      const note = document.getElementById('insightNote').value.trim();
-      if (!file || !date) return alert('File and date are required');
-      if (file.size > 5 * 1024 * 1024) return alert('File size must be under 5MB');
-      const formData = new FormData();
-      formData.append('file', file);
-      formData.append('date', date);
-      formData.append('note', note);
-      try {
-        const response = await fetch('/api/insights', {
-          method: 'POST',
-          headers: { 'Authorization': `Bearer ${sessionStorage.getItem('adminToken')}` },
-          body: formData
-        });
-        if (response.ok) {
-          alert('Insight uploaded');
-          document.getElementById('insightFile').value = '';
-          document.getElementById('insightDate').value = '';
-          document.getElementById('insightNote').value = '';
-        } else {
-          alert('Failed to upload insight');
-        }
-      } catch (e) {
-        console.error('Error uploading insight:', e);
-        alert('Error uploading insight');
-      }
-    }
-
-    // TRADE HISTORY
-    async function uploadHistory() {
-      const file = document.getElementById('historyFile').files[0];
-      const month = document.getElementById('tradeMonth').value;
-      const note = document.getElementById('historyNote').value.trim();
-      if (!file || !month) return alert('File and month are required');
-      if (file.size > 5 * 1024 * 1024) return alert('File size must be under 5MB');
-      const formData = new FormData();
-      formData.append('file', file);
-      formData.append('month', month);
-      formData.append('note', note);
-      try {
-        const response = await fetch('/api/history', {
-          method: 'POST',
-          headers: { 'Authorization': `Bearer ${sessionStorage.getItem('adminToken')}` },
-          body: formData
-        });
-        if (response.ok) {
-          alert('History uploaded');
-          document.getElementById('historyFile').value = '';
-          document.getElementById('tradeMonth').value = 'January';
-          document.getElementById('historyNote').value = '';
-        } else {
-          alert('Failed to upload history');
-        }
-      } catch (e) {
-        console.error('Error uploading history:', e);
-        alert('Error uploading history');
-      }
-    }
-
-    // LOGS
-    async function log(message) {
-      try {
-        await fetch('/api/logs', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${sessionStorage.getItem('adminToken')}`
-          },
-          body: JSON.stringify({ message, timestamp: new Date().toISOString() })
-        });
-      } catch (e) {
-        console.error('Error logging:', e);
-      }
-    }
-
-    async function loadLogs() {
-      const cont = document.getElementById('logContainer');
-      cont.innerHTML = '<p class="loading">Loading...</p>';
-      try {
-        const response = await fetch('/api/logs', {
-          headers: { 'Authorization': `Bearer ${sessionStorage.getItem('adminToken')}` }
-        });
-        const logs = await response.json();
-        cont.innerHTML = '';
-        if (!logs.length) {
-          cont.innerHTML = '<p>No logs.</p>';
-          return;
-        }
-        logs.forEach(l => {
-          const p = document.createElement('p');
-          p.textContent = escapeHTML(`${l.timestamp}: ${l.message}`);
-          cont.appendChild(p);
-        });
-        } catch (e) {
-          console.error('Error loading logs:', e);
-          cont.innerHTML = '<p class="error">Error loading logs.</p>';
-        }
-      }
-
-      // INIT
-      window.onload = () => {
-        if (isAuthenticated()) {
-          document.getElementById('pwModal').style.display = 'none';
-          initAll();
-        }
-      };
+        // Load signals when the page loads
+        loadSignals();
     </script>
-  </body>
+</body>
 </html>
