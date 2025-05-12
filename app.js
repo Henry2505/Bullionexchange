@@ -1,58 +1,33 @@
-// Initialize Supabase client
-const supabaseUrl = 'https://your-project-url.supabase.co'; // Replace with your Supabase URL
-const supabaseKey = 'your-anon-key'; // Replace with your Supabase anon/public key
-const supabase = supabase.createClient(supabaseUrl, supabaseKey);
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>CBE Admin Panel</title>
+  <link rel="stylesheet" href="styles.css" />
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.0.0/dist/umd/supabase.js"></script>
+  <script src="app.js" defer></script>
+</head>
+<body>
+  <div class="container">
+    <h1>CBE Admin Panel - Manage Signals</h1>
 
-// DOM Elements
-const createSignalForm = document.getElementById('create-signal-form');
-const signalNameInput = document.getElementById('signal-name');
-const signalTypeInput = document.getElementById('signal-type');
-const signalValueInput = document.getElementById('signal-value');
-const signalsList = document.getElementById('signals-list');
+    <!-- Create Signal Form -->
+    <div class="form-container">
+      <h2>Create New Signal</h2>
+      <form id="create-signal-form">
+        <input type="text" id="signal-name" placeholder="Signal Name" required />
+        <input type="text" id="signal-type" placeholder="Signal Type (Buy/Sell)" required />
+        <input type="text" id="signal-value" placeholder="Signal Value" required />
+        <button type="submit">Create Signal</button>
+      </form>
+    </div>
 
-// Fetch all signals from Supabase
-async function fetchSignals() {
-  const { data, error } = await supabase.from('signals').select('*');
-
-  if (error) {
-    console.error('Error fetching signals:', error.message);
-    return;
-  }
-
-  signalsList.innerHTML = '';
-
-  data.forEach(signal => {
-    const li = document.createElement('li');
-    li.textContent = `${signal.name} | ${signal.type} | ${signal.value}`;
-    signalsList.appendChild(li);
-  });
-}
-
-// Handle signal form submission
-createSignalForm.addEventListener('submit', async (e) => {
-  e.preventDefault();
-
-  const newSignal = {
-    name: signalNameInput.value,
-    type: signalTypeInput.value,
-    value: signalValueInput.value,
-  };
-
-  const { error } = await supabase.from('signals').insert([newSignal]);
-
-  if (error) {
-    console.error('Error creating signal:', error.message);
-    return;
-  }
-
-  // Clear form
-  signalNameInput.value = '';
-  signalTypeInput.value = '';
-  signalValueInput.value = '';
-
-  // Refresh list
-  fetchSignals();
-});
-
-// Load signals on page load
-window.addEventListener('DOMContentLoaded', fetchSignals);
+    <!-- View All Signals -->
+    <div class="signals-list">
+      <h2>All Signals</h2>
+      <ul id="signals-list"></ul>
+    </div>
+  </div>
+</body>
+</html>
