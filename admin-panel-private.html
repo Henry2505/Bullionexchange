@@ -146,10 +146,11 @@
   <!-- Password Modal -->
   <div id="pwModal">
     <div class="box">
-      <h3>Enter Admin Password</h3>
+      <h3>Admin Login</h3>
+      <input type="email" id="adminEmail" placeholder="Email"/>
       <input type="password" id="adminPw" placeholder="Password"/>
       <br/>
-      <button onclick="checkPw()">Unlock</button>
+      <button onclick="login()">Login</button>
     </div>
   </div>
 
@@ -169,7 +170,7 @@
     <a href="#" data-target="users">User Approvals</a>
     <a href="#" data-target="settings">Settings</a>
     <a href="#" data-target="signals">Publish Signal</a>
-    <a href="#" data-target="viewSignals">View Signals</a> <!-- New section -->
+    <a href="#" data-target="viewSignals">View Signals</a>
     <a href="#" data-target="broadcast">Broadcast</a>
     <a href="#" data-target="messages">Inbox</a>
     <a href="#" data-target="tradeInsights">Trade Insights</a>
@@ -214,27 +215,27 @@
       <h2>Publish Signal</h2>
       <div class="form-group"><label>Pair</label><input id="pair"></div>
       <div class="form-group"><label>Type</label>
-        <select id="type"><option>BUY</option><option>SELL</option></select>
+        <select id="signal_type"><option>BUY</option><option>SELL</option></select>
       </div>
-      <div class="form-group"><label>Entry</label><input id="entry"></div>
-      <div class="form-group"><label>TP</label><input id="tp"></div>
-      <div class="form-group"><label>SL</label><input id="sl"></div>
-      <div class="form-group"><label>Admin Note</label><textarea id="signalNote"></textarea></div>
+      <div class="form-group"><label>Entry Price</label><input id="entry_price" type="number" step="0.01"></div>
+      <div class="form-group"><label>Stop Loss (SL)</label><input id="sl" type="number" step="0.01"></div>
+      <div class="form-group"><label>Take Profit 1 (TP1)</label><input id="tp1" type="number" step="0.01"></div>
+      <div class="form-group"><label>Take Profit 2 (TP2)</label><input id="tp2" type="number" step="0.01"></div>
+      <div class="form-group"><label>Take Profit 3 (TP3)</label><input id="p3" type="number" step="0.01"></div>
+      <div class="form-group"><label>Comment</label><textarea id="comment"></textarea></div>
       <button class="btn" onclick="publishSignal()">Publish</button>
     </div>
 
     <!-- View Signals -->
     <div class="content-section" id="viewSignals">
       <h2>View Signals</h2>
-      <div id="signalsList">
-        <!-- Signals will be displayed here -->
-      </div>
+      <div id="signalsList"></div>
     </div>
 
     <!-- Broadcast -->
     <div class="content-section" id="broadcast">
       <h2>Broadcast Message</h2>
-      <div class="form-group"><textarea id="broadcastText" rows="4"></textarea></div>
+      <div class="form-group"><label>Message</label><textarea id="broadcastText" rows="4"></textarea></div>
       <button class="btn" onclick="sendBroadcast()">Send Broadcast</button>
     </div>
 
@@ -279,317 +280,345 @@
   <!-- Include Supabase client library via CDN -->
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script>
-    // JavaScript code will be added in Part 2
+    // Initialize Supabase client
+    const { createClient } = supabase;
+    const supabase = createClient(
+      'https://dapwpgvnfjcfqqhrpxla.supabase.co',
+      'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImRhcHdwZ3ZuZmpjZnFxaHJweGxhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDcwNDA4ODgsImV4cCI6MjA2MjYxNjg4OH0.ICC0UsLlzJDNre7rFCeD3k6iVzo6jOJgn3PhABpEMsQ'
+    );
+
+    // -- Helpers: always read/write arrays --
+    function getArr(key){
+      let v = localStorage.getItem(key);
+      if (!v) return [];
+      v = v.trim();
+      if (v.charAt(0) !== '[') v = '[' + v + ']';
+      try { v = JSON.parse(v); }
+      catch { return []; }
+      return Array.isArray(v) ? v : [];
+    }
+    function setArr(key, arr){
+      localStorage.setItem(key, JSON.stringify(arr));
+    }
+
+    // -- Auth & Init --
+    async function login(){
+      const email = document.getElementById('adminEmail').value.trim();
+      const password = document.getElementById('adminPw').value;
+      const { error } = await supabase.auth.signInWithPassword({ email, password });
+      if (error) {
+        alert('Login failed: ' + error.message);
+      } else {
+        sessionStorage.setItem('adminAuth', 'true');
+        document.getElementById('pwModal').style.display = 'none';
+        initAll();
+      }
+    }
+    async function logout(){
+      await supabase.auth.signOut();
+      sessionStorage.removeItem('adminAuth');
+      location.reload();
+    }
+    if (sessionStorage.getItem('adminAuth') === 'true') {
+      supabase.auth.getSession().then(({ data: { session } }) => {
+        if (session) {
+          document.getElementById('pwModal').style.display = 'none';
+          initAll();
+        }
+      });
+    }
+    window.onload = () => {
+      if (sessionStorage.getItem('adminAuth') === 'true') {
+        supabase.auth.getSession().then(({ data: { session } }) => {
+          if (session) initAll();
+        });
+      }
+    };
+
+    function initAll(){
+      showSection('payments');
+      loadPayments();
+      loadApplications();
+      loadUsers();
+      loadSettings();
+      loadInbox();
+      loadLogs();
+      loadSignals();
+    }
+    function showSection(id){
+      document.querySelectorAll('.content-section').forEach(s => s.classList.remove('active'));
+      document.getElementById(id).classList.add('active');
+    }
+
+    // -- Sidebar Toggle & Nav --
+    function toggleSidebar(){
+      document.getElementById('sidebar').classList.toggle('show');
+    }
+    document.querySelectorAll('.sidebar a[data-target]').forEach(a => {
+      a.addEventListener('click', e => {
+        showSection(e.currentTarget.dataset.target);
+        toggleSidebar();
+      });
+    });
+
+    // -- Payment Records --
+    function loadPayments(){
+      const rec = getArr('paymentRecords');
+      const c = document.getElementById('paymentContainer');
+      if (!rec.length) return void (c.innerHTML = '<p>No records.</p>');
+      let html = '<table><tr><th>Email</th><th>Plan</th><th>Status</th><th>Action</th></tr>';
+      rec.forEach((p, i) => {
+        html += `<tr>
+          <td>${p.email}</td>
+          <td>${p.plan}</td>
+          <td>${p.status}</td>
+          <td><button class="btn" onclick="approvePayment(${i})">Approve</button></td>
+        </tr>`;
+      });
+      html += '</table>';
+      c.innerHTML = html;
+    }
+    function approvePayment(i){
+      const rec = getArr('paymentRecords');
+      rec[i].status = 'approved';
+      setArr('paymentRecords', rec);
+
+      const users = getArr('users');
+      const email = rec[i].email.trim().toLowerCase();
+      const u = users.find(u => u.email && u.email.trim().toLowerCase() === email);
+      if (u){
+        u.status = 'approved';
+        setArr('users', users);
+      }
+
+      loadPayments();
+      loadUsers();
+    }
+
+    // -- Applications --
+    function loadApplications(){
+      const apps = getArr('applications');
+      const c = document.getElementById('applicationContainer');
+      if (!apps.length) return void (c.innerHTML = '<p>No applications.</p>');
+      let html = '<table><tr><th>Name</th><th>Email</th><th>Status</th></tr>';
+      apps.forEach(a => {
+        html += `<tr><td>${a.name}</td><td>${a.email}</td><td>${a.status}</td></tr>`;
+      });
+      html += '</table>';
+      c.innerHTML = html;
+    }
+
+    // -- User Approvals --
+    function loadUsers(){
+      const users = getArr('users');
+      const c = document.getElementById('userContainer');
+      if (!users.length) return void (c.innerHTML = '<p>No users.</p>');
+      let html = '<table><tr><th>Name</th><th>Email</th><th>Status</th><th>Actions</th></tr>';
+      users.forEach((u, i) => {
+        html += `<tr>
+          <td>${u.name}</td>
+          <td>${u.email}</td>
+          <td>${u.status}</td>
+          <td>
+            <button class="btn" onclick="approveUser(${i})">Approve</button>
+            <button class="btn" onclick="deactivateUser(${i})">Deactivate</button>
+            <button class="btn" onclick="deleteUser(${i})">Delete</button>
+          </td>
+        </tr>`;
+      });
+      html += '</table>';
+      c.innerHTML = html;
+    }
+    window.addEventListener('storage', e => {
+      if (e.key === 'users') loadUsers();
+    });
+    function approveUser(i){
+      const users = getArr('users');
+      users[i].status = 'approved';
+      setArr('users', users);
+      log(`Approved user: ${users[i].email}`);
+      loadUsers();
+    }
+    function deactivateUser(i){
+      const users = getArr('users');
+      users[i].status = 'inactive';
+      setArr('users', users);
+      log(`Deactivated user: ${users[i].email}`);
+      loadUsers();
+    }
+    function deleteUser(i){
+      const users = getArr('users');
+      const removed = users.splice(i, 1)[0];
+      setArr('users', users);
+      log(`Deleted user: ${removed.email}`);
+      loadUsers();
+    }
+
+    // -- Settings --
+    function loadSettings(){
+      const s = JSON.parse(localStorage.getItem('paymentSettings') || '{}');
+      document.getElementById('btcWallet').value = s.btc || '';
+      document.getElementById('ethWallet').value = s.eth || '';
+      document.getElementById('usdtWallet').value = s.usdt || '';
+      document.getElementById('paystackKey').value = s.paystackKey || '';
+    }
+    function saveSettings(){
+      const obj = {
+        btc: document.getElementById('btcWallet').value.trim(),
+        eth: document.getElementById('ethWallet').value.trim(),
+        usdt: document.getElementById('usdtWallet').value.trim(),
+        paystackKey: document.getElementById('paystackKey').value.trim()
+      };
+      localStorage.setItem('paymentSettings', JSON.stringify(obj));
+      alert('Settings saved');
+    }
+
+    // -- Signals --
+    async function publishSignal(){
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) {
+        alert('You must be logged in to publish a signal.');
+        return;
+      }
+
+      const data = {
+        user_id: user.id,
+        pair: document.getElementById('pair').value.trim(),
+        signal_type: document.getElementById('signal_type').value,
+        entry_price: parseFloat(document.getElementById('entry_price').value),
+        sl: parseFloat(document.getElementById('sl').value),
+        tp1: parseFloat(document.getElementById('tp1').value),
+        tp2: document.getElementById('tp2').value ? parseFloat(document.getElementById('tp2').value) : null,
+        tp3: document.getElementById('tp3').value ? parseFloat(document.getElementById('tp3').value) : null,
+        comment: document.getElementById('comment').value.trim()
+      };
+
+      if (!data.pair || !data.signal_type || !data.entry_price || !data.sl || !data.tp1) {
+        return alert('Please fill in all required fields (Pair, Type, Entry Price, SL, TP1).');
+      }
+
+      const { error } = await supabase.from('signals').insert([data]);
+      if (error) {
+        console.error('Error publishing signal:', error);
+        alert('Failed to publish signal: ' + error.message);
+      } else {
+        alert('Signal published successfully.');
+        document.getElementById('pair').value = '';
+        document.getElementById('signal_type').value = 'BUY';
+        document.getElementById('entry_price').value = '';
+        document.getElementById('sl').value = '';
+        document.getElementById('tp1').value = '';
+        document.getElementById('tp2').value = '';
+        document.getElementById('tp3').value = '';
+        document.getElementById('comment').value = '';
+        loadSignals();
+      }
+    }
+
+    async function loadSignals(){
+      const { data, error } = await supabase.from('signals').select('*');
+      if (error) {
+        console.error('Error fetching signals:', error);
+        document.getElementById('signalsList').innerHTML = '<p>Error loading signals.</p>';
+        return;
+      }
+      const signalsList = document.getElementById('signalsList');
+      signalsList.innerHTML = '';
+      if (data.length === 0) {
+        signalsList.innerHTML = '<p>No signals found.</p>';
+      } else {
+        let html = '<table><tr><th>Pair</th><th>Type</th><th>Entry Price</th><th>SL</th><th>TP1</th><th>TP2</th><th>TP3</th><th>Comment</th><th>Created At</th></tr>';
+        data.forEach(signal => {
+          html += `<tr>
+            <td>${signal.pair}</td>
+            <td>${signal.signal_type}</td>
+            <td>${signal.entry_price}</td>
+            <td>${signal.sl}</td>
+            <td>${signal.tp1}</td>
+            <td>${signal.tp2 || '-'}</td>
+            <td>${signal.tp3 || '-'}</td>
+            <td>${signal.comment || '-'}</td>
+            <td>${new Date(signal.created_at).toLocaleString()}</td>
+          </tr>`;
+        });
+        html += '</table>';
+        signalsList.innerHTML = html;
+      }
+    }
+
+    // -- Broadcast --
+    function sendBroadcast(){
+      const msg = document.getElementById('broadcastText').value.trim();
+      if (!msg) return alert('Empty');
+      const arr = getArr('broadcasts');
+      arr.push({ message: msg, time: new Date().toLocaleString() });
+      setArr('broadcasts', arr);
+      alert('Broadcast sent');
+    }
+
+    // -- Inbox --
+    function loadInbox(){
+      const msgs = getArr('inboxMessages');
+      const c = document.getElementById('inboxContainer');
+      if (!msgs.length) return void (c.innerHTML = '<p>No messages.</p>');
+      let html = '<table><tr><th>Name</th><th>Email</th><th>Message</th></tr>';
+      msgs.forEach(m => {
+        html += `<tr><td>${m.name}</td><td>${m.email}</td><td>${m.message}</td></tr>`;
+      });
+      html += '</table>';
+      c.innerHTML = html;
+    }
+
+    // -- Trade Insights --
+    function uploadInsight(){
+      const file = document.getElementById('insightFile').files[0];
+      if (!file) return alert('Select file');
+      const reader = new FileReader();
+      reader.onload = e => {
+        const data = {
+          date: document.getElementById('insightDate').value,
+          image: e.target.result,
+          note: document.getElementById('insightNote').value
+        };
+        const arr = getArr('tradeInsights');
+        arr.push(data);
+        setArr('tradeInsights', arr);
+        alert('Insight uploaded');
+      };
+      reader.readAsDataURL(file);
+    }
+
+    // -- Trade History --
+    function uploadHistory(){
+      const file = document.getElementById('historyFile').files[0];
+      if (!file) return alert('Select file');
+      const reader = new FileReader();
+      reader.onload = e => {
+        const data = {
+          month: document.getElementById('tradeMonth').value,
+          image: e.target.result,
+          note: document.getElementById('historyNote').value
+        };
+        const arr = getArr('tradeHistory');
+        arr.push(data);
+        setArr('tradeHistory', arr);
+        alert('History uploaded');
+      };
+      reader.readAsDataURL(file);
+    }
+
+    // -- Logs --
+    function log(msg){
+      const arr = getArr('adminLogs');
+      arr.push(`${new Date().toLocaleString()}: ${msg}`);
+      setArr('adminLogs', arr);
+    }
+    function loadLogs(){
+      const l = getArr('adminLogs');
+      const c = document.getElementById('logContainer');
+      if (!l.length) return void (c.innerHTML = '<p>No logs.</p>');
+      c.innerHTML = l.map(e => `<p>${e}</p>`).join('');
+    }
   </script>
 </body>
 </html>
-// Initialize Supabase client (replace with your Supabase URL and anon key)
-const { createClient } = supabase;
-const supabase = createClient('https://your-supabase-url.supabase.co', 'your-anon-key');
-
-// -- Helpers: always read/write arrays --
-function getArr(key){
-  let v = localStorage.getItem(key);
-  if (!v) return [];
-  v = v.trim();
-  if (v.charAt(0) !== '[') v = '[' + v + ']';
-  try { v = JSON.parse(v); }
-  catch { return []; }
-  return Array.isArray(v) ? v : [];
-}
-function setArr(key, arr){
-  localStorage.setItem(key, JSON.stringify(arr));
-}
-
-// -- Auth & Init --
-function checkPw(){
-  if (document.getElementById('adminPw').value === 'Blessed@123'){
-    sessionStorage.adminAuth = 'true';
-    document.getElementById('pwModal').style.display = 'none';
-    initAll();
-  } else alert('Wrong password');
-}
-function logout(){
-  sessionStorage.removeItem('adminAuth');
-  location.reload();
-}
-if (sessionStorage.adminAuth === 'true'){
-  document.getElementById('pwModal').style.display = 'none';
-}
-window.onload = () => {
-  if (sessionStorage.adminAuth === 'true') initAll();
-};
-
-function initAll(){
-  showSection('payments');
-  loadPayments(); loadApplications(); loadUsers();
-  loadSettings(); loadInbox(); loadLogs();
-  loadSignals(); // Load signals on init
-}
-function showSection(id){
-  document.querySelectorAll('.content-section').forEach(s => s.classList.remove('active'));
-  document.getElementById(id).classList.add('active');
-}
-
-// -- Sidebar Toggle & Nav --
-function toggleSidebar(){
-  document.getElementById('sidebar').classList.toggle('show');
-}
-document.querySelectorAll('.sidebar a[data-target]').forEach(a => {
-  a.addEventListener('click', e => {
-    showSection(e.currentTarget.dataset.target);
-    toggleSidebar();
-  });
-});
-
-// -- Payment Records --
-function loadPayments(){
-  const rec = getArr('paymentRecords');
-  const c = document.getElementById('paymentContainer');
-  if (!rec.length) return void (c.innerHTML = '<p>No records.</p>');
-  let html = '<table><tr><th>Email</th><th>Plan</th><th>Status</th><th>Action</th></tr>';
-  rec.forEach((p, i) => {
-    html += `<tr>
-      <td>${p.email}</td>
-      <td>${p.plan}</td>
-      <td>${p.status}</td>
-      <td><button class="btn" onclick="approvePayment(${i})">Approve</button></td>
-    </tr>`;
-  });
-  html += '</table>';
-  c.innerHTML = html;
-}
-function approvePayment(i){
-  const rec = getArr('paymentRecords');
-  rec[i].status = 'approved';
-  setArr('paymentRecords', rec);
-
-  // Mirror onto users
-  const users = getArr('users');
-  const email = rec[i].email.trim().toLowerCase();
-  const u = users.find(u => u.email && u.email.trim().toLowerCase() === email);
-  if (u){
-    u.status = 'approved';
-    setArr('users', users);
-  }
-
-  loadPayments();
-  loadUsers();
-}
-
-// -- Applications --
-function loadApplications(){
-  const apps = getArr('applications');
-  const c = document.getElementById('applicationContainer');
-  if (!apps.length) return void (c.innerHTML = '<p>No applications.</p>');
-  let html = '<table><tr><th>Name</th><th>Email</th><th>Status</th></tr>';
-  apps.forEach(a => {
-    html += `<tr><td>${a.name}</td><td>${a.email}</td><td>${a.status}</td></tr>`;
-  });
-  html += '</table>';
-  c.innerHTML = html;
-}
-
-// -- User Approvals --
-function loadUsers(){
-  const users = getArr('users');
-  const c = document.getElementById('userContainer');
-  if (!users.length) return void (c.innerHTML = '<p>No users.</p>');
-  let html = '<table><tr><th>Name</th><th>Email</th><th>Status</th><th>Actions</th></tr>';
-  users.forEach((u, i) => {
-    html += `<tr>
-      <td>${u.name}</td>
-      <td>${u.email}</td>
-      <td>${u.status}</td>
-      <td>
-        <button class="btn" onclick="approveUser(${i})">Approve</button>
-        <button class="btn" onclick="deactivateUser(${i})">Deactivate</button>
-        <button class="btn" onclick="deleteUser(${i})">Delete</button>
-      </td>
-    </tr>`;
-  });
-  html += '</table>';
-  c.innerHTML = html;
-}
-window.addEventListener('storage', e => {
-  if (e.key === 'users') loadUsers();
-});
-function approveUser(i){
-  const users = getArr('users');
-  users[i].status = 'approved';
-  setArr('users', users);
-  log(`Approved user: ${users[i].email}`);
-  loadUsers();
-}
-function deactivateUser(i){
-  const users = getArr('users');
-  users[i].status = 'inactive';
-  setArr('users', users);
-  log(`Deactivated user: ${users[i].email}`);
-  loadUsers();
-}
-function deleteUser(i){
-  const users = getArr('users');
-  const removed = users.splice(i, 1)[0];
-  setArr('users', users);
-  log(`Deleted user: ${removed.email}`);
-  loadUsers();
-}
-
-// -- Settings --
-function loadSettings(){
-  const s = JSON.parse(localStorage.getItem('paymentSettings') || '{}');
-  document.getElementById('btcWallet').value = s.btc || '';
-  document.getElementById('ethWallet').value = s.eth || '';
-  document.getElementById('usdtWallet').value = s.usdt || '';
-  document.getElementById('paystackKey').value = s.paystackKey || '';
-}
-function saveSettings(){
-  const obj = {
-    btc: document.getElementById('btcWallet').value.trim(),
-    eth: document.getElementById('ethWallet').value.trim(),
-    usdt: document.getElementById('usdtWallet').value.trim(),
-    paystackKey: document.getElementById('paystackKey').value.trim()
-  };
-  localStorage.setItem('paymentSettings', JSON.stringify(obj));
-  alert('Settings saved');
-}
-
-// -- Signals --
-async function publishSignal(){
-  const data = {
-    pair: document.getElementById('pair').value.trim(),
-    type: document.getElementById('type').value,
-    entry: document.getElementById('entry').value.trim(),
-    tp: document.getElementById('tp').value.trim(),
-    sl: document.getElementById('sl').value.trim(),
-    note: document.getElementById('signalNote').value.trim(),
-    date: new Date().toLocaleDateString(),
-    time: new Date().toLocaleTimeString()
-  };
-  
-  if (!data.pair || !data.entry || !data.tp || !data.sl) {
-    return alert('Please fill in all required fields (Pair, Entry, TP, SL).');
-  }
-
-  // Insert into Supabase
-  const { error } = await supabase.from('signals').insert([data]);
-  if (error) {
-    console.error('Error publishing signal:', error);
-    alert('Failed to publish signal.');
-  } else {
-    alert('Signal published successfully.');
-    // Clear form
-    document.getElementById('pair').value = '';
-    document.getElementById('type').value = 'BUY';
-    document.getElementById('entry').value = '';
-    document.getElementById('tp').value = '';
-    document.getElementById('sl').value = '';
-    document.getElementById('signalNote').value = '';
-    loadSignals(); // Refresh signal list
-  }
-}
-
-async function loadSignals(){
-  const { data, error } = await supabase.from('signals').select('*');
-  if (error) {
-    console.error('Error fetching signals:', error);
-    document.getElementById('signalsList').innerHTML = '<p>Error loading signals.</p>';
-    return;
-  }
-  const signalsList = document.getElementById('signalsList');
-  signalsList.innerHTML = '';
-  if (data.length === 0) {
-    signalsList.innerHTML = '<p>No signals found.</p>';
-  } else {
-    let html = '<table><tr><th>Pair</th><th>Type</th><th>Entry</th><th>TP</th><th>SL</th><th>Note</th><th>Date</th><th>Time</th></tr>';
-    data.forEach(signal => {
-      html += `<tr>
-        <td>${signal.pair}</td>
-        <td>${signal.type}</td>
-        <td>${signal.entry}</td>
-        <td>${signal.tp}</td>
-        <td>${signal.sl}</td>
-        <td>${signal.note || '-'}</td>
-        <td>${signal.date}</td>
-        <td>${signal.time}</td>
-      </tr>`;
-    });
-    html += '</table>';
-    signalsList.innerHTML = html;
-  }
-}
-
-// -- Broadcast --
-function sendBroadcast(){
-  const msg = document.getElementById('broadcastText').value.trim();
-  if (!msg) return alert('Empty');
-  const arr = getArr('broadcasts');
-  arr.push({ message: msg, time: new Date().toLocaleString() });
-  setArr('broadcasts', arr);
-  alert('Broadcast sent');
-}
-
-// -- Inbox --
-function loadInbox(){
-  const msgs = getArr('inboxMessages');
-  const c = document.getElementById('inboxContainer');
-  if (!msgs.length) return void (c.innerHTML = '<p>No messages.</p>');
-  let html = '<table><tr><th>Name</th><th>Email</th><th>Message</th></tr>';
-  msgs.forEach(m => {
-    html += `<tr><td>${m.name}</td><td>${m.email}</td><td>${m.message}</td></tr>`;
-  });
-  html += '</table>';
-  c.innerHTML = html;
-}
-
-// -- Trade Insights --
-function uploadInsight(){
-  const file = document.getElementById('insightFile').files[0];
-  if (!file) return alert('Select file');
-  const reader = new FileReader();
-  reader.onload = e => {
-    const data = {
-      date: document.getElementById('insightDate').value,
-      image: e.target.result,
-      note: document.getElementById('insightNote').value
-    };
-    const arr = getArr('tradeInsights');
-    arr.push(data);
-    setArr('tradeInsights', arr);
-    alert('Insight uploaded');
-  };
-  reader.readAsDataURL(file);
-}
-
-// -- Trade History --
-function uploadHistory(){
-  const file = document.getElementById('historyFile').files[0];
-  if (!file) return alert('Select file');
-  const reader = new FileReader();
-  reader.onload = e => {
-    const data = {
-      month: document.getElementById('tradeMonth').value,
-      image: e.target.result,
-      note: document.getElementById('historyNote').value
-    };
-    const arr = getArr('tradeHistory');
-    arr.push(data);
-    setArr('tradeHistory', arr);
-    alert('History uploaded');
-  };
-  reader.readAsDataURL(file);
-}
-
-// -- Logs --
-function log(msg){
-  const arr = getArr('adminLogs');
-  arr.push(`${new Date().toLocaleString()}: ${msg}`);
-  setArr('adminLogs', arr);
-}
-function loadLogs(){
-  const l = getArr('adminLogs');
-  const c = document.getElementById('logContainer');
-  if (!l.length) return void (c.innerHTML = '<p>No logs.</p>');
-  c.innerHTML = l.map(e => `<p>${e}</p>`).join('');
-}
