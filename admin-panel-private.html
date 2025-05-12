@@ -3,14 +3,12 @@
 <head>
   <meta charset="UTF-8"/>
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Admin Panel – CBE</title>
+  <title>CBE Admin Panel</title>
   <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;500;700&display=swap" rel="stylesheet"/>
   <link rel="stylesheet" href="styles.css"/>
-  <!-- Supabase JS -->
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js"></script>
 </head>
 <body oncontextmenu="return false;">
-  <!-- Background Video & Overlay -->
+  <!-- Video & Overlay -->
   <video id="bg" autoplay muted loop playsinline poster="fallback.jpg">
     <source src="star-video.mp4" type="video/mp4"/>
   </video>
@@ -22,25 +20,27 @@
       <h3>Admin Login</h3>
       <input type="text" id="adminEmail" placeholder="Email"/>
       <input type="password" id="adminPw" placeholder="Password"/>
-      <button onclick="login()">Login</button>
+      <button id="loginBtn">Login</button>
     </div>
   </div>
 
   <!-- Top Bar -->
   <div class="top-bar">
-    <button class="logoutBtn" onclick="logout()">Logout</button>
+    <button id="logoutBtn" class="logoutBtn">Logout</button>
     <h1>CBE Admin Panel</h1>
-    <button class="menu-toggle" onclick="toggleSidebar()">
+    <button class="menu-toggle" id="menuToggle">
       <span></span><span></span><span></span>
     </button>
   </div>
 
-  <!-- Sidebar Navigation -->
+  <!-- Sidebar -->
   <div class="sidebar" id="sidebar">
     <a href="#" data-target="payments">Payment Records</a>
     <a href="#" data-target="applications">Applications</a>
     <a href="#" data-target="users">User Approvals</a>
+    <a href="#" data-target="settings">Settings</a>
     <a href="#" data-target="signals">Publish Signal</a>
+    <a href="#" data-target="broadcast">Broadcast</a>
     <a href="#" data-target="messages">Inbox</a>
     <a href="#" data-target="tradeInsights">Trade Insights</a>
     <a href="#" data-target="tradeHistory">Trade History</a>
@@ -50,79 +50,60 @@
 
   <!-- Main Content -->
   <div id="main-content">
-    <!-- Payments -->
     <div class="content-section" id="payments">
       <h2>Payment Records</h2>
-      <table>
-        <thead><tr><th>Email</th><th>Plan</th><th>Status</th></tr></thead>
-        <tbody id="paymentTableBody"></tbody>
-      </table>
+      <table><tbody id="paymentTableBody"></tbody></table>
     </div>
-
-    <!-- Applications -->
     <div class="content-section" id="applications">
       <h2>Application Submissions</h2>
-      <table>
-        <thead><tr><th>Name</th><th>Email</th><th>Status</th><th>Action</th></tr></thead>
-        <tbody id="applicationTableBody"></tbody>
-      </table>
+      <table><tbody id="applicationTableBody"></tbody></table>
     </div>
-
-    <!-- Users -->
     <div class="content-section" id="users">
       <h2>User Approvals</h2>
-      <table>
-        <thead><tr><th>Name</th><th>Email</th><th>Status</th></tr></thead>
-        <tbody id="userTableBody"></tbody>
-      </table>
+      <table><tbody id="userTableBody"></tbody></table>
     </div>
-
-    <!-- Signals -->
+    <div class="content-section" id="settings">
+      <h2>Settings</h2>
+      <div class="form-group"><label>Bitcoin Address</label><input id="btcWallet"/></div>
+      <div class="form-group"><label>Ethereum Address</label><input id="ethWallet"/></div>
+      <div class="form-group"><label>USDT Address</label><input id="usdtWallet"/></div>
+      <div class="form-group"><label>Paystack Key</label><input id="paystackKey"/></div>
+      <button class="btn" id="submitSettings">Save Settings</button>
+    </div>
     <div class="content-section" id="signals">
       <h2>Publish Signal</h2>
       <div class="form-group"><label>Pair</label><input id="pair"/></div>
-      <div class="form-group"><label>Entry Point</label><input id="entry" type="number" step="0.01"/></div>
-      <div class="form-group"><label>Stop Loss</label><input id="sl" type="number" step="0.01"/></div>
-      <div class="form-group"><label>Take Profit</label><input id="tp" type="number" step="0.01"/></div>
+      <div class="form-group"><label>Type</label><select id="type"><option>BUY</option><option>SELL</option></select></div>
+      <div class="form-group"><label>Entry</label><input id="entry" type="number"/></div>
+      <div class="form-group"><label>TP</label><input id="tp" type="number"/></div>
+      <div class="form-group"><label>SL</label><input id="sl" type="number"/></div>
       <div class="form-group"><label>Note</label><textarea id="signalNote"></textarea></div>
       <button class="btn" id="submitSignal">Publish</button>
     </div>
-
-    <!-- Inbox -->
+    <div class="content-section" id="broadcast">
+      <h2>Broadcast Message</h2>
+      <div class="form-group"><textarea id="broadcastText"></textarea></div>
+      <button class="btn" id="sendBroadcast">Send</button>
+    </div>
     <div class="content-section" id="messages">
       <h2>Inbox Messages</h2>
-      <table>
-        <thead><tr><th>Name</th><th>Email</th><th>Message</th></tr></thead>
-        <tbody id="messageTableBody"></tbody>
-      </table>
+      <table><tbody id="messageTableBody"></tbody></table>
     </div>
-
-    <!-- Trade Insights -->
     <div class="content-section" id="tradeInsights">
       <h2>Upload Trade Insight</h2>
       <div class="form-group"><label>Date</label><input type="date" id="insightDate"/></div>
-      <div class="form-group"><label>Screenshot</label><input type="file" id="insightFile" accept="image/*"/></div>
+      <div class="form-group"><label>File</label><input type="file" id="insightFile"/></div>
       <div class="form-group"><label>Note</label><textarea id="insightNote"></textarea></div>
       <button class="btn" id="submitInsight">Upload Insight</button>
     </div>
-
-    <!-- Trade History -->
     <div class="content-section" id="tradeHistory">
       <h2>Upload Trade History</h2>
-      <div class="form-group"><label>Month</label>
-        <select id="historyMonth">
-          <option>January</option><option>February</option><option>March</option>
-          <option>April</option><option>May</option><option>June</option>
-          <option>July</option><option>August</option><option>September</option>
-          <option>October</option><option>November</option><option>December</option>
-        </select>
-      </div>
-      <div class="form-group"><label>Screenshot</label><input type="file" id="historyFile" accept="image/*"/></div>
+      <div class="form-group"><label>Month</label><select id="tradeMonth">
+        <option>January</option><!-- etc. --></select></div>
+      <div class="form-group"><label>File</label><input type="file" id="historyFile"/></div>
       <div class="form-group"><label>Note</label><textarea id="historyNote"></textarea></div>
       <button class="btn" id="submitHistory">Upload History</button>
     </div>
-
-    <!-- Logs -->
     <div class="content-section" id="logs">
       <h2>Admin Logs</h2>
       <ul id="logList"></ul>
@@ -130,7 +111,9 @@
     </div>
   </div>
 
-  <!-- Main Script -->
-  <script src="app.js"></script>
+  <!-- Load Supabase client library -->
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js"></script>
+  <!-- Your custom admin logic -->
+  <script src="admin.js"></script>
 </body>
 </html>
