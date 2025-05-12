@@ -1,68 +1,136 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
+  <meta charset="UTF-8"/>
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>CBE Admin Panel</title>
-  <link rel="stylesheet" href="styles.css" />
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.39.3/+esm" type="module"></script>
+  <title>Admin Panel – CBE</title>
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;500;700&display=swap" rel="stylesheet"/>
+  <link rel="stylesheet" href="styles.css"/>
+  <!-- Supabase JS -->
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js"></script>
 </head>
-<body>
-  <div class="sidebar">
-    <h2>CBE Admin</h2>
-    <nav>
-      <ul>
-        <li><a href="#" data-section="signals">Signals</a></li>
-        <li><a href="#" data-section="testimonials">Testimonials</a></li>
-        <li><a href="#" data-section="payments">Payments</a></li>
-        <li><a href="#" data-section="inbox">Inbox</a></li>
-        <li><a href="#" data-section="trading-history">Trading History</a></li>
-        <li><a href="#" data-section="trade-insights">Trade Insights</a></li>
-      </ul>
-    </nav>
+<body oncontextmenu="return false;">
+  <!-- Background Video & Overlay -->
+  <video id="bg" autoplay muted loop playsinline poster="fallback.jpg">
+    <source src="star-video.mp4" type="video/mp4"/>
+  </video>
+  <div class="overlay"></div>
+
+  <!-- Password Modal -->
+  <div id="pwModal">
+    <div class="box">
+      <h3>Admin Login</h3>
+      <input type="text" id="adminEmail" placeholder="Email"/>
+      <input type="password" id="adminPw" placeholder="Password"/>
+      <button onclick="login()">Login</button>
+    </div>
   </div>
 
-  <div class="main-content">
-    <section id="signals" class="section">
-      <h2>Post New Signal</h2>
-      <form id="signalForm">
-        <input type="text" id="currencyPair" placeholder="Currency Pair e.g. XAUUSD" required />
-        <input type="number" step="0.01" id="entryPoint" placeholder="Entry Point e.g. 1985.50" required />
-        <input type="number" step="0.01" id="stopLoss" placeholder="Stop Loss e.g. 1979.00" required />
-        <input type="number" step="0.01" id="takeProfit" placeholder="Take Profit e.g. 1999.00" required />
-        <textarea id="note" placeholder="Note (e.g., trade at your own risk)"></textarea>
-        <button type="submit">Submit Signal</button>
-      </form>
-      <h3>All Signals</h3>
-      <ul id="signalItems"></ul>
-    </section>
+  <!-- Top Bar -->
+  <div class="top-bar">
+    <button class="logoutBtn" onclick="logout()">Logout</button>
+    <h1>CBE Admin Panel</h1>
+    <button class="menu-toggle" onclick="toggleSidebar()">
+      <span></span><span></span><span></span>
+    </button>
+  </div>
 
-    <section id="testimonials" class="section hidden">
-      <h2>Testimonials</h2>
-      <ul id="testimonialItems"></ul>
-    </section>
+  <!-- Sidebar Navigation -->
+  <div class="sidebar" id="sidebar">
+    <a href="#" data-target="payments">Payment Records</a>
+    <a href="#" data-target="applications">Applications</a>
+    <a href="#" data-target="users">User Approvals</a>
+    <a href="#" data-target="signals">Publish Signal</a>
+    <a href="#" data-target="messages">Inbox</a>
+    <a href="#" data-target="tradeInsights">Trade Insights</a>
+    <a href="#" data-target="tradeHistory">Trade History</a>
+    <a href="#" data-target="logs">Admin Logs</a>
+    <a href="index.html">← Back to Site</a>
+  </div>
 
-    <section id="payments" class="section hidden">
-      <h2>Payments</h2>
-      <ul id="paymentItems"></ul>
-    </section>
+  <!-- Main Content -->
+  <div id="main-content">
+    <!-- Payments -->
+    <div class="content-section" id="payments">
+      <h2>Payment Records</h2>
+      <table>
+        <thead><tr><th>Email</th><th>Plan</th><th>Status</th></tr></thead>
+        <tbody id="paymentTableBody"></tbody>
+      </table>
+    </div>
 
-    <section id="inbox" class="section hidden">
+    <!-- Applications -->
+    <div class="content-section" id="applications">
+      <h2>Application Submissions</h2>
+      <table>
+        <thead><tr><th>Name</th><th>Email</th><th>Status</th><th>Action</th></tr></thead>
+        <tbody id="applicationTableBody"></tbody>
+      </table>
+    </div>
+
+    <!-- Users -->
+    <div class="content-section" id="users">
+      <h2>User Approvals</h2>
+      <table>
+        <thead><tr><th>Name</th><th>Email</th><th>Status</th></tr></thead>
+        <tbody id="userTableBody"></tbody>
+      </table>
+    </div>
+
+    <!-- Signals -->
+    <div class="content-section" id="signals">
+      <h2>Publish Signal</h2>
+      <div class="form-group"><label>Pair</label><input id="pair"/></div>
+      <div class="form-group"><label>Entry Point</label><input id="entry" type="number" step="0.01"/></div>
+      <div class="form-group"><label>Stop Loss</label><input id="sl" type="number" step="0.01"/></div>
+      <div class="form-group"><label>Take Profit</label><input id="tp" type="number" step="0.01"/></div>
+      <div class="form-group"><label>Note</label><textarea id="signalNote"></textarea></div>
+      <button class="btn" id="submitSignal">Publish</button>
+    </div>
+
+    <!-- Inbox -->
+    <div class="content-section" id="messages">
       <h2>Inbox Messages</h2>
-      <ul id="inboxItems"></ul>
-    </section>
+      <table>
+        <thead><tr><th>Name</th><th>Email</th><th>Message</th></tr></thead>
+        <tbody id="messageTableBody"></tbody>
+      </table>
+    </div>
 
-    <section id="trading-history" class="section hidden">
-      <h2>Trading History</h2>
-      <ul id="tradingHistoryItems"></ul>
-    </section>
+    <!-- Trade Insights -->
+    <div class="content-section" id="tradeInsights">
+      <h2>Upload Trade Insight</h2>
+      <div class="form-group"><label>Date</label><input type="date" id="insightDate"/></div>
+      <div class="form-group"><label>Screenshot</label><input type="file" id="insightFile" accept="image/*"/></div>
+      <div class="form-group"><label>Note</label><textarea id="insightNote"></textarea></div>
+      <button class="btn" id="submitInsight">Upload Insight</button>
+    </div>
 
-    <section id="trade-insights" class="section hidden">
-      <h2>Trade Insights</h2>
-      <ul id="tradeInsightsItems"></ul>
-    </section>
+    <!-- Trade History -->
+    <div class="content-section" id="tradeHistory">
+      <h2>Upload Trade History</h2>
+      <div class="form-group"><label>Month</label>
+        <select id="historyMonth">
+          <option>January</option><option>February</option><option>March</option>
+          <option>April</option><option>May</option><option>June</option>
+          <option>July</option><option>August</option><option>September</option>
+          <option>October</option><option>November</option><option>December</option>
+        </select>
+      </div>
+      <div class="form-group"><label>Screenshot</label><input type="file" id="historyFile" accept="image/*"/></div>
+      <div class="form-group"><label>Note</label><textarea id="historyNote"></textarea></div>
+      <button class="btn" id="submitHistory">Upload History</button>
+    </div>
+
+    <!-- Logs -->
+    <div class="content-section" id="logs">
+      <h2>Admin Logs</h2>
+      <ul id="logList"></ul>
+      <button class="btn" id="clearLogs">Clear Logs</button>
+    </div>
   </div>
 
-  <script type="module" src="app.js"></script>
+  <!-- Main Script -->
+  <script src="app.js"></script>
 </body>
 </html>
