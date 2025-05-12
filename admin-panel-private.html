@@ -1,33 +1,171 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>CBE Admin Panel</title>
-  <link rel="stylesheet" href="styles.css" />
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.0.0/dist/umd/supabase.js"></script>
-  <script src="app.js" defer></script>
+  <link rel="stylesheet" href="styles.css"> <!-- Optional: External CSS -->
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background-color: #0a0a23;
+      color: #fff;
+      margin: 0;
+      padding: 20px;
+    }
+    .container {
+      max-width: 800px;
+      margin: auto;
+    }
+    h1, h2 {
+      color: #e6b800;
+    }
+    .form-group {
+      margin-bottom: 15px;
+    }
+    label {
+      font-weight: bold;
+    }
+    input, textarea {
+      width: 100%;
+      padding: 8px;
+      margin-top: 5px;
+      border-radius: 5px;
+      border: none;
+    }
+    button {
+      background-color: #e6b800;
+      color: black;
+      padding: 10px 20px;
+      border: none;
+      border-radius: 5px;
+      cursor: pointer;
+      margin-top: 10px;
+    }
+    .section {
+      margin-top: 40px;
+      padding: 20px;
+      background-color: #1e1e3f;
+      border-radius: 10px;
+    }
+    .signal-item, .member-item {
+      padding: 10px;
+      border-bottom: 1px solid #555;
+    }
+  </style>
 </head>
 <body>
   <div class="container">
-    <h1>CBE Admin Panel - Manage Signals</h1>
+    <h1>CBE Admin Panel</h1>
 
-    <!-- Create Signal Form -->
-    <div class="form-container">
-      <h2>Create New Signal</h2>
-      <form id="create-signal-form">
-        <input type="text" id="signal-name" placeholder="Signal Name" required />
-        <input type="text" id="signal-type" placeholder="Signal Type (Buy/Sell)" required />
-        <input type="text" id="signal-value" placeholder="Signal Value" required />
-        <button type="submit">Create Signal</button>
-      </form>
+    <!-- SECTION: Post Signal -->
+    <div class="section">
+      <h2>Post New Signal</h2>
+      <div class="form-group">
+        <label for="pair">Currency Pair</label>
+        <input type="text" id="pair" placeholder="e.g. XAUUSD">
+      </div>
+      <div class="form-group">
+        <label for="entry">Entry Point</label>
+        <input type="text" id="entry" placeholder="e.g. 1985.50">
+      </div>
+      <div class="form-group">
+        <label for="stoploss">Stop Loss</label>
+        <input type="text" id="stoploss" placeholder="e.g. 1979.00">
+      </div>
+      <div class="form-group">
+        <label for="takeprofit">Take Profit</label>
+        <input type="text" id="takeprofit" placeholder="e.g. 1999.00">
+      </div>
+      <button onclick="submitSignal()">Post Signal</button>
     </div>
 
-    <!-- View All Signals -->
-    <div class="signals-list">
-      <h2>All Signals</h2>
-      <ul id="signals-list"></ul>
+    <!-- SECTION: Member Applications -->
+    <div class="section">
+      <h2>Pending Member Applications</h2>
+      <div id="applicationsList">
+        <!-- Applications will load here dynamically -->
+      </div>
     </div>
   </div>
+
+  <script>
+    // Frontend function to submit a signal to backend (PHP)
+    function submitSignal() {
+      const pair = document.getElementById('pair').value;
+      const entry = document.getElementById('entry').value;
+      const stoploss = document.getElementById('stoploss').value;
+      const takeprofit = document.getElementById('takeprofit').value;
+
+      if (!pair || !entry || !stoploss || !takeprofit) {
+        alert('Please fill in all fields');
+        return;
+      }
+
+      fetch('submit_signal.php', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+        body: `pair=${pair}&entry=${entry}&stoploss=${stoploss}&takeprofit=${takeprofit}`
+      })
+      .then(res => res.text())
+      .then(response => {
+        alert(response);
+        document.getElementById('pair').value = '';
+        document.getElementById('entry').value = '';
+        document.getElementById('stoploss').value = '';
+        document.getElementById('takeprofit').value = '';
+      })
+      .catch(err => {
+        alert('Error submitting signal');
+        console.error(err);
+      });
+    }
+
+    // Load member applications (connects to backend PHP later)
+    function loadApplications() {
+      fetch('get_applications.php')
+        .then(res => res.json())
+        .then(data => {
+          const container = document.getElementById('applicationsList');
+          container.innerHTML = '';
+          data.forEach(app => {
+            const div = document.createElement('div');
+            div.classList.add('member-item');
+            div.innerHTML = `
+              <p><strong>Name:</strong> ${app.name}</p>
+              <p><strong>Email:</strong> ${app.email}</p>
+              <p><strong>Telegram:</strong> ${app.telegram}</p>
+              <button onclick="approveMember(${app.id})">Approve</button>
+              <button onclick="rejectMember(${app.id})">Reject</button>
+            `;
+            container.appendChild(div);
+          });
+        })
+        .catch(err => {
+          console.error('Failed to load applications', err);
+        });
+    }
+
+    function approveMember(id) {
+      fetch(`approve_member.php?id=${id}`)
+        .then(res => res.text())
+        .then(msg => {
+          alert(msg);
+          loadApplications();
+        });
+    }
+
+    function rejectMember(id) {
+      fetch(`reject_member.php?id=${id}`)
+        .then(res => res.text())
+        .then(msg => {
+          alert(msg);
+          loadApplications();
+        });
+    }
+
+    // Initial load
+    loadApplications();
+  </script>
 </body>
 </html>
