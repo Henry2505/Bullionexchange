@@ -1,144 +1,98 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8"/>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>CBE Admin Panel</title>
-  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;500;700&display=swap" rel="stylesheet"/>
-  <link rel="stylesheet" href="styles.css"/>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Login - CBE</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #0b0c10;
+            color: #ffffff;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+        }
+        .login-container {
+            background-color: #1f2833;
+            padding: 40px;
+            border-radius: 8px;
+            box-shadow: 0 0 10px rgba(255, 255, 255, 0.1);
+        }
+        .login-container h2 {
+            margin-bottom: 20px;
+            color: #66fcf1;
+        }
+        input[type="email"],
+        input[type="password"] {
+            width: 100%;
+            padding: 12px;
+            margin: 10px 0;
+            border: none;
+            border-radius: 4px;
+        }
+        button {
+            width: 100%;
+            padding: 12px;
+            background-color: #66fcf1;
+            color: #0b0c10;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-weight: bold;
+        }
+        button:hover {
+            background-color: #45a29e;
+        }
+        .error-message {
+            color: #ff4c4c;
+            margin-top: 10px;
+        }
+    </style>
 </head>
-<body oncontextmenu="return false;">
-  <!-- Background Video & Overlay -->
-  <video id="bg" autoplay muted loop playsinline poster="fallback.jpg">
-    <source src="star-video.mp4" type="video/mp4"/>
-  </video>
-  <div class="overlay"></div>
+<body>
 
-  <!-- Password Modal -->
-  <div id="pwModal">
-    <div class="box">
-      <h3>Admin Login</h3>
-      <input type="text" id="adminEmail" placeholder="Email"/>
-      <input type="password" id="adminPw" placeholder="Password"/>
-      <button id="loginBtn">Login</button>
-    </div>
-  </div>
+<div class="login-container">
+    <h2>Admin Login</h2>
+    <input type="email" id="email" placeholder="Email">
+    <input type="password" id="password" placeholder="Password">
+    <button onclick="adminLogin()">Login</button>
+    <div class="error-message" id="error-message"></div>
+</div>
 
-  <!-- Top Bar -->
-  <div class="top-bar">
-    <button id="logoutBtn" class="logoutBtn">Logout</button>
-    <h1>CBE Admin Panel</h1>
-    <button class="menu-toggle" id="menuToggle">
-      <span></span><span></span><span></span>
-    </button>
-  </div>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js"></script>
+<script>
+    // Initialize Supabase
+    const SUPABASE_URL = 'https://dapwpgvnfjcfqqhrpxla.supabase.co';
+    const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImRhcHdwZ3ZuZmpjZnFxaHJweGxhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDcwNDA4ODgsImV4cCI6MjA2MjYxNjg4OH0.ICC0UsLlzJDNre7rFCeD3k6iVzo6jOJgn3PhABpEMsQ';
+    const supabase = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
-  <!-- Sidebar Navigation -->
-  <div class="sidebar" id="sidebar">
-    <a href="#" data-target="payments">Payment Records</a>
-    <a href="#" data-target="applications">Applications</a>
-    <a href="#" data-target="users">User Approvals</a>
-    <a href="#" data-target="settings">Settings</a>
-    <a href="#" data-target="signals">Publish Signal</a>
-    <a href="#" data-target="broadcast">Broadcast</a>
-    <a href="#" data-target="messages">Inbox</a>
-    <a href="#" data-target="tradeInsights">Trade Insights</a>
-    <a href="#" data-target="tradeHistory">Trade History</a>
-    <a href="#" data-target="logs">Admin Logs</a>
-    <a href="index.html">← Back to Site</a>
-  </div>
+    async function adminLogin() {
+        const email = document.getElementById('email').value.trim();
+        const password = document.getElementById('password').value.trim();
+        const errorDiv = document.getElementById('error-message');
+        errorDiv.textContent = "";
 
-  <!-- Main Content Sections -->
-  <div id="main-content">
-    <!-- Payments -->
-    <div class="content-section" id="payments">
-      <h2>Payment Records</h2>
-      <table><tbody id="paymentTableBody"></tbody></table>
-    </div>
+        if (!email || !password) {
+            errorDiv.textContent = "Please enter both email and password.";
+            return;
+        }
 
-    <!-- Applications -->
-    <div class="content-section" id="applications">
-      <h2>Application Submissions</h2>
-      <table><tbody id="applicationTableBody"></tbody></table>
-    </div>
+        const { data, error } = await supabase.auth.signInWithPassword({
+            email: email,
+            password: password
+        });
 
-    <!-- Users -->
-    <div class="content-section" id="users">
-      <h2>User Approvals</h2>
-      <table><tbody id="userTableBody"></tbody></table>
-    </div>
+        if (error) {
+            errorDiv.textContent = error.message;
+        } else {
+            // Redirect to the main dashboard page
+            window.location.href = "admin-dashboard.html";
+        }
+    }
+</script>
 
-    <!-- Settings -->
-    <div class="content-section" id="settings">
-      <h2>Settings</h2>
-      <div class="form-group"><label>Bitcoin Address</label><input id="btcWallet"/></div>
-      <div class="form-group"><label>Ethereum Address</label><input id="ethWallet"/></div>
-      <div class="form-group"><label>USDT Address</label><input id="usdtWallet"/></div>
-      <div class="form-group"><label>Paystack Key</label><input id="paystackKey"/></div>
-      <button class="btn" id="submitSettings">Save Settings</button>
-    </div>
-
-    <!-- Signals -->
-    <div class="content-section" id="signals">
-      <h2>Publish Signal</h2>
-      <div class="form-group"><label>Pair</label><input id="pair"/></div>
-      <div class="form-group"><label>Type</label><select id="type"><option>BUY</option><option>SELL</option></select></div>
-      <div class="form-group"><label>Entry</label><input id="entry" type="number"/></div>
-      <div class="form-group"><label>TP</label><input id="tp" type="number"/></div>
-      <div class="form-group"><label>SL</label><input id="sl" type="number"/></div>
-      <div class="form-group"><label>Note</label><textarea id="signalNote"></textarea></div>
-      <button class="btn" id="submitSignal">Publish</button>
-    </div>
-
-    <!-- Broadcast -->
-    <div class="content-section" id="broadcast">
-      <h2>Broadcast Message</h2>
-      <div class="form-group"><textarea id="broadcastText"></textarea></div>
-      <button class="btn" id="sendBroadcast">Send</button>
-    </div>
-
-    <!-- Inbox Messages -->
-    <div class="content-section" id="messages">
-      <h2>Inbox Messages</h2>
-      <table><tbody id="messageTableBody"></tbody></table>
-    </div>
-
-    <!-- Trade Insights -->
-    <div class="content-section" id="tradeInsights">
-      <h2>Upload Trade Insight</h2>
-      <div class="form-group"><label>Date</label><input type="date" id="insightDate"/></div>
-      <div class="form-group"><label>File</label><input type="file" id="insightFile"/></div>
-      <div class="form-group"><label>Note</label><textarea id="insightNote"></textarea></div>
-      <button class="btn" id="submitInsight">Upload Insight</button>
-    </div>
-
-    <!-- Trading History -->
-    <div class="content-section" id="tradeHistory">
-      <h2>Upload Trade History</h2>
-      <div class="form-group"><label>Month</label>
-        <select id="tradeMonth">
-          <option>January</option><option>February</option><option>March</option>
-          <option>April</option><option>May</option><option>June</option>
-          <option>July</option><option>August</option><option>September</option>
-          <option>October</option><option>November</option><option>December</option>
-        </select>
-      </div>
-      <div class="form-group"><label>File</label><input type="file" id="historyFile"/></div>
-      <div class="form-group"><label>Note</label><textarea id="historyNote"></textarea></div>
-      <button class="btn" id="submitHistory">Upload History</button>
-    </div>
-
-    <!-- Admin Logs -->
-    <div class="content-section" id="logs">
-      <h2>Admin Logs</h2>
-      <ul id="logList"></ul>
-      <button class="btn" id="clearLogs">Clear Logs</button>
-    </div>
-  </div>
-
-  <!-- Load Supabase client library from CDN -->
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js"></script>
-  <!-- Load your custom admin logic -->
-  <script src="admin.js"></script>
 </body>
 </html>
