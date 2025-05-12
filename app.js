@@ -1,6 +1,6 @@
-// Initialize Supabase
-const supabaseUrl = 'https://your-project-url.supabase.co';
-const supabaseKey = 'your-anon-key';
+// Initialize Supabase client
+const supabaseUrl = 'https://your-project-url.supabase.co'; // Replace with your Supabase URL
+const supabaseKey = 'your-anon-key'; // Replace with your Supabase anon/public key
 const supabase = supabase.createClient(supabaseUrl, supabaseKey);
 
 // DOM Elements
@@ -10,56 +10,49 @@ const signalTypeInput = document.getElementById('signal-type');
 const signalValueInput = document.getElementById('signal-value');
 const signalsList = document.getElementById('signals-list');
 
-// Function to fetch and display all signals
+// Fetch all signals from Supabase
 async function fetchSignals() {
-    const { data, error } = await supabase
-        .from('signals')  // Replace with your table name in Supabase
-        .select('*');
+  const { data, error } = await supabase.from('signals').select('*');
 
-    if (error) {
-        console.error('Error fetching signals:', error);
-        return;
-    }
+  if (error) {
+    console.error('Error fetching signals:', error.message);
+    return;
+  }
 
-    // Clear the current list
-    signalsList.innerHTML = '';
+  signalsList.innerHTML = '';
 
-    // Display signals
-    data.forEach(signal => {
-        const li = document.createElement('li');
-        li.textContent = `${signal.name} - ${signal.type} - ${signal.value}`;
-        signalsList.appendChild(li);
-    });
+  data.forEach(signal => {
+    const li = document.createElement('li');
+    li.textContent = `${signal.name} | ${signal.type} | ${signal.value}`;
+    signalsList.appendChild(li);
+  });
 }
 
-// Handle form submission to create a new signal
+// Handle signal form submission
 createSignalForm.addEventListener('submit', async (e) => {
-    e.preventDefault();
+  e.preventDefault();
 
-    const newSignal = {
-        name: signalNameInput.value,
-        type: signalTypeInput.value,
-        value: signalValueInput.value
-    };
+  const newSignal = {
+    name: signalNameInput.value,
+    type: signalTypeInput.value,
+    value: signalValueInput.value,
+  };
 
-    // Insert the new signal into Supabase
-    const { data, error } = await supabase
-        .from('signals')  // Replace with your table name in Supabase
-        .insert([newSignal]);
+  const { error } = await supabase.from('signals').insert([newSignal]);
 
-    if (error) {
-        console.error('Error inserting new signal:', error);
-        return;
-    }
+  if (error) {
+    console.error('Error creating signal:', error.message);
+    return;
+  }
 
-    // Clear form fields after successful submission
-    signalNameInput.value = '';
-    signalTypeInput.value = '';
-    signalValueInput.value = '';
+  // Clear form
+  signalNameInput.value = '';
+  signalTypeInput.value = '';
+  signalValueInput.value = '';
 
-    // Refresh the signals list
-    fetchSignals();
+  // Refresh list
+  fetchSignals();
 });
 
-// Load signals when page loads
-window.onload = fetchSignals;
+// Load signals on page load
+window.addEventListener('DOMContentLoaded', fetchSignals);
