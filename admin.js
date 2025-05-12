@@ -1,23 +1,29 @@
 // admin.js
 
+import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm';
+
 // 1) Initialize Supabase client
 const SUPABASE_URL     = 'https://dapwpgvnfjcfqqhrpxla.supabase.co';
-const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImRhcHdwZ3ZuZmpjZnFxaHJweGxhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDcwNDA4ODgsImV4cCI6MjA2MjYxNjg4OH0.ICC0UsLlzJDNre7rFCeD3k6iVzo6jOJgn3PhABpEMsQ';
-const supabase = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFz...';
+const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
-// 2) Wire up UI elements
-const loginBtn      = document.getElementById('loginBtn');
-const logoutBtn     = document.getElementById('logoutBtn');
-const menuToggleBtn = document.getElementById('menuToggle');
-const sidebar       = document.getElementById('sidebar');
-const pwModal       = document.getElementById('pwModal');
+// 2) UI elements
+const pwModal   = document.getElementById('pwModal');
+const loginBtn  = document.getElementById('loginBtn');
+const logoutBtn = document.getElementById('logoutBtn');
+const menuBtn   = document.getElementById('menuToggle');
+const sidebar   = document.getElementById('sidebar');
 
-// 3) Toggle sidebar
-menuToggleBtn.addEventListener('click', () => {
-  sidebar.classList.toggle('show');
-});
+// 3) Sidebar toggle
+menuBtn.addEventListener('click', () => sidebar.classList.toggle('show'));
 
-// 4) Handle login
+// 4) Attempt auto-login if session exists
+(async () => {
+  const { data: { session } } = await supabase.auth.getSession();
+  if (session) initDashboard();
+})();
+
+// 5) Login handler with explicit error reporting
 loginBtn.addEventListener('click', async () => {
   const email    = document.getElementById('adminEmail').value.trim();
   const password = document.getElementById('adminPw').value;
@@ -26,36 +32,31 @@ loginBtn.addEventListener('click', async () => {
     return alert('Please enter both email and password.');
   }
 
-  const { data, error } = await supabase.auth.signInWithPassword({ email, password });
-  if (error) {
-    return alert('Login failed: ' + error.message);
+  try {
+    const { data, error } = await supabase.auth.signInWithPassword({ email, password });
+    if (error) {
+      alert('Login error: ' + error.message);
+      console.error('Supabase login error', error);
+      return;
+    }
+    // Success
+    pwModal.style.display = 'none';
+    initDashboard();
+  } catch (err) {
+    alert('Unexpected error: ' + err.message);
+    console.error(err);
   }
-
-  // On successful login, hide modal and init dashboard
-  pwModal.style.display = 'none';
-  initDashboard();
 });
 
-// 5) Handle logout
-logoutBtn.addEventListener('click', () => {
-  supabase.auth.signOut();
+// 6) Logout handler
+logoutBtn.addEventListener('click', async () => {
+  await supabase.auth.signOut();
   window.location.reload();
 });
 
-// 6) If already logged in (page refresh), skip login modal
-supabase.auth.getSession().then(({ data: { session } }) => {
-  if (session) {
-    pwModal.style.display = 'none';
-    initDashboard();
-  }
-});
-
-// 7) Main dashboard init
+// 7) Initialize dashboard after login
 async function initDashboard() {
-  // Show default section
   showSection('payments');
-
-  // Nav links
   document.querySelectorAll('.sidebar a[data-target]').forEach(a => {
     a.addEventListener('click', e => {
       e.preventDefault();
@@ -63,8 +64,7 @@ async function initDashboard() {
       sidebar.classList.remove('show');
     });
   });
-
-  // Load all data in parallel
+  // Load data
   await Promise.all([
     loadPayments(),
     loadApplications(),
@@ -75,27 +75,25 @@ async function initDashboard() {
   ]);
 }
 
-// 8) Utility to switch visible section
+// 8) Utility to switch sections
 function showSection(id) {
-  document.querySelectorAll('.content-section').forEach(sec => sec.classList.remove('active'));
+  document.querySelectorAll('.content-section').forEach(s => s.classList.remove('active'));
   document.getElementById(id).classList.add('active');
 }
 
-// 9) Data-loaders (examples shown for payments & applications; replicate for others)
+// --- Data loaders follow (with basic error alerts) ---
+
 async function loadPayments() {
   const { data, error } = await supabase
     .from('payments')
     .select('*')
     .order('created_at', { ascending: false });
-  if (error) return console.error('Payment load error:', error);
-  document.getElementById('paymentTableBody').innerHTML = data.map(p => `
-    <tr>
-      <td>${p.user_id}</td>
-      <td>${p.amount}</td>
-      <td>${p.payment_method}</td>
-      <td>${p.status}</td>
-    </tr>
-  `).join('') || '<tr><td colspan="4">No payments</td></tr>';
+  if (error) return alert('Error loading payments: ' + error.message);
+  document.getElementById('paymentTableBody').innerHTML =
+    data.map(p => `<tr>
+      <td>${p.user_id}</td><td>${p.amount}</td><td>${p.payment_method}</td><td>${p.status}</td>
+    </tr>`).join('') ||
+    '<tr><td colspan="4">No payments</td></tr>';
 }
 
 async function loadApplications() {
@@ -103,23 +101,57 @@ async function loadApplications() {
     .from('applications')
     .select('*')
     .order('created_at', { ascending: false });
-  if (error) return console.error('Applications load error:', error);
-  document.getElementById('applicationTableBody').innerHTML = data.map(a => `
-    <tr>
-      <td>${a.user_id}</td>
-      <td>${a.status}</td>
+  if (error) return alert('Error loading applications: ' + error.message);
+  document.getElementById('applicationTableBody').innerHTML =
+    data.map(a => `<tr>
+      <td>${a.user_id}</td><td>${a.status}</td>
       <td><button class="btn" onclick="updateApplication(${a.id}, 'approved')">Approve</button></td>
       <td><button class="btn" onclick="updateApplication(${a.id}, 'rejected')">Reject</button></td>
-    </tr>
-  `).join('') || '<tr><td colspan="4">No applications</td></tr>';
+    </tr>`).join('') ||
+    '<tr><td colspan="4">No applications</td></tr>';
 }
-
 window.updateApplication = async (id, status) => {
-  await supabase.from('applications').update({ status }).eq('id', id);
+  const { error } = await supabase.from('applications').update({ status }).eq('id', id);
+  if (error) return alert('Error updating application: ' + error.message);
   loadApplications();
 };
 
-// ...and so on for loadUsers(), loadSettings(), loadMessages(), loadLogs(),
-// plus your publishSignal(), uploadInsight(), uploadHistory(), etc., exactly as before.
+async function loadUsers() {
+  const { data, error } = await supabase
+    .from('members')
+    .select('*')
+    .order('created_at', { ascending: false });
+  if (error) return alert('Error loading users: ' + error.message);
+  document.getElementById('userTableBody').innerHTML =
+    data.map(u => `<tr>
+      <td>${u.user_id}</td><td>${u.status}</td><td>${new Date(u.created_at).toLocaleString()}</td>
+    </tr>`).join('') ||
+    '<tr><td colspan="3">No users</td></tr>';
+}
 
-// Just be sure each function is called inside initDashboard()
+async function loadSettings() {
+  const { data, error } = await supabase
+    .from('settings')
+    .select('*')
+    .limit(1)
+    .single();
+  if (error) return alert('Error loading settings: ' + error.message);
+  document.getElementById('btcWallet').value = data.btc;
+  document.getElementById('ethWallet').value = data.eth;
+  document.getElementById('usdtWallet').value = data.usdt;
+  document.getElementById('paystackKey').value = data.paystackKey;
+}
+
+document.getElementById('submitSettings').addEventListener('click', async () => {
+  const btc = document.getElementById('btcWallet').value;
+  const eth = document.getElementById('ethWallet').value;
+  const usdt = document.getElementById('usdtWallet').value;
+  const paystackKey = document.getElementById('paystackKey').value;
+  const { error } = await supabase
+    .from('settings')
+    .upsert({ id: 1, btc, eth, usdt, paystackKey });
+  if (error) return alert('Error saving settings: ' + error.message);
+  alert('Settings saved');
+});
+
+// Similar pattern for loadMessages, loadLogs, publishSignal, uploadInsight, uploadHistory...
