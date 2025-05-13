@@ -85,16 +85,10 @@
 
   <footer>© 2025 CBE – Chukwuemeka Bullion Exchange</footer>
 
-  <script>
-    // Ensure localStorage.users is always a proper JSON array
-    (function normalizeUsers(){
-      const raw = localStorage.getItem('users');
-      if (raw && raw.trim().charAt(0) !== '[') {
-        localStorage.setItem('users', '[' + raw + ']');
-      }
-    })();
+  <script type="module">
+    import { supabase } from './supabase-config.js';
 
-    document.getElementById('apply-form').addEventListener('submit', function (e) {
+    document.getElementById('apply-form').addEventListener('submit', async function (e) {
       e.preventDefault();
 
       const name     = document.getElementById('apply-name').value.trim();
@@ -108,38 +102,36 @@
         return;
       }
 
-      // Load existing users (array)
-      let users = [];
-      try {
-        users = JSON.parse(localStorage.getItem('users') || '[]');
-      } catch (_) {
-        users = [];
-      }
-      if (!Array.isArray(users)) {
-        users = [users];
-      }
+      const { data: existing, error: fetchError } = await supabase
+        .from('users')
+        .select('id')
+        .eq('email', email);
 
-      // Prevent duplicate applications
-      if (users.some(u => u.email === email)) {
+      if (existing && existing.length > 0) {
         alert("You’ve already applied. Please proceed to the VIP Subscription.");
-        window.location.href = 'vip-subscription.html';
+        window.location.href = 'CBE_vip_subscription.html';
         return;
       }
 
-      // Add new applicant
-      users.push({
-        name,
-        email,
-        password,
-        phone,
-        message,
-        status: 'pending',
-        date: new Date().toISOString()
-      });
-      localStorage.setItem('users', JSON.stringify(users));
+      const { data, error } = await supabase.from('users').insert([
+        {
+          full_name: name,
+          email: email,
+          password: password,
+          phone: phone,
+          message: message,
+          status: 'pending',
+          joined_at: new Date().toISOString()
+        }
+      ]);
 
-      alert("Application submitted successfully! Please proceed to VIP Subscription.");
-      window.location.href = 'vip-subscription.html';
+      if (error) {
+        console.error(error);
+        alert("Failed to submit application. Please try again.");
+      } else {
+        alert("Application submitted! Please proceed to VIP Subscription.");
+        window.location.href = 'CBE_vip_subscription.html';
+      }
     });
   </script>
 </body>
