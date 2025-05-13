@@ -57,6 +57,11 @@
       background: #e6c200;
       box-shadow: 0 0 15px gold;
     }
+    #apply-alert {
+      margin-top: 15px;
+      text-align: center;
+      font-weight: bold;
+    }
     footer {
       text-align: center; padding: 20px;
       color: #888;
@@ -82,6 +87,8 @@
       <textarea id="apply-message" placeholder="Tell us about yourself or goals" required></textarea>
       <button type="submit">Submit Application</button>
     </form>
+    <!-- Inline alert banner for errors/success -->
+    <div id="apply-alert" style="color: crimson;"></div>
   </div>
 
   <footer>© 2025 CBE – Chukwuemeka Bullion Exchange</footer>
@@ -95,6 +102,10 @@
     document.getElementById('apply-form').addEventListener('submit', async function (e) {
       e.preventDefault();
 
+      const alertDiv   = document.getElementById('apply-alert');
+      alertDiv.textContent = '';
+      alertDiv.style.color = 'crimson';
+
       const full_name = document.getElementById('apply-name').value.trim();
       const email     = document.getElementById('apply-email').value.trim().toLowerCase();
       const password  = document.getElementById('apply-password').value;
@@ -102,10 +113,11 @@
       const message   = document.getElementById('apply-message').value.trim();
 
       if (!full_name || !email || !password || !phone || !message) {
-        return alert('Please complete all fields.');
+        alertDiv.textContent = 'Please complete all fields.';
+        return;
       }
 
-      // Attempt insert and log response
+      // Attempt insert and display result
       const { data, error } = await supabase
         .from('users')
         .insert([{
@@ -117,16 +129,16 @@
           status: 'pending',
           joined_at: new Date().toISOString()
         }])
-        .select(); // include select so data is returned
-
-      console.log('Supabase response data:', data);
-      console.log('Supabase response error:', error);
+        .select();
 
       if (error) {
-        alert(`Error: ${error.message}. Check console for details.`);
+        alertDiv.textContent = `Error: ${error.message}`;
       } else {
-        alert('Application submitted successfully! Please proceed to VIP Subscription.');
-        window.location.href = 'CBE_vip_subscription.html';
+        alertDiv.style.color = 'lightgreen';
+        alertDiv.textContent = 'Application submitted successfully! Redirecting...';
+        setTimeout(() => {
+          window.location.href = 'CBE_vip_subscription.html';
+        }, 1500);
       }
     });
   </script>
