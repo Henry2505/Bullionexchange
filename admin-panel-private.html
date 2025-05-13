@@ -3,154 +3,30 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Manage Payments — Admin Panel</title>
-  <style>
-    body {
-      margin: 0;
-      font-family: Arial, sans-serif;
-      background: #0b0c10;
-      color: #fff;
-      padding: 20px;
-    }
-    h2 {
-      color: #66fcf1;
-      margin-bottom: 20px;
-    }
-    form {
-      background: #1f2833;
-      padding: 20px;
-      border-radius: 8px;
-      margin-bottom: 30px;
-    }
-    input, select, button {
-      width: 100%;
-      padding: 10px;
-      margin: 10px 0;
-      border-radius: 4px;
-      border: none;
-      font-size: 16px;
-    }
-    input, select {
-      background: #0b0c10;
-      color: #fff;
-    }
-    button {
-      background: #66fcf1;
-      color: #0b0c10;
-      font-weight: bold;
-      cursor: pointer;
-    }
-    table {
-      width: 100%;
-      border-collapse: collapse;
-      background: #1f2833;
-    }
-    th, td {
-      padding: 12px;
-      border-bottom: 1px solid #444;
-      text-align: left;
-    }
-    th {
-      background: #45a29e;
-    }
-    td input {
-      background: #0b0c10;
-      color: #fff;
-      border: none;
-    }
-  </style>
+  <title>CBE Admin Panel</title>
+  <link rel="stylesheet" href="styles.css">
 </head>
 <body>
+  <div class="sidebar">
+    <h2>CBE Admin</h2>
+    <ul>
+      <li><a href="admin-dashboard.html">Dashboard</a></li>
+      <li><a href="admin-signals.html">Signals</a></li>
+      <li><a href="admin-users.html">Users</a></li>
+      <li><a href="admin-payments.html">Payments</a></li> <!-- Added Payments navigation -->
+      <li><a href="admin-settings.html">Settings</a></li>
+      <li><a href="admin-messages.html">Messages</a></li>
+      <li><a href="admin-files.html">Files</a></li>
+      <li><a href="index.html">Logout</a></li>
+    </ul>
+  </div>
 
-  <h2>Manage Payment Methods</h2>
+  <div class="main-content">
+    <h1>Welcome to CBE Admin Panel</h1>
+    <p>Select a section from the sidebar to begin.</p>
+  </div>
 
-  <form id="addPaymentForm">
-    <label for="type">Payment Type</label>
-    <select id="type" required>
-      <option value="">-- Select Payment Type --</option>
-      <option value="Paystack">Paystack</option>
-      <option value="BTC">BTC</option>
-      <option value="USDT TRC20">USDT TRC20</option>
-      <option value="Ethereum">Ethereum</option>
-      <option value="TRX">TRX</option>
-    </select>
-
-    <label for="value">Wallet Address / Paystack Link</label>
-    <input type="text" id="value" placeholder="Enter address or link" required />
-
-    <button type="submit">Add Payment</button>
-  </form>
-
-  <table>
-    <thead>
-      <tr>
-        <th>Type</th>
-        <th>Value</th>
-        <th>Actions</th>
-      </tr>
-    </thead>
-    <tbody id="paymentsTable"></tbody>
-  </table>
-
-  <script type="module">
-    import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm';
-    const supabase = createClient(
-      'https://dapwpgvnfjcfqqhrpxla.supabase.co',
-      'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImRhcHdwZ3ZuZmpjZnFxaHJweGxhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDcwNDA4ODgsImV4cCI6MjA2MjYxNjg4OH0.ICC0UsLlzJDNre7rFCeD3k6iVzo6jOJgn3PhABpEMsQ'
-    );
-
-    const addForm = document.getElementById('addPaymentForm');
-    const type = document.getElementById('type');
-    const value = document.getElementById('value');
-    const tableBody = document.getElementById('paymentsTable');
-
-    async function loadPayments() {
-      const { data, error } = await supabase.from('payments').select('*');
-      tableBody.innerHTML = '';
-      if (data) {
-        data.forEach(payment => {
-          const row = document.createElement('tr');
-          row.innerHTML = `
-            <td>${payment.type}</td>
-            <td>
-              <input type="text" value="${payment.value}" data-id="${payment.id}" class="edit-value"/>
-            </td>
-            <td>
-              <button onclick="deletePayment(${payment.id})">Delete</button>
-            </td>
-          `;
-          tableBody.appendChild(row);
-        });
-      }
-    }
-
-    addForm.addEventListener('submit', async (e) => {
-      e.preventDefault();
-      const { error } = await supabase.from('payments').insert([
-        { type: type.value, value: value.value }
-      ]);
-      if (!error) {
-        type.value = '';
-        value.value = '';
-        await loadPayments();
-      }
-    });
-
-    window.deletePayment = async (id) => {
-      await supabase.from('payments').delete().eq('id', id);
-      await loadPayments();
-    }
-
-    tableBody.addEventListener('change', async (e) => {
-      if (e.target.classList.contains('edit-value')) {
-        const id = e.target.getAttribute('data-id');
-        const newValue = e.target.value;
-        await supabase.from('payments').update({ value: newValue }).eq('id', id);
-      }
-    });
-
-    loadPayments();
-  </script>
-
+  <!-- Load shared JS file -->
+  <script type="module" src="admin.js"></script>
 </body>
 </html>
