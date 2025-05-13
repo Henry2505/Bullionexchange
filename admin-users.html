@@ -2,49 +2,175 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>CBE Admin — Users</title>
-  <link rel="stylesheet" href="styles.css" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Admin – Manage Users | CBE</title>
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600&display=swap" rel="stylesheet" />
+  <style>
+    body {
+      margin: 0;
+      font-family: 'Poppins', sans-serif;
+      background: #111;
+      color: #f5f5f5;
+    }
+
+    header {
+      background: #000;
+      padding: 20px;
+      text-align: center;
+      color: gold;
+      font-size: 1.5rem;
+      font-weight: bold;
+      border-bottom: 2px solid gold;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin: 30px auto;
+      max-width: 1000px;
+      background: #1c1c1c;
+      border-radius: 10px;
+      overflow: hidden;
+    }
+
+    th, td {
+      padding: 12px 20px;
+      text-align: left;
+      border-bottom: 1px solid #333;
+    }
+
+    th {
+      background: #222;
+      color: gold;
+    }
+
+    tr:hover {
+      background: #292929;
+    }
+
+    .btn {
+      padding: 6px 14px;
+      border: none;
+      border-radius: 6px;
+      font-weight: bold;
+      cursor: pointer;
+    }
+
+    .approve-btn {
+      background: gold;
+      color: black;
+    }
+
+    .delete-btn {
+      background: crimson;
+      color: white;
+      margin-left: 10px;
+    }
+
+    .error {
+      color: red;
+      text-align: center;
+      padding: 10px;
+    }
+  </style>
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 </head>
 <body>
-  <div class="admin-wrapper">
-    <aside class="sidebar">
-      <h2>CBE Admin</h2>
-      <nav>
-        <a href="admin-dashboard.html">Dashboard</a>
-        <a href="admin-signals.html">Signals</a>
-        <a href="admin-users.html" class="active">Users</a>
-        <a href="admin-payments.html">Payments</a>
-        <a href="admin-history.html">Trade History</a>
-        <a href="admin-insights.html">Trade Insights</a>
-        <a href="admin-settings.html">Settings</a>
-        <a href="admin-messages.html">Messages</a>
-        <a href="admin-files.html">Files</a>
-      </nav>
-    </aside>
 
-    <main class="main-panel">
-      <header><h1>Registered Users</h1></header>
+  <header>Admin Panel – Manage Applicants</header>
 
-      <section class="table-section">
-        <table>
-          <thead>
-            <tr>
-              <th>Email</th>
-              <th>Full Name</th>
-              <th>Status</th>
-              <th>Joined</th>
-              <th>Actions</th>
-            </tr>
-          </thead>
-          <tbody id="users-table-body">
-            <!-- Populated by JavaScript -->
-          </tbody>
-        </table>
-      </section>
-    </main>
-  </div>
+  <table>
+    <thead>
+      <tr>
+        <th>Full Name</th>
+        <th>Email</th>
+        <th>Phone</th>
+        <th>Joined</th>
+        <th>Actions</th>
+      </tr>
+    </thead>
+    <tbody id="users-table-body">
+      <tr><td colspan="5" class="error">Loading users...</td></tr>
+    </tbody>
+  </table>
 
-  <script type="module" src="admin.js"></script>
+  <script>
+    const SUPABASE_URL = 'https://dapwpgvnfjcfqqhrpxla.supabase.co';
+    const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImRhcHdwZ3ZuZmpjZnFxaHJweGxhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDcwNDA4ODgsImV4cCI6MjA2MjYxNjg4OH0.ICC0UsLlzJDNre7rFCeD3k6iVzo6jOJgn3PhABpEMsQ';
+
+    const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+    async function fetchUsers() {
+      const { data: users, error } = await supabase
+        .from('users')
+        .select('*')
+        .order('joined_at', { ascending: false });
+
+      const tbody = document.getElementById('users-table-body');
+      tbody.innerHTML = '';
+
+      if (error) {
+        console.error('Fetch error:', error);
+        tbody.innerHTML = `<tr><td colspan="5" class="error">Error loading users</td></tr>`;
+        return;
+      }
+
+      if (users.length === 0) {
+        tbody.innerHTML = `<tr><td colspan="5">No applicants found.</td></tr>`;
+        return;
+      }
+
+      users.forEach(user => {
+        const row = document.createElement('tr');
+        row.innerHTML = `
+          <td>${user.full_name}</td>
+          <td>${user.email}</td>
+          <td>${user.phone || ''}</td>
+          <td>${new Date(user.joined_at).toLocaleDateString()}</td>
+          <td>
+            ${user.status === 'pending'
+              ? `<button class="btn approve-btn" data-id="${user.id}">Approve</button>`
+              : `<span style="color: lightgreen;">Approved</span>`}
+            <button class="btn delete-btn" data-id="${user.id}">Delete</button>
+          </td>
+        `;
+        tbody.appendChild(row);
+      });
+    }
+
+    document.getElementById('users-table-body').addEventListener('click', async function (e) {
+      if (e.target.classList.contains('approve-btn')) {
+        const id = e.target.dataset.id;
+        const { error } = await supabase
+          .from('users')
+          .update({ status: 'approved' })
+          .eq('id', id);
+
+        if (error) {
+          alert('Error approving user');
+        } else {
+          fetchUsers();
+        }
+      }
+
+      if (e.target.classList.contains('delete-btn')) {
+        const id = e.target.dataset.id;
+        const { error } = await supabase
+          .from('users')
+          .delete()
+          .eq('id', id);
+
+        if (error) {
+          alert('Error deleting user');
+        } else {
+          fetchUsers();
+        }
+      }
+    });
+
+    document.addEventListener('DOMContentLoaded', fetchUsers);
+  </script>
+
 </body>
 </html>
