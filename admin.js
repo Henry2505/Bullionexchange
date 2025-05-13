@@ -1,157 +1,134 @@
-// admin.js
+// Initialize Supabase
+const supabaseUrl = 'https://dapwpgvnfjcfqqhrpxla.supabase.co';
+const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImRhcHdwZ3ZuZmpjZnFxaHJweGxhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDcwNDA4ODgsImV4cCI6MjA2MjYxNjg4OH0.ICC0UsLlzJDNre7rFCeD3k6iVzo6jOJgn3PhABpEMsQ';
+const supabase = supabase.createClient(supabaseUrl, supabaseKey);
 
-import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm';
-
-// 1) Initialize Supabase client
-const SUPABASE_URL     = 'https://dapwpgvnfjcfqqhrpxla.supabase.co';
-const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFz...';
-const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
-
-// 2) UI elements
-const pwModal   = document.getElementById('pwModal');
-const loginBtn  = document.getElementById('loginBtn');
-const logoutBtn = document.getElementById('logoutBtn');
-const menuBtn   = document.getElementById('menuToggle');
-const sidebar   = document.getElementById('sidebar');
-
-// 3) Sidebar toggle
-menuBtn.addEventListener('click', () => sidebar.classList.toggle('show'));
-
-// 4) Attempt auto-login if session exists
-(async () => {
-  const { data: { session } } = await supabase.auth.getSession();
-  if (session) initDashboard();
-})();
-
-// 5) Login handler with explicit error reporting
-loginBtn.addEventListener('click', async () => {
-  const email    = document.getElementById('adminEmail').value.trim();
-  const password = document.getElementById('adminPw').value;
-
-  if (!email || !password) {
-    return alert('Please enter both email and password.');
-  }
-
-  try {
-    const { data, error } = await supabase.auth.signInWithPassword({ email, password });
-    if (error) {
-      alert('Login error: ' + error.message);
-      console.error('Supabase login error', error);
-      return;
-    }
-    // Success
-    pwModal.style.display = 'none';
-    initDashboard();
-  } catch (err) {
-    alert('Unexpected error: ' + err.message);
-    console.error(err);
-  }
-});
-
-// 6) Logout handler
-logoutBtn.addEventListener('click', async () => {
-  await supabase.auth.signOut();
-  window.location.reload();
-});
-
-// 7) Initialize dashboard after login
-async function initDashboard() {
-  showSection('payments');
-  document.querySelectorAll('.sidebar a[data-target]').forEach(a => {
-    a.addEventListener('click', e => {
-      e.preventDefault();
-      showSection(a.dataset.target);
-      sidebar.classList.remove('show');
-    });
-  });
-  // Load data
-  await Promise.all([
-    loadPayments(),
-    loadApplications(),
-    loadUsers(),
-    loadSettings(),
-    loadMessages(),
-    loadLogs()
-  ]);
-}
-
-// 8) Utility to switch sections
-function showSection(id) {
-  document.querySelectorAll('.content-section').forEach(s => s.classList.remove('active'));
-  document.getElementById(id).classList.add('active');
-}
-
-// --- Data loaders follow (with basic error alerts) ---
-
-async function loadPayments() {
-  const { data, error } = await supabase
-    .from('payments')
-    .select('*')
-    .order('created_at', { ascending: false });
-  if (error) return alert('Error loading payments: ' + error.message);
-  document.getElementById('paymentTableBody').innerHTML =
-    data.map(p => `<tr>
-      <td>${p.user_id}</td><td>${p.amount}</td><td>${p.payment_method}</td><td>${p.status}</td>
-    </tr>`).join('') ||
-    '<tr><td colspan="4">No payments</td></tr>';
-}
-
-async function loadApplications() {
-  const { data, error } = await supabase
-    .from('applications')
-    .select('*')
-    .order('created_at', { ascending: false });
-  if (error) return alert('Error loading applications: ' + error.message);
-  document.getElementById('applicationTableBody').innerHTML =
-    data.map(a => `<tr>
-      <td>${a.user_id}</td><td>${a.status}</td>
-      <td><button class="btn" onclick="updateApplication(${a.id}, 'approved')">Approve</button></td>
-      <td><button class="btn" onclick="updateApplication(${a.id}, 'rejected')">Reject</button></td>
-    </tr>`).join('') ||
-    '<tr><td colspan="4">No applications</td></tr>';
-}
-window.updateApplication = async (id, status) => {
-  const { error } = await supabase.from('applications').update({ status }).eq('id', id);
-  if (error) return alert('Error updating application: ' + error.message);
-  loadApplications();
+// Sidebar toggle (optional)
+document.getElementById('menuToggle').onclick = () => {
+  document.getElementById('sidebar').classList.toggle('show');
 };
 
-async function loadUsers() {
-  const { data, error } = await supabase
-    .from('members')
-    .select('*')
-    .order('created_at', { ascending: false });
-  if (error) return alert('Error loading users: ' + error.message);
-  document.getElementById('userTableBody').innerHTML =
-    data.map(u => `<tr>
-      <td>${u.user_id}</td><td>${u.status}</td><td>${new Date(u.created_at).toLocaleString()}</td>
-    </tr>`).join('') ||
-    '<tr><td colspan="3">No users</td></tr>';
-}
-
-async function loadSettings() {
-  const { data, error } = await supabase
-    .from('settings')
-    .select('*')
-    .limit(1)
-    .single();
-  if (error) return alert('Error loading settings: ' + error.message);
-  document.getElementById('btcWallet').value = data.btc;
-  document.getElementById('ethWallet').value = data.eth;
-  document.getElementById('usdtWallet').value = data.usdt;
-  document.getElementById('paystackKey').value = data.paystackKey;
-}
-
-document.getElementById('submitSettings').addEventListener('click', async () => {
-  const btc = document.getElementById('btcWallet').value;
-  const eth = document.getElementById('ethWallet').value;
-  const usdt = document.getElementById('usdtWallet').value;
-  const paystackKey = document.getElementById('paystackKey').value;
-  const { error } = await supabase
-    .from('settings')
-    .upsert({ id: 1, btc, eth, usdt, paystackKey });
-  if (error) return alert('Error saving settings: ' + error.message);
-  alert('Settings saved');
+// Navigation
+document.querySelectorAll('.sidebar a').forEach(a => {
+  a.addEventListener('click', e => {
+    e.preventDefault();
+    const target = a.dataset.target;
+    document.querySelectorAll('.content-section').forEach(s => s.classList.remove('active'));
+    document.getElementById(target).classList.add('active');
+  });
 });
+// Show default
+document.getElementById('signals').classList.add('active');
 
-// Similar pattern for loadMessages, loadLogs, publishSignal, uploadInsight, uploadHistory...
+// —— Signals —— 
+document.getElementById('submitSignal').onclick = async () => {
+  const obj = {
+    currency_pair: document.getElementById('pair').value,
+    entry_point: parseFloat(document.getElementById('entry').value),
+    stop_loss: parseFloat(document.getElementById('sl').value),
+    take_profit: parseFloat(document.getElementById('tp').value),
+    note: document.getElementById('signalNote').value,
+    status: 'pending'
+  };
+  const { error } = await supabase.from('signals').insert([obj]);
+  if (error) return alert('Error: ' + error.message);
+  loadSignals();
+};
+async function loadSignals() {
+  const { data } = await supabase.from('signals').select('*').order('created_at', { ascending: false });
+  const ul = document.getElementById('signalList');
+  ul.innerHTML = data.map(s => `<li>${s.currency_pair} | EP:${s.entry_point} SL:${s.stop_loss} TP:${s.take_profit} — ${s.note}</li>`).join('');
+}
+loadSignals();
+
+// —— Testimonials —— 
+async function loadTestimonials() {
+  const { data } = await supabase.from('testimonials').select('*').order('created_at', { ascending: false });
+  document.getElementById('testimonialList').innerHTML = data.map(t => `
+    <li>
+      ${t.content} — <em>${t.status}</em>
+      <button onclick="updateTestimonial(${t.id}, 'approved')">Approve</button>
+      <button onclick="updateTestimonial(${t.id}, 'rejected')">Reject</button>
+    </li>
+  `).join('');
+}
+window.updateTestimonial = async (id, status) => {
+  await supabase.from('testimonials').update({ status }).eq('id', id);
+  loadTestimonials();
+};
+loadTestimonials();
+
+// —— Payments —— 
+async function loadPayments() {
+  const { data } = await supabase.from('payments').select('*').order('created_at', { ascending: false });
+  document.getElementById('paymentList').innerHTML = data.map(p => `
+    <li>User:${p.user_id} Amount:${p.amount} ${p.payment_method} — ${p.status}</li>
+  `).join('');
+}
+loadPayments();
+
+// —— Inbox —— 
+async function loadInbox() {
+  const { data } = await supabase.from('inbox').select('*').order('created_at', { ascending: false });
+  document.getElementById('inboxList').innerHTML = data.map(m => `
+    <li>
+      ${m.user_email}: ${m.message}
+      <button onclick="replyInbox(${m.id})">Reply</button>
+    </li>
+  `).join('');
+}
+window.replyInbox = async id => {
+  const resp = prompt('Your reply:');
+  if (!resp) return;
+  await supabase.from('inbox').update({ response: resp }).eq('id', id);
+  loadInbox();
+};
+loadInbox();
+
+// —— Trade Insights —— 
+document.getElementById('submitInsight').onclick = async () => {
+  const file = document.getElementById('insightFile').files[0];
+  const note = document.getElementById('insightNote').value;
+  const path = `trade_insights/${Date.now()}-${file.name}`;
+  await supabase.storage.from('files').upload(path, file);
+  await supabase.from('trade_insights').insert([{ screenshot_url: path, insight_content: note }]);
+  loadInsights();
+};
+async function loadInsights() {
+  const { data } = await supabase.from('trade_insights').select('*').order('created_at', { ascending: false });
+  document.getElementById('insightList').innerHTML = data.map(i => `<li>${i.insight_content} — <a href="${supabase.storage.from('files').getPublicUrl(i.screenshot_url).publicURL}" target="_blank">View</a></li>`).join('');
+}
+loadInsights();
+
+// —— Trading History —— 
+document.getElementById('submitHistory').onclick = async () => {
+  const file = document.getElementById('historyFile').files[0];
+  const note = document.getElementById('historyNote').value;
+  const month = document.getElementById('tradeMonth').value;
+  const path = `trading_history/${Date.now()}-${file.name}`;
+  await supabase.storage.from('files').upload(path, file);
+  await supabase.from('trading_history').insert([{ screenshot_url: path, month, year: new Date().getFullYear() }]);
+  loadHistory();
+};
+async function loadHistory() {
+  const { data } = await supabase.from('trading_history').select('*').order('created_at', { ascending: false });
+  document.getElementById('historyList').innerHTML = data.map(h => `<li>${h.month} ${h.year} — <a href="${supabase.storage.from('files').getPublicUrl(h.screenshot_url).publicURL}" target="_blank">View</a></li>`).join('');
+}
+loadHistory();
+
+// —— Members —— 
+async function loadMembers() {
+  const { data } = await supabase.from('members').select('*').order('created_at', { ascending: false });
+  document.getElementById('memberList').innerHTML = data.map(m => `
+    <li>
+      User:${m.user_id} — ${m.status}
+      <button onclick="updateMember(${m.id}, 'approved')">Approve</button>
+      <button onclick="updateMember(${m.id}, 'rejected')">Reject</button>
+    </li>
+  `).join('');
+}
+window.updateMember = async (id, status) => {
+  await supabase.from('members').update({ status }).eq('id', id);
+  loadMembers();
+};
+loadMembers();
