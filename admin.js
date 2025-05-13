@@ -1,117 +1,83 @@
-// admin.js (Main script for admin panel)
+// admin.js
 
-import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm';
+// Function to fetch users and populate the table
+async function fetchUsers() {
+  const { data, error } = await supabase.from('users').select('*');
 
-// Supabase config
-const SUPABASE_URL = 'https://dapwpgvnfjcfqqhrpxla.supabase.co';
-const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...'; // Replace with your actual anon key
-const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+  if (error) {
+    console.error('Error fetching users:', error);
+    return;
+  }
 
-// Navigation routing
-document.addEventListener('DOMContentLoaded', () => {
-  const links = document.querySelectorAll('.nav-link');
-  links.forEach(link => {
-    link.addEventListener('click', e => {
-      e.preventDefault();
-      const target = link.getAttribute('href');
-      loadPage(target);
-    });
+  const tableBody = document.querySelector('#users-table-body');
+  tableBody.innerHTML = ''; // Clear any existing rows
+
+  data.forEach(user => {
+    const row = document.createElement('tr');
+    row.innerHTML = `
+      <td>${user.email}</td>
+      <td>${user.name}</td>
+      <td>${user.status}</td>
+      <td>${new Date(user.created_at).toLocaleDateString()}</td>
+      <td><button class="edit-btn" data-id="${user.id}">Edit</button></td>
+    `;
+    tableBody.appendChild(row);
   });
+}
 
-  const path = window.location.pathname.split('/').pop();
-  if (path === '' || path === 'admin-panel-private.html') {
-    loadPage('admin-overview.html');
-  } else {
-    loadPage(path);
+// Open modal and populate form for editing
+document.querySelector('#users-table-body').addEventListener('click', async (e) => {
+  if (e.target.classList.contains('edit-btn')) {
+    const userId = e.target.dataset.id;
+
+    const { data, error } = await supabase.from('users').select('*').eq('id', userId).single();
+
+    if (error) {
+      console.error('Error fetching user data:', error);
+      return;
+    }
+
+    // Populate the form with current user data
+    document.getElementById('user-email').value = data.email;
+    document.getElementById('user-name').value = data.name;
+    document.getElementById('user-status').value = data.status;
+
+    // Show modal
+    document.getElementById('user-modal').style.display = 'block';
+
+    // Handle form submission
+    document.getElementById('user-form').onsubmit = async (event) => {
+      event.preventDefault();
+
+      const updatedData = {
+        email: document.getElementById('user-email').value,
+        name: document.getElementById('user-name').value,
+        status: document.getElementById('user-status').value,
+      };
+
+      const { error: updateError } = await supabase
+        .from('users')
+        .update(updatedData)
+        .eq('id', userId);
+
+      if (updateError) {
+        console.error('Error updating user:', updateError);
+        return;
+      }
+
+      alert('User updated successfully');
+      document.getElementById('user-modal').style.display = 'none';
+      fetchUsers(); // Refresh the user list
+    };
   }
 });
 
-async function loadPage(page) {
-  const content = document.getElementById('content');
-  try {
-    const res = await fetch(page);
-    const html = await res.text();
-    content.innerHTML = html;
+// Close the modal
+document.getElementById('close-modal').addEventListener('click', () => {
+  document.getElementById('user-modal').style.display = 'none';
+});
 
-    if (page === 'admin-payments.html') loadPayments();
-    // Add more load handlers if needed
-  } catch (err) {
-    content.innerHTML = '<p>Failed to load page.</p>';
-  }
-}
-
-// Load payments from Supabase
-async function loadPayments() {
-  const { data, error } = await supabase.from('payments').select('*');
-  const tableBody = document.getElementById('payment-table-body');
-  tableBody.innerHTML = '';
-
-  if (error) {
-    console.error('Error fetching payments:', error);
-    tableBody.innerHTML = '<tr><td colspan="5">Failed to load payments.</td></tr>';
-    return;
-  }
-
-  data.forEach(row => {
-    const tr = document.createElement('tr');
-    tr.innerHTML = `
-      <td>${row.id}</td>
-      <td>${row.method}</td>
-      <td>${row.details || ''}</td>
-      <td>${row.date ? new Date(row.date).toLocaleString() : '-'}</td>
-      <td><button class="edit-btn" data-id="${row.id}">Edit</button></td>
-    `;
-    tableBody.appendChild(tr);
-  });
-
-  document.querySelectorAll('.edit-btn').forEach(btn => {
-    btn.addEventListener('click', () => editPayment(btn.dataset.id));
-  });
-}
-
-// Edit or Add Payment
-window.savePayment = async () => {
-  const id = document.getElementById('payment-id').value;
-  const method = document.getElementById('payment-method').value;
-  const details = document.getElementById('payment-details').value;
-
-  if (!method) {
-    alert('Payment method is required.');
-    return;
-  }
-
-  const payload = { method, details };
-
-  if (id) {
-    const { error } = await supabase.from('payments').update(payload).eq('id', id);
-    if (error) {
-      alert('Error updating payment.');
-      console.error(error);
-      return;
-    }
-  } else {
-    payload.date = new Date().toISOString();
-    const { error } = await supabase.from('payments').insert([payload]);
-    if (error) {
-      alert('Error adding payment.');
-      console.error(error);
-      return;
-    }
-  }
-
-  document.getElementById('payment-form').reset();
-  document.getElementById('payment-id').value = '';
-  loadPayments();
-};
-
-window.editPayment = async (id) => {
-  const { data, error } = await supabase.from('payments').select('*').eq('id', id).single();
-  if (error || !data) {
-    alert('Payment not found.');
-    return;
-  }
-
-  document.getElementById('payment-id').value = data.id;
-  document.getElementById('payment-method').value = data.method;
-  document.getElementById('payment-details').value = data.details || '';
-};
+// Initialize the page
+document.addEventListener('DOMContentLoaded', () => {
+  fetchUsers();
+});
