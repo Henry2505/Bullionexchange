@@ -85,8 +85,13 @@
 
   <footer>© 2025 CBE – Chukwuemeka Bullion Exchange</footer>
 
-  <script type="module">
-    import { supabase } from './supabase-config.js';
+  <!-- Supabase JS -->
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.38.3/dist/umd/supabase.min.js"></script>
+  <script>
+    const SUPABASE_URL = 'https://dapwpgvnfjcfqqhrpxla.supabase.co';
+    const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImRhcHdwZ3ZuZmpjZnFxaHJweGxhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDcwNDA4ODgsImV4cCI6MjA2MjYxNjg4OH0.ICC0UsLlzJDNre7rFCeD3k6iVzo6jOJgn3PhABpEMsQ';
+
+    const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
     document.getElementById('apply-form').addEventListener('submit', async function (e) {
       e.preventDefault();
@@ -102,34 +107,21 @@
         return;
       }
 
-      const { data: existing, error: fetchError } = await supabase
-        .from('users')
-        .select('id')
-        .eq('email', email);
-
-      if (existing && existing.length > 0) {
-        alert("You’ve already applied. Please proceed to the VIP Subscription.");
-        window.location.href = 'CBE_vip_subscription.html';
-        return;
-      }
-
-      const { data, error } = await supabase.from('users').insert([
-        {
-          full_name: name,
-          email: email,
-          password: password,
-          phone: phone,
-          message: message,
-          status: 'pending',
-          joined_at: new Date().toISOString()
-        }
-      ]);
+      const { data, error } = await supabase.from('users').insert([{
+        name,
+        email,
+        password,
+        phone,
+        message,
+        status: 'pending',
+        created_at: new Date().toISOString()
+      }]);
 
       if (error) {
         console.error(error);
         alert("Failed to submit application. Please try again.");
       } else {
-        alert("Application submitted! Please proceed to VIP Subscription.");
+        alert("Application submitted successfully! Please proceed to VIP Subscription.");
         window.location.href = 'CBE_vip_subscription.html';
       }
     });
