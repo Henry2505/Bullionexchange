@@ -1,207 +1,117 @@
-// admin.js
+// admin.js (Main script for admin panel)
 
+import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm';
+
+// Supabase config
+const SUPABASE_URL = 'https://dapwpgvnfjcfqqhrpxla.supabase.co';
+const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...'; // Replace with your actual anon key
+const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+// Navigation routing
 document.addEventListener('DOMContentLoaded', () => {
-  // Sidebar toggle (hamburger)
-  const menuToggle = document.getElementById('menuToggle');
-  const sidebar    = document.getElementById('sidebar');
-  menuToggle.addEventListener('click', () => {
-    sidebar.classList.toggle('show');
-  });
-
-  // SPA-style navigation for sidebar links
-  document.querySelectorAll('.sidebar a[data-target]').forEach(link => {
+  const links = document.querySelectorAll('.nav-link');
+  links.forEach(link => {
     link.addEventListener('click', e => {
       e.preventDefault();
-      const targetId = link.dataset.target;
-      // Hide all sections
-      document.querySelectorAll('.content-section').forEach(sec =>
-        sec.classList.remove('active')
-      );
-      // Show the selected section
-      document.getElementById(targetId).classList.add('active');
+      const target = link.getAttribute('href');
+      loadPage(target);
     });
   });
 
-  // Activate the first tab on load
-  const firstLink = document.querySelector('.sidebar a[data-target]');
-  if (firstLink) firstLink.click();
-  
-  // Initialize data loading
-  loadSignals();
-  loadTestimonials();
-  loadPayments();
-  loadInbox();
-  loadInsights();
-  loadHistory();
-  loadMembers();
+  const path = window.location.pathname.split('/').pop();
+  if (path === '' || path === 'admin-panel-private.html') {
+    loadPage('admin-overview.html');
+  } else {
+    loadPage(path);
+  }
 });
 
-// ——— Supabase Initialization ———
-const SUPABASE_URL     = 'https://dapwpgvnfjcfqqhrpxla.supabase.co';
-const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImRhcHdwZ3ZuZmpjZnFxaHJweGxhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDcwNDA4ODgsImV4cCI6MjA2MjYxNjg4OH0.ICC0UsLlzJDNre7rFCeD3k6iVzo6jOJgn3PhABpEMsQ';
-const supabase = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+async function loadPage(page) {
+  const content = document.getElementById('content');
+  try {
+    const res = await fetch(page);
+    const html = await res.text();
+    content.innerHTML = html;
 
-// ——— Signals ———
-document.getElementById('submitSignal').onclick = async () => {
-  const obj = {
-    currency_pair: document.getElementById('pair').value,
-    entry_point:   parseFloat(document.getElementById('entry').value),
-    stop_loss:     parseFloat(document.getElementById('sl').value),
-    take_profit:   parseFloat(document.getElementById('tp').value),
-    note:          document.getElementById('signalNote').value,
-    status:        'pending'
-  };
-  const { error } = await supabase.from('signals').insert([obj]);
-  if (error) return alert('Error posting signal: ' + error.message);
-  loadSignals();
-};
-
-async function loadSignals() {
-  const { data, error } = await supabase
-    .from('signals')
-    .select('*')
-    .order('created_at', { ascending: false });
-  if (error) return console.error(error);
-  document.getElementById('signalList').innerHTML = data
-    .map(s => `<li>${s.currency_pair} | EP: ${s.entry_point} SL: ${s.stop_loss} TP: ${s.take_profit} — ${s.note}</li>`)
-    .join('');
+    if (page === 'admin-payments.html') loadPayments();
+    // Add more load handlers if needed
+  } catch (err) {
+    content.innerHTML = '<p>Failed to load page.</p>';
+  }
 }
 
-// ——— Testimonials ———
-async function loadTestimonials() {
-  const { data, error } = await supabase
-    .from('testimonials')
-    .select('*')
-    .order('created_at', { ascending: false });
-  if (error) return console.error(error);
-  document.getElementById('testimonialList').innerHTML = data
-    .map(t => `
-      <li>
-        ${t.content} — <em>${t.status}</em>
-        <button onclick="updateTestimonial(${t.id}, 'approved')">Approve</button>
-        <button onclick="updateTestimonial(${t.id}, 'rejected')">Reject</button>
-      </li>`)
-    .join('');
-}
-
-window.updateTestimonial = async (id, status) => {
-  const { error } = await supabase
-    .from('testimonials')
-    .update({ status })
-    .eq('id', id);
-  if (error) return alert('Error: ' + error.message);
-  loadTestimonials();
-};
-
-// ——— Payments ———
+// Load payments from Supabase
 async function loadPayments() {
-  const { data, error } = await supabase
-    .from('payments')
-    .select('*')
-    .order('created_at', { ascending: false });
-  if (error) return console.error(error);
-  document.getElementById('paymentList').innerHTML = data
-    .map(p => `<li>User: ${p.user_id} Amount: ${p.amount} via ${p.payment_method} — ${p.status}</li>`)
-    .join('');
+  const { data, error } = await supabase.from('payments').select('*');
+  const tableBody = document.getElementById('payment-table-body');
+  tableBody.innerHTML = '';
+
+  if (error) {
+    console.error('Error fetching payments:', error);
+    tableBody.innerHTML = '<tr><td colspan="5">Failed to load payments.</td></tr>';
+    return;
+  }
+
+  data.forEach(row => {
+    const tr = document.createElement('tr');
+    tr.innerHTML = `
+      <td>${row.id}</td>
+      <td>${row.method}</td>
+      <td>${row.details || ''}</td>
+      <td>${row.date ? new Date(row.date).toLocaleString() : '-'}</td>
+      <td><button class="edit-btn" data-id="${row.id}">Edit</button></td>
+    `;
+    tableBody.appendChild(tr);
+  });
+
+  document.querySelectorAll('.edit-btn').forEach(btn => {
+    btn.addEventListener('click', () => editPayment(btn.dataset.id));
+  });
 }
 
-// ——— Inbox ———
-async function loadInbox() {
-  const { data, error } = await supabase
-    .from('inbox')
-    .select('*')
-    .order('created_at', { ascending: false });
-  if (error) return console.error(error);
-  document.getElementById('inboxList').innerHTML = data
-    .map(m => `
-      <li>
-        ${m.user_email}: ${m.message}
-        <button onclick="replyInbox(${m.id})">Reply</button>
-      </li>`)
-    .join('');
-}
+// Edit or Add Payment
+window.savePayment = async () => {
+  const id = document.getElementById('payment-id').value;
+  const method = document.getElementById('payment-method').value;
+  const details = document.getElementById('payment-details').value;
 
-window.replyInbox = async id => {
-  const response = prompt('Your reply:');
-  if (!response) return;
-  const { error } = await supabase
-    .from('inbox')
-    .update({ response })
-    .eq('id', id);
-  if (error) return alert('Error: ' + error.message);
-  loadInbox();
+  if (!method) {
+    alert('Payment method is required.');
+    return;
+  }
+
+  const payload = { method, details };
+
+  if (id) {
+    const { error } = await supabase.from('payments').update(payload).eq('id', id);
+    if (error) {
+      alert('Error updating payment.');
+      console.error(error);
+      return;
+    }
+  } else {
+    payload.date = new Date().toISOString();
+    const { error } = await supabase.from('payments').insert([payload]);
+    if (error) {
+      alert('Error adding payment.');
+      console.error(error);
+      return;
+    }
+  }
+
+  document.getElementById('payment-form').reset();
+  document.getElementById('payment-id').value = '';
+  loadPayments();
 };
 
-// ——— Trade Insights ———
-document.getElementById('submitInsight').onclick = async () => {
-  const file = document.getElementById('insightFile').files[0];
-  const note = document.getElementById('insightNote').value;
-  const path = `trade_insights/${Date.now()}-${file.name}`;
-  const { error: upErr } = await supabase.storage.from('files').upload(path, file);
-  if (upErr) return alert('Upload error: ' + upErr.message);
-  const { error } = await supabase.from('trade_insights').insert([
-    { screenshot_url: path, insight_content: note }
-  ]);
-  if (error) return alert('Error: ' + error.message);
-  loadInsights();
-};
+window.editPayment = async (id) => {
+  const { data, error } = await supabase.from('payments').select('*').eq('id', id).single();
+  if (error || !data) {
+    alert('Payment not found.');
+    return;
+  }
 
-async function loadInsights() {
-  const { data, error } = await supabase
-    .from('trade_insights')
-    .select('*')
-    .order('created_at', { ascending: false });
-  if (error) return console.error(error);
-  document.getElementById('insightList').innerHTML = data
-    .map(i => `<li>${i.insight_content} — <a href="${supabase.storage.from('files').getPublicUrl(i.screenshot_url).publicURL}" target="_blank">View</a></li>`)
-    .join('');
-}
-
-// ——— Trading History ———
-document.getElementById('submitHistory').onclick = async () => {
-  const file  = document.getElementById('historyFile').files[0];
-  const note  = document.getElementById('historyNote').value;
-  const month = document.getElementById('tradeMonth').value;
-  const path  = `trading_history/${Date.now()}-${file.name}`;
-  const { error: upErr } = await supabase.storage.from('files').upload(path, file);
-  if (upErr) return alert('Upload error: ' + upErr.message);
-  const { error } = await supabase.from('trading_history').insert([
-    { screenshot_url: path, month, year: new Date().getFullYear() }
-  ]);
-  if (error) return alert('Error: ' + error.message);
-  loadHistory();
-};
-
-async function loadHistory() {
-  const { data, error } = await supabase
-    .from('trading_history')
-    .select('*')
-    .order('created_at', { ascending: false });
-  if (error) return console.error(error);
-  document.getElementById('historyList').innerHTML = data
-    .map(h => `<li>${h.month} ${h.year} — <a href="${supabase.storage.from('files').getPublicUrl(h.screenshot_url).publicURL}" target="_blank">View</a></li>`)
-    .join('');
-}
-
-// ——— Members ———
-async function loadMembers() {
-  const { data, error } = await supabase
-    .from('members')
-    .select('*')
-    .order('created_at', { ascending: false });
-  if (error) return console.error(error);
-  document.getElementById('memberList').innerHTML = data
-    .map(m => `
-      <li>
-        User: ${m.user_id} — ${m.status}
-        <button onclick="updateMember(${m.id}, 'approved')">Approve</button>
-        <button onclick="updateMember(${m.id}, 'rejected')">Reject</button>
-      </li>`)
-    .join('');
-}
-
-window.updateMember = async (id, status) => {
-  const { error } = await supabase.from('members').update({ status }).eq('id', id);
-  if (error) return alert('Error: ' + error.message);
-  loadMembers();
+  document.getElementById('payment-id').value = data.id;
+  document.getElementById('payment-method').value = data.method;
+  document.getElementById('payment-details').value = data.details || '';
 };
