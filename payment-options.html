@@ -147,14 +147,16 @@
   </section>
 
   <footer>
-    &copy; 2025 CBE - Chukwuemeka Bullion Exchange. All rights reserved.
+    © 2025 CBE - Chukwuemeka Bullion Exchange. All rights reserved.
   </footer>
 
   <script>
-    const plan = new URLSearchParams(window.location.search).get("plan");
-    document.getElementById("selected-plan").textContent = plan ? `Selected Plan: ${plan.toUpperCase()}` : "No plan selected.";
+    const params = new URLSearchParams(window.location.search);
+    const plan = params.get("plan");
+    const amount = params.get("amount");
+    document.getElementById("selected-plan").textContent = plan && amount ? `Selected Plan: ${plan.toUpperCase()} - $${amount}` : "No plan selected.";
 
-    const supabase = supabase.createClient('https://YOUR_PROJECT_URL.supabase.co', 'YOUR_PUBLIC_ANON_KEY');
+    const supabase = supabase.createClient('https://dapwpgvnfjcfqqhrpxla.supabase.co', 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImRhcHdwZ3ZuZmpjZnFxaHJweGxhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDcwNDA4ODgsImV4cCI6MjA2MjYxNjg4OH0.ICC0UsLlzJDNre7rFCeD3k6iVzo6jOJgn3PhABpEMsQ');
 
     async function loadPaymentSettings() {
       const { data, error } = await supabase.from("payment_settings").select("*");
@@ -164,11 +166,18 @@
       }
       const get = (key) => data.find(item => item.key === key)?.value || "Not available";
 
-      document.getElementById("paystack-link").href = get("paystackLink");
-      document.getElementById("btc-wallet").textContent = get("btc");
-      document.getElementById("usdt-wallet").textContent = get("usdt");
-      document.getElementById("eth-wallet").textContent = get("eth");
-      document.getElementById("trx-wallet").textContent = get("trx");
+      const paystackLink = get("paystackLink");
+      if (paystackLink && paystackLink !== "Not available") {
+        document.getElementById("paystack-link").href = paystackLink;
+      } else {
+        document.getElementById("paystack-link").textContent = "Paystack payment not available";
+        document.getElementById("paystack-link").removeAttribute("href");
+      }
+
+      document.getElementById("btc-wallet").textContent = get("btc") || "Not available";
+      document.getElementById("usdt-wallet").textContent = get("usdt") || "Not available";
+      document.getElementById("eth-wallet").textContent = get("eth") || "Not available";
+      document.getElementById("trx-wallet").textContent = get("trx") || "Not available";
     }
 
     loadPaymentSettings();
