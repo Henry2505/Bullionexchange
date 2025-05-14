@@ -1,12 +1,9 @@
-// admin.js
-
 const supabase = supabase.createClient(
   "https://dapwpgvnfjcfqqhrpxla.supabase.co",
-  "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImRhcHdwZ3ZuZmpjZnFxaHJweGxhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDcwNDA4ODgsImV4cCI6MjA2MjYxNjg4OH0.ICC0UsLlzJDNre7rFCeD3k6iVzo6jOJgn3PhABpEMsQ"
+  "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
 );
 
-// Check auth status
-async function checkAdminAuth() {
+window.addEventListener("DOMContentLoaded", async () => {
   const { data: { session } } = await supabase.auth.getSession();
 
   if (!session) {
@@ -15,29 +12,19 @@ async function checkAdminAuth() {
   }
 
   const user = session.user;
-  const { data: roleData, error: roleError } = await supabase
+  const { data: roleData, error } = await supabase
     .from("user_roles")
     .select("role")
     .eq("user_id", user.id)
     .single();
 
-  if (roleError || !roleData || roleData.role !== "admin") {
-    alert("Unauthorized: Admins only.");
+  if (error || !roleData || roleData.role !== "admin") {
     await supabase.auth.signOut();
     window.location.href = "admin-login.html";
   }
-}
-
-// Run auth check on load
-checkAdminAuth();
-
-// Add logout button listener
-document.addEventListener("DOMContentLoaded", () => {
-  const logoutBtn = document.getElementById("logout-btn");
-  if (logoutBtn) {
-    logoutBtn.addEventListener("click", async () => {
-      await supabase.auth.signOut();
-      window.location.href = "admin-login.html";
-    });
-  }
 });
+
+async function logout() {
+  await supabase.auth.signOut();
+  window.location.href = "admin-login.html";
+}
