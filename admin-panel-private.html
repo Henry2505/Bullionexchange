@@ -1,168 +1,222 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8"/>
+  <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>CBE Admin Panel</title>
   <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;500;700&display=swap" rel="stylesheet"/>
   <style>
-    * { margin:0; padding:0; box-sizing:border-box }
-    body, html { width:100%; height:100%; font-family:'Poppins',sans-serif; background:#000; color:#fff; overflow:hidden }
-    a { color: gold; text-decoration: none } a:hover { text-decoration: underline }
-
-    .video-background { position:fixed; top:0; left:0; width:100%; height:100%; object-fit:cover; z-index:-2 }
-    .overlay          { position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.6); z-index:-1 }
-
-    .top-bar {
-      position:relative; background:rgba(0,0,0,0.8);
-      padding:15px 20px; display:flex; justify-content:space-between; align-items:center;
-      border-bottom:1px solid gold; z-index:10;
+    body {
+      font-family: 'Poppins', sans-serif;
+      margin: 0;
+      padding: 0;
+      background-color: #0a0a0a;
+      color: #fff;
     }
-    .top-bar h1  { font-size:1.2rem; color:gold }
-    .logoutBtn   { background:crimson; color:#fff; border:none; padding:6px 12px; border-radius:4px; cursor:pointer }
-
-    .menu-toggle {
-      width:30px; height:30px; background:gold; border:none; border-radius:50%; cursor:pointer;
-      display:flex; flex-direction:column; justify-content:space-around; align-items:center;
-      padding:4px; box-shadow:0 0 8px gold; animation:blink 2s infinite;
+    header {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      background-color: rgba(0, 0, 0, 0.9);
+      padding: 10px 20px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      z-index: 999;
     }
-    @keyframes blink {0%,100%{box-shadow:0 0 6px gold}50%{box-shadow:0 0 18px gold}}
-    .menu-toggle span { display:block; width:6px; height:6px; background:#000; border-radius:50% }
-
+    header .logo {
+      font-size: 1.5em;
+      font-weight: 700;
+      color: gold;
+      text-decoration: none;
+    }
+    header .menu-toggle {
+      font-size: 1.5em;
+      cursor: pointer;
+      display: none;
+    }
     .sidebar {
-      position:fixed; top:60px; left:0; width:220px; height:calc(100% - 60px);
-      background:rgba(0,0,0,0.9); overflow-y:auto; transform:translateX(-100%); transition:transform 0.3s ease; z-index:5;
+      position: fixed;
+      top: 60px;
+      left: 0;
+      width: 250px;
+      height: calc(100% - 60px);
+      background-color: rgba(0, 0, 0, 0.95);
+      overflow-y: auto;
+      padding: 20px;
+      transition: 0.3s;
     }
-    .sidebar.show { transform:translateX(0) }
     .sidebar a {
-      display:block; padding:12px 18px; border-bottom:1px solid #111;
+      display: block;
+      color: #ccc;
+      text-decoration: none;
+      margin: 15px 0;
+      transition: 0.3s;
     }
-    .sidebar a:hover { background:gold; color:black }
-
-    #main-content {
-      margin-top:60px; padding:20px; height:calc(100% - 60px); overflow-y:auto;
+    .sidebar a:hover {
+      color: gold;
+    }
+    .main {
+      margin-left: 270px;
+      padding: 80px 20px 20px;
     }
     .content-section {
-      display:none; background:rgba(20,20,20,0.8); padding:20px; margin-bottom:20px;
-      border-radius:8px; box-shadow:0 0 15px rgba(255,215,0,0.2);
+      display: none;
     }
-    .content-section.active { display:block }
-    h2 { color:gold; margin-bottom:15px }
-
+    .content-section.active {
+      display: block;
+    }
+    .form-group {
+      margin-bottom: 15px;
+    }
+    .form-group label {
+      display: block;
+      margin-bottom: 5px;
+    }
+    .form-group input {
+      width: 100%;
+      padding: 8px;
+      background: #111;
+      border: 1px solid #444;
+      color: #fff;
+    }
     .btn {
-      background:gold; color:black; border:none; padding:6px 10px; border-radius:4px; cursor:pointer;
-      font-weight:bold; margin-bottom:10px;
+      padding: 10px 20px;
+      background: gold;
+      color: #000;
+      border: none;
+      cursor: pointer;
     }
-    .btn:hover { background:#e6c200 }
 
-    table { width:100%; border-collapse:collapse; margin-top:10px }
-    th, td { padding:8px; border:1px solid #333; text-align:left }
-    th { background:#222; color:gold }
-    td { background:#111 }
+    @media screen and (max-width: 768px) {
+      header .menu-toggle {
+        display: block;
+      }
+      .sidebar {
+        top: 60px;
+        width: 100%;
+        height: auto;
+        position: fixed;
+        transform: translateY(-100%);
+      }
+      .sidebar.show {
+        transform: translateY(0);
+      }
+      .main {
+        margin-left: 0;
+        padding: 100px 20px 20px;
+      }
+    }
 
-    .form-group { margin-bottom:12px }
-    .form-group label { display:block; margin-bottom:4px; font-weight:600 }
-    .form-group input { width:100%; padding:8px; background:#111; color:#fff; border:1px solid #444; border-radius:4px }
+    video.bg {
+      position: fixed;
+      top: 0;
+      left: 0;
+      object-fit: cover;
+      width: 100%;
+      height: 100%;
+      z-index: -1;
+    }
 
-    .loading { text-align:center; padding:20px }
-    .error   { color:crimson }
+    .overlay {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background-color: rgba(0,0,0,0.8);
+      z-index: -1;
+    }
   </style>
 </head>
 <body>
-  <video class="video-background" autoplay muted loop playsinline>
-    <source src="star-video.mp4" type="video/mp4"/>
+
+  <video autoplay muted loop class="bg">
+    <source src="https://videos.pexels.com/video-files/8569166/8569166-hd_1920_1080_30fps.mp4" type="video/mp4" />
   </video>
   <div class="overlay"></div>
 
-  <div class="top-bar">
-    <button class="logoutBtn" onclick="logout()">Logout</button>
-    <h1>CBE Admin Panel</h1>
-    <button class="menu-toggle" onclick="toggleSidebar()">
-      <span></span><span></span><span></span>
-    </button>
-  </div>
+  <header>
+    <a href="Index.html" class="logo">CBE Admin Panel</a>
+    <div class="menu-toggle" onclick="toggleSidebar()">☰</div>
+  </header>
 
   <div class="sidebar" id="sidebar">
     <a href="#" data-target="dashboard">Dashboard</a>
-    <a href="#" data-target="payments">Payment Records</a>
+    <a href="#" data-target="signal">Post Signal</a>
+    <a href="#" data-target="payments">Payments</a>
     <a href="#" data-target="applications">Applications</a>
-    <a href="#" data-target="users">User Approvals</a>
-    <a href="#" data-target="signals">Publish Signal</a>
-    <a href="#" data-target="tradeInsights">Trade Insights</a>
-    <a href="#" data-target="tradeHistory">Trade History</a>
+    <a href="#" data-target="users">Users</a>
     <a href="#" data-target="messages">Inbox</a>
     <a href="#" data-target="settings">Settings</a>
-    <a href="#" data-target="logs">Admin Logs</a>
+    <a href="#" data-target="logs">Logs</a>
     <a href="Index.html">← Back to Site</a>
+    <button class="btn" onclick="logout()">Logout</button>
   </div>
 
-  <div id="main-content">
-    <!-- Dashboard Home -->
-    <div class="content-section" id="dashboard">
-      <h2>Dashboard</h2>
-      <p>Welcome to CBE Admin. Choose a section from the sidebar.</p>
+  <div class="main">
+    <div id="dashboard" class="content-section">
+      <h2>Admin Dashboard</h2>
+      <p>Welcome to the Chukwuemeka Bullion Exchange Admin Panel.</p>
     </div>
 
-    <!-- Payment Records -->
-    <div class="content-section" id="payments">
-      <h2>Payment Records</h2>
-      <button class="btn" onclick="loadPayments()">Refresh</button>
-      <div id="paymentContainer" class="loading">Loading payments…</div>
+    <div id="signal" class="content-section">
+      <h2>Post New Signal</h2>
+      <div id="signalContainer">
+        <div class="form-group"><label>Signal Title</label><input type="text" id="signalTitle"/></div>
+        <div class="form-group"><label>Entry Position</label><input type="text" id="entryPosition"/></div>
+        <div class="form-group"><label>Take Profit 1</label><input type="text" id="tp1"/></div>
+        <div class="form-group"><label>Take Profit 2</label><input type="text" id="tp2"/></div>
+        <div class="form-group"><label>Stop Loss</label><input type="text" id="sl"/></div>
+        <div class="form-group"><label>Admin Note</label><input type="text" id="adminNote"/></div>
+        <button class="btn" onclick="publishSignal()">Publish Signal</button>
+      </div>
     </div>
 
-    <!-- Application Submissions -->
-    <div class="content-section" id="applications">
-      <h2>Application Submissions</h2>
-      <div id="applicationContainer" class="loading">Loading applications…</div>
+    <div id="payments" class="content-section">
+      <h2>Payment Settings</h2>
+      <div id="paymentContainer">Loading payment info...</div>
     </div>
 
-    <!-- User Approvals -->
-    <div class="content-section" id="users">
-      <h2>User Approvals</h2>
-      <div id="userContainer" class="loading">Loading users…</div>
+    <div id="applications" class="content-section">
+      <h2>Member Applications</h2>
+      <div id="applicationContainer">Loading applications...</div>
     </div>
 
-    <!-- Publish Signal -->
-    <div class="content-section" id="signals">
-      <h2>Publish Signal</h2>
-      <div id="signalContainer" class="loading">Coming soon…</div>
+    <div id="users" class="content-section">
+      <h2>Approved Users</h2>
+      <div id="userContainer">Loading users...</div>
     </div>
 
-    <!-- Trade Insights -->
-    <div class="content-section" id="tradeInsights">
-      <h2>Trade Insights</h2>
-      <div id="insightsContainer" class="loading">Coming soon…</div>
+    <div id="messages" class="content-section">
+      <h2>Inbox</h2>
+      <div id="inboxContainer">Loading messages...</div>
     </div>
 
-    <!-- Trade History -->
-    <div class="content-section" id="tradeHistory">
-      <h2>Trade History</h2>
-      <div id="historyContainer" class="loading">Coming soon…</div>
+    <div id="settings" class="content-section">
+      <h2>Admin Settings</h2>
+      <div id="settingsContainer">Loading settings...</div>
     </div>
 
-    <!-- Inbox Messages -->
-    <div class="content-section" id="messages">
-      <h2>Inbox Messages</h2>
-      <div id="inboxContainer" class="loading">Loading messages…</div>
-    </div>
-
-    <!-- Settings -->
-    <div class="content-section" id="settings">
-      <h2>Payment Method Settings</h2>
-      <div id="settingsContainer" class="loading">Loading settings…</div>
-      <button class="btn" onclick="saveSettings()">Save Settings</button>
-      <p id="settingsMessage"></p>
-    </div>
-
-    <!-- Admin Logs -->
-    <div class="content-section" id="logs">
-      <h2>Admin Logs</h2>
-      <div id="logContainer" class="loading">Loading logs…</div>
+    <div id="logs" class="content-section">
+      <h2>Trade History & Logs</h2>
+      <div id="logContainer">Loading logs...</div>
     </div>
   </div>
 
-  <!-- Supabase JS & Admin Logic -->
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js"></script>
   <script src="admin.js"></script>
+  <script>
+    window.onload = () => {
+      document.querySelectorAll('.content-section').forEach(div => div.classList.remove('active'));
+      document.getElementById('dashboard').classList.add('active');
+    };
+
+    function toggleSidebar() {
+      document.getElementById('sidebar').classList.toggle('show');
+    }
+  </script>
+
 </body>
 </html>
