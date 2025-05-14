@@ -1,112 +1,94 @@
-<script type="module">
-  import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm';
+import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm';
 
-  const supabase = createClient('https://your-project-url.supabase.co', 'your-public-anon-key');
+const SUPABASE_URL = 'https://dapwpgvnfjcfqqhrpxla.supabase.co';
+const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImRhcHdwZ3ZuZmpjZnFxaHJweGxhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDcwNDA4ODgsImV4cCI6MjA2MjYxNjg4OH0.ICC0UsLlzJDNre7rFCeD3k6iVzo6jOJgn3PhABpEMsQ';
 
-  document.addEventListener('DOMContentLoaded', async () => {
-    const { data: settingsData, error } = await supabase.from('settings').select('*');
-    if (error) {
-      alert('Failed to load payment settings.');
-      console.error(error);
-      return;
+const supabase = createClient(SUPABASE_URL, SUPABASE_KEY);
+
+function getPlan() {
+  return new URLSearchParams(window.location.search).get('plan') || '';
+}
+function formatAmount(plan) {
+  return plan === 'weekly'  ? 50
+       : plan === 'monthly' ? 150
+       : plan === 'yearly'  ? 1500
+       : 0;
+}
+
+document.addEventListener('DOMContentLoaded', async () => {
+  const plan = getPlan();
+  const amount = formatAmount(plan);
+
+  document.getElementById('planInfo').textContent = plan
+    ? `You selected: ${plan.toUpperCase()} plan ($${amount}${plan==='weekly'?'/week':plan==='monthly'?'/month':'/year'})`
+    : 'No plan selected.';
+
+  // Load payment_settings
+  const { data: settings } = await supabase.from('payment_settings').select('key,value');
+  const lookup = {};
+  settings.forEach(s => lookup[s.key] = s.value);
+
+  // Paystack button
+  document.getElementById('paystackBtn').onclick = () => {
+    if (!lookup.Paystack) return alert('Paystack not configured yet.');
+    window.open(lookup.Paystack, '_blank');
+  };
+
+  // Crypto button
+  document.getElementById('cryptoBtn').onclick = () => {
+    document.getElementById('cryptoOptions').style.display = 'block';
+  };
+
+  // Crypto selection
+  document.getElementById('cryptoType').onchange = function() {
+    document.getElementById('walletAddress').textContent =
+      lookup[this.value] || 'Not available';
+  };
+
+  // Copy wallet
+  document.getElementById('copyWalletBtn').onclick = () => {
+    const addr = document.getElementById('walletAddress').textContent;
+    if (addr && addr !== 'Not available') {
+      navigator.clipboard.writeText(addr).then(() => alert('Copied!'));
     }
+  };
 
-    const settings = {};
-    settingsData.forEach(item => {
-      settings[item.key] = item.value;
+  // Form submit
+  document.getElementById('paymentForm').onsubmit = async e => {
+    e.preventDefault();
+    const email = document.getElementById('userEmail').value.trim().toLowerCase();
+    const isCrypto = document.getElementById('cryptoOptions').style.display === 'block';
+    const method = isCrypto
+      ? document.getElementById('cryptoType').value
+      : 'Paystack';
+
+    if (!plan || amount === 0) return alert('Invalid plan.');
+    if (!email) return alert('Enter your email.');
+    if (isCrypto && !method) return alert('Select crypto.');
+
+    // Prevent duplicates
+    const { data: dup } = await supabase
+      .from('user_payments')
+      .select('id')
+      .eq('user_email', email)
+      .eq('plan', plan)
+      .in('status', ['pending','approved']);
+    if (dup.length) return alert('You already submitted for this plan.');
+
+    // Insert
+    const { error } = await supabase.from('user_payments').insert({
+      user_email: email,
+      amount,
+      method,
+      details: isCrypto ? lookup[method] : '',
+      plan
     });
-
-    const planNames = {
-      weekly: 'Weekly VIP Plan – $50',
-      monthly: 'Monthly VIP Plan – $150',
-      yearly: 'Yearly VIP Plan – $1500'
-    };
-
-    const walletMap = {
-      Bitcoin: settings.btc || '',
-      Ethereum: settings.eth || '',
-      USDT: settings.usdt || '',
-      TRX: settings.trx || ''
-    };
-
-    const selectedPackage = sessionStorage.getItem('selectedPackage') || '';
-    document.getElementById('selectedPlanInfo').textContent = planNames[selectedPackage] || 'No valid package selected.';
-
-    document.getElementById('cryptoBtn').addEventListener('click', () => {
-      document.getElementById('cryptoOptions').style.display = 'block';
-    });
-
-    document.getElementById('cryptoType').addEventListener('change', function () {
-      document.getElementById('walletAddress').textContent = walletMap[this.value] || 'Not set';
-    });
-
-    document.getElementById('copyWalletBtn').addEventListener('click', () => {
-      const w = document.getElementById('walletAddress').textContent;
-      if (w && w !== 'Not set') {
-        navigator.clipboard.writeText(w).then(() => alert('Wallet address copied!'));
-      } else {
-        alert('No wallet address to copy.');
-      }
-    });
-
-    document.getElementById('paystackBtn').addEventListener('click', () => {
-      if (!settings.paystackKey) {
-        return alert('Paystack key not set.');
-      }
-      alert('Simulated Paystack payment – then click Submit Payment.');
-    });
-
-    document.getElementById('paymentForm').addEventListener('submit', async (e) => {
-      e.preventDefault();
-
-      const email = document.getElementById('userEmail').value.trim().toLowerCase();
-      const cryptoType = document.getElementById('cryptoType').value;
-      const isCrypto = document.getElementById('cryptoOptions').style.display === 'block';
-      const method = isCrypto ? cryptoType : 'Paystack';
-      const amount = selectedPackage === 'weekly' ? 50 : selectedPackage === 'monthly' ? 150 : 1500;
-
-      if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
-        return alert('Enter a valid email.');
-      }
-
-      if (!selectedPackage || !planNames[selectedPackage]) {
-        return alert('No valid package selected.');
-      }
-
-      if (isCrypto && !walletMap[cryptoType]) {
-        return alert('Invalid crypto type or wallet missing.');
-      }
-
-      const { data: existing, error: checkError } = await supabase
-        .from('user_payments')
-        .select('*')
-        .eq('user_email', email)
-        .neq('status', 'expired');
-
-      if (checkError) {
-        console.error(checkError);
-        return alert('Could not check existing payments.');
-      }
-
-      if (existing && existing.length > 0) {
-        return alert('You have already submitted a payment. Await approval.');
-      }
-
-      const { error: insertError } = await supabase.from('user_payments').insert({
-        user_email: email,
-        amount,
-        method,
-        details: isCrypto ? walletMap[cryptoType] : '',
-        status: 'pending'
-      });
-
-      if (insertError) {
-        console.error(insertError);
-        return alert('Payment submission failed.');
-      }
-
-      alert('Payment submitted successfully!');
+    if (error) {
+      console.error(error);
+      alert('Submission failed.');
+    } else {
+      alert('Payment submitted! Await approval.');
       window.location.href = 'CBE_login.html';
-    });
-  });
-</script>
+    }
+  };
+});
