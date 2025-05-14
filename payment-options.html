@@ -6,6 +6,7 @@
   <title>VIP Payment - CBE</title>
   <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;500;700&display=swap" rel="stylesheet">
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js"></script>
+  <script src="https://js.paystack.co/v1/inline.js"></script>
   <style>
     body {
       margin: 0;
@@ -132,7 +133,7 @@
   <section class="payment-section">
     <div class="payment-option">
       <h2>Pay with Paystack</h2>
-      <p><a id="paystack-link" href="#" target="_blank">Click here to pay via Paystack</a></p>
+      <p><a id="paystack-link" href="#" onclick="initiatePaystackPayment()">Pay via Paystack</a></p>
     </div>
     <div class="payment-option">
       <h2>Pay with Cryptocurrency</h2>
@@ -154,30 +155,79 @@
     const params = new URLSearchParams(window.location.search);
     const plan = params.get("plan");
     const amount = params.get("amount");
-    document.getElementById("selected-plan").textContent = plan && amount ? `Selected Plan: ${plan.toUpperCase()} - $${amount}` : "No plan selected.";
+    console.log("Query parameters:", { plan, amount });
+    document.getElementById("selected-plan").textContent = plan && amount ? `Selected Plan: ${plan.toUpperCase()} - $${amount}` : "No plan selected. Please select a plan.";
 
     const supabase = supabase.createClient('https://dapwpgvnfjcfqqhrpxla.supabase.co', 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImRhcHdwZ3ZuZmpjZnFxaHJweGxhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDcwNDA4ODgsImV4cCI6MjA2MjYxNjg4OH0.ICC0UsLlzJDNre7rFCeD3k6iVzo6jOJgn3PhABpEMsQ');
 
     async function loadPaymentSettings() {
       const { data, error } = await supabase.from("payment_settings").select("*");
+      console.log("Supabase response:", { data, error });
       if (error) {
-        console.error("Error loading settings:", error);
+        console.error("Error loading settings:", error.message);
+        document.getElementById("paystack-link").textContent = "Error loading Paystack link";
+        document.getElementById("paystack-link").removeAttribute("href");
+        document.getElementById("btc-wallet").textContent = "Error loading wallet";
+        document.getElementById("usdt-wallet").textContent = "Error loading wallet";
+        document.getElementById("eth-wallet").textContent = "Error loading wallet";
+        document.getElementById("trx-wallet").textContent = "Error loading wallet";
         return;
       }
       const get = (key) => data.find(item => item.key === key)?.value || "Not available";
-
-      const paystackLink = get("paystackLink");
-      if (paystackLink && paystackLink !== "Not available") {
-        document.getElementById("paystack-link").href = paystackLink;
-      } else {
+      const paystackKey = get("paystackKey");
+      if (!paystackKey || paystackKey === "Not available") {
         document.getElementById("paystack-link").textContent = "Paystack payment not available";
         document.getElementById("paystack-link").removeAttribute("href");
+      } else {
+        document.getElementById("paystack-link").dataset.paystackKey = paystackKey;
       }
-
       document.getElementById("btc-wallet").textContent = get("btc") || "Not available";
       document.getElementById("usdt-wallet").textContent = get("usdt") || "Not available";
       document.getElementById("eth-wallet").textContent = get("eth") || "Not available";
       document.getElementById("trx-wallet").textContent = get("trx") || "Not available";
+    }
+
+    async function logPaymentToSupabase(paymentDetails) {
+      const { error } = await supabase.from("user_payments").insert([paymentDetails]);
+      if (error) {
+        console.error("Error logging payment:", error.message);
+      } else {
+        console.log("Payment logged successfully:", paymentDetails);
+      }
+    }
+
+    function initiatePaystackPayment() {
+      if (!amount || !plan) {
+        alert("Please select a valid plan before proceeding with payment.");
+        return;
+      }
+      const paystackKey = document.getElementById("paystack-link").dataset.paystackKey || "Not available";
+      if (paystackKey === "Not available") {
+        alert("Paystack payment is currently unavailable.");
+        return;
+      }
+      const handler = PaystackPop.setup({
+        key: paystackKey,
+        email: "customer@example.com", // Replace with user email from Supabase auth
+        amount: parseInt(amount) * 100, // Convert to kobo (Paystack requires amount in smallest currency unit)
+        currency: "USD",
+        callback: async function(response) {
+          alert("Payment successful! Reference: " + response.reference);
+          await logPaymentToSupabase({
+            user_id: null, // Replace with supabase.auth.getUser().data.user.id if auth is enabled
+            plan: plan,
+            amount: parseFloat(amount),
+            currency: "USD",
+            payment_method: "paystack",
+            payment_reference: response.reference,
+            status: "completed"
+          });
+        },
+        onClose: function() {
+          alert("Payment window closed.");
+        }
+      });
+      handler.openIframe();
     }
 
     loadPaymentSettings();
