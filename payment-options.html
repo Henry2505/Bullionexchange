@@ -104,15 +104,14 @@
   </div>
 
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-  <!-- Inline plan‐linking script -->
   <script>
-    document.addEventListener('DOMContentLoaded', () => {
-      // 1. Parse URL parameters
+    // Immediately run this as soon as the script is parsed:
+    (function() {
       const params = new URLSearchParams(window.location.search);
       const plan   = params.get('plan');
       const amount = params.get('amount');
+      console.log('DEBUG: URL params → plan=', plan, ', amount=', amount);
 
-      // 2. Map to display names
       const planNames = {
         weekly:  'Weekly Plan',
         monthly: 'Monthly Plan',
@@ -120,7 +119,6 @@
       };
       const prettyName = planNames[plan] || 'Unknown Plan';
 
-      // 3. Update the plan info text
       const planInfoEl = document.getElementById('planInfo');
       if (plan && amount) {
         planInfoEl.textContent = `You chose: ${prettyName} — $${amount}`;
@@ -128,13 +126,13 @@
         planInfoEl.textContent = 'No subscription plan selected.';
       }
 
-      // 4. Inject hidden inputs so your form handler gets plan & amount
+      // Add hidden inputs for POSTing
       const form = document.getElementById('paymentForm');
-      form.insertAdjacentHTML('beforeend', \`
-        <input type="hidden" name="plan"   value="\${plan || ''}">
-        <input type="hidden" name="amount" value="\${amount || ''}">
-      \`);
-    });
+      form.insertAdjacentHTML('beforeend', `
+        <input type="hidden" name="plan"   value="${plan||''}">
+        <input type="hidden" name="amount" value="${amount||''}">
+      `);
+    })();
   </script>
 </body>
 </html>
