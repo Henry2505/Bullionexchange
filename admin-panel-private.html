@@ -1,32 +1,172 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
+  <meta charset="UTF-8"/>
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>CBE Admin Panel</title>
-  <link rel="stylesheet" href="styles.css">
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;500;700&display=swap" rel="stylesheet"/>
+  <style>
+    * { margin:0; padding:0; box-sizing:border-box; }
+    body, html { width:100%; height:100%; font-family:'Poppins',sans-serif; background:#000; color:#fff; overflow:hidden; }
+    a { color: gold; text-decoration: none; }
+    a:hover { text-decoration: underline; }
+
+    .video-background { position:fixed; top:0; left:0; width:100%; height:100%; object-fit:cover; z-index:-2; }
+    .overlay { position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.6); z-index:-1; }
+
+    .top-bar {
+      position:relative; background:rgba(0,0,0,0.8);
+      padding:15px 20px; display:flex; justify-content:space-between; align-items:center;
+      border-bottom:1px solid gold; z-index:10;
+    }
+    .top-bar h1 { font-size:1.2rem; color:gold; }
+    .logoutBtn {
+      background:crimson; color:#fff; border:none; padding:6px 12px; border-radius:4px; cursor:pointer;
+    }
+
+    .menu-toggle {
+      width:30px; height:30px; background:gold; border:none; border-radius:50%; cursor:pointer;
+      display:flex; flex-direction:column; justify-content:space-around; align-items:center;
+      padding:4px; box-shadow:0 0 8px gold; animation:blink 2s infinite;
+    }
+    @keyframes blink {0%,100%{box-shadow:0 0 6px gold}50%{box-shadow:0 0 18px gold}}
+    .menu-toggle span { display:block; width:6px; height:6px; background:#000; border-radius:50%; }
+
+    .sidebar {
+      position:fixed; top:60px; left:0; width:220px; height:calc(100% - 60px);
+      background:rgba(0,0,0,0.9); overflow-y:auto; transform:translateX(-100%); transition:transform 0.3s ease; z-index:5;
+    }
+    .sidebar.show { transform:translateX(0); }
+    .sidebar a {
+      display:block; padding:12px 18px; border-bottom:1px solid #111;
+    }
+    .sidebar a:hover { background:gold; color:black; }
+
+    #main-content {
+      margin-top:60px; padding:20px; height:calc(100% - 60px); overflow-y:auto;
+    }
+    .content-section { display:none; background:rgba(20,20,20,0.8); padding:20px; margin-bottom:20px; border-radius:8px; box-shadow:0 0 15px rgba(255,215,0,0.2); }
+    .content-section.active { display:block; }
+    h2 { color:gold; margin-bottom:15px; }
+
+    @media (max-width:768px) {
+      .sidebar { width:100%; }
+      #main-content { padding:10px; }
+    }
+  </style>
 </head>
 <body>
-  <div class="sidebar">
-    <h2>CBE Admin</h2>
-    <ul>
-      <li><a href="admin-dashboard.html">Dashboard</a></li>
-      <li><a href="admin-signals.html">Signals</a></li>
-      <li><a href="admin-users.html">Users</a></li>
-      <li><a href="admin-payments.html">Payments</a></li> <!-- Added Payments navigation -->
-      <li><a href="admin-settings.html">Settings</a></li>
-      <li><a href="admin-messages.html">Messages</a></li>
-      <li><a href="admin-files.html">Files</a></li>
-      <li><a href="index.html">Logout</a></li>
-    </ul>
+  <video class="video-background" autoplay muted loop playsinline poster="">
+    <source src="star-video.mp4" type="video/mp4"/>
+  </video>
+  <div class="overlay"></div>
+
+  <div class="top-bar">
+    <button class="logoutBtn" onclick="logout()">Logout</button>
+    <h1>CBE Admin Panel</h1>
+    <button class="menu-toggle" onclick="toggleSidebar()"><span></span><span></span><span></span></button>
   </div>
 
-  <div class="main-content">
-    <h1>Welcome to CBE Admin Panel</h1>
-    <p>Select a section from the sidebar to begin.</p>
+  <div class="sidebar" id="sidebar">
+    <a href="#" data-target="dashboard">Dashboard</a>
+    <a href="#" data-target="payments">Payment Records</a>
+    <a href="#" data-target="applications">Applications</a>
+    <a href="#" data-target="users">User Approvals</a>
+    <a href="#" data-target="signals">Publish Signal</a>
+    <a href="#" data-target="tradeInsights">Trade Insights</a>
+    <a href="#" data-target="tradeHistory">Trade History</a>
+    <a href="#" data-target="messages">Inbox</a>
+    <a href="#" data-target="settings">Settings</a>
+    <a href="#" data-target="logs">Admin Logs</a>
+    <a href="Index.html">← Back to Site</a>
   </div>
 
-  <!-- Load shared JS file -->
-  <script type="module" src="admin.js"></script>
+  <div id="main-content">
+    <!-- Dashboard Home -->
+    <div class="content-section" id="dashboard">
+      <h2>Dashboard Home</h2>
+      <p>Welcome back, Admin! Select a section from the sidebar.</p>
+    </div>
+
+    <!-- Payments -->
+    <div class="content-section" id="payments">
+      <h2>Payment Records</h2>
+      <div id="paymentContainer" class="loading">Loading…</div>
+    </div>
+
+    <!-- Applications -->
+    <div class="content-section" id="applications">
+      <h2>Application Submissions</h2>
+      <div id="applicationContainer" class="loading">Loading…</div>
+    </div>
+
+    <!-- Users -->
+    <div class="content-section" id="users">
+      <h2>User Approvals</h2>
+      <div id="userContainer" class="loading">Loading…</div>
+    </div>
+
+    <!-- Signals -->
+    <div class="content-section" id="signals">
+      <h2>Publish Signal</h2>
+      <!-- your signal form here -->
+    </div>
+
+    <!-- Trade Insights -->
+    <div class="content-section" id="tradeInsights">
+      <h2>Trade Insights</h2>
+      <!-- your insights uploader here -->
+    </div>
+
+    <!-- Trade History -->
+    <div class="content-section" id="tradeHistory">
+      <h2>Trade History</h2>
+      <!-- your history uploader here -->
+    </div>
+
+    <!-- Inbox Messages -->
+    <div class="content-section" id="messages">
+      <h2>Inbox Messages</h2>
+      <div id="inboxContainer" class="loading">Loading…</div>
+    </div>
+
+    <!-- Settings -->
+    <div class="content-section" id="settings">
+      <h2>Settings</h2>
+      <!-- your settings form here -->
+    </div>
+
+    <!-- Logs -->
+    <div class="content-section" id="logs">
+      <h2>Admin Logs</h2>
+      <div id="logContainer" class="loading">Loading…</div>
+    </div>
+  </div>
+
+  <script>
+    // Sidebar toggle
+    function toggleSidebar() {
+      document.getElementById('sidebar').classList.toggle('show');
+    }
+    // Logout placeholder
+    function logout() {
+      alert('Logging out…');
+      // add your logout logic
+    }
+    // Navigation
+    document.querySelectorAll('.sidebar a[data-target]').forEach(el => {
+      el.addEventListener('click', e => {
+        e.preventDefault();
+        const tgt = el.getAttribute('data-target');
+        document.querySelectorAll('.content-section').forEach(s => s.classList.remove('active'));
+        document.getElementById(tgt).classList.add('active');
+        toggleSidebar();
+      });
+    });
+    // Show dashboard on load
+    document.addEventListener('DOMContentLoaded', () => {
+      document.getElementById('dashboard').classList.add('active');
+    });
+  </script>
 </body>
 </html>
