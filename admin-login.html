@@ -68,31 +68,39 @@
   <script>
     const supabase = supabase.createClient(
       "https://dapwpgvnfjcfqqhrpxla.supabase.co",
-      "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+      "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImRhcHdwZ3ZuZmpjZnFxaHJweGxhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDcwNDA4ODgsImV4cCI6MjA2MjYxNjg4OH0.ICC0UsLlzJDNre7rFCeD3k6iVzo6jOJgn3PhABpEMsQ"
     );
 
     async function login() {
       const email = document.getElementById("email").value;
       const password = document.getElementById("password").value;
-      const { data, error } = await supabase.auth.signInWithPassword({ email, password });
+      const errorDiv = document.getElementById("error");
+
+      const { data, error } = await supabase.auth.signInWithPassword({
+        email,
+        password
+      });
 
       if (error) {
-        document.getElementById("error").innerText = error.message;
-      } else {
-        const user = data.user;
-        const { data: roleData, error: roleError } = await supabase
-          .from("user_roles")
-          .select("role")
-          .eq("user_id", user.id)
-          .single();
-
-        if (roleError || roleData.role !== "admin") {
-          document.getElementById("error").innerText = "Access denied. Admins only.";
-          await supabase.auth.signOut();
-        } else {
-          window.location.href = "admin-panel-private.html";
-        }
+        errorDiv.innerText = error.message;
+        return;
       }
+
+      // Verify user role is "admin"
+      const { data: roleData, error: roleError } = await supabase
+        .from("user_roles")
+        .select("role")
+        .eq("user_id", data.user.id)
+        .single();
+
+      if (roleError || !roleData || roleData.role !== "admin") {
+        errorDiv.innerText = "Access denied. You are not an admin.";
+        await supabase.auth.signOut();
+        return;
+      }
+
+      // Redirect to admin panel
+      window.location.href = "admin-panel-private.html";
     }
   </script>
 </body>
