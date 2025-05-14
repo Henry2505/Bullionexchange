@@ -1,143 +1,80 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>CBE Admin Login</title>
-  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;500;700&display=swap" rel="stylesheet"/>
-  <style>
-    body {
-      font-family: 'Poppins', sans-serif;
-      background: linear-gradient(to right, #000, #111);
-      color: white;
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      height: 100vh;
-      margin: 0;
-    }
-    .login-container {
-      background: #1a1a1a;
-      padding: 30px;
-      border-radius: 10px;
-      box-shadow: 0 0 15px gold;
-      width: 100%;
-      max-width: 400px;
-    }
-    h2 {
-      text-align: center;
-      color: gold;
-      margin-bottom: 20px;
-    }
-    input {
-      width: 100%;
-      padding: 12px;
-      margin-bottom: 15px;
-      background: #000;
-      border: 1px solid #444;
-      color: white;
-      border-radius: 5px;
-    }
-    button {
-      width: 100%;
-      padding: 12px;
-      background: gold;
-      border: none;
-      color: black;
-      font-weight: bold;
-      border-radius: 5px;
-      cursor: pointer;
-    }
-    .error, #debug {
-      margin-top: 10px;
-      text-align: center;
-      font-size: 13px;
-    }
-    .error {
-      color: crimson;
-    }
-    #debug {
-      color: lightgray;
-    }
-  </style>
-</head>
-<body>
-  <div class="login-container">
-    <h2>Admin Login</h2>
-    <input type="email" id="email" placeholder="Email" />
-    <input type="password" id="password" placeholder="Password" />
-    <button onclick="login()">Login</button>
-    <div class="error" id="error"></div>
-    <div id="debug"></div>
-  </div>
+<script>
+  const debug = document.getElementById("debug");
+  const errorDiv = document.getElementById("error");
 
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-  <script>
-    const debug = document.getElementById("debug");
-    const errorDiv = document.getElementById("error");
+  let supabase;
 
-    let supabase;
+  try {
+    supabase = supabase.createClient(
+      "https://dapwpgvnfjcfqqhrpxla.supabase.co",
+      "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImRhcHdwZ3ZuZmpjZnFxaHJweGxhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDcwNDA4ODgsImV4cCI6MjA2MjYxNjg4OH0.ICC0UsLlzJDNre7rFCeD3k6iVzo6jOJgn3PhABpEMsQ"
+    );
+    debug.innerText = "✅ Supabase initialized.";
+  } catch (err) {
+    debug.innerText = "❌ Supabase init failed: " + err.message;
+  }
+
+  async function login() {
+    errorDiv.innerText = "";
+    debug.innerText = "⏳ Starting login...";
+
+    const email = document.getElementById("email").value;
+    const password = document.getElementById("password").value;
+
+    if (!email || !password) {
+      errorDiv.innerText = "Please enter email and password.";
+      debug.innerText = "⚠️ Missing email or password.";
+      return;
+    }
+
+    debug.innerText = "🔐 Attempting Supabase login...";
 
     try {
-      supabase = supabase.createClient(
-        "https://dapwpgvnfjcfqqhrpxla.supabase.co",
-        "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImRhcHdwZ3ZuZmpjZnFxaHJweGxhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDcwNDA4ODgsImV4cCI6MjA2MjYxNjg4OH0.ICC0UsLlzJDNre7rFCeD3k6iVzo6jOJgn3PhABpEMsQ"
-      );
-      debug.innerText = "✅ Supabase initialized.";
-    } catch (err) {
-      debug.innerText = "❌ Supabase init failed: " + err.message;
-    }
-
-    async function login() {
-      errorDiv.innerText = "";
-      debug.innerText = "⏳ Logging in...";
-
-      const email = document.getElementById("email").value;
-      const password = document.getElementById("password").value;
-
-      if (!email || !password) {
-        errorDiv.innerText = "Please enter email and password.";
-        return;
-      }
-
       const { data, error } = await supabase.auth.signInWithPassword({
         email,
         password
       });
 
       if (error) {
-        errorDiv.innerText = error.message || "Login failed.";
+        errorDiv.innerText = error.message;
         debug.innerText = "❌ Login error: " + error.message;
         return;
       }
 
+      debug.innerText = "✅ Authenticated. Checking role...";
+
       const user = data.user;
-      if (!user) {
+      if (!user || !user.id) {
         errorDiv.innerText = "Login failed. User not found.";
         debug.innerText = "❌ No user returned.";
         return;
       }
 
-      try {
-        const { data: roleData, error: roleError } = await supabase
-          .from("user_roles")
-          .select("role")
-          .eq("user_id", user.id)
-          .single();
+      const { data: roleData, error: roleError } = await supabase
+        .from("user_roles")
+        .select("role")
+        .eq("user_id", user.id)
+        .single();
 
-        if (roleError || !roleData || roleData.role !== "admin") {
-          errorDiv.innerText = "Access denied. Admins only.";
-          debug.innerText = "❌ Not an admin or role check failed.";
-          await supabase.auth.signOut();
-        } else {
-          debug.innerText = "✅ Login successful. Redirecting...";
-          window.location.href = "admin-panel-private.html";
-        }
-      } catch (err) {
-        errorDiv.innerText = "Something went wrong during role check.";
-        debug.innerText = "❌ Role check failed: " + err.message;
+      if (roleError) {
+        errorDiv.innerText = "Role check failed.";
+        debug.innerText = "❌ Role error: " + roleError.message;
+        return;
       }
+
+      if (!roleData || roleData.role !== "admin") {
+        errorDiv.innerText = "Access denied. Admins only.";
+        debug.innerText = "❌ Not an admin.";
+        await supabase.auth.signOut();
+        return;
+      }
+
+      debug.innerText = "✅ Admin confirmed. Redirecting...";
+      window.location.href = "admin-panel-private.html";
+
+    } catch (err) {
+      errorDiv.innerText = "Unexpected error.";
+      debug.innerText = "❌ Exception: " + err.message;
     }
-  </script>
-</body>
-</html>
+  }
+</script>
