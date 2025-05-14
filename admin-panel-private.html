@@ -1,57 +1,73 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>CBE Admin Dashboard</title>
-  <link rel="stylesheet" href="styles.css" />
+  <meta charset="UTF-8">
+  <title>CBE Admin Panel</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;500;700&display=swap" rel="stylesheet">
   <style>
     body {
-      margin: 0;
       font-family: 'Poppins', sans-serif;
-      background: #0a0a0a;
+      background: #111;
       color: white;
+      margin: 0;
+      padding: 0;
     }
-    nav {
-      background: black;
-      padding: 10px 20px;
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      box-shadow: 0 0 10px gold;
-    }
-    nav h1 {
-      color: gold;
+    header {
+      background: gold;
+      color: black;
+      padding: 15px;
+      text-align: center;
       font-size: 24px;
+      font-weight: bold;
     }
-    nav a {
-      color: white;
-      margin-left: 20px;
-      text-decoration: none;
-    }
-    .dashboard-content {
-      padding: 30px;
+    .container {
+      padding: 20px;
     }
   </style>
 </head>
 <body>
-  <nav>
-    <h1>CBE Admin Panel</h1>
-    <div>
-      <a href="admin-dashboard.html">Dashboard</a>
-      <a href="admin-signals.html">Signals</a>
-      <a href="admin-users.html">Users</a>
-      <a href="admin-settings.html">Settings</a>
-      <a href="#" onclick="logout()">Logout</a>
-    </div>
-  </nav>
-
-  <div class="dashboard-content">
-    <h2>Welcome to CBE Admin Panel</h2>
-    <p>This is a protected area. Only authorized admins can view this page.</p>
+  <header>CBE Admin Dashboard</header>
+  <div class="container">
+    <p>Welcome, admin!</p>
+    <button onclick="logout()">Logout</button>
   </div>
 
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-  <script src="admin.js"></script>
+  <script>
+    const supabase = supabase.createClient(
+      "https://dapwpgvnfjcfqqhrpxla.supabase.co",
+      "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImRhcHdwZ3ZuZmpjZnFxaHJweGxhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDcwNDA4ODgsImV4cCI6MjA2MjYxNjg4OH0.ICC0UsLlzJDNre7rFCeD3k6iVzo6jOJgn3PhABpEMsQ"
+    );
+
+    async function checkSession() {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) {
+        window.location.href = "admin-login.html";
+        return;
+      }
+
+      // Optional: Confirm user is still an admin
+      const { data: roleData, error: roleError } = await supabase
+        .from("user_roles")
+        .select("role")
+        .eq("user_id", session.user.id)
+        .single();
+
+      if (roleError || !roleData || roleData.role !== "admin") {
+        alert("Access denied.");
+        await supabase.auth.signOut();
+        window.location.href = "admin-login.html";
+      }
+    }
+
+    async function logout() {
+      await supabase.auth.signOut();
+      window.location.href = "admin-login.html";
+    }
+
+    // Call check
+    checkSession();
+  </script>
 </body>
 </html>
