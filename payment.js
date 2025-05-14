@@ -92,3 +92,31 @@ document.addEventListener('DOMContentLoaded', async () => {
     }
   };
 });
+// === BEGIN plan‐linking code ===
+(function() {
+  const params = new URLSearchParams(window.location.search);
+  const plan   = params.get('plan');
+  const amount = params.get('amount');
+  console.log('PLAN DEBUG →', plan, amount);
+
+  const planNames = {
+    weekly:  'Weekly Plan',
+    monthly: 'Monthly Plan',
+    yearly:  'Yearly Plan'
+  };
+  const prettyName = planNames[plan] || 'Unknown Plan';
+
+  const planInfoEl = document.getElementById('planInfo');
+  if (plan && amount) {
+    planInfoEl.textContent = `You chose: ${prettyName} — $${amount}`;
+  } else {
+    planInfoEl.textContent = 'No subscription plan selected.';
+  }
+
+  const form = document.getElementById('paymentForm');
+  form.insertAdjacentHTML('beforeend', `
+    <input type="hidden" name="plan"   value="${plan||''}">
+    <input type="hidden" name="amount" value="${amount||''}">
+  `);
+})();
+// === END plan‐linking code ===
