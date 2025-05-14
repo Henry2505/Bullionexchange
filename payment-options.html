@@ -3,234 +3,107 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>VIP Payment - CBE</title>
+  <title>VIP Payment • CBE</title>
   <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;500;700&display=swap" rel="stylesheet">
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js"></script>
-  <script src="https://js.paystack.co/v1/inline.js"></script>
   <style>
-    body {
-      margin: 0;
-      font-family: 'Poppins', sans-serif;
-      background-color: #0b0b0b;
-      color: #f5f5f5;
-    }
-    header {
-      padding: 100px 20px 40px;
-      text-align: center;
-      color: gold;
-    }
-    header h1 {
-      font-size: 36px;
-      margin-bottom: 10px;
-    }
-    .payment-section {
-      max-width: 700px;
-      margin: 40px auto;
-      padding: 20px;
-      background-color: #141414;
-      border-radius: 10px;
-      border-left: 4px solid gold;
-    }
-    .payment-option {
-      margin-bottom: 25px;
-    }
-    .payment-option h2 {
-      color: gold;
-      font-size: 22px;
-      margin-bottom: 8px;
-    }
-    .payment-option p, a {
-      font-size: 16px;
-      color: #ddd;
-      text-decoration: none;
-    }
-    .payment-option a:hover {
-      text-decoration: underline;
-      color: gold;
-    }
-    .subscribe-btn {
-      display: inline-block;
-      margin-top: 10px;
-      background-color: gold;
-      color: #000;
-      padding: 14px 20px;
-      font-weight: bold;
-      border-radius: 6px;
-      transition: all 0.3s ease;
-    }
-    .subscribe-btn:hover {
-      box-shadow: 0 0 15px gold, 0 0 30px #ffd700;
-      background-color: #e6c200;
-    }
-    footer {
-      text-align: center;
-      padding: 20px;
-      font-size: 14px;
-      color: #888;
-      background-color: #0b0b0b;
-      border-top: 1px solid #222;
-      margin-top: 60px;
-    }
+    body { margin:0; font-family:'Poppins',sans-serif; background:#0b0b0b; color:#f5f5f5 }
     .video-background {
-      position: fixed;
-      top: 0; left: 0;
-      width: 100%; height: 100%;
-      object-fit: cover;
-      z-index: -2;
+      position:fixed; top:0; left:0; width:100%; height:100%;
+      object-fit:cover; z-index:-2;
     }
     .overlay {
-      position: fixed;
-      top: 0; left: 0;
-      width: 100%; height: 100%;
-      background: rgba(0, 0, 0, 0.5);
-      z-index: -1;
+      position:fixed; top:0; left:0; width:100%; height:100%;
+      background:rgba(0,0,0,0.6); z-index:-1;
     }
-    nav {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      padding: 20px 40px;
-      background: rgba(0, 0, 0, 0.8);
-      position: fixed;
-      top: 0;
-      width: 100%;
-      z-index: 1000;
-      border-bottom: 1px solid #333;
-      box-shadow: 0 0 10px gold;
+    .container {
+      max-width:700px; margin:120px auto 40px; padding:30px;
+      background:rgba(20,20,20,0.8); border-radius:12px;
+      box-shadow:0 0 20px gold; text-align:center;
     }
-    nav img {
-      height: 40px;
-      vertical-align: middle;
-      margin-right: 10px;
+    h1 { color:gold; margin-bottom:10px }
+    #planInfo { font-size:18px; margin-bottom:20px }
+    input, select {
+      width:100%; padding:12px; margin-bottom:20px;
+      background:#111; border:1px solid #444; color:#f5f5f5;
+      border-radius:6px; font-size:16px;
     }
-    nav a {
-      color: gold;
-      margin-left: 20px;
-      text-decoration: none;
+    .method-select { display:flex; justify-content:center; gap:20px; margin-bottom:20px }
+    .method-select button {
+      flex:1; min-width:120px; padding:12px; background:gold;
+      color:#000; border:none; border-radius:6px; font-weight:bold;
+      cursor:pointer; transition:0.3s;
     }
+    .method-select button:hover {
+      background:#e6c200; box-shadow:0 0 10px gold;
+    }
+    #cryptoOptions { display:none; margin-bottom:20px }
+    .wallet-box {
+      display:flex; justify-content:space-between; align-items:center;
+      background:#111; padding:10px; border-radius:6px;
+    }
+    .wallet-box span { color:gold; font-size:14px }
+    .wallet-box button {
+      padding:6px 12px; background:#333; color:gold; border:none;
+      border-radius:5px; cursor:pointer; animation:blinkGlow 2s infinite;
+    }
+    @keyframes blinkGlow {
+      0%,100%{box-shadow:0 0 5px gold}50%{box-shadow:0 0 15px gold}
+    }
+    .submit-btn button {
+      width:100%; padding:14px; background:gold; color:#000;
+      border:none; border-radius:8px; font-size:16px; font-weight:bold;
+      cursor:pointer; transition:0.3s;
+    }
+    .submit-btn button:hover {
+      background:#e6c200; box-shadow:0 0 10px gold;
+    }
+    .logo-wrapper { text-align:center; margin-bottom:20px }
+    .logo-wrapper a img { height:60px; cursor:pointer }
   </style>
 </head>
 <body>
   <video class="video-background" autoplay muted loop playsinline>
-    <source src="star-video.mp4" type="video/mp4" />
+    <source src="star-video.mp4" type="video/mp4">
   </video>
   <div class="overlay"></div>
 
-  <nav>
+  <div class="logo-wrapper">
     <a href="Index.html"><img src="CBE_logo.PNG" alt="CBE Logo"></a>
-    <div>
-      <a href="Index.html">Home</a>
-      <a href="CBE_login.html">Login</a>
-    </div>
-  </nav>
-  <div style="height: 90px;"></div>
+  </div>
 
-  <header>
-    <h1>VIP Plan Payment</h1>
-    <p id="selected-plan">Loading your plan...</p>
-  </header>
+  <div class="container">
+    <h1>Complete Your Payment</h1>
+    <p id="planInfo">Loading plan…</p>
 
-  <section class="payment-section">
-    <div class="payment-option">
-      <h2>Pay with Paystack</h2>
-      <p><a id="paystack-link" href="#" onclick="initiatePaystackPayment()">Pay via Paystack</a></p>
-    </div>
-    <div class="payment-option">
-      <h2>Pay with Cryptocurrency</h2>
-      <p>BTC Wallet: <span id="btc-wallet">Loading...</span></p>
-      <p>USDT (TRC20): <span id="usdt-wallet">Loading...</span></p>
-      <p>ETH (ERC20): <span id="eth-wallet">Loading...</span></p>
-      <p>TRX (TRC20): <span id="trx-wallet">Loading...</span></p>
-    </div>
-    <div>
-      <a href="https://wa.me/2349133957084" class="subscribe-btn" target="_blank">Contact Support</a>
-    </div>
-  </section>
+    <form id="paymentForm">
+      <input type="email" id="userEmail" placeholder="Your application email" required />
 
-  <footer>
-    © 2025 CBE - Chukwuemeka Bullion Exchange. All rights reserved.
-  </footer>
+      <div class="method-select">
+        <button type="button" id="paystackBtn">Paystack</button>
+        <button type="button" id="cryptoBtn">Crypto</button>
+      </div>
 
-  <script>
-    const params = new URLSearchParams(window.location.search);
-    const plan = params.get("plan");
-    const amount = params.get("amount");
-    console.log("Query parameters:", { plan, amount });
-    document.getElementById("selected-plan").textContent = plan && amount ? `Selected Plan: ${plan.toUpperCase()} - $${amount}` : "No plan selected. Please select a plan.";
+      <div id="cryptoOptions">
+        <select id="cryptoType">
+          <option value="">Select Crypto</option>
+          <option value="BTC">BTC</option>
+          <option value="Ethereum ERC20">Ethereum ERC20</option>
+          <option value="USDT TRC20">USDT TRC20</option>
+          <option value="TRX">TRX</option>
+        </select>
+        <div class="wallet-box">
+          <span id="walletAddress">–</span>
+          <button type="button" id="copyWalletBtn">Copy</button>
+        </div>
+      </div>
 
-    const supabase = supabase.createClient('https://dapwpgvnfjcfqqhrpxla.supabase.co', 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImRhcHdwZ3ZuZmpjZnFxaHJweGxhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDcwNDA4ODgsImV4cCI6MjA2MjYxNjg4OH0.ICC0UsLlzJDNre7rFCeD3k6iVzo6jOJgn3PhABpEMsQ');
+      <div class="submit-btn">
+        <button type="submit">Submit Payment</button>
+      </div>
+    </form>
+  </div>
 
-    async function loadPaymentSettings() {
-      const { data, error } = await supabase.from("payment_settings").select("*");
-      console.log("Supabase response:", { data, error });
-      if (error) {
-        console.error("Error loading settings:", error.message);
-        document.getElementById("paystack-link").textContent = "Error loading Paystack link";
-        document.getElementById("paystack-link").removeAttribute("href");
-        document.getElementById("btc-wallet").textContent = "Error loading wallet";
-        document.getElementById("usdt-wallet").textContent = "Error loading wallet";
-        document.getElementById("eth-wallet").textContent = "Error loading wallet";
-        document.getElementById("trx-wallet").textContent = "Error loading wallet";
-        return;
-      }
-      const get = (key) => data.find(item => item.key === key)?.value || "Not available";
-      const paystackKey = get("paystackKey");
-      if (!paystackKey || paystackKey === "Not available") {
-        document.getElementById("paystack-link").textContent = "Paystack payment not available";
-        document.getElementById("paystack-link").removeAttribute("href");
-      } else {
-        document.getElementById("paystack-link").dataset.paystackKey = paystackKey;
-      }
-      document.getElementById("btc-wallet").textContent = get("btc") || "Not available";
-      document.getElementById("usdt-wallet").textContent = get("usdt") || "Not available";
-      document.getElementById("eth-wallet").textContent = get("eth") || "Not available";
-      document.getElementById("trx-wallet").textContent = get("trx") || "Not available";
-    }
-
-    async function logPaymentToSupabase(paymentDetails) {
-      const { error } = await supabase.from("user_payments").insert([paymentDetails]);
-      if (error) {
-        console.error("Error logging payment:", error.message);
-      } else {
-        console.log("Payment logged successfully:", paymentDetails);
-      }
-    }
-
-    function initiatePaystackPayment() {
-      if (!amount || !plan) {
-        alert("Please select a valid plan before proceeding with payment.");
-        return;
-      }
-      const paystackKey = document.getElementById("paystack-link").dataset.paystackKey || "Not available";
-      if (paystackKey === "Not available") {
-        alert("Paystack payment is currently unavailable.");
-        return;
-      }
-      const handler = PaystackPop.setup({
-        key: paystackKey,
-        email: "customer@example.com", // Replace with user email from Supabase auth
-        amount: parseInt(amount) * 100, // Convert to kobo (Paystack requires amount in smallest currency unit)
-        currency: "USD",
-        callback: async function(response) {
-          alert("Payment successful! Reference: " + response.reference);
-          await logPaymentToSupabase({
-            user_id: null, // Replace with supabase.auth.getUser().data.user.id if auth is enabled
-            plan: plan,
-            amount: parseFloat(amount),
-            currency: "USD",
-            payment_method: "paystack",
-            payment_reference: response.reference,
-            status: "completed"
-          });
-        },
-        onClose: function() {
-          alert("Payment window closed.");
-        }
-      });
-      handler.openIframe();
-    }
-
-    loadPaymentSettings();
-  </script>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script type="module" src="payment.js"></script>
 </body>
 </html>
