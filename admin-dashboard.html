@@ -1,36 +1,48 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
+  <meta charset="UTF-8"/>
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>CBE Admin — Dashboard</title>
-  <link rel="stylesheet" href="styles.css" />
+  <title>CBE Admin Panel</title>
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;500;700&display=swap" rel="stylesheet"/>
+  <style>
+    /* (your existing styles here) */
+  </style>
+
+  <!-- 1) Load Supabase client -->
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+  <!-- 2) Authentication Guard -->
+  <script type="module">
+    import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm';
+
+    // Initialize Supabase (Anon key is fine for auth checks)
+    const SUPABASE_URL = 'https://dapwpgvnfjcfqqhrpxla.supabase.co';
+    const SUPABASE_ANON = 'eyJhbGciOiJIUzI1NiIsInR5cCI6Ik...'; // your anon key
+    const supabase        = createClient(SUPABASE_URL, SUPABASE_ANON);
+
+    (async () => {
+      const { data: { session } } = await supabase.auth.getSession();
+      // If no session or not admin, redirect to login
+      if (!session || session.user.app_metadata?.role !== 'admin') {
+        window.location.href = 'CBE_login.html';
+      }
+    })();
+  </script>
 </head>
 <body>
-  <div class="admin-wrapper">
-    <aside class="sidebar">
-      <h2>CBE Admin</h2>
-      <nav>
-        <a href="admin-dashboard.html" class="active">Dashboard</a>
-        <a href="admin-signals.html">Signals</a>
-        <a href="admin-users.html">Users</a>
-        <a href="admin-payments.html">Payments</a>
-        <a href="admin-settings.html">Settings</a>
-        <a href="admin-messages.html">Messages</a>
-        <a href="admin-files.html">Files</a>
-      </nav>
-    </aside>
+  <!-- (Your existing video background, overlay, top-bar, sidebar, main-content, etc.) -->
 
-    <main class="main-panel">
-      <header><h1>Dashboard Overview</h1></header>
-      <section class="cards">
-        <div class="card"><h3>Total Users</h3><p id="total-users">0</p></div>
-        <div class="card"><h3>Signals Today</h3><p id="signals-today">0</p></div>
-        <div class="card"><h3>Pending Messages</h3><p id="messages-pending">0</p></div>
-      </section>
-    </main>
-  </div>
+  <!-- Replace your logout() function call with this: -->
+  <script type="module">
+    // Use the same supabase client from above
+    document.querySelector('.logoutBtn').addEventListener('click', async () => {
+      await supabase.auth.signOut();
+      window.location.href = 'CBE_login.html';
+    });
+  </script>
 
-  <script type="module" src="admin.js"></script>
+  <!-- 3) The rest of your admin logic (sidebar toggle, loadPayments, loadSettings, etc.) stays in admin.js -->
+  <script src="admin.js" type="module"></script>
 </body>
 </html>
