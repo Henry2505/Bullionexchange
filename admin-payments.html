@@ -3,69 +3,208 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>CBE Admin — Payments</title>
-  <link rel="stylesheet" href="styles.css" />
+  <title>Admin Payment Settings - CBE</title>
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;500;700&display=swap" rel="stylesheet">
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js"></script>
+  <style>
+    body {
+      margin: 0;
+      font-family: 'Poppins', sans-serif;
+      background-color: #0b0b0b;
+      color: #f5f5f5;
+    }
+    header {
+      padding: 100px 20px 40px;
+      text-align: center;
+      color: gold;
+    }
+    header h1 {
+      font-size: 36px;
+      margin-bottom: 10px;
+    }
+    .admin-section {
+      max-width: 700px;
+      margin: 40px auto;
+      padding: 20px;
+      background-color: #141414;
+      border-radius: 10px;
+      border-left: 4px solid gold;
+    }
+    .payment-method {
+      margin-bottom: 20px;
+    }
+    .payment-method label {
+      display: block;
+      color: gold;
+      font-size: 18px;
+      margin-bottom: 5px;
+    }
+    .payment-method input {
+      width: 100%;
+      padding: 10px;
+      background-color: #222;
+      border: 1px solid #444;
+      border-radius: 5px;
+      color: #f5f5f5;
+      font-size: 16px;
+    }
+    .payment-method input:focus {
+      outline: none;
+      border-color: gold;
+    }
+    button {
+      display: inline-block;
+      background-color: gold;
+      color: #000;
+      padding: 14px 20px;
+      font-weight: bold;
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+      transition: all 0.3s ease;
+    }
+    button:hover {
+      box-shadow: 0 0 15px gold, 0 0 30px #ffd700;
+      background-color: #e6c200;
+    }
+    .error {
+      color: #ff5555;
+      font-size: 14px;
+      margin-top: 10px;
+    }
+    .success {
+      color: #55ff55;
+      font-size: 14px;
+      margin-top: 10px;
+    }
+    nav {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 20px 40px;
+      background: rgba(0, 0, 0, 0.8);
+      position: fixed;
+      top: 0;
+      width: 100%;
+      z-index: 1000;
+      border-bottom: 1px solid #333;
+      box-shadow: 0 0 10px gold;
+    }
+    nav img {
+      height: 40px;
+      vertical-align: middle;
+      margin-right: 10px;
+    }
+    nav a {
+      color: gold;
+      margin-left: 20px;
+      text-decoration: none;
+    }
+    .video-background {
+      position: fixed;
+      top: 0; left: 0;
+      width: 100%; height: 100%;
+      object-fit: cover;
+      z-index: -2;
+    }
+    .overlay {
+      position: fixed;
+      top: 0; left: 0;
+      width: 100%; height: 100%;
+      background: rgba(0, 0, 0, 0.5);
+      z-index: -1;
+    }
+  </style>
 </head>
 <body>
-  <div class="admin-wrapper">
-    <aside class="sidebar">
-      <h2>CBE Admin</h2>
-      <nav>
-        <a href="admin-dashboard.html">Dashboard</a>
-        <a href="admin-signals.html">Signals</a>
-        <a href="admin-users.html">Users</a>
-        <a href="admin-payments.html" class="active">Payments</a>
-        <a href="admin-trade-history.html">Trade History</a>
-        <a href="admin-trade-insights.html">Trade Insights</a>
-        <a href="admin-settings.html">Settings</a>
-        <a href="admin-messages.html">Messages</a>
-        <a href="admin-files.html">Files</a>
-      </nav>
-    </aside>
+  <video class="video-background" autoplay muted loop playsinline>
+    <source src="star-video.mp4" type="video/mp4" />
+  </video>
+  <div class="overlay"></div>
 
-    <main class="main-panel">
-      <header><h1>Payment Management</h1></header>
+  <nav>
+    <a href="Index.html"><img src="CBE_logo.PNG" alt="CBE Logo"></a>
+    <div>
+      <a href="Index.html">Home</a>
+      <a href="CBE_login.html">Login</a>
+    </div>
+  </nav>
+  <div style="height: 90px;"></div>
 
-      <section class="table-section">
-        <table>
-          <thead>
-            <tr>
-              <th>User Email</th>
-              <th>Amount</th>
-              <th>Method</th>
-              <th>Details</th>
-              <th>Status</th>
-              <th>Timestamp</th>
-              <th>Actions</th>
-            </tr>
-          </thead>
-          <tbody id="payments-table-body">
-            <!-- Payments will load here dynamically -->
-          </tbody>
-        </table>
-      </section>
+  <header>
+    <h1>Admin Payment Settings</h1>
+    <p>Manage payment methods for CBE VIP subscriptions</p>
+  </header>
 
-      <section class="form-section">
-        <h2>Add/Edit Payment Method</h2>
-        <form id="payment-method-form">
-          <label for="method">Method:</label>
-          <select id="method">
-            <option value="Paystack">Paystack</option>
-            <option value="BTC">BTC</option>
-            <option value="USDT TRC20">USDT TRC20</option>
-            <option value="Ethereum">Ethereum</option>
-            <option value="TRX">TRX</option>
-          </select>
+  <section class="admin-section">
+    <div class="payment-method">
+      <label for="paystackKey">Paystack Public Key</label>
+      <input type="text" id="paystackKey" placeholder="e.g., pk_test_1234567890abcdef">
+    </div>
+    <div class="payment-method">
+      <label for="btc">Bitcoin (BTC) Wallet Address</label>
+      <input type="text" id="btc" placeholder="e.g., bc1q...">
+    </div>
+    <div class="payment-method">
+      <label for="usdt">USDT (TRC20) Wallet Address</label>
+      <input type="text" id="usdt" placeholder="e.g., T...">
+    </div>
+    <div class="payment-method">
+      <label for="eth">Ethereum (ETH) Wallet Address</label>
+      <input type="text" id="eth" placeholder="e.g., 0x...">
+    </div>
+    <div class="payment-method">
+      <label for="trx">TRON (TRX) Wallet Address</label>
+      <input type="text" id="trx" placeholder="e.g., T...">
+    </div>
+    <button onclick="savePaymentSettings()">Save Payment Settings</button>
+    <p id="message" class="error"></p>
+  </section>
 
-          <label for="details">Wallet Address / Link:</label>
-          <input type="text" id="details" placeholder="Wallet address or Paystack link" required />
+  <script>
+    const supabase = supabase.createClient('https://dapwpgvnfjcfqqhrpxla.supabase.co', 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImRhcHdwZ3ZuZmpjZnFxaHJweGxhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDcwNDA4ODgsImV4cCI6MjA2MjYxNjg4OH0.ICC0UsLlzJDNre7rFCeD3k6iVzo6jOJgn3PhABpEMsQ');
 
-          <button type="submit">Save Payment Method</button>
-        </form>
-      </section>
-    </main>
-  </div>
+    async function loadPaymentSettings() {
+      const { data, error } = await supabase.from('payment_settings').select('*');
+      if (error) {
+        document.getElementById('message').textContent = 'Error loading settings: ' + error.message;
+        document.getElementById('message').className = 'error';
+        return;
+      }
+      const inputs = ['paystackKey', 'btc', 'usdt', 'eth', 'trx'];
+      inputs.forEach(key => {
+        const setting = data.find(item => item.key === key);
+        document.getElementById(key).value = setting ? setting.value : '';
+      });
+    }
 
-  <script type="module" src="admin.js"></script>
+    async function savePaymentSettings() {
+      const settings = [
+        { key: 'paystackKey', value: document.getElementById('paystackKey').value.trim() },
+        { key: 'btc', value: document.getElementById('btc').value.trim() },
+        { key: 'usdt', value: document.getElementById('usdt').value.trim() },
+        { key: 'eth', value: document.getElementById('eth').value.trim() },
+        { key: 'trx', value: document.getElementById('trx').value.trim() }
+      ].filter(setting => setting.value); // Only save non-empty values
+
+      if (settings.length === 0) {
+        document.getElementById('message').textContent = 'Please enter at least one payment method.';
+        document.getElementById('message').className = 'error';
+        return;
+      }
+
+      const { error } = await supabase.from('payment_settings').upsert(settings, { onConflict: 'key' });
+      if (error) {
+        document.getElementById('message').textContent = 'Error saving settings: ' + error.message;
+        document.getElementById('message').className = 'error';
+      } else {
+        document.getElementById('message').textContent = 'Payment settings saved successfully!';
+        document.getElementById('message').className = 'success';
+      }
+    }
+
+    // Load existing settings on page load
+    loadPaymentSettings();
+  </script>
 </body>
 </html>
