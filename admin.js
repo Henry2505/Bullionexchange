@@ -1,140 +1,112 @@
-// Initialize Supabase (anon key for admin role bypass)
-const SUPABASE_URL = 'https://dapwpgvnfjcfqqhrpxla.supabase.co';
-const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImRhcHdwZ3ZuZmpjZnFxaHJweGxhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDcwNDA4ODgsImV4cCI6MjA2MjYxNjg4OH0.ICC0UsLlzJDNre7rFCeD3k6iVzo6jOJgn3PhABpEMsQ';
+// Initialize Supabase
+const supabase = supabase.createClient(
+  'https://dapwpgvnfjcfqqhrpxla.supabase.co',
+  'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImRhcHdwZ3ZuZmpjZnFxaHJweGxhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDcwNDA4ODgsImV4cCI6MjA2MjYxNjg4OH0.ICC0UsLlzJDNre7rFCeD3k6iVzo6jOJgn3PhABpEMsQ'
+);
 
-const supabaseAdmin = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+// Admin Access Check
+supabase.auth.getSession().then(async ({ data: { session }, error }) => {
+  if (error || !session) {
+    alert("You must be logged in.");
+    window.location.href = "login.html";
+    return;
+  }
 
-// ─── Sidebar Toggle & Navigation ───
+  const user = session.user;
+  const { data: roleData, error: roleError } = await supabase
+    .from('user_roles')
+    .select('role')
+    .eq('user_id', user.id)
+    .single();
 
-function toggleSidebar() {
-  document.getElementById('sidebar').classList.toggle('show');
-}
-function logout() {
-  supabase.auth.signOut().then(() => location.reload());
-}
-document.querySelectorAll('.sidebar a[data-target]').forEach(el => {
-  el.addEventListener('click', e => {
-    e.preventDefault();
-    document.querySelectorAll('.content-section').forEach(s => s.classList.remove('active'));
-    document.getElementById(el.dataset.target).classList.add('active');
-    toggleSidebar();
-  });
+  if (roleError || !roleData || roleData.role !== 'admin') {
+    alert("Access denied. Admins only.");
+    window.location.href = "login.html";
+  } else {
+    console.log("Welcome Admin:", user.email);
+    // Load rest of the dashboard
+    loadPayments();
+    loadSettings();
+  }
 });
-document.addEventListener('DOMContentLoaded', () => {
-  document.getElementById('dashboard').classList.add('active');
-  loadPayments();
-  loadSettings();
-  // (Call other loaders as you implement them)
-});
 
-// ─── Payments Management ───
-
+// Example functions (keep your original ones)
 async function loadPayments() {
-  const { data, error } = await supabaseAdmin
-    .from('user_payments')
-    .select('*')
-    .order('created_at', { ascending: false });
-  const container = document.getElementById('paymentContainer');
+  const { data, error } = await supabase.from("user_payments").select("*").order("timestamp", { ascending: false });
+  const container = document.getElementById("paymentContainer");
+
   if (error) {
-    container.innerHTML = '<p class="error">Error loading payments.</p>';
-    console.error(error);
+    container.innerHTML = `<div class="alert-error">Error loading payments: ${error.message}</div>`;
     return;
   }
-  if (!data.length) {
-    container.innerHTML = '<p>No payments found.</p>';
+
+  if (data.length === 0) {
+    container.innerHTML = `<p>No payments found.</p>`;
     return;
   }
-  // Build table
-  const table = document.createElement('table');
-  table.innerHTML = `
-    <thead>
-      <tr>
-        <th>ID</th><th>Email</th><th>Plan</th><th>Amount</th>
-        <th>Method</th><th>Status</th><th>When</th><th>Actions</th>
-      </tr>
-    </thead>
-    <tbody>
-      ${data.map(p => `
+
+  container.innerHTML = `
+    <table>
+      <thead>
         <tr>
-          <td>${p.id}</td>
-          <td>${p.user_email}</td>
-          <td>${p.plan}</td>
-          <td>${p.amount}</td>
-          <td>${p.method}</td>
-          <td>${p.status}</td>
-          <td>${new Date(p.created_at).toLocaleString()}</td>
-          <td>
-            <button class="btn approve-pay" data-id="${p.id}">Approve</button>
-            <button class="btn reject-pay"  data-id="${p.id}">Reject</button>
-            <button class="btn delete-pay"  data-id="${p.id}">Delete</button>
-          </td>
+          <th scope="col">Email</th>
+          <th scope="col">Amount</th>
+          <th scope="col">Method</th>
+          <th scope="col">Details</th>
+          <th scope="col">Status</th>
+          <th scope="col">Timestamp</th>
         </tr>
-      `).join('')}
-    </tbody>
+      </thead>
+      <tbody>
+        ${data.map(payment => `
+          <tr>
+            <td>${payment.user_email}</td>
+            <td>${payment.amount}</td>
+            <td>${payment.method}</td>
+            <td>${payment.details}</td>
+            <td>${payment.status}</td>
+            <td>${new Date(payment.timestamp).toLocaleString('en-NG', { timeZone: 'Africa/Lagos' })}</td>
+          </tr>
+        `).join('')}
+      </tbody>
+    </table>
   `;
-  container.innerHTML = '';
-  container.appendChild(table);
-
-  // Bind actions
-  container.querySelectorAll('.approve-pay').forEach(btn => {
-    btn.onclick = async () => {
-      await supabaseAdmin.from('user_payments').update({ status: 'approved' }).eq('id', btn.dataset.id);
-      loadPayments();
-    };
-  });
-  container.querySelectorAll('.reject-pay').forEach(btn => {
-    btn.onclick = async () => {
-      await supabaseAdmin.from('user_payments').update({ status: 'rejected' }).eq('id', btn.dataset.id);
-      loadPayments();
-    };
-  });
-  container.querySelectorAll('.delete-pay').forEach(btn => {
-    btn.onclick = async () => {
-      await supabaseAdmin.from('user_payments').delete().eq('id', btn.dataset.id);
-      loadPayments();
-    };
-  });
 }
-
-// ─── Payment Settings ───
 
 async function loadSettings() {
-  const { data, error } = await supabaseAdmin
-    .from('payment_settings')
-    .select('key,value')
-    .order('id');
-  const container = document.getElementById('settingsContainer');
+  const { data, error } = await supabase.from("payment_settings").select("*").single();
+  const settingsMessage = document.getElementById("settingsMessage");
+
   if (error) {
-    container.textContent = 'Error loading settings';
-    console.error(error);
+    settingsMessage.textContent = "Failed to load settings.";
     return;
   }
-  container.innerHTML = '';
-  data.forEach(item => {
-    const group = document.createElement('div');
-    group.className = 'form-group';
-    group.innerHTML = `
-      <label>${item.key}</label>
-      <input type="text" id="setting_${item.key}" value="${item.value}" />
-    `;
-    container.appendChild(group);
-  });
+
+  document.getElementById("paystackLink").value = data.paystack_link || "";
+  document.getElementById("btcAddress").value = data.btc_wallet || "";
+  document.getElementById("usdtAddress").value = data.usdt_wallet || "";
+  document.getElementById("ethAddress").value = data.eth_wallet || "";
+  document.getElementById("trxAddress").value = data.trx_wallet || "";
 }
 
-async function saveSettings() {
-  document.getElementById('settingsMessage').textContent = '';
-  const groups = document.querySelectorAll('#settingsContainer .form-group input');
-  for (let inp of groups) {
-    const key = inp.id.replace('setting_', '');
-    const value = inp.value.trim();
-    const { error } = await supabaseAdmin
-      .from('payment_settings')
-      .upsert({ key, value }, { onConflict: 'key' });
-    if (error) {
-      document.getElementById('settingsMessage').textContent = `Error saving ${key}`;
-      console.error(error);
-      return;
-    }
-  }
-  document.getElementById('settingsMessage').textContent = 'Settings saved!';
-}
+document.getElementById("saveSettingsBtn").addEventListener("click", async () => {
+  const paystackLink = document.getElementById("paystackLink").value;
+  const btc = document.getElementById("btcAddress").value;
+  const usdt = document.getElementById("usdtAddress").value;
+  const eth = document.getElementById("ethAddress").value;
+  const trx = document.getElementById("trxAddress").value;
+
+  const { error } = await supabase
+    .from("payment_settings")
+    .update({
+      paystack_link: paystackLink,
+      btc_wallet: btc,
+      usdt_wallet: usdt,
+      eth_wallet: eth,
+      trx_wallet: trx
+    })
+    .eq("id", 1);
+
+  const msg = document.getElementById("settingsMessage");
+  msg.textContent = error ? "Failed to update settings." : "Settings updated!";
+});
