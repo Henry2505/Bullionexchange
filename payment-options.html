@@ -104,6 +104,37 @@
   </div>
 
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-  <script type="module" src="payment.js"></script>
+  <!-- Inline plan‐linking script -->
+  <script>
+    document.addEventListener('DOMContentLoaded', () => {
+      // 1. Parse URL parameters
+      const params = new URLSearchParams(window.location.search);
+      const plan   = params.get('plan');
+      const amount = params.get('amount');
+
+      // 2. Map to display names
+      const planNames = {
+        weekly:  'Weekly Plan',
+        monthly: 'Monthly Plan',
+        yearly:  'Yearly Plan'
+      };
+      const prettyName = planNames[plan] || 'Unknown Plan';
+
+      // 3. Update the plan info text
+      const planInfoEl = document.getElementById('planInfo');
+      if (plan && amount) {
+        planInfoEl.textContent = `You chose: ${prettyName} — $${amount}`;
+      } else {
+        planInfoEl.textContent = 'No subscription plan selected.';
+      }
+
+      // 4. Inject hidden inputs so your form handler gets plan & amount
+      const form = document.getElementById('paymentForm');
+      form.insertAdjacentHTML('beforeend', \`
+        <input type="hidden" name="plan"   value="\${plan || ''}">
+        <input type="hidden" name="amount" value="\${amount || ''}">
+      \`);
+    });
+  </script>
 </body>
 </html>
