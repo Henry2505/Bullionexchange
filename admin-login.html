@@ -48,10 +48,16 @@
       border-radius: 5px;
       cursor: pointer;
     }
-    .error {
-      color: crimson;
+    .error, #debug {
       margin-top: 10px;
       text-align: center;
+      font-size: 13px;
+    }
+    .error {
+      color: crimson;
+    }
+    #debug {
+      color: lightgray;
     }
   </style>
 </head>
@@ -62,19 +68,37 @@
     <input type="password" id="password" placeholder="Password" />
     <button onclick="login()">Login</button>
     <div class="error" id="error"></div>
+    <div id="debug"></div>
   </div>
 
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script>
-    const supabase = supabase.createClient(
-      "https://dapwpgvnfjcfqqhrpxla.supabase.co",
-      "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImRhcHdwZ3ZuZmpjZnFxaHJweGxhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDcwNDA4ODgsImV4cCI6MjA2MjYxNjg4OH0.ICC0UsLlzJDNre7rFCeD3k6iVzo6jOJgn3PhABpEMsQ"
-    );
+    const debug = document.getElementById("debug");
+    const errorDiv = document.getElementById("error");
+
+    let supabase;
+
+    try {
+      supabase = supabase.createClient(
+        "https://dapwpgvnfjcfqqhrpxla.supabase.co",
+        "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImRhcHdwZ3ZuZmpjZnFxaHJweGxhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDcwNDA4ODgsImV4cCI6MjA2MjYxNjg4OH0.ICC0UsLlzJDNre7rFCeD3k6iVzo6jOJgn3PhABpEMsQ"
+      );
+      debug.innerText = "✅ Supabase initialized.";
+    } catch (err) {
+      debug.innerText = "❌ Supabase init failed: " + err.message;
+    }
 
     async function login() {
+      errorDiv.innerText = "";
+      debug.innerText = "⏳ Logging in...";
+
       const email = document.getElementById("email").value;
       const password = document.getElementById("password").value;
-      const errorDiv = document.getElementById("error");
+
+      if (!email || !password) {
+        errorDiv.innerText = "Please enter email and password.";
+        return;
+      }
 
       const { data, error } = await supabase.auth.signInWithPassword({
         email,
@@ -82,25 +106,37 @@
       });
 
       if (error) {
-        errorDiv.innerText = error.message;
+        errorDiv.innerText = error.message || "Login failed.";
+        debug.innerText = "❌ Login error: " + error.message;
         return;
       }
 
-      // Verify user role is "admin"
-      const { data: roleData, error: roleError } = await supabase
-        .from("user_roles")
-        .select("role")
-        .eq("user_id", data.user.id)
-        .single();
-
-      if (roleError || !roleData || roleData.role !== "admin") {
-        errorDiv.innerText = "Access denied. You are not an admin.";
-        await supabase.auth.signOut();
+      const user = data.user;
+      if (!user) {
+        errorDiv.innerText = "Login failed. User not found.";
+        debug.innerText = "❌ No user returned.";
         return;
       }
 
-      // Redirect to admin panel
-      window.location.href = "admin-panel-private.html";
+      try {
+        const { data: roleData, error: roleError } = await supabase
+          .from("user_roles")
+          .select("role")
+          .eq("user_id", user.id)
+          .single();
+
+        if (roleError || !roleData || roleData.role !== "admin") {
+          errorDiv.innerText = "Access denied. Admins only.";
+          debug.innerText = "❌ Not an admin or role check failed.";
+          await supabase.auth.signOut();
+        } else {
+          debug.innerText = "✅ Login successful. Redirecting...";
+          window.location.href = "admin-panel-private.html";
+        }
+      } catch (err) {
+        errorDiv.innerText = "Something went wrong during role check.";
+        debug.innerText = "❌ Role check failed: " + err.message;
+      }
     }
   </script>
 </body>
