@@ -7,17 +7,26 @@
   <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;500;700&display=swap" rel="stylesheet">
   <style>
     /* Reset & base */
-    * { margin:0; padding:0; box-sizing:border-box; }
-    html,body { font-family:'Poppins',sans-serif; background:#0b0b0b; color:#f5f5f5; overflow-x:hidden; }
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    html, body {
+      min-height: 100%;
+      font-family: 'Poppins', sans-serif;
+      background: #0b0b0b;
+      color: #f5f5f5;
+      overflow-y: auto;    /* ensure vertical scrolling */
+      overflow-x: hidden;
+    }
 
-    /* Background */
+    /* Background video & overlay */
     .video-background {
-      position:fixed; top:0; left:0; width:100vw; height:100vh;
-      object-fit:cover; z-index:-2;
+      position: fixed; top: 0; left: 0;
+      width: 100vw; height: 100vh;
+      object-fit: cover; z-index: -2;
     }
     .overlay {
-      position:fixed; top:0; left:0; width:100vw; height:100vh;
-      background:rgba(0,0,0,0.5); z-index:-1;
+      position: fixed; top: 0; left: 0;
+      width: 100vw; height: 100vh;
+      background: rgba(0,0,0,0.5); z-index: -1;
     }
 
     /* Animate-on-scroll */
@@ -26,80 +35,114 @@
       transform: translateY(20px);
       transition: opacity 0.6s ease-out, transform 0.6s ease-out;
     }
-    .animate.in-view {
+    .in-view {
       opacity: 1;
       transform: none;
     }
 
-    /* Logo & menu */
+    /* Logo & menu icon */
     .menu-container {
-      position:fixed; top:20px; left:20px; right:20px;
-      display:flex; justify-content:space-between; align-items:center; z-index:2000;
+      position: fixed; top: 20px; left: 20px; right: 20px;
+      display: flex; justify-content: space-between; align-items: center;
+      z-index: 2000;
     }
-    .logo img { height:40px; cursor:pointer; }
+    .logo img {
+      height: 40px;
+      cursor: pointer;
+    }
     .menu-icon {
-      width:40px; height:40px;
-      background:rgba(255,215,0,0.25); border-radius:50%;
-      display:flex; flex-direction:column; justify-content:center; align-items:center;
-      cursor:pointer; box-shadow:0 0 10px rgba(255,215,0,0.8);
-      transition:box-shadow 0.3s,transform 0.3s;
+      width: 40px; height: 40px;
+      background: rgba(255,215,0,0.25);
+      border-radius: 50%;
+      display: flex; flex-direction: column; justify-content: center; align-items: center;
+      cursor: pointer;
+      box-shadow: 0 0 10px rgba(255,215,0,0.8);
+      transition: box-shadow 0.3s, transform 0.3s;
     }
-    .menu-icon:hover { box-shadow:0 0 20px rgba(255,215,0,1); transform:scale(1.1); }
-    .menu-icon span { width:6px; height:6px; background:gold; border-radius:50%; margin:3px 0; }
+    .menu-icon:hover {
+      box-shadow: 0 0 20px rgba(255,215,0,1);
+      transform: scale(1.1);
+    }
+    .menu-icon span {
+      width: 6px; height: 6px;
+      background: gold; border-radius: 50%;
+      margin: 3px 0;
+    }
 
+    /* Slide-out menu */
     .menu-overlay {
-      position:fixed; top:0; right:-100%; width:260px; height:100vh;
-      background:#0b0b1f; display:flex; flex-direction:column;
-      align-items:center; justify-content:center; transition:right 0.4s ease; z-index:1999;
+      position: fixed; top: 0; right: -100%;
+      width: 260px; height: 100vh;
+      background: #0b0b1f;
+      display: flex; flex-direction: column; align-items: center; justify-content: center;
+      transition: right 0.4s ease; z-index: 1999;
     }
-    .menu-overlay.active { right:0; }
+    .menu-overlay.active { right: 0; }
     .menu-overlay a {
-      color:gold; text-decoration:none; font-size:1.2rem;
-      margin:15px 0;
+      color: gold; text-decoration: none; font-size: 1.2rem;
+      margin: 15px 0;
     }
 
     /* Spacer */
-    .spacer { height:90px; }
+    .spacer { height: 90px; }
 
     /* Header */
     header {
-      background:linear-gradient(135deg,#111,#1c1c1c);
-      padding:100px 20px 60px; text-align:center; color:gold;
+      background: linear-gradient(135deg, #111, #1c1c1c);
+      padding: 100px 20px 60px;
+      text-align: center;
     }
-    header h1 { font-size:48px; margin-bottom:10px; }
-    header p { font-size:20px; color:#ccc; }
+    header h1 {
+      font-size: 48px; color: gold; margin-bottom: 10px;
+    }
+    header p {
+      font-size: 20px; color: #ccc; margin-bottom: 30px;
+    }
 
-    /* FAQ */
+    /* FAQ Section */
     section {
-      padding:60px 20px; max-width:800px; margin:auto;
+      max-width: 800px; margin: auto; padding: 60px 20px 40px;
+    }
+    section .animate + .animate {
+      margin-top: 30px;
     }
     h3 {
-      font-size:24px; color:#ffd700;
-      margin-top:30px; margin-bottom:10px;
+      font-size: 24px; color: #ffd700;
+      margin-bottom: 10px;
     }
-    p, ul { font-size:18px; line-height:1.7; color:#ddd; }
-    ul { padding-left:30px; }
+    p, ul {
+      font-size: 18px; line-height: 1.7; color: #ddd;
+    }
+    ul { padding-left: 30px; }
 
     /* Contact block */
     .contact {
-      background:#111; padding:50px 20px; text-align:center; border-top:1px solid #333;
+      background: #111; padding: 50px 20px; text-align: center;
+      border-top: 1px solid #333;
     }
-    .contact a { color:#ffd700; text-decoration:none; font-weight:500; }
+    .contact a {
+      color: #ffd700; text-decoration: none; font-weight: 500;
+    }
     .contact .cta-button {
-      display:inline-block; margin-top:20px;
-      padding:15px 35px; background:gold; color:#000;
-      font-weight:600; text-decoration:none; border-radius:30px;
-      transition:background-color 0.3s;
+      display: inline-block; margin-top: 20px;
+      padding: 15px 35px; background: gold; color: #000;
+      font-weight: 600; text-decoration: none; border-radius: 30px;
+      transition: background-color 0.3s ease;
     }
-    .contact .cta-button:hover { background:#ffd700; }
+    .contact .cta-button:hover {
+      background: #ffd700;
+    }
 
     /* Footer */
-    footer { text-align:center; padding:20px; font-size:14px; color:#888; background:#0b0b0b; border-top:1px solid #222; }
+    footer {
+      text-align: center; padding: 20px;
+      font-size: 14px; color: #888;
+      background: #0b0b0b; border-top: 1px solid #222;
+    }
 
     @media(max-width:600px){
-      .menu-container { padding:0 10px; }
-      .menu-icon { top:15px; right:15px; }
-      .logo img { height:30px; }
+      .menu-container { padding: 0 10px; }
+      .logo img { height: 30px; }
     }
   </style>
 </head>
@@ -113,15 +156,13 @@
 
   <!-- Logo & menu icon -->
   <div class="menu-container animate">
-    <a href="index.html" class="logo">
-      <img src="CBE_logo.png" alt="CBE Logo">
-    </a>
+    <a href="index.html" class="logo"><img src="CBE_logo.png" alt="CBE Logo"></a>
     <div class="menu-icon" id="menuToggle">
       <span></span><span></span><span></span>
     </div>
   </div>
 
-  <!-- Slide-out nav -->
+  <!-- Slide-out menu -->
   <div class="menu-overlay" id="menuOverlay">
     <a href="index.html">Home</a>
     <a href="about.html">About</a>
@@ -145,17 +186,14 @@
       <h3>What is CBE?</h3>
       <p>CBE (Chukwuemeka Bullion Exchange) is a platform dedicated to empowering individuals through forex trading with expert mentorship, signals, and capital support.</p>
     </div>
-
     <div class="animate">
       <h3>Do I need prior trading experience?</h3>
       <p>No, CBE caters to both beginners and experienced traders. Our mentorship and resources help you start from any level.</p>
     </div>
-
     <div class="animate">
       <h3>What are the membership fees?</h3>
       <p>We offer various plans, including free and VIP subscriptions. Visit our <a href="vip-subscription.html">VIP Subscription</a> page for details.</p>
     </div>
-
     <div class="animate">
       <h3>How can I contact support?</h3>
       <p>Reach us via WhatsApp, Telegram, or Email in the contact section below.</p>
@@ -167,7 +205,7 @@
     <h3>Get in Touch</h3>
     <p><a href="https://wa.me/2349133957084" target="_blank">WhatsApp</a></p>
     <p><a href="https://t.me/apexincomeoptions" target="_blank">Telegram</a></p>
-    <p><a href="mailto:support@chukwuemekabullionexchange.com" target="_blank">Email</a></p>
+    <p><a href="mailto:support@chukwuemekabullionexchange.com">Email</a></p>
     <a href="CBE_apply.html" class="cta-button">Apply to Join Now</a>
   </div>
 
@@ -176,15 +214,16 @@
     © 2025 CBE - Chukwuemeka Bullion Exchange. All rights reserved.
   </footer>
 
+  <!-- Scripts -->
   <script>
     // Menu toggle
-    document.getElementById('menuToggle').addEventListener('click', () => {
+    document.getElementById('menuToggle').addEventListener('click', function() {
       document.getElementById('menuOverlay').classList.toggle('active');
     });
 
-    // IntersectionObserver for .animate
+    // Scroll-triggered reveal
     document.addEventListener('DOMContentLoaded', () => {
-      const items = document.querySelectorAll('.animate');
+      const animated = document.querySelectorAll('.animate');
       const io = new IntersectionObserver((entries) => {
         entries.forEach(entry => {
           if (entry.isIntersecting) {
@@ -193,7 +232,7 @@
           }
         });
       }, { threshold: 0.2 });
-      items.forEach(el => io.observe(el));
+      animated.forEach(el => io.observe(el));
     });
   </script>
 </body>
