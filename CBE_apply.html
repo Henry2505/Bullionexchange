@@ -11,62 +11,106 @@
       background: #0b0b0b;
       color: #f5f5f5;
       font-family: 'Poppins', sans-serif;
+      overflow-x: hidden;
+      animation: fadeIn 1.5s ease;
     }
+
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(20px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
     .video-background {
       position: fixed; top: 0; left: 0;
       width: 100%; height: 100%;
       object-fit: cover; z-index: -2;
     }
+
     .overlay {
       position: fixed; top: 0; left: 0;
       width: 100%; height: 100%;
       background: rgba(0,0,0,0.6); z-index: -1;
     }
-    .apply-section {
-      max-width: 500px; margin: 120px auto;
-      background: rgba(20,20,20,0.8);
-      padding: 40px; border-radius: 12px;
-      box-shadow: 0 0 20px rgba(255, 215, 0, 0.2);
+
+    .logo-bar {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 30px 0 10px;
+      animation: fadeIn 1.2s ease-in-out;
     }
+
+    .logo-bar img {
+      height: 60px;
+      cursor: pointer;
+      transition: transform 0.3s ease;
+    }
+
+    .logo-bar img:hover {
+      transform: scale(1.1);
+    }
+
+    .apply-section {
+      max-width: 500px; margin: 40px auto 100px;
+      background: rgba(20,20,20,0.85);
+      padding: 40px; border-radius: 12px;
+      box-shadow: 0 0 20px rgba(255, 215, 0, 0.25);
+      animation: slideUp 1.4s ease;
+    }
+
+    @keyframes slideUp {
+      from { opacity: 0; transform: translateY(40px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
     .apply-section h1 {
       font-size: 2rem; color: gold;
       margin-bottom: 20px; text-align: center;
     }
+
     .apply-section form {
       display: flex; flex-direction: column; gap: 15px;
     }
+
     input, textarea {
       padding: 12px; border: none;
       border-radius: 8px;
       background: #1c1c1c;
       color: #f5f5f5; font-size: 1rem;
     }
+
     input::placeholder, textarea::placeholder {
       color: #888;
     }
+
     input:focus, textarea:focus {
       outline: none; box-shadow: 0 0 8px gold;
     }
+
     button {
       background: gold; color: #000;
       font-weight: bold; padding: 14px;
       border: none; border-radius: 6px;
       cursor: pointer; transition: 0.3s;
     }
+
     button:hover {
       background: #e6c200;
       box-shadow: 0 0 15px gold;
     }
+
     #apply-alert {
       margin-top: 15px;
       text-align: center;
       font-weight: bold;
     }
+
     footer {
       text-align: center; padding: 20px;
       color: #888;
     }
   </style>
+
   <!-- Load Supabase client -->
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 </head>
@@ -77,6 +121,14 @@
   </video>
   <div class="overlay"></div>
 
+  <!-- Logo Branding -->
+  <div class="logo-bar">
+    <a href="Index.html">
+      <img src="CBE_logo.PNG" alt="CBE Logo" />
+    </a>
+  </div>
+
+  <!-- Apply Section -->
   <div class="apply-section">
     <h1>Apply to Join CBE</h1>
     <form id="apply-form">
@@ -87,37 +139,34 @@
       <textarea id="apply-message" placeholder="Tell us about yourself or goals" required></textarea>
       <button type="submit">Submit Application</button>
     </form>
-    <!-- Inline alert banner for errors/success -->
     <div id="apply-alert" style="color: crimson;"></div>
   </div>
 
   <footer>© 2025 CBE – Chukwuemeka Bullion Exchange</footer>
 
   <script>
-    // Initialize Supabase
-    const SUPABASE_URL     = 'https://dapwpgvnfjcfqqhrpxla.supabase.co';
+    const SUPABASE_URL = 'https://dapwpgvnfjcfqqhrpxla.supabase.co';
     const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImRhcHdwZ3ZuZmpjZnFxaHJweGxhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDcwNDA4ODgsImV4cCI6MjA2MjYxNjg4OH0.ICC0UsLlzJDNre7rFCeD3k6iVzo6jOJgn3PhABpEMsQ';
     const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
     document.getElementById('apply-form').addEventListener('submit', async function (e) {
       e.preventDefault();
 
-      const alertDiv   = document.getElementById('apply-alert');
+      const alertDiv = document.getElementById('apply-alert');
       alertDiv.textContent = '';
       alertDiv.style.color = 'crimson';
 
       const full_name = document.getElementById('apply-name').value.trim();
-      const email     = document.getElementById('apply-email').value.trim().toLowerCase();
-      const password  = document.getElementById('apply-password').value;
-      const phone     = document.getElementById('apply-phone').value.trim();
-      const message   = document.getElementById('apply-message').value.trim();
+      const email = document.getElementById('apply-email').value.trim().toLowerCase();
+      const password = document.getElementById('apply-password').value;
+      const phone = document.getElementById('apply-phone').value.trim();
+      const message = document.getElementById('apply-message').value.trim();
 
       if (!full_name || !email || !password || !phone || !message) {
         alertDiv.textContent = 'Please complete all fields.';
         return;
       }
 
-      // Attempt insert and display result
       const { data, error } = await supabase
         .from('users')
         .insert([{
