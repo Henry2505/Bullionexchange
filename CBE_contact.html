@@ -2,133 +2,235 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Contact Us | CBE</title>
-  <link rel="stylesheet" href="styles.css"> <!-- Optional: your custom styles -->
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <style>
-    body {
-      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    * {
       margin: 0;
       padding: 0;
-      background: #0f172a;
-      color: white;
+      box-sizing: border-box;
+    }
+
+    body, html {
+      height: 100%;
+      font-family: Arial, sans-serif;
+      overflow: hidden;
+    }
+
+    video.bg-video {
+      position: fixed;
+      right: 0;
+      bottom: 0;
+      min-width: 100%;
+      min-height: 100%;
+      z-index: -1;
     }
 
     .contact-container {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      background: rgba(0, 0, 0, 0.7);
+      padding: 30px;
+      border-radius: 15px;
+      width: 90%;
       max-width: 500px;
-      margin: 100px auto;
-      padding: 20px;
-      background: #1e293b;
-      border-radius: 10px;
-      box-shadow: 0 0 15px rgba(0, 255, 255, 0.1);
+      color: white;
+      animation: fadeIn 1.5s ease, slideUp 1s ease;
     }
 
-    h2 {
+    @keyframes fadeIn {
+      from { opacity: 0; }
+      to { opacity: 1; }
+    }
+
+    @keyframes slideUp {
+      from { transform: translate(-50%, 30%); }
+      to { transform: translate(-50%, -50%); }
+    }
+
+    .contact-container h2 {
       text-align: center;
       margin-bottom: 20px;
-      color: #38bdf8;
+      color: #00ffff;
     }
 
-    form input, form textarea {
+    .contact-container input,
+    .contact-container textarea {
       width: 100%;
       padding: 12px;
       margin-bottom: 15px;
       border: none;
-      border-radius: 5px;
+      border-radius: 8px;
       font-size: 16px;
     }
 
-    form textarea {
-      resize: vertical;
-      height: 120px;
-    }
-
-    button {
-      background-color: #0ea5e9;
-      color: white;
-      border: none;
-      padding: 12px 20px;
-      font-size: 16px;
-      border-radius: 5px;
-      cursor: pointer;
+    .contact-container button {
       width: 100%;
+      background: #00ffff;
+      border: none;
+      padding: 12px;
+      font-size: 16px;
+      border-radius: 8px;
+      color: black;
+      cursor: pointer;
+      transition: background 0.3s ease;
     }
 
-    button:hover {
-      background-color: #0284c7;
+    .contact-container button:hover {
+      background: #00cccc;
+    }
+
+    .branding {
+      position: absolute;
+      top: 20px;
+      left: 20px;
+    }
+
+    .branding img {
+      height: 60px;
+      cursor: pointer;
+    }
+
+    .message-box {
+      margin-top: 10px;
+      padding: 10px;
+      border-radius: 5px;
+      font-weight: bold;
+      text-align: center;
     }
 
     .success {
-      background: #10b981;
+      background-color: #10b981;
       color: white;
-      padding: 10px;
-      border-radius: 5px;
-      margin-bottom: 15px;
-      text-align: center;
     }
 
     .error {
-      background: #ef4444;
+      background-color: #ef4444;
       color: white;
-      padding: 10px;
-      border-radius: 5px;
-      margin-bottom: 15px;
+    }
+
+    .social-links {
       text-align: center;
+      margin-top: 20px;
+    }
+
+    .social-links a {
+      color: #00ffff;
+      margin: 0 10px;
+      text-decoration: none;
+      font-weight: bold;
+    }
+
+    .social-links a:hover {
+      text-decoration: underline;
+    }
+
+    .spinner {
+      text-align: center;
+      margin-top: 10px;
+    }
+
+    .spinner div {
+      width: 20px;
+      height: 20px;
+      border: 3px solid #00ffff;
+      border-top: 3px solid transparent;
+      border-radius: 50%;
+      animation: spin 1s linear infinite;
+      display: inline-block;
+    }
+
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
+
+    @media (max-width: 600px) {
+      .contact-container {
+        padding: 20px;
+      }
+
+      .branding img {
+        height: 45px;
+      }
     }
   </style>
 </head>
 <body>
 
+  <!-- Background Video -->
+  <video autoplay muted loop class="bg-video">
+    <source src="video.mp4" type="video/mp4">
+    Your browser does not support the video tag.
+  </video>
+
+  <!-- Logo -->
+  <div class="branding">
+    <a href="Index.html"><img src="CBE_logo.PNG" alt="CBE Logo"></a>
+  </div>
+
+  <!-- Contact Form -->
   <div class="contact-container">
     <h2>Contact Us</h2>
-
-    <div id="form-alert"></div>
-
     <form id="contact-form">
       <input type="text" id="contact-name" placeholder="Your Name" required>
       <input type="email" id="contact-email" placeholder="Your Email" required>
       <textarea id="contact-message" placeholder="Your Message" required></textarea>
       <button type="submit">Send Message</button>
     </form>
+
+    <div class="spinner" id="spinner" style="display:none;">
+      <div></div>
+    </div>
+
+    <div id="form-alert" class="message-box"></div>
+
+    <div class="social-links">
+      <p>Prefer direct chat?</p>
+      <a href="https://wa.me/2349133957084" target="_blank">WhatsApp</a> |
+      <a href="https://t.me/apexincomeoptions" target="_blank">Telegram</a>
+    </div>
   </div>
 
+  <!-- Supabase Script -->
   <script>
-    const supabaseUrl = 'https://dapwpgvnfjcfqqhrpxla.supabase.co';
-    const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImRhcHdwZ3ZuZmpjZnFxaHJweGxhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDcwNDA4ODgsImV4cCI6MjA2MjYxNjg4OH0.ICC0UsLlzJDNre7rFCeD3k6iVzo6jOJgn3PhABpEMsQ';
-    const supabase = supabase.createClient(supabaseUrl, supabaseKey);
+    const supabase = supabase.createClient(
+      'https://dapwpgvnfjcfqqhrpxla.supabase.co',
+      'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImRhcHdwZ3ZuZmpjZnFxaHJweGxhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDcwNDA4ODgsImV4cCI6MjA2MjYxNjg4OH0.ICC0UsLlzJDNre7rFCeD3k6iVzo6jOJgn3PhABpEMsQ'
+    );
 
-    const contactForm = document.getElementById('contact-form');
+    const form = document.getElementById('contact-form');
     const alertBox = document.getElementById('form-alert');
+    const spinner = document.getElementById('spinner');
 
-    contactForm.addEventListener('submit', async function (e) {
+    form.addEventListener('submit', async function (e) {
       e.preventDefault();
       alertBox.innerHTML = '';
+      spinner.style.display = 'block';
 
       const name = document.getElementById('contact-name').value.trim();
       const email = document.getElementById('contact-email').value.trim();
       const message = document.getElementById('contact-message').value.trim();
 
       if (!name || !email || !message) {
+        spinner.style.display = 'none';
         alertBox.innerHTML = `<div class="error">Please fill in all fields.</div>`;
         return;
       }
 
-      try {
-        const { error } = await supabase
-          .from('messages')
-          .insert([{ name, email, message, date: new Date().toISOString() }]);
+      const { error } = await supabase
+        .from('messages')
+        .insert([{ name, email, message, date: new Date().toISOString() }]);
 
-        if (error) {
-          console.error(error);
-          alertBox.innerHTML = `<div class="error">Failed to send message. Try again.</div>`;
-        } else {
-          alertBox.innerHTML = `<div class="success">Message sent successfully!</div>`;
-          contactForm.reset();
-        }
-      } catch (err) {
-        console.error(err);
-        alertBox.innerHTML = `<div class="error">Something went wrong. Please try again.</div>`;
+      spinner.style.display = 'none';
+
+      if (error) {
+        alertBox.innerHTML = `<div class="error">Failed to send message. Try again.</div>`;
+      } else {
+        alertBox.innerHTML = `<div class="success">Message sent successfully!</div>`;
+        form.reset();
       }
     });
   </script>
