@@ -6,12 +6,12 @@
   <title>VIP Subscription - CBE</title>
   <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;500;700&display=swap" rel="stylesheet">
   <style>
-    /* Base reset */
+    /* Reset & base */
     * { margin: 0; padding: 0; box-sizing: border-box; }
-    body, html { height: 100%; font-family: 'Poppins', sans-serif; }
+    html, body { height: 100%; font-family: 'Poppins', sans-serif; overflow: hidden; }
 
     /* Background video & overlay */
-    .video-background {
+    video.bg-video {
       position: fixed; top: 0; left: 0;
       width: 100vw; height: 100vh;
       object-fit: cover; z-index: -2;
@@ -19,33 +19,72 @@
     .overlay {
       position: fixed; top: 0; left: 0;
       width: 100vw; height: 100vh;
-      background: rgba(0, 0, 0, 0.5); z-index: -1;
+      background: rgba(0,0,0,0.5); z-index: -1;
     }
 
-    /* Fade-in & slide-up animations */
-    @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
-    @keyframes slideUp { from { transform: translateY(20px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+    /* Animations */
+    @keyframes fadeIn { from { opacity: 0 } to { opacity: 1 } }
+    @keyframes slideUp { from { transform: translateY(20px); opacity: 0 } to { transform: translateY(0); opacity: 1 } }
+    .fade-in { animation: fadeIn 1s ease forwards; opacity: 0; }
+    .slide-up { animation: slideUp 0.8s ease forwards; opacity: 0; }
 
-    .fade-in {
+    /* Navigation container */
+    .menu-container {
+      position: fixed; top: 20px; right: 20px;
+      z-index: 1001;
+      display: flex; align-items: center;
+    }
+    .menu-icon {
+      width: 40px; height: 40px;
+      background: rgba(255,215,0,0.25);
+      border-radius: 50%;
+      display: flex; flex-direction: column;
+      justify-content: center; align-items: center;
+      cursor: pointer;
+      box-shadow: 0 0 10px rgba(255,215,0,0.8);
+      transition: box-shadow 0.3s, transform 0.3s;
       animation: fadeIn 1s ease forwards;
       opacity: 0;
+      animation-delay: 0.2s;
     }
-    .slide-up {
-      animation: slideUp 0.8s ease forwards;
-      opacity: 0;
+    .menu-icon:hover { box-shadow: 0 0 20px rgba(255,215,0,1); transform: scale(1.1); }
+    .menu-icon span {
+      display: block; width: 6px; height: 6px;
+      background: gold; border-radius: 50%;
+      margin: 3px 0;
     }
 
-    /* Navigation */
-    nav {
-      display: flex; justify-content: space-between; align-items: center;
-      padding: 20px 40px; background: rgba(0,0,0,0.8);
-      position: fixed; top: 0; width: 100vw; z-index: 1000;
-      border-bottom: 1px solid #333; box-shadow: 0 0 10px gold;
+    /* Slide-out overlay */
+    .menu-overlay {
+      position: fixed; top: 0; right: -100%;
+      width: 260px; height: 100vh;
+      background: #0b0b1f; z-index: 1000;
+      display: flex; flex-direction: column;
+      align-items: center; justify-content: center;
+      transition: right 0.4s ease;
     }
-    nav a { color: gold; text-decoration: none; font-weight: 500; }
-    nav a img { height: 40px; vertical-align: middle; }
+    .menu-overlay.active { right: 0; }
+    .menu-overlay a {
+      color: gold; text-decoration: none;
+      font-size: 1.2rem; margin: 15px 0;
+      opacity: 0; transform: translateX(20px);
+      animation: slideUp 0.5s ease forwards;
+    }
+    .menu-overlay a:nth-child(1){ animation-delay:0.3s; }
+    .menu-overlay a:nth-child(2){ animation-delay:0.4s; }
+    .menu-overlay a:nth-child(3){ animation-delay:0.5s; }
+    .menu-overlay a:nth-child(4){ animation-delay:0.6s; }
+    .menu-overlay a:nth-child(5){ animation-delay:0.7s; }
+    .menu-overlay a:nth-child(6){ animation-delay:0.8s; }
 
-    /* Spacer so content sits below nav */
+    /* Logo */
+    .branding {
+      position: fixed; top: 20px; left: 20px; z-index:1001;
+      animation: fadeIn 1s ease forwards; opacity:0; animation-delay:0.1s;
+    }
+    .branding img { height: 50px; cursor: pointer; }
+
+    /* Spacer */
     .spacer { height: 90px; }
 
     /* Header */
@@ -53,6 +92,8 @@
       padding: 100px 20px 40px;
       text-align: center; color: gold;
     }
+    header.fade-in { animation-delay: 0.3s; }
+    header.slide-up { animation-delay: 0.3s; }
     header h1 { font-size: 36px; margin-bottom: 10px; }
     header p  { font-size: 18px; color: #ccc; }
 
@@ -65,8 +106,13 @@
       background-color: #141414; border-radius: 10px;
       border-left: 4px solid gold; padding: 20px;
       width: 250px; text-align: center;
-      transition: transform 0.3s ease, box-shadow 0.3s ease;
+      transition: transform 0.3s, box-shadow 0.3s;
+      opacity: 0; transform: translateY(20px);
+      animation: slideUp 0.8s ease forwards;
     }
+    .plan-card:nth-child(1){ animation-delay:0.4s; }
+    .plan-card:nth-child(2){ animation-delay:0.5s; }
+    .plan-card:nth-child(3){ animation-delay:0.6s; }
     .plan-card:hover {
       transform: translateY(-5px);
       box-shadow: 0 6px 20px rgba(0,0,0,0.5);
@@ -87,59 +133,72 @@
     }
 
     /* Footer */
+    footer.fade-in { animation-delay: 0.8s; }
     footer {
       text-align: center; padding: 20px;
       font-size: 14px; color: #888;
       background-color: #0b0b0b; border-top: 1px solid #222;
-      margin-top: 60px;
+      margin-top: 60px; opacity:0;
     }
 
     /* Responsive */
     @media (max-width: 600px) {
       .plan-card { width: 100%; }
-      nav { padding: 10px 20px; }
     }
-
   </style>
 </head>
 <body>
 
-  <!-- Video & overlay -->
-  <video class="video-background" autoplay muted loop playsinline>
+  <!-- Background -->
+  <video class="bg-video" autoplay muted loop playsinline>
     <source src="star-video.mp4" type="video/mp4" />
     Your browser does not support the video tag.
   </video>
   <div class="overlay"></div>
 
-  <!-- Navigation with clickable logo -->
-  <nav class="fade-in">
-    <a href="Index.html"><img src="CBE_logo.PNG" alt="CBE Logo"></a>
-    <div>
-      <a href="Index.html">Home</a>
-      <a href="CBE_login.html">Login</a>
+  <!-- Logo -->
+  <div class="branding">
+    <a href="Index.html"><img src="CBE_logo.PNG" alt="CBE Logo" /></a>
+  </div>
+
+  <!-- Menu icon -->
+  <div class="menu-container">
+    <div class="menu-icon" id="menuToggle">
+      <span></span><span></span><span></span>
     </div>
-  </nav>
+  </div>
+
+  <!-- Slide-out menu -->
+  <div class="menu-overlay" id="menuOverlay">
+    <a href="Index.html">Home</a>
+    <a href="CBE_trade_insights_public.html">Trade Insights</a>
+    <a href="FAQ.html">FAQ</a>
+    <a href="CBE_apply.html">Apply</a>
+    <a href="CBE_contact.html">Contact</a>
+    <a href="CBE_login.html">Login</a>
+  </div>
+
   <div class="spacer"></div>
 
   <!-- Header -->
-  <header class="slide-up" style="animation-delay: 0.2s;">
+  <header class="fade-in slide-up">
     <h1>VIP Subscription Plans</h1>
     <p>Choose a plan to access exclusive CBE features</p>
   </header>
 
-  <!-- Subscription plans -->
+  <!-- Plans -->
   <section class="subscription-section">
-    <div class="plan-card slide-up" style="animation-delay: 0.4s;">
+    <div class="plan-card">
       <h2>Weekly Plan</h2>
       <p>$50 / week</p>
       <a href="payment-options.html?plan=weekly&amount=50" class="subscribe-btn">Subscribe Now</a>
     </div>
-    <div class="plan-card slide-up" style="animation-delay: 0.6s;">
+    <div class="plan-card">
       <h2>Monthly Plan</h2>
       <p>$150 / month</p>
       <a href="payment-options.html?plan=monthly&amount=150" class="subscribe-btn">Subscribe Now</a>
     </div>
-    <div class="plan-card slide-up" style="animation-delay: 0.8s;">
+    <div class="plan-card">
       <h2>Yearly Plan</h2>
       <p>$1500 / year</p>
       <a href="payment-options.html?plan=yearly&amount=1500" class="subscribe-btn">Subscribe Now</a>
@@ -147,9 +206,18 @@
   </section>
 
   <!-- Footer -->
-  <footer class="fade-in" style="animation-delay: 1s;">
+  <footer class="fade-in">
     © 2025 CBE - Chukwuemeka Bullion Exchange. All rights reserved.
   </footer>
 
+  <!-- Menu toggle script -->
+  <script>
+    const toggle = document.getElementById('menuToggle');
+    const overlay = document.getElementById('menuOverlay');
+    toggle.addEventListener('click', () => {
+      overlay.classList.toggle('active');
+      toggle.classList.toggle('active');
+    });
+  </script>
 </body>
 </html>
