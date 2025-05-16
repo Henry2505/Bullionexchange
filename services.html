@@ -224,50 +224,17 @@
       .menu-icon { right: 15px; }
       .logo img { height: 30px; }
     }
-    /* Slide-in animation */
+
+    /* ===== Slide-in with CSS transitions ===== */
     .slide-in {
       opacity: 0;
       transform: translateX(-50px);
+      transition: opacity 0.6s ease-out, transform 0.6s ease-out;
     }
-    /* Keyframes for the slide-in effect */
-    @keyframes slideIn {
-      to {
-        opacity: 1;
-        transform: translateX(0);
-      }
-    }
-    /* Delays for each element */
-    header.slide-in {
-      animation-delay: 0s;
-    }
-    section.slide-in:nth-of-type(1) {
-      animation-delay: 0.2s;
-    }
-    section.slide-in:nth-of-type(2) {
-      animation-delay: 0.4s;
-    }
-    section.slide-in:nth-of-type(3) {
-      animation-delay: 0.6s;
-    }
-    section.slide-in:nth-of-type(4) {
-      animation-delay: 0.8s;
-    }
-    .contact.slide-in {
-      animation-delay: 1s;
-    }
-
-    /* ===== Observer-driven visibility ===== */
+    /* When JS adds .visible, it will transition into place */
     .slide-in.visible {
-      animation: slideIn 0.6s ease-out forwards;
-    }
-
-    /* Respect reduced motion preferences */
-    @media (prefers-reduced-motion: reduce) {
-      .slide-in.visible {
-        animation: none;
-        opacity: 1;
-        transform: none;
-      }
+      opacity: 1;
+      transform: translateX(0);
     }
   </style>
 </head>
@@ -287,7 +254,6 @@
     <a href="index.html" class="logo">
       <img src="CBE_logo.png" alt="CBE Logo">
     </a>
-    <!-- Three-dot menu in top right -->
     <div class="menu-icon" id="menuToggle">
       <span></span><span></span><span></span>
     </div>
@@ -336,12 +302,14 @@
     <p>No capital? No problem. CBE offers funding options to help beginners start trading without upfront investment.</p>
   </section>
 
-  <div class="contact slide-in" id="contact">
+  <div class="contact slide-in">
     <h2>Contact Us</h2>
     <p><a href="https://wa.me/2349133957084" target="_blank">WhatsApp</a></p>
     <p><a href="https://t.me/apexincomeoptions" target="_blank">Telegram</a></p>
     <p><a href="mailto:henrychukwuemeka215@icloud.com">Email</a></p>
-    <p style="margin-top: 30px;"><a href="CBE_apply.html" class="cta-button">Apply Now</a></p>
+    <p style="margin-top:30px;">
+      <a href="CBE_apply.html" class="cta-button">Apply Now</a>
+    </p>
   </div>
 
   <footer>
@@ -360,11 +328,11 @@
     // Slide-in on scroll
     document.addEventListener('DOMContentLoaded', () => {
       const items = document.querySelectorAll('.slide-in');
-      const obs = new IntersectionObserver((entries, o) => {
-        entries.forEach(e => {
-          if (e.isIntersecting) {
-            e.target.classList.add('visible');
-            o.unobserve(e.target);
+      const obs = new IntersectionObserver((entries, observer) => {
+        entries.forEach(entry => {
+          if (entry.isIntersecting) {
+            entry.target.classList.add('visible');
+            observer.unobserve(entry.target);
           }
         });
       }, { threshold: 0.1, rootMargin: '0px 0px -50px 0px' });
