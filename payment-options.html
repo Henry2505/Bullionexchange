@@ -89,10 +89,11 @@
       background: rgba(255,255,255,0.05);
       padding: .8rem 1rem;
       border-radius: 8px;
+      display: flex; justify-content: space-between;
+      font-size: 1rem;
     }
-    .methods li strong {
-      color: var(--text-light);
-    }
+    .methods li span.method { font-weight: 500; }
+    .methods li span.address { font-family: monospace; }
 
     .back-link {
       display: block;
@@ -106,6 +107,7 @@
     @media (max-width: 600px) {
       .container { margin: 2rem 1rem; padding: 1.5rem 1rem; }
       h1 { font-size: 2rem; }
+      .methods li { flex-direction: column; align-items: flex-start; }
     }
   </style>
 </head>
@@ -128,37 +130,86 @@
     </ul>
 
     <div class="methods">
-      <h2>Payment Options</h2>
-      <ul>
-        <li><strong>Paystack:</strong> Complete your payment securely via Paystack gateway.</li>
-        <li><strong>USDT (TRC-20):</strong> Send to our TRC-20 wallet address: <code>TYq…XYZ</code></li>
-        <li><strong>Bitcoin (BTC):</strong> Send to: <code>1A2b3C…</code></li>
-        <li><strong>Ethereum (ETH):</strong> Send to: <code>0xAbC…123</code></li>
+      <h2>Payment Integration</h2>
+      <ul id="payment-list">
+        <!-- Dynamically populated -->
       </ul>
     </div>
 
     <a href="CBE_vip_subscription.html" class="back-link">← Change Plan</a>
   </div>
 
+  <!-- Supabase and Plan-selection script -->
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js/dist/umd/supabase.min.js"></script>
   <script>
-    (function() {
+    (async function() {
+      // Initialize Supabase client
+      const SUPABASE_URL = 'https://dapwpgvnfjcfqqhrpxla.supabase.co';
+      const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImRhcHdwZ3ZuZmpjZnFxaHJweGxhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDcwNDA4ODgsImV4cCI6MjA2MjYxNjg4OH0.ICC0UsLlzJDNre7rFCeD3k6iVzo6jOJgn3PhABpEMsQ';
+      const supabase = supabaseJs.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+      // Determine chosen plan from URL
       const params = new URLSearchParams(window.location.search);
-      const plan = params.get('plan') || 'weekly';
+      const planKey = params.get('plan') || 'weekly';
 
-      // Plan definitions
-      const config = {
-        weekly:  { name: 'Weekly',  price: 50, save: 0 },
-        monthly: { name: 'Monthly', price: 150, save: 50 },
-        yearly:  { name: 'Yearly',  price: 1500, save: 300 }
+      const planConfig = {
+        weekly:  { name: 'Weekly Plan',  price: 50,  save: 0 },
+        monthly: { name: 'Monthly Plan', price: 150, save: 50 },
+        yearly:  { name: 'Yearly Plan',  price: 1500,save: 300 }
       };
+      const chosen = planConfig[planKey];
 
-      const chosen = config[plan];
-
-      document.getElementById('plan-name').textContent  = chosen.name + ' Plan';
+      // Render plan details
+      document.getElementById('plan-name').textContent  = chosen.name;
       document.getElementById('plan-price').textContent = `$${chosen.price}`;
       document.getElementById('plan-save').textContent  = `$${chosen.save}`;
+      document.getElementById('title').textContent      = `You Selected: ${chosen.name}`;
 
-      document.getElementById('title').textContent = `You Selected: ${chosen.name} Plan`;
+      // Fetch payment settings from Supabase
+      const { data: settings, error } = await supabase
+        .from('settings')
+        .select('name,value');
+
+      if (error) {
+        console.error('Supabase error:', error);
+        return;
+      }
+
+      // Map setting name→value
+      const map = {};
+      settings.forEach(({ name, value }) => { map[name] = value; });
+
+      // Build payment methods list
+      const methods = [
+        { label: 'Paystack (Naira card/transfer)', html: `<a href="${map.paystack_link}" target="_blank">Pay via Paystack</a>` },
+        { label: 'USDT (TRC-20)', address: map.wallet_usdt_trc20 },
+        { label: 'Bitcoin (BTC)', address: map.wallet_btc },
+        { label: 'Ethereum (ETH)', address: map.wallet_eth },
+        { label: 'TRON (TRX)', address: map.wallet_trx }
+      ];
+
+      const ul = document.getElementById('payment-list');
+      methods.forEach(m => {
+        const li = document.createElement('li');
+        const spanMethod = document.createElement('span');
+        spanMethod.className = 'method';
+        spanMethod.textContent = m.label;
+        li.appendChild(spanMethod);
+
+        if (m.html) {
+          const temp = document.createElement('span');
+          temp.className = 'address';
+          temp.innerHTML = m.html;
+          li.appendChild(temp);
+        } else {
+          const spanAddr = document.createElement('span');
+          spanAddr.className = 'address';
+          spanAddr.textContent = m.address;
+          li.appendChild(spanAddr);
+        }
+
+        ul.appendChild(li);
+      });
     })();
   </script>
 </body>
