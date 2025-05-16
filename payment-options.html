@@ -17,23 +17,30 @@
     body,html{margin:0;padding:0;width:100%;height:100%;font-family:'Poppins',sans-serif;color:var(--text-light);overflow-x:hidden;}
     .video-background{position:fixed;top:0;left:0;width:100%;height:100%;object-fit:cover;z-index:-2;}
     .overlay{position:fixed;top:0;left:0;width:100%;height:100%;background:var(--overlay);z-index:-1;}
+    /* Logo */
+    .logo {
+      position: fixed; top: 20px; left: 20px; z-index: 2000;
+    }
+    .logo img {
+      height: 40px;
+      cursor: pointer;
+    }
 
     .container{
       position:relative;
-      max-width:640px;margin:4rem auto;
+      max-width:640px;margin:6rem auto 4rem;
       background:var(--glass);backdrop-filter:blur(10px);
       padding:2rem 1.5rem;border-radius:16px;
       border:1px solid rgba(255,255,255,0.1);
       box-shadow:0 4px 40px rgba(0,0,0,0.7);
     }
-    /* Dimmed title */
     h1{
       text-align:center;margin-top:0;font-size:2rem;
       color: rgba(255,215,0,0.6);
       text-shadow:0 0 4px var(--gold);
     }
     .details{list-style:none;padding:0;margin:1rem 0;font-size:1rem;}
-    .details li{display:flex;justify-content:space-between;margin:0.5rem 0;}
+    .details li{display:flex;justify-content:space-between;margin:.5rem 0;}
 
     button, .copy-btn{
       cursor:pointer;border:none;border-radius:30px;font-weight:600;
@@ -61,36 +68,34 @@
       border:1px solid rgba(255,255,255,0.1);
       border-radius:12px;
       padding:1rem;
-      display:flex;
-      flex-direction:column;
-      justify-content:space-between;
+      display:flex;flex-direction:column;justify-content:space-between;
       box-shadow:0 2px 20px rgba(0,0,0,0.5);
     }
     .wallet-card .label{
       font-weight:500;color:var(--text-muted);margin-bottom:.5rem;
     }
     .wallet-card .address{
-      font-family:monospace;font-size:.95rem;
-      color:var(--text-light);
-      word-break:break-all;
-      margin-bottom:1rem;
+      font-family:monospace;font-size:.95rem;color:var(--text-light);word-break:break-all;margin-bottom:1rem;
     }
     .copy-btn{
-      align-self:flex-end;
-      padding:.4rem .8rem;
-      background:var(--gold);
-      color:#000;
-      box-shadow:0 0 8px var(--gold-glow);
-      font-size:.9rem;
+      align-self:flex-end;padding:.4rem .8rem;background:var(--gold);color:#000;
+      box-shadow:0 0 8px var(--gold-glow);font-size:.9rem;
     }
     .copy-btn:hover{transform:scale(1.05);}
 
-    /* Updated change-plan link */
+    /* Proof & email */
+    .proof-section{margin-top:2rem;}
+    .proof-section label{display:block;margin:.5rem 0;color:var(--text-muted);}
+    .proof-section input{
+      width:100%;padding:.6rem;border-radius:6px;border:1px solid #444;
+      background:#111;color:var(--text-light);margin-bottom:1rem;
+    }
+
     .back-link{text-align:center;display:block;margin-top:1.5rem;color:var(--text-muted);text-decoration:none;}
     .back-link:hover{color:var(--gold);}
 
     @media (max-width:600px){
-      .container{margin:2rem 1rem;padding:1.5rem;}
+      .container{margin:5rem 1rem;padding:1.5rem;}
       h1{font-size:1.75rem;}
     }
   </style>
@@ -102,6 +107,9 @@
     <source src="star-video.mp4" type="video/mp4">
   </video>
   <div class="overlay"></div>
+
+  <!-- Logo -->
+  <a href="index.html" class="logo"><img src="CBE_logo.png" alt="CBE Logo"></a>
 
   <div class="container">
     <h1 id="title">Your Plan</h1>
@@ -140,54 +148,107 @@
           <button class="copy-btn" data-copy="usdtAddr">Copy</button>
         </div>
       </div>
+
+      <!-- Proof & Email -->
+      <div class="proof-section">
+        <label for="proof">Upload Payment Proof</label>
+        <input type="file" id="proof" accept="image/*" />
+
+        <label for="email">Your Email</label>
+        <input type="email" id="email" placeholder="you@example.com" />
+      </div>
+
+      <!-- Submit Payment -->
+      <button id="submitPayment">Submit Payment</button>
     </div>
 
     <a href="vip-subscription.html" class="back-link">← Change Plan</a>
   </div>
 
+  <script src="https://js.paystack.co/v1/inline.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js"></script>
   <script>
-    // Plan from URL
-    const params = new URLSearchParams(location.search);
-    const key = params.get('plan')||'weekly';
-    const cfg = {
-      weekly:  {n:'Weekly Plan',  p:50,  s:0},
-      monthly: {n:'Monthly Plan', p:150, s:50},
-      yearly:  {n:'Yearly Plan',  p:1500,s:300}
-    };
-    const ch = cfg[key];
-    document.getElementById('plan-name').textContent  = ch.n;
-    document.getElementById('plan-price').textContent = `$${ch.p}`;
-    document.getElementById('plan-save').textContent  = `$${ch.s}`;
-    document.getElementById('title').textContent      = `You Selected: ${ch.n}`;
+    (async function(){
+      // Supabase init
+      const SUPA_URL = 'https://dapwpgvnfjcfqqhrpxla.supabase.co';
+      const SUPA_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImRhcHdwZ3ZuZmpjZnFxaHJweGxhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDcwNDA4ODgsImV4cCI6MjA2MjYxNjg4OH0.ICC0UsLlzJDNre7rFCeD3k6iVzo6jOJgn3PhABpEMsQ';
+      const supabase = supabasejs.createClient(SUPA_URL, SUPA_KEY);
 
-    // Paystack redirect
-    document.getElementById('paystackBtn').onclick = () => {
-      window.location.href = 'https://your-paystack-link.example.com';
-    };
+      // Plan logic
+      const params = new URLSearchParams(location.search);
+      const planKey = params.get('plan')||'weekly';
+      const config = {
+        weekly:  { name:'Weekly Plan',  price:50,  save:0 },
+        monthly: { name:'Monthly Plan', price:150, save:50 },
+        yearly:  { name:'Yearly Plan',  price:1500,save:300 }
+      };
+      const chosen = config[planKey];
+      document.getElementById('plan-name').textContent  = chosen.name;
+      document.getElementById('plan-price').textContent = `$${chosen.price}`;
+      document.getElementById('plan-save').textContent  = `$${chosen.save}`;
+      document.getElementById('title').textContent      = `You Selected: ${chosen.name}`;
 
-    // Toggle crypto section
-    const cryptoBtn = document.getElementById('cryptoBtn'),
-          section   = document.getElementById('cryptoSection');
-    cryptoBtn.onclick = () => {
-      if (section.style.display === 'block') {
-        section.classList.remove('visible');
-        setTimeout(()=> section.style.display = 'none', 600);
-      } else {
-        section.style.display = 'block';
-        setTimeout(()=> section.classList.add('visible'), 50);
-      }
-    };
+      // Fetch settings
+      let { data:settings } = await supabase.from('settings').select('name,value');
+      const map = {}; settings.forEach(r=>map[r.name]=r.value);
 
-    // Copy buttons
-    document.querySelectorAll('.copy-btn').forEach(btn=>{
-      btn.addEventListener('click', () => {
-        const text = document.getElementById(btn.dataset.copy).textContent;
-        navigator.clipboard.writeText(text).then(() => {
-          btn.textContent = 'Copied!';
-          setTimeout(()=> btn.textContent = 'Copy', 1500);
-        });
+      // Paystack redirect
+      document.getElementById('paystackBtn').onclick = () => {
+        window.location.href = map.paystack_link || '#';
+      };
+
+      // Toggle crypto
+      const cryptoBtn = document.getElementById('cryptoBtn'),
+            section   = document.getElementById('cryptoSection');
+      cryptoBtn.onclick = () => {
+        if(section.style.display==='block'){
+          section.classList.remove('visible');
+          setTimeout(()=>section.style.display='none',600);
+        } else {
+          section.style.display='block';
+          setTimeout(()=>section.classList.add('visible'),50);
+          cryptoBtn.disabled = true;
+        }
+      };
+
+      // Copy wallet
+      document.querySelectorAll('.copy-btn').forEach(btn=>{
+        btn.onclick = () => {
+          const txt = document.getElementById(btn.dataset.copy).textContent;
+          navigator.clipboard.writeText(txt).then(()=>{
+            btn.textContent='Copied!';
+            setTimeout(()=>btn.textContent='Copy',1500);
+          });
+        };
       });
-    });
+
+      // Submit payment
+      document.getElementById('submitPayment').onclick = async () => {
+        const proofFile = document.getElementById('proof').files[0];
+        const email     = document.getElementById('email').value.trim();
+        if(!proofFile || !email) return alert('Please upload proof and enter your email.');
+
+        // upload proof
+        const { data:upload, error:upErr } = await supabase
+          .storage.from('payments-proof')
+          .upload(`proofs/${Date.now()}_${proofFile.name}`, proofFile);
+        if(upErr) return alert('Upload error: '+upErr.message);
+        const url = supabase.storage.from('payments-proof').getPublicUrl(upload.path).data.publicUrl;
+
+        // insert record
+        const { error:insErr } = await supabase.from('payments').insert([{
+          user_email: email,
+          amount: chosen.price,
+          method: 'crypto',
+          details: url,
+          status: 'pending'
+        }]);
+        if(insErr) return alert('Error: '+insErr.message);
+
+        alert('Your payment has been submitted successfully!');
+        setTimeout(()=> window.location.href='index.html', 1500);
+      };
+    })();
   </script>
 </body>
 </html>
