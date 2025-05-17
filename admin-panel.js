@@ -7,8 +7,13 @@ export const supabase = createClient(SUPABASE_URL, SUPABASE_ANON)
 
 // 0) AUTH GUARD
 supabase.auth.onAuthStateChange((event, session) => {
-  if (!session) window.location.href = '/login.html'
+  if (!session) window.location.href = 'admin-login.html'
 });
+
+(async () => {
+  const { data: { session } } = await supabase.auth.getSession();
+  if (!session) window.location.href = 'admin-login.html';
+})();
 
 (async () => {
   const { data: { session } } = await supabase.auth.getSession();
