@@ -5,20 +5,22 @@ const SUPABASE_URL  = 'https://dapwpgvnfjcfqqhrpxla.supabase.co'
 const SUPABASE_ANON = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImFub24iLCJpYXQiOjE3NDcwNDA4ODgsImV4cCI6MjA2MjYxNjg4OH0.ICC0UsLlzJDNre7rFCeD3k6iVzo6jOJgn3PhABpEMsQ'
 export const supabase = createClient(SUPABASE_URL, SUPABASE_ANON)
 
-// 0) AUTH GUARD
-supabase.auth.onAuthStateChange((event, session) => {
-  if (!session) window.location.href = 'admin-login.html'
-});
+ // 0) AUTH GUARD
+-supabase.auth.onAuthStateChange((event, session) => {
+-  if (!session) window.location.href = 'login.html';
+-});
++supabase.auth.onAuthStateChange((event, session) => {
++  if (!session) window.location.href = 'admin-login.html';
++});
 
-(async () => {
-  const { data: { session } } = await supabase.auth.getSession();
-  if (!session) window.location.href = 'admin-login.html';
-})();
-
-(async () => {
-  const { data: { session } } = await supabase.auth.getSession();
-  if (!session) window.location.href = '/login.html';
-})();
+-(async () => {
+-  const { data: { session } } = await supabase.auth.getSession();
+-  if (!session) window.location.href = 'login.html';
+-})();
++;(async () => {
++  const { data: { session } } = await supabase.auth.getSession();
++  if (!session) window.location.href = 'admin-login.html';
++})();
 
 // 1) Sidebar toggle & section nav
 const sidebar = document.getElementById('sidebar')
