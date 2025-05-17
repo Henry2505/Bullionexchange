@@ -1,80 +1,75 @@
-<script>
-  const debug = document.getElementById("debug");
-  const errorDiv = document.getElementById("error");
-
-  let supabase;
-
-  try {
-    supabase = supabase.createClient(
-      "https://dapwpgvnfjcfqqhrpxla.supabase.co",
-      "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImRhcHdwZ3ZuZmpjZnFxaHJweGxhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDcwNDA4ODgsImV4cCI6MjA2MjYxNjg4OH0.ICC0UsLlzJDNre7rFCeD3k6iVzo6jOJgn3PhABpEMsQ"
-    );
-    debug.innerText = "✅ Supabase initialized.";
-  } catch (err) {
-    debug.innerText = "❌ Supabase init failed: " + err.message;
-  }
-
-  async function login() {
-    errorDiv.innerText = "";
-    debug.innerText = "⏳ Starting login...";
-
-    const email = document.getElementById("email").value;
-    const password = document.getElementById("password").value;
-
-    if (!email || !password) {
-      errorDiv.innerText = "Please enter email and password.";
-      debug.innerText = "⚠️ Missing email or password.";
-      return;
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Admin Login | CBE</title>
+  <style>
+    body {
+      margin: 0; padding: 0;
+      display: flex; justify-content: center; align-items: center;
+      height: 100vh; background: #000; color: #fff;
+      font-family: sans-serif;
     }
+    #adminLoginForm {
+      background: rgba(0,0,0,0.6);
+      padding: 2rem;
+      border: 1px solid rgba(255,215,0,0.6);
+      border-radius: 8px;
+      width: 320px;
+    }
+    #adminLoginForm h2 {
+      margin-bottom: 1rem;
+      text-align: center;
+    }
+    #adminLoginForm input {
+      width: 100%; padding: .75rem; margin: .5rem 0;
+      border: 1px solid rgba(255,215,0,0.6);
+      background: rgba(0,0,0,0.4); color: #fff;
+      border-radius: 4px; outline: none;
+    }
+    #adminLoginForm button {
+      width: 100%; padding: .75rem; margin-top: 1rem;
+      background: rgba(255,215,0,0.8); border: none;
+      border-radius: 4px; cursor: pointer;
+      font-size: 1rem; color: #000;
+    }
+    #adminError {
+      color: #f66; margin-top: .5rem;
+      text-align: center; min-height: 1.2rem;
+    }
+  </style>
+</head>
+<body>
+  <form id="adminLoginForm">
+    <h2>Admin Login</h2>
+    <input type="email" id="adminEmail" placeholder="Email" required />
+    <input type="password" id="adminPassword" placeholder="Password" required />
+    <button type="submit">Log In</button>
+    <div id="adminError"></div>
+  </form>
 
-    debug.innerText = "🔐 Attempting Supabase login...";
+  <script type="module">
+    import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm'
 
-    try {
-      const { data, error } = await supabase.auth.signInWithPassword({
-        email,
-        password
-      });
+    const supabase = createClient(
+      'https://dapwpgvnfjcfqqhrpxla.supabase.co',
+      'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImFub24iLCJpYXQiOjE3NDcwNDA4ODgsImV4cCI6MjA2MjYxNjg4OH0.ICC0UsLlzJDNre7rFCeD3k6iVzo6jOJgn3PhABpEMsQ'
+    )
 
+    document.getElementById('adminLoginForm').addEventListener('submit', async e => {
+      e.preventDefault()
+      const email = document.getElementById('adminEmail').value
+      const password = document.getElementById('adminPassword').value
+
+      const { error } = await supabase.auth.signInWithPassword({ email, password })
       if (error) {
-        errorDiv.innerText = error.message;
-        debug.innerText = "❌ Login error: " + error.message;
-        return;
+        document.getElementById('adminError').textContent = error.message
+      } else {
+        // On success, redirect to the admin panel
+        window.location.href = 'admin-panel-private.html'
       }
-
-      debug.innerText = "✅ Authenticated. Checking role...";
-
-      const user = data.user;
-      if (!user || !user.id) {
-        errorDiv.innerText = "Login failed. User not found.";
-        debug.innerText = "❌ No user returned.";
-        return;
-      }
-
-      const { data: roleData, error: roleError } = await supabase
-        .from("user_roles")
-        .select("role")
-        .eq("user_id", user.id)
-        .single();
-
-      if (roleError) {
-        errorDiv.innerText = "Role check failed.";
-        debug.innerText = "❌ Role error: " + roleError.message;
-        return;
-      }
-
-      if (!roleData || roleData.role !== "admin") {
-        errorDiv.innerText = "Access denied. Admins only.";
-        debug.innerText = "❌ Not an admin.";
-        await supabase.auth.signOut();
-        return;
-      }
-
-      debug.innerText = "✅ Admin confirmed. Redirecting...";
-      window.location.href = "admin-panel-private.html";
-
-    } catch (err) {
-      errorDiv.innerText = "Unexpected error.";
-      debug.innerText = "❌ Exception: " + err.message;
-    }
-  }
-</script>
+    })
+  </script>
+</body>
+</html>
