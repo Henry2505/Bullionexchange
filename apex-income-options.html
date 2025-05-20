@@ -5,202 +5,263 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Apex Income Options | CBE</title>
   <style>
-    /* Reset & base */
-    * { margin:0; padding:0; box-sizing:border-box; }
-    body, html { height:100%; font-family: 'Helvetica Neue', Arial, sans-serif; overflow-x:hidden; }
+    /* ===== VARIABLES & RESET ===== */
+    :root {
+      --gold: #ffd700;
+      --black-trans: rgba(0,0,0,0.7);
+      --bg-opacity: 0.4;
+      --font: 'Helvetica Neue', Arial, sans-serif;
+    }
+    *, *::before, *::after { margin:0; padding:0; box-sizing:border-box; }
+    html, body {
+      width:100%; height:100%;
+      font-family: var(--font);
+      color: #fff; overflow-x:hidden;
+      background: #000;
+    }
+    a { text-decoration:none; color:inherit; }
 
-    /* Video background */
+    /* ===== VIDEO BACKGROUND ===== */
     #bg-video {
-      position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-      object-fit: cover; z-index: -2; opacity: 0.4;
+      position: fixed; top:0; left:0;
+      width:100%; height:100%;
+      object-fit:cover; opacity: var(--bg-opacity);
+      z-index: -2;
     }
     .overlay {
-      position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-      background: rgba(0,0,0,0.6); z-index: -1;
+      position: fixed; top:0; left:0;
+      width:100%; height:100%;
+      background: var(--black-trans);
+      z-index: -1;
     }
 
-    /* Container & sections */
-    .container { max-width: 1200px; margin: auto; padding: 4rem 2rem; color: #fff; }
-    section { padding: 4rem 0; animation: fadeInUp 1s ease forwards; opacity:0; }
-    section:nth-child(odd) { background: rgba(0,0,0,0.4); }
-    @keyframes fadeInUp {
-      to { opacity:1; transform: translateY(0); }
-      from { opacity:0; transform: translateY(30px); }
+    /* ===== LAYOUT ===== */
+    header, main, footer {
+      position: relative; z-index:1;
+      max-width: 1000px; margin: 0 auto; padding: 60px 20px;
     }
 
-    /* Headings & text */
-    h1, h2, h3 { color: #ffd700; margin-bottom:1rem; text-transform: uppercase; letter-spacing:1px; }
-    p { line-height:1.6; margin-bottom:1rem; }
-
-    /* Buttons */
-    .btn-primary {
-      display: inline-block; padding:0.75rem 1.75rem;
-      background: #ffd700; color: #000; text-decoration:none;
-      font-weight: bold; border-radius: 50px;
-      transition: transform 0.3s;
+    /* ===== NAV & LOGO ===== */
+    nav {
+      display: flex; justify-content: space-between; align-items: center;
+      margin-bottom: 40px;
     }
-    .btn-primary:hover { transform: scale(1.05); }
+    nav .logo {
+      height: 60px;
+      cursor: pointer;
+      transition: transform .3s;
+    }
+    nav .logo:hover { transform: scale(1.05); }
 
-    /* Rocket-to-top */
+    /* ===== SECTION ANIMATIONS ===== */
+    .animate {
+      opacity: 0; transition: all .8s ease-out;
+    }
+    .slide-left { transform: translateX(-50px); }
+    .slide-right { transform: translateX(50px); }
+    .slide-up { transform: translateY(30px); }
+    .visible {
+      opacity: 1;
+      transform: translateX(0) translateY(0);
+    }
+
+    /* ===== HEADINGS & TEXT ===== */
+    h1, h2, h3 {
+      color: var(--gold); margin-bottom: 16px;
+      text-transform: uppercase; letter-spacing: 1px;
+    }
+    p, li { line-height:1.6; margin-bottom:12px; }
+    ul { list-style:none; padding-left:0; }
+
+    /* ===== BUTTONS ===== */
+    .btn {
+      display:inline-block; padding:14px 28px;
+      background: var(--gold); color:#000; font-weight:bold;
+      border-radius:50px; transition: transform .3s;
+    }
+    .btn:hover { transform: scale(1.05); }
+
+    /* ===== FEATURES GRID ===== */
+    .features {
+      display:grid;
+      grid-template-columns: repeat(auto-fit, minmax(240px,1fr));
+      gap:24px;
+    }
+    .feature {
+      background: rgba(255,215,0,0.1);
+      padding:20px; border-radius:8px;
+      transition: background .3s, transform .3s;
+    }
+    .feature:hover {
+      background: rgba(255,215,0,0.2);
+      transform: translateY(-8px);
+    }
+
+    /* ===== FAQ ACCORDION ===== */
+    .faq .item {
+      border-bottom:1px solid #444; margin-bottom:16px;
+    }
+    .faq .item h3 {
+      cursor:pointer; padding:12px 0;
+    }
+    .faq .item p {
+      display:none; padding-left:16px; padding-bottom:12px;
+    }
+    .faq .item.open p { display:block; }
+
+    /* ===== BACK-TO-TOP ===== */
     #toTop {
-      position: fixed; bottom: 40px; right: 40px; width: 60px; height: 60px;
-      background: url('rocket-icon.svg') no-repeat center/contain;
-      cursor: pointer; opacity: 0.7; transform: rotate(-45deg);
-      transition: opacity 0.3s, transform 0.3s;
-      display: none; z-index: 10;
+      position:fixed; bottom:30px; right:30px;
+      width:50px; height:50px;
+      background: url('rocket.svg') center/contain no-repeat;
+      cursor:pointer; opacity:0.7; transition:opacity .3s, transform .3s;
+      display:none; z-index:10;
     }
-    #toTop:hover { opacity:1; transform: rotate(0deg) scale(1.1); }
+    #toTop:hover { opacity:1; transform: scale(1.1); }
 
-    /* Features grid */
-    .features { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px,1fr)); gap:2rem; }
-    .feature-card {
-      background: rgba(255,215,0,0.1); padding:2rem; border-radius: 10px;
-      transition: background 0.3s, transform 0.3s;
-    }
-    .feature-card:hover {
-      background: rgba(255,215,0,0.2); transform: translateY(-8px);
-    }
-
-    /* FAQ accordion */
-    .faq h3 { cursor: pointer; }
-    .faq p { display: none; padding-left:1rem; }
-    .faq .open p { display: block; }
-
-    /* Responsive tweaks */
+    /* ===== RESPONSIVE ===== */
     @media(max-width:768px) {
-      h1 { font-size:2rem; }
-      .btn-primary { padding:0.6rem 1.4rem; }
-      #toTop { width:50px; height:50px; bottom:20px; right:20px; }
+      header, main, footer { padding:40px 16px; }
+      nav .logo { height:50px; }
     }
   </style>
 </head>
 <body>
 
-  <!-- Video Background -->
+  <!-- VIDEO BG & OVERLAY -->
   <video id="bg-video" autoplay muted loop>
-    <source src="your-star-video.mp4" type="video/mp4">
-    <!-- fallback poster -->
+    <source src="star-video.mp4" type="video/mp4">
   </video>
   <div class="overlay"></div>
 
-  <!-- Page Content -->
-  <div class="container">
+  <!-- HEADER & NAV -->
+  <header>
+    <nav>
+      <a href="Index.html">
+        <img src="CBE_logo.PNG" alt="CBE Logo" class="logo">
+      </a>
+      <a href="#apply" class="btn">Apply Now</a>
+    </nav>
+  </header>
 
-    <!-- Hero -->
-    <section id="hero">
+  <!-- MAIN -->
+  <main>
+    <!-- HERO -->
+    <section id="hero" class="animate slide-up">
       <h1>Apex Income Options</h1>
       <p>
-        Welcome to <strong>Apex Income Options</strong>, the premium flagship package of <strong>Chukwuemeka Bullion Exchange (CBE)</strong>.
-        Designed for ambitious traders seeking consistency, growth, and hands-off profits, this all-in-one service delivers:
+        Welcome to <strong>Apex Income Options</strong>, the flagship package of
+        <strong>Chukwuemeka Bullion Exchange.</strong>  
+        Tailored for serious traders seeking consistency and growth.
       </p>
       <ul>
-        <li>⚡ Premium Daily Gold (XAUUSD) Signals</li>
-        <li>🎓 One-on-One Mentorship with Industry Experts</li>
-        <li>💼 Managed Account Strategies for Passive Income</li>
+        <li>• Premium Daily XAUUSD Signals</li>
+        <li>• Expert One-on-One Mentorship</li>
+        <li>• Fully Managed Account Strategies</li>
       </ul>
-      <a href="#apply" class="btn-primary">Apply Now</a>
+      <a href="#apply" class="btn">Get Started</a>
     </section>
 
-    <!-- What You Get -->
-    <section id="features" style="animation-delay:0.3s;">
-      <h2>What's Inside the Apex Package?</h2>
+    <!-- FEATURES -->
+    <section id="features" class="animate slide-left">
+      <h2>What’s Inside</h2>
       <div class="features">
-        <div class="feature-card" style="animation-delay:0.4s;">
+        <div class="feature">
           <h3>Premium Signals</h3>
-          <p>Receive 3+ high-conviction XAUUSD trading signals daily, complete with entry, stop-loss, and take-profit levels.</p>
+          <p>3+ daily high-conviction gold trading signals, each with entry, stop-loss & take-profit levels.</p>
         </div>
-        <div class="feature-card" style="animation-delay:0.5s;">
-          <h3>Expert Mentorship</h3>
-          <p>Weekly 1-on-1 coaching sessions to sharpen your market analysis and execution skills under our top tradersʼ guidance.</p>
+        <div class="feature">
+          <h3>Pro Mentorship</h3>
+          <p>Weekly 1-on-1 coaching sessions to refine your analysis and execution under top traders’ guidance.</p>
         </div>
-        <div class="feature-card" style="animation-delay:0.6s;">
-          <h3>Managed Accounts</h3>
-          <p>Let us grow your account for you. Our seasoned managers execute strategies for steady, passive returns—no Ponzi contracts here.</p>
+        <div class="feature">
+          <h3>Account Management</h3>
+          <p>Our expert team trades your account for you with transparent P&L—no recycled deposits, no Ponzi practice.</p>
         </div>
-        <div class="feature-card" style="animation-delay:0.7s;">
-          <h3>Risk Management</h3>
-          <p>Advanced risk controls and capital preservation protocols that guard your funds, ensuring sustainable growth long-term.</p>
+        <div class="feature">
+          <h3>Risk Control</h3>
+          <p>Advanced capital preservation protocols to safeguard your funds and ensure long-term growth.</p>
         </div>
       </div>
     </section>
 
-    <!-- How It Works -->
-    <section id="how-it-works" style="animation-delay:0.6s;">
+    <!-- PROCESS -->
+    <section id="process" class="animate slide-right">
       <h2>How It Works</h2>
       <ol>
-        <li><strong>Apply &amp; Qualify.</strong> Fill our simple application form; we'll verify your trading background.</li>
-        <li><strong>Onboarding Call.</strong> We discuss your goals, set expectations, and tailor the plan.</li>
-        <li><strong>Activate Service.</strong> Gain access to signals, mentorship portal, and live account dashboard.</li>
-        <li><strong>Grow &amp; Profit.</strong> Watch your returns compound under expert management and guidance.</li>
+        <li><strong>Apply & Qualify:</strong> Complete a quick form; we verify your trading background.</li>
+        <li><strong>Onboarding Call:</strong> Align expectations, set goals, and tailor your program.</li>
+        <li><strong>Activate:</strong> Access signals dashboard, mentorship portal, and live account reporting.</li>
+        <li><strong>Profit:</strong> Watch your portfolio grow under expert management.</li>
       </ol>
     </section>
 
     <!-- FAQ -->
-    <section id="faq" style="animation-delay:0.9s;">
+    <section id="faq" class="animate slide-left">
       <h2>Frequently Asked Questions</h2>
       <div class="faq">
         <div class="item">
           <h3>Is this a Ponzi scheme?</h3>
-          <p>Absolutely not. Apex Income Options is a transparent, performance-driven service: real trades, real P&L statements, and clear profit splits—no debt recycling, no pyramid pay-ins.</p>
+          <p>No. We use real trades, publish live P&L statements, and operate under strict risk controls—no pyramid or recycled funds.</p>
         </div>
         <div class="item">
-          <h3>How much capital do I need?</h3>
-          <p>We offer flexible tiers starting from $500. Our funding program also supports skilled traders with no upfront capital.</p>
+          <h3>What’s the minimum capital?</h3>
+          <p>Starter tiers begin at $500, and our funded-trader program can waive upfront capital for proven performers.</p>
         </div>
         <div class="item">
           <h3>What returns can I expect?</h3>
-          <p>While past performance isn't a guarantee, our clients have historically seen 5–12% monthly, thanks to disciplined strategies and strong risk controls.</p>
+          <p>While past performance isn’t a guarantee, clients have historically averaged 5–12% monthly, thanks to disciplined strategies.</p>
         </div>
         <div class="item">
           <h3>Can I withdraw anytime?</h3>
-          <p>Yes—monthly withdrawals are unlocked after your first 30 days. No lock-in Ponzi-style hurdles.</p>
+          <p>Yes—monthly withdrawals unlock after a 30-day warm-up. No hidden lock-in periods.</p>
         </div>
       </div>
     </section>
 
-    <!-- Call to Action -->
-    <section id="apply" style="animation-delay:1.2s;">
+    <!-- CALL TO ACTION -->
+    <section id="apply" class="animate slide-up">
       <h2>Ready to Elevate Your Income?</h2>
-      <p>
-        Join the ranks of Africa’s top traders. Apply now to secure your spot in our elite Apex Income Options program.
-      </p>
-      <a href="https://your-site.com/apply" class="btn-primary">Apply for Apex</a>
+      <p>Join Africa’s elite traders. Apply now to secure your spot in Apex Income Options and start compounding your wealth.</p>
+      <a href="https://your-site.com/apply" class="btn">Apply Now</a>
     </section>
-  </div>
+  </main>
 
-  <!-- Rocket Button -->
+  <!-- BACK-TO-TOP -->
   <div id="toTop" title="Back to top"></div>
 
+  <!-- FOOTER -->
+  <footer>
+    <p>&copy; 2025 Chukwuemeka Bullion Exchange. All rights reserved.</p>
+  </footer>
+
+  <!-- ===== SCRIPTS ===== -->
   <script>
-    // Scroll-triggered animations
-    document.addEventListener('scroll', () => {
-      document.querySelectorAll('section').forEach((sec, i) => {
-        if (sec.getBoundingClientRect().top < window.innerHeight - 100) {
-          sec.style.animationDelay = `${i * 0.2}s`;
-          sec.style.animationPlayState = 'running';
+    // IntersectionObserver for slide + fade
+    const obs = new IntersectionObserver((entries) => {
+      entries.forEach(e => {
+        if (e.isIntersecting) {
+          e.target.classList.add('visible');
+          obs.unobserve(e.target);
         }
       });
-    });
+    }, { threshold: 0.2 });
+    document.querySelectorAll('.animate').forEach(el => obs.observe(el));
 
-    // FAQ accordion
+    // FAQ toggle
     document.querySelectorAll('.faq .item h3').forEach(h3 => {
       h3.addEventListener('click', () => {
-        const item = h3.parentElement;
-        item.classList.toggle('open');
+        h3.parentElement.classList.toggle('open');
       });
     });
 
-    // Rocket scroll-to-top
+    // Back to top
     const toTop = document.getElementById('toTop');
     window.addEventListener('scroll', () => {
-      if (window.scrollY > window.innerHeight / 2) {
-        toTop.style.display = 'block';
-      } else {
-        toTop.style.display = 'none';
-      }
+      toTop.style.display = window.scrollY > window.innerHeight/2 ? 'block' : 'none';
     });
     toTop.addEventListener('click', () => {
-      window.scrollTo({ top: 0, behavior: 'smooth' });
+      window.scrollTo({ top:0, behavior:'smooth' });
     });
   </script>
 </body>
