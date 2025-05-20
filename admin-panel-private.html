@@ -1,151 +1,318 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Admin Panel | CBE</title>
-  <link rel="stylesheet" href="admin-panel.css"/>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>CBE Admin Panel</title>
+  <!-- Bootstrap 5 CSS -->
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+  <style>
+    body {
+      overflow-x: hidden;
+    }
+    #sidebar {
+      min-width: 250px;
+      max-width: 250px;
+      transition: all 0.3s;
+      background: #1f1f1f;
+      color: #fff;
+      height: 100vh;
+    }
+    #sidebar.collapsed {
+      margin-left: -250px;
+    }
+    #sidebar .nav-link {
+      color: #ccc;
+    }
+    #sidebar .nav-link.active {
+      background: #343a40;
+      color: #fff;
+    }
+    #sidebar .nav-link:hover {
+      background: #343a40;
+      color: #fff;
+    }
+    #content {
+      width: 100%;
+      padding: 20px;
+      transition: margin-left .3s;
+    }
+    #toggle-btn {
+      cursor: pointer;
+      font-size: 1.5rem;
+      color: #333;
+    }
+  </style>
 </head>
 <body>
-  <!-- Video background -->
-  <video id="bg-video" autoplay loop muted>
-    <source src="star-video.MP4" type="video/mp4">
-  </video>
-
-  <!-- Sidebar -->
-  <aside id="sidebar" class="expanded">
-    <div id="toggleSidebar" class="toggle-btn">⋮</div>
-    <nav>
-      <ul>
-        <li data-section="dashboard"><i class="icon-dashboard"></i><span>Dashboard</span></li>
-        <li data-section="payments"><i class="icon-wallet"></i><span>Payments</span></li>
-        <li data-section="messages"><i class="icon-message"></i><span>Inbox</span></li>
-        <li data-section="testimonials"><i class="icon-star"></i><span>Testimonials</span></li>
-        <li data-section="history"><i class="icon-history"></i><span>Trade History</span></li>
-        <li data-section="insights"><i class="icon-insight"></i><span>Trade Insights</span></li>
-        <li data-section="signals"><i class="icon-signal"></i><span>Signals</span></li>
-        <li data-section="members"><i class="icon-users"></i><span>Members</span></li>
-        <li data-section="settings"><i class="icon-settings"></i><span>Settings</span></li>
-        <li data-section="logout"><i class="icon-logout"></i><span>Logout</span></li>
-      </ul>
+  <div class="d-flex">
+    <!-- Sidebar -->
+    <nav id="sidebar" class="bg-dark">
+      <div class="p-3">
+        <h4 class="text-center">CBE Admin</h4>
+        <ul class="nav nav-pills flex-column mt-4" id="menu">
+          <li class="nav-item">
+            <a class="nav-link active" data-section="dashboard" href="#">Dashboard</a>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link" data-section="users" href="#">Users</a>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link" data-section="payments" href="#">Payments</a>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link" data-section="messages" href="#">Messages</a>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link" data-section="settings-payment" href="#">Payment Settings</a>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link" data-section="trade-history" href="#">Trade History</a>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link" data-section="trade-insights" href="#">Trade Insights</a>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link" data-section="signals" href="#">Signals</a>
+          </li>
+          <li class="nav-item mt-auto">
+            <a class="nav-link text-danger" href="#">Logout</a>
+          </li>
+        </ul>
+      </div>
     </nav>
-  </aside>
 
-  <!-- Main content -->
-  <main id="mainContent">
-    <section id="dashboard" class="active">
-      <h1>Welcome, Admin</h1>
-      <!-- Overview cards here -->
-    </section>
+    <!-- Page Content -->
+    <div id="content">
+      <div class="d-flex justify-content-between align-items-center mb-4">
+        <div id="toggle-btn">&#8942;</div>
+        <h2 id="section-title">Dashboard</h2>
+      </div>
 
-    <section id="payments">
-      <h2>Payments</h2>
-      <div id="paymentsTable"></div>
-    </section>
+      <!-- Sections -->
+      <div id="sections">
+        <!-- Dashboard -->
+        <div class="section" data-section="dashboard">
+          <p>Welcome to your admin dashboard. Select a menu item to get started.</p>
+        </div>
 
-    <section id="messages">
-      <h2>Inbox</h2>
-      <div id="messagesTable"></div>
-      <div id="messageReply" class="hidden">
-        <h3>Reply to <span id="replyToEmail"></span></h3>
-        <textarea id="replyBody" rows="5" placeholder="Your message…"></textarea>
-        <div class="btn-group">
-          <button id="sendReply">Send Reply</button>
-          <button id="cancelReply">Cancel</button>
+        <!-- Users -->
+        <div class="section d-none" data-section="users">
+          <h4>Users Verification</h4>
+          <table class="table table-striped">
+            <thead><tr><th>Email</th><th>Name</th><th>Status</th><th>Action</th></tr></thead>
+            <tbody id="users-table">
+              <!-- Example row -->
+              <tr>
+                <td>user1@example.com</td>
+                <td>John Doe</td>
+                <td><span class="badge bg-warning">Pending</span></td>
+                <td>
+                  <button class="btn btn-sm btn-success">Verify</button>
+                  <button class="btn btn-sm btn-danger">Reject</button>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <!-- Payments -->
+        <div class="section d-none" data-section="payments">
+          <h4>Payment Approval</h4>
+          <table class="table table-striped">
+            <thead><tr><th>User</th><th>Amount</th><th>Date</th><th>Status</th><th>Action</th></tr></thead>
+            <tbody id="payments-table">
+              <tr>
+                <td>Jane Smith</td>
+                <td>$150</td>
+                <td>2025-05-18</td>
+                <td><span class="badge bg-warning">Pending</span></td>
+                <td>
+                  <button class="btn btn-sm btn-success">Approve</button>
+                  <button class="btn btn-sm btn-danger">Decline</button>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <!-- Messages -->
+        <div class="section d-none" data-section="messages">
+          <h4>Contact Messages</h4>
+          <div id="messages-list" class="list-group">
+            <a href="#" class="list-group-item list-group-item-action">
+              <strong>user2@example.com</strong> – “I need help with…”
+            </a>
+          </div>
+        </div>
+
+        <!-- Payment Settings -->
+        <div class="section d-none" data-section="settings-payment">
+          <h4>Payment Settings</h4>
+          <form id="payment-settings-form">
+            <div class="mb-3">
+              <label for="wallet-address" class="form-label">Default Wallet Address</label>
+              <input type="text" class="form-control" id="wallet-address" placeholder="Enter address">
+            </div>
+            <button type="submit" class="btn btn-primary">Save Settings</button>
+          </form>
+        </div>
+
+        <!-- Trade History -->
+        <div class="section d-none" data-section="trade-history">
+          <h4>Trade History (Jan – Dec)</h4>
+          <div class="mb-3">
+            <label for="month-select" class="form-label">Select Month</label>
+            <select id="month-select" class="form-select" style="max-width: 200px;">
+              <option value="01">January</option>
+              <option value="02">February</option>
+              <option value="03">March</option>
+              <option value="04">April</option>
+              <option value="05">May</option>
+              <option value="06">June</option>
+              <option value="07">July</option>
+              <option value="08">August</option>
+              <option value="09">September</option>
+              <option value="10">October</option>
+              <option value="11">November</option>
+              <option value="12">December</option>
+            </select>
+          </div>
+          <table class="table table-striped">
+            <thead><tr><th>Date</th><th>Pair</th><th>Notes</th><th>Screenshot</th></tr></thead>
+            <tbody id="history-table">
+              <!-- Populated via JS -->
+            </tbody>
+          </table>
+        </div>
+
+        <!-- Trade Insights -->
+        <div class="section d-none" data-section="trade-insights">
+          <h4>Weekly Pips Insights</h4>
+          <form id="insights-form" class="mb-4">
+            <div class="row g-3 align-items-end">
+              <div class="col-md-4">
+                <label for="insight-week" class="form-label">Week Ending</label>
+                <input type="date" id="insight-week" class="form-control">
+              </div>
+              <div class="col-md-4">
+                <label for="insight-pips" class="form-label">Pips Gained</label>
+                <input type="number" id="insight-pips" class="form-control" placeholder="e.g. 120">
+              </div>
+              <div class="col-md-4">
+                <button type="submit" class="btn btn-success">Post Insight</button>
+              </div>
+            </div>
+          </form>
+          <ul id="insights-list" class="list-group">
+            <!-- Populated via JS -->
+          </ul>
+        </div>
+
+        <!-- Signals -->
+        <div class="section d-none" data-section="signals">
+          <h4>Publish Signals</h4>
+          <form id="signals-form">
+            <div class="mb-3">
+              <label for="signal-text" class="form-label">Signal Note</label>
+              <textarea id="signal-text" class="form-control" rows="3"></textarea>
+            </div>
+            <button type="submit" class="btn btn-primary">Publish Signal</button>
+          </form>
+          <hr>
+          <ul id="signals-list" class="list-group">
+            <!-- Populated via JS -->
+          </ul>
         </div>
       </div>
-    </section>
+    </div>
+  </div>
 
-    <section id="testimonials">
-      <h2>Testimonials</h2>
-      <div id="testimonialsTable"></div>
-    </section>
+  <!-- Bootstrap 5 JS & Popper -->
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+  <script>
+    // Sidebar toggle
+    document.getElementById('toggle-btn').addEventListener('click', () => {
+      document.getElementById('sidebar').classList.toggle('collapsed');
+    });
 
-    <section id="history">
-      <h2>Trade History Uploads</h2>
-      <div id="historyUploader">
-        <label for="historyMonth">Month:</label>
-        <select id="historyMonth">
-          <option value="1">January</option>
-          <option value="2">February</option>
-          <option value="3">March</option>
-          <option value="4">April</option>
-          <option value="5">May</option>
-          <option value="6">June</option>
-          <option value="7">July</option>
-          <option value="8">August</option>
-          <option value="9">September</option>
-          <option value="10">October</option>
-          <option value="11">November</option>
-          <option value="12">December</option>
-        </select>
-        <input type="file" id="historyFile" accept="image/*" />
-        <textarea id="historyNotes" rows="3" placeholder="Notes…"></textarea>
-        <button id="uploadHistory">Upload</button>
-      </div>
-      <div id="historyList"></div>
-    </section>
+    // Menu navigation
+    document.querySelectorAll('#menu .nav-link').forEach(link => {
+      link.addEventListener('click', e => {
+        e.preventDefault();
+        // activate link
+        document.querySelectorAll('#menu .nav-link').forEach(l => l.classList.remove('active'));
+        link.classList.add('active');
+        // show section
+        const section = link.dataset.section;
+        document.getElementById('section-title').textContent = link.textContent;
+        document.querySelectorAll('.section').forEach(sec => {
+          sec.classList.toggle('d-none', sec.dataset.section !== section);
+        });
+      });
+    });
 
-    <section id="insights">
-      <h2>Trade Insights</h2>
-      <div id="insightForm">
-        <input type="text" id="insightTitle" placeholder="Title" />
-        <textarea id="insightBody" rows="4" placeholder="Details…"></textarea>
-        <button id="postInsight">Post Insight</button>
-      </div>
-      <div id="insightsList"></div>
-    </section>
+    // Placeholder data stores (replace with real AJAX calls)
+    let tradeHistory = {
+      '01': [{date:'2025-01-05', pair:'EUR/USD', notes:'Bought dip', screenshot:'—'}],
+      // ... fill for other months
+    };
+    let insights = [];
+    let signals = [];
 
-    <section id="signals">
-      <h2>Signals</h2>
-      <div id="signalForm">
-        <select id="signalType">
-          <option value="buy">Buy</option>
-          <option value="sell">Sell</option>
-        </select>
-        <input type="text" id="signalName" placeholder="Signal Name" />
-        <input type="number" id="entryLevel" placeholder="Entry Level" step="any" />
-        <input type="number" id="sl" placeholder="Stop Loss" step="any" />
-        <input type="number" id="tp1" placeholder="Take Profit 1" step="any" />
-        <input type="number" id="tp2" placeholder="Take Profit 2" step="any" />
-        <button id="createSignal">Create Signal</button>
-      </div>
-      <div id="signalsTable"></div>
-    </section>
+    // Month selector change
+    document.getElementById('month-select').addEventListener('change', () => {
+      const m = document.getElementById('month-select').value;
+      const tbody = document.getElementById('history-table');
+      tbody.innerHTML = '';
+      (tradeHistory[m]||[]).forEach(t => {
+        const tr = document.createElement('tr');
+        tr.innerHTML = `<td>${t.date}</td><td>${t.pair}</td><td>${t.notes}</td><td>${t.screenshot}</td>`;
+        tbody.appendChild(tr);
+      });
+    });
+    // initialize month
+    document.getElementById('month-select').dispatchEvent(new Event('change'));
 
-    <section id="members">
-      <h2>Member Approvals</h2>
-      <div id="membersTable"></div>
-    </section>
+    // Post insights
+    document.getElementById('insights-form').addEventListener('submit', e => {
+      e.preventDefault();
+      const date = document.getElementById('insight-week').value;
+      const pips = document.getElementById('insight-pips').value;
+      insights.unshift({date,pips});
+      renderInsights();
+      e.target.reset();
+    });
+    function renderInsights() {
+      const ul = document.getElementById('insights-list');
+      ul.innerHTML = '';
+      insights.forEach(i => {
+        const li = document.createElement('li');
+        li.className = 'list-group-item';
+        li.textContent = `${i.date}: ${i.pips} pips`;
+        ul.appendChild(li);
+      });
+    }
 
-    <section id="settings">
-      <h2>Payment Addresses & Settings</h2>
-      <form id="walletForm">
-        <div class="form-row">
-          <label for="paystackKey">Paystack Public Key:</label>
-          <input type="text" id="paystackKey" placeholder="Paystack Key" />
-        </div>
-        <div class="form-row">
-          <label for="walletBTC">Bitcoin (BTC):</label>
-          <input type="text" id="walletBTC" placeholder="1H9Bny4d3UXm4PUypAVPFCr4FWWa4wR5jr" />
-        </div>
-        <div class="form-row">
-          <label for="walletETH">Ethereum (ERC-20):</label>
-          <input type="text" id="walletETH" placeholder="0x2b54218c1a53ccf4e34fab52fa455307f75cf9a5" />
-        </div>
-        <div class="form-row">
-          <label for="walletTRON">TRON (TRC-20):</label>
-          <input type="text" id="walletTRON" placeholder="TWR85S2xpkPVNXeotJcFqJuRKnhbUnTguP" />
-        </div>
-        <div class="form-row">
-          <label for="walletUSDT">USDT (TRC-20):</label>
-          <input type="text" id="walletUSDT" placeholder="TWR85S2xpkPVNXeotJcFqJuRKnhbUnTguP" />
-        </div>
-        <button id="saveWallets">Save Addresses</button>
-      </form>
-    </section>
-  </main>
-
-  <script type="module" src="admin-panel.js"></script>
+    // Publish signals
+    document.getElementById('signals-form').addEventListener('submit', e => {
+      e.preventDefault();
+      const text = document.getElementById('signal-text').value.trim();
+      if (!text) return;
+      signals.unshift({text, time:new Date().toLocaleString()});
+      renderSignals();
+      e.target.reset();
+    });
+    function renderSignals() {
+      const ul = document.getElementById('signals-list');
+      ul.innerHTML = '';
+      signals.forEach(s => {
+        const li = document.createElement('li');
+        li.className = 'list-group-item';
+        li.innerHTML = `<strong>[${s.time}]</strong> ${s.text}`;
+        ul.appendChild(li);
+      });
+    }
+  </script>
 </body>
 </html>
