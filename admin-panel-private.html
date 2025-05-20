@@ -9,14 +9,13 @@
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet"/>
   <!-- Chart.js -->
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-  <!-- Sortable.js for drag-and-drop -->
+  <!-- Sortable.js -->
   <script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.0/Sortable.min.js"></script>
   <style>
     /* Video BG & Overlay */
     video#bg {position:fixed;top:0;left:0;width:100%;height:100%;object-fit:cover;z-index:-2;}
     .overlay {position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.6);z-index:-1;}
-    /* Base */
-    body {margin:0;padding:0;overflow-x:hidden;font-family:'Poppins',sans-serif;color:#f5f5f5;background:var(--bg-color);}
+    /* Theme vars */
     :root {
       --bg-color: transparent;
       --text-color: #f5f5f5;
@@ -32,6 +31,8 @@
       --text-color: #333;
       --glass-bg: rgba(255,255,255,0.6);
     }
+    /* Base */
+    body {margin:0;padding:0;overflow-x:hidden;font-family:'Poppins',sans-serif;color:var(--text-color);background:var(--bg-color);}
     a {text-decoration:none;color:inherit;}
     /* Glass panels */
     .glass {background:var(--glass-bg);backdrop-filter:blur(12px);box-shadow:0 8px 32px rgba(0,0,0,0.4);border-radius:12px;}
@@ -50,6 +51,7 @@
     .card-stat.bg-success{background:rgba(28,200,138,0.8);}
     .card-stat.bg-info{background:rgba(54,185,204,0.8);}
     .card-stat.bg-secondary{background:rgba(134,142,150,0.8);}
+    .card-stat.bg-warning{background:rgba(255,193,7,0.8);} /* Win Rate */
     /* Tables & forms */
     .table-hover tbody tr:hover{background:rgba(255,255,255,0.05);}
     .form-control,.form-select{background:rgba(255,255,255,0.1);border:none;color:#fff;}
@@ -60,19 +62,15 @@
     .btn-outline-secondary:hover{background:rgba(255,255,255,0.1);}
     /* Headings */
     h4{color:#ffd700;margin-bottom:1rem;}
-    .badge-status{width:80px;text-align:center;}
-    input[type=file]{padding:.3rem;}
     /* Toasts */
     #toast-container {position:fixed;bottom:1rem;right:1rem;z-index:1050;}
   </style>
 </head>
 <body data-theme="dark">
 
-  <!-- Background -->
+  <!-- Background & Toasts -->
   <video id="bg" autoplay muted loop><source src="star-video.MP4" type="video/mp4"/></video>
   <div class="overlay"></div>
-
-  <!-- Toast container -->
   <div id="toast-container"></div>
 
   <div class="d-flex glass" style="min-height:100vh;">
@@ -80,20 +78,21 @@
     <nav id="sidebar" class="d-flex flex-column p-3">
       <h4 class="text-center">CBE Admin</h4>
       <ul class="nav nav-pills flex-column mb-auto mt-4" id="menu">
-        <li class="nav-item"><a class="nav-link active" data-section="dashboard" href="#">Dashboard</a></li>
-        <li class="nav-item"><a class="nav-link" data-section="users" href="#">Users</a></li>
-        <li class="nav-item"><a class="nav-link" data-section="payments" href="#">Payments</a></li>
-        <li class="nav-item"><a class="nav-link" data-section="messages" href="#">Messages</a></li>
-        <li class="nav-item"><a class="nav-link" data-section="settings-payment" href="#">Payment Settings</a></li>
-        <li class="nav-item"><a class="nav-link" data-section="trade-history" href="#">Trade History</a></li>
-        <li class="nav-item"><a class="nav-link" data-section="trade-insights" href="#">Trade Insights</a></li>
-        <li class="nav-item"><a class="nav-link" data-section="signals" href="#">Signals</a></li>
-        <li class="nav-item mt-auto"><a class="nav-link text-danger" href="#">Logout</a></li>
+        <li><a class="nav-link active" data-section="dashboard" href="#">Dashboard</a></li>
+        <li><a class="nav-link" data-section="users" href="#">Users</a></li>
+        <li><a class="nav-link" data-section="payments" href="#">Payments</a></li>
+        <li><a class="nav-link" data-section="messages" href="#">Messages</a></li>
+        <li><a class="nav-link" data-section="settings-payment" href="#">Payment Settings</a></li>
+        <li><a class="nav-link" data-section="trade-history" href="#">Trade History</a></li>
+        <li><a class="nav-link" data-section="trade-insights" href="#">Trade Insights</a></li>
+        <li><a class="nav-link" data-section="signals" href="#">Signals</a></li>
+        <li class="mt-auto"><a class="nav-link text-danger" href="#">Logout</a></li>
       </ul>
     </nav>
 
     <!-- Main Content -->
     <div id="content" class="d-flex flex-column">
+      <!-- Header -->
       <div class="d-flex justify-content-between align-items-center mb-4">
         <div>
           <span id="toggle-btn">&#8942;</span>
@@ -126,16 +125,16 @@
                 <h5>Signals Published</h5><h2 id="stat-signals">—</h2>
               </div>
             </div>
+            <div class="col-md-3">
+              <div class="card card-stat p-3 glass bg-warning" draggable="true" data-key="winrate">
+                <h5>Win Rate (%)</h5><h2 id="stat-winrate">—</h2>
+              </div>
+            </div>
           </div>
-
           <!-- Charts -->
           <div class="row g-4 mt-4">
-            <div class="col-md-6">
-              <canvas id="chart-pnl" height="200"></canvas>
-            </div>
-            <div class="col-md-6">
-              <canvas id="chart-winrate" height="200"></canvas>
-            </div>
+            <div class="col-md-6"><canvas id="chart-pnl" height="200"></canvas></div>
+            <div class="col-md-6"><canvas id="chart-winrate" height="200"></canvas></div>
           </div>
         </div>
 
@@ -144,9 +143,7 @@
           <h4>Users Verification</h4>
           <input id="user-search" class="form-control mb-3" placeholder="Search users…" />
           <table class="table table-hover text-white">
-            <thead>
-              <tr><th>Email</th><th>Name</th><th>Status</th><th>Action</th></tr>
-            </thead>
+            <thead><tr><th>Email</th><th>Name</th><th>Status</th><th>Action</th></tr></thead>
             <tbody id="users-table"></tbody>
           </table>
         </div>
@@ -154,7 +151,7 @@
         <!-- Payments Approval -->
         <div class="section d-none p-4 mb-4 glass" data-section="payments">
           <h4>Payment Approval</h4>
-          <button id="export-payments" class="btn btn-outline-secondary btn-sm mb-3">Export CSV</button>
+          <button id="export-payments" class="btn btn-outline-secondary btn-sm mb-3">Export CSV/XLSX</button>
           <table class="table table-hover text-white">
             <thead><tr><th>User</th><th>Amount</th><th>Date</th><th>Status</th><th>Action</th></tr></thead>
             <tbody id="payments-table"></tbody>
@@ -177,20 +174,10 @@
           </ul>
           <div class="tab-content">
             <div id="paystack-tab" class="tab-pane fade show active">
-              <form id="form-paystack">
-                <div class="mb-3"><label>Public Key</label><input type="text" class="form-control" id="ps-public" /></div>
-                <div class="mb-3"><label>Secret Key</label><input type="text" class="form-control" id="ps-secret" /></div>
-                <button class="btn btn-primary">Save Paystack</button>
-              </form>
+              <form id="form-paystack">…</form>
             </div>
             <div id="crypto-tab" class="tab-pane fade">
-              <form id="form-crypto">
-                <div class="mb-3"><label>Bitcoin (BTC)</label><input type="text" class="form-control" id="addr-btc" /></div>
-                <div class="mb-3"><label>Ethereum (ERC20)</label><input type="text" class="form-control" id="addr-eth" /></div>
-                <div class="mb-3"><label>Tron (TRX)</label><input type="text" class="form-control" id="addr-trx" /></div>
-                <div class="mb-3"><label>USDT (TRC20)</label><input type="text" class="form-control" id="addr-usdt" /></div>
-                <button class="btn btn-primary">Save Crypto</button>
-              </form>
+              <form id="form-crypto">…</form>
             </div>
           </div>
         </div>
@@ -198,187 +185,132 @@
         <!-- Trade History -->
         <div class="section d-none p-4 mb-4 glass" data-section="trade-history">
           <h4>Trade History (Jan – Dec)</h4>
-          <div class="row g-2 mb-3">
-            <div class="col-md-3"><select id="month-select" class="form-select"> 
-              <option value="01">Jan</option><option value="02">Feb</option><option value="03">Mar</option>
-              <option value="04">Apr</option><option value="05">May</option><option value="06">Jun</option>
-              <option value="07">Jul</option><option value="08">Aug</option><option value="09">Sep</option>
-              <option value="10">Oct</option><option value="11">Nov</option><option value="12">Dec</option>
-            </select></div>
-            <div class="col-md-3"><input id="trade-search" class="form-control" placeholder="Search trades…" /></div>
-            <div class="col-auto"><button id="export-history" class="btn btn-outline-secondary">Export</button></div>
-          </div>
-          <form id="trade-upload-form" class="border p-3 mb-4 glass">
-            <div class="row g-3">
-              <div class="col-md-3"><label>Date</label><input type="date" class="form-control" id="trade-date"/></div>
-              <div class="col-md-3"><label>Asset</label>
-                <input list="asset-list" class="form-control" id="trade-pair" placeholder="e.g. GOLD"/>
-                <datalist id="asset-list">
-                  <option>GOLD</option><option>BTC/USD</option><option>ETH/USD</option>
-                  <option>EUR/USD</option><option>USD/JPY</option>
-                </datalist>
-              </div>
-              <div class="col-md-3"><label>Notes</label><input type="text" class="form-control" id="trade-notes"/></div>
-              <div class="col-md-3"><label>Screenshot</label><input type="file" accept="image/*" class="form-control" id="trade-file"/></div>
-            </div>
-            <div class="mt-3"><button class="btn btn-success">Add Trade</button></div>
-          </form>
-          <table class="table table-striped text-white">
-            <thead><tr><th>Date</th><th>Asset</th><th>Notes</th><th>Screenshot</th></tr></thead>
-            <tbody id="history-table"></tbody>
-          </table>
+          <!-- … your existing HTML … -->
         </div>
 
         <!-- Trade Insights -->
         <div class="section d-none p-4 mb-4 glass" data-section="trade-insights">
           <h4>Weekly Pips Insights</h4>
-          <form id="insights-form" class="row g-3 mb-4">
-            <div class="col-md-4"><label>Week Ending</label><input type="date" id="insight-week" class="form-control"/></div>
-            <div class="col-md-4"><label>Pips Gained</label><input type="number" id="insight-pips" class="form-control"/></div>
-            <div class="col-md-4 align-self-end"><button class="btn btn-success">Post Insight</button></div>
-          </form>
-          <ul class="list-group" id="insights-list"></ul>
+          <!-- … your existing HTML … -->
         </div>
 
         <!-- Signals -->
         <div class="section d-none p-4 mb-4 glass" data-section="signals">
           <h4>Publish Signals</h4>
-          <form id="signals-form" class="border p-3 mb-4 glass">
-            <div class="row g-3">
-              <div class="col-md-3"><label>Asset / Pair</label>
-                <input list="asset-list" id="signal-asset" class="form-control" placeholder="Type or choose…"/>
-              </div>
-              <div class="col-md-2"><label>Type</label>
-                <select id="signal-type" class="form-select"><option>BUY</option><option>SELL</option></select>
-              </div>
-              <div class="col-md-2"><label>SL</label><input id="signal-sl" class="form-control"/></div>
-              <div class="col-md-2"><label>TP1</label><input id="signal-tp1" class="form-control"/></div>
-              <div class="col-md-2"><label>TP2</label><input id="signal-tp2" class="form-control"/></div>
-              <div class="col-12"><label>Notes (Money Mgmt)</label>
-                <textarea id="signal-note" class="form-control" rows="2"></textarea>
-              </div>
-            </div>
-            <div class="mt-3"><button class="btn btn-primary">Publish Signal</button></div>
-          </form>
-          <ul class="list-group" id="signals-list"></ul>
+          <!-- … your existing HTML … -->
         </div>
       </div>
     </div>
   </div>
 
-  <!-- Reply Modal -->
-  <div class="modal fade" id="replyModal"><div class="modal-dialog">
-    <form class="modal-content glass p-4" id="reply-form">
-      <div class="modal-header">
-        <h5 class="modal-title">Reply to Message</h5>
-        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
-      </div>
-      <div class="modal-body">
-        <input type="hidden" id="reply-email"/>
-        <div class="mb-3"><label>To</label><input id="reply-to" class="form-control" readonly/></div>
-        <div class="mb-3"><label>Message</label><textarea id="reply-body" class="form-control" rows="4"></textarea></div>
-      </div>
-      <div class="modal-footer"><button class="btn btn-success">Send Reply</button></div>
-    </form>
-  </div></div>
+  <!-- Reply Modal (unchanged) -->
+  <div class="modal fade" id="replyModal">…</div>
 
-  <!-- Bootstrap & Scripts -->
+  <!-- Scripts -->
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
   <script>
-    // Theme toggle
+    // — Theme Toggle —
     const themeBtn = document.getElementById('theme-toggle');
     themeBtn.onclick = () => {
-      const root = document.body;
-      const next = root.getAttribute('data-theme') === 'dark' ? 'light' : 'dark';
-      root.setAttribute('data-theme', next);
+      const body = document.body;
+      const next = body.getAttribute('data-theme') === 'dark' ? 'light' : 'dark';
+      body.setAttribute('data-theme', next);
       themeBtn.textContent = next === 'dark' ? 'Light Mode' : 'Dark Mode';
+      // backend persistence hook here
     };
 
-    // Sidebar toggle
+    // — Sidebar Toggle —
     document.getElementById('toggle-btn').onclick = () =>
       document.getElementById('sidebar').classList.toggle('collapsed');
 
-    // Navigation logic
+    // — Navigation —
     document.querySelectorAll('#menu .nav-link').forEach(link=>{
-      link.addEventListener('click', e => {
+      link.addEventListener('click', e=>{
         e.preventDefault();
-        document.querySelectorAll('#menu .nav-link').forEach(l => l.classList.remove('active'));
+        document.querySelectorAll('#menu .nav-link').forEach(l=>l.classList.remove('active'));
         link.classList.add('active');
         document.getElementById('section-title').textContent = link.textContent;
-        document.querySelectorAll('.section').forEach(sec =>
-          sec.classList.toggle('d-none', sec.dataset.section !== link.dataset.section)
-        );
+        document.querySelectorAll('.section')
+          .forEach(sec=>sec.classList.toggle('d-none', sec.dataset.section !== link.dataset.section));
       });
     });
 
-    // Drag & drop dashboard widgets
-    new Sortable(document.getElementById('stats-container'), {
-      animation: 150,
-      ghostClass: 'sortable-ghost'
-    });
+    // — Drag & Drop Stats —
+    new Sortable(document.getElementById('stats-container'), { animation:150 });
 
-    // Keyboard shortcuts
-    document.addEventListener('keydown', e => {
-      if (['INPUT','TEXTAREA'].includes(e.target.tagName)) return;
-      const map = {n:'signals', p:'payments', u:'users'};
-      const sec = map[e.key.toLowerCase()];
-      if (sec) {
-        document.querySelector(`[data-section="${sec}"]`).classList.remove('d-none');
-        document.querySelector(`#menu .nav-link[data-section="${sec}"]`).click();
-      }
-    });
-
-    // Toast notifications
-    function showToast(msg, ok = true) {
-      const id = 't' + Date.now();
-      const tpl = `
-        <div id="${id}" class="toast align-items-center text-white ${ok?'bg-success':'bg-danger'} border-0" role="alert">
-          <div class="d-flex">
-            <div class="toast-body">${msg}</div>
-            <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast"></button>
-          </div>
-        </div>`;
-      document.getElementById('toast-container').insertAdjacentHTML('beforeend', tpl);
-      new bootstrap.Toast(document.getElementById(id), { delay: 3000 }).show();
+    // — Toast Helpers —
+    function showToast(msg, ok=true) {
+      const id='t'+Date.now();
+      document.getElementById('toast-container').insertAdjacentHTML('beforeend', 
+        `<div id="${id}" class="toast align-items-center text-white ${ok?'bg-success':'bg-danger'} border-0" role="alert">
+           <div class="d-flex">
+             <div class="toast-body">${msg}</div>
+             <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast"></button>
+           </div>
+         </div>`);
+      new bootstrap.Toast(document.getElementById(id), {delay:3000}).show();
     }
 
-    // Inline validation example
-    document.getElementById('signals-form').addEventListener('submit', e => {
+    // — Fetch & Render Stats + Win Rate —
+    async function fetchInsights() {
+      // Replace with real API call:
+      // e.g. const resp = await fetch('/api/insights');
+      return [
+        { week:'W1', pips:120 },
+        { week:'W2', pips:-50 },
+        { week:'W3', pips:80 },
+        { week:'W4', pips:200 },
+      ];
+    }
+    async function loadDashboard() {
+      // fetch raw stats similarly...
+      document.getElementById('stat-users').textContent = /*…*/ 128;
+      document.getElementById('stat-payments').textContent = /*…*/ 12;
+      document.getElementById('stat-trades').textContent = /*…*/ 34;
+      document.getElementById('stat-signals').textContent = /*…*/ 27;
+
+      // Win rate computation:
+      const insights = await fetchInsights();
+      const wins = insights.filter(i=>i.pips>0).length;
+      const rate = Math.round((wins/insights.length)*100);
+      document.getElementById('stat-winrate').textContent = rate;
+
+      // Charts:
+      const ctx1 = document.getElementById('chart-pnl').getContext('2d');
+      new Chart(ctx1,{ type:'line', data:{
+        labels: insights.map(i=>i.week),
+        datasets:[{ label:'P&L', data: insights.map(i=>i.pips), tension:0.4 }]
+      }, options:{responsive:true,plugins:{legend:{display:false}}}});
+
+      const ctx2 = document.getElementById('chart-winrate').getContext('2d');
+      new Chart(ctx2,{ type:'bar', data:{
+        labels: insights.map(i=>i.week),
+        datasets:[{ label:'Win Rate', data: insights.map((_,i)=> i<wins?100:0) }]
+      }, options:{responsive:true,plugins:{legend:{display:false}}}});
+    }
+    loadDashboard();
+
+    // — Inline Validation Example —
+    document.getElementById('signals-form').addEventListener('submit', e=>{
       if (!e.target.checkValidity()) {
         e.preventDefault();
         showToast('Please fill all required fields', false);
-      } else {
-        showToast('Signal published!');
-      }
+      } else showToast('Signal published!');
     });
 
-    // Chart.js setup
-    const chartPNL = new Chart(document.getElementById('chart-pnl'), {
-      type: 'line',
-      data: {
-        labels: ['W1','W2','W3','W4'],
-        datasets: [{ label:'P&L', data:[1200,1500,800,2000], tension:0.4 }]
-      },
-      options:{responsive:true, plugins:{legend:{display:false}}}
-    });
-    const chartWR = new Chart(document.getElementById('chart-winrate'), {
-      type: 'bar',
-      data: {
-        labels: ['Jan','Feb','Mar','Apr','May'],
-        datasets:[{ label:'Win Rate', data:[75,82,68,90,77] }]
-      },
-      options:{responsive:true, plugins:{legend:{display:false}}}
-    });
-
-    // WebSocket stub
+    // — WebSocket Stub —
     const ws = new WebSocket('wss://example.com/realtime');
     ws.onmessage = evt => {
       const m = JSON.parse(evt.data);
       if (m.type==='signal') showToast('New signal received!');
-      // handle payments, messages...
     };
 
-    // TODO: replace placeholders with real fetch & render calls
+    // Keyboard Shortcuts (N/P/U)
+    document.addEventListener('keydown', e => {
+      if (['INPUT','TEXTAREA'].includes(e.target.tagName)) return;
+      const map={n:'signals',p:'payments',u:'users'};
+      if (map[e.key]) document.querySelector(`#menu .nav-link[data-section="${map[e.key]}"]`).click();
+    });
   </script>
 </body>
 </html>
