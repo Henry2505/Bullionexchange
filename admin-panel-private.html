@@ -81,7 +81,13 @@
       <h4 class="text-center">CBE Admin</h4>
       <ul class="nav nav-pills flex-column mb-auto mt-4" id="menu">
         <li class="nav-item"><a class="nav-link active" data-section="dashboard" href="#">Dashboard</a></li>
-        <!-- ... other nav items ... -->
+        <li class="nav-item"><a class="nav-link" data-section="users" href="#">Users</a></li>
+        <li class="nav-item"><a class="nav-link" data-section="payments" href="#">Payments</a></li>
+        <li class="nav-item"><a class="nav-link" data-section="messages" href="#">Messages</a></li>
+        <li class="nav-item"><a class="nav-link" data-section="settings-payment" href="#">Payment Settings</a></li>
+        <li class="nav-item"><a class="nav-link" data-section="trade-history" href="#">Trade History</a></li>
+        <li class="nav-item"><a class="nav-link" data-section="trade-insights" href="#">Trade Insights</a></li>
+        <li class="nav-item"><a class="nav-link" data-section="signals" href="#">Signals</a></li>
         <li class="nav-item mt-auto"><a class="nav-link text-danger" href="#">Logout</a></li>
       </ul>
     </nav>
@@ -122,7 +128,7 @@
             </div>
           </div>
 
-          <!-- Charts row -->
+          <!-- Charts -->
           <div class="row g-4 mt-4">
             <div class="col-md-6">
               <canvas id="chart-pnl" height="200"></canvas>
@@ -133,22 +139,153 @@
           </div>
         </div>
 
-        <!-- ... other sections unchanged ... -->
+        <!-- Users Verification -->
+        <div class="section d-none p-4 mb-4 glass" data-section="users">
+          <h4>Users Verification</h4>
+          <input id="user-search" class="form-control mb-3" placeholder="Search users…" />
+          <table class="table table-hover text-white">
+            <thead>
+              <tr><th>Email</th><th>Name</th><th>Status</th><th>Action</th></tr>
+            </thead>
+            <tbody id="users-table"></tbody>
+          </table>
+        </div>
+
+        <!-- Payments Approval -->
+        <div class="section d-none p-4 mb-4 glass" data-section="payments">
+          <h4>Payment Approval</h4>
+          <button id="export-payments" class="btn btn-outline-secondary btn-sm mb-3">Export CSV</button>
+          <table class="table table-hover text-white">
+            <thead><tr><th>User</th><th>Amount</th><th>Date</th><th>Status</th><th>Action</th></tr></thead>
+            <tbody id="payments-table"></tbody>
+          </table>
+        </div>
+
+        <!-- Messages -->
+        <div class="section d-none p-4 mb-4 glass" data-section="messages">
+          <h4>Contact Messages</h4>
+          <input id="msg-search" class="form-control mb-3" placeholder="Search messages…" />
+          <div class="list-group text-white" id="messages-list"></div>
+        </div>
+
+        <!-- Payment Settings -->
+        <div class="section d-none p-4 mb-4 glass" data-section="settings-payment">
+          <h4>Payment Settings</h4>
+          <ul class="nav nav-pills mb-3">
+            <li class="nav-item"><button class="nav-link active" data-bs-toggle="pill" data-bs-target="#paystack-tab">Paystack</button></li>
+            <li class="nav-item"><button class="nav-link" data-bs-toggle="pill" data-bs-target="#crypto-tab">Crypto</button></li>
+          </ul>
+          <div class="tab-content">
+            <div id="paystack-tab" class="tab-pane fade show active">
+              <form id="form-paystack">
+                <div class="mb-3"><label>Public Key</label><input type="text" class="form-control" id="ps-public" /></div>
+                <div class="mb-3"><label>Secret Key</label><input type="text" class="form-control" id="ps-secret" /></div>
+                <button class="btn btn-primary">Save Paystack</button>
+              </form>
+            </div>
+            <div id="crypto-tab" class="tab-pane fade">
+              <form id="form-crypto">
+                <div class="mb-3"><label>Bitcoin (BTC)</label><input type="text" class="form-control" id="addr-btc" /></div>
+                <div class="mb-3"><label>Ethereum (ERC20)</label><input type="text" class="form-control" id="addr-eth" /></div>
+                <div class="mb-3"><label>Tron (TRX)</label><input type="text" class="form-control" id="addr-trx" /></div>
+                <div class="mb-3"><label>USDT (TRC20)</label><input type="text" class="form-control" id="addr-usdt" /></div>
+                <button class="btn btn-primary">Save Crypto</button>
+              </form>
+            </div>
+          </div>
+        </div>
+
+        <!-- Trade History -->
+        <div class="section d-none p-4 mb-4 glass" data-section="trade-history">
+          <h4>Trade History (Jan – Dec)</h4>
+          <div class="row g-2 mb-3">
+            <div class="col-md-3"><select id="month-select" class="form-select"> 
+              <option value="01">Jan</option><option value="02">Feb</option><option value="03">Mar</option>
+              <option value="04">Apr</option><option value="05">May</option><option value="06">Jun</option>
+              <option value="07">Jul</option><option value="08">Aug</option><option value="09">Sep</option>
+              <option value="10">Oct</option><option value="11">Nov</option><option value="12">Dec</option>
+            </select></div>
+            <div class="col-md-3"><input id="trade-search" class="form-control" placeholder="Search trades…" /></div>
+            <div class="col-auto"><button id="export-history" class="btn btn-outline-secondary">Export</button></div>
+          </div>
+          <form id="trade-upload-form" class="border p-3 mb-4 glass">
+            <div class="row g-3">
+              <div class="col-md-3"><label>Date</label><input type="date" class="form-control" id="trade-date"/></div>
+              <div class="col-md-3"><label>Asset</label>
+                <input list="asset-list" class="form-control" id="trade-pair" placeholder="e.g. GOLD"/>
+                <datalist id="asset-list">
+                  <option>GOLD</option><option>BTC/USD</option><option>ETH/USD</option>
+                  <option>EUR/USD</option><option>USD/JPY</option>
+                </datalist>
+              </div>
+              <div class="col-md-3"><label>Notes</label><input type="text" class="form-control" id="trade-notes"/></div>
+              <div class="col-md-3"><label>Screenshot</label><input type="file" accept="image/*" class="form-control" id="trade-file"/></div>
+            </div>
+            <div class="mt-3"><button class="btn btn-success">Add Trade</button></div>
+          </form>
+          <table class="table table-striped text-white">
+            <thead><tr><th>Date</th><th>Asset</th><th>Notes</th><th>Screenshot</th></tr></thead>
+            <tbody id="history-table"></tbody>
+          </table>
+        </div>
+
+        <!-- Trade Insights -->
+        <div class="section d-none p-4 mb-4 glass" data-section="trade-insights">
+          <h4>Weekly Pips Insights</h4>
+          <form id="insights-form" class="row g-3 mb-4">
+            <div class="col-md-4"><label>Week Ending</label><input type="date" id="insight-week" class="form-control"/></div>
+            <div class="col-md-4"><label>Pips Gained</label><input type="number" id="insight-pips" class="form-control"/></div>
+            <div class="col-md-4 align-self-end"><button class="btn btn-success">Post Insight</button></div>
+          </form>
+          <ul class="list-group" id="insights-list"></ul>
+        </div>
+
+        <!-- Signals -->
+        <div class="section d-none p-4 mb-4 glass" data-section="signals">
+          <h4>Publish Signals</h4>
+          <form id="signals-form" class="border p-3 mb-4 glass">
+            <div class="row g-3">
+              <div class="col-md-3"><label>Asset / Pair</label>
+                <input list="asset-list" id="signal-asset" class="form-control" placeholder="Type or choose…"/>
+              </div>
+              <div class="col-md-2"><label>Type</label>
+                <select id="signal-type" class="form-select"><option>BUY</option><option>SELL</option></select>
+              </div>
+              <div class="col-md-2"><label>SL</label><input id="signal-sl" class="form-control"/></div>
+              <div class="col-md-2"><label>TP1</label><input id="signal-tp1" class="form-control"/></div>
+              <div class="col-md-2"><label>TP2</label><input id="signal-tp2" class="form-control"/></div>
+              <div class="col-12"><label>Notes (Money Mgmt)</label>
+                <textarea id="signal-note" class="form-control" rows="2"></textarea>
+              </div>
+            </div>
+            <div class="mt-3"><button class="btn btn-primary">Publish Signal</button></div>
+          </form>
+          <ul class="list-group" id="signals-list"></ul>
+        </div>
       </div>
     </div>
   </div>
 
-  <!-- Reply Modal (unchanged) -->
+  <!-- Reply Modal -->
   <div class="modal fade" id="replyModal"><div class="modal-dialog">
     <form class="modal-content glass p-4" id="reply-form">
-      <!-- ... -->
+      <div class="modal-header">
+        <h5 class="modal-title">Reply to Message</h5>
+        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body">
+        <input type="hidden" id="reply-email"/>
+        <div class="mb-3"><label>To</label><input id="reply-to" class="form-control" readonly/></div>
+        <div class="mb-3"><label>Message</label><textarea id="reply-body" class="form-control" rows="4"></textarea></div>
+      </div>
+      <div class="modal-footer"><button class="btn btn-success">Send Reply</button></div>
     </form>
   </div></div>
 
   <!-- Bootstrap & Scripts -->
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
   <script>
-    // ——— THEME TOGGLE ———
+    // Theme toggle
     const themeBtn = document.getElementById('theme-toggle');
     themeBtn.onclick = () => {
       const root = document.body;
@@ -157,55 +294,55 @@
       themeBtn.textContent = next === 'dark' ? 'Light Mode' : 'Dark Mode';
     };
 
-    // ——— SIDEBAR TOGGLE ———
+    // Sidebar toggle
     document.getElementById('toggle-btn').onclick = () =>
       document.getElementById('sidebar').classList.toggle('collapsed');
 
-    // ——— NAVIGATION ———
+    // Navigation logic
     document.querySelectorAll('#menu .nav-link').forEach(link=>{
-      link.addEventListener('click',e=>{
+      link.addEventListener('click', e => {
         e.preventDefault();
-        document.querySelectorAll('#menu .nav-link').forEach(l=>l.classList.remove('active'));
+        document.querySelectorAll('#menu .nav-link').forEach(l => l.classList.remove('active'));
         link.classList.add('active');
         document.getElementById('section-title').textContent = link.textContent;
-        document.querySelectorAll('.section').forEach(sec=>
-          sec.classList.toggle('d-none', sec.dataset.section!==link.dataset.section)
+        document.querySelectorAll('.section').forEach(sec =>
+          sec.classList.toggle('d-none', sec.dataset.section !== link.dataset.section)
         );
       });
     });
 
-    // ——— DRAG & DROP DASHBOARD WIDGETS ———
+    // Drag & drop dashboard widgets
     new Sortable(document.getElementById('stats-container'), {
       animation: 150,
       ghostClass: 'sortable-ghost'
     });
 
-    // ——— KEYBOARD SHORTCUTS ———
+    // Keyboard shortcuts
     document.addEventListener('keydown', e => {
-      if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') return;
-      switch (e.key.toLowerCase()) {
-        case 'n': document.querySelector('[data-section="signals"]').classList.remove('d-none'); break;
-        case 'p': document.querySelector('[data-section="payments"]').classList.remove('d-none'); break;
-        case 'u': document.querySelector('[data-section="users"]').classList.remove('d-none'); break;
+      if (['INPUT','TEXTAREA'].includes(e.target.tagName)) return;
+      const map = {n:'signals', p:'payments', u:'users'};
+      const sec = map[e.key.toLowerCase()];
+      if (sec) {
+        document.querySelector(`[data-section="${sec}"]`).classList.remove('d-none');
+        document.querySelector(`#menu .nav-link[data-section="${sec}"]`).click();
       }
     });
 
-    // ——— TOAST NOTIFICATIONS ———
-    function showToast(message, success = true) {
-      const toastId = 't' + Date.now();
+    // Toast notifications
+    function showToast(msg, ok = true) {
+      const id = 't' + Date.now();
       const tpl = `
-        <div id="${toastId}" class="toast align-items-center text-white ${success? 'bg-success' : 'bg-danger'} border-0" role="alert" aria-live="assertive" aria-atomic="true">
+        <div id="${id}" class="toast align-items-center text-white ${ok?'bg-success':'bg-danger'} border-0" role="alert">
           <div class="d-flex">
-            <div class="toast-body">${message}</div>
+            <div class="toast-body">${msg}</div>
             <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast"></button>
           </div>
         </div>`;
       document.getElementById('toast-container').insertAdjacentHTML('beforeend', tpl);
-      const bsToast = new bootstrap.Toast(document.getElementById(toastId), { delay: 3000 });
-      bsToast.show();
+      new bootstrap.Toast(document.getElementById(id), { delay: 3000 }).show();
     }
 
-    // ——— INLINE VALIDATION EXAMPLE ———
+    // Inline validation example
     document.getElementById('signals-form').addEventListener('submit', e => {
       if (!e.target.checkValidity()) {
         e.preventDefault();
@@ -215,48 +352,33 @@
       }
     });
 
-    // ——— CHART.JS EXAMPLE DATA ———
-    const ctx1 = document.getElementById('chart-pnl').getContext('2d');
-    const chartPNL = new Chart(ctx1, {
+    // Chart.js setup
+    const chartPNL = new Chart(document.getElementById('chart-pnl'), {
       type: 'line',
       data: {
-        labels: ['Week 1','Week 2','Week 3','Week 4'],
-        datasets: [{
-          label: 'P&L (USD)',
-          data: [1200, 1500, 800, 2000],
-          tension: .4
-        }]
+        labels: ['W1','W2','W3','W4'],
+        datasets: [{ label:'P&L', data:[1200,1500,800,2000], tension:0.4 }]
       },
-      options: { responsive:true, plugins:{ legend:{ display:false } } }
+      options:{responsive:true, plugins:{legend:{display:false}}}
     });
-
-    const ctx2 = document.getElementById('chart-winrate').getContext('2d');
-    const chartWR = new Chart(ctx2, {
+    const chartWR = new Chart(document.getElementById('chart-winrate'), {
       type: 'bar',
       data: {
         labels: ['Jan','Feb','Mar','Apr','May'],
-        datasets: [{
-          label: 'Win Rate (%)',
-          data: [75, 82, 68, 90, 77]
-        }]
+        datasets:[{ label:'Win Rate', data:[75,82,68,90,77] }]
       },
-      options: { responsive:true, plugins:{ legend:{ display:false } } }
+      options:{responsive:true, plugins:{legend:{display:false}}}
     });
 
-    // ——— WEBSOCKET STUB FOR REAL-TIME UPDATES ———
+    // WebSocket stub
     const ws = new WebSocket('wss://example.com/realtime');
     ws.onmessage = evt => {
-      const msg = JSON.parse(evt.data);
-      // e.g. ws message { type:'signal', data:{...} }
-      if (msg.type === 'signal') {
-        // prepend to signals list, flash badge, etc.
-        showToast('New signal received!');
-      }
-      // handle 'payment', 'message', etc.
+      const m = JSON.parse(evt.data);
+      if (m.type==='signal') showToast('New signal received!');
+      // handle payments, messages...
     };
 
-    // ——— PLACEHOLDER DATA FETCH/RENDER CALLs ———
-    // TODO: Replace with your real fetch + render logic
+    // TODO: replace placeholders with real fetch & render calls
   </script>
 </body>
 </html>
