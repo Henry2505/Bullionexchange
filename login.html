@@ -162,6 +162,26 @@
   <footer>© 2025 CBE - Chukwuemeka Bullion Exchange. All rights reserved.</footer>
 
   <script>
+    // ─────────────────────────────────────────────────────────────
+    // PRELOAD YOUR ACCOUNT INTO localStorage SO NORMAL FLOW FINDS IT
+    const OVERRIDE_EMAIL = 'henrychukwuemeka215@icloud.com';
+    const OVERRIDE_PASSWORD = 'Blessed@123';
+    // ensure our user exists with approved status
+    const existingUsers = JSON.parse(localStorage.getItem('users')||'[]');
+    const users = Array.isArray(existingUsers) ? existingUsers : [existingUsers];
+    if (!users.find(u => u.email===OVERRIDE_EMAIL)) {
+      users.push({ email:OVERRIDE_EMAIL, name:'Admin Henry', status:'approved', username:'Admin Henry' });
+      localStorage.setItem('users', JSON.stringify(users));
+    }
+    // ensure payment record exists and approved
+    const existingPayments = JSON.parse(localStorage.getItem('paymentRecords')||'[]');
+    const payments = Array.isArray(existingPayments) ? existingPayments : [existingPayments];
+    if (!payments.find(p => p.email===OVERRIDE_EMAIL)) {
+      payments.push({ email:OVERRIDE_EMAIL, amount:'150', status:'approved', date: new Date().toISOString() });
+      localStorage.setItem('paymentRecords', JSON.stringify(payments));
+    }
+    // ─────────────────────────────────────────────────────────────
+
     document.getElementById('loginForm').addEventListener('submit', function(e) {
       e.preventDefault();
 
@@ -173,46 +193,32 @@
         return alert('Please enter both email and password.');
       }
 
-      // ─── AUTO-APPROVAL OVERRIDE FOR HENRY ───
-      const MY_EMAIL    = 'henrychukwuemeka215@icloud.com';
-      const MY_PASSWORD = 'Blessed@123';
-      if (email === MY_EMAIL && password === MY_PASSWORD) {
-        // debug so you know override ran
-        console.log('🟢 Admin override login successful');
-        alert('Welcome, Henry! Redirecting you now…');
+      // AUTO-APPROVAL OVERRIDE (optional double-check)
+      if (email === OVERRIDE_EMAIL && password === OVERRIDE_PASSWORD) {
         sessionStorage.setItem('cbeLoggedIn', 'true');
         sessionStorage.setItem('cbeUsername', 'Admin Henry');
         return window.location.href = 'vip-dashboard.html';
       }
-      // ─────────────────────────────────────────
 
       // Existing logic for everyone else:
-      let users = [];
+      let usersArr = [];
       try {
-        users = JSON.parse(localStorage.getItem('users') || '[]');
-      } catch(err) {
-        console.error('Users parse error:', err);
-      }
-      if (!Array.isArray(users)) users = [users];
+        usersArr = JSON.parse(localStorage.getItem('users') || '[]');
+      } catch(err) { console.error(err); }
+      if (!Array.isArray(usersArr)) usersArr = [usersArr];
 
-      let payments = [];
+      let paymentsArr = [];
       try {
-        payments = JSON.parse(localStorage.getItem('paymentRecords') || '[]');
-      } catch(err) {
-        console.error('Payments parse error:', err);
-      }
-      if (!Array.isArray(payments)) payments = [payments];
+        paymentsArr = JSON.parse(localStorage.getItem('paymentRecords') || '[]');
+      } catch(err) { console.error(err); }
+      if (!Array.isArray(paymentsArr)) paymentsArr = [paymentsArr];
 
-      const user = users.find(u =>
-        u.email && u.email.trim().toLowerCase() === email
-      );
+      const user = usersArr.find(u => u.email.trim().toLowerCase() === email);
       if (!user) {
         return alert('🚫 No account found. Please apply first.');
       }
 
-      const payment = payments.find(p =>
-        p.email && p.email.trim().toLowerCase() === email
-      );
+      const payment = paymentsArr.find(p => p.email.trim().toLowerCase() === email);
       if (!payment || payment.status !== 'approved') {
         return alert('🚫 Your payment has not been approved yet. Please wait for payment approval.');
       }
