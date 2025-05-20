@@ -1,464 +1,403 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" data-theme="dark">
 <head>
-  <meta charset="UTF-8" /><meta name="viewport" content="width=device-width,initial-scale=1" />
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>CBE Admin Panel</title>
-  <!-- Google Font -->
-  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700&display=swap" rel="stylesheet"/>
-  <!-- Bootstrap 5 -->
-  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet"/>
-  <!-- Chart.js -->
-  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-  <!-- Sortable.js -->
-  <script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.0/Sortable.min.js"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;500;700&display=swap" rel="stylesheet">
   <style>
-    /* Video BG & Overlay */
-    video#bg {position:fixed;top:0;left:0;width:100%;height:100%;object-fit:cover;z-index:-2;}
-    .overlay {position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.6);z-index:-1;}
-    /* Theme vars */
-    :root {--bg:#121212;--fg:#f5f5f5;--glass:rgba(255,255,255,0.05);}
-    [data-theme="light"]{--bg:#f0f0f0;--fg:#333;--glass:rgba(255,255,255,0.6);}
-    body{margin:0;padding:0;overflow-x:hidden;font-family:Poppins,sans-serif;background:var(--bg);color:var(--fg);}
-    a{color:inherit;text-decoration:none;}
-    .glass{background:var(--glass);backdrop-filter:blur(12px);border-radius:12px;box-shadow:0 8px 32px rgba(0,0,0,0.4);}
-    #sidebar{width:250px;background:rgba(0,0,0,0.3);transition:.3s;}
-    #sidebar.collapsed{margin-left:-250px;}
-    #sidebar .nav-link{color:#ddd;}
-    #sidebar .nav-link.active,#sidebar .nav-link:hover{background:rgba(255,255,255,0.1);color:#fff;}
-    #content{flex:1;padding:1.5rem;}
-    #toggle-btn{cursor:pointer;font-size:1.5rem;}
-    .card-stat{cursor:grab;color:#fff;border:none;}
-    .card-stat bg-warning{background:rgba(255,193,7,0.8);}
-    .form-control,.form-select{background:rgba(255,255,255,0.1);border:none;color:#fff;}
-    .form-control:focus,.form-select:focus{background:rgba(255,255,255,0.15);box-shadow:none;}
-    .btn-primary{background:#ffd700;color:#000;border:none;}
-    .btn-success{background:#1cc88a;border:none;}
-    .btn-outline-secondary{color:#fff;border-color:rgba(255,255,255,0.4);}
-    .btn-outline-secondary:hover{background:rgba(255,255,255,0.1);}
-    h4{color:#ffd700;}
-    #toast-container{position:fixed;bottom:1rem;right:1rem;z-index:1050;}
+    /* Theme variables for dark mode (default) */
+    :root {
+      --bg-primary: #0b0b0b;
+      --bg-secondary: #111;
+      --bg-tertiary: #1c1c1c;
+      --text-primary: #f5f5f5;
+      --text-secondary: #ddd;
+      --text-tertiary: #888;
+      --accent: gold;
+      --accent-hover: #ffd700;
+      --button-bg: gold;
+      --button-text: #000;
+      --button-bg-hover: #ffd700;
+      --border: #333;
+      --border-footer: #222;
+    }
+
+    /* Theme variables for light mode */
+    [data-theme="light"] {
+      --bg-primary: #ffffff;
+      --bg-secondary: #f5f5f5;
+      --bg-tertiary: #e0e0e0;
+      --text-primary: #333333;
+      --text-secondary: #555555;
+      --text-tertiary: #777777;
+      --accent: #0066cc;
+      --accent-hover: #004080;
+      --button-bg: #0066cc;
+      --button-text: #ffffff;
+      --button-bg-hover: #004080;
+      --border: #cccccc;
+      --border-footer: #dddddd;
+    }
+
+    body {
+      margin: 0;
+      font-family: 'Poppins', sans-serif;
+      background-color: var(--bg-primary);
+      color: var(--text-primary);
+    }
+
+    /* Header styling */
+    header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 10px 20px;
+      background-color: var(--bg-secondary);
+      border-bottom: 1px solid var(--border);
+    }
+
+    #themeToggle {
+      background: none;
+      border: none;
+      color: var(--accent);
+      font-size: 1.5rem;
+      cursor: pointer;
+      transition: color 0.3s;
+    }
+
+    #themeToggle:hover {
+      color: var(--accent-hover);
+    }
+
+    /* Dashboard styling */
+    .dashboard {
+      padding: 20px;
+    }
+
+    .counters {
+      display: flex;
+      gap: 20px;
+      margin-bottom: 20px;
+    }
+
+    .section {
+      margin-bottom: 40px;
+    }
+
+    /* Table styling */
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      color: var(--text-primary);
+    }
+
+    th, td {
+      padding: 8px;
+      text-align: left;
+      border-bottom: 1px solid var(--border);
+    }
+
+    th {
+      background-color: var(--bg-secondary);
+    }
+
+    tr:nth-child(even) {
+      background-color: var(--bg-tertiary);
+    }
+
+    table img {
+      border-radius: 5px;
+      box-shadow: 0 0 5px rgba(0,0,0,0.3);
+    }
+
+    /* Charts styling */
+    .charts {
+      display: flex;
+      justify-content: space-around;
+    }
+
+    .charts canvas {
+      max-width: 400px;
+      background-color: var(--bg-primary);
+    }
+
+    /* Responsive design */
+    @media (max-width: 768px) {
+      .charts {
+        flex-direction: column;
+        align-items: center;
+      }
+      .charts canvas {
+        max-width: 100%;
+      }
+    }
+
+    /* Fade-in animation */
+    .fade-in {
+      opacity: 0;
+      animation: fadeIn 0.5s ease-in forwards;
+    }
+
+    @keyframes fadeIn {
+      to {
+        opacity: 1;
+      }
+    }
   </style>
 </head>
-<body data-theme="dark">
+<body>
 
-  <!-- Background & Toasts -->
-  <video id="bg" autoplay muted loop><source src="star-video.MP4" type="video/mp4"/></video>
-  <div class="overlay"></div>
-  <div id="toast-container"></div>
+  <!-- Header with theme toggle -->
+  <header>
+    <h1>CBE Admin Panel</h1>
+    <button id="themeToggle" aria-label="Toggle theme">🌓</button>
+  </header>
 
-  <div class="d-flex glass" style="min-height:100vh;">
-    <!-- Sidebar -->
-    <nav id="sidebar" class="d-flex flex-column p-3">
-      <h4 class="text-center">CBE Admin</h4>
-      <ul class="nav nav-pills flex-column mb-auto mt-4" id="menu">
-        <li><a class="nav-link active" data-section="dashboard" href="#">Dashboard</a></li>
-        <li><a class="nav-link" data-section="users" href="#">Users</a></li>
-        <li><a class="nav-link" data-section="payments" href="#">Payments</a></li>
-        <li><a class="nav-link" data-section="messages" href="#">Messages</a></li>
-        <li><a class="nav-link" data-section="settings-payment" href="#">Payment Settings</a></li>
-        <li><a class="nav-link" data-section="trade-history" href="#">Trade History</a></li>
-        <li><a class="nav-link" data-section="trade-insights" href="#">Trade Insights</a></li>
-        <li><a class="nav-link" data-section="signals" href="#">Signals</a></li>
-        <li class="mt-auto"><a class="nav-link text-danger" href="#">Logout</a></li>
-      </ul>
-    </nav>
+  <!-- Dashboard content -->
+  <div class="dashboard">
+    <div class="counters">
+      <div>Total Users: <span id="totalUsers">0</span></div>
+      <div>Verified Users: <span id="verifiedUsers">0</span></div>
+    </div>
 
-    <!-- Main Content -->
-    <div id="content" class="d-flex flex-column">
-      <div class="d-flex justify-content-between align-items-center mb-4">
-        <div>
-          <span id="toggle-btn">&#8942;</span>
-          <button id="theme-toggle" class="btn btn-sm btn-outline-secondary ms-2">Light Mode</button>
-        </div>
-        <h2 id="section-title">Dashboard</h2>
-      </div>
+    <!-- Users Verification Section -->
+    <div class="section">
+      <h2>Users Verification</h2>
+      <table id="usersTable" class="fade-in">
+        <thead>
+          <tr>
+            <th>Email</th>
+            <th>Name</th>
+            <th>Status</th>
+            <th>Registration Date</th>
+            <th>Last Login</th>
+            <th>Action</th>
+          </tr>
+        </thead>
+        <tbody>
+          <!-- Populated by JavaScript -->
+        </tbody>
+      </table>
+    </div>
 
-      <div id="sections">
-        <!-- Dashboard -->
-        <div class="section" data-section="dashboard">
-          <div class="row g-4" id="stats-container">
-            <div class="col-md-3">
-              <div class="card card-stat p-3 glass bg-primary" draggable="true" data-key="users">
-                <h5>Total Users</h5><h2 id="stat-users">0</h2>
-              </div>
-            </div>
-            <div class="col-md-3">
-              <div class="card card-stat p-3 glass bg-success" draggable="true" data-key="payments">
-                <h5>Pending Payments</h5><h2 id="stat-payments">0</h2>
-              </div>
-            </div>
-            <div class="col-md-3">
-              <div class="card card-stat p-3 glass bg-info" draggable="true" data-key="trades">
-                <h5>Trades This Month</h5><h2 id="stat-trades">0</h2>
-              </div>
-            </div>
-            <div class="col-md-3">
-              <div class="card card-stat p-3 glass bg-secondary" draggable="true" data-key="signals">
-                <h5>Signals Published</h5><h2 id="stat-signals">0</h2>
-              </div>
-            </div>
-            <div class="col-md-3">
-              <div class="card card-stat p-3 glass bg-warning" draggable="true" data-key="winrate">
-                <h5>Win Rate (%)</h5><h2 id="stat-winrate">0</h2>
-              </div>
-            </div>
-          </div>
-          <div class="row g-4 mt-4">
-            <div class="col-md-6"><canvas id="chart-pnl" height="200"></canvas></div>
-            <div class="col-md-6"><canvas id="chart-winrate" height="200"></canvas></div>
-          </div>
-        </div>
+    <!-- Payment Approval Section -->
+    <div class="section">
+      <h2>Payment Approval</h2>
+      <table id="paymentsTable" class="fade-in">
+        <thead>
+          <tr>
+            <th>User</th>
+            <th>Amount</th>
+            <th>Date</th>
+            <th>Status</th>
+            <th>Payment Method</th>
+            <th>Transaction ID</th>
+            <th>Action</th>
+          </tr>
+        </thead>
+        <tbody>
+          <!-- Populated by JavaScript -->
+        </tbody>
+      </table>
+    </div>
 
-        <!-- Users -->
-        <div class="section d-none p-4 mb-4 glass" data-section="users">
-          <h4>Users Verification</h4>
-          <input id="user-search" class="form-control mb-3" placeholder="Search users…" />
-          <table class="table table-hover text-white">
-            <thead><tr><th>Email</th><th>Name</th><th>Status</th><th>Action</th></tr></thead>
-            <tbody id="users-table"></tbody>
-          </table>
-        </div>
+    <!-- Trade History Section -->
+    <div class="section">
+      <h2>Trade History</h2>
+      <table id="tradesTable" class="fade-in">
+        <thead>
+          <tr>
+            <th>Date</th>
+            <th>Asset</th>
+            <th>Notes</th>
+            <th>Screenshot</th>
+            <th>Trade Type</th>
+            <th>Quantity</th>
+            <th>Price</th>
+          </tr>
+        </thead>
+        <tbody>
+          <!-- Populated by JavaScript -->
+        </tbody>
+      </table>
+    </div>
 
-        <!-- Payments -->
-        <div class="section d-none p-4 mb-4 glass" data-section="payments">
-          <h4>Payment Approval</h4>
-          <button id="export-payments" class="btn btn-outline-secondary btn-sm mb-3">Export CSV/XLSX</button>
-          <table class="table table-hover text-white">
-            <thead><tr><th>User</th><th>Amount</th><th>Date</th><th>Status</th><th>Action</th></tr></thead>
-            <tbody id="payments-table"></tbody>
-          </table>
-        </div>
-
-        <!-- Messages -->
-        <div class="section d-none p-4 mb-4 glass" data-section="messages">
-          <h4>Contact Messages</h4>
-          <input id="msg-search" class="form-control mb-3" placeholder="Search messages…" />
-          <div class="list-group text-white" id="messages-list"></div>
-        </div>
-
-        <!-- Payment Settings -->
-        <div class="section d-none p-4 mb-4 glass" data-section="settings-payment">
-          <h4>Payment Settings</h4>
-          <ul class="nav nav-pills mb-3">
-            <li class="nav-item"><button class="nav-link active" data-bs-toggle="pill" data-bs-target="#paystack-tab">Paystack</button></li>
-            <li class="nav-item"><button class="nav-link" data-bs-toggle="pill" data-bs-target="#crypto-tab">Crypto</button></li>
-          </ul>
-          <div class="tab-content">
-            <div id="paystack-tab" class="tab-pane fade show active">
-              <form id="form-paystack">
-                <div class="mb-3"><label>Paystack Public Key</label><input type="text" class="form-control" id="ps-public" required/></div>
-                <div class="mb-3"><label>Paystack Secret Key</label><input type="text" class="form-control" id="ps-secret" required/></div>
-                <div class="mb-3"><label>Paystack Link</label><input type="url" class="form-control" id="ps-link" placeholder="https://paystack.com/..." required/></div>
-                <button class="btn btn-primary">Save Paystack</button>
-              </form>
-            </div>
-            <div id="crypto-tab" class="tab-pane fade">
-              <form id="form-crypto">
-                <div class="mb-3"><label>BTC Wallet</label><input type="text" class="form-control" id="addr-btc" required/></div>
-                <div class="mb-3"><label>ETH Wallet</label><input type="text" class="form-control" id="addr-eth" required/></div>
-                <div class="mb-3"><label>TRX Wallet</label><input type="text" class="form-control" id="addr-trx" required/></div>
-                <div class="mb-3"><label>USDT (TRC20)</label><input type="text" class="form-control" id="addr-usdt" required/></div>
-                <button class="btn btn-primary">Save Crypto</button>
-              </form>
-            </div>
-          </div>
-        </div>
-
-        <!-- Trade History -->
-        <div class="section d-none p-4 mb-4 glass" data-section="trade-history">
-          <h4>Trade History</h4>
-          <div class="row g-2 mb-3 align-items-end">
-            <div class="col-md-3">
-              <label>Select Month</label>
-              <select id="month-select" class="form-select">
-                <option value="01">January</option>
-                <option value="02">February</option>
-                <option value="03">March</option>
-                <option value="04">April</option>
-                <option value="05">May</option>
-                <option value="06">June</option>
-                <option value="07">July</option>
-                <option value="08">August</option>
-                <option value="09">September</option>
-                <option value="10">October</option>
-                <option value="11">November</option>
-                <option value="12">December</option>
-              </select>
-            </div>
-            <div class="col-md-3">
-              <label>Search</label>
-              <input id="trade-search" class="form-control" placeholder="Search notes or asset…" />
-            </div>
-            <div class="col-auto">
-              <button id="export-history" class="btn btn-outline-secondary">Export</button>
-            </div>
-          </div>
-          <form id="trade-upload-form" class="border p-3 mb-4 glass">
-            <div class="row g-3">
-              <div class="col-md-3">
-                <label>Date</label>
-                <input type="date" class="form-control" id="trade-date" required/>
-              </div>
-              <div class="col-md-3">
-                <label>Asset</label>
-                <input list="asset-list" class="form-control" id="trade-pair" placeholder="e.g. GOLD" required/>
-                <datalist id="asset-list">
-                  <option>GOLD</option><option>BTC/USD</option><option>ETH/USD</option>
-                  <option>EUR/USD</option><option>USD/JPY</option>
-                </datalist>
-              </div>
-              <div class="col-md-3">
-                <label>Notes</label>
-                <input type="text" class="form-control" id="trade-notes" placeholder="Enter any notes"/>
-              </div>
-              <div class="col-md-3">
-                <label>Screenshot</label>
-                <input type="file" accept="image/*" class="form-control" id="trade-file" required/>
-              </div>
-            </div>
-            <div class="mt-3">
-              <button class="btn btn-success">Add Trade</button>
-            </div>
-          </form>
-          <table class="table table-striped text-white">
-            <thead>
-              <tr><th>Date</th><th>Asset</th><th>Notes</th><th>Screenshot</th></tr>
-            </thead>
-            <tbody id="history-table"></tbody>
-          </table>
-        </div>
-
-        <!-- Trade Insights -->
-        <div class="section d-none p-4 mb-4 glass" data-section="trade-insights">
-          <h4>Weekly Pips Insights</h4>
-          <form id="insights-form" class="row g-3 mb-4">
-            <div class="col-md-4"><label>Week Ending</label><input type="date" id="insight-week" class="form-control" required/></div>
-            <div class="col-md-4"><label>Pips Gained</label><input type="number" id="insight-pips" class="form-control" required/></div>
-            <div class="col-md-4"><label>Note</label><textarea id="insight-note" class="form-control"></textarea></div>
-            <div class="col-12"><button class="btn btn-success">Post Insight</button></div>
-          </form>
-          <ul class="list-group" id="insights-list"></ul>
-        </div>
-
-        <!-- Signals -->
-        <div class="section d-none p-4 mb-4 glass" data-section="signals">
-          <h4>Publish Signals</h4>
-          <form id="signals-form" class="border p-3 mb-4 glass">
-            <div class="row g-3">
-              <div class="col-md-3"><label>Asset / Pair</label><input list="asset-list" id="signal-asset" class="form-control" required/></div>
-              <div class="col-md-2"><label>Type</label><select id="signal-type" class="form-select"><option>BUY</option><option>SELL</option></select></div>
-              <div class="col-md-2"><label>SL</label><input id="signal-sl" class="form-control" required/></div>
-              <div class="col-md-2"><label>TP1</label><input id="signal-tp1" class="form-control" required/></div>
-              <div class="col-md-2"><label>TP2</label><input id="signal-tp2" class="form-control"/></div>
-              <div class="col-12"><label>Notes</label><textarea id="signal-note" class="form-control"></textarea></div>
-            </div>
-            <div class="mt-3"><button class="btn btn-primary">Publish Signal</button></div>
-          </form>
-          <ul class="list-group" id="signals-list"></ul>
-        </div>
-      </div>
+    <!-- Charts Section -->
+    <div class="charts">
+      <canvas id="userStatusChart" class="fade-in"></canvas>
+      <canvas id="paymentTrendsChart" class="fade-in"></canvas>
     </div>
   </div>
 
-  <!-- Reply Modal -->
-  <div class="modal fade" id="replyModal"><div class="modal-dialog">
-    <form class="modal-content glass p-4" id="reply-form">
-      <div class="modal-header">
-        <h5 class="modal-title">Reply to Message</h5>
-        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
-      </div>
-      <div class="modal-body">
-        <input type="hidden" id="reply-email"/>
-        <div class="mb-3"><label>To</label><input id="reply-to" class="form-control" readonly/></div>
-        <div class="mb-3"><label>Message</label><textarea id="reply-body" class="form-control" rows="4" required></textarea></div>
-      </div>
-      <div class="modal-footer"><button class="btn btn-success">Send Reply</button></div>
-    </form>
-  </div></div>
+  <!-- External Libraries -->
+  <script src="https://code.jquery.com/jquery-3.5.1.min.js"></script>
+  <script src="https://cdn.datatables.net/1.10.24/js/jquery.dataTables.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
-  <!-- Scripts -->
-  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
   <script>
-    // Helpers
-    function showToast(msg, ok=true){
-      const id='t'+Date.now();
-      document.getElementById('toast-container').insertAdjacentHTML('beforeend',`
-        <div id="${id}" class="toast align-items-center text-white ${ok?'bg-success':'bg-danger'} border-0" role="alert">
-          <div class="d-flex">
-            <div class="toast-body">${msg}</div>
-            <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast"></button>
-          </div>
-        </div>`);
-      new bootstrap.Toast(document.getElementById(id),{delay:3000}).show();
+    // Admin Panel Script
+    // Uses dummy data for demonstration. Replace `dummyData` with database data later.
+
+    // Dummy data (replace with real data from your database)
+    const dummyData = {
+      users: [
+        { email: "user1@example.com", name: "User One", status: "Verified", registrationDate: "2023-01-01", lastLogin: "2023-05-01" },
+        { email: "user2@example.com", name: "User Two", status: "Pending", registrationDate: "2023-02-01", lastLogin: "2023-04-01" },
+        // Add more users as needed
+      ],
+      payments: [
+        { user: "User One", amount: 100, date: "2023-03-01", status: "Approved", paymentMethod: "Credit Card", transactionId: "TX12345" },
+        { user: "User Two", amount: 200, date: "2023-03-15", status: "Pending", paymentMethod: "PayPal", transactionId: "TX67890" },
+        // Add more payments as needed
+      ],
+      trades: [
+        { date: "2023-04-01", asset: "EUR/USD", notes: "Buy signal", screenshot: "url/to/screenshot", tradeType: "Buy", quantity: 1000, price: 1.2345 },
+        { date: "2023-04-02", asset: "GBP/USD", notes: "Sell signal", screenshot: "url/to/screenshot", tradeType: "Sell", quantity: 500, price: 1.3456 },
+        // Add more trades as needed
+      ]
+    };
+
+    // Theme toggle function (no persistence since localStorage is not used)
+    function toggleTheme() {
+      const currentTheme = document.documentElement.getAttribute('data-theme');
+      const newTheme = currentTheme === 'light' ? 'dark' : 'light';
+      document.documentElement.setAttribute('data-theme', newTheme);
+      // Theme resets on page reload; save to database later for persistence.
     }
 
-    // Theme toggle
-    const themeBtn=document.getElementById('theme-toggle');
-    themeBtn.onclick=()=>{
-      const next=document.body.getAttribute('data-theme')==='dark'?'light':'dark';
-      document.body.setAttribute('data-theme',next);
-      themeBtn.textContent= next==='dark'?'Light Mode':'Dark Mode';
-    };
+    // Attach theme toggle to button
+    document.getElementById('themeToggle').addEventListener('click', toggleTheme);
 
-    // Sidebar & nav
-    document.getElementById('toggle-btn').onclick=()=>document.getElementById('sidebar').classList.toggle('collapsed');
-    document.querySelectorAll('#menu .nav-link').forEach(link=>{
-      link.onclick=e=>{
-        e.preventDefault();
-        document.querySelectorAll('#menu .nav-link').forEach(l=>l.classList.remove('active'));
-        link.classList.add('active');
-        document.getElementById('section-title').textContent=link.textContent;
-        document.querySelectorAll('.section').forEach(sec=>
-          sec.classList.toggle('d-none',sec.dataset.section!==link.dataset.section)
-        );
-      };
-    });
-
-    // Drag & drop stats
-    new Sortable(document.getElementById('stats-container'),{animation:150});
-
-    // ===== Dashboard =====
-    async function loadDashboard(){
-      const stats={ users:0, payments:0, trades:0, signals:0 };
-      document.getElementById('stat-users').textContent=stats.users;
-      document.getElementById('stat-payments').textContent=stats.payments;
-      document.getElementById('stat-trades').textContent=stats.trades;
-      document.getElementById('stat-signals').textContent=stats.signals;
-      const insights= await fetch('/api/insights').then(r=>r.json())
-        .catch(_=>[{week:'W1',pips:0},{week:'W2',pips:0},{week:'W3',pips:0},{week:'W4',pips:0}]);
-      const wins=insights.filter(i=>i.pips>0).length;
-      document.getElementById('stat-winrate').textContent=Math.round(wins/insights.length*100);
-      new Chart(document.getElementById('chart-pnl'),{
-        type:'line',
-        data:{labels:insights.map(i=>i.week),datasets:[{data:insights.map(i=>i.pips),tension:0.4}]},
-        options:{responsive:true,plugins:{legend:{display:false}}}
+    // Render Users Table with DataTables
+    function renderUsersTable(data) {
+      const table = $('#usersTable').DataTable({
+        data: data,
+        columns: [
+          { data: 'email' },
+          { data: 'name' },
+          { data: 'status' },
+          { data: 'registrationDate' },
+          { data: 'lastLogin' },
+          { data: null, defaultContent: '<button>Verify</button>' }
+        ]
       });
-      new Chart(document.getElementById('chart-winrate'),{
-        type:'bar',
-        data:{labels:insights.map(i=>i.week),datasets:[{data:insights.map(i=>i.pips>0?100:0)}]},
-        options:{responsive:true,plugins:{legend:{display:false}}}
+      // Dummy action for Verify button (replace with real functionality later)
+      table.on('click', 'button', function() {
+        alert('Verify user');
       });
     }
-    loadDashboard();
 
-    // ===== Users & Payments =====
-    async function loadUsers(){
-      /* stub */
-    }
-    async function loadPayments(){
-      /* stub */
-    }
-    loadUsers(); loadPayments();
-
-    // ===== Messages & Reply =====
-    async function loadMessages(){
-      /* stub */
-    }
-    document.getElementById('reply-form').onsubmit=e=>{
-      e.preventDefault();
-      showToast(`Reply sent to ${document.getElementById('reply-email').value}`);
-      bootstrap.Modal.getInstance(document.getElementById('replyModal')).hide();
-    };
-    loadMessages();
-
-    // ===== Payment Settings =====
-    document.getElementById('form-paystack').onsubmit=e=>{
-      e.preventDefault(); showToast('Paystack settings saved');
-    };
-    document.getElementById('form-crypto').onsubmit=e=>{
-      e.preventDefault(); showToast('Crypto wallets saved');
-    };
-
-    // ===== Trade History Upload & Filter =====
-    document.getElementById('trade-upload-form').addEventListener('submit', e => {
-      e.preventDefault();
-      const date   = e.target['trade-date'].value;
-      const asset  = e.target['trade-pair'].value;
-      const notes  = e.target['trade-notes'].value;
-      const file   = e.target['trade-file'].files[0];
-      const reader = new FileReader();
-      reader.onload = () => {
-        const tr = document.createElement('tr');
-        tr.dataset.month = date.slice(5,7);
-        tr.innerHTML = `
-          <td>${date}</td>
-          <td>${asset}</td>
-          <td>${notes}</td>
-          <td><img src="${reader.result}" style="height:40px; object-fit:cover;"/></td>
-        `;
-        document.getElementById('history-table').append(tr);
-        showToast('Trade added');
-        e.target.reset();
-      };
-      reader.readAsDataURL(file);
-    });
-    document.getElementById('month-select').addEventListener('change', e => {
-      const m = e.target.value;
-      document.querySelectorAll('#history-table tr').forEach(tr => {
-        tr.style.display = (tr.dataset.month === m) ? '' : 'none';
+    // Render Payments Table with DataTables
+    function renderPaymentsTable(data) {
+      const table = $('#paymentsTable').DataTable({
+        data: data,
+        columns: [
+          { data: 'user' },
+          { data: 'amount' },
+          { data: 'date' },
+          { data: 'status' },
+          { data: 'paymentMethod' },
+          { data: 'transactionId' },
+          { data: null, defaultContent: '<button>Approve</button>' }
+        ]
       });
-    });
-    document.getElementById('trade-search').addEventListener('input', e => {
-      const term = e.target.value.toLowerCase();
-      document.querySelectorAll('#history-table tr').forEach(tr => {
-        tr.style.display = tr.textContent.toLowerCase().includes(term) ? '' : 'none';
+      // Dummy action for Approve button (replace with real functionality later)
+      table.on('click', 'button', function() {
+        alert('Approve payment');
       });
-    });
-    document.getElementById('export-history').addEventListener('click', () => {
-      const rows = [['Date','Asset','Notes','Screenshot']];
-      document.querySelectorAll('#history-table tr').forEach(tr => {
-        rows.push([...tr.children].map(td => td.textContent));
+    }
+
+    // Render Trades Table with DataTables
+    function renderTradesTable(data) {
+      const table = $('#tradesTable').DataTable({
+        data: data,
+        columns: [
+          { data: 'date' },
+          { data: 'asset' },
+          { data: 'notes' },
+          { data: 'screenshot', render: function(data) {
+            return data ? `<img src="${data}" alt="Screenshot" width="50">` : 'No screenshot';
+          } },
+          { data: 'tradeType' },
+          { data: 'quantity' },
+          { data: 'price' }
+        ]
       });
-      const csv = rows.map(r => r.join(',')).join('\n');
-      const blob = new Blob([csv], { type: 'text/csv' });
-      const a = document.createElement('a');
-      a.href = URL.createObjectURL(blob);
-      a.download = 'trade_history.csv';
-      a.click();
-    });
+    }
 
-    // ===== Trade Insights =====
-    document.getElementById('insights-form').onsubmit=e=>{
-      e.preventDefault();
-      const week=e.target['insight-week'].value;
-      const pips=e.target['insight-pips'].value;
-      const note=e.target['insight-note'].value;
-      const li=document.createElement('li');
-      li.className='list-group-item glass mb-2';
-      li.innerHTML=`<strong>${week}</strong>: ${pips} pips<br>${note}`;
-      document.getElementById('insights-list').append(li);
-      showToast('Insight added');
-    };
+    // Render User Status Pie Chart with Chart.js
+    function renderUserStatusChart(users) {
+      const statuses = users.reduce((acc, user) => {
+        acc[user.status] = (acc[user.status] || 0) + 1;
+        return acc;
+      }, {});
+      const labels = Object.keys(statuses);
+      const data = Object.values(statuses);
+      new Chart(document.getElementById('userStatusChart'), {
+        type: 'pie',
+        data: {
+          labels: labels,
+          datasets: [{
+            data: data,
+            backgroundColor: ['#4caf50', '#f44336'] // Green for Verified, Red for Pending
+          }]
+        },
+        options: {
+          responsive: true,
+          plugins: {
+            legend: { position: 'top' },
+            title: { display: true, text: 'User Status Distribution' }
+          }
+        }
+      });
+    }
 
-    // ===== Signals =====
-    document.getElementById('signals-form').onsubmit=e=>{
-      e.preventDefault();
-      const asset=e.target['signal-asset'].value;
-      const type=e.target['signal-type'].value;
-      const sl=e.target['signal-sl'].value;
-      const tp1=e.target['signal-tp1'].value;
-      const tp2=e.target['signal-tp2'].value;
-      const note=e.target['signal-note'].value;
-      const li=document.createElement('li');
-      li.className='list-group-item glass mb-2';
-      li.innerHTML=`<strong>${type} ${asset}</strong> SL:${sl} TP1:${tp1} TP2:${tp2}<br>${note}`;
-      document.getElementById('signals-list').append(li);
-      showToast('Signal published');
-    };
+    // Render Payment Trends Line Graph with Chart.js
+    function renderPaymentTrendsChart(payments) {
+      const paymentData = payments.reduce((acc, payment) => {
+        const date = payment.date;
+        acc[date] = (acc[date] || 0) + payment.amount;
+        return acc;
+      }, {});
+      const labels = Object.keys(paymentData).sort();
+      const data = labels.map(date => paymentData[date]);
+      new Chart(document.getElementById('paymentTrendsChart'), {
+        type: 'line',
+        data: {
+          labels: labels,
+          datasets: [{
+            label: 'Total Payments',
+            data: data,
+            borderColor: '#2196f3',
+            fill: false
+          }]
+        },
+        options: {
+          responsive: true,
+          scales: {
+            x: { title: { display: true, text: 'Date' } },
+            y: { title: { display: true, text: 'Amount' } }
+          }
+        }
+      });
+    }
 
-    // ===== Keyboard Shortcuts =====
-    document.addEventListener('keydown',e=>{
-      if(['INPUT','TEXTAREA'].includes(e.target.tagName))return;
-      const map={n:'signals',p:'payments',u:'users'};
-      if(map[e.key]) document.querySelector(`#menu .nav-link[data-section="${map[e.key]}"]`).click();
-    });
+    // Update Dashboard Counters
+    function updateCounters(data) {
+      const totalUsers = data.users.length;
+      const verifiedUsers = data.users.filter(user => user.status === 'Verified').length;
+      document.getElementById('totalUsers').textContent = totalUsers;
+      document.getElementById('verifiedUsers').textContent = verifiedUsers;
+    }
 
-    // ===== WebSocket Stub =====
-    const ws=new WebSocket('wss://example.com/realtime');
-    ws.onmessage=evt=>{
-      const m=JSON.parse(evt.data);
-      if(m.type==='signal') showToast('New live signal!');
-    };
+    // Initialize the admin panel with dummy data
+    renderUsersTable(dummyData.users);
+    renderPaymentsTable(dummyData.payments);
+    renderTradesTable(dummyData.trades);
+    renderUserStatusChart(dummyData.users);
+    renderPaymentTrendsChart(dummyData.payments);
+    updateCounters(dummyData);
   </script>
 </body>
 </html>
