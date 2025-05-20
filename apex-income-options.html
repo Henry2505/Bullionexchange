@@ -3,289 +3,214 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Apex Income Options | CBE</title>
+  <title>Apex Income Options – Premium Forex Signals | CBE</title>
   <style>
-    /* ===== VARIABLES & RESET ===== */
-    :root {
-      --gold: #ffd700;
-      --black-trans: rgba(0,0,0,0.7);
-      --bg-opacity: 0.4;
-      --font: 'Helvetica Neue', Arial, sans-serif;
-    }
-    *, *::before, *::after { margin:0; padding:0; box-sizing:border-box; }
-    html, body {
-      width:100%; height:100%;
-      font-family: var(--font);
-      color: #fff; overflow-x:hidden;
-      background: #000;
-    }
-    a { text-decoration:none; color:inherit; }
+    /* Reset & Base */
+    * { margin:0; padding:0; box-sizing:border-box; }
+    body, html { height:100%; font-family: 'Segoe UI', sans-serif; color:#fff; overflow-x:hidden; }
+    a { color: #d4af37; text-decoration: none; }
+    h1, h2, h3 { font-weight: 600; margin-bottom: .5em; }
+    p { line-height:1.6; margin-bottom:1em; }
 
-    /* ===== VIDEO BACKGROUND ===== */
+    /* Background Video & Overlay */
     #bg-video {
-      position: fixed; top:0; left:0;
-      width:100%; height:100%;
-      object-fit:cover; opacity: var(--bg-opacity);
-      z-index: -2;
+      position: fixed; top:0; left:0; width:100%; height:100%; object-fit:cover; z-index:-2;
     }
-    .overlay {
-      position: fixed; top:0; left:0;
-      width:100%; height:100%;
-      background: var(--black-trans);
-      z-index: -1;
+    #overlay {
+      position: fixed; top:0; left:0; width:100%; height:100%;
+      background: rgba(0,0,0,0.6); z-index:-1;
     }
+    header { position: relative; text-align:center; padding: 100px 20px;}
+    header img { width:160px; cursor:pointer; }
+    .hero-content { max-width:800px; margin: auto; }
+    .hero-content h1 { font-size:3rem; margin-bottom: .3em; }
+    .hero-content p { font-size:1.2rem; }
 
-    /* ===== LAYOUT ===== */
-    header, main, footer {
-      position: relative; z-index:1;
-      max-width: 1000px; margin: 0 auto; padding: 60px 20px;
-    }
+    /* Sections */
+    section { padding:80px 20px; max-width:1000px; margin:auto; }
+    .slide-in { opacity:0; transform: translateY(50px); transition: all 0.8s ease-out; }
+    .slide-in.visible { opacity:1; transform: translateY(0); }
 
-    /* ===== NAV & LOGO ===== */
-    nav {
-      display: flex; justify-content: space-between; align-items: center;
-      margin-bottom: 40px;
-    }
-    nav .logo {
-      height: 60px; cursor: pointer; transition: transform .3s;
-    }
-    nav .logo:hover { transform: scale(1.05); }
+    /* Buttons */
+    .btn { display:inline-block; padding:12px 30px; border:2px solid #d4af37; border-radius:4px; font-weight:600; }
+    .btn-gold { background: rgba(212,175,55,0.9); color:#000; }
+    .btn-outline { background:transparent; color:#d4af37; }
 
-    /* ===== SECTION ANIMATIONS ===== */
-    .animate {
-      opacity: 0; transition: all .8s ease-out;
-    }
-    .slide-left { transform: translateX(-50px); }
-    .slide-right { transform: translateX(50px); }
-    .slide-up { transform: translateY(30px); }
-    .visible {
-      opacity: 1; transform: translateX(0) translateY(0);
-    }
+    /* Pricing Cards */
+    .pricing { display:flex; flex-wrap:wrap; gap:20px; justify-content:center; }
+    .card { background: rgba(0,0,0,0.7); border:1px solid #d4af37; border-radius:8px; flex:1 1 280px; padding:20px; }
+    .card h3 { margin-bottom:.5em; }
+    .card .price { font-size:2.5rem; font-weight:700; margin: .5em 0; }
+    .card ul { list-style: none; margin-bottom:1em; }
+    .card ul li { margin: .5em 0; }
 
-    /* ===== HEADINGS & TEXT ===== */
-    h1, h2, h3 {
-      color: var(--gold); margin-bottom: 16px;
-      text-transform: uppercase; letter-spacing: 1px;
-    }
-    p, li { line-height:1.6; margin-bottom:12px; }
-    ul { list-style:none; padding-left:0; }
+    /* FAQ Accordion */
+    .faq-item { margin-bottom:1em; }
+    .faq-question { cursor:pointer; padding:12px; background: rgba(212,175,55,0.1); border:1px solid #d4af37; border-radius:4px; }
+    .faq-answer { max-height:0; overflow:hidden; transition:max-height .4s ease; background: rgba(0,0,0,0.5); padding:0 12px; border-left:1px solid #d4af37; }
 
-    /* ===== BUTTONS ===== */
-    .btn {
-      display:inline-block; padding:14px 28px;
-      background: var(--gold); color:#000; font-weight:bold;
-      border-radius:50px; transition: transform .3s;
-    }
-    .btn:hover { transform: scale(1.05); }
+    /* Rocket Button */
+    #rocket { position: fixed; bottom:30px; right:30px; background:#d4af37; padding:12px; border-radius:50%; font-size:1.5rem; cursor:pointer; display:none; }
 
-    /* ===== FEATURES GRID ===== */
-    .features {
-      display:grid;
-      grid-template-columns: repeat(auto-fit, minmax(240px,1fr));
-      gap:24px;
-    }
-    .feature {
-      background: rgba(255,215,0,0.1);
-      padding:20px; border-radius:8px;
-      transition: background .3s, transform .3s;
-    }
-    .feature:hover {
-      background: rgba(255,215,0,0.2);
-      transform: translateY(-8px);
-    }
-
-    /* ===== PACKAGES TABLE ===== */
-    .packages {
-      width:100%; border-collapse: collapse; margin-top: 20px;
-    }
-    .packages th, .packages td {
-      border: 1px solid #444; padding: 12px; text-align: center;
-    }
-    .packages th { background:rgba(255,215,0,0.1); color: var(--gold); }
-
-    /* ===== FAQ ACCORDION ===== */
-    .faq .item {
-      border-bottom:1px solid #444; margin-bottom:16px;
-    }
-    .faq .item h3 {
-      cursor:pointer; padding:12px 0;
-    }
-    .faq .item p {
-      display:none; padding-left:16px; padding-bottom:12px;
-    }
-    .faq .item.open p { display:block; }
-
-    /* ===== BACK-TO-TOP ===== */
-    #toTop {
-      position:fixed; bottom:30px; right:30px;
-      width:50px; height:50px;
-      background: url('rocket.svg') center/contain no-repeat;
-      cursor:pointer; opacity:0.7; transition:opacity .3s, transform .3s;
-      display:none; z-index:10;
-    }
-    #toTop:hover { opacity:1; transform: scale(1.1); }
-
-    /* ===== RESPONSIVE ===== */
-    @media(max-width:768px) {
-      header, main, footer { padding:40px 16px; }
-      nav .logo { height:50px; }
-    }
+    /* Footer */
+    footer { text-align:center; padding:40px 20px; background: rgba(0,0,0,0.8); font-size:.9rem; }
+    footer a { color:#d4af37; }
   </style>
 </head>
 <body>
 
-  <!-- VIDEO BG & OVERLAY -->
+  <!-- Background -->
   <video id="bg-video" autoplay muted loop>
     <source src="star-video.mp4" type="video/mp4">
   </video>
-  <div class="overlay"></div>
+  <div id="overlay"></div>
 
-  <!-- HEADER & NAV -->
+  <!-- Header / Hero -->
   <header>
-    <nav>
-      <a href="Index.html">
-        <img src="CBE_logo.PNG" alt="CBE Logo" class="logo">
-      </a>
-      <a href="#apply" class="btn">Apply Now</a>
-    </nav>
+    <a href="Index.html"><img src="CBE_logo.PNG" alt="CBE Logo"></a>
+    <div class="hero-content slide-in">
+      <h1>Welcome to Apex Income Options</h1>
+      <p>Your daily premium forex signals—crafted by experts, designed for consistency. Dive into a world of clarity, actionable insights, and professional-grade analysis.</p>
+      <a href="#pricing" class="btn btn-gold">View Packages</a>
+    </div>
   </header>
 
-  <!-- MAIN -->
-  <main>
-    <!-- HERO -->
-    <section id="hero" class="animate slide-up">
-      <h1>Apex Income Options</h1>
-      <p>
-        The **flagship daily signal service** of Chukwuemeka Bullion Exchange (CBE).  
-        Specially crafted for **forex traders 18+**, our signals drive high-accuracy entries on XAUUSD—no account management online, just the raw data you need to profit.
-      </p>
-      <ul>
-        <li>• Curated Daily Trade Signals</li>
-        <li>• Professional Analysis & Rationale</li>
-        <li>• Access via Secure VIP Dashboard</li>
-      </ul>
-      <a href="#packages" class="btn">See Packages</a>
-    </section>
+  <!-- About Section -->
+  <section id="about" class="slide-in">
+    <h2>About Apex Income Options</h2>
+    <p>Apex Income Options is the flagship signal service of <strong>Chukwuemeka Bullion Exchange (CBE)</strong>. We’re not an investment fund, we’re not a Ponzi scheme—just pure, no-nonsense forex signals delivered daily to your VIP dashboard.</p>
+    <p>Designed for traders <strong>18 years and above</strong>, Apex empowers disciplined self-traders with:</p>
+    <ul>
+      <li>Curated daily trade signals (<em>entries, exits, SL/TP</em>)</li>
+      <li>Technical & fundamental rationale for each setup</li>
+      <li>Educational notes—learn as you earn</li>
+      <li>Access via a secure, members-only dashboard</li>
+    </ul>
+  </section>
 
-    <!-- ABOUT CBE vs APEX -->
-    <section id="about" class="animate slide-left">
-      <h2>CBE vs. Apex Income Options</h2>
-      <p><strong>Chukwuemeka Bullion Exchange (CBE)</strong> is the umbrella brand empowering traders through:</p>
-      <ul>
-        <li>• Mentorship Programs</li>
-        <li>• Capital Support (in-office supervision)</li>
-        <li>• Trade Insights Dashboard</li>
-        <li>• VIP Ecosystem & More</li>
-      </ul>
-      <p><strong>Apex Income Options</strong> is our **premium signal product**—daily XAUUSD alerts, actionable entries/exits, and deep trade notes, delivered straight to your dashboard.</p>
-    </section>
+  <!-- How It Works -->
+  <section id="how-it-works" class="slide-in">
+    <h2>How It Works</h2>
+    <ol>
+      <li><strong>Choose a Package:</strong> Weekly, Monthly, or Yearly.</li>
+      <li><strong>Subscribe & Approve:</strong> Complete payment, get instant VIP access.</li>
+      <li><strong>Receive Signals:</strong> Daily trade setups sent to your dashboard & email.</li>
+      <li><strong>Execute & Learn:</strong> Place trades, follow our notes, and refine your strategy.</li>
+      <li><strong>Scale Up:</strong> Love the accuracy? Renew, upgrade, or explore physical capital support in our offices.</li>
+    </ol>
+  </section>
 
-    <!-- PACKAGES -->
-    <section id="packages" class="animate slide-right">
-      <h2>Subscription Packages</h2>
-      <p>Test our accuracy with a short-term trial, then upgrade to monthly or yearly for best value. All plans require traders to be **18+**.</p>
-      <table class="packages">
-        <thead>
-          <tr>
-            <th>Plan</th>
-            <th>Price (USD)</th>
-            <th>Signals/Day</th>
-            <th>Dashboard Access</th>
-          </tr>
-        </thead>
-        <tbody>
-          <tr>
-            <td>Weekly Trial</td>
-            <td>$75</td>
-            <td>3–5</td>
-            <td>Yes</td>
-          </tr>
-          <tr>
-            <td>Monthly Pro</td>
-            <td>$250</td>
-            <td>3–5</td>
-            <td>Yes + Archives</td>
-          </tr>
-          <tr>
-            <td>Yearly Elite</td>
-            <td>$2,700</td>
-            <td>3–5</td>
-            <td>All Features + VIP Chat</td>
-          </tr>
-        </tbody>
-      </table>
-    </section>
+  <!-- Features -->
+  <section id="features" class="slide-in">
+    <h2>Key Features</h2>
+    <ul>
+      <li><strong>High-Quality Analysis:</strong> Our team combines price action, indicators, and fundamentals.</li>
+      <li><strong>Multiple Timeframes:</strong> Signals spanning H1, H4, Daily, and beyond.</li>
+      <li><strong>Transparent Results:</strong> Monthly performance reports on our Trade Insights Dashboard.</li>
+      <li><strong>Support & Community:</strong> VIP chat group, Q&A live sessions, and ongoing mentorship.</li>
+    </ul>
+  </section>
 
-    <!-- HOW IT WORKS -->
-    <section id="process" class="animate slide-left">
-      <h2>How It Works</h2>
-      <ol>
-        <li><strong>Choose & Pay:</strong> Select Weekly, Monthly or Yearly. Secure checkout online.</li>
-        <li><strong>Get Access:</strong> Immediately unlock your VIP dashboard with live signals.</li>
-        <li><strong>Trade at Home:</strong> Implement our signals on your own trading account.</li>
-        <li><strong>Office Capital Support:</strong> For funded traders, trade under our roof with direct supervision and extra capital.</li>
-      </ol>
-    </section>
-
-    <!-- FAQ -->
-    <section id="faq" class="animate slide-up">
-      <h2>FAQ</h2>
-      <div class="faq">
-        <div class="item">
-          <h3>Is this a Ponzi scheme?</h3>
-          <p>No. Apex Income Options delivers **real-time signals** and **transparent performance**. You trade on your own account—no recycled deposits or pyramid payouts.</p>
-        </div>
-        <div class="item">
-          <h3>Who can subscribe?</h3>
-          <p>Anyone aged **18 or above** with a personal forex account. No minimum balance, just a desire to learn and earn.</p>
-        </div>
+  <!-- Pricing -->
+  <section id="pricing" class="slide-in">
+    <h2>Choose Your Package</h2>
+    <div class="pricing">
+      <div class="card">
+        <h3>Weekly Plan</h3>
+        <div class="price">$49<span>/week</span></div>
+        <ul>
+          <li>Daily Signals (5–7 per week)</li>
+          <li>Entry, SL, TP, Notes</li>
+          <li>Access to VIP Chat</li>
+        </ul>
+        <a href="apply.html" class="btn btn-outline">Subscribe Now</a>
       </div>
-    </section>
+      <div class="card">
+        <h3>Monthly Plan</h3>
+        <div class="price">$179<span>/month</span></div>
+        <ul>
+          <li>Daily Signals (20–25 per month)</li>
+          <li>Performance Reports</li>
+          <li>Priority Support</li>
+        </ul>
+        <a href="apply.html" class="btn btn-outline">Subscribe Now</a>
+      </div>
+      <div class="card">
+        <h3>Yearly Plan</h3>
+        <div class="price">$1,799<span>/year</span></div>
+        <ul>
+          <li>All Monthly Benefits</li>
+          <li>Exclusive Webinars</li>
+          <li>1-on-1 Strategy Calls</li>
+        </ul>
+        <a href="apply.html" class="btn btn-outline">Subscribe Now</a>
+      </div>
+    </div>
+  </section>
 
-    <!-- CALL TO ACTION -->
-    <section id="apply" class="animate slide-up">
-      <h2>Ready to Outperform the Market?</h2>
-      <p>Join Apex Income Options today—experience professional-grade signals and watch your edge compound. Select your plan and get started in minutes.</p>
-      <a href="https://your-site.com/apply" class="btn">Apply Now</a>
-    </section>
-  </main>
+  <!-- FAQ -->
+  <section id="faq" class="slide-in">
+    <h2>Frequently Asked Questions</h2>
+    <div class="faq-item">
+      <div class="faq-question">Is this an investment fund?</div>
+      <div class="faq-answer"><p>No. Apex Income Options is strictly a <strong>signal service</strong>. You remain the account owner and place your own trades.</p></div>
+    </div>
+    <div class="faq-item">
+      <div class="faq-question">How old do I need to be?</div>
+      <div class="faq-answer"><p>Participants must be <strong>18 years or older</strong>.</p></div>
+    </div>
+    <div class="faq-item">
+      <div class="faq-question">Can I get capital support?</div>
+      <div class="faq-answer"><p>Yes. Skilled traders can apply for <strong>in-office capital support</strong>—trade under supervision, with our funds.</p></div>
+    </div>
+    <div class="faq-item">
+      <div class="faq-question">Are returns guaranteed?</div>
+      <div class="faq-answer"><p>Forex carries risk. We provide our best analysis, but <strong>no returns are guaranteed</strong>. We emphasize risk management and learning.</p></div>
+    </div>
+  </section>
 
-  <!-- BACK-TO-TOP -->
-  <div id="toTop" title="Back to top"></div>
+  <!-- Call to Action -->
+  <section id="cta" class="slide-in" style="text-align:center;">
+    <h2>Ready to Elevate Your Trading?</h2>
+    <p>Join Apex Income Options today—see our signals in action, refine your strategy, and trade with confidence.</p>
+    <a href="apply.html" class="btn btn-gold">Get Started Now</a>
+  </section>
 
-  <!-- FOOTER -->
+  <!-- Rocket to Top -->
+  <div id="rocket" title="Back to top">🚀</div>
+
+  <!-- Footer & Disclaimers -->
   <footer>
-    <p>&copy; 2025 Chukwuemeka Bullion Exchange. All rights reserved. | 18+ only</p>
+    <p>&copy; 2025 Chukwuemeka Bullion Exchange. All rights reserved.</p>
+    <p>Apex Income Options is a signal service by CBE. Not an investment platform or Ponzi. Trading forex involves risk. Intended for those 18+ only.</p>
+    <p><a href="privacy.html">Privacy Policy</a> | <a href="terms.html">Terms & Conditions</a></p>
   </footer>
 
-  <!-- ===== SCRIPTS ===== -->
+  <!-- Scripts -->
   <script>
-    // IntersectionObserver for slide + fade
-    const obs = new IntersectionObserver((entries) => {
+    // Slide-in on scroll
+    const slideElems = document.querySelectorAll('.slide-in');
+    const observer = new IntersectionObserver(entries => {
       entries.forEach(e => {
-        if (e.isIntersecting) {
-          e.target.classList.add('visible');
-          obs.unobserve(e.target);
-        }
+        if (e.isIntersecting) e.target.classList.add('visible');
       });
     }, { threshold: 0.2 });
-    document.querySelectorAll('.animate').forEach(el => obs.observe(el));
+    slideElems.forEach(el => observer.observe(el));
 
-    // FAQ toggle
-    document.querySelectorAll('.faq .item h3').forEach(h3 => {
-      h3.addEventListener('click', () => {
-        h3.parentElement.classList.toggle('open');
+    // FAQ Accordion
+    document.querySelectorAll('.faq-question').forEach(q => {
+      q.addEventListener('click', () => {
+        const ans = q.nextElementSibling;
+        ans.style.maxHeight = ans.style.maxHeight ? null : ans.scrollHeight + 'px';
       });
     });
 
-    // Back to top
-    const toTop = document.getElementById('toTop');
+    // Rocket Button
+    const rocket = document.getElementById('rocket');
     window.addEventListener('scroll', () => {
-      toTop.style.display = window.scrollY > window.innerHeight/2 ? 'block' : 'none';
+      rocket.style.display = window.scrollY > window.innerHeight ? 'block' : 'none';
     });
-    toTop.addEventListener('click', () => {
-      window.scrollTo({ top:0, behavior:'smooth' });
-    });
+    rocket.addEventListener('click', () => window.scrollTo({ top: 0, behavior: 'smooth' }));
   </script>
 </body>
 </html>
