@@ -329,11 +329,11 @@
     <h2>Our Track Record</h2>
     <div class="stats">
       <div class="stat">
-        <div class="number" data-target="1000">0</div>
+        <div class="number" data-target="3750">0</div>
         <div class="label">Signals Delivered</div>
       </div>
       <div class="stat">
-        <div class="number" data-target="86">0</div>
+        <div class="number" data-target="85">0</div>
         <div class="label">Avg. Win Rate (%)</div>
       </div>
       <div class="stat">
@@ -438,15 +438,24 @@
 
   <!-- SCRIPTS -->
   <script>
-    // Slide-in Observer
-    const observer = new IntersectionObserver(entries => {
-      entries.forEach(e => {
-        if (e.isIntersecting) e.target.classList.add('visible');
-      });
-    }, { threshold: 0.3 });
-    document.querySelectorAll('.slide-in').forEach(el => observer.observe(el));
+    // Navigation & slide-in are unchanged from homepage pattern
+    document.addEventListener('DOMContentLoaded', () => {
+      const observer = new IntersectionObserver(entries => {
+        entries.forEach(e => {
+          if (e.isIntersecting) {
+            e.target.classList.add('visible');
+            if (e.target.id === 'stats') {
+              document.querySelectorAll('#stats .number').forEach(el => animateCount(el));
+            }
+          }
+        });
+      }, { threshold: 0.3 });
 
-    // Counter Animation
+      // observe all slide-in sections (including stats)
+      document.querySelectorAll('.slide-in').forEach(el => observer.observe(el));
+    });
+
+    // Counter Animation (identical to homepage)
     function animateCount(el) {
       const target = +el.getAttribute('data-target');
       let count = 0;
@@ -457,14 +466,10 @@
         if (count < target) requestAnimationFrame(update);
       })();
     }
-    document.querySelectorAll('.number').forEach(el => {
-      observer.observe(el);
-      el.addEventListener('visible', () => animateCount(el));
-    });
 
     // Testimonial Slider
     const slides = document.querySelector('.slides');
-    const total = 7;
+    const total = slides.children.length;
     let idx = 0;
     document.getElementById('next').onclick = () => change(1);
     document.getElementById('prev').onclick = () => change(-1);
