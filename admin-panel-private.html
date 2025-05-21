@@ -85,6 +85,7 @@
       <ul class="nav nav-pills flex-column mb-auto mt-4" id="menu">
         <li><a class="nav-link active" data-section="dashboard" href="#">Dashboard</a></li>
         <li><a class="nav-link" data-section="users" href="#">Users</a></li>
+        <li><a class="nav-link" data-section="capital-applications" href="#">Capital Applications</a></li>
         <li><a class="nav-link" data-section="payments" href="#">Payments</a></li>
         <li><a class="nav-link" data-section="messages" href="#">Messages</a></li>
         <li><a class="nav-link" data-section="settings-payment" href="#">Payment Settings</a></li>
@@ -148,6 +149,14 @@
           <input id="user-search" class="form-control mb-3" placeholder="Search users…" />
           <table id="users-table" class="table table-hover text-white" style="width:100%">
             <thead><tr><th>#</th><th>Email</th><th>Name</th><th>Registration Date</th><th>Status</th><th>Action</th></tr></thead>
+            <tbody></tbody>
+          </table>
+        </div>
+
+        <div class="section d-none p-4 mb-4 glass" data-section="capital-applications">
+          <h4>Capital Applications</h4>
+          <table id="applications-table" class="table table-hover text-white" style="width:100%">
+            <thead><tr><th>#</th><th>Name</th><th>Email</th><th>Phone</th><th>Experience</th><th>Status</th><th>Action</th></tr></thead>
             <tbody></tbody>
           </table>
         </div>
@@ -326,7 +335,7 @@
         <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
       </div>
       <div class="modal-body">
-        <input type="hidden" id="reply-email"/>
+        <input type="hidden" id="reply-message-id"/>
         <div class="mb-3"><label>To</label><input id="reply-to" class="form-control" readonly/></div>
         <div class="mb-3"><label>Message</label><textarea id="reply-body" class="form-control" rows="4" required></textarea></div>
       </div>
@@ -337,7 +346,7 @@
   <div class="modal fade" id="screenshotModal"><div class="modal-dialog modal-lg">
     <div class="modal-content glass p-4">
       <div class="modal-header">
-        <h5 class="modal-title">Payment Screenshot</h5>
+        <h5 class="modal-title">Screenshot</h5>
         <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
       </div>
       <div class="modal-body">
@@ -397,6 +406,7 @@
         try {
           if (link.dataset.section === 'dashboard') loadDashboard();
           else if (link.dataset.section === 'users') loadUsers();
+          else if (link.dataset.section === 'capital-applications') loadCapitalApplications();
           else if (link.dataset.section === 'payments') loadPayments();
           else if (link.dataset.section === 'messages') loadMessages();
           else if (link.dataset.section === 'trade-history') loadTradeHistory();
@@ -414,8 +424,8 @@
     new Sortable(document.getElementById('stats-container'), { animation: 150 });
 
     // Open Reply Modal
-    function openReply(email) {
-      document.getElementById('reply-email').value = email;
+    function openReply(messageId, email) {
+      document.getElementById('reply-message-id').value = messageId;
       document.getElementById('reply-to').value = email;
       new bootstrap.Modal(document.getElementById('replyModal')).show();
     }
@@ -426,33 +436,82 @@
       new bootstrap.Modal(document.getElementById('screenshotModal')).show();
     }
 
+    // Approve User
+    async function approveUser(userId) {
+      try {
+        const { error } = await supabase
+          .from('users')
+          .update({ status: 'Approved' })
+          .eq('id', userId);
+        if (error) throw error;
+        showToast('User approved successfully');
+        loadUsers();
+      } catch (error) {
+        console.error('Error approving user:', error);
+        showToast('Error approving user', false);
+      }
+    }
+
+    // Approve Capital Application
+    async function approveApplication(id) {
+      try {
+        const { error } = await supabase
+          .from('capital_applications')
+          .update({ status: 'Approved' })
+          .eq('id', id);
+        if (error) throw error;
+        showToast('Application approved successfully');
+        loadCapitalApplications();
+      } catch (error) {
+        console.error('Error approving application:', error);
+        showToast('Error approving application', false);
+      }
+    }
+
     // Approve Payment
     async function approvePayment(paymentId) {
-      const { error } = await supabase
-        .from('payments')
-        .update({ status: 'Approved' })
-        .eq('id', paymentId);
-      if (error) {
-        console.error('Error approving payment:', error);
-        showToast('Error approving payment', false);
-      } else {
+      try {
+        const { error } = await supabase
+          .from('payments')
+          .update({ status: 'Approved' })
+          .eq('id', paymentId);
+        if (error) throw error;
         showToast('Payment approved successfully');
         loadPayments();
+      } catch (error) {
+        console.error('Error approving payment:', error);
+        showToast('Error approving payment', false);
       }
     }
 
     // Approve Testimonial
     async function approveTestimonial(testimonialId) {
-      const { error } = await supabase
-        .from('testimonials')
-        .update({ status: 'Approved' })
-        .eq('id', testimonialId);
-      if (error) {
-        console.error('Error approving testimonial:', error);
-        showToast('Error approving testimonial', false);
-      } else {
+      try {
+        const { error } = await supabase
+          .from('testimonials')
+          .update({ status: 'Approved' })
+          .eq('id', testimonialId);
+        if (error) throw error;
         showToast('Testimonial approved successfully');
         loadTestimonials();
+      } catch (error) {
+        console.error('Error approving testimonial:', error);
+        showToast('Error approving testimonial', false);
+      }
+    }
+
+    // Upload File to Supabase Storage
+    async function uploadFile(file, bucket, path) {
+      try {
+        const { data, error } = await supabase.storage
+          .from(bucket)
+          .upload(path, file, { upsert: true });
+        if (error) throw error;
+        const { publicUrl } = supabase.storage.from(bucket).getPublicUrl(path).data;
+        return publicUrl;
+      } catch (error) {
+        console.error('Error uploading file:', error);
+        throw error;
       }
     }
 
@@ -465,7 +524,18 @@
           { data: 'name' },
           { data: 'registered_at', render: data => new Date(data).toLocaleDateString() },
           { data: 'status' },
-          { data: null, render: (_, __, row) => `<button class="btn btn-sm btn-success" onclick="alert('Approve ${row.name}')">Approve</button>` }
+          { data: null, render: (_, __, row) => row.status === 'Pending' ? `<button class="btn btn-sm btn-success" onclick="approveUser(${row.id})">Approve</button>` : '—' }
+        ]
+      });
+      $('#applications-table').DataTable({
+        columns: [
+          { data: 'id' },
+          { data: 'full_name' },
+          { data: 'email' },
+          { data: 'phone' },
+          { data: 'experience' },
+          { data: 'status' },
+          { data: null, render: (_, __, row) => row.status === 'Pending' ? `<button class="btn btn-sm btn-success" onclick="approveApplication(${row.id})">Approve</button>` : '—' }
         ]
       });
       $('#payments-table').DataTable({
@@ -477,7 +547,7 @@
           { data: 'method' },
           { data: 'date', render: data => new Date(data).toLocaleDateString() },
           { data: 'screenshot', render: data => data ? `<button class="btn btn-sm btn-info" onclick="viewScreenshot('${data}')">View</button>` : '—' },
-          { data: null, render: (_, __, row) => `<button class="btn btn-sm btn-primary" onclick="approvePayment(${row.id})">Approve</button>` }
+          { data: null, render: (_, __, row) => row.status === 'Pending' ? `<button class="btn btn-sm btn-primary" onclick="approvePayment(${row.id})">Approve</button>` : '—' }
         ]
       });
       $('#messages-table').DataTable({
@@ -486,7 +556,7 @@
           { data: 'from_name' },
           { data: 'text' },
           { data: 'date', render: data => new Date(data).toLocaleDateString() },
-          { data: null, render: (_, __, row) => `<button class="btn btn-sm btn-success" onclick="openReply('${row.email}')">Reply</button>` }
+          { data: null, render: (_, __, row) => `<button class="btn btn-sm btn-success" onclick="openReply(${row.id}, '${row.email}')">Reply</button>` }
         ]
       });
       $('#history-table').DataTable({
@@ -537,13 +607,11 @@
         document.getElementById('stat-trades').textContent = stats.trades;
         document.getElementById('stat-signals').textContent = stats.signals;
 
-        // Calculate Win Rate from trade_insights
         const wins = insightsData ? insightsData.filter(i => i.pips > 0).length : 0;
         const totalWeeks = insightsData ? insightsData.length : 0;
         const winRate = totalWeeks > 0 ? Math.round((wins / totalWeeks) * 100) : 0;
         document.getElementById('stat-winrate').textContent = winRate;
 
-        // Charts
         new Chart(document.getElementById('chart-pnl'), {
           type: 'line',
           data: {
@@ -578,11 +646,7 @@
     async function loadUsers() {
       try {
         const { data, error } = await supabase.from('users').select('*');
-        if (error) {
-          console.error('Error fetching users:', error);
-          showToast('Error fetching users', false);
-          return;
-        }
+        if (error) throw error;
         $('#users-table').DataTable().clear().rows.add(data || []).draw();
       } catch (error) {
         console.error('Error loading users:', error);
@@ -590,15 +654,23 @@
       }
     }
 
+    // Load Capital Applications
+    async function loadCapitalApplications() {
+      try {
+        const { data, error } = await supabase.from('capital_applications').select('*').order('created_at', { ascending: false });
+        if (error) throw error;
+        $('#applications-table').DataTable().clear().rows.add(data || []).draw();
+      } catch (error) {
+        console.error('Error loading applications:', error);
+        showToast('Error loading applications', false);
+      }
+    }
+
     // Load Payments
     async function loadPayments() {
       try {
         const { data, error } = await supabase.from('payments').select('*, users(name)');
-        if (error) {
-          console.error('Error fetching payments:', error);
-          showToast('Error fetching payments', false);
-          return;
-        }
+        if (error) throw error;
         $('#payments-table').DataTable().clear().rows.add(data || []).draw();
       } catch (error) {
         console.error('Error loading payments:', error);
@@ -610,11 +682,7 @@
     async function loadMessages() {
       try {
         const { data, error } = await supabase.from('messages').select('*');
-        if (error) {
-          console.error('Error fetching messages:', error);
-          showToast('Error fetching messages', false);
-          return;
-        }
+        if (error) throw error;
         $('#messages-table').DataTable().clear().rows.add(data || []).draw();
       } catch (error) {
         console.error('Error loading messages:', error);
@@ -626,11 +694,7 @@
     async function loadTradeHistory() {
       try {
         const { data, error } = await supabase.from('trade_history').select('*');
-        if (error) {
-          console.error('Error fetching trade history:', error);
-          showToast('Error fetching trade history', false);
-          return;
-        }
+        if (error) throw error;
         $('#history-table').DataTable().clear().rows.add(data || []).draw();
       } catch (error) {
         console.error('Error loading trade history:', error);
@@ -642,11 +706,7 @@
     async function loadTradeInsights() {
       try {
         const { data, error } = await supabase.from('trade_insights').select('*').order('week_ending', { ascending: false });
-        if (error) {
-          console.error('Error fetching trade insights:', error);
-          showToast('Error fetching trade insights', false);
-          return;
-        }
+        if (error) throw error;
         const list = document.getElementById('insights-list');
         list.innerHTML = '';
         (data || []).forEach(insight => {
@@ -667,11 +727,7 @@
     async function loadSignals() {
       try {
         const { data, error } = await supabase.from('signals').select('*').order('created_at', { ascending: false });
-        if (error) {
-          console.error('Error fetching signals:', error);
-          showToast('Error fetching signals', false);
-          return;
-        }
+        if (error) throw error;
         const list = document.getElementById('signals-list');
         list.innerHTML = '';
         (data || []).forEach(signal => {
@@ -695,11 +751,7 @@
           .from('testimonials')
           .select('id, user_id, testimonial_text, status, created_at, users(email, name)')
           .order('created_at', { ascending: false });
-        if (error) {
-          console.error('Error fetching testimonials:', error);
-          showToast('Error fetching testimonials', false);
-          return;
-        }
+        if (error) throw error;
         const formattedData = (data || []).map(t => ({
           id: t.id,
           user_id: t.user_id,
@@ -730,17 +782,13 @@
           created_at: new Date().toISOString()
         };
         const { error } = await supabase.from('signals').insert([signal]);
-        if (error) {
-          console.error('Error publishing signal:', error);
-          showToast('Error publishing signal', false);
-        } else {
-          showToast('Signal published successfully');
-          document.getElementById('signals-form').reset();
-          loadSignals();
-        }
+        if (error) throw error;
+        showToast('Signal published successfully');
+        document.getElementById('signals-form').reset();
+        loadSignals();
       } catch (error) {
-        console.error('Error submitting signal:', error);
-        showToast('Error submitting signal', false);
+        console.error('Error publishing signal:', error);
+        showToast('Error publishing signal', false);
       }
     });
 
@@ -755,18 +803,14 @@
           created_at: new Date().toISOString()
         };
         const { error } = await supabase.from('trade_insights').insert([insight]);
-        if (error) {
-          console.error('Error posting insight:', error);
-          showToast('Error posting insight', false);
-        } else {
-          showToast('Insight posted successfully');
-          document.getElementById('insights-form').reset();
-          loadTradeInsights();
-          loadDashboard(); // Refresh dashboard for updated win rate
-        }
+        if (error) throw error;
+        showToast('Insight posted successfully');
+        document.getElementById('insights-form').reset();
+        loadTradeInsights();
+        loadDashboard();
       } catch (error) {
-        console.error('Error submitting insight:', error);
-        showToast('Error submitting insight', false);
+        console.error('Error posting insight:', error);
+        showToast('Error posting insight', false);
       }
     });
 
@@ -774,47 +818,88 @@
     document.getElementById('trade-upload-form').addEventListener('submit', async e => {
       e.preventDefault();
       try {
-        // TODO: Add Supabase Storage upload for screenshots
+        const file = document.getElementById('trade-file').files[0];
+        let screenshotUrl = null;
+        if (file) {
+          const path = `screenshots/trades/${Date.now()}_${file.name}`;
+          screenshotUrl = await uploadFile(file, 'screenshots', path);
+        }
         const trade = {
           date: document.getElementById('trade-date').value,
           asset: document.getElementById('trade-pair').value,
           notes: document.getElementById('trade-notes').value,
-          screenshot: 'placeholder.png', // Replace with actual file upload
+          screenshot: screenshotUrl,
           created_at: new Date().toISOString()
         };
         const { error } = await supabase.from('trade_history').insert([trade]);
-        if (error) {
-          console.error('Error adding trade:', error);
-          showToast('Error adding trade', false);
-        } else {
-          showToast('Trade added successfully');
-          document.getElementById('trade-upload-form').reset();
-          loadTradeHistory();
-        }
+        if (error) throw error;
+        showToast('Trade added successfully');
+        document.getElementById('trade-upload-form').reset();
+        loadTradeHistory();
       } catch (error) {
         console.error('Error submitting trade:', error);
         showToast('Error submitting trade', false);
       }
     });
 
-    // Payment Settings Form Submission (Placeholder)
-    document.getElementById('form-paystack').addEventListener('submit', e => {
+    // Payment Settings Form Submission
+    document.getElementById('form-paystack').addEventListener('submit', async e => {
       e.preventDefault();
-      // TODO: Implement saving Paystack settings to payment_settings table
-      showToast('Paystack settings saved (placeholder)', true);
+      try {
+        const settings = {
+          provider: 'Paystack',
+          public_key: document.getElementById('ps-public').value,
+          secret_key: document.getElementById('ps-secret').value,
+          wallet_address: document.getElementById('ps-link').value
+        };
+        const { error } = await supabase.from('payment_settings').upsert([settings]);
+        if (error) throw error;
+        showToast('Paystack settings saved successfully');
+        document.getElementById('form-paystack').reset();
+      } catch (error) {
+        console.error('Error saving Paystack settings:', error);
+        showToast('Error saving Paystack settings', false);
+      }
     });
-    document.getElementById('form-crypto').addEventListener('submit', e => {
+    document.getElementById('form-crypto').addEventListener('submit', async e => {
       e.preventDefault();
-      // TODO: Implement saving Crypto settings to payment_settings table
-      showToast('Crypto settings saved (placeholder)', true);
+      try {
+        const settings = [
+          { provider: 'BTC', wallet_address: document.getElementById('addr-btc').value },
+          { provider: 'ETH', wallet_address: document.getElementById('addr-eth').value },
+          { provider: 'TRX', wallet_address: document.getElementById('addr-trx').value },
+          { provider: 'USDT', wallet_address: document.getElementById('addr-usdt').value }
+        ];
+        const { error } = await supabase.from('payment_settings').upsert(settings);
+        if (error) throw error;
+        showToast('Crypto settings saved successfully');
+        document.getElementById('form-crypto').reset();
+      } catch (error) {
+        console.error('Error saving Crypto settings:', error);
+        showToast('Error saving Crypto settings', false);
+      }
     });
 
-    // Reply Form Submission (Placeholder)
-    document.getElementById('reply-form').addEventListener('submit', e => {
+    // Reply Form Submission
+    document.getElementById('reply-form').addEventListener('submit', async e => {
       e.preventDefault();
-      // TODO: Implement reply logic (e.g., send email or store in replies table)
-      showToast('Reply sent (placeholder)', true);
-      bootstrap.Modal.getInstance(document.getElementById('replyModal')).hide();
+      try {
+        const reply = {
+          message_id: parseInt(document.getElementById('reply-message-id').value),
+          to_email: document.getElementById('reply-to').value,
+          body: document.getElementById('reply-body').value,
+          created_at: new Date().toISOString()
+        };
+        const { error } = await supabase.from('replies').insert([reply]);
+        if (error) throw error;
+        showToast('Reply sent successfully');
+        document.getElementById('reply-form').reset();
+        bootstrap.Modal.getInstance(document.getElementById('replyModal')).hide();
+        loadMessages();
+      } catch (error) {
+        console.error('Error submitting reply:', error);
+        showToast('Error submitting reply', false);
+      }
     });
 
     // Real-time Clock
