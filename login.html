@@ -222,12 +222,15 @@
               o.unobserve(entry.target);
             }
           });
-        }, { threshold: 0.2, rootMargin: '0px 0px -50px 0px' });
+        }, {
+          threshold: 0.2,
+          rootMargin: '0px 0px -50px 0px'
+        });
         obs.observe(el);
       });
     });
 
-    // Theme toggle logic
+    // Theme toggle
     const toggle = document.getElementById('theme-toggle');
     toggle.addEventListener('click', () => {
       const curr = document.documentElement.getAttribute('data-theme');
@@ -236,38 +239,47 @@
       localStorage.setItem('theme', next);
       toggle.textContent = next === 'dark' ? '🌞' : '🌜';
     });
-    // initialize toggle icon
     (()=>{
       const theme = document.documentElement.getAttribute('data-theme');
-      toggle.textContent = theme==='dark'?'🌞':'🌜';
+      toggle.textContent = theme === 'dark' ? '🌞' : '🌜';
     })();
 
-    // Login logic
+    // Login logic with redirect for non-existent user
     document.getElementById('loginForm').addEventListener('submit', function(e) {
       e.preventDefault();
       const rawEmail = document.getElementById('email').value.trim();
       const email = rawEmail.toLowerCase();
       const password = document.getElementById('password').value.trim();
 
-      if (!email || !password) return alert('Please enter both email and password.');
+      if (!email || !password) {
+        return alert('Please enter both email and password.');
+      }
 
-      let users = JSON.parse(localStorage.getItem('users')||'[]');
-      let payments = JSON.parse(localStorage.getItem('paymentRecords')||'[]');
+      let users = JSON.parse(localStorage.getItem('users') || '[]');
+      let payments = JSON.parse(localStorage.getItem('paymentRecords') || '[]');
       if (!Array.isArray(users)) users = [users];
       if (!Array.isArray(payments)) payments = [payments];
 
-      const user = users.find(u => u.email?.trim().toLowerCase()===email);
-      if (!user) return alert('🚫 No account found. Please apply first.');
+      const user = users.find(u => u.email?.trim().toLowerCase() === email);
+      if (!user) {
+        alert('🚫 You don’t have an account with us yet – you need to apply.');
+        setTimeout(() => {
+          window.location.href = 'CBE_apply.html';
+        }, 2000);
+        return;
+      }
 
-      const payment = payments.find(p => p.email?.trim().toLowerCase()===email);
-      if (!payment || payment.status!=='approved') {
-        return alert('🚫 Payment not approved yet. Please wait for approval.');
+      const payment = payments.find(p => p.email?.trim().toLowerCase() === email);
+      if (!payment || payment.status !== 'approved') {
+        return alert('🚫 Your payment has not been approved yet. Please wait for approval.');
       }
-      if (user.status!=='approved') {
-        return alert('🚫 Account not approved. Please wait for admin approval.');
+      if (user.status !== 'approved') {
+        return alert('🚫 Your account is not approved yet. Please wait for admin approval.');
       }
-      sessionStorage.setItem('cbeLoggedIn','true');
-      sessionStorage.setItem('cbeUsername', user.username||rawEmail);
+
+      // Success
+      sessionStorage.setItem('cbeLoggedIn', 'true');
+      sessionStorage.setItem('cbeUsername', user.username || rawEmail);
       window.location.href = 'vip-dashboard.html';
     });
   </script>
