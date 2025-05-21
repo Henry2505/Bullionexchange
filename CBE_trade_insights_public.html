@@ -1,256 +1,182 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" data-theme="dark">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Trade Insights - Chukwuemeka Bullion Exchange</title>
-  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;500;700&display=swap" rel="stylesheet">
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Trade Insights – CBE</title>
+  <meta name="description" content="Exclusive trade insights and signals from Chukwuemeka Bullion Exchange. VIP access required."/>
+  <meta name="keywords" content="CBE, trade insights, forex signals, VIP"/>
+
+  <!-- Theme CSS -->
+  <link rel="stylesheet" href="theme.css"/>
+  <!-- Playfair & Roboto -->
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700&family=Roboto:wght@300;400;700&display=swap" rel="stylesheet"/>
+
   <style>
+    /* RESET & BASE */
+    * { margin:0; padding:0; box-sizing:border-box; }
+    html { scroll-behavior:smooth; }
     body {
-      margin: 0;
-      font-family: 'Poppins', sans-serif;
-      background-color: #0b0b0b;
-      color: #f5f5f5;
+      font-family:'Roboto', sans-serif;
+      color: var(--text);
+      background: var(--bg);
+      overflow-x:hidden;
+      line-height:1.6;
     }
-    .video-background {
-      position: fixed;
-      top: 0;
-      left: 0;
-      width: 100%;
-      height: 100%;
-      object-fit: cover;
-      z-index: -2;
-    }
-    .overlay {
-      position: fixed;
-      top: 0;
-      left: 0;
-      width: 100%;
-      height: 100%;
-      background: rgba(0, 0, 0, 0.5);
-      z-index: -1;
-    }
-    .menu-container {
-      position: fixed;
-      top: 0;
-      width: 100%;
-      z-index: 2000;
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      padding: 20px 20px;
-      background: rgba(0, 0, 0, 0.8);
-      border-bottom: 1px solid #333;
-      box-shadow: 0 0 10px gold;
-    }
+    a { color: var(--gold); text-decoration:none; }
+    a:hover { text-decoration:underline; }
+
+    /* LOGO & THEME TOGGLE */
     .logo {
-      font-size: 20px;
-      font-weight: bold;
-      color: gold;
-      text-decoration: none;
+      position: fixed; top:20px; left:20px; z-index:10;
     }
     .logo img {
-      height: 40px;
-      vertical-align: middle;
-      margin-right: 10px;
+      width:160px; cursor:pointer; transition:transform .3s;
     }
-    .menu-icon {
-      position: fixed;
-      top: 20px;
-      right: 20px;
-      width: 48px;
-      height: 48px;
-      background: rgba(255,215,0,0.25);
-      border-radius: 50%;
-      display: flex;
-      flex-direction: column;
-      justify-content: center;
-      align-items: center;
-      cursor: pointer;
-      box-shadow: 0 0 14px rgba(255,215,0,0.8);
-      transition: box-shadow 0.3s ease, transform 0.3s ease;
-      animation: pulse 2s infinite ease-in-out;
-      z-index: 2001;
+    .logo img:hover { transform:scale(1.05); }
+
+    #theme-toggle {
+      position: fixed; top:20px; right:20px; z-index:10;
+      background:none; border:none; font-size:1.5rem;
+      color: var(--text); cursor:pointer; transition:transform .3s;
     }
-    .menu-icon:hover {
-      box-shadow: 0 0 20px rgba(255,215,0,1);
-      transform: scale(1.1);
+    #theme-toggle:hover { transform:scale(1.2); }
+
+    /* SLIDE-IN */
+    .slide-in {
+      opacity:0; transform:translateY(30px);
+      transition:opacity .7s ease-out, transform .7s ease-out;
     }
-    .menu-icon span {
-      display: block;
-      width: 10px;
-      height: 10px;
-      background: gold;
-      border-radius: 50%;
-      margin: 5px 0;
-      transition: transform 0.3s ease, opacity 0.3s ease;
+    .slide-in.visible {
+      opacity:1; transform:translateY(0);
     }
-    .menu-icon.active span:nth-child(1) {
-      transform: translateY(15px);
+
+    /* MAIN WRAPPER */
+    main {
+      max-width:800px; margin:0 auto;
+      padding:140px 20px 60px; /* space for header */
     }
-    .menu-icon.active span:nth-child(2) {
-      opacity: 0;
+
+    /* HEADER CARD */
+    .header-card {
+      background: var(--glass-bg); backdrop-filter:blur(8px);
+      padding:60px 20px; text-align:center;
+      border-radius:12px; box-shadow:0 4px 30px rgba(0,0,0,0.5);
+      margin-bottom:40px;
     }
-    .menu-icon.active span:nth-child(3) {
-      transform: translateY(-15px);
+    .header-card h1 {
+      font-family:'Playfair Display', serif;
+      font-size:3rem; color: var(--gold);
+      margin-bottom:10px;
     }
-    @keyframes pulse {
-      0% { box-shadow: 0 0 14px rgba(255,215,0,0.8); }
-      50% { box-shadow: 0 0 24px rgba(255,215,0,1); }
-      100% { box-shadow: 0 0 14px rgba(255,215,0,0.8); }
+    .header-card p {
+      font-size:1.1rem; color: var(--text-light);
     }
-    .menu-overlay {
-      position: fixed;
-      top: 0;
-      right: -100%;
-      width: 280px;
-      height: 100%;
-      background: #0b0b1f;
-      z-index: 1500;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      transition: right 0.4s ease;
-      box-shadow: -5px 0 15px rgba(0, 0, 0, 0.5);
+
+    /* INSIGHTS CARD */
+    .insights-card {
+      background: var(--glass-bg); backdrop-filter:blur(8px);
+      padding:40px 20px; border-radius:12px;
+      box-shadow:0 4px 30px rgba(0,0,0,0.5);
+      margin-bottom:40px; text-align:center;
     }
-    .menu-overlay.active {
-      right: 0;
+    .insights-card p {
+      color: var(--text-light); font-size:1rem;
+      margin-bottom:20px;
     }
-    .menu-overlay ul {
-      list-style: none;
-      padding: 0;
-      margin: 0;
+
+    .btn-vip {
+      display:inline-block; padding:12px 30px;
+      background: var(--gold); color:#000;
+      font-family:'Playfair Display', serif;
+      font-size:1.1rem; border-radius:30px;
+      transition:transform .3s, box-shadow .3s;
     }
-    .menu-overlay li {
-      margin: 20px 0;
+    .btn-vip:hover {
+      transform:scale(1.05); box-shadow:0 8px 30px rgba(0,0,0,0.6);
     }
-    .menu-overlay a {
-      color: gold;
-      text-decoration: none;
-      font-size: 1.2rem;
-      position: relative;
-      transition: all 0.3s ease;
-    }
-    .menu-overlay a:hover {
-      color: #e6c200;
-      text-shadow: 0 0 10px gold;
-    }
-    .menu-overlay a::after {
-      content: '';
-      position: absolute;
-      left: 0;
-      bottom: -2px;
-      width: 100%;
-      height: 2px;
-      background: gold;
-      transform: scaleX(0);
-      transform-origin: left;
-      transition: transform 0.3s ease;
-    }
-    .menu-overlay a:hover::after {
-      transform: scaleX(1);
-    }
-    .trade-insights-section {
-      padding: 60px 20px;
-      max-width: 800px;
-      margin: 90px auto;
-      text-align: center;
-    }
-    .trade-insights-section h1 {
-      font-size: 36px;
-      color: gold;
-      margin-bottom: 30px;
-    }
-    .trade-insights-section p {
-      font-size: 16px;
-      color: #ddd;
-      margin-bottom: 20px;
-    }
-    .cta-button {
-      display: inline-block;
-      padding: 15px 35px;
-      background: linear-gradient(90deg, gold, #ffd700);
-      color: #fff;
-      font-weight: 600;
-      text-decoration: none;
-      border-radius: 30px;
-      box-shadow: 0 0 15px rgba(255, 215, 0, 0.6);
-      transition: all 0.3s;
-      margin-top: 20px;
-    }
-    .cta-button:hover {
-      transform: scale(1.05);
-      box-shadow: 0 0 25px rgba(255, 215, 0, 0.8);
-    }
+
+    /* FOOTER */
     footer {
-      text-align: center;
-      padding: 20px;
-      font-size: 14px;
-      color: #888;
-      background-color: #0b0b0b;
-      border-top: 1px solid #222;
+      text-align:center; padding:20px 0;
+      color: var(--text-muted);
+      margin-top:40px;
     }
-    @media (max-width: 600px) {
-      .menu-icon { right: 15px; }
-      .logo img { height: 30px; }
-      .trade-insights-section { padding: 40px 15px; }
-      .trade-insights-section h1 { font-size: 28px; }
+
+    /* RESPONSIVE */
+    @media(max-width:768px){
+      main{padding:120px 15px 40px;}
+      .logo img{width:120px;}
+      .header-card h1{font-size:2.4rem;}
     }
   </style>
 </head>
 <body>
-  <video class="video-background" autoplay muted loop playsinline>
-    <source src="star-video.mp4" type="video/mp4">
-    Your browser does not support the video tag.
-  </video>
-  <div class="overlay"></div>
-  <div class="menu-container">
-    <a href="index.html" class="logo">
-      <img src="CBE_logo.png" alt="CBE Logo">
-    </a>
-    <div class="menu-icon" id="menuToggle">
-      <span></span><span></span><span></span>
+
+  <!-- Logo -->
+  <div class="logo">
+    <a href="index.html"><img src="CBE_logo.PNG" alt="CBE Logo"/></a>
+  </div>
+
+  <!-- Theme Toggle -->
+  <button id="theme-toggle" aria-label="Toggle light/dark">🌞</button>
+
+  <main>
+    <!-- Header -->
+    <div class="header-card slide-in">
+      <h1>Trade Insights</h1>
+      <p>All trading signals and in-depth market analysis are exclusive to our VIP members.</p>
     </div>
-  </div>
-  <div class="menu-overlay" id="menuOverlay">
-    <ul>
-      <li><a href="index.html">Home</a></li>
-      <li><a href="about.html">About</a></li>
-      <li><a href="services.html">Services</a></li>
-      <li><a href="CBE_trade_insights_public.html">Trade Insights</a></li>
-      <li><a href="FAQ.html">FAQ</a></li>
-      <li><a href="vip-subscription.html">VIP Subscription</a></li>
-      <li><a href="payment-options.html">Payment Options</a></li>
-      <li><a href="CBE_apply.html">Apply</a></li>
-      <li><a href="CBE_contact.html">Contact</a></li>
-      <li><a href="terms.html">Terms & Conditions</a></li>
-      <li><a href="privacy.html">Privacy Policy</a></li>
-      <li><a href="vip-dashboard.html">Dashboard</a></li>
-      <li><a href="login.html">Login</a></li>
-      <li><a href="CBE_apex_income_options.html">Apex Income Options</a></li>
-    </ul>
-  </div>
-  <div class="trade-insights-section">
-    <h1>Trade Insights</h1>
-    <p>All trading signals and insights are exclusive to VIP subscribers. Join now for premium access!</p>
-    <a href="vip-subscription.html" class="cta-button">Join VIP Now</a>
-  </div>
-  <footer>
-    © 2025 CBE - Chukwuemeka Bullion Exchange. All rights reserved.
+
+    <!-- Insights Content -->
+    <div class="insights-card slide-in" style="transition-delay:.3s;">
+      <p id="insightsContent">Loading latest trade insights…</p>
+      <a href="vip-subscription.html" class="btn-vip">Join VIP Now</a>
+    </div>
+  </main>
+
+  <footer class="slide-in" style="transition-delay:.6s;">
+    © 2025 Chukwuemeka Bullion Exchange. All rights reserved.
   </footer>
+
   <script>
-    const menuToggle = document.getElementById('menuToggle');
-    const menuOverlay = document.getElementById('menuOverlay');
-    menuToggle.addEventListener('click', () => {
-      menuToggle.classList.toggle('active');
-      menuOverlay.classList.toggle('active');
+    // Slide-in on scroll
+    document.addEventListener('DOMContentLoaded', () => {
+      document.querySelectorAll('.slide-in').forEach(el => {
+        const obs = new IntersectionObserver((entries, o) => {
+          entries.forEach(entry => {
+            if (entry.isIntersecting) {
+              entry.target.classList.add('visible');
+              o.unobserve(entry.target);
+            }
+          });
+        }, { threshold: 0.3, rootMargin: '0px 0px -50px 0px' });
+        obs.observe(el);
+      });
     });
 
-    window.onload = function() {
-      const siteData = JSON.parse(localStorage.getItem('siteData') || '{}');
-      document.querySelector('.trade-insights-section p').textContent = siteData.content['CBE_trade_insights_public'] || 'All trading signals and insights are exclusive to VIP subscribers. Join now for premium access!';
-    };
+    // Theme toggle
+    const toggle = document.getElementById('theme-toggle');
+    toggle.addEventListener('click', () => {
+      const curr = document.documentElement.getAttribute('data-theme');
+      const next = curr === 'dark' ? 'light' : 'dark';
+      document.documentElement.setAttribute('data-theme', next);
+      localStorage.setItem('theme', next);
+      toggle.textContent = next === 'dark' ? '🌞' : '🌜';
+    });
+    // init toggle icon
+    (() => {
+      const theme = document.documentElement.getAttribute('data-theme');
+      toggle.textContent = theme === 'dark' ? '🌞' : '🌜';
+    })();
+
+    // Load insights from localStorage
+    document.addEventListener('DOMContentLoaded', () => {
+      const data = JSON.parse(localStorage.getItem('siteData')||'{}');
+      const content = data.content?.CBE_trade_insights_public
+        || 'All trading signals and insights are exclusive to VIP subscribers. Join now for premium access!';
+      document.getElementById('insightsContent').textContent = content;
+    });
   </script>
 </body>
 </html>
