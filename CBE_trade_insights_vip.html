@@ -5,8 +5,10 @@
   <meta name="viewport" content="width=device-width,initial-scale=1.0"/>
   <title>Trade Insights • CBE VIP</title>
   <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;500;700&display=swap" rel="stylesheet"/>
+  <!-- Supabase JavaScript Client -->
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js"></script>
   <style>
-    /* Disable selection & right‑click globally */
+    /* Disable selection & right-click globally */
     * {
       -webkit-user-select: none;
       -moz-user-select: none;
@@ -71,7 +73,7 @@
       display:block;
       pointer-events:none;             /* disable pointer events */
       -webkit-user-drag:none;          /* disable drag in WebKit */
-      user-drag:none;                  /* non‑standard but some browsers */
+      user-drag:none;                  /* non-standard but some browsers */
     }
     /* Transparent overlay to block saving */
     .insight-card .img-blocker {
@@ -127,20 +129,41 @@
 
   <!-- Footer -->
   <footer>
-    © 2025 CBE – Chukwuemeka Bullion Exchange. All rights reserved.
+    © 2025 CBE – Chukwuemeka Bullion Exchange. All rights reserved.
   </footer>
 
   <script>
-    document.addEventListener('DOMContentLoaded', () => {
-      const container = document.getElementById('insightsContainer');
-      let insights = [];
+    // Supabase Initialization
+    const SUPABASE_URL = 'https://dapwpgvnfjcfqqhrpxla.supabase.co';
+    const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImRhcHdwZ3ZuZmpjZnFxaHJweGxhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDcwNDA4ODgsImV4cCI6MjA2MjYxNjg4OH0.ICC0UsLlzJDNre7rFCeD3k6iVzo6jOJgn3PhABpEMsQ';
+    const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+    // Function to load trade insights from Supabase
+    async function loadTradeInsights() {
       try {
-        insights = JSON.parse(localStorage.getItem('tradeInsights') || '[]');
-      } catch (err) {
-        console.error('Failed to load tradeInsights:', err);
+        const { data, error } = await supabase
+          .from('trade_insights')
+          .select('*')
+          .order('date', { ascending: false }); // Show recent first
+        if (error) throw error;
+        return data;
+      } catch (error) {
+        console.error('Error fetching trade insights:', error);
+        return null;
+      }
+    }
+
+    // DOMContentLoaded event listener
+    document.addEventListener('DOMContentLoaded', async () => {
+      const container = document.getElementById('insightsContainer');
+      const insights = await loadTradeInsights();
+
+      if (!insights) {
+        container.innerHTML = '<p class="notice">Failed to load trade insights.</p>';
+        return;
       }
 
-      if (!insights.length) {
+      if (insights.length === 0) {
         container.innerHTML = '<p class="notice">No trade insights available yet.</p>';
         return;
       }
