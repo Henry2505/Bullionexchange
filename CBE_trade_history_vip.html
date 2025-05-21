@@ -5,8 +5,10 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Trade History • CBE VIP</title>
   <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;500;700&display=swap" rel="stylesheet"/>
+  <!-- Supabase JavaScript Client -->
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js"></script>
   <style>
-    /* Disable selection & right‑click */
+    /* Disable selection & right-click */
     * {
       user-select: none;
       -webkit-user-select: none;
@@ -117,20 +119,41 @@
 
   <!-- Footer -->
   <footer>
-    © 2025 CBE – Chukwuemeka Bullion Exchange. All rights reserved.
+    © 2025 CBE – Chukwuemeka Bullion Exchange. All rights reserved.
   </footer>
 
   <script>
-    document.addEventListener('DOMContentLoaded', () => {
-      const container = document.getElementById('historyContainer');
-      let records = [];
+    // Supabase Initialization
+    const SUPABASE_URL = 'https://dapwpgvnfjcfqqhrpxla.supabase.co';
+    const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImRhcHdwZ3ZuZmpjZnFxaHJweGxhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDcwNDA4ODgsImV4cCI6MjA2MjYxNjg4OH0.ICC0UsLlzJDNre7rFCeD3k6iVzo6jOJgn3PhABpEMsQ';
+    const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+    // Function to load trade history from Supabase
+    async function loadTradeHistory() {
       try {
-        records = JSON.parse(localStorage.getItem('tradeHistory') || '[]');
-      } catch (e) {
-        console.error('Unable to load tradeHistory:', e);
+        const { data, error } = await supabase
+          .from('trade_history')
+          .select('*')
+          .order('month', { ascending: false }); // Show recent first
+        if (error) throw error;
+        return data;
+      } catch (error) {
+        console.error('Error fetching trade history:', error);
+        return null;
+      }
+    }
+
+    // DOMContentLoaded event listener
+    document.addEventListener('DOMContentLoaded', async () => {
+      const container = document.getElementById('historyContainer');
+      const records = await loadTradeHistory();
+
+      if (!records) {
+        container.innerHTML = '<p class="notice">Failed to load trade history.</p>';
+        return;
       }
 
-      if (!records.length) {
+      if (records.length === 0) {
         container.innerHTML = '<p class="notice">No trade history uploaded yet.</p>';
         return;
       }
