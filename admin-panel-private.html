@@ -4,12 +4,16 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
   <title>CBE Admin Panel</title>
+  <!-- Google Font -->
   <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700&display=swap" rel="stylesheet"/>
+  <!-- Bootstrap 5 CSS -->
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet"/>
-  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.0/Sortable.min.js"></script>
+  <!-- DataTables CSS -->
   <link href="https://cdn.datatables.net/1.13.4/css/dataTables.bootstrap5.min.css" rel="stylesheet"/>
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js"></script>
+  <!-- Chart.js for Dashboard -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <!-- Sortable.js for Draggable Stats -->
+  <script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.0/Sortable.min.js"></script>
   <style>
     :root {
       --bg: #000000;
@@ -53,6 +57,10 @@
     #content { flex: 1; padding: 1.5rem; }
     #toggle-btn { cursor: pointer; font-size: 1.5rem; }
     .card-stat { cursor: grab; color: #fff; border: none; }
+    .card-stat.bg-primary { background: rgba(13,110,253,0.8); }
+    .card-stat.bg-success { background: rgba(28,200,138,0.8); }
+    .card-stat.bg-info { background: rgba(13,202,240,0.8); }
+    .card-stat.bg-secondary { background: rgba(108,117,125,0.8); }
     .card-stat.bg-warning { background: rgba(255,193,7,0.8); }
     .form-control, .form-select {
       background: rgba(255,255,255,0.1);
@@ -70,15 +78,15 @@
     h4 { color: #ffd700; }
     #toast-container { position: fixed; bottom: 1rem; right: 1rem; z-index: 1050; }
     table.dataTable thead th { background: rgba(255,255,255,0.1); }
-    canvas { max-width: 100%; }
   </style>
 </head>
 <body data-theme="dark">
-
+  <!-- Overlay & Toasts -->
   <div class="overlay" style="position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); z-index: -1;"></div>
   <div id="toast-container"></div>
 
   <div class="d-flex glass" style="min-height:100vh;">
+    <!-- Sidebar -->
     <nav id="sidebar" class="d-flex flex-column p-3">
       <h4 class="text-center">CBE Admin</h4>
       <ul class="nav nav-pills flex-column mb-auto mt-4" id="menu">
@@ -95,6 +103,7 @@
       </ul>
     </nav>
 
+    <!-- Main Content -->
     <div id="content" class="d-flex flex-column">
       <div class="d-flex justify-content-between align-items-center mb-4">
         <div>
@@ -108,6 +117,7 @@
       </div>
 
       <div id="sections">
+        <!-- Dashboard -->
         <div class="section" data-section="dashboard">
           <div class="row g-4" id="stats-container">
             <div class="col-md-3">
@@ -140,18 +150,9 @@
             <div class="col-md-6"><canvas id="chart-pnl" height="200"></canvas></div>
             <div class="col-md-6"><canvas id="chart-winrate" height="200"></canvas></div>
           </div>
-          <div class="row g-4 mt-4">
-            <div class="col-md-6 glass p-3">
-              <h4>User Status Distribution</h4>
-              <canvas id="chart-user-status" height="200"></canvas>
-            </div>
-            <div class="col-md-6 glass p-3">
-              <h4>Payment Trends</h4>
-              <canvas id="chart-payments-trend" height="200"></canvas>
-            </div>
-          </div>
         </div>
 
+        <!-- Users -->
         <div class="section d-none p-4 mb-4 glass" data-section="users">
           <h4>Users Verification</h4>
           <input id="user-search" class="form-control mb-3" placeholder="Search users…" />
@@ -161,6 +162,7 @@
           </table>
         </div>
 
+        <!-- Payments -->
         <div class="section d-none p-4 mb-4 glass" data-section="payments">
           <h4>Payment Approval</h4>
           <button id="export-payments" class="btn btn-outline-secondary btn-sm mb-3">Export CSV/XLSX</button>
@@ -181,6 +183,7 @@
           </table>
         </div>
 
+        <!-- Messages -->
         <div class="section d-none p-4 mb-4 glass" data-section="messages">
           <h4>Contact Messages</h4>
           <input id="msg-search" class="form-control mb-3" placeholder="Search messages…" />
@@ -190,6 +193,7 @@
           </table>
         </div>
 
+        <!-- Payment Settings -->
         <div class="section d-none p-4 mb-4 glass" data-section="settings-payment">
           <h4>Payment Settings</h4>
           <ul class="nav nav-pills mb-3">
@@ -217,24 +221,17 @@
           </div>
         </div>
 
+        <!-- Trade History -->
         <div class="section d-none p-4 mb-4 glass" data-section="trade-history">
           <h4>Trade History</h4>
           <div class="row g-2 mb-3 align-items-end">
             <div class="col-md-3">
               <label>Select Month</label>
               <select id="month-select" class="form-select">
-                <option value="01">January</option>
-                <option value="02">February</option>
-                <option value="03">March</option>
-                <option value="04">April</option>
-                <option value="05">May</option>
-                <option value="06">June</option>
-                <option value="07">July</option>
-                <option value="08">August</option>
-                <option value="09">September</option>
-                <option value="10">October</option>
-                <option value="11">November</option>
-                <option value="12">December</option>
+                <option value="01">January</option><option value="02">February</option><option value="03">March</option>
+                <option value="04">April</option><option value="05">May</option><option value="06">June</option>
+                <option value="07">July</option><option value="08">August</option><option value="09">September</option>
+                <option value="10">October</option><option value="11">November</option><option value="12">December</option>
               </select>
             </div>
             <div class="col-md-3"><label>Search</label><input id="trade-search" class="form-control"/></div>
@@ -255,6 +252,7 @@
           </table>
         </div>
 
+        <!-- Trade Insights -->
         <div class="section d-none p-4 mb-4 glass" data-section="trade-insights">
           <h4>Weekly Pips Insights</h4>
           <form id="insights-form" class="row g-3 mb-4">
@@ -266,23 +264,56 @@
           <ul class="list-group" id="insights-list"></ul>
         </div>
 
+        <!-- Signals -->
         <div class="section d-none p-4 mb-4 glass" data-section="signals">
           <h4>Publish Signals</h4>
           <form id="signals-form" class="border p-3 mb-4 glass">
             <div class="row g-3">
-              <div class="col-md-3"><label>Asset / Pair</label><input list="asset-list" id="signal-asset" class="form-control" required/></div>
-              <div class="col-md-2"><label>Entry Level</label><input id="signal-entry" class="form-control" type="number" step="0.0001" required/></div>
-              <div class="col-md-2"><label>Type</label><select id="signal-type" class="form-select"><option>BUY</option><option>SELL</option></select></div>
-              <div class="col-md-2"><label>SL</label><input id="signal-sl" class="form-control" type="number" step="0.0001" required/></div>
-              <div class="col-md-2"><label>TP1</label><input id="signal-tp1" class="form-control" type="number" step="0.0001" required/></div>
-              <div class="col-md-2"><label>TP2</label><input id="signal-tp2" class="form-control" type="number" step="0.0001"/></div>
-              <div class="col-12"><label>Notes</label><textarea id="signal-note" class="form-control"></textarea></div>
+              <div class="col-md-3">
+                <label>Asset / Pair</label>
+                <input list="asset-list" id="signal-asset" class="form-control" required/>
+                <datalist id="asset-list">
+                  <option value="EUR/USD"/>
+                  <option value="GOLD"/>
+                  <option value="BTC/USD"/>
+                </datalist>
+              </div>
+              <div class="col-md-2">
+                <label>Type</label>
+                <select id="signal-type" class="form-select">
+                  <option>BUY</option>
+                  <option>SELL</option>
+                </select>
+              </div>
+              <div class="col-md-2">
+                <label>Entry Level</label>
+                <input type="number" step="0.0001" id="signal-entry" class="form-control" required/>
+              </div>
+              <div class="col-md-2">
+                <label>SL</label>
+                <input type="number" step="0.0001" id="signal-sl" class="form-control" required/>
+              </div>
+              <div class="col-md-2">
+                <label>TP1</label>
+                <input type="number" step="0.0001" id="signal-tp1" class="form-control" required/>
+              </div>
+              <div class="col-md-2">
+                <label>TP2</label>
+                <input type="number" step="0.0001" id="signal-tp2" class="form-control"/>
+              </div>
+              <div class="col-12">
+                <label>Notes</label>
+                <textarea id="signal-note" class="form-control"></textarea>
+              </div>
             </div>
-            <div class="mt-3"><button class="btn btn-primary">Publish Signal</button></div>
+            <div class="mt-3">
+              <button class="btn btn-primary">Publish Signal</button>
+            </div>
           </form>
           <ul class="list-group" id="signals-list"></ul>
         </div>
 
+        <!-- Testimonials -->
         <div class="section d-none p-4 mb-4 glass" data-section="testimonials">
           <h4>Testimonials Management</h4>
           <input id="testimonial-search" class="form-control mb-3" placeholder="Search testimonials…" />
@@ -305,6 +336,7 @@
     </div>
   </div>
 
+  <!-- Reply Modal -->
   <div class="modal fade" id="replyModal"><div class="modal-dialog">
     <form class="modal-content glass p-4" id="reply-form">
       <div class="modal-header">
@@ -320,6 +352,7 @@
     </form>
   </div></div>
 
+  <!-- Screenshot Modal -->
   <div class="modal fade" id="screenshotModal"><div class="modal-dialog modal-lg">
     <div class="modal-content glass p-4">
       <div class="modal-header">
@@ -332,700 +365,465 @@
     </div>
   </div></div>
 
-  <datalist id="asset-list">
-    <option value="GOLD"/>
-    <option value="EUR/USD"/>
-    <option value="BTC/USD"/>
-    <option value="USD/JPY"/>
-    <option value="XAU/USD"/>
-  </datalist>
-
+  <!-- Scripts -->
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
   <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
   <script src="https://cdn.datatables.net/1.13.4/js/jquery.dataTables.min.js"></script>
   <script src="https://cdn.datatables.net/1.13.4/js/dataTables.bootstrap5.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script>
-    const SUPABASE_URL = 'https://dapwpgvnfjcfqqhrpxla.supabase.co';
-    const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImRhcHdwZ3ZuZmpjZnFxaHJweGxhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDcwNDA4ODgsImV4cCI6MjA2MjYxNjg4OH0.ICC0UsLlzJDNre7rFCeD3k6iVzo6jOJgn3PhABpEMsQ';
-    const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+    // Initialize Supabase
+    const supabase = window.supabase.createClient(
+      'https://dapwpgvnfjcfqqhrpxla.supabase.co',
+      'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImRhcHdwZ3ZuZmpjZnFxaHJweGxhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDcwNDA4ODgsImV4cCI6MjA2MjYxNjg4OH0.ICC0UsLlzJDNre7rFCeD3k6iVzo6jOJgn3PhABpEMsQ'
+    );
 
-    const dummyData = {
-      users: [
-        { id:1,email:'alice@example.com',name:'Alice',registered:'2025-01-15',status:'Active' },
-        { id:2,email:'bob@example.com',name:'Bob',registered:'2025-03-02',status:'Pending' }
-      ],
-      messages: [
-        { id:1,from:'Charlie',email:'charlie@example.com',text:'Need help',date:'2025-05-18' }
-      ],
-      trades: [
-        { date:'2025-05-05',asset:'GOLD',notes:'Good entry',screenshot:'' }
-      ],
-      userStatusDist: { Active:60, Pending:25, Suspended:15 },
-      paymentTrends: [
-        { week:'2025-04-01',amount:1200 },
-        { week:'2025-04-08',amount:1500 },
-        { week:'2025-04-15',amount:900 },
-        { week:'2025-04-22',amount:1700 }
-      ],
-      insights: [
-        { week_ending:'2025-04-07',pips_gained:500 },
-        { week_ending:'2025-04-14',pips_gained:-200 },
-        { week_ending:'2025-04-21',pips_gained:300 },
-        { week_ending:'2025-04-28',pips_gained:600 }
-      ]
-    };
-
-    function showToast(msg, ok=true){
-      const id='t'+Date.now();
-      document.getElementById('toast-container').insertAdjacentHTML('beforeend',`
-        <div id="${id}" class="toast align-items-center text-white ${ok?'bg-success':'bg-danger'} border-0" role="alert">
+    // Toast Helper
+    function showToast(msg, ok = true) {
+      const id = 't' + Date.now();
+      document.getElementById('toast-container').insertAdjacentHTML('beforeend', `
+        <div id="${id}" class="toast align-items-center text-white ${ok ? 'bg-success' : 'bg-danger'} border-0" role="alert">
           <div class="d-flex">
             <div class="toast-body">${msg}</div>
             <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast"></button>
           </div>
         </div>`);
-      new bootstrap.Toast(document.getElementById(id),{delay:3000}).show();
+      new bootstrap.Toast(document.getElementById(id), { delay: 3000 }).show();
     }
 
-    const themeBtn = document.getElementById('theme-toggle');
-    themeBtn.onclick = () => {
+    // Theme Toggle
+    document.getElementById('theme-toggle').onclick = () => {
       const next = document.body.getAttribute('data-theme') === 'dark' ? 'light' : 'dark';
       document.body.setAttribute('data-theme', next);
-      themeBtn.textContent = next === 'dark' ? 'Light Mode' : 'Dark Mode';
+      document.getElementById('theme-toggle').textContent = next === 'dark' ? 'Light Mode' : 'Dark Mode';
     };
 
-    document.getElementById('toggle-btn').onclick = () => document.getElementById('sidebar').classList.toggle('collapsed');
+    // Sidebar Toggle
+    document.getElementById('toggle-btn').onclick = () => {
+      document.getElementById('sidebar').classList.toggle('collapsed');
+    };
+
+    // Navigation
     document.querySelectorAll('#menu .nav-link').forEach(link => {
       link.onclick = e => {
         e.preventDefault();
+        console.log(`Navigating to section: ${link.dataset.section}`);
         document.querySelectorAll('#menu .nav-link').forEach(l => l.classList.remove('active'));
         link.classList.add('active');
         document.getElementById('section-title').textContent = link.textContent;
         document.querySelectorAll('.section').forEach(sec =>
           sec.classList.toggle('d-none', sec.dataset.section !== link.dataset.section)
         );
-        if (link.dataset.section === 'dashboard') {
-          loadDashboard();
-        } else if (link.dataset.section === 'users') {
-          loadUsers();
-        } else if (link.dataset.section === 'payments') {
-          loadPayments();
-        } else if (link.dataset.section === 'messages') {
-          loadMessages();
-        } else if (link.dataset.section === 'settings-payment') {
-          loadPaymentSettings();
-        } else if (link.dataset.section === 'trade-history') {
-          loadTradeHistory();
-        } else if (link.dataset.section === 'trade-insights') {
-          loadInsights();
-        } else if (link.dataset.section === 'signals') {
-          loadSignals();
-        } else if (link.dataset.section === 'testimonials') {
-          loadTestimonials();
+        try {
+          if (link.dataset.section === 'dashboard') loadDashboard();
+          else if (link.dataset.section === 'users') loadUsers();
+          else if (link.dataset.section === 'payments') loadPayments();
+          else if (link.dataset.section === 'messages') loadMessages();
+          else if (link.dataset.section === 'trade-history') loadTradeHistory();
+          else if (link.dataset.section === 'trade-insights') loadTradeInsights();
+          else if (link.dataset.section === 'signals') loadSignals();
+          else if (link.dataset.section === 'testimonials') loadTestimonials();
+        } catch (error) {
+          console.error(`Error loading section ${link.dataset.section}:`, error);
+          showToast(`Error loading ${link.textContent} section`, false);
         }
       };
     });
 
+    // Drag & Drop Stats
     new Sortable(document.getElementById('stats-container'), { animation: 150 });
 
+    // Open Reply Modal
     function openReply(email) {
       document.getElementById('reply-email').value = email;
       document.getElementById('reply-to').value = email;
       new bootstrap.Modal(document.getElementById('replyModal')).show();
     }
 
+    // View Screenshot
     function viewScreenshot(url) {
       document.getElementById('screenshot-img').src = url;
       new bootstrap.Modal(document.getElementById('screenshotModal')).show();
     }
 
-    async function loadDashboard() {
-      let usersData, paymentsData, tradesData, sigData, insightsData, userStatusData, paymentTrendData;
-      let usersError, paymentsError, tradesError, sigError, insightsError, userStatusError, paymentTrendError;
-
-      try {
-        [{ data: usersData, error: usersError },
-         { data: paymentsData, error: paymentsError },
-         { data: tradesData, error: tradesError },
-         { data: sigData, error: sigError },
-         { data: insightsData, error: insightsError },
-         { data: userStatusData, error: userStatusError },
-         { data: paymentTrendData, error: paymentTrendError }] = await Promise.all([
-          supabase.from('users').select('id', { count: 'exact' }),
-          supabase.from('payments').select('id', { count: 'exact' }).eq('status', 'pending'),
-          supabase.from('trades').select('id', { count: 'exact' }).gte('date', new Date(new Date().getFullYear(), new Date().getMonth(), 1).toISOString().split('T')[0]),
-          supabase.from('signals').select('id', { count: 'exact' }),
-          supabase.from('insights').select('week_ending, pips_gained').order('week_ending', { ascending: true }).limit(12),
-          supabase.from('users').select('status').then(({ data }) => ({
-            data: data.reduce((acc, { status }) => {
-              acc[status] = (acc[status] || 0) + 1;
-              return acc;
-            }, {}),
-            error: null
-          })),
-          supabase.from('payments').select('date, amount').then(({ data }) => ({
-            data: Object.entries(data.reduce((acc, { date, amount }) => {
-              const week = new Date(date).toISOString().slice(0,10);
-              acc[week] = (acc[week] || 0) + (amount || 0);
-              return acc;
-            }, {})).map(([week, amount]) => ({ week, amount })).sort((a, b) => new Date(a.week) - new Date(b.week)).slice(-12),
-            error: null
-          }))
-        ]);
-
-        if (usersError) { console.error('Users query error:', usersError); showToast('Error fetching users data', false); }
-        if (paymentsError) { console.error('Payments query error:', paymentsError); showToast('Error fetching payments data', false); }
-        if (tradesError) { console.error('Trades query error:', tradesError); showToast('Error fetching trades data', false); }
-        if (sigError) { console.error('Signals query error:', sigError); showToast('Error fetching signals data', false); }
-        if (insightsError) { console.error('Insights query error:', insightsError); showToast('Error fetching insights data', false); }
-        if (userStatusError) { console.error('User status query error:', userStatusError); showToast('Error fetching user status data', false); }
-        if (paymentTrendError) { console.error('Payment trends query error:', paymentTrendError); showToast('Error fetching payment trends data', false); }
-
-        console.log('Fetched data:', { usersData, paymentsData, tradesData, sigData, insightsData, userStatusData, paymentTrendData });
-      } catch (err) {
-        console.error('Dashboard query error:', err);
-        showToast('Failed to load dashboard data', false);
-      }
-
-      const stats = {
-        users: usersError || !usersData ? 0 : usersData.length,
-        payments: paymentsError || !paymentsData ? 0 : paymentsData.length,
-        trades: tradesError || !tradesData ? 0 : tradesData.length,
-        signals: sigError || !sigData ? 0 : sigData.length
-      };
-
-      document.getElementById('stat-users').textContent = stats.users;
-      document.getElementById('stat-payments').textContent = stats.payments;
-      document.getElementById('stat-trades').textContent = stats.trades;
-      document.getElementById('stat-signals').textContent = stats.signals;
-
-      const insights = insightsError || !insightsData?.length ? dummyData.insights : insightsData;
-      const cumulativePips = insights.length ? insights.reduce((acc, curr) => {
-        const last = acc.length ? acc[acc.length - 1].pips : 0;
-        acc.push({ week: curr.week_ending, pips: last + (curr.pips_gained || 0) });
-        return acc;
-      }, []) : [{ week: new Date().toISOString().slice(0,10), pips: 0 }];
-      const wins = insights.length ? insights.filter(i => (i.pips_gained || 0) > 0).length : 0;
-      const winRate = insights.length ? Math.round((wins / insights.length) * 100) : 0;
-      document.getElementById('stat-winrate').textContent = winRate;
-
-      const userStatus = userStatusError || !userStatusData?.data ? dummyData.userStatusDist : userStatusData.data;
-      const paymentTrends = paymentTrendError || !paymentTrendData?.data?.length ? dummyData.paymentTrends : paymentTrendData.data;
-
-      try {
-        ```chartjs
-        {
-          "type": "line",
-          "data": {
-            "labels": cumulativePips.map(i => new Date(i.week).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })),
-            "datasets": [{
-              "label": "Cumulative Pips",
-              "data": cumulativePips.map(i => i.pips),
-              "borderColor": "#ffd700",
-              "backgroundColor": "rgba(255,215,0,0.2)",
-              "fill": true
-            }]
-          },
-          "options": {
-            "responsive": true,
-            "plugins": {
-              "legend": { "labels": { "color": "var(--fg)" } },
-              "title": { "display": true, "text": "Company Pips Growth", "color": "var(--fg)" }
-            },
-            "scales": {
-              "x": { "ticks": { "color": "var(--fg)" }, "grid": { "color": "rgba(255,255,255,0.1)" } },
-              "y": { "beginAtZero": true, "ticks": { "color": "var(--fg)" }, "grid": { "color": "rgba(255,255,255,0.1)" } }
-            }
-          }
-        }
-        ```
-      } catch (err) {
-        console.error('PNL Chart error:', err);
-        showToast('Failed to render PNL chart', false);
-      }
-
-      try {
-        ```chartjs
-        {
-          "type": "bar",
-          "data": {
-            "labels": insights.map(i => new Date(i.week_ending).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })),
-            "datasets": [{
-              "label": "Win Rate (%)",
-              "data": insights.map(i => (i.pips_gained || 0) > 0 ? 100 : 0),
-              "backgroundColor": "#1cc88a"
-            }]
-          },
-          "options": {
-            "responsive": true,
-            "plugins": {
-              "legend": { "labels": { "color": "var(--fg)" } },
-              "title": { "display": true, "text": "Weekly Win Rate", "color": "var(--fg)" }
-            },
-            "scales": {
-              "x": { "ticks": { "color": "var(--fg)" }, "grid": { "color": "rgba(255,255,255,0.1)" } },
-              "y": { "beginAtZero": true, "max": 100, "ticks": { "color": "var(--fg)" }, "grid": { "color": "rgba(255,255,255,0.1)" } }
-            }
-          }
-        }
-        ```
-      } catch (err) {
-        console.error('Win Rate Chart error:', err);
-        showToast('Failed to render Win Rate chart', false);
-      }
-
-      try {
-        ```chartjs
-        {
-          "type": "pie",
-          "data": {
-            "labels": Object.keys(userStatus),
-            "datasets": [{
-              "label": "User Status",
-              "data": Object.values(userStatus),
-              "backgroundColor": ["#1cc88a", "#ffd700", "#ff6f61"],
-              "borderColor": ["#ffffff", "#ffffff", "#ffffff"],
-              "borderWidth": 1
-            }]
-          },
-          "options": {
-            "responsive": true,
-            "plugins": {
-              "legend": { "position": "top", "labels": { "color": "var(--fg)" } },
-              "title": { "display": true, "text": "User Status Distribution", "color": "var(--fg)" }
-            }
-          }
-        }
-        ```
-      } catch (err) {
-        console.error('User Status Chart error:', err);
-        showToast('Failed to render User Status chart', false);
-      }
-
-      try {
-        ```chartjs
-        {
-          "type": "line",
-          "data": {
-            "labels": paymentTrends.map(d => new Date(d.week).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })),
-            "datasets": [{
-              "label": "Payment Trends",
-              "data": paymentTrends.map(d => d.amount),
-              "borderColor": "#36b9cc",
-              "backgroundColor": "rgba(54,185,204,0.2)",
-              "fill": true
-            }]
-          },
-          "options": {
-            "responsive": true,
-            "plugins": {
-              "legend": { "labels": { "color": "var(--fg)" } },
-              "title": { "display": true, "text": "Weekly Payment Trends", "color": "var(--fg)" }
-            },
-            "scales": {
-              "x": { "ticks": { "color": "var(--fg)" }, "grid": { "color": "rgba(255,255,255,0.1)" } },
-              "y": { "beginAtZero": true, "ticks": { "color": "var(--fg)" }, "grid": { "color": "rgba(255,255,255,0.1)" } }
-            }
-          }
-        }
-        ```
-      } catch (err) {
-        console.error('Payment Trends Chart error:', err);
-        showToast('Failed to render Payment Trends chart', false);
-      }
-
-      // Real-time subscriptions
-      supabase.channel('insights-channel')
-        .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'insights' }, () => {
-          console.log('New insight added, refreshing dashboard');
-          loadDashboard();
-        })
-        .subscribe();
-
-      supabase.channel('payments-channel')
-        .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'payments' }, () => {
-          console.log('New payment added, refreshing dashboard');
-          loadDashboard();
-        })
-        .subscribe();
-    }
-
-    async function loadUsers() {
-      const { data, error } = await supabase.from('users').select('*');
-      if (error) {
-        console.error('Error fetching users:', error);
-        showToast('Error fetching users', false);
-        return;
-      }
-      $('#users-table').DataTable().clear().rows.add(data || dummyData.users).draw();
-    }
-
-    async function approveUser(userId) {
-      const { error } = await supabase.from('users').update({ status: 'Active' }).eq('id', userId);
-      if (error) {
-        showToast('Error approving user', false);
-        console.error('Error approving user:', error);
-      } else {
-        showToast('User approved');
-        loadUsers();
-      }
-    }
-
-    async function loadPayments() {
-      const { data, error } = await supabase.from('payments').select('*');
-      if (error) {
-        console.error('Error fetching payments:', error);
-        showToast('Error fetching payments', false);
-        return;
-      }
-      $('#payments-table').DataTable().clear().rows.add(data || []).draw();
-    }
-
+    // Approve Payment
     async function approvePayment(paymentId) {
-      const { error } = await supabase.from('payments').update({ status: 'approved' }).eq('id', paymentId);
+      const { error } = await supabase
+        .from('payments')
+        .update({ status: 'Approved' })
+        .eq('id', paymentId);
       if (error) {
-        showToast('Error approving payment', false);
         console.error('Error approving payment:', error);
+        showToast('Error approving payment', false);
       } else {
         showToast('Payment approved successfully');
         loadPayments();
       }
     }
 
-    document.getElementById('export-payments').addEventListener('click', async () => {
-      const { data, error } = await supabase.from('payments').select('*');
-      if (error) {
-        showToast('Error fetching payments for export', false);
-        return;
-      }
-      const csv = [
-        'ID,User,Email,Amount,Method,Date,Status',
-        ...data.map(row => `${row.id},${row.user},${row.email},${row.amount},${row.method},${row.date},${row.status}`)
-      ].join('\n');
-      const blob = new Blob([csv], { type: 'text/csv' });
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = 'payments.csv';
-      a.click();
-      URL.revokeObjectURL(url);
-    });
-
-    async function loadMessages() {
-      const { data, error } = await supabase.from('messages').select('*');
-      if (error) {
-        console.error('Error fetching messages:', error);
-        showToast('Error fetching messages', false);
-        return;
-      }
-      $('#messages-table').DataTable().clear().rows.add(data || dummyData.messages).draw();
-    }
-
-    document.getElementById('reply-form').addEventListener('submit', async e => {
-      e.preventDefault();
-      const email = document.getElementById('reply-email').value;
-      const body = document.getElementById('reply-body').value;
-      const { error } = await supabase.from('replies').insert([{ to_email: email, body, sent: new Date().toISOString() }]);
-      if (error) {
-        showToast('Failed to send reply', false);
-        console.error('Error sending reply:', error);
-      } else {
-        showToast('Reply sent');
-        e.target.reset();
-        bootstrap.Modal.getInstance(document.getElementById('replyModal')).hide();
-      }
-    });
-
-    async function loadPaymentSettings() {
-      const { data, error } = await supabase.from('settings').select('*');
-      if (error) {
-        console.error('Error fetching payment settings:', error);
-        showToast('Error fetching payment settings', false);
-        return;
-      }
-      const settings = data.reduce((acc, s) => { acc[s.key] = s.value; return acc; }, {});
-      document.getElementById('ps-public').value = settings['paystack_public_key'] || '';
-      document.getElementById('ps-secret').value = settings['paystack_secret_key'] || '';
-      document.getElementById('ps-link').value = settings['paystack_link'] || '';
-      document.getElementById('addr-btc').value = settings['btc_wallet'] || '';
-      document.getElementById('addr-eth').value = settings['eth_wallet'] || '';
-      document.getElementById('addr-trx').value = settings['trx_wallet'] || '';
-      document.getElementById('addr-usdt').value = settings['usdt_wallet'] || '';
-    }
-
-    document.getElementById('form-paystack').addEventListener('submit', async e => {
-      e.preventDefault();
-      const updates = [
-        { key: 'paystack_public_key', value: document.getElementById('ps-public').value },
-        { key: 'paystack_secret_key', value: document.getElementById('ps-secret').value },
-        { key: 'paystack_link', value: document.getElementById('ps-link').value }
-      ];
-      for (const update of updates) {
-        const { error } = await supabase.from('settings').upsert(update, { onConflict: 'key' });
-        if (error) {
-          showToast('Failed to save Paystack settings', false);
-          console.error('Error saving Paystack settings:', error);
-          return;
-        }
-      }
-      showToast('Paystack settings saved');
-    });
-
-    document.getElementById('form-crypto').addEventListener('submit', async e => {
-      e.preventDefault();
-      const updates = [
-        { key: 'btc_wallet', value: document.getElementById('addr-btc').value },
-        { key: 'eth_wallet', value: document.getElementById('addr-eth').value },
-        { key: 'trx_wallet', value: document.getElementById('addr-trx').value },
-        { key: 'usdt_wallet', value: document.getElementById('addr-usdt').value }
-      ];
-      for (const update of updates) {
-        const { error } = await supabase.from('settings').upsert(update, { onConflict: 'key' });
-        if (error) {
-          showToast('Failed to save crypto settings', false);
-          console.error('Error saving crypto settings:', error);
-          return;
-        }
-      }
-      showToast('Crypto settings saved');
-    });
-
-    async function loadTradeHistory() {
-      const month = document.getElementById('month-select').value;
-      const { data, error } = await supabase.from('trades').select('*').ilike('date', `%-${month}-%`);
-      if (error) {
-        console.error('Error fetching trade history:', error);
-        showToast('Error fetching trade history', false);
-        return;
-      }
-      $('#history-table').DataTable().clear().rows.add(data || dummyData.trades).draw();
-    }
-
-    document.getElementById('trade-upload-form').addEventListener('submit', async e => {
-      e.preventDefault();
-      const date = document.getElementById('trade-date').value;
-      const asset = document.getElementById('trade-pair').value;
-      const notes = document.getElementById('trade-notes').value;
-      const file = document.getElementById('trade-file').files[0];
-      if (!file) {
-        showToast('Please select a screenshot', false);
-        return;
-      }
-
-      const fileName = `trades/${Date.now()}_${file.name}`;
-      const { error: uploadError } = await supabase.storage.from('screenshots').upload(fileName, file);
-      if (uploadError) {
-        showToast('Failed to upload screenshot', false);
-        console.error('Error uploading screenshot:', uploadError);
-        return;
-      }
-
-      const screenshotUrl = supabase.storage.from('screenshots').getPublicUrl(fileName).data.publicUrl;
-      const { error } = await supabase.from('trades').insert([{ date, asset, notes, screenshot: screenshotUrl }]);
-      if (error) {
-        showToast('Failed to add trade', false);
-        console.error('Error adding trade:', error);
-      } else {
-        showToast('Trade added');
-        e.target.reset();
-        loadTradeHistory();
-      }
-    });
-
-    document.getElementById('export-history').addEventListener('click', async () => {
-      const month = document.getElementById('month-select').value;
-      const { data, error } = await supabase.from('trades').select('*').ilike('date', `%-${month}-%`);
-      if (error) {
-        showToast('Error fetching trades for export', false);
-        return;
-      }
-      const csv = [
-        'Date,Asset,Notes,Screenshot',
-        ...data.map(row => `${row.date},${row.asset},${row.notes},${row.screenshot}`)
-      ].join('\n');
-      const blob = new Blob([csv], { type: 'text/csv' });
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = `trades_${month}.csv`;
-      a.click();
-      URL.revokeObjectURL(url);
-    });
-
-    async function loadInsights() {
-      const { data, error } = await supabase.from('insights').select('*').order('week_ending', { ascending: false });
-      if (error) {
-        console.error('Error fetching insights:', error);
-        showToast('Error loading insights', false);
-        return;
-      }
-      const list = document.getElementById('insights-list');
-      list.innerHTML = '';
-      data.forEach(insight => {
-        const li = document.createElement('li');
-        li.className = 'list-group-item bg-transparent text-white';
-        li.innerHTML = `
-          <strong>Week Ending: ${insight.week_ending}</strong>
-          <div>Pips Gained: ${insight.pips_gained}</div>
-          <div>Note: ${insight.note || 'No note'}</div>
-        `;
-        list.appendChild(li);
-      });
-    }
-
-    document.getElementById('insights-form').addEventListener('submit', async e => {
-      e.preventDefault();
-      const week = document.getElementById('insight-week').value;
-      const pips = document.getElementById('insight-pips').value;
-      const note = document.getElementById('insight-note').value;
-      const { error } = await supabase.from('insights').insert([{ week_ending: week, pips_gained: pips, note: note || null }]);
-      if (error) {
-        showToast('Failed to post insight', false);
-        console.error('Error posting insight:', error);
-      } else {
-        showToast('Insight posted');
-        e.target.reset();
-        loadInsights();
-        loadDashboard();
-      }
-    });
-
-    async function loadSignals() {
-      const { data, error } = await supabase.from('signals').select('*').order('created_at', { ascending: false });
-      if (error) {
-        console.error('Error fetching signals:', error);
-        showToast('Error loading signals', false);
-        return;
-      }
-      const list = document.getElementById('signals-list');
-      list.innerHTML = '';
-      data.forEach(sig => {
-        const li = document.createElement('li');
-        li.className = 'list-group-item bg-transparent text-white';
-        li.innerHTML = `
-          <strong>${sig.asset}</strong> [${sig.type}] @ ${sig.entry}
-          — SL: ${sig.sl} | TP1: ${sig.tp1}${sig.tp2 ? ` | TP2: ${sig.tp2}` : ''}
-          <div><small>${new Date(sig.created_at).toLocaleString()}</small></div>
-          <div>${sig.note || ''}</div>
-        `;
-        list.appendChild(li);
-      });
-    }
-
-    document.getElementById('signals-form').addEventListener('submit', async e => {
-      e.preventDefault();
-      const asset = document.getElementById('signal-asset').value;
-      const entry = document.getElementById('signal-entry').value;
-      const type = document.getElementById('signal-type').value;
-      const sl = document.getElementById('signal-sl').value;
-      const tp1 = document.getElementById('signal-tp1').value;
-      const tp2 = document.getElementById('signal-tp2').value;
-      const note = document.getElementById('signal-note').value;
-      const { error } = await supabase.from('signals').insert([{
-        asset, entry: parseFloat(entry), type, sl: parseFloat(sl), tp1: parseFloat(tp1),
-        tp2: tp2 ? parseFloat(tp2) : null, note: note || null, created_at: new Date().toISOString()
-      }]);
-      if (error) {
-        showToast('Failed to publish signal', false);
-        console.error('Error publishing signal:', error);
-      } else {
-        showToast('Signal published');
-        e.target.reset();
-        loadSignals();
-      }
-    });
-
-    async function loadTestimonials() {
-      const { data, error } = await supabase
-        .from('testimonials')
-        .select('id, user_id, testimonial_text, status, created_at, users(email, name)')
-        .order('created_at', { ascending: false });
-      if (error) {
-        console.error('Error fetching testimonials:', error);
-        showToast('Error fetching testimonials', false);
-        return;
-      }
-      const testimonialsData = data.map(testimonial => ({
-        id: testimonial.id,
-        user: testimonial.users.name,
-        email: testimonial.users.email,
-        testimonial: testimonial.testimonial_text,
-        date: new Date(testimonial.created_at).toLocaleDateString(),
-        status: testimonial.status
-      }));
-      $('#testimonials-table').DataTable().clear().rows.add(testimonialsData).draw();
-    }
-
+    // Approve Testimonial
     async function approveTestimonial(testimonialId) {
-      const { error } = await supabase.from('testimonials').update({ status: 'approved' }).eq('id', testimonialId);
+      const { error } = await supabase
+        .from('testimonials')
+        .update({ status: 'Approved' })
+        .eq('id', testimonialId);
       if (error) {
-        showToast('Error approving testimonial', false);
         console.error('Error approving testimonial:', error);
+        showToast('Error approving testimonial', false);
       } else {
         showToast('Testimonial approved successfully');
         loadTestimonials();
       }
     }
 
+    // Initialize DataTables
     $(document).ready(() => {
       $('#users-table').DataTable({
         columns: [
           { data: 'id' },
           { data: 'email' },
           { data: 'name' },
-          { data: 'registered' },
+          { data: 'registered', render: data => new Date(data).toLocaleDateString() },
           { data: 'status' },
-          { data: null, render: (_, r) => `<button class="btn btn-sm btn-success" onclick="approveUser(${r.id})">Approve</button>` }
+          { data: null, render: (_, __, row) => `<button class="btn btn-sm btn-success" onclick="alert('Approve ${row.name}')">Approve</button>` }
         ]
       });
       $('#payments-table').DataTable({
         columns: [
           { data: 'id' },
-          { data: 'user' },
+          { data: 'user_id' },
           { data: 'email' },
           { data: 'amount' },
           { data: 'method' },
-          { data: 'date' },
-          { data: 'screenshot', render: data => data ? `<button class="btn btn-sm btn-info" onclick="viewScreenshot('${data}')">View Screenshot</button>` : 'No Screenshot' },
-          { data: null, render: (_, row) => `<button class="btn btn-sm btn-primary" onclick="approvePayment(${row.id})">Approve</button>` }
+          { data: 'date', render: data => new Date(data).toLocaleDateString() },
+          { data: 'screenshot', render: data => data ? `<button class="btn btn-sm btn-info" onclick="viewScreenshot('${data}')">View</button>` : '—' },
+          { data: null, render: (_, __, row) => `<button class="btn btn-sm btn-primary" onclick="approvePayment(${row.id})">Approve</button>` }
         ]
       });
       $('#messages-table').DataTable({
         columns: [
           { data: 'id' },
-          { data: 'from' },
+          { data: 'from_name' },
           { data: 'text' },
-          { data: 'date' },
-          { data: null, render: (_, r) => `<button class="btn btn-sm btn-success" onclick="openReply('${r.email}')">Reply</button>` }
+          { data: 'date', render: data => new Date(data).toLocaleDateString() },
+          { data: null, render: (_, __, row) => `<button class="btn btn-sm btn-success" onclick="openReply('${row.email}')">Reply</button>` }
         ]
       });
       $('#history-table').DataTable({
         columns: [
-          { data: 'date' },
+          { data: 'date', render: data => new Date(data).toLocaleDateString() },
           { data: 'asset' },
           { data: 'notes' },
-          { data: 'screenshot', render: src => src ? `<img src="${src}" style="height:40px;object-fit:cover"/>` : '—' }
+          { data: 'screenshot', render: data => data ? `<img src="${data}" style="height:40px;object-fit:cover"/>` : '—' }
         ]
       });
       $('#testimonials-table').DataTable({
         columns: [
           { data: 'id' },
-          { data: 'user' },
+          { data: 'user_id' },
           { data: 'email' },
-          { data: 'testimonial' },
-          { data: 'date' },
+          { data: 'testimonial_text' },
+          { data: 'created_at', render: data => new Date(data).toLocaleDateString() },
           { data: 'status' },
-          { data: null, render: (_, row) => row.status === 'pending' ? `<button class="btn btn-sm btn-success" onclick="approveTestimonial(${row.id})">Approve</button>` : '—' }
+          { data: null, render: (_, __, row) => row.status === 'Pending' ? `<button class="btn btn-sm btn-success" onclick="approveTestimonial(${row.id})">Approve</button>` : '—' }
         ]
       });
     });
 
+    // Load Dashboard
+    async function loadDashboard() {
+      try {
+        const { data: usersData, error: usersError } = await supabase.from('users').select('id');
+        const { data: paymentsData, error: paymentsError } = await supabase.from('payments').select('id').eq('status', 'Pending');
+        const { data: tradesData, error: tradesError } = await supabase.from('trades').select('id');
+        const { data: signalsData, error: signalsError } = await supabase.from('signals').select('id');
+        const { data: insightsData, error: insightsError } = await supabase.from('trade_insights').select('week_ending, pips').order('week_ending', { ascending: false });
+
+        if (usersError) console.error('Error fetching users:', usersError);
+        if (paymentsError) console.error('Error fetching payments:', paymentsError);
+        if (tradesError) console.error('Error fetching trades:', tradesError);
+        if (signalsError) console.error('Error fetching signals:', signalsError);
+        if (insightsError) console.error('Error fetching insights:', insightsError);
+
+        const stats = {
+          users: usersError ? 0 : usersData.length,
+          payments: paymentsError ? 0 : paymentsData.length,
+          trades: tradesError ? 0 : tradesData.length,
+          signals: signalsError ? 0 : signalsData.length
+        };
+
+        document.getElementById('stat-users').textContent = stats.users;
+        document.getElementById('stat-payments').textContent = stats.payments;
+        document.getElementById('stat-trades').textContent = stats.trades;
+        document.getElementById('stat-signals').textContent = stats.signals;
+
+        // Calculate Win Rate from trade_insights
+        const wins = insightsData ? insightsData.filter(i => i.pips > 0).length : 0;
+        const totalWeeks = insightsData ? insightsData.length : 0;
+        const winRate = totalWeeks > 0 ? Math.round((wins / totalWeeks) * 100) : 0;
+        document.getElementById('stat-winrate').textContent = winRate;
+
+        // Charts
+        new Chart(document.getElementById('chart-pnl'), {
+          type: 'line',
+          data: {
+            labels: insightsData ? insightsData.map(i => new Date(i.week_ending).toLocaleDateString()) : ['W1', 'W2', 'W3', 'W4'],
+            datasets: [{
+              data: insightsData ? insightsData.map(i => i.pips) : [0, 0, 0, 0],
+              tension: 0.4,
+              borderColor: '#ffd700',
+              backgroundColor: 'rgba(255,215,0,0.2)'
+            }]
+          },
+          options: { responsive: true, plugins: { legend: { display: false } } }
+        });
+        new Chart(document.getElementById('chart-winrate'), {
+          type: 'bar',
+          data: {
+            labels: insightsData ? insightsData.map(i => new Date(i.week_ending).toLocaleDateString()) : ['W1', 'W2', 'W3', 'W4'],
+            datasets: [{
+              data: insightsData ? insightsData.map(i => i.pips > 0 ? 100 : 0) : [0, 0, 0, 0],
+              backgroundColor: '#1cc88a'
+            }]
+          },
+          options: { responsive: true, plugins: { legend: { display: false } } }
+        });
+      } catch (error) {
+        console.error('Error loading dashboard:', error);
+        showToast('Error loading dashboard', false);
+      }
+    }
+
+    // Load Users
+    async function loadUsers() {
+      try {
+        const { data, error } = await supabase.from('users').select('*');
+        if (error) {
+          console.error('Error fetching users:', error);
+          showToast('Error fetching users', false);
+          return;
+        }
+        $('#users-table').DataTable().clear().rows.add(data || []).draw();
+      } catch (error) {
+        console.error('Error loading users:', error);
+        showToast('Error loading users', false);
+      }
+    }
+
+    // Load Payments
+    async function loadPayments() {
+      try {
+        const { data, error } = await supabase.from('payments').select('*, users(name)');
+        if (error) {
+          console.error('Error fetching payments:', error);
+          showToast('Error fetching payments', false);
+          return;
+        }
+        $('#payments-table').DataTable().clear().rows.add(data || []).draw();
+      } catch (error) {
+        console.error('Error loading payments:', error);
+        showToast('Error loading payments', false);
+      }
+    }
+
+    // Load Messages
+    async function loadMessages() {
+      try {
+        const { data, error } = await supabase.from('messages').select('*');
+        if (error) {
+          console.error('Error fetching messages:', error);
+          showToast('Error fetching messages', false);
+          return;
+        }
+        $('#messages-table').DataTable().clear().rows.add(data || []).draw();
+      } catch (error) {
+        console.error('Error loading messages:', error);
+        showToast('Error loading messages', false);
+      }
+    }
+
+    // Load Trade History
+    async function loadTradeHistory() {
+      try {
+        const { data, error } = await supabase.from('trades').select('*');
+        if (error) {
+          console.error('Error fetching trades:', error);
+          showToast('Error fetching trades', false);
+          return;
+        }
+        $('#history-table').DataTable().clear().rows.add(data || []).draw();
+      } catch (error) {
+        console.error('Error loading trade history:', error);
+        showToast('Error loading trade history', false);
+      }
+    }
+
+    // Load Trade Insights
+    async function loadTradeInsights() {
+      try {
+        const { data, error } = await supabase.from('trade_insights').select('*').order('week_ending', { ascending: false });
+        if (error) {
+          console.error('Error fetching trade insights:', error);
+          showToast('Error fetching trade insights', false);
+          return;
+        }
+        const list = document.getElementById('insights-list');
+        list.innerHTML = '';
+        (data || []).forEach(insight => {
+          list.innerHTML += `
+            <li class="list-group-item">
+              <strong>Week Ending ${new Date(insight.week_ending).toLocaleDateString()}</strong>: ${insight.pips} pips<br>
+              <small>${insight.note || ''}</small><br>
+              <small>Posted on ${new Date(insight.created_at).toLocaleString()}</small>
+            </li>`;
+        });
+      } catch (error) {
+        console.error('Error loading trade insights:', error);
+        showToast('Error loading trade insights', false);
+      }
+    }
+
+    // Load Signals
+    async function loadSignals() {
+      try {
+        const { data, error } = await supabase.from('signals').select('*').order('created_at', { ascending: false });
+        if (error) {
+          console.error('Error fetching signals:', error);
+          showToast('Error fetching signals', false);
+          return;
+        }
+        const list = document.getElementById('signals-list');
+        list.innerHTML = '';
+        (data || []).forEach(signal => {
+          list.innerHTML += `
+            <li class="list-group-item">
+              <strong>${signal.asset}</strong> - ${signal.type} at ${signal.entry_level}, SL: ${signal.sl}, TP1: ${signal.tp1}, TP2: ${signal.tp2 || 'N/A'}<br>
+              <small>${signal.notes || ''}</small><br>
+              <small>Published on ${new Date(signal.created_at).toLocaleString()}</small>
+            </li>`;
+        });
+      } catch (error) {
+        console.error('Error loading signals:', error);
+        showToast('Error loading signals', false);
+      }
+    }
+
+    // Load Testimonials
+    async function loadTestimonials() {
+      try {
+        const { data, error } = await supabase
+          .from('testimonials')
+          .select('id, user_id, testimonial_text, status, created_at, users(email, name)')
+          .order('created_at', { ascending: false });
+        if (error) {
+          console.error('Error fetching testimonials:', error);
+          showToast('Error fetching testimonials', false);
+          return;
+        }
+        const formattedData = (data || []).map(t => ({
+          id: t.id,
+          user_id: t.user_id,
+          email: t.users?.email || 'Unknown',
+          testimonial_text: t.testimonial_text,
+          status: t.status,
+          created_at: t.created_at
+        }));
+        $('#testimonials-table').DataTable().clear().rows.add(formattedData).draw();
+      } catch (error) {
+        console.error('Error loading testimonials:', error);
+        showToast('Error loading testimonials', false);
+      }
+    }
+
+    // Signals Form Submission
+    document.getElementById('signals-form').addEventListener('submit', async e => {
+      e.preventDefault();
+      try {
+        const signal = {
+          asset: document.getElementById('signal-asset').value,
+          type: document.getElementById('signal-type').value,
+          entry_level: parseFloat(document.getElementById('signal-entry').value),
+          sl: parseFloat(document.getElementById('signal-sl').value),
+          tp1: parseFloat(document.getElementById('signal-tp1').value),
+          tp2: document.getElementById('signal-tp2').value ? parseFloat(document.getElementById('signal-tp2').value) : null,
+          notes: document.getElementById('signal-note').value,
+          created_at: new Date().toISOString()
+        };
+        const { error } = await supabase.from('signals').insert([signal]);
+        if (error) {
+          console.error('Error publishing signal:', error);
+          showToast('Error publishing signal', false);
+        } else {
+          showToast('Signal published successfully');
+          document.getElementById('signals-form').reset();
+          loadSignals();
+        }
+      } catch (error) {
+        console.error('Error submitting signal:', error);
+        showToast('Error submitting signal', false);
+      }
+    });
+
+    // Trade Insights Form Submission
+    document.getElementById('insights-form').addEventListener('submit', async e => {
+      e.preventDefault();
+      try {
+        const insight = {
+          week_ending: document.getElementById('insight-week').value,
+          pips: parseInt(document.getElementById('insight-pips').value),
+          note: document.getElementById('insight-note').value,
+          created_at: new Date().toISOString()
+        };
+        const { error } = await supabase.from('trade_insights').insert([insight]);
+        if (error) {
+          console.error('Error posting insight:', error);
+          showToast('Error posting insight', false);
+        } else {
+          showToast('Insight posted successfully');
+          document.getElementById('insights-form').reset();
+          loadTradeInsights();
+          loadDashboard(); // Refresh dashboard for updated win rate
+        }
+      } catch (error) {
+        console.error('Error submitting insight:', error);
+        showToast('Error submitting insight', false);
+      }
+    });
+
+    // Trade History Form Submission
+    document.getElementById('trade-upload-form').addEventListener('submit', async e => {
+      e.preventDefault();
+      try {
+        const trade = {
+          date: document.getElementById('trade-date').value,
+          asset: document.getElementById('trade-pair').value,
+          notes: document.getElementById('trade-notes').value,
+          screenshot: 'placeholder.png', // Replace with actual file upload logic
+          created_at: new Date().toISOString()
+        };
+        const { error } = await supabase.from('trades').insert([trade]);
+        if (error) {
+          console.error('Error adding trade:', error);
+          showToast('Error adding trade', false);
+        } else {
+          showToast('Trade added successfully');
+          document.getElementById('trade-upload-form').reset();
+          loadTradeHistory();
+        }
+      } catch (error) {
+        console.error('Error submitting trade:', error);
+        showToast('Error submitting trade', false);
+      }
+    });
+
+    // Real-time Clock
     function updateClock() {
       document.getElementById('current-datetime').textContent = new Date().toLocaleString();
     }
     updateClock();
     setInterval(updateClock, 60000);
 
+    // Load Dashboard on Start
     loadDashboard();
   </script>
 </body>
