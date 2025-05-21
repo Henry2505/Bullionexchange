@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" data-theme="dark">
 <head>
   <meta charset="UTF-8" /><meta name="viewport" content="width=device-width,initial-scale=1" />
   <title>CBE Admin Panel</title>
@@ -14,48 +14,77 @@
   <!-- DataTables CSS -->
   <link href="https://cdn.datatables.net/1.13.4/css/dataTables.bootstrap5.min.css" rel="stylesheet"/>
   <style>
-    /* Video BG & Overlay */
-    video#bg {position:fixed;top:0;left:0;width:100%;height:100%;object-fit:cover;z-index:-2;}
-    .overlay {position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.6);z-index:-1;}
-    /* Theme vars */
-    :root {--bg:#121212;--fg:#f5f5f5;--glass:rgba(255,255,255,0.05);}
+    /* RESET & THEME VARS */
+    :root {--bg:#121212;--fg:#f5f5f5;--glass:rgba(255,255,255,0.05);--gold:#ffd700;}
     [data-theme="light"]{--bg:#f0f0f0;--fg:#333;--glass:rgba(255,255,255,0.6);}
-    body{margin:0;padding:0;overflow-x:hidden;font-family:Poppins,sans-serif;background:var(--bg);color:var(--fg);}
+    *{margin:0;padding:0;box-sizing:border-box;}
+    html{scroll-behavior:smooth;}
+    body{font-family:'Poppins',sans-serif;background:var(--bg);color:var(--fg);overflow-x:hidden;}
     a{color:inherit;text-decoration:none;}
     @keyframes fadeIn { to { opacity: 1; } }
-    .glass{background:var(--glass);backdrop-filter:blur(12px);border-radius:12px;box-shadow:0 8px 32px rgba(0,0,0,0.4);opacity:0;animation:fadeIn 0.8s forwards;}
-    #sidebar{width:250px;background:rgba(0,0,0,0.3);transition:.3s;}
-    #sidebar.collapsed{margin-left:-250px;}
-    #sidebar .nav-link{color:#ddd;}
-    #sidebar .nav-link.active,#sidebar .nav-link:hover{background:rgba(255,255,255,0.1);color:#fff;}
-    #content{flex:1;padding:1.5rem;}
-    #toggle-btn{cursor:pointer;font-size:1.5rem;}
-    .card-stat{cursor:grab;color:#fff;border:none;}
-    .card-stat bg-warning{background:rgba(255,193,7,0.8);}
-    .form-control,.form-select{background:rgba(255,255,255,0.1);border:none;color:#fff;}
-    .form-control:focus,.form-select:focus{background:rgba(255,255,255,0.15);box-shadow:none;}
-    .btn-primary{background:#ffd700;color:#000;border:none;}
-    .btn-success{background:#1cc88a;border:none;}
-    .btn-outline-secondary{color:#fff;border-color:rgba(255,255,255,0.4);}
-    .btn-outline-secondary:hover{background:rgba(255,255,255,0.1);}
-    h4{color:#ffd700;}
-    #toast-container{position:fixed;bottom:1rem;right:1rem;z-index:1050;}
-    /* DataTables header override */
-    table.dataTable thead th {background:rgba(255,255,255,0.1);}
+    /* LOGO & THEME TOGGLE */
+    .logo { position:fixed; top:20px; left:20px; z-index:1000; }
+    .logo img { width:160px; cursor:pointer; transition:transform .3s; }
+    .logo img:hover { transform:scale(1.05); }
+    #theme-toggle {
+      position:fixed; top:20px; right:20px; z-index:1000;
+      background:none; border:none; font-size:1.5rem; color:var(--fg); cursor:pointer;
+      transition:transform .3s;
+    }
+    #theme-toggle:hover { transform:scale(1.2); }
+    /* GLASS CONTAINER */
+    .glass-container {
+      display:flex; min-height:100vh; background:transparent;
+    }
+    .glass {
+      background:var(--glass); backdrop-filter:blur(12px); border-radius:12px;
+      box-shadow:0 8px 32px rgba(0,0,0,0.4); opacity:0; animation:fadeIn 0.8s forwards;
+    }
+    /* SLIDE-IN */
+    .slide-in {
+      opacity:0; transform:translateY(20px);
+      transition:opacity .7s ease-out, transform .7s ease-out;
+    }
+    .slide-in.visible { opacity:1; transform:translateY(0); }
+    /* SIDEBAR */
+    #sidebar { width:250px; background:rgba(0,0,0,0.3); transition:.3s; }
+    #sidebar.collapsed { margin-left:-250px; }
+    #sidebar .nav-link { color:#ddd; }
+    #sidebar .nav-link.active, #sidebar .nav-link:hover {
+      background:rgba(255,255,255,0.1); color:#fff; }
+    /* CONTENT */
+    #content { flex:1; padding:1.5rem; }
+    #toggle-btn { cursor:pointer; font-size:1.5rem; }
+    .card-stat { cursor:grab; color:#fff; border:none; }
+    .form-control, .form-select {
+      background:rgba(255,255,255,0.1); border:none; color:#fff;
+    }
+    .form-control:focus, .form-select:focus {
+      background:rgba(255,255,255,0.15); box-shadow:none;
+    }
+    .btn-primary { background:var(--gold); color:#000; border:none; }
+    .btn-success { background:#1cc88a; border:none; }
+    .btn-outline-secondary {
+      color:#fff; border-color:rgba(255,255,255,0.4);
+    }
+    .btn-outline-secondary:hover { background:rgba(255,255,255,0.1); }
+    h4 { color:var(--gold); }
+    table.dataTable thead th { background:rgba(255,255,255,0.1); }
   </style>
 </head>
-<body data-theme="dark">
+<body>
 
-  <!-- Background & Toasts -->
-  <video id="bg" autoplay muted loop playsinline preload="auto">
-    <source src="star-video.MP4" type="video/mp4"/>
-  </video>
-  <div class="overlay"></div>
-  <div id="toast-container"></div>
+  <!-- Logo -->
+  <div class="logo slide-in" style="animation-delay:.2s;">
+    <a href="index.html"><img src="CBE_logo.PNG" alt="CBE Logo"/></a>
+  </div>
 
-  <div class="d-flex glass" style="min-height:100vh;">
+  <!-- Theme Toggle -->
+  <button id="theme-toggle" aria-label="Toggle light/dark" class="slide-in" style="animation-delay:.3s;">🌞</button>
+
+  <div class="glass-container slide-in" style="animation-delay:.4s;">
     <!-- Sidebar -->
-    <nav id="sidebar" class="d-flex flex-column p-3">
+    <nav id="sidebar" class="d-flex flex-column p-3 glass slide-in" style="animation-delay:.5s;">
       <h4 class="text-center">CBE Admin</h4>
       <ul class="nav nav-pills flex-column mb-auto mt-4" id="menu">
         <li><a class="nav-link active" data-section="dashboard" href="#">Dashboard</a></li>
@@ -71,11 +100,10 @@
     </nav>
 
     <!-- Main Content -->
-    <div id="content" class="d-flex flex-column">
+    <div id="content" class="d-flex flex-column glass slide-in" style="animation-delay:.6s;">
       <div class="d-flex justify-content-between align-items-center mb-4">
         <div>
           <span id="toggle-btn">&#8942;</span>
-          <button id="theme-toggle" class="btn btn-sm btn-outline-secondary ms-2">Light Mode</button>
         </div>
         <div class="d-flex align-items-baseline">
           <h2 id="section-title">Dashboard</h2>
@@ -85,7 +113,7 @@
 
       <div id="sections">
         <!-- Dashboard -->
-        <div class="section" data-section="dashboard">
+        <div class="section slide-in" data-section="dashboard" style="animation-delay:.7s;">
           <div class="row g-4" id="stats-container">
             <div class="col-md-3">
               <div class="card card-stat p-3 glass bg-primary" draggable="true" data-key="users">
@@ -130,7 +158,7 @@
         </div>
 
         <!-- Users -->
-        <div class="section d-none p-4 mb-4 glass" data-section="users">
+        <div class="section d-none p-4 mb-4 glass slide-in" data-section="users" style="animation-delay:.8s;">
           <h4>Users Verification</h4>
           <input id="user-search" class="form-control mb-3" placeholder="Search users…" />
           <table id="users-table" class="table table-hover text-white" style="width:100%">
@@ -139,20 +167,14 @@
           </table>
         </div>
 
-        <!-- Payments (now includes Email column) -->
-        <div class="section d-none p-4 mb-4 glass" data-section="payments">
+        <!-- Payments -->  
+        <div class="section d-none p-4 mb-4 glass slide-in" data-section="payments" style="animation-delay:.9s;">
           <h4>Payment Approval</h4>
           <button id="export-payments" class="btn btn-outline-secondary btn-sm mb-3">Export CSV/XLSX</button>
           <table id="payments-table" class="table table-hover text-white" style="width:100%">
             <thead>
               <tr>
-                <th>#</th>
-                <th>User</th>
-                <th>Email</th>
-                <th>Amount</th>
-                <th>Payment Method</th>
-                <th>Date</th>
-                <th>Action</th>
+                <th>#</th><th>User</th><th>Email</th><th>Amount</th><th>Payment Method</th><th>Date</th><th>Action</th>
               </tr>
             </thead>
             <tbody></tbody>
@@ -160,7 +182,7 @@
         </div>
 
         <!-- Messages -->
-        <div class="section d-none p-4 mb-4 glass" data-section="messages">
+        <div class="section d-none p-4 mb-4 glass slide-in" data-section="messages" style="animation-delay:1s;">
           <h4>Contact Messages</h4>
           <input id="msg-search" class="form-control mb-3" placeholder="Search messages…" />
           <table id="messages-table" class="table table-hover text-white" style="width:100%">
@@ -170,7 +192,7 @@
         </div>
 
         <!-- Payment Settings -->
-        <div class="section d-none p-4 mb-4 glass" data-section="settings-payment">
+        <div class="section d-none p-4 mb-4 glass slide-in" data-section="settings-payment" style="animation-delay:1.1s;">
           <h4>Payment Settings</h4>
           <ul class="nav nav-pills mb-3">
             <li class="nav-item"><button class="nav-link active" data-bs-toggle="pill" data-bs-target="#paystack-tab">Paystack</button></li>
@@ -198,24 +220,18 @@
         </div>
 
         <!-- Trade History -->
-        <div class="section d-none p-4 mb-4 glass" data-section="trade-history">
+        <div class="section d-none p-4 mb-4 glass slide-in" data-section="trade-history" style="animation-delay:1.2s;">
           <h4>Trade History</h4>
           <div class="row g-2 mb-3 align-items-end">
             <div class="col-md-3">
               <label>Select Month</label>
               <select id="month-select" class="form-select">
-                <option value="01">January</option>
-                <option value="02">February</option>
-                <option value="03">March</option>
-                <option value="04">April</option>
-                <option value="05">May</option>
-                <option value="06">June</option>
-                <option value="07">July</option>
-                <option value="08">August</option>
-                <option value="09">September</option>
-                <option value="10">October</option>
-                <option value="11">November</option>
-                <option value="12">December</option>
+                <option value="01">January</option><option value="02">February</option>
+                <option value="03">March</option><option value="04">April</option>
+                <option value="05">May</option><option value="06">June</option>
+                <option value="07">July</option><option value="08">August</option>
+                <option value="09">September</option><option value="10">October</option>
+                <option value="11">November</option><option value="12">December</option>
               </select>
             </div>
             <div class="col-md-3"><label>Search</label><input id="trade-search" class="form-control"/></div>
@@ -237,7 +253,7 @@
         </div>
 
         <!-- Trade Insights -->
-        <div class="section d-none p-4 mb-4 glass" data-section="trade-insights">
+        <div class="section d-none p-4 mb-4 glass slide-in" data-section="trade-insights" style="animation-delay:1.3s;">
           <h4>Weekly Pips Insights</h4>
           <form id="insights-form" class="row g-3 mb-4">
             <div class="col-md-4"><label>Week Ending</label><input type="date" id="insight-week" class="form-control" required/></div>
@@ -249,7 +265,7 @@
         </div>
 
         <!-- Signals -->
-        <div class="section d-none p-4 mb-4 glass" data-section="signals">
+        <div class="section d-none p-4 mb-4 glass slide-in" data-section="signals" style="animation-delay:1.4s;">
           <h4>Publish Signals</h4>
           <form id="signals-form" class="border p-3 mb-4 glass">
             <div class="row g-3">
@@ -334,7 +350,7 @@
     themeBtn.onclick=()=>{
       const next=document.body.getAttribute('data-theme')==='dark'?'light':'dark';
       document.body.setAttribute('data-theme',next);
-      themeBtn.textContent= next==='dark'?'Light Mode':'Dark Mode';
+      themeBtn.textContent= next==='dark'?'🌞':'🌜';
     };
 
     // Sidebar & nav
@@ -354,14 +370,14 @@
     // Drag & drop stats
     new Sortable(document.getElementById('stats-container'),{animation:150});
 
-    // Open reply modal with email
+    // Reply modal
     function openReply(email){
-      document.getElementById('reply-email').value = email;
-      document.getElementById('reply-to').value   = email;
+      document.getElementById('reply-email').value=email;
+      document.getElementById('reply-to').value=email;
       new bootstrap.Modal(document.getElementById('replyModal')).show();
     }
 
-    // Initialize DataTables
+    // DataTables init
     $(document).ready(()=>{
       $('#users-table').DataTable({
         data: dummyData.users,
@@ -441,6 +457,18 @@
     }
     updateClock();
     setInterval(updateClock, 60000);
+
+    // Slide-in on scroll for glass-container, sidebar, content & sections
+    document.addEventListener('DOMContentLoaded',()=>{
+      document.querySelectorAll('.slide-in').forEach(el=>{
+        const obs=new IntersectionObserver((entries,o)=>{
+          entries.forEach(e=>{
+            if(e.isIntersecting){ e.target.classList.add('visible'); o.unobserve(e.target); }
+          });
+        },{threshold:0.2});
+        obs.observe(el);
+      });
+    });
   </script>
 </body>
 </html>
