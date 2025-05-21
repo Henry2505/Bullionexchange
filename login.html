@@ -6,15 +6,21 @@
   <title>Login – CBE</title>
   <meta name="description" content="Login to access your CBE VIP dashboard and premium forex signals."/>
   <meta name="keywords" content="CBE, login, forex signals, VIP dashboard"/>
+  <!-- Theme CSS -->
   <link rel="stylesheet" href="theme.css"/>
+  <!-- Playfair & Roboto -->
   <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700&family=Roboto:wght@300;400;700&display=swap" rel="stylesheet"/>
+  <!-- UMD build of Supabase JS -->
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
   <script>
+    // initialize theme
     const saved = localStorage.getItem('theme');
     document.documentElement.setAttribute('data-theme', saved || 'dark');
   </script>
+  <!-- FontAwesome -->
   <script src="https://kit.fontawesome.com/your-kit-code.js" crossorigin="anonymous"></script>
   <style>
+    /* RESET & BASE */
     * { margin:0; padding:0; box-sizing:border-box; }
     html { scroll-behavior:smooth; }
     body {
@@ -27,8 +33,13 @@
     a { color: var(--gold); text-decoration:none; }
     a:hover { text-decoration:underline; }
 
-    .logo { position: fixed; top:20px; left:20px; z-index:10; }
-    .logo img { width:160px; cursor:pointer; transition:transform .3s; }
+    /* LOGO & THEME TOGGLE */
+    .logo {
+      position: fixed; top:20px; left:20px; z-index:10;
+    }
+    .logo img {
+      width:160px; cursor:pointer; transition:transform .3s;
+    }
     .logo img:hover { transform:scale(1.05); }
 
     #theme-toggle {
@@ -38,6 +49,7 @@
     }
     #theme-toggle:hover { transform:scale(1.2); }
 
+    /* SLIDE-IN */
     .slide-in {
       opacity:0; transform:translateY(30px);
       transition:opacity .7s ease-out, transform .7s ease-out;
@@ -46,11 +58,13 @@
       opacity:1; transform:translateY(0);
     }
 
+    /* WRAPPER */
     main {
       max-width:600px; margin:0 auto;
-      padding:140px 20px 60px;
+      padding:140px 20px 60px; /* header space */
     }
 
+    /* HEADER CARD */
     .header-card {
       background: var(--glass-bg);
       backdrop-filter: blur(8px);
@@ -69,6 +83,7 @@
       font-size:1.1rem; color: var(--text-light);
     }
 
+    /* FORM CARD */
     .form-card {
       background: var(--glass-bg);
       backdrop-filter: blur(8px);
@@ -82,7 +97,9 @@
       margin-bottom:20px;
       text-align:center;
     }
-    .form-group { margin-bottom:20px; }
+    .form-group {
+      margin-bottom:20px;
+    }
     .form-group label {
       display:block; margin-bottom:8px;
       color: var(--text-light);
@@ -125,18 +142,21 @@
     }
     .submit-btn span { position:relative; z-index:1; }
 
+    /* HELP LINKS */
     .help-links {
       text-align:center; margin-top:30px;
       font-size:.9rem; color: var(--text-light);
     }
     .help-links a { margin:0 8px; }
 
+    /* FOOTER */
     footer {
       text-align:center; padding:20px 0;
       color: var(--text-muted);
       margin-top:40px;
     }
 
+    /* RESPONSIVE */
     @media(max-width:480px) {
       main { padding:120px 15px 40px; }
       .logo img { width:120px; }
@@ -146,18 +166,22 @@
 </head>
 <body>
 
+  <!-- Logo -->
   <div class="logo">
     <a href="index.html"><img src="CBE_logo.PNG" alt="CBE Logo"></a>
   </div>
 
+  <!-- Theme Toggle -->
   <button id="theme-toggle" aria-label="Toggle light/dark">🌞</button>
 
   <main>
+    <!-- Header -->
     <div class="header-card slide-in">
       <h1>Login to CBE</h1>
       <p>Access your VIP dashboard and premium forex signals.</p>
     </div>
 
+    <!-- Form -->
     <div class="form-card slide-in" style="transition-delay:.3s;">
       <h2>Sign In</h2>
       <form id="loginForm">
@@ -173,6 +197,7 @@
       </form>
     </div>
 
+    <!-- Help Links -->
     <div class="help-links slide-in" style="transition-delay:.6s;">
       <p>Need assistance?</p>
       <p>
@@ -183,11 +208,13 @@
     </div>
   </main>
 
+  <!-- Footer -->
   <footer class="slide-in" style="transition-delay:.9s;">
     © 2025 Chukwuemeka Bullion Exchange. All rights reserved.
   </footer>
 
   <script>
+    // Slide-in on scroll
     document.addEventListener('DOMContentLoaded', () => {
       document.querySelectorAll('.slide-in').forEach(el => {
         const obs = new IntersectionObserver((entries, o) => {
@@ -202,6 +229,7 @@
       });
     });
 
+    // Theme toggle
     const toggle = document.getElementById('theme-toggle');
     toggle.addEventListener('click', () => {
       const curr = document.documentElement.getAttribute('data-theme');
@@ -215,56 +243,78 @@
       toggle.textContent = theme === 'dark' ? '🌞' : '🌜';
     })();
 
+    // Supabase initialization
     const SUPA_URL = 'https://dapwpgvnfjcfqqhrpxla.supabase.co';
     const SUPA_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImRhcHdwZ3ZuZmpjZnFxaHJweGxhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDcwNDA4ODgsImV4cCI6MjA2MjYxNjg4OH0.ICC0UsLlzJDNre7rFCeD3k6iVzo6jOJgn3PhABpEMsQ';
     const supabase = window.supabase.createClient(SUPA_URL, SUPA_KEY);
 
+    // Login logic
     document.getElementById('loginForm').addEventListener('submit', async e => {
       e.preventDefault();
-      try {
-        const email = document.getElementById('email').value.trim().toLowerCase();
-        const password = document.getElementById('password').value;
-        if (!email || !password) {
-          return alert('Please enter both email and password.');
-        }
+      const email = document.getElementById('email').value.trim().toLowerCase();
+      const password = document.getElementById('password').value;
+      if (!email || !password) {
+        return alert('Please enter both email and password.');
+      }
 
-        const { data, error: signErr } = await supabase.auth.signInWithPassword({ email, password });
-        if (signErr) {
-          alert('🚫 No account found. Redirecting to application page...');
-          return setTimeout(() => window.location.href = 'CBE_apply.html', 2000);
-        }
-        const user = data.user;
-
-        const { data: payment, error: payErr } = await supabase
-          .from('payment_records')
+      // 1) Attempt authentication
+      const { data, error: signErr } = await supabase.auth.signInWithPassword({ email, password });
+      if (signErr) {
+        // If auth failed, check if user applied (profile exists)
+        const { data: profileCheck, error: profCheckErr } = await supabase
+          .from('profiles')
           .select('status')
           .eq('email', email)
           .single();
-        if (payErr || !payment) {
-          alert('🚫 Application received—no payment yet. Redirecting to subscription page...');
-          return setTimeout(() => window.location.href = 'subscription.html', 2000);
-        }
-        if (payment.status !== 'approved') {
-          alert('🚫 Payment pending approval. Redirecting to subscription page...');
-          return setTimeout(() => window.location.href = 'subscription.html', 2000);
+
+        if (!profCheckErr && profileCheck) {
+          // They applied—and admin has approved application status in profiles
+          if (profileCheck.status === 'approved') {
+            alert('🚫 You’ve already applied. Please proceed to payment.');
+            return setTimeout(() => window.location.href = 'subscription.html', 2000);
+          } else {
+            // Applied but not yet admin-approved
+            return alert('🚫 Your application is pending admin approval. Please wait.');
+          }
         }
 
-        const { data: profile, error: profErr } = await supabase
-          .from('profiles')
-          .select('status, username')
-          .eq('id', user.id)
-          .single();
-        if (profErr || !profile || profile.status !== 'approved') {
-          return alert('🚫 Your account is pending admin approval. Please wait.');
-        }
-
-        sessionStorage.setItem('cbeLoggedIn', 'true');
-        sessionStorage.setItem('cbeUsername', profile.username || email);
-        window.location.href = 'vip-dashboard.html';
-      } catch (err) {
-        console.error(err);
-        alert('🚫 An unexpected error occurred. Check the console for details.');
+        // No profile → never applied
+        alert('🚫 You don’t have an account. Redirecting you to the application page...');
+        return setTimeout(() => window.location.href = 'CBE_apply.html', 2000);
       }
+
+      // 2) Payment check
+      const user = data.user;
+      const { data: payment, error: payErr } = await supabase
+        .from('payment_records')
+        .select('status')
+        .eq('email', email)
+        .single();
+
+      if (payErr || !payment) {
+        alert('🚫 We have your application but no payment yet. Redirecting to subscription page...');
+        return setTimeout(() => window.location.href = 'subscription.html', 2000);
+      }
+      if (payment.status !== 'approved') {
+        alert('🚫 Your payment is pending approval. Redirecting to subscription page...');
+        return setTimeout(() => window.location.href = 'subscription.html', 2000);
+      }
+
+      // 3) Final profile approval
+      const { data: profile, error: profErr } = await supabase
+        .from('profiles')
+        .select('status, username')
+        .eq('id', user.id)
+        .single();
+
+      if (profErr || !profile || profile.status !== 'approved') {
+        return alert('🚫 Your account is pending admin approval. Please wait.');
+      }
+
+      // 4) Success → session + redirect
+      sessionStorage.setItem('cbeLoggedIn', 'true');
+      sessionStorage.setItem('cbeUsername', profile.username || email);
+      window.location.href = 'vip-dashboard.html';
     });
   </script>
 </body>
