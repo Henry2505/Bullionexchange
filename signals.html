@@ -8,6 +8,8 @@
     href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700&display=swap"
     rel="stylesheet"
   />
+  <!-- Supabase JavaScript Client -->
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js"></script>
   <style>
     /* --- Reset & Base --- */
     * { margin:0; padding:0; box-sizing:border-box; }
@@ -154,45 +156,55 @@
   </footer>
 
   <script>
+    // Supabase Initialization
+    const SUPABASE_URL = 'https://dapwpgvnfjcfqqhrpxla.supabase.co';
+    const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImRhcHdwZ3ZuZmpjZnFxaHJweGxhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDcwNDA4ODgsImV4cCI6MjA2MjYxNjg4OH0.ICC0UsLlzJDNre7rFCeD3k6iVzo6jOJgn3PhABpEMsQ';
+    const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
     // 1️⃣ Check session & VIP access
     async function ensureVIP() {
       try {
-        const res = await fetch('/api/session', { credentials: 'include' });
-        if (!res.ok) throw new Error();
-        const user = await res.json();
-        if (!user || user.role !== 'vip') throw new Error();
+        const { data: { session }, error } = await supabase.auth.getSession();
+        if (error || !session) throw new Error('No active session');
+        const userId = session.user.id;
+        const { data: user, error: userError } = await supabase
+          .from('users')
+          .select('role')
+          .eq('id', userId)
+          .single();
+        if (userError || !user || user.role !== 'vip') throw new Error('Not a VIP user');
       } catch {
         alert('Please log in as VIP to view signals.');
         return window.location.href = 'login.html';
       }
     }
 
-    // 2️⃣ Fetch latest signals from your backend
+    // 2️⃣ Fetch latest signal from Supabase
     async function loadLatestSignal() {
       const card = document.getElementById('signalCard');
       try {
-        const res = await fetch('/api/signals', { credentials: 'include' });
-        if (!res.ok) throw new Error();
-        const signals = await res.json();       // expect array sorted by createdAt asc or desc
+        const { data: signals, error } = await supabase
+          .from('signals')
+          .select('*')
+          .order('created_at', { ascending: false })
+          .limit(1);
+        if (error) throw error;
         if (!signals.length) {
           card.innerHTML = '<p style="text-align:center;color:#aaa;padding:40px;">No signals published yet.</p>';
           return;
         }
-        // take the most recent (last) signal
-        const sig = signals[signals.length - 1];
-
-        // build HTML
+        const sig = signals[0];
         card.innerHTML = `
           <div class="signal-header">
-            <h2>${new Date(sig.createdAt).toLocaleDateString()}</h2>
-            <div class="time">${new Date(sig.createdAt).toLocaleTimeString()}</div>
+            <h2>${new Date(sig.created_at).toLocaleDateString()}</h2>
+            <div class="time">${new Date(sig.created_at).toLocaleTimeString()}</div>
           </div>
           <div class="signal-body">
             <div class="detail">Action: <span>${sig.action}</span></div>
             <div class="detail">Asset: <span>${sig.asset}</span></div>
-            <div class="detail">SL: <span id="slValue">${sig.sl}</span> <button class="copy-btn" onclick="copyText(sig.sl)">Copy</button></div>
-            <div class="detail">TP1: <span id="tp1Value">${sig.tp1}</span> <button class="copy-btn" onclick="copyText(sig.tp1)">Copy</button></div>
-            <div class="detail">TP2: <span id="tp2Value">${sig.tp2}</span> <button class="copy-btn" onclick="copyText(sig.tp2)">Copy</button></div>
+            <div class="detail">SL: <span id="slValue">${sig.sl}</span> <button class="copy-btn" onclick="copyText('${sig.sl}')">Copy</button></div>
+            <div class="detail">TP1: <span id="tp1Value">${sig.tp1}</span> <button class="copy-btn" onclick="copyText('${sig.tp1}')">Copy</button></div>
+            <div class="detail">TP2: <span id="tp2Value">${sig.tp2}</span> <button class="copy-btn" onclick="copyText('${sig.tp2}')">Copy</button></div>
           </div>
           <div class="admin-note">
             Note: ${sig.note || 'Trade at your own risk — always manage your risk!'}
@@ -206,7 +218,7 @@
 
     // 3️⃣ Utility: copy to clipboard
     function copyText(txt) {
-      navigator.clipboard.writeText(txt).then(_=>{
+      navigator.clipboard.writeText(txt).then(_ => {
         alert('Copied: ' + txt);
       });
     }
