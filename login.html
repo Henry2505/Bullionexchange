@@ -10,6 +10,8 @@
   <link rel="stylesheet" href="theme.css"/>
   <!-- Playfair & Roboto -->
   <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700&family=Roboto:wght@300;400;700&display=swap" rel="stylesheet"/>
+  <!-- Supabase JS SDK -->
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script>
     // initialize theme
     const saved = localStorage.getItem('theme');
@@ -143,10 +145,10 @@
     /* HELP LINKS */
     .help-links {
       text-align:center; margin-top:30px;
-      font-size: .9rem; color: var(--text-light);
+      font-size:.9rem; color: var(--text-light);
     }
     .help-links a { margin:0 8px; }
-    
+
     /* FOOTER */
     footer {
       text-align:center; padding:20px 0;
@@ -161,8 +163,6 @@
       .header-card h1 { font-size:2.4rem; }
     }
   </style>
-  <!-- Supabase JS -->
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 </head>
 <body>
 
@@ -214,7 +214,7 @@
   </footer>
 
   <script>
-    // slide-in on scroll
+    // SLIDE-IN ON SCROLL
     document.addEventListener('DOMContentLoaded', () => {
       document.querySelectorAll('.slide-in').forEach(el => {
         const obs = new IntersectionObserver((entries, o) => {
@@ -229,26 +229,26 @@
       });
     });
 
-    // theme toggle
+    // THEME TOGGLE
     const toggle = document.getElementById('theme-toggle');
     toggle.addEventListener('click', () => {
       const curr = document.documentElement.getAttribute('data-theme');
-      const next = curr==='dark'?'light':'dark';
+      const next = curr === 'dark' ? 'light' : 'dark';
       document.documentElement.setAttribute('data-theme', next);
       localStorage.setItem('theme', next);
-      toggle.textContent = next==='dark'?'🌞':'🌜';
+      toggle.textContent = next === 'dark' ? '🌞' : '🌜';
     });
     (() => {
       const theme = document.documentElement.getAttribute('data-theme');
-      toggle.textContent = theme==='dark'?'🌞':'🌜';
+      toggle.textContent = theme === 'dark' ? '🌞' : '🌜';
     })();
 
-    // initialize Supabase
+    // SUPABASE INITIALIZATION
     const SUPA_URL = 'https://dapwpgvnfjcfqqhrpxla.supabase.co';
     const SUPA_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImRhcHdwZ3ZuZmpjZnFxaHJweGxhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDcwNDA4ODgsImV4cCI6MjA2MjYxNjg4OH0.ICC0UsLlzJDNre7rFCeD3k6iVzo6jOJgn3PhABpEMsQ';
-    const supabase = supabaseJs.createClient(SUPA_URL, SUPA_KEY);
+    const supabase = supabase.createClient(SUPA_URL, SUPA_KEY);
 
-    // login logic
+    // LOGIN FORM LOGIC
     document.getElementById('loginForm').addEventListener('submit', async e => {
       e.preventDefault();
       const email = document.getElementById('email').value.trim().toLowerCase();
@@ -258,39 +258,47 @@
         return alert('Please enter both email and password.');
       }
 
-      // 1. sign in
+      // 1) SIGN IN
       const { data: { user }, error: signErr } = await supabase.auth.signInWithPassword({ email, password });
       if (signErr) {
-        if (signErr.message.includes('Invalid login credentials')) {
-          alert('🚫 You don’t have an account with us yet – you need to apply.');
-          return setTimeout(() => window.location.href='CBE_apply.html', 2000);
-        }
-        return alert('🚫 ' + signErr.message);
+        // No account → apply
+        alert('🚫 No account found. Redirecting to application page...');
+        return setTimeout(() => window.location.href = 'CBE_apply.html', 2000);
       }
 
-      // 2. check payment status
-      const { data: payments, error: payErr } = await supabase
+      // 2) PAYMENT RECORD
+      const { data: payment, error: payErr } = await supabase
         .from('payment_records')
         .select('status')
         .eq('email', email)
         .limit(1)
         .single();
-      if (payErr || !payments || payments.status !== 'approved') {
-        return alert('🚫 Your payment has not been approved yet. Please wait for approval.');
+
+      if (payErr || !payment) {
+        // Applied but no payment
+        alert('🚫 Application received—no payment yet. Redirecting to subscription page...');
+        return setTimeout(() => window.location.href = 'subscription.html', 2000);
+      }
+      if (payment.status !== 'approved') {
+        // Payment pending
+        alert('🚫 Payment pending approval. Redirecting to subscription page...');
+        return setTimeout(() => window.location.href = 'subscription.html', 2000);
       }
 
-      // 3. check user status (assumes you store it in profiles table)
+      // 3) PROFILE APPROVAL
       const { data: profile, error: profErr } = await supabase
         .from('profiles')
         .select('status, username')
         .eq('id', user.id)
         .limit(1)
         .single();
+
       if (profErr || !profile || profile.status !== 'approved') {
-        return alert('🚫 Your account is not approved yet. Please wait for admin approval.');
+        alert('🚫 Your account is pending admin approval. Please wait.');
+        return;
       }
 
-      // 4. success → session + redirect
+      // 4) ALL GOOD → SESSION & REDIRECT
       sessionStorage.setItem('cbeLoggedIn', 'true');
       sessionStorage.setItem('cbeUsername', profile.username || email);
       window.location.href = 'vip-dashboard.html';
