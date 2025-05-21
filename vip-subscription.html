@@ -26,6 +26,33 @@
       color: var(--text);
     }
 
+    /* Slide-in animation */
+    .slide-in {
+      opacity: 0;
+      transform: translateY(50px);
+      transition: all 0.8s ease-out;
+    }
+    .slide-in.visible {
+      opacity: 1;
+      transform: translateY(0);
+    }
+
+    /* Logo top-left */
+    .logo-top-left {
+      position: fixed;
+      top: 20px; left: 20px;
+      z-index: 3;
+    }
+    .logo-top-left img {
+      height: 80px; /* bolder/larger */
+      filter: drop-shadow(0 0 5px var(--gold));
+      cursor: pointer;
+      transition: transform .3s ease;
+    }
+    .logo-top-left img:hover {
+      transform: scale(1.05);
+    }
+
     /* Full-screen video & overlay */
     .video-background {
       position: fixed; top: 0; left: 0;
@@ -62,12 +89,8 @@
       text-shadow: 0 0 4px var(--gold); /* reduced blur */
     }
     .header-logo {
-      height: 60px;
+      height: 80px;
       flex-shrink: 0;
-      transition: transform .3s;
-    }
-    .header-logo:hover {
-      transform: scale(1.05);
     }
     .header-text {
       text-align: left;
@@ -163,6 +186,11 @@
 </head>
 <body>
 
+  <!-- Logo top-left -->
+  <div class="logo-top-left slide-in">
+    <a href="index.html"><img src="CBE_logo.png" alt="CBE Logo"></a>
+  </div>
+
   <!-- Background video & overlay -->
   <video class="video-background" autoplay muted loop playsinline>
     <source src="star-video.mp4" type="video/mp4">
@@ -172,9 +200,9 @@
   <!-- Theme toggle control -->
   <button id="theme-toggle" aria-label="Toggle light/dark">🌞</button>
 
-  <!-- Header with logo -->
-  <header>
-    <a href="index.html"><img src="CBE_logo.png" alt="CBE Logo" class="header-logo"></a>
+  <!-- Header with inline logo and text -->
+  <header class="slide-in">
+    <img src="CBE_logo.png" alt="CBE Logo" class="header-logo">
     <div class="header-text">
       <h1>VIP Subscription Plans</h1>
       <p>Unlock exclusive signals, in-depth insights, and one-on-one mentorship.</p>
@@ -183,7 +211,7 @@
 
   <!-- Plan Cards -->
   <div class="plans">
-    <div class="plan-card">
+    <div class="plan-card slide-in">
       <h2>Weekly Plan</h2>
       <div class="price">$50</div>
       <ul>
@@ -195,7 +223,7 @@
       <a href="payment-options.html?plan=weekly" class="subscribe-btn">Choose Weekly</a>
     </div>
 
-    <div class="plan-card">
+    <div class="plan-card slide-in">
       <h2>Monthly Plan</h2>
       <div class="price">$150</div>
       <ul>
@@ -208,7 +236,7 @@
       <a href="payment-options.html?plan=monthly" class="subscribe-btn">Choose Monthly</a>
     </div>
 
-    <div class="plan-card">
+    <div class="plan-card slide-in">
       <h2>Yearly Plan</h2>
       <div class="price">$1,500</div>
       <ul>
@@ -223,11 +251,24 @@
     </div>
   </div>
 
-  <footer>
+  <footer class="slide-in">
     © 2025 CBE: Chukwuemeka Bullion Exchange. All rights reserved.
   </footer>
 
   <script>
+    // IntersectionObserver for slide-in
+    document.addEventListener('DOMContentLoaded', () => {
+      const observer = new IntersectionObserver(entries => {
+        entries.forEach(entry => {
+          if (entry.isIntersecting) {
+            entry.target.classList.add('visible');
+            observer.unobserve(entry.target);
+          }
+        });
+      }, { threshold: 0.2 });
+      document.querySelectorAll('.slide-in').forEach(el => observer.observe(el));
+    });
+
     // Theme toggle logic
     const toggle = document.getElementById('theme-toggle');
     toggle.addEventListener('click', () => {
