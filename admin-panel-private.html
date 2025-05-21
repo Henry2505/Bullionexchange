@@ -1,8 +1,8 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
   <title>CBE Admin Panel</title>
   <!-- Google Font -->
   <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700&display=swap" rel="stylesheet"/>
@@ -17,245 +17,561 @@
   <!-- Supabase JavaScript Client -->
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js"></script>
   <style>
-    /* your existing CSS exactly as before… */
+    /* Theme variables */
+    :root {
+      --bg: #000000; /* Pure black for dark mode */
+      --fg: #f5f5f5; /* Light gray text for contrast */
+      --glass: #000000; /* Solid black for content areas in dark mode */
+    }
+    [data-theme="light"] {
+      --bg: #f0f0f0; /* Light gray for light mode */
+      --fg: #333; /* Dark text for light mode */
+      --glass: rgba(255,255,255,0.6); /* Semi-transparent white for glass effect in light mode */
+    }
+    body {
+      margin: 0;
+      padding: 0;
+      overflow-x: hidden;
+      font-family: Poppins, sans-serif;
+      background: var(--bg);
+      color: var(--fg);
+    }
+    a { color: inherit; text-decoration: none; }
+    @keyframes fadeIn { to { opacity: 1; } }
+    .glass {
+      background: var(--glass);
+      backdrop-filter: blur(12px);
+      border-radius: 12px;
+      box-shadow: 0 8px 32px rgba(0,0,0,0.4);
+      opacity: 0;
+      animation: fadeIn 0.8s forwards;
+    }
+    #sidebar {
+      width: 250px;
+      background: rgba(0,0,0,0.3);
+      transition: .3s;
+    }
+    #sidebar.collapsed { margin-left: -250px; }
+    #sidebar .nav-link { color: #ddd; }
+    #sidebar .nav-link.active, #sidebar .nav-link:hover {
+      background: rgba(255,255,255,0.1);
+      color: #fff;
+    }
+    #content { flex: 1; padding: 1.5rem; }
+    #toggle-btn { cursor: pointer; font-size: 1.5rem; }
+    .card-stat { cursor: grab; color: #fff; border: none; }
+    .card-stat.bg-warning { background: rgba(255,193,7,0.8); }
+    .form-control, .form-select {
+      background: rgba(255,255,255,0.1);
+      border: none;
+      color: #fff;
+    }
+    .form-control:focus, .form-select:focus {
+      background: rgba(255,255,255,0.15);
+      box-shadow: none;
+    }
+    .btn-primary { background: #ffd700; color: #000; border: none; }
+    .btn-success { background: #1cc88a; border: none; }
+    .btn-outline-secondary { color: #fff; border-color: rgba(255,255,255,0.4); }
+    .btn-outline-secondary:hover { background: rgba(255,255,255,0.1); }
+    h4 { color: #ffd700; }
+    #toast-container { position: fixed; bottom: 1rem; right: 1rem; z-index: 1050; }
+    /* DataTables header override */
+    table.dataTable thead th { background: rgba(255,255,255,0.1); }
   </style>
 </head>
 <body data-theme="dark">
-  <!-- overlay, sidebar, content… all your original HTML unchanged except Payments table header adds a Screenshot column -->
-  <!-- (I’m omitting the static HTML here to save space—you’ll use your original markup with the extra <th>Screenshot</th>) -->
+
+  <!-- Overlay & Toasts -->
+  <div class="overlay" style="position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); z-index: -1;"></div>
+  <div id="toast-container"></div>
+
+  <div class="d-flex glass" style="min-height:100vh;">
+    <!-- Sidebar -->
+    <nav id="sidebar" class="d-flex flex-column p-3">
+      <h4 class="text-center">CBE Admin</h4>
+      <ul class="nav nav-pills flex-column mb-auto mt-4" id="menu">
+        <li><a class="nav-link active" data-section="dashboard" href="#">Dashboard</a></li>
+        <li><a class="nav-link" data-section="users" href="#">Users</a></li>
+        <li><a class="nav-link" data-section="payments" href="#">Payments</a></li>
+        <li><a class="nav-link" data-section="messages" href="#">Messages</a></li>
+        <li><a class="nav-link" data-section="settings-payment" href="#">Payment Settings</a></li>
+        <li><a class="nav-link" data-section="trade-history" href="#">Trade History</a></li>
+        <li><a class="nav-link" data-section="trade-insights" href="#">Trade Insights</a></li>
+        <li><a class="nav-link" data-section="signals" href="#">Signals</a></li>
+        <li class="mt-auto"><a class="nav-link text-danger" href="#">Logout</a></li>
+      </ul>
+    </nav>
+
+    <!-- Main Content -->
+    <div id="content" class="d-flex flex-column">
+      <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+          <span id="toggle-btn">⋮</span>
+          <button id="theme-toggle" class="btn btn-sm btn-outline-secondary ms-2">Light Mode</button>
+        </div>
+        <div class="d-flex align-items-baseline">
+          <h2 id="section-title">Dashboard</h2>
+          <small id="current-datetime" class="text-white ms-3"></small>
+        </div>
+      </div>
+
+      <div id="sections">
+        <!-- Dashboard -->
+        <div class="section" data-section="dashboard">
+          <div class="row g-4" id="stats-container">
+            <div class="col-md-3">
+              <div class="card card-stat p-3 glass bg-primary" draggable="true" data-key="users">
+                <h5>Total Users</h5><h2 id="stat-users">0</h2>
+              </div>
+            </div>
+            <div class="col-md-3">
+              <div class="card card-stat p-3 glass bg-success" draggable="true" data-key="payments">
+                <h5>Pending Payments</h5><h2 id="stat-payments">0</h2>
+              </div>
+            </div>
+            <div class="col-md-3">
+              <div class="card card-stat p-3 glass bg-info" draggable="true" data-key="trades">
+                <h5>Trades This Month</h5><h2 id="stat-trades">0</h2>
+              </div>
+            </div>
+            <div class="col-md-3">
+              <div class="card card-stat p-3 glass bg-secondary" draggable="true" data-key="signals">
+                <h5>Signals Published</h5><h2 id="stat-signals">0</h2>
+              </div>
+            </div>
+            <div class="col-md-3">
+              <div class="card card-stat p-3 glass bg-warning" draggable="true" data-key="winrate">
+                <h5>Win Rate (%)</h5><h2 id="stat-winrate">0</h2>
+              </div>
+            </div>
+          </div>
+          <div class="row g-4 mt-4">
+            <div class="col-md-6"><canvas id="chart-pnl" height="200"></canvas></div>
+            <div class="col-md-6"><canvas id="chart-winrate" height="200"></canvas></div>
+          </div>
+          <div class="row g-4 mt-4">
+            <div class="col-md-6 glass p-3">
+              <h4>User Status Distribution</h4>
+              <canvas id="chart-user-status" height="200"></canvas>
+            </div>
+            <div class="col-md-6 glass p-3">
+              <h4>Payment Trends</h4>
+              <canvas id="chart-payments-trend" height="200"></canvas>
+            </div>
+          </div>
+        </div>
+
+        <!-- Users -->
+        <div class="section d-none p-4 mb-4 glass" data-section="users">
+          <h4>Users Verification</h4>
+          <input id="user-search" class="form-control mb-3" placeholder="Search users…" />
+          <table id="users-table" class="table table-hover text-white" style="width:100%">
+            <thead><tr><th>#</th><th>Email</th><th>Name</th><th>Registration Date</th><th>Status</th><th>Action</th></tr></thead>
+            <tbody></tbody>
+          </table>
+        </div>
+
+        <!-- Payments -->
+        <div class="section d-none p-4 mb-4 glass" data-section="payments">
+          <h4>Payment Approval</h4>
+          <button id="export-payments" class="btn btn-outline-secondary btn-sm mb-3">Export CSV/XLSX</button>
+          <table id="payments-table" class="table table-hover text-white" style="width:100%">
+            <thead>
+              <tr>
+                <th>#</th>
+                <th>User</th>
+                <th>Email</th>
+                <th>Amount</th>
+                <th>Payment Method</th>
+                <th>Date</th>
+                <th>Screenshot</th>
+                <th>Action</th>
+              </tr>
+            </thead>
+            <tbody></tbody>
+          </table>
+        </div>
+
+        <!-- Messages -->
+        <div class="section d-none p-4 mb-4 glass" data-section="messages">
+          <h4>Contact Messages</h4>
+          <input id="msg-search" class="form-control mb-3" placeholder="Search messages…" />
+          <table id="messages-table" class="table table-hover text-white" style="width:100%">
+            <thead><tr><th>#</th><th>From</th><th>Message</th><th>Date</th><th>Action</th></tr></thead>
+            <tbody></tbody>
+          </table>
+        </div>
+
+        <!-- Payment Settings -->
+        <div class="section d-none p-4 mb-4 glass" data-section="settings-payment">
+          <h4>Payment Settings</h4>
+          <ul class="nav nav-pills mb-3">
+            <li class="nav-item"><button class="nav-link active" data-bs-toggle="pill" data-bs-target="#paystack-tab">Paystack</button></li>
+            <li class="nav-item"><button class="nav-link" data-bs-toggle="pill" data-bs-target="#crypto-tab">Crypto</button></li>
+          </ul>
+          <div class="tab-content">
+            <div id="paystack-tab" class="tab-pane fade show active">
+              <form id="form-paystack">
+                <div class="mb-3"><label>Paystack Public Key</label><input type="text" class="form-control" id="ps-public" required/></div>
+                <div class="mb-3"><label>Paystack Secret Key</label><input type="text" class="form-control" id="ps-secret" required/></div>
+                <div class="mb-3"><label>Paystack Link</label><input type="url" class="form-control" id="ps-link" placeholder="https://paystack.com/..." required/></div>
+                <button class="btn btn-primary">Save Paystack</button>
+              </form>
+            </div>
+            <div id="crypto-tab" class="tab-pane fade">
+              <form id="form-crypto">
+                <div class="mb-3"><label>BTC Wallet</label><input type="text" class="form-control" id="addr-btc" required/></div>
+                <div class="mb-3"><label>ETH Wallet</label><input type="text" class="form-control" id="addr-eth" required/></div>
+                <div class="mb-3"><label>TRX Wallet</label><input type="text" class="form-control" id="addr-trx" required/></div>
+                <div class="mb-3"><label>USDT (TRC20)</label><input type="text" class="form-control" id="addr-usdt" required/></div>
+                <button class="btn btn-primary">Save Crypto</button>
+              </form>
+            </div>
+          </div>
+        </div>
+
+        <!-- Trade History -->
+        <div class="section d-none p-4 mb-4 glass" data-section="trade-history">
+          <h4>Trade History</h4>
+          <div class="row g-2 mb-3 align-items-end">
+            <div class="col-md-3">
+              <label>Select Month</label>
+              <select id="month-select" class="form-select">
+                <option value="01">January</option>
+                <option value="02">February</option>
+                <option value="03">March</option>
+                <option value="04">April</option>
+                <option value="05">May</option>
+                <option value="06">June</option>
+                <option value="07">July</option>
+                <option value="08">August</option>
+                <option value="09">September</option>
+                <option value="10">October</option>
+                <option value="11">November</option>
+                <option value="12">December</option>
+              </select>
+            </div>
+            <div class="col-md-3"><label>Search</label><input id="trade-search" class="form-control"/></div>
+            <div class="col-auto"><button id="export-history" class="btn btn-outline-secondary">Export</button></div>
+          </div>
+          <form id="trade-upload-form" class="border p-3 mb-4 glass">
+            <div class="row g-3">
+              <div class="col-md-3"><label>Date</label><input type="date" class="form-control" id="trade-date" required/></div>
+              <div class="col-md-3"><label>Asset</label><input list="asset-list" class="form-control" id="trade-pair" required/></div>
+              <div class="col-md-3"><label>Notes</label><input type="text" class="form-control" id="trade-notes"/></div>
+              <div class="col-md-3"><label>Screenshot</label><input type="file" accept="image/*" class="form-control" id="trade-file" required/></div>
+            </div>
+            <div class="mt-3"><button class="btn btn-success">Add Trade</button></div>
+          </form>
+          <table id="history-table" class="table table-striped text-white" style="width:100%">
+            <thead><tr><th>Date</th><th>Asset</th><th>Notes</th><th>Screenshot</th></tr></thead>
+            <tbody></tbody>
+          </table>
+        </div>
+
+        <!-- Trade Insights -->
+        <div class="section d-none p-4 mb-4 glass" data-section="trade-insights">
+          <h4>Weekly Pips Insights</h4>
+          <form id="insights-form" class="row g-3 mb-4">
+            <div class="col-md-4"><label>Week Ending</label><input type="date" id="insight-week" class="form-control" required/></div>
+            <div class="col-md-4"><label>Pips Gained</label><input type="number" id="insight-pips" class="form-control" required/></div>
+            <div class="col-md-4"><label>Note</label><textarea id="insight-note" class="form-control"></textarea></div>
+            <div class="col-12"><button class="btn btn-success">Post Insight</button></div>
+          </form>
+          <ul class="list-group" id="insights-list"></ul>
+        </div>
+
+        <!-- Signals -->
+        <div class="section d-none p-4 mb-4 glass" data-section="signals">
+          <h4>Publish Signals</h4>
+          <form id="signals-form" class="border p-3 mb-4 glass">
+            <div class="row g-3">
+              <div class="col-md-3"><label>Asset / Pair</label><input list="asset-list" id="signal-asset" class="form-control" required/></div>
+              <div class="col-md-2"><label>Type</label><select id="signal-type" class="form-select"><option>BUY</option><option>SELL</option></select></div>
+              <div class="col-md-2"><label>SL</label><input id="signal-sl" class="form-control" required/></div>
+              <div class="col-md-2"><label>TP1</label><input id="signal-tp1" class="form-control" required/></div>
+              <div class="col-md-2"><label>TP2</label><input id="signal-tp2" class="form-control"/></div>
+              <div class="col-12"><label>Notes</label><textarea id="signal-note" class="form-control"></textarea></div>
+            </div>
+            <div class="mt-3"><button class="btn btn-primary">Publish Signal</button></div>
+          </form>
+          <ul class="list-group" id="signals-list"></ul>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Reply Modal -->
+  <div class="modal fade" id="replyModal"><div class="modal-dialog">
+    <form class="modal-content glass p-4" id="reply-form">
+      <div class="modal-header">
+        <h5 class="modal-title">Reply to Message</h5>
+        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body">
+        <input type="hidden" id="reply-email"/>
+        <div class="mb-3"><label>To</label><input id="reply-to" class="form-control" readonly/></div>
+        <div class="mb-3"><label>Message</label><textarea id="reply-body" class="form-control" rows="4" required></textarea></div>
+      </div>
+      <div class="modal-footer"><button class="btn btn-success">Send Reply</button></div>
+    </form>
+  </div></div>
+
+  <!-- Screenshot Modal (Added for Payments) -->
+  <div class="modal fade" id="screenshotModal"><div class="modal-dialog modal-lg">
+    <div class="modal-content glass p-4">
+      <div class="modal-header">
+        <h5 class="modal-title">Payment Screenshot</h5>
+        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body">
+        <img id="screenshot-img" src="" class="img-fluid" />
+      </div>
+    </div>
+  </div></div>
 
   <!-- Scripts -->
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+  <!-- jQuery & DataTables JS -->
   <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
   <script src="https://cdn.datatables.net/1.13.4/js/jquery.dataTables.min.js"></script>
   <script src="https://cdn.datatables.net/1.13.4/js/dataTables.bootstrap5.min.js"></script>
-
   <script>
-    // 1) Supabase init
+    // Initialize Supabase client
     const SUPABASE_URL = 'https://dapwpgvnfjcfqqhrpxla.supabase.co';
-    const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ5...';
+    const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImRhcHdwZ3ZuZmpjZnFxaHJweGxhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDcwNDA4ODgsImV4cCI6MjA2MjYxNjg4OH0.ICC0UsLlzJDNre7rFCeD3k6iVzo6jOJgn3PhABpEMsQ';
     const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
-    // 2) Toast helper
-    function showToast(msg, ok = true) {
-      const id = 't' + Date.now();
-      $('#toast-container').append(`
-        <div id="${id}" class="toast align-items-center text-white ${ok?'bg-success':'bg-danger'} border-0">
+    // Dummy Data (for sections not yet fully wired)
+    const dummyData = {
+      users: [
+        { id:1,email:'alice@example.com',name:'Alice',registered:'2025-01-15',status:'Active' },
+        { id:2,email:'bob@example.com',name:'Bob',registered:'2025-03-02',status:'Pending' }
+      ],
+      messages: [
+        { id:1,from:'Charlie',email:'charlie@example.com',text:'Need help',date:'2025-05-18' }
+      ],
+      trades: [
+        { date:'2025-05-05',asset:'GOLD',notes:'Good entry',screenshot:'' }
+      ],
+      userStatusDist: { Active:60, Pending:25, Suspended:15 },
+      paymentTrends: [
+        { week:'W1',amount:1200 },
+        { week:'W2',amount:1500 },
+        { week:'W3',amount:900 },
+        { week:'W4',amount:1700 }
+      ]
+    };
+
+    // Helpers
+    function showToast(msg, ok=true){
+      const id='t'+Date.now();
+      document.getElementById('toast-container').insertAdjacentHTML('beforeend',`
+        <div id="${id}" class="toast align-items-center text-white ${ok?'bg-success':'bg-danger'} border-0" role="alert">
           <div class="d-flex">
             <div class="toast-body">${msg}</div>
-            <button class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast"></button>
+            <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast"></button>
           </div>
         </div>`);
-      new bootstrap.Toast(document.getElementById(id), { delay: 3000 }).show();
+      new bootstrap.Toast(document.getElementById(id),{delay:3000}).show();
     }
 
-    // 3) Common functions
-    function openReply(email) {
-      $('#reply-email').val(email);
-      $('#reply-to').val(email);
-      new bootstrap.Modal($('#replyModal')).show();
-    }
-    async function approveUser(id) {
-      const { error } = await supabase.from('users').update({ status: 'Active' }).eq('id', id);
-      showToast(error ? 'User approval failed' : 'User approved', !error);
-      $('#users-table').DataTable().ajax.reload(null, false);
-    }
-    async function approvePayment(id) {
-      const { error } = await supabase.from('payments').update({ approved: true }).eq('id', id);
-      showToast(error ? 'Payment approval failed' : 'Payment approved', !error);
-      $('#payments-table').DataTable().ajax.reload(null, false);
-    }
+    // Theme toggle
+    const themeBtn = document.getElementById('theme-toggle');
+    themeBtn.onclick = () => {
+      const next = document.body.getAttribute('data-theme') === 'dark' ? 'light' : 'dark';
+      document.body.setAttribute('data-theme', next);
+      themeBtn.textContent = next === 'dark' ? 'Light Mode' : 'Dark Mode';
+    };
 
-    // 4) Document ready
-    $(function() {
-      // Sidebar toggles & theme (unchanged)…
-      $('#toggle-btn').click(() => $('#sidebar').toggleClass('collapsed'));
-      $('#theme-toggle').click(() => {
-        const next = $('body').attr('data-theme') === 'dark' ? 'light' : 'dark';
-        $('body').attr('data-theme', next);
-        $('#theme-toggle').text(next === 'dark' ? 'Light Mode' : 'Dark Mode');
-      });
-      $('#menu .nav-link').click(function(e) {
+    // Sidebar & nav
+    document.getElementById('toggle-btn').onclick = () => document.getElementById('sidebar').classList.toggle('collapsed');
+    document.querySelectorAll('#menu .nav-link').forEach(link => {
+      link.onclick = e => {
         e.preventDefault();
-        $('#menu .nav-link').removeClass('active');
-        $(this).addClass('active');
-        $('#section-title').text($(this).text());
-        $('.section').addClass('d-none');
-        $(`.section[data-section="${$(this).data('section')}"]`).removeClass('d-none');
-      });
-      new Sortable($('#stats-container')[0], { animation: 150 });
+        document.querySelectorAll('#menu .nav-link').forEach(l => l.classList.remove('active'));
+        link.classList.add('active');
+        document.getElementById('section-title').textContent = link.textContent;
+        document.querySelectorAll('.section').forEach(sec =>
+          sec.classList.toggle('d-none', sec.dataset.section !== link.dataset.section)
+        );
+        if (link.dataset.section === 'payments') {
+          loadPayments();
+        } else if (link.dataset.section === 'users') {
+          loadUsers();
+        } else if (link.dataset.section === 'messages') {
+          loadMessages();
+        } else if (link.dataset.section === 'trade-history') {
+          loadTradeHistory();
+        }
+      };
+    });
 
-      // USERS table
+    // Drag & drop stats
+    new Sortable(document.getElementById('stats-container'), { animation: 150 });
+
+    // Open reply modal with email
+    function openReply(email) {
+      document.getElementById('reply-email').value = email;
+      document.getElementById('reply-to').value = email;
+      new bootstrap.Modal(document.getElementById('replyModal')).show();
+    }
+
+    // View screenshot in modal
+    function viewScreenshot(url) {
+      document.getElementById('screenshot-img').src = url;
+      new bootstrap.Modal(document.getElementById('screenshotModal')).show();
+    }
+
+    // Load users from Supabase
+    async function loadUsers() {
+      const { data, error } = await supabase.from('users').select('*');
+      if (error) {
+        console.error('Error fetching users:', error);
+        showToast('Error fetching users', false);
+        return;
+      }
+      $('#users-table').DataTable().clear().rows.add(data || dummyData.users).draw();
+    }
+
+    // Load payments from Supabase
+    async function loadPayments() {
+      const { data, error } = await supabase.from('payments').select('*');
+      if (error) {
+        console.error('Error fetching payments:', error);
+        showToast('Error fetching payments', false);
+        return;
+      }
+      $('#payments-table').DataTable().clear().rows.add(data || []).draw();
+    }
+
+    // Approve payment
+    async function approvePayment(paymentId) {
+      const { error } = await supabase
+        .from('payments')
+        .update({ status: 'approved' })
+        .eq('id', paymentId);
+      if (error) {
+        showToast('Error approving payment', false);
+        console.error('Error approving payment:', error);
+      } else {
+        showToast('Payment approved successfully');
+        loadPayments(); // Refresh the table
+      }
+    }
+
+    // Load messages from Supabase
+    async function loadMessages() {
+      const { data, error } = await supabase.from('messages').select('*');
+      if (error) {
+        console.error('Error fetching messages:', error);
+        showToast('Error fetching messages', false);
+        return;
+      }
+      $('#messages-table').DataTable().clear().rows.add(data || dummyData.messages).draw();
+    }
+
+    // Load trade history from Supabase
+    async function loadTradeHistory() {
+      const { data, error } = await supabase.from('trades').select('*');
+      if (error) {
+        console.error('Error fetching trade history:', error);
+        showToast('Error fetching trade history', false);
+        return;
+      }
+      $('#history-table').DataTable().clear().rows.add(data || dummyData.trades).draw();
+    }
+
+    // Initialize DataTables
+    $(document).ready(() => {
       $('#users-table').DataTable({
-        ajax: async (_, cb) => {
-          const { data, error } = await supabase.from('users').select('*').order('id');
-          cb({ data: error ? [] : data });
-        },
         columns: [
-          { data: 'id' }, { data: 'email' }, { data: 'name' },
-          { data: 'registered' }, { data: 'status' },
-          { data: null, orderable: false, render: (_,__,r) =>
-            r.status === 'Active'
-              ? '<span class="badge bg-success">Active</span>'
-              : `<button class="btn btn-sm btn-success" onclick="approveUser(${r.id})">Approve</button>`
-          }
+          { data: 'id' }, { data: 'email' }, { data: 'name' }, { data: 'registered' }, { data: 'status' },
+          { data: null, render: (_, r) => `<button class="btn btn-sm btn-success" onclick="alert('Approve ${r.name}')">Approve</button>` }
         ]
       });
-
-      // PAYMENTS table
       $('#payments-table').DataTable({
-        ajax: async (_, cb) => {
-          const { data, error } = await supabase.from('payments').select('*').order('date', { ascending: false });
-          cb({ data: error ? [] : data });
-        },
         columns: [
-          { data: 'id' }, { data: 'user' }, { data: 'email' },
-          { data: 'amount' }, { data: 'method' }, { data: 'date' },
-          { data: 'screenshot_url', render: url =>
-            url
-              ? `<a href="${url}" target="_blank"><img src="${url}" style="height:40px;object-fit:cover;border-radius:4px"/></a>`
-              : '—'
-          },
-          { data: null, orderable: false, render: (_,__,r) =>
-            r.approved
-              ? '<span class="badge bg-success">Approved</span>'
-              : `<button class="btn btn-sm btn-primary" onclick="approvePayment(${r.id})">Verify & Approve</button>`
-          }
+          { data: 'id' }, { data: 'user' }, { data: 'email' }, { data: 'amount' }, { data: 'method' }, { data: 'date' },
+          { data: 'screenshot', render: function(data) {
+              return data ? `<button class="btn btn-sm btn-info" onclick="viewScreenshot('${data}')">View Screenshot</button>` : 'No Screenshot';
+          }},
+          { data: null, render: function(data, type, row) {
+              return `<button class="btn btn-sm btn-primary" onclick="approvePayment(${row.id})">Approve</button>`;
+          }}
         ]
       });
-      $('#export-payments').click(() => $('#payments-table').DataTable().buttons().trigger());
-
-      // MESSAGES table
       $('#messages-table').DataTable({
-        ajax: async (_, cb) => {
-          const { data, error } = await supabase.from('messages').select('*').order('date', { ascending: false });
-          cb({ data: error ? [] : data });
-        },
         columns: [
           { data: 'id' }, { data: 'from' }, { data: 'text' }, { data: 'date' },
-          { data: null, orderable: false, render: (_,__,r) =>
-            `<button class="btn btn-sm btn-success" onclick="openReply('${r.email}')">Reply</button>`
-          }
+          { data: null, render: (_, r) => `<button class="btn btn-sm btn-success" onclick="openReply('${r.email}')">Reply</button>` }
         ]
-      });
-
-      // TRADE HISTORY upload & table
-      $('#trade-upload-form').submit(async e => {
-        e.preventDefault();
-        const file = $('#trade-file')[0].files[0];
-        const date = $('#trade-date').val();
-        const asset= $('#trade-pair').val();
-        const notes= $('#trade-notes').val();
-        // upload to storage
-        const { data:up, error:upErr } = await supabase
-          .storage.from('screenshots')
-          .upload(`screenshots/${Date.now()}_${file.name}`, file);
-        if (upErr) return showToast('Upload failed', false);
-        const url = `${SUPABASE_URL}/storage/v1/object/public/screenshots/${up.path}`;
-        // insert trade
-        const { error } = await supabase.from('trades').insert({ date, asset, notes, screenshot_url: url });
-        showToast(error ? 'Trade add failed' : 'Trade added', !error);
-        $('#history-table').DataTable().ajax.reload(null, false);
-        e.target.reset();
       });
       $('#history-table').DataTable({
-        ajax: async (_, cb) => {
-          const { data, error } = await supabase.from('trades').select('*').order('date', { ascending: false });
-          cb({ data: error ? [] : data });
-        },
         columns: [
           { data: 'date' }, { data: 'asset' }, { data: 'notes' },
-          { data: 'screenshot_url', render: url =>
-            url
-              ? `<a href="${url}" target="_blank"><img src="${url}" style="height:40px;object-fit:cover"/></a>`
-              : '—'
-          }
+          { data: 'screenshot', render: src => src ? `<img src="${src}" style="height:40px;object-fit:cover"/>` : '—' }
         ]
       });
-
-      // INSIGHTS form & list
-      async function loadInsights() {
-        const { data, error } = await supabase.from('insights').select('*').order('week');
-        const $list = $('#insights-list').empty();
-        if (!error) data.forEach(i => {
-          $list.append(`
-            <li class="list-group-item">
-              <strong>Week:</strong> ${i.week} | <strong>Pips:</strong> ${i.pips}<br>${i.note||''}
-            </li>`);
-        });
-      }
-      $('#insights-form').submit(async e => {
-        e.preventDefault();
-        const week = $('#insight-week').val();
-        const pips = +$('#insight-pips').val();
-        const note = $('#insight-note').val();
-        const { error } = await supabase.from('insights').insert({ week, pips, note });
-        showToast(error ? 'Insight failed' : 'Insight added', !error);
-        loadInsights();
-        e.target.reset();
-      });
-      loadInsights();
-
-      // SIGNALS form & list
-      async function loadSignals() {
-        const { data, error } = await supabase.from('signals').select('*').order('date_posted', { ascending: false });
-        const $list = $('#signals-list').empty();
-        if (!error) data.forEach(s => {
-          $list.append(`
-            <li class="list-group-item">
-              <strong>${s.asset} (${s.type})</strong><br>
-              SL: ${s.sl} | TP1: ${s.tp1}${s.tp2 ? ' | TP2: '+s.tp2 : ''}<br>
-              ${s.note||''}<br>
-              <small>${new Date(s.date_posted).toLocaleDateString()}</small>
-            </li>`);
-        });
-      }
-      $('#signals-form').submit(async e => {
-        e.preventDefault();
-        const vals = {
-          asset: $('#signal-asset').val(),
-          type:  $('#signal-type').val(),
-          sl:    $('#signal-sl').val(),
-          tp1:   $('#signal-tp1').val(),
-          tp2:   $('#signal-tp2').val(),
-          note:  $('#signal-note').val(),
-          date_posted: new Date().toISOString()
-        };
-        const { error } = await supabase.from('signals').insert(vals);
-        showToast(error ? 'Signal failed' : 'Signal published', !error);
-        loadSignals();
-        e.target.reset();
-      });
-      loadSignals();
-
-      // DASHBOARD stats & charts (counts + dummy charts)
-      async function loadDashboard() {
-        // counts
-        const [{ count: uCnt }] = await supabase.from('users').select('id', { count: 'exact' });
-        const [{ count: pCnt }] = await supabase.from('payments').select('id', { count: 'exact' }).eq('approved', false);
-        const thisMonth = new Date().toISOString().slice(0,7);
-        const [{ count: tCnt }] = await supabase.from('trades').select('id', { count: 'exact' }).like('date', thisMonth+'%');
-        const [{ count: sCnt }] = await supabase.from('signals').select('id', { count: 'exact' });
-        $('#stat-users').text(uCnt);
-        $('#stat-payments').text(pCnt);
-        $('#stat-trades').text(tCnt);
-        $('#stat-signals').text(sCnt);
-        // win rate
-        const { data:ins } = await supabase.from('insights').select('pips');
-        const wins = ins.filter(i => i.pips>0).length;
-        $('#stat-winrate').text(ins.length ? Math.round(wins/ins.length*100) : 0);
-        // keep your original chart code here (it uses dummyData arrays),
-        // or swap in real data from `ins`, etc., as you prefer
-      }
-      loadDashboard();
-
-      // clock
-      function updateClock() {
-        $('#current-datetime').text(new Date().toLocaleString());
-      }
-      updateClock();
-      setInterval(updateClock, 60000);
     });
+
+    // Dashboard: stats & charts
+    async function loadDashboard() {
+      const { data: usersData, error: usersError } = await supabase.from('users').select('id', { count: 'exact' });
+      const { data: paymentsData, error: paymentsError } = await supabase.from('payments').select('id', { count: 'exact' }).eq('status', 'pending');
+      const { data: tradesData, error: tradesError } = await supabase.from('trades').select('id', { count: 'exact' });
+      const stats = {
+        users: usersError ? 0 : usersData.length,
+        payments: paymentsError ? 0 : paymentsData.length,
+        trades: tradesError ? 0 : tradesData.length,
+        signals: 0 // Placeholder, adjust if signals table exists
+      };
+      document.getElementById('stat-users').textContent = stats.users;
+      document.getElementById('stat-payments').textContent = stats.payments;
+      document.getElementById('stat-trades').textContent = stats.trades;
+      document.getElementById('stat-signals').textContent = stats.signals;
+      const insights = await fetch('/api/insights').then(r => r.json())
+        .catch(_ => [{ week: 'W1', pips: 0 }, { week: 'W2', pips: 0 }, { week: 'W3', pips: 0 }, { week: 'W4', pips: 0 }]);
+      const wins = insights.filter(i => i.pips > 0).length;
+      const winRate = Math.round((wins / insights.length) * 100);
+      document.getElementById('stat-winrate').textContent = winRate;
+
+      new Chart(document.getElementById('chart-pnl'), {
+        type: 'line',
+        data: { labels: insights.map(i => i.week), datasets: [{ data: insights.map(i => i.pips), tension: 0.4 }] },
+        options: { responsive: true, plugins: { legend: { display: false } } }
+      });
+      new Chart(document.getElementById('chart-winrate'), {
+        type: 'bar',
+        data: { labels: insights.map(i => i.week), datasets: [{ data: insights.map(i => i.pips > 0 ? 100 : 0) }] },
+        options: { responsive: true, plugins: { legend: { display: false } } }
+      });
+      new Chart(document.getElementById('chart-user-status'), {
+        type: 'pie',
+        data: {
+          labels: Object.keys(dummyData.userStatusDist),
+          datasets: [{ data: Object.values(dummyData.userStatusDist) }]
+        },
+        options: { responsive: true }
+      });
+      new Chart(document.getElementById('chart-payments-trend'), {
+        type: 'line',
+        data: {
+          labels: dummyData.paymentTrends.map(d => d.week),
+          datasets: [{ data: dummyData.paymentTrends.map(d => d.amount), tension: 0.4 }]
+        },
+        options: { responsive: true, plugins: { legend: { display: false } } }
+      });
+    }
+    loadDashboard();
+
+    // Real-time clock
+    function updateClock() {
+      document.getElementById('current-datetime').textContent = new Date().toLocaleString();
+    }
+    updateClock();
+    setInterval(updateClock, 60000);
   </script>
 </body>
 </html>
