@@ -11,7 +11,7 @@
   <!-- Playfair & Roboto -->
   <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700&family=Roboto:wght@300;400;700&display=swap" rel="stylesheet"/>
   <script>
-    // initialize theme
+    // Initialize theme
     const saved = localStorage.getItem('theme');
     document.documentElement.setAttribute('data-theme', saved || 'dark');
   </script>
@@ -211,8 +211,16 @@
     © 2025 Chukwuemeka Bullion Exchange. All rights reserved.
   </footer>
 
+  <!-- Supabase CDN -->
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js"></script>
   <script>
-    // Slide-in on scroll
+    // Initialize Supabase client with your credentials
+    const supabase = Supabase.createClient(
+      'https://dapwpgvnfjcfqqhrpxla.supabase.co',
+      'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImRhcHdwZ3ZuZmpjZnFxaHJweGxhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDcwNDA4ODgsImV4cCI6MjA2MjYxNjg4OH0.ICC0UsLlzJDNre7rFCeD3k6iVzo6jOJgn3PhABpEMsQ'
+    );
+
+    // Slide-in on scroll (unchanged)
     document.addEventListener('DOMContentLoaded', () => {
       document.querySelectorAll('.slide-in').forEach(el => {
         const obs = new IntersectionObserver((entries, o) => {
@@ -230,7 +238,7 @@
       });
     });
 
-    // Theme toggle
+    // Theme toggle (unchanged)
     const toggle = document.getElementById('theme-toggle');
     toggle.addEventListener('click', () => {
       const curr = document.documentElement.getAttribute('data-theme');
@@ -239,13 +247,13 @@
       localStorage.setItem('theme', next);
       toggle.textContent = next === 'dark' ? '🌞' : '🌜';
     });
-    (()=>{
+    (() => {
       const theme = document.documentElement.getAttribute('data-theme');
       toggle.textContent = theme === 'dark' ? '🌞' : '🌜';
     })();
 
-    // Login logic with redirect for non-existent user
-    document.getElementById('loginForm').addEventListener('submit', function(e) {
+    // Login logic with Supabase
+    document.getElementById('loginForm').addEventListener('submit', async function(e) {
       e.preventDefault();
       const rawEmail = document.getElementById('email').value.trim();
       const email = rawEmail.toLowerCase();
@@ -255,32 +263,66 @@
         return alert('Please enter both email and password.');
       }
 
-      let users = JSON.parse(localStorage.getItem('users') || '[]');
-      let payments = JSON.parse(localStorage.getItem('paymentRecords') || '[]');
-      if (!Array.isArray(users)) users = [users];
-      if (!Array.isArray(payments)) payments = [payments];
+      try {
+        // Authenticate user with Supabase
+        const { data: authData, error: authError } = await supabase.auth.signInWithPassword({
+          email,
+          password,
+        });
 
-      const user = users.find(u => u.email?.trim().toLowerCase() === email);
-      if (!user) {
-        alert('🚫 You don’t have an account with us yet – you need to apply.');
-        setTimeout(() => {
-          window.location.href = 'CBE_apply.html';
-        }, 2000);
-        return;
-      }
+        if (authError) {
+          throw authError;
+        }
 
-      const payment = payments.find(p => p.email?.trim().toLowerCase() === email);
-      if (!payment || payment.status !== 'approved') {
-        return alert('🚫 Your payment has not been approved yet. Please wait for approval.');
-      }
-      if (user.status !== 'approved') {
-        return alert('🚫 Your account is not approved yet. Please wait for admin approval.');
-      }
+        // Fetch user data from 'users' table
+        const { data: userData, error: userError } = await supabase
+          .from('users')
+          .select('*')
+          .eq('email', email)
+          .single();
 
-      // Success
-      sessionStorage.setItem('cbeLoggedIn', 'true');
-      sessionStorage.setItem('cbeUsername', user.username || rawEmail);
-      window.location.href = 'vip-dashboard.html';
+        if (userError) {
+          throw userError;
+        }
+
+        // Fetch payment data from 'paymentRecords' table
+        const { data: paymentData, error: paymentError } = await supabase
+          .from('paymentRecords')
+          .select('*')
+          .eq('email', email)
+          .single();
+
+        if (paymentError) {
+          throw paymentError;
+        }
+
+        // Verify payment status
+        if (!paymentData || paymentData.status !== 'approved') {
+          return alert('🚫 Your payment has not been approved yet. Please wait for approval.');
+        }
+
+        // Verify account status
+        if (userData.status !== 'approved') {
+          return alert('🚫 Your account is not approved yet. Please wait for admin approval.');
+        }
+
+        // Success: Store session and redirect
+        sessionStorage.setItem('cbeLoggedIn', 'true');
+        sessionStorage.setItem('cbeUsername', userData.username || rawEmail);
+        window.location.href = 'vip-dashboard.html';
+      } catch (error) {
+        if (error.message.includes('Invalid login credentials')) {
+          alert('🚫 Invalid email or password. Please try again.');
+        } else if (error.message.includes('User not found') || error.status === 404) {
+          alert('🚫 You don’t have an account with us yet – you need to apply.');
+          setTimeout(() => {
+            window.location.href = 'CBE_apply.html';
+          }, 2000);
+        } else {
+          alert('🚫 An error occurred. Please try again later.');
+          console.error('Login error:', error.message);
+        }
+      }
     });
   </script>
 </body>
