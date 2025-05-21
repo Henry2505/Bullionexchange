@@ -226,22 +226,22 @@
       <div class="crypto-grid">
         <div class="crypto-card">
           <div class="label">Bitcoin (BTC)</div>
-          <div class="address" id="btcAddr">—</div>
+          <div class="address" id="btcAddr">1H9Bny4d3UXm4PUypAVPFCr4FWWa4wR5jr</div>
           <button class="copy-btn" data-copy="btcAddr">Copy</button>
         </div>
         <div class="crypto-card">
           <div class="label">Ethereum (ERC-20)</div>
-          <div class="address" id="ethAddr">—</div>
+          <div class="address" id="ethAddr">0x2b54218c1a53ccf4e34fab52fa455307f75cf9a5</div>
           <button class="copy-btn" data-copy="ethAddr">Copy</button>
         </div>
         <div class="crypto-card">
           <div class="label">TRON (TRC-20)</div>
-          <div class="address" id="trxAddr">—</div>
+          <div class="address" id="trxAddr">TWR85S2xpkPVNXeotJcFqJuRKnhbUnTguP</div>
           <button class="copy-btn" data-copy="trxAddr">Copy</button>
         </div>
         <div class="crypto-card">
           <div class="label">USDT (TRC-20)</div>
-          <div class="address" id="usdtAddr">—</div>
+          <div class="address" id="usdtAddr">TWR85S2xpkPVNXeotJcFqJuRKnhbUnTguP</div>
           <button class="copy-btn" data-copy="usdtAddr">Copy</button>
         </div>
       </div>
@@ -285,6 +285,8 @@
         }, { threshold: 0.2, rootMargin: '0px 0px -50px 0px' });
         obs.observe(el);
       });
+      // Load crypto addresses from Supabase on page load
+      loadCryptoAddresses();
     });
 
     // Theme toggle logic
@@ -301,83 +303,71 @@
       toggle.textContent = theme === 'dark' ? '🌞' : '🌜';
     })();
 
-    // Supabase setup
-    const SUPABASE_URL = 'https://dapwpgvnfjcfqqhrpxla.supabase.co';
-    const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImRhcHdwZ3ZuZmpjZnFxaHJweGxhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDcwNDA4ODgsImV4cCI6MjA2MjYxNjg4OH0.ICC0UsLlzJDNre7rFCeD3k6iVzo6jOJgn3PhABpEMsQ';
-    const supabase = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
-
-    // Load plans from Supabase
-    async function loadPlans() {
-      const { data, error } = await supabase.from('plans').select('*');
-      if (error) {
-        console.error('Error fetching plans:', error);
-        return;
-      }
-      const plans = data.reduce((acc, plan) => {
-        acc[plan.id] = plan;
-        return acc;
-      }, {});
-      const params = new URLSearchParams(location.search);
-      const key = params.get('plan') || 'weekly';
-      const ch = plans[key] || { name: 'Unknown Plan', price: 0, savings: 0 };
-      document.getElementById('plan-name').textContent = ch.name;
-      document.getElementById('plan-price').textContent = `$${ch.price}`;
-      document.getElementById('plan-save').textContent = `$${ch.savings}`;
-    }
-
-    // Load crypto addresses from Supabase
-    async function loadCryptoAddresses() {
-      const { data, error } = await supabase.from('crypto_addresses').select('*');
-      if (error) {
-        console.error('Error fetching crypto addresses:', error);
-        return;
-      }
-      data.forEach(crypto => {
-        const el = document.getElementById(`${crypto.currency.toLowerCase()}Addr`);
-        if (el) {
-          el.textContent = crypto.address;
-        }
-      });
-    }
-
-    // Call load functions on page load
-    document.addEventListener('DOMContentLoaded', () => {
-      loadPlans();
-      loadCryptoAddresses();
-    });
+    // Plan details
+    const params = new URLSearchParams(location.search);
+    const key = params.get('plan') || 'weekly';
+    const cfg = {
+      weekly:  {n:'Weekly Plan',  p:50,  s:0},
+      monthly: {n:'Monthly Plan', p:150, s:50},
+      yearly:  {n:'Yearly Plan',  p:1500, s:300}
+    };
+    const ch = cfg[key];
+    document.getElementById('plan-name').textContent  = ch.n;
+    document.getElementById('plan-price').textContent = `$${ch.p}`;
+    document.getElementById('plan-save').textContent  = `$${ch.s}`;
 
     // Paystack button
-    document.getElementById('paystackBtn').onclick = () => {
+    document.getElementById('paystackBtn').onclick = ()=> {
       window.location.href = 'https://your-paystack-link.example.com';
     };
 
     // Crypto toggle & copy
     const cryptoBtn = document.getElementById('cryptoBtn'),
           section   = document.getElementById('cryptoSection');
-    cryptoBtn.addEventListener('click', () => {
+    cryptoBtn.addEventListener('click', ()=> {
       if (section.style.display === 'block') {
         section.classList.remove('visible');
-        setTimeout(() => section.style.display = 'none', 600);
+        setTimeout(()=> section.style.display = 'none', 600);
       } else {
         section.style.display = 'block';
-        setTimeout(() => section.classList.add('visible'), 50);
+        setTimeout(()=> section.classList.add('visible'), 50);
       }
     });
-    document.querySelectorAll('.copy-btn').forEach(btn => {
-      btn.addEventListener('click', () => {
+    document.querySelectorAll('.copy-btn').forEach(btn=>{
+      btn.addEventListener('click', ()=> {
         const text = document.getElementById(btn.dataset.copy).textContent;
-        navigator.clipboard.writeText(text).then(() => {
+        navigator.clipboard.writeText(text).then(()=>{
           btn.textContent = 'Copied!';
-          setTimeout(() => btn.textContent = 'Copy', 1500);
+          setTimeout(()=> btn.textContent = 'Copy', 1500);
         });
       });
     });
+
+    // Supabase setup
+    const SUPABASE_URL = 'https://dapwpgvnfjcfqqhrpxla.supabase.co';
+    const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImRhcHdwZ3ZuZmpjZnFxaHJweGxhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDcwNDA4ODgsImV4cCI6MjA2MjYxNjg4OH0.ICC0UsLlzJDNre7rFCeD3k6iVzo6jOJgn3PhABpEMsQ';
+    const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+    // Function to fetch crypto addresses from Supabase
+    async function loadCryptoAddresses() {
+      const { data, error } = await supabase.from('crypto_addresses').select('code, address');
+      if (error) {
+        console.error('Error fetching crypto addresses:', error);
+        return; // Keep default addresses if fetch fails
+      }
+      data.forEach(item => {
+        const addrEl = document.getElementById(`${item.code}Addr`);
+        if (addrEl) {
+          addrEl.textContent = item.address;
+        }
+      });
+    }
 
     // Payment form handler
     const form = document.getElementById('paymentForm');
     const emailInput = document.getElementById('emailInput');
     const proofInput = document.getElementById('proofInput');
-    const successMsg = document.getElementById('successMessage');
+    const successMsg  = document.getElementById('successMessage');
 
     form.addEventListener('submit', async e => {
       e.preventDefault();
@@ -393,15 +383,14 @@
       if (urlError) {
         return alert('URL error: ' + urlError.message);
       }
-      const planName = document.getElementById('plan-name').textContent;
       const { error: insertError } = await supabase
-        .from('payments').insert([{ email: emailInput.value, plan: planName, proof_url: publicUrl }]);
+        .from('payments').insert([{ email:emailInput.value, plan:ch.n, proof_url:publicUrl }]);
       if (insertError) {
         return alert('Record error: ' + insertError.message);
       }
       successMsg.style.display = 'block';
       form.reset();
-      setTimeout(() => window.location.href = 'index.html', 3000);
+      setTimeout(()=> window.location.href = 'index.html', 3000);
     });
   </script>
 </body>
