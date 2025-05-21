@@ -353,6 +353,15 @@
     </div>
   </div></div>
 
+  <!-- Asset List -->
+  <datalist id="asset-list">
+    <option value="GOLD"/>
+    <option value="EUR/USD"/>
+    <option value="BTC/USD"/>
+    <option value="USD/JPY"/>
+    <option value="XAU/USD"/>
+  </datalist>
+
   <!-- Scripts -->
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
   <!-- jQuery & DataTables JS -->
@@ -474,7 +483,7 @@
         supabase.from('payments').select('id', { count: 'exact' }).eq('status', 'pending'),
         supabase.from('trades').select('id', { count: 'exact' }).gte('date', new Date(new Date().getFullYear(), new Date().getMonth(), 1).toISOString().split('T')[0]),
         supabase.from('signals').select('id', { count: 'exact' }),
-        supabase.from('insights').select('week_ending, pips_gained').order('week_ending', { ascending: false }).limit(4),
+        supabase.from('insights').select('week_ending, pips_gained').order('week_ending', { ascending: true }).limit(12), // Last 12 weeks for growth
         supabase.from('users').select('status').then(({ data }) => ({
           data: data.reduce((acc, { status }) => {
             acc[status] = (acc[status] || 0) + 1;
@@ -484,10 +493,10 @@
         })),
         supabase.from('payments').select('date, amount').then(({ data }) => ({
           data: Object.entries(data.reduce((acc, { date, amount }) => {
-            const week = `W${Math.ceil(new Date(date).getDate() / 7)}`;
+            const week = new Date(date).toISOString().slice(0,10); // Group by week start
             acc[week] = (acc[week] || 0) + amount;
             return acc;
-          }, {})).map(([week, amount]) => ({ week, amount })),
+          }, {})).map(([week, amount]) => ({ week, amount })).sort((a, b) => new Date(a.week) - new Date(b.week)).slice(-12), // Last 12 weeks
           error: null
         }))
       ]);
@@ -505,58 +514,118 @@
       document.getElementById('stat-signals').textContent = stats.signals;
 
       const insights = insightsError ? dummyData.insights : insightsData;
-      const wins = insights.filter(i => i.pips_gained > 0).length;
+      const cumulativePips = insights.reduce((acc, curr) => {
+        const last = acc.length ? acc[acc.length - 1].pips : 0;
+        acc.push({ week: curr.week_ending, pips: last + (curr.pips_gained || 0) });
+        return acc;
+      }, []);
+      const wins = insights.filter(i => (i.pips_gained || 0) > 0).length;
       const winRate = insights.length ? Math.round((wins / insights.length) * 100) : 0;
       document.getElementById('stat-winrate').textContent = winRate;
 
-      new Chart(document.getElementById('chart-pnl'), {
-        type: 'line',
-        data: {
-          labels: insights.map(i => i.week_ending || i.week),
-          datasets: [{
-            data: insights.map(i => i.pips_gained || 0),
-            tension: 0.4,
-            borderColor: '#ffd700',
-            backgroundColor: 'rgba(255,215,0,0.2)'
+      ```chartjs
+      {
+        "type": "line",
+        "data": {
+          "labels": cumulativePips.map(i => new Date(i.week).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })),
+          "datasets": [{
+            "label": "Cumulative Pips (Company Growth)",
+            "data": cumulativePips.map(i => i.pips),
+            "tension": 0.4,
+            "borderColor": "#ffd700",
+            "backgroundColor": "rgba(255,215,0,0.2)",
+            "fill": true
           }]
         },
-        options: { responsive: true, plugins: { legend: { display: false } }, scales: { y: { beginAtZero: true } } }
-      });
-      new Chart(document.getElementById('chart-winrate'), {
-        type: 'bar',
-        data: {
-          labels: insights.map(i => i.week_ending || i.week),
-          datasets: [{
-            data: insights.map(i => (i.pips_gained || 0) > 0 ? 100 : 0),
-            backgroundColor: '#1cc88a'
+        "options": {
+          "responsive": true,
+          "plugins": {
+            "legend": { "display": true, "labels": { "color": "var(--fg)" } },
+            "title": { "display": true, "text": "Cumulative Pips Growth", "color": "var(--fg)" }
+          },
+          "scales": {
+            "x": { "ticks": { "color": "var(--fg)" } },
+            "y": { "beginAtZero": true, "ticks": { "color": "var(--fg)" } }
+          }
+        }
+      }
+      ```
+
+      ```chartjs
+      {
+        "type": "bar",
+        "data": {
+          "labels": insights.map(i => new Date(i.week_ending).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })),
+          "datasets": [{
+            "label": "Weekly Win Rate (%)",
+            "data": insights.map(i => (i.pips_gained || 0) > 0 ? 100 : 0),
+            "backgroundColor": "#1cc88a"
           }]
         },
-        options: { responsive: true, plugins: { legend: { display: false } }, scales: { y: { beginAtZero: true, max: 100 } } }
-      });
-      new Chart(document.getElementById('chart-user-status'), {
-        type: 'pie',
-        data: {
-          labels: userStatusError ? Object.keys(dummyData.userStatusDist) : Object.keys(userStatusData.data),
-          datasets: [{
-            data: userStatusError ? Object.values(dummyData.userStatusDist) : Object.values(userStatusData.data),
-            backgroundColor: ['#1cc88a', '#ffd700', '#ff6f61']
+        "options": {
+          "responsive": true,
+          "plugins": {
+            "legend": { "display": true, "labels": { "color": "var(--fg)" } },
+            "title": { "display": true, "text": "Weekly Win Rate", "color": "var(--fg)" }
+          },
+          "scales": {
+            "x": { "ticks": { "color": "var(--fg)" } },
+            "y": { "beginAtZero": true, "max": 100, "ticks": { "color": "var(--fg)" } }
+          }
+        }
+      }
+      ```
+
+      ```chartjs
+      {
+        "type": "pie",
+        "data": {
+          "labels": userStatusError ? Object.keys(dummyData.userStatusDist) : Object.keys(userStatusData.data),
+          "datasets": [{
+            "label": "User Status Distribution",
+            "data": userStatusError ? Object.values(dummyData.userStatusDist) : Object.values(userStatusData.data),
+            "backgroundColor": ["#1cc88a", "#ffd700", "#ff6f61"],
+            "borderColor": ["#ffffff", "#ffffff", "#ffffff"],
+            "borderWidth": 1
           }]
         },
-        options: { responsive: true }
-      });
-      new Chart(document.getElementById('chart-payments-trend'), {
-        type: 'line',
-        data: {
-          labels: paymentTrendError ? dummyData.paymentTrends.map(d => d.week) : paymentTrendData.data.map(d => d.week),
-          datasets: [{
-            data: paymentTrendError ? dummyData.paymentTrends.map(d => d.amount) : paymentTrendData.data.map(d => d.amount),
-            tension: 0.4,
-            borderColor: '#36b9cc',
-            backgroundColor: 'rgba(54,185,204,0.2)'
+        "options": {
+          "responsive": true,
+          "plugins": {
+            "legend": { "position": "top", "labels": { "color": "var(--fg)" } },
+            "title": { "display": true, "text": "User Status Distribution", "color": "var(--fg)" }
+          }
+        }
+      }
+      ```
+
+      ```chartjs
+      {
+        "type": "line",
+        "data": {
+          "labels": paymentTrendError ? dummyData.paymentTrends.map(d => d.week) : paymentTrendData.data.map(d => new Date(d.week).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })),
+          "datasets": [{
+            "label": "Weekly Payment Trends",
+            "data": paymentTrendError ? dummyData.paymentTrends.map(d => d.amount) : paymentTrendData.data.map(d => d.amount),
+            "tension": 0.4,
+            "borderColor": "#36b9cc",
+            "backgroundColor": "rgba(54,185,204,0.2)",
+            "fill": true
           }]
         },
-        options: { responsive: true, plugins: { legend: { display: false } }, scales: { y: { beginAtZero: true } } }
-      });
+        "options": {
+          "responsive": true,
+          "plugins": {
+            "legend": { "display": true, "labels": { "color": "var(--fg)" } },
+            "title": { "display": true, "text": "Payment Trends", "color": "var(--fg)" }
+          },
+          "scales": {
+            "x": { "ticks": { "color": "var(--fg)" } },
+            "y": { "beginAtZero": true, "ticks": { "color": "var(--fg)" } }
+          }
+        }
+      }
+      ```
     }
 
     // Load Users
@@ -877,7 +946,7 @@
         email: testimonial.users.email,
         testimonial: testimonial.testimonial_text,
         date: new Date(testimonial.created_at).toLocaleDateString(),
-        status: testimonial.status,
+        status: testimonial.testimonial_status,
       }));
       $('#testimonials-table').DataTable().clear().rows.add(testimonialsData).draw();
     }
