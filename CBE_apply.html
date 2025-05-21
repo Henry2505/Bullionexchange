@@ -212,15 +212,20 @@
         alertDiv.style.color = 'crimson';
         return alertDiv.textContent = 'Please complete all fields.';
       }
+      if (!email.match(/^[^\s@]+@[^\s@]+\.[^\s@]+$/)) {
+        alertDiv.style.color = 'crimson';
+        return alertDiv.textContent = 'Please enter a valid email address.';
+      }
       try {
-        // Register user with Supabase Auth
         const { data: authData, error: authError } = await supabase.auth.signUp({
           email,
           password,
-          options: { data: { name: full_name, phone } }
+          options: {
+            data: { name: full_name, phone },
+            emailRedirectTo: 'https://apexincomeoptions.com.ng/CBE_vip_subscription.html'
+          }
         });
         if (authError) throw new Error(authError.message);
-        // Insert capital application
         const { data, error } = await supabase
           .from('capital_applications')
           .insert([{
