@@ -1,16 +1,24 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" data-theme="dark">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Apply • Chukwuemeka Bullion Exchange</title>
+
+  <!-- Centralized theme variables -->
+  <link rel="stylesheet" href="theme.css">
+  <script>
+    // Ensure dark is the default
+    document.documentElement.setAttribute('data-theme','dark');
+  </script>
+
   <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700&display=swap" rel="stylesheet">
   <style>
     /* === Base & Animations === */
     body {
       margin: 0;
-      background: #0b0b0b;
-      color: #f5f5f5;
+      background: var(--bg);
+      color: var(--text);
       font-family: 'Poppins', sans-serif;
       overflow-x: hidden;
       animation: fadeIn 1.5s ease;
@@ -33,7 +41,7 @@
     .overlay {
       position: fixed; top: 0; left: 0;
       width: 100%; height: 100%;
-      background: rgba(0,0,0,0.6); z-index: -1;
+      background: var(--overlay); z-index: -1;
     }
 
     /* === Logo Bar === */
@@ -65,7 +73,7 @@
     }
     .apply-section h1 {
       font-size: 2rem;
-      color: gold;
+      color: var(--gold);
       margin-bottom: 20px;
       text-align: center;
     }
@@ -81,7 +89,7 @@
       border: none;
       border-radius: 8px;
       background: #1c1c1c;
-      color: #f5f5f5;
+      color: var(--text);
       font-size: 1rem;
     }
     input::placeholder, textarea::placeholder {
@@ -89,7 +97,7 @@
     }
     input:focus, textarea:focus {
       outline: none;
-      box-shadow: 0 0 8px gold;
+      box-shadow: 0 0 8px var(--gold);
     }
 
     /* === Custom Checkbox & Tiny Links === */
@@ -111,15 +119,15 @@
       transition: border-color 0.3s ease, box-shadow 0.3s ease;
     }
     .terms-container input[type="checkbox"]:checked {
-      border-color: gold;
-      box-shadow: 0 0 8px gold;
+      border-color: var(--gold);
+      box-shadow: 0 0 8px var(--gold);
     }
     .terms-container input[type="checkbox"]:checked::after {
       content: '';
       position: absolute;
       top: 4px; left: 4px;
       width: 8px; height: 8px;
-      background: gold;
+      background: var(--gold);
       border-radius: 50%;
     }
     .terms-container label {
@@ -130,7 +138,7 @@
       color: #888;
     }
     .terms-links a {
-      color: gold;
+      color: var(--gold);
       text-decoration: none;
       margin: 0 3px;
       position: relative;
@@ -139,7 +147,7 @@
       content: '';
       position: absolute; left: 0; bottom: -1px;
       width: 100%; height: 1px;
-      background: gold;
+      background: var(--gold);
       transform-origin: left; transform: scaleX(0);
       transition: transform 0.3s ease;
     }
@@ -149,7 +157,7 @@
 
     /* === Submit Button === */
     button {
-      background: gold;
+      background: var(--gold);
       color: #000;
       font-weight: bold;
       padding: 14px;
@@ -165,8 +173,8 @@
       pointer-events: auto;
     }
     button.enabled:hover {
-      background: #e6c200;
-      box-shadow: 0 0 15px gold;
+      background: var(--gold-dark);
+      box-shadow: 0 0 15px var(--gold);
     }
 
     /* === Alert & Footer === */
@@ -229,7 +237,7 @@
   <footer>© 2025 CBE – Chukwuemeka Bullion Exchange</footer>
 
   <script>
-    // Supabase initialization (swap in your real ANON KEY)
+    // Supabase initialization
     const SUPABASE_URL     = 'https://dapwpgvnfjcfqqhrpxla.supabase.co';
     const SUPABASE_ANON_KEY = 'YOUR_ANON_KEY_HERE';
     const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
@@ -242,11 +250,7 @@
 
     // Enable/disable submit based on agreement
     agreeCheckbox.addEventListener('change', () => {
-      if (agreeCheckbox.checked) {
-        submitBtn.classList.add('enabled');
-      } else {
-        submitBtn.classList.remove('enabled');
-      }
+      submitBtn.classList.toggle('enabled', agreeCheckbox.checked);
     });
 
     // Form submission handler
@@ -255,26 +259,22 @@
       alertDiv.textContent = '';
       alertDiv.style.color = 'crimson';
 
-      // Must agree first
       if (!agreeCheckbox.checked) {
         alertDiv.textContent = 'You must agree to the Privacy Policy and Terms to continue.';
         return;
       }
 
-      // Collect values
       const full_name = document.getElementById('apply-name').value.trim();
       const email     = document.getElementById('apply-email').value.trim().toLowerCase();
       const password  = document.getElementById('apply-password').value;
       const phone     = document.getElementById('apply-phone').value.trim();
       const message   = document.getElementById('apply-message').value.trim();
 
-      // Validate non-empty
       if (!full_name || !email || !password || !phone || !message) {
         alertDiv.textContent = 'Please complete all fields.';
         return;
       }
 
-      // Insert into Supabase
       const { data, error } = await supabase
         .from('users')
         .insert([{
