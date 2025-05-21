@@ -190,16 +190,12 @@
       border:1px solid var(--gold);
       border-radius:4px;
       display:flex; justify-content:space-between; align-items:center;
-      font-size: 1rem; /* Added to normalize font size */
     }
     .faq-answer {
       max-height:0; overflow:hidden;
       transition:max-height .4s ease;
       padding:0 12px; border-left:1px solid var(--gold);
       background:rgba(0,0,0,0.5);
-    }
-    .faq-answer p {
-      font-size: 1rem; /* Added to normalize font size */
     }
 
     /* NEWSLETTER */
@@ -278,9 +274,105 @@
       background:rgba(0,0,0,0.8); font-size:.9rem;
     }
     footer a { color:var(--gold); }
+
+    /* NAVIGATION BAR */
+    #nav-menu {
+      position: absolute;
+      top: 20px;
+      right: 20px;
+      z-index: 10;
+    }
+    #menu-toggle {
+      background: none;
+      border: none;
+      cursor: pointer;
+      padding: 10px;
+      display: flex;
+      flex-direction: column;
+      gap: 5px;
+      width: 40px;
+      height: 40px;
+      justify-content: center;
+      align-items: center;
+    }
+    #menu-toggle span {
+      width: 30px;
+      height: 3px;
+      background: var(--gold);
+      transition: all 0.3s ease;
+    }
+    #menu-toggle.active span:nth-child(1) {
+      transform: rotate(45deg) translate(7px, 7px);
+    }
+    #menu-toggle.active span:nth-child(2) {
+      opacity: 0;
+    }
+    #menu-toggle.active span:nth-child(3) {
+      transform: rotate(-45deg) translate(8px, -8px);
+    }
+    #menu-list {
+      list-style: none;
+      margin: 0;
+      padding: 20px;
+      background: rgba(0, 0, 0, 0.9);
+      position: absolute;
+      top: 50px;
+      right: -250px;
+      width: 250px;
+      transition: right 0.3s ease;
+      border: 1px solid var(--gold);
+      border-radius: 4px;
+    }
+    #menu-list.active {
+      right: 0;
+    }
+    #menu-list li {
+      margin: 10px 0;
+    }
+    #menu-list a {
+      color: #fff;
+      font-weight: 500;
+      transition: color 0.3s;
+    }
+    #menu-list a:hover {
+      color: var(--gold);
+    }
+
+    /* === Reset any zoom/scale in the FAQ only === */
+    #faq,
+    #faq .faq-question,
+    #faq .faq-answer {
+      transform: none !important;
+      zoom: 1 !important;
+      font-size: 1rem !important;
+    }
   </style>
 </head>
 <body>
+
+  <!-- Navigation Menu (Top Right) -->
+  <nav id="nav-menu" aria-label="Main navigation">
+    <button id="menu-toggle" aria-label="Toggle navigation menu" aria-expanded="false">
+      <span></span>
+      <span></span>
+      <span></span>
+    </button>
+    <ul id="menu-list">
+      <li><a href="index.html">Home</a></li>
+      <li><a href="about.html">About</a></li>
+      <li><a href="services.html">Services</a></li>
+      <li><a href="CBE_trade_insights_public.html">Trade Insights</a></li>
+      <li><a href="FAQ.html">FAQ</a></li>
+      <li><a href="apex-income-options.html">Apex Income Options</a></li>
+      <li><a href="vip-subscription.html">VIP Subscription</a></li>
+      <li><a href="CBE_apply.html">Apply</a></li>
+      <li><a href="CBE_contact.html">Contact</a></li>
+      <li><a href="testimonials.html">Testimonials</a></li>
+      <li><a href="terms.html">Terms & Conditions</a></li>
+      <li><a href="privacy.html">Privacy Policy</a></li>
+      <li><a href="login.html">Login</a></li>
+    </ul>
+  </nav>
 
   <!-- Background Video & Overlay -->
   <video id="bg-video" autoplay muted loop playsinline>
@@ -476,15 +568,32 @@
 
   <!-- SCRIPTS -->
   <script>
-    // Slide-in Observer
+    // Navigation Menu Toggle
+    document.addEventListener('DOMContentLoaded', () => {
+      const toggle = document.getElementById('menu-toggle');
+      const menu = document.getElementById('menu-list');
+      toggle.addEventListener('click', () => {
+        toggle.classList.toggle('active');
+        menu.classList.toggle('active');
+        const expanded = toggle.getAttribute('aria-expanded') === 'true';
+        toggle.setAttribute('aria-expanded', !expanded);
+      });
+    });
+
+    // Slide-in Observer for sections
     const observer = new IntersectionObserver(entries => {
       entries.forEach(e => {
-        if (e.isIntersecting) e.target.classList.add('visible');
+        if (e.isIntersecting) {
+          e.target.classList.add('visible');
+          if (e.target.id === 'stats') {
+            document.querySelectorAll('#stats .number').forEach(el => animateCount(el));
+          }
+        }
       });
     }, { threshold: 0.3 });
     document.querySelectorAll('.slide-in').forEach(el => observer.observe(el));
 
-    // Counter Animation
+    // Counter Animation for stats
     function animateCount(el) {
       const target = +el.getAttribute('data-target');
       let count = 0;
@@ -495,10 +604,6 @@
         if (count < target) requestAnimationFrame(update);
       })();
     }
-    document.querySelectorAll('.number').forEach(el => {
-      observer.observe(el);
-      el.addEventListener('visible', () => animateCount(el));
-    });
 
     // Testimonial Slider
     const slides = document.querySelector('.slides');
