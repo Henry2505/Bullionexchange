@@ -1,57 +1,109 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" data-theme="dark">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>CBE Admin - Users</title>
-  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700&display=swap" rel="stylesheet">
-  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-  <link href="https://cdn.datatables.net/1.13.4/css/dataTables.bootstrap5.min.css" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700&display=swap" rel="stylesheet" />
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet" />
+  <link href="https://cdn.datatables.net/1.13.4/css/dataTables.bootstrap5.min.css" rel="stylesheet" />
   <style>
-    /* Shared CSS from above */
-    table.dataTable thead th { background: rgba(255, 255, 255, 0.1); }
+    body {
+      font-family: 'Poppins', sans-serif;
+      background: linear-gradient(to right, #0f2027, #203a43, #2c5364);
+      color: #fff;
+      min-height: 100vh;
+      margin: 0;
+    }
+    .glass {
+      background: rgba(255, 255, 255, 0.05);
+      backdrop-filter: blur(10px);
+      border-radius: 10px;
+    }
+    #header-logo {
+      cursor: pointer;
+      font-size: 1.2rem;
+      font-weight: bold;
+      color: white;
+    }
+    #toast-container {
+      position: fixed;
+      bottom: 1rem;
+      right: 1rem;
+      z-index: 1050;
+    }
+    .btn-outline-secondary {
+      color: white;
+      border-color: white;
+    }
+    .btn-outline-secondary:hover {
+      background-color: white;
+      color: #000;
+    }
+    .table td, .table th {
+      color: white;
+    }
+    table.dataTable thead th {
+      background: rgba(255, 255, 255, 0.1);
+    }
   </style>
 </head>
-<body data-theme="dark">
-  <div class="overlay" style="position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0, 0, 0, 0.6); z-index: -1;"></div>
-  <div id="toast-container" style="position: fixed; bottom: 1rem; right: 1rem; z-index: 1050;"></div>
-  <div class="d-flex glass" style="min-height: 100vh;">
-    <!-- Shared Sidebar -->
-    <nav id="sidebar" class="d-flex flex-column p-3">...</nav>
-    <div id="content" class="d-flex flex-column">
-      <div class="d-flex justify-content-between align-items-center mb-4">
-        <div>
-          <span id="toggle-btn" style="cursor: pointer; font-size: 1.5rem;">⋮</span>
-          <button id="theme-toggle" class="btn btn-sm btn-outline-secondary ms-2">Light Mode</button>
-        </div>
-        <h2 id="section-title">Users</h2>
+<body>
+  <div class="overlay" style="position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0, 0, 0, 0.5); z-index: -1;"></div>
+
+  <div id="toast-container"></div>
+
+  <div class="container py-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+      <div id="header-logo" onclick="location.href='admin-dashboard.html'">
+        CBE Admin
       </div>
-      <div class="p-4 glass">
-        <h4>Users Verification</h4>
-        <input id="user-search" class="form-control mb-3" placeholder="Search users…">
+      <div>
+        <button id="theme-toggle" class="btn btn-sm btn-outline-secondary">Light Mode</button>
+      </div>
+    </div>
+
+    <div class="glass p-4">
+      <h3 class="mb-3">Users Verification</h3>
+      <input id="user-search" class="form-control mb-3" placeholder="Search users…" />
+      <div class="table-responsive">
         <table id="users-table" class="table table-hover text-white" style="width: 100%;">
-          <thead><tr><th>#</th><th>Email</th><th>Name</th><th>Registration Date</th><th>Status</th><th>Action</th></tr></thead>
+          <thead>
+            <tr>
+              <th>#</th>
+              <th>Email</th>
+              <th>Name</th>
+              <th>Registration Date</th>
+              <th>Status</th>
+              <th>Action</th>
+            </tr>
+          </thead>
           <tbody></tbody>
         </table>
       </div>
     </div>
   </div>
+
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
   <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
   <script src="https://cdn.datatables.net/1.13.4/js/jquery.dataTables.min.js"></script>
   <script src="https://cdn.datatables.net/1.13.4/js/dataTables.bootstrap5.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
   <script>
-    // Authentication Check
+    // Authentication check
     if (localStorage.getItem('isLoggedIn') !== 'true') {
       const currentUrl = window.location.pathname.split('/').pop();
       window.location.href = `admin-login.html?redirect=${currentUrl}`;
     }
 
-    // Supabase Initialization
-    const supabase = window.supabase.createClient('https://dapwpgvnfjcfqqhrpxla.supabase.co', 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImRhcHdwZ3ZuZmpjZnFxaHJweGxhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDcwNDA4ODgsImV4cCI6MjA2MjYxNjg4OH0.ICC0UsLlzJDNre7rFCeD3k6iVzo6jOJgn3PhABpEMsQ');
+    // Supabase client
+    const supabase = window.supabase.createClient(
+      'https://dapwpgvnfjcfqqhrpxla.supabase.co',
+      'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImRhcHdwZ3ZuZmpjZnFxaHJweGxhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDcwNDA4ODgsImV4cCI6MjA2MjYxNjg4OH0.ICC0UsLlzJDNre7rFCeD3k6iVzo6jOJgn3PhABpEMsQ'
+    );
 
-    // Toast Function
+    // Toast Message
     function showToast(msg, ok = true) {
       const id = 't' + Date.now();
       document.getElementById('toast-container').innerHTML += `
@@ -64,37 +116,25 @@
       new bootstrap.Toast(document.getElementById(id), { delay: 3000 }).show();
     }
 
-    // Theme Toggle
+    // Theme toggle
     document.getElementById('theme-toggle').onclick = () => {
-      const next = document.body.getAttribute('data-theme') === 'dark' ? 'light' : 'dark';
-      document.body.setAttribute('data-theme', next);
+      const body = document.body;
+      const next = body.getAttribute('data-theme') === 'dark' ? 'light' : 'dark';
+      body.setAttribute('data-theme', next);
       document.getElementById('theme-toggle').textContent = next === 'dark' ? 'Light Mode' : 'Dark Mode';
     };
 
-    // Sidebar Toggle
-    document.getElementById('toggle-btn').onclick = () => {
-      document.getElementById('sidebar').classList.toggle('collapsed');
-    };
-
-    // Active Link
-    document.querySelectorAll('#menu .nav-link').forEach(link => {
-      if (link.href.endsWith('admin-users.html')) link.classList.add('active');
-    });
-
-    // DataTable Initialization
-    $(document).ready(() => {
-      $('#users-table').DataTable({
-        columns: [
-          { data: 'id' },
-          { data: 'email' },
-          { data: 'name' },
-          { data: 'registered_at', render: data => new Date(data).toLocaleDateString() },
-          { data: 'status' },
-          { data: null, render: (_, __, row) => row.status === 'Pending' ? `<button class="btn btn-sm btn-success" onclick="approveUser(${row.id})">Approve</button>` : '—' }
-        ]
-      });
-      loadUsers();
-    });
+    // Load Users
+    async function loadUsers() {
+      try {
+        const { data, error } = await supabase.from('users').select('*');
+        if (error) throw error;
+        $('#users-table').DataTable().clear().rows.add(data || []).draw();
+      } catch (error) {
+        console.error('Error loading users:', error);
+        showToast('Error loading users', false);
+      }
+    }
 
     // Approve User
     async function approveUser(userId) {
@@ -109,17 +149,26 @@
       }
     }
 
-    // Load Users
-    async function loadUsers() {
-      try {
-        const { data, error } = await supabase.from('users').select('*');
-        if (error) throw error;
-        $('#users-table').DataTable().clear().rows.add(data || []).draw();
-      } catch (error) {
-        console.error('Error loading users:', error);
-        showToast('Error loading users', false);
-      }
-    }
+    // DataTable
+    $(document).ready(() => {
+      $('#users-table').DataTable({
+        columns: [
+          { data: 'id' },
+          { data: 'email' },
+          { data: 'name' },
+          { data: 'registered_at', render: data => new Date(data).toLocaleDateString() },
+          { data: 'status' },
+          {
+            data: null,
+            render: (_, __, row) =>
+              row.status === 'Pending'
+                ? `<button class="btn btn-sm btn-success" onclick="approveUser(${row.id})">Approve</button>`
+                : '—'
+          }
+        ]
+      });
+      loadUsers();
+    });
   </script>
 </body>
 </html>
