@@ -1,152 +1,104 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>CBE Admin Dashboard</title>
-  <!-- Poppins & Bootstrap -->
-  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700&display=swap" rel="stylesheet">
-  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-  <!-- Bootstrap Icons -->
-  <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css" rel="stylesheet">
+  <!-- Fonts, Bootstrap & Icons -->
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700&display=swap" rel="stylesheet" />
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet" />
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css" rel="stylesheet" />
+  <!-- Charts & Drag&Drop -->
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.0/Sortable.min.js"></script>
+
   <style>
     body { font-family: 'Poppins', sans-serif; }
+    .overlay { position: fixed; top:0; left:0; width:100%; height:100%; background: rgba(0,0,0,0.6); z-index:-1; }
     /* Sidebar */
     #sidebar {
-      width: 240px;
-      background: #000;
-      color: #ffd700;
-      transition: width .3s;
+      width: 240px; background: #000; color: #ffd700; transition: width .3s;
+      display: flex; flex-direction: column;
     }
-    #sidebar.collapsed {
-      width: 70px;
-    }
+    #sidebar.collapsed { width: 70px; }
     #sidebar .brand {
-      font-size: 1.25rem;
-      font-weight: 600;
-      padding: 1rem;
-      text-align: center;
-      border-bottom: 1px solid #333;
+      display: flex; align-items: center; gap: .5rem;
+      padding: 1rem; border-bottom: 1px solid #333;
     }
+    #sidebar .brand img { height: 32px; }
+    #sidebar .brand .title { font-size:1.25rem; font-weight:600; }
+    #sidebar.collapsed .brand .title { display: none; }
     #sidebar .nav-link {
-      color: #ffd700;
-      padding: .75rem 1rem;
-      transition: background .2s, color .2s;
+      color: #ffd700; padding: .75rem 1rem; transition: background .2s, color .2s;
     }
     #sidebar .nav-link:hover,
     #sidebar .nav-link.active {
-      background: #ffd700;
-      color: #000;
+      background: #ffd700; color: #000;
     }
-    #sidebar .nav-link .bi {
-      font-size: 1.2rem;
-      vertical-align: -2px;
-    }
-    /* Icon-only when collapsed */
-    #sidebar.collapsed .nav-link span.text {
-      display: none;
-    }
-    #sidebar.collapsed .brand span.text {
-      display: none;
-    }
-    /* Content shift */
+    #sidebar .nav-link .bi { font-size:1.2rem; vertical-align:-2px; }
+    #sidebar.collapsed .nav-link span.text { display: none; }
+
+    /* Content */
     #content {
-      flex: 1;
-      transition: margin-left .3s;
-      margin-left: 240px;
+      flex: 1; margin-left: 240px; transition: margin-left .3s; padding: 2rem;
     }
-    #sidebar.collapsed ~ #content {
-      margin-left: 70px;
-    }
-    /* Black & gold cards */
+    #sidebar.collapsed ~ #content { margin-left: 70px; }
+
+    /* Stats cards */
     .card-stat { color: #fff; border: none; }
-    .card-stat.bg-primary { background: rgba(13, 110, 253, 0.8); }
-    .card-stat.bg-success { background: rgba(28, 200, 138, 0.8); }
-    .card-stat.bg-info { background: rgba(13, 202, 240, 0.8); }
-    .card-stat.bg-secondary { background: rgba(108, 117, 125, 0.8); }
-    .card-stat.bg-warning { background: rgba(255, 193, 7, 0.8); }
+    .card-stat.bg-primary   { background: rgba(13,110,253,0.8); }
+    .card-stat.bg-success   { background: rgba(28,200,138,0.8); }
+    .card-stat.bg-info      { background: rgba(13,202,240,0.8); }
+    .card-stat.bg-secondary { background: rgba(108,117,125,0.8); }
+    .card-stat.bg-warning   { background: rgba(255,193,7,0.8); }
+
     /* Glass effect */
     .glass { backdrop-filter: blur(10px); }
+
+    /* Top bar controls */
+    #top-controls i { font-size:1.5rem; cursor:pointer; color:#ffd700; }
   </style>
 </head>
 <body data-theme="dark">
-  <div class="overlay" style="position: fixed; top: 0; left: 0; width:100%; height:100%; background:rgba(0,0,0,0.6); z-index: -1;"></div>
-  <div id="toast-container" style="position: fixed; bottom:1rem; right:1rem; z-index:1050;"></div>
+  <div class="overlay"></div>
+  <div id="toast-container" style="position:fixed; bottom:1rem; right:1rem; z-index:1050;"></div>
+
   <div class="d-flex glass" style="min-height:100vh;">
-    
-    <!-- Sidebar -->
-    <nav id="sidebar" class="d-flex flex-column">
-      <div class="brand text-gold">
-        <i class="bi-gear-fill"></i>
-        <span class="text">CBE Admin</span>
-      </div>
+    <!-- SIDEBAR -->
+    <nav id="sidebar">
+      <a href="admin-dashboard.html" class="brand">
+        <img src="CBE_logo.PNG" alt="CBE Logo">
+        <span class="title">CBE Admin</span>
+      </a>
       <ul id="menu" class="nav nav-pills flex-column mt-3">
-        <li class="nav-item">
-          <a href="admin-dashboard.html" class="nav-link">
-            <i class="bi-speedometer2"></i>
-            <span class="text">Dashboard</span>
-          </a>
-        </li>
-        <li class="nav-item">
-          <a href="admin-users.html" class="nav-link">
-            <i class="bi-people-fill"></i>
-            <span class="text">Users</span>
-          </a>
-        </li>
-        <li class="nav-item">
-          <a href="admin-payments.html" class="nav-link">
-            <i class="bi-credit-card-fill"></i>
-            <span class="text">Payments</span>
-          </a>
-        </li>
-        <li class="nav-item">
-          <a href="admin-trades.html" class="nav-link">
-            <i class="bi-bar-chart-fill"></i>
-            <span class="text">Trades</span>
-          </a>
-        </li>
-        <li class="nav-item">
-          <a href="admin-signals.html" class="nav-link">
-            <i class="bi-lightning-fill"></i>
-            <span class="text">Signals</span>
-          </a>
-        </li>
-        <li class="nav-item">
-          <a href="admin-insights.html" class="nav-link">
-            <i class="bi-graph-up"></i>
-            <span class="text">Insights</span>
-          </a>
-        </li>
-        <li class="nav-item">
-          <a href="admin-settings.html" class="nav-link">
-            <i class="bi-sliders"></i>
-            <span class="text">Settings</span>
-          </a>
-        </li>
-        <li class="nav-item mt-auto">
-          <a href="logout.html" class="nav-link">
-            <i class="bi-box-arrow-right"></i>
-            <span class="text">Logout</span>
-          </a>
-        </li>
+        <li class="nav-item"><a href="admin-dashboard.html"           class="nav-link"><i class="bi-speedometer2"></i> <span class="text">Dashboard</span></a></li>
+        <li class="nav-item"><a href="admin-capital-applications.html" class="nav-link"><i class="bi-folder2-open"></i> <span class="text">Capital Applications</span></a></li>
+        <li class="nav-item"><a href="admin-messages.html"            class="nav-link"><i class="bi-chat-dots-fill"></i> <span class="text">Messages</span></a></li>
+        <li class="nav-item"><a href="admin-settings-payments.html"   class="nav-link"><i class="bi-credit-card"></i> <span class="text">Settings & Payments</span></a></li>
+        <li class="nav-item"><a href="admin-signals.html"             class="nav-link"><i class="bi-lightning-fill"></i> <span class="text">Signals</span></a></li>
+        <li class="nav-item"><a href="admin-testimonials.html"        class="nav-link"><i class="bi-chat-quote"></i> <span class="text">Testimonials</span></a></li>
+        <li class="nav-item"><a href="admin-trade-history.html"       class="nav-link"><i class="bi-clock-history"></i> <span class="text">Trade History</span></a></li>
+        <li class="nav-item"><a href="admin-trade-insights.html"      class="nav-link"><i class="bi-graph-up"></i> <span class="text">Trade Insights</span></a></li>
+        <li class="nav-item"><a href="admin-users.html"               class="nav-link"><i class="bi-people-fill"></i> <span class="text">Users</span></a></li>
+        <li class="nav-item mt-auto"><a href="logout.html"           class="nav-link"><i class="bi-box-arrow-right"></i> <span class="text">Logout</span></a></li>
       </ul>
     </nav>
 
-    <!-- Main Content -->
-    <div id="content" class="d-flex flex-column p-4">
+    <!-- MAIN CONTENT -->
+    <div id="content">
+      <!-- Top Controls -->
       <div class="d-flex justify-content-between align-items-center mb-4">
-        <div>
-          <span id="toggle-btn" style="cursor: pointer; font-size:1.5rem; color:#ffd700;">⋮</span>
-          <button id="theme-toggle" class="btn btn-sm btn-outline-secondary ms-2">Light Mode</button>
+        <div id="top-controls">
+          <i id="toggle-btn" class="bi-list"></i>
+          <button id="theme-toggle" class="btn btn-sm btn-outline-secondary ms-3">Light Mode</button>
         </div>
         <div class="d-flex align-items-baseline">
-          <h2 id="section-title" class="text-white">Dashboard</h2>
-          <small id="current-datetime" class="text-white ms-3"></small>
+          <h2 id="section-title" class="text-white me-3">Dashboard</h2>
+          <small id="current-datetime" class="text-white"></small>
         </div>
       </div>
-      <!-- Stats Cards (same as before) -->
+
+      <!-- Stats Cards -->
       <div class="row g-4" id="stats-container">
         <div class="col-md-3">
           <div class="card card-stat p-3 glass bg-primary" draggable="true" data-key="users">
@@ -179,129 +131,120 @@
           </div>
         </div>
       </div>
+
       <!-- Charts -->
       <div class="row g-4 mt-4">
-        <div class="col-md-6">
-          <canvas id="chart-pnl" height="200"></canvas>
-        </div>
-        <div class="col-md-6">
-          <canvas id="chart-winrate" height="200"></canvas>
-        </div>
+        <div class="col-md-6"><canvas id="chart-pnl"    height="200"></canvas></div>
+        <div class="col-md-6"><canvas id="chart-winrate" height="200"></canvas></div>
       </div>
     </div>
   </div>
 
-  <!-- Scripts -->
+  <!-- SCRIPTS -->
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script>
-    // ===== Authentication Check =====
+    // Auth redirect
     if (localStorage.getItem('isLoggedIn') !== 'true') {
-      const currentUrl = window.location.pathname.split('/').pop();
-      window.location.href = `admin-login.html?redirect=${currentUrl}`;
+      const cur = window.location.pathname.split('/').pop();
+      window.location.href = `admin-login.html?redirect=${cur}`;
     }
 
-    // ===== Supabase Init =====
-    const supabase = window.supabase.createClient(
+    // Supabase init
+    const supabase = supabase.createClient(
       'https://dapwpgvnfjcfqqhrpxla.supabase.co',
-      'PUBLIC_ANON_KEY'
+      'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImRhcHdwZ3ZuZmpjZnFxaHJweGxhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDcwNDA4ODgsImV4cCI6MjA2MjYxNjg4OH0.ICC0UsLlzJDNre7rFCeD3k6iVzo6jOJgn3PhABpEMsQ'
     );
 
-    // ===== Toast =====
-    function showToast(msg, ok = true) {
-      const id = 't' + Date.now();
-      document.getElementById('toast-container').innerHTML += `
-        <div id="${id}" class="toast align-items-center text-white ${ok?'bg-success':'bg-danger'} border-0" role="alert">
-          <div class="d-flex">
-            <div class="toast-body">${msg}</div>
-            <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast"></button>
-          </div>
-        </div>`;
-      new bootstrap.Toast(document.getElementById(id), { delay: 3000 }).show();
+    // Toast helper
+    function showToast(msg, ok=true) {
+      const id = 't'+Date.now();
+      document.getElementById('toast-container').innerHTML +=
+        `<div id="${id}" class="toast align-items-center text-white ${ok?'bg-success':'bg-danger'} border-0" role="alert">
+           <div class="d-flex">
+             <div class="toast-body">${msg}</div>
+             <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast"></button>
+           </div>
+         </div>`;
+      new bootstrap.Toast(document.getElementById(id), { delay:3000 }).show();
     }
 
-    // ===== Theme Toggle =====
+    // Theme switch
     document.getElementById('theme-toggle').onclick = () => {
-      const next = document.body.getAttribute('data-theme') === 'dark' ? 'light' : 'dark';
+      const next = document.body.getAttribute('data-theme')==='dark'?'light':'dark';
       document.body.setAttribute('data-theme', next);
-      document.getElementById('theme-toggle').textContent = next === 'dark' ? 'Light Mode' : 'Dark Mode';
+      document.getElementById('theme-toggle').textContent = next==='dark'?'Light Mode':'Dark Mode';
     };
 
-    // ===== Sidebar Toggle =====
+    // Sidebar collapse
     document.getElementById('toggle-btn').onclick = () => {
       document.getElementById('sidebar').classList.toggle('collapsed');
     };
 
-    // ===== Active Link Highlight =====
+    // Highlight current link
     document.querySelectorAll('#menu .nav-link').forEach(link => {
-      if (link.href.endsWith(window.location.pathname.split('/').pop())) {
+      if (link.href.endsWith(window.location.pathname.split('/').pop()))
         link.classList.add('active');
-      }
     });
 
-    // ===== Drag & Drop Stats =====
-    new Sortable(document.getElementById('stats-container'), { animation: 150 });
+    // Drag & Drop stats
+    new Sortable(document.getElementById('stats-container'), { animation:150 });
 
-    // ===== Load Dashboard Stats & Charts =====
+    // Load stats & charts
     async function loadDashboard() {
       try {
-        const { data: users }     = await supabase.from('users').select('id');
-        const { data: payments }  = await supabase.from('payments').select('id').eq('status','Pending');
-        const { data: trades }    = await supabase.from('trade_history').select('id');
-        const { data: signals }   = await supabase.from('signals').select('id');
-        const { data: insights }  = await supabase.from('trade_insights')
-          .select('week_ending,pips').order('week_ending',{ascending:false});
+        const [{ data: u },{ data: p },{ data: t },{ data: s },{ data: i }] = await Promise.all([
+          supabase.from('users').select('id'),
+          supabase.from('payments').select('id').eq('status','Pending'),
+          supabase.from('trade_history').select('id'),
+          supabase.from('signals').select('id'),
+          supabase.from('trade_insights').select('week_ending,pips').order('week_ending',{ascending:false})
+        ]);
 
-        document.getElementById('stat-users').textContent    = users?.length || 0;
-        document.getElementById('stat-payments').textContent = payments?.length || 0;
-        document.getElementById('stat-trades').textContent   = trades?.length || 0;
-        document.getElementById('stat-signals').textContent  = signals?.length || 0;
+        document.getElementById('stat-users').textContent    = u.length;
+        document.getElementById('stat-payments').textContent = p.length;
+        document.getElementById('stat-trades').textContent   = t.length;
+        document.getElementById('stat-signals').textContent  = s.length;
 
-        const wins      = insights.filter(i => i.pips>0).length;
-        const total     = insights.length;
-        document.getElementById('stat-winrate').textContent = total ? Math.round(wins/total*100) : 0;
+        const wins = i.filter(x => x.pips>0).length;
+        const total= i.length;
+        document.getElementById('stat-winrate').textContent = total?Math.round(wins/total*100):0;
 
-        // PnL Line
-        new Chart(
-          document.getElementById('chart-pnl'),
-          {
-            type: 'line',
-            data: {
-              labels: insights.map(i => new Date(i.week_ending).toLocaleDateString()),
-              datasets: [{
-                data: insights.map(i => i.pips),
-                tension: 0.4,
-                borderColor: '#ffd700',
-                backgroundColor: 'rgba(255,215,0,0.2)'
-              }]
-            },
-            options: { responsive:true, plugins:{ legend:{ display:false } } }
-          }
-        );
+        // P&L chart
+        new Chart(document.getElementById('chart-pnl'), {
+          type:'line',
+          data:{
+            labels: i.map(x=>new Date(x.week_ending).toLocaleDateString()),
+            datasets:[{
+              data: i.map(x=>x.pips),
+              tension:0.4,
+              borderColor:'#ffd700',
+              backgroundColor:'rgba(255,215,0,0.2)'
+            }]
+          },
+          options:{ responsive:true, plugins:{ legend:{ display:false } } }
+        });
 
-        // Win Rate Bar
-        new Chart(
-          document.getElementById('chart-winrate'),
-          {
-            type: 'bar',
-            data: {
-              labels: insights.map(i => new Date(i.week_ending).toLocaleDateString()),
-              datasets: [{
-                data: insights.map(i => i.pips>0?100:0),
-                backgroundColor: '#1cc88a'
-              }]
-            },
-            options: { responsive:true, plugins:{ legend:{ display:false } } }
-          }
-        );
+        // Win-rate chart
+        new Chart(document.getElementById('chart-winrate'), {
+          type:'bar',
+          data:{
+            labels: i.map(x=>new Date(x.week_ending).toLocaleDateString()),
+            datasets:[{
+              data: i.map(x=> x.pips>0?100:0 ),
+              backgroundColor:'#1cc88a'
+            }]
+          },
+          options:{ responsive:true, plugins:{ legend:{ display:false } } }
+        });
 
-      } catch (err) {
-        console.error(err);
+      } catch(e) {
+        console.error(e);
         showToast('Error loading dashboard', false);
       }
     }
 
-    // ===== Clock =====
+    // Live clock
     function updateClock() {
       document.getElementById('current-datetime').textContent = new Date().toLocaleString();
     }
