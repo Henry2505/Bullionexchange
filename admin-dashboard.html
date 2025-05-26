@@ -4,7 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width,initial-scale=1">
   <title>Admin — CBE Dashboard</title>
-  <!-- Poppins & Bootstrap & Icons -->
+  <!-- Poppins, Bootstrap & Icons -->
   <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700&display=swap" rel="stylesheet">
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
   <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css" rel="stylesheet">
@@ -35,23 +35,18 @@
     a { color:var(--gold); text-decoration:none; }
     img { max-width:100%; display:block; }
     .overlay {
-      position:fixed;top:0;left:0;width:100%;height:100%;
-      background:var(--overlay);z-index:-1;
+      position:fixed; top:0; left:0;
+      width:100%; height:100%;
+      background:var(--overlay); z-index:-1;
     }
     .glass { backdrop-filter:blur(10px); }
 
     /* HEADER */
     header.admin-header {
-      position:relative;
-      display:flex; align-items:center;
-      justify-content:space-between;
-      padding:1rem 2rem;
-      background:rgba(0,0,0,0.6);
-      border-bottom:1px solid var(--gold);
-      z-index:10;
+      display:flex; justify-content:space-between; align-items:center;
+      padding:1rem 2rem; background:rgba(0,0,0,0.6);
+      border-bottom:1px solid var(--gold); position:relative; z-index:10;
     }
-    header.admin-header .logo { cursor:pointer; display:flex; align-items:center; }
-    header.admin-header .logo img { height:40px; }
     #menu-toggle {
       background:none; border:none; cursor:pointer;
       display:flex; flex-direction:column; gap:5px;
@@ -61,38 +56,35 @@
       width:30px; height:3px; background:var(--gold);
       transition:all .3s ease;
     }
+    .logo { cursor:pointer; }
+    .logo img { height:40px; }
 
     /* NAV PANEL */
     #nav-panel {
       position:absolute; top:100%; right:2rem;
-      width:240px;
-      background:rgba(0,0,0,0.9);
-      border:1px solid var(--gold);
-      border-radius:0 0 4px 4px;
+      width:240px; background:rgba(0,0,0,0.9);
+      border:1px solid var(--gold); border-radius:0 0 4px 4px;
       padding:.75rem 1rem;
-      transform: translateY(-20px);
-      opacity:0;
+      transform:translateY(-20px); opacity:0;
       transition:transform .3s,opacity .3s;
-      pointer-events: none;
+      pointer-events:none;
     }
     #nav-panel.show {
-      transform: translateY(0);
-      opacity:1;
-      pointer-events: auto;
+      transform:translateY(0); opacity:1;
+      pointer-events:auto;
     }
-    #nav-panel ul { list-style:none; padding:0; }
+    #nav-panel ul { list-style:none; margin:0; padding:0; }
     #nav-panel li { margin:.5rem 0; }
     #nav-panel a {
       color:#fff; font-weight:500; display:flex; align-items:center; gap:.5rem;
     }
     #nav-panel a:hover { color:var(--gold); }
 
-    /* STATS CARDS */
+    /* DRAG-AND-DROP STATS CARDS */
     .stats-row {
       display:grid;
-      grid-template-columns:repeat(auto-fit,minmax(180px,1fr));
-      gap:1rem;
-      margin:2rem 0;
+      grid-template-columns:repeat(auto-fill,minmax(200px,1fr));
+      gap:1rem; margin:2rem 0;
     }
     .card-stat {
       background:var(--glass-bg);
@@ -102,19 +94,21 @@
       text-align:center;
       color:#fff;
       backdrop-filter:blur(8px);
+      cursor:grab;
+      user-select:none;
     }
+    .card-stat:active { cursor:grabbing; }
     .card-stat h5 { color:var(--gold); margin-bottom:.5rem; }
     .card-stat h2 { font-size:2rem; }
 
-    /* CHARTS GRID */
+    /* CHARTS LAYOUT */
     .charts {
       display:grid;
       grid-template-columns:repeat(auto-fit,minmax(280px,1fr));
-      gap:1rem;
-      margin-bottom:2rem;
+      gap:1rem; margin-bottom:2rem;
     }
 
-    /* CLOCK & THEME */
+    /* HEADER-RIGHT */
     #header-right { display:flex; align-items:center; gap:1rem; }
     #current-datetime { color:#fff; }
     #theme-toggle {
@@ -129,20 +123,17 @@
   <div class="overlay"></div>
 
   <!-- HEADER -->
-  <header class="admin-header">
+  <header class="admin-header glass">
     <button id="menu-toggle" aria-label="Toggle menu">
       <span></span><span></span><span></span>
     </button>
-
     <div class="logo" id="logo">
       <img src="CBE_logo.PNG" alt="CBE Logo">
     </div>
-
     <div id="header-right">
       <small id="current-datetime"></small>
       <button id="theme-toggle" aria-label="Toggle theme">🌞</button>
     </div>
-
     <nav id="nav-panel" aria-label="Admin navigation">
       <ul>
         <li><a href="admin-dashboard.html"><i class="bi-speedometer2"></i> Dashboard</a></li>
@@ -161,7 +152,7 @@
 
   <!-- MAIN CONTENT -->
   <main class="container py-4">
-    <!-- Stats cards -->
+    <!-- Drag-and-Drop Stat Cards -->
     <div class="stats-row" id="stats-container">
       <div class="card-stat" data-key="users">
         <h5>Total Users</h5><h2 id="stat-users">0</h2>
@@ -180,11 +171,11 @@
       </div>
     </div>
 
-    <!-- All three charts -->
+    <!-- Three Charts: P&L, Win-Rate, User Status -->
     <div class="charts">
       <canvas id="chart-pnl"    height="200"></canvas>
       <canvas id="chart-winrate" height="200"></canvas>
-      <canvas id="chart-status" height="200"></canvas>
+      <canvas id="chart-status"  height="200"></canvas>
     </div>
   </main>
 
@@ -192,137 +183,142 @@
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script>
-    // Logo redirects
-    document.getElementById('logo').addEventListener('click', () => {
-      window.location.href = 'admin-dashboard.html';
-    });
+    document.addEventListener('DOMContentLoaded', () => {
+      // Redirect on logo click
+      document.getElementById('logo').onclick = () => {
+        window.location.href = 'admin-dashboard.html';
+      };
 
-    // Theme toggle
-    const themeBtn = document.getElementById('theme-toggle');
-    function updateThemeIcon() {
-      themeBtn.textContent = document.documentElement.getAttribute('data-theme') === 'dark' ? '🌞' : '🌜';
-    }
-    themeBtn.addEventListener('click', () => {
-      const next = document.documentElement.getAttribute('data-theme') === 'dark' ? 'light' : 'dark';
-      document.documentElement.setAttribute('data-theme', next);
-      localStorage.setItem('theme', next);
-      updateThemeIcon();
-    });
-    // Initialize theme
-    const saved = localStorage.getItem('theme') || 'dark';
-    document.documentElement.setAttribute('data-theme', saved);
-    updateThemeIcon();
+      // Theme toggle
+      const themeBtn = document.getElementById('theme-toggle');
+      const setTheme = t => {
+        document.documentElement.setAttribute('data-theme', t);
+        localStorage.setItem('theme', t);
+        themeBtn.textContent = t === 'dark' ? '🌞' : '🌜';
+      };
+      themeBtn.addEventListener('click', () => {
+        const next = document.documentElement.getAttribute('data-theme') === 'dark' ? 'light' : 'dark';
+        setTheme(next);
+      });
+      setTheme(localStorage.getItem('theme') || 'dark');
 
-    // Clock
-    function updateClock() {
-      document.getElementById('current-datetime')
-        .textContent = new Date().toLocaleString();
-    }
-    updateClock();
-    setInterval(updateClock, 60000);
+      // Clock
+      const clk = () => {
+        document.getElementById('current-datetime').textContent = new Date().toLocaleString();
+      };
+      clk(); setInterval(clk, 60000);
 
-    // Nav panel toggle
-    const menuToggle = document.getElementById('menu-toggle');
-    const navPanel   = document.getElementById('nav-panel');
-    menuToggle.addEventListener('click', () => {
-      navPanel.classList.toggle('show');
-      menuToggle.setAttribute('aria-expanded', navPanel.classList.contains('show'));
-    });
+      // Nav toggle
+      const menuToggle = document.getElementById('menu-toggle');
+      const navPanel   = document.getElementById('nav-panel');
+      menuToggle.addEventListener('click', () => {
+        navPanel.classList.toggle('show');
+        menuToggle.setAttribute('aria-expanded', navPanel.classList.contains('show'));
+      });
 
-    // Auth redirect
-    if (localStorage.getItem('isLoggedIn') !== 'true') {
-      const cur = window.location.pathname.split('/').pop();
-      window.location.href = `admin-login.html?redirect=${cur}`;
-    }
-
-    // Supabase init
-    const supabase = supabase.createClient(
-      'https://dapwpgvnfjcfqqhrpxla.supabase.co',
-      'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImRhcHdwZ3ZuZmpjZnFxaHJweGxhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDcwNDA4ODgsImV4cCI6MjA2MjYxNjg4OH0.ICC0UsLlzJDNre7rFCeD3k6iVzo6jOJgn3PhABpEMsQ'
-    );
-
-    // Toast helper
-    function showToast(msg, ok = true) {
-      const t = document.createElement('div');
-      t.className = `toast align-items-center text-white ${ok?'bg-success':'bg-danger'} border-0 position-fixed top-0 end-0 m-3`;
-      t.innerHTML = `
-        <div class="d-flex">
-          <div class="toast-body">${msg}</div>
-          <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast"></button>
-        </div>`;
-      document.body.append(t);
-      new bootstrap.Toast(t, { delay: 3000 }).show();
-    }
-
-    // Load stats & charts
-    async function loadDashboard() {
-      try {
-        // fetch all core data
-        const [u,p,t,s,i] = await Promise.all([
-          supabase.from('users').select('id,status'),
-          supabase.from('payments').select('id').eq('status','Pending'),
-          supabase.from('trade_history').select('id'),
-          supabase.from('signals').select('id'),
-          supabase.from('trade_insights').select('week_ending,pips').order('week_ending',{ascending:false})
-        ]);
-
-        // Stats cards
-        document.getElementById('stat-users').textContent    = u.data.length;
-        document.getElementById('stat-payments').textContent = p.data.length;
-        document.getElementById('stat-trades').textContent   = t.data.length;
-        document.getElementById('stat-signals').textContent  = s.data.length;
-        const insights = i.data;
-        const wins     = insights.filter(x=>x.pips>0).length;
-        const rate     = insights.length ? Math.round(wins/insights.length*100) : 0;
-        document.getElementById('stat-winrate').textContent = rate;
-
-        // P&L line chart
-        new Chart(document.getElementById('chart-pnl'), {
-          type: 'line',
-          data: {
-            labels: insights.map(x=>new Date(x.week_ending).toLocaleDateString()),
-            datasets: [{
-              data: insights.map(x=>x.pips),
-              tension:0.4,
-              borderColor:'#ffd700',
-              backgroundColor:'rgba(255,215,0,0.2)'
-            }]
-          },
-          options:{ responsive:true, plugins:{ legend:{ display:false } } }
-        });
-
-        // Win-rate bar chart
-        new Chart(document.getElementById('chart-winrate'), {
-          type: 'bar',
-          data: {
-            labels: insights.map(x=>new Date(x.week_ending).toLocaleDateString()),
-            datasets:[{
-              data: insights.map(x=> x.pips>0?100:0 ),
-              backgroundColor:'#1cc88a'
-            }]
-          },
-          options:{ responsive:true, plugins:{ legend:{ display:false } } }
-        });
-
-        // User-status doughnut chart
-        const counts = u.data.reduce((acc,u)=>(acc[u.status] = (acc[u.status]||0)+1, acc), {});
-        const labels = ['Active','Expired','Pending','Deleted'];
-        const data   = labels.map(l=> counts[l]||0 );
-        new Chart(document.getElementById('chart-status'), {
-          type: 'doughnut',
-          data: { labels, datasets:[{ data }] },
-          options: { responsive:true, plugins:{ legend:{ position:'bottom' } } }
-        });
-
-        // Make cards draggable
-        new Sortable(document.getElementById('stats-container'), { animation:150 });
+      // Auth guard
+      if (localStorage.getItem('isLoggedIn') !== 'true') {
+        const cur = window.location.pathname.split('/').pop();
+        window.location.href = `admin-login.html?redirect=${cur}`;
       }
-      catch(err){
-        console.error(err);
-        showToast('Error loading dashboard', false);
+
+      // Initialize Supabase
+      const supabase = window.supabase.createClient(
+        'https://dapwpgvnfjcfqqhrpxla.supabase.co',
+        'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImRhcHdwZ3ZuZmpjZnFxaHJweGxhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDcwNDA4ODgsImV4cCI6MjA2MjYxNjg4OH0.ICC0UsLlzJDNre7rFCeD3k6iVzo6jOJgn3PhABpEMsQ'
+      );
+
+      // Simple toast
+      function showToast(msg, ok=true) {
+        const t = document.createElement('div');
+        t.className = `toast align-items-center text-white ${ok?'bg-success':'bg-danger'} border-0 position-fixed top-0 end-0 m-3`;
+        t.innerHTML = `
+          <div class="d-flex">
+            <div class="toast-body">${msg}</div>
+            <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast"></button>
+          </div>`;
+        document.body.append(t);
+        new bootstrap.Toast(t, { delay: 3000 }).show();
       }
-    }
-    loadDashboard();
+
+      // Load stats & charts
+      (async () => {
+        try {
+          const [
+            { data: users },
+            { data: payments },
+            { data: trades },
+            { data: signals },
+            { data: insights }
+          ] = await Promise.all([
+            supabase.from('users').select('id,status'),
+            supabase.from('payments').select('id').eq('status','Pending'),
+            supabase.from('trade_history').select('id'),
+            supabase.from('signals').select('id'),
+            supabase.from('trade_insights').select('week_ending,pips').order('week_ending',{ascending:false}),
+          ]);
+
+          // Update stat cards
+          document.getElementById('stat-users').textContent    = users.length;
+          document.getElementById('stat-payments').textContent = payments.length;
+          document.getElementById('stat-trades').textContent   = trades.length;
+          document.getElementById('stat-signals').textContent  = signals.length;
+          const wins = insights.filter(x=>x.pips>0).length;
+          const rate = insights.length ? Math.round(wins/insights.length*100) : 0;
+          document.getElementById('stat-winrate').textContent = rate;
+
+          // Make cards draggable
+          new Sortable(document.getElementById('stats-container'), {
+            animation:150,
+            ghostClass:'sortable-ghost',
+            dragClass:'sortable-drag',
+            handle:'.card-stat'
+          });
+
+          // P&L line chart
+          new Chart(document.getElementById('chart-pnl'), {
+            type:'line',
+            data:{
+              labels: insights.map(x=>new Date(x.week_ending).toLocaleDateString()),
+              datasets:[{
+                data: insights.map(x=>x.pips),
+                tension:0.4,
+                borderColor:'#ffd700',
+                backgroundColor:'rgba(255,215,0,0.2)'
+              }]
+            },
+            options:{ responsive:true, plugins:{ legend:{ display:false } } }
+          });
+
+          // Win-rate bar chart
+          new Chart(document.getElementById('chart-winrate'), {
+            type:'bar',
+            data:{
+              labels: insights.map(x=>new Date(x.week_ending).toLocaleDateString()),
+              datasets:[{
+                data: insights.map(x=> x.pips>0?100:0 ),
+                backgroundColor:'#1cc88a'
+              }]
+            },
+            options:{ responsive:true, plugins:{ legend:{ display:false } } }
+          });
+
+          // User-status doughnut chart
+          const statusCounts = users.reduce((acc,u)=>(acc[u.status]=(acc[u.status]||0)+1, acc), {});
+          const labels = ['Active','Expired','Pending','Deleted'];
+          const data   = labels.map(l=> statusCounts[l]||0);
+          new Chart(document.getElementById('chart-status'), {
+            type:'doughnut',
+            data:{ labels, datasets:[{ data }] },
+            options:{ responsive:true, plugins:{ legend:{ position:'bottom' } } }
+          });
+        }
+        catch(err) {
+          console.error(err);
+          showToast('Error loading dashboard', false);
+        }
+      })();
+    });
   </script>
 </body>
 </html>
