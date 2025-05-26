@@ -91,14 +91,14 @@
     /* ===== FAQ ===== */
     #faq { max-width:800px; margin:60px auto; }
     .faq-item { margin-bottom:1em; border:1px solid var(--gold); border-radius:4px; overflow:hidden; }
-    .faq-question { padding:12px; background:rgba(212,175,55,0.1); display:flex; justify-content:space-between; align-items:center; cursor:pointer; }
+    .faq-question { padding:12px; background:rgba(212,175,55,0.1); display:flex; justify-content:space-between; align-items:center; cursor:pointer; color:var(--text); }
     .faq-answer { max-height:0; overflow:hidden; transition:max-height .4s ease; padding:0 12px; background:rgba(0,0,0,0.5); color:#ddd; }
     .faq-open .faq-answer { padding:12px; }
     .faq-open .faq-question i { transform:rotate(180deg); }
 
     /* ===== CHAT & ROCKET ===== */
     .chat-btns { position:fixed; bottom:20px; left:20px; display:flex; flex-direction:column; gap:10px; z-index:5; }
-    .chat-btns a { width:50px; height:50px; display:flex; align-items:center; justify-content:center; border-radius:50%; color:#fff; font-size:1.5rem; }
+    .chat-btns a { display:flex; align-items:center; justify-content:center; width:50px; height:50px; border-radius:50%; color:#fff; font-size:1.5rem; }
     .chat-btns a[href*="wa.me"] { background:#25D366; }
     .chat-btns a.telegram { background:#0088cc; }
     #rocket { position:fixed; bottom:30px; right:30px; background:var(--gold); padding:12px; border-radius:50%; font-size:1.5rem; cursor:pointer; display:none; }
@@ -116,7 +116,7 @@
     <button id="menu-toggle" aria-expanded="false"><span></span><span></span><span></span></button>
     <ul id="menu-list">
       <li><a href="index.html">Home</a></li>
-      <!-- ... -->
+      <!-- ...other links... -->
       <li><a href="CBE_apply.html">Apply</a></li>
       <li><a href="terms.html">Terms & Conditions</a></li>
     </ul>
@@ -211,28 +211,28 @@
 
   <!-- Chat & Rocket -->
   <div class="chat-btns">
-    <a href="https://wa.me/2349133957084" target="_blank"><i class="fab fa-whatsapp"></i></a>
-    <a class="telegram" href="https://t.me/apexincomeoptions" target="_blank"><i class="fab fa-telegram-plane"></i></a>
+    <a href="https://wa.me/2349133957084" target="_blank" title="WhatsApp"><i class="fab fa-whatsapp"></i></a>
+    <a class="telegram" href="https://t.me/apexincomeoptions" target="_blank" title="Telegram"><i class="fab fa-telegram-plane"></i></a>
   </div>
   <div id="rocket">🚀</div>
 
   <!-- Footer -->
-  <footer>
-    <p>© 2025 Chukwuemeka Bullion Exchange. All rights reserved.</p>
-    <p>Forex trading involves risk. For ages 18+ only.</p>
-    <p><a href="privacy.html">Privacy Policy</a> | <a href="terms.html">Terms & Conditions</a></p>
+  <footer>  
+    <p>© 2025 Chukwuemeka Bullion Exchange. All rights reserved.</p>  
+    <p>Forex trading involves risk. For ages 18+ only.</p>  
+    <p><a href="privacy.html">Privacy Policy</a> | <a href="terms.html">Terms & Conditions</a></p>  
   </footer>
 
   <!-- Supabase JS -->
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script>
-    // Supabase init
-    const supabase = window.supabase.createClient(
+    // Initialize Supabase client
+    const supabase = supabase.createClient(
       'https://dapwpgvnfjcfqqhrpxla.supabase.co',
       'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImRhcHdwZ3ZuZmpjZnFxaHJweGxhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDcwNDA4ODgsImV4cCI6MjA2MjYxNjg4OH0.ICC0UsLlzJDNre7rFCeD3k6iVzo6jOJgn3PhABpEMsQ'
     );
 
-    // Toast
+    // Toast helper
     function showToast(msg, ok = true) {
       const t = document.createElement('div');
       t.textContent = msg;
@@ -246,32 +246,38 @@
       setTimeout(() => t.remove(), 3000);
     }
 
-    // Form submit
-    document.getElementById('capitalForm').addEventListener('submit', async e => {
+    // Form submission with error logging
+    const form = document.getElementById('capitalForm');
+    form.addEventListener('submit', async e => {
       e.preventDefault();
-      const btn = e.target.querySelector('button[type="submit"]');
-      btn.disabled = true; btn.textContent = 'Submitting...';
+      const btn = form.querySelector('button[type="submit"]');
+      btn.disabled = true;
+      btn.textContent = 'Submitting...';
 
       const payload = {
-        full_name: e.target.fullName.value.trim(),
-        email: e.target.email.value.trim(),
-        whatsapp: e.target.whatsapp.value.trim(),
-        telegram: e.target.telegram.value.trim(),
-        experience: parseInt(e.target.experience.value) || 0,
-        motivation: e.target.motivation.value.trim()
+        full_name: form.fullName.value.trim(),
+        email: form.email.value.trim(),
+        whatsapp: form.whatsapp.value.trim(),
+        telegram: form.telegram.value.trim(),
+        experience: parseInt(form.experience.value) || 0,
+        motivation: form.motivation.value.trim()
       };
 
       try {
         const { error } = await supabase
           .from('capital_applications')
           .insert([payload]);
+
         if (error) throw error;
-        showToast('✅ Application submitted!');
-        e.target.reset();
+
+        showToast('✅ Application submitted successfully!');
+        form.reset();
         setTimeout(() => location.reload(), 1000);
-      } catch {
-        showToast('❌ Submission failed. Try again.', false);
-        btn.disabled = false; btn.textContent = 'Submit Application';
+      } catch (err) {
+        console.error('Supabase error:', err);
+        showToast(`❌ Submission failed: ${err.message}`, false);
+        btn.disabled = false;
+        btn.textContent = 'Submit Application';
       }
     });
 
@@ -300,15 +306,15 @@
       menu.classList.toggle('active');
     });
 
-    // Slide-in
+    // Slide-in observer
     const obs = new IntersectionObserver(entries=>{
       entries.forEach(e=>{
-        if(e.isIntersecting){e.target.classList.add('visible'); obs.unobserve(e.target);}
+        if(e.isIntersecting){ e.target.classList.add('visible'); obs.unobserve(e.target); }
       });
     },{threshold:0.3});
     document.querySelectorAll('.slide-in').forEach(el=>obs.observe(el));
 
-    // FAQ
+    // FAQ accordion
     document.querySelectorAll('.faq-item').forEach(item=>{
       item.querySelector('.faq-question').addEventListener('click', ()=>{
         item.classList.toggle('faq-open');
@@ -317,9 +323,9 @@
       });
     });
 
-    // Rocket
+    // Rocket to top
     const rocket = document.getElementById('rocket');
-    window.addEventListener('scroll', ()=> rocket.style.display = window.scrollY>window.innerHeight/2?'block':'none');
+    window.addEventListener('scroll', ()=> rocket.style.display = window.scrollY>window.innerHeight/2 ? 'block':'none');
     rocket.addEventListener('click', ()=> window.scrollTo({top:0, behavior:'smooth'}));
   </script>
 </body>
