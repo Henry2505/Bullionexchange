@@ -151,7 +151,7 @@
           <input type="checkbox" id="agree-terms"/>
           <label for="agree-terms">I agree to</label>
           <span class="terms-links">
-            <a href="privacy.html" target="_blank">Privacy Policy</a> & 
+            <a href="privacy.html" target="_blank">Privacy Policy</a> &amp; 
             <a href="terms.html" target="_blank">Terms & Conditions</a>
           </span>
         </div>
@@ -164,8 +164,35 @@
     © 2025 Chukwuemeka Bullion Exchange. All rights reserved.
   </footer>
 
-  <!-- Supabase JS -->
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <!-- UMD build of Supabase and initialization -->
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js/dist/umd/supabase.js"></script>
+  <script>
+    // 1) Project settings
+    const SUPABASE_URL     = 'https://dapwpgvnfjcfqqhrpxla.supabase.co';
+    const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImRhcHdwZ3ZuZmpjZnFxaHJweGxhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDcwNDA4ODgsImV4cCI6MjA2MjYxNjg4OH0.ICC0UsLlzJDNre7rFCeD3k6iVzo6jOJgn3PhABpEMsQ';
+
+    // 2) Create the client
+    const supabase = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+    // 3) Debug logging
+    console.log('SUPABASE_URL:', SUPABASE_URL);
+    console.log(
+      'SUPABASE_ANON_KEY (first/last):',
+      SUPABASE_ANON_KEY.slice(0,5), '…', SUPABASE_ANON_KEY.slice(-5)
+    );
+    console.log('Supabase client object:', supabase);
+
+    // 4) Quick test query
+    (async () => {
+      const { data, error } = await supabase
+        .from('users')
+        .select('id')
+        .limit(1);
+      console.log('Quick select test →', { data, error });
+    })();
+  </script>
+
+  <!-- Your form logic -->
   <script>
     // Slide-in animations
     document.addEventListener('DOMContentLoaded', () => {
@@ -186,22 +213,14 @@
     const toggle = document.getElementById('theme-toggle');
     toggle.addEventListener('click', () => {
       const current = document.documentElement.getAttribute('data-theme');
-      const next = current === 'dark' ? 'light' : 'dark';
+      const next    = current === 'dark' ? 'light' : 'dark';
       document.documentElement.setAttribute('data-theme', next);
       localStorage.setItem('theme', next);
       toggle.textContent = next === 'dark' ? '🌞' : '🌜';
     });
     toggle.textContent = document.documentElement.getAttribute('data-theme') === 'dark' ? '🌞' : '🌜';
 
-    // Supabase client setup (using your provided keys)
-    const SUPABASE_URL     = 'https://dapwpgvnfjcfqqhrpxla.supabase.co';
-    const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImRhcHdwZ3ZuZmpjZnFxaHJweGxhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDcwNDA4ODgsImV4cCI6MjA2MjYxNjg4OH0.ICC0UsLlzJDNre7rFCeD3k6iVzo6jOJgn3PhABpEMsQ';
-    const supabase         = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
-
-    // DEBUG: verify client
-    console.log('Supabase client:', supabase);
-
-    // Form elements
+    // Form submission logic
     const agreeCheckbox = document.getElementById('agree-terms');
     const submitBtn     = document.getElementById('submit-btn');
     const form          = document.getElementById('apply-form');
@@ -215,17 +234,15 @@
       e.preventDefault();
       alertDiv.textContent = '';
 
-      // Must agree
       if (!agreeCheckbox.checked) {
         alertDiv.style.color = 'crimson';
         alertDiv.textContent = 'You must agree to the Privacy Policy and Terms to continue.';
         return;
       }
 
-      // Gather & validate
       const full_name  = form['apply-name'].value.trim();
       const email      = form['apply-email'].value.trim().toLowerCase();
-      const password   = form['apply-password'].value;   // stored in plaintext—consider hashing server-side
+      const password   = form['apply-password'].value;   // consider hashing server-side
       const phone      = form['apply-phone'].value.trim();
       const experience = form['apply-message'].value.trim();
 
@@ -240,7 +257,6 @@
         return;
       }
 
-      // Insert into users table
       try {
         const { error } = await supabase
           .from('users')
