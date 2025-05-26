@@ -1,209 +1,149 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Admin Payment Settings - CBE</title>
-  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;500;700&display=swap" rel="stylesheet">
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js"></script>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>CBE Admin - Payments</title>
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700&display=swap" rel="stylesheet">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link href="https://cdn.datatables.net/1.13.4/css/dataTables.bootstrap5.min.css" rel="stylesheet">
   <style>
-    body {
-      margin: 0;
-      font-family: 'Poppins', sans-serif;
-      background-color: #0b0b0b;
-      color: #f5f5f5;
-    }
-    header {
-      padding: 100px 20px 40px;
-      text-align: center;
-      color: gold;
-    }
-    header h1 {
-      font-size: 36px;
-      margin-bottom: 10px;
-    }
-    .admin-section {
-      max-width: 700px;
-      margin: 40px auto;
-      padding: 20px;
-      background-color: #141414;
-      border-radius: 10px;
-      border-left: 4px solid gold;
-    }
-    .payment-method {
-      margin-bottom: 20px;
-    }
-    .payment-method label {
-      display: block;
-      color: gold;
-      font-size: 18px;
-      margin-bottom: 5px;
-    }
-    .payment-method input {
-      width: 100%;
-      padding: 10px;
-      background-color: #222;
-      border: 1px solid #444;
-      border-radius: 5px;
-      color: #f5f5f5;
-      font-size: 16px;
-    }
-    .payment-method input:focus {
-      outline: none;
-      border-color: gold;
-    }
-    button {
-      display: inline-block;
-      background-color: gold;
-      color: #000;
-      padding: 14px 20px;
-      font-weight: bold;
-      border: none;
-      border-radius: 6px;
-      cursor: pointer;
-      transition: all 0.3s ease;
-    }
-    button:hover {
-      box-shadow: 0 0 15px gold, 0 0 30px #ffd700;
-      background-color: #e6c200;
-    }
-    .error {
-      color: #ff5555;
-      font-size: 14px;
-      margin-top: 10px;
-    }
-    .success {
-      color: #55ff55;
-      font-size: 14px;
-      margin-top: 10px;
-    }
-    nav {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      padding: 20px 40px;
-      background: rgba(0, 0, 0, 0.8);
-      position: fixed;
-      top: 0;
-      width: 100%;
-      z-index: 1000;
-      border-bottom: 1px solid #333;
-      box-shadow: 0 0 10px gold;
-    }
-    nav img {
-      height: 40px;
-      vertical-align: middle;
-      margin-right: 10px;
-    }
-    nav a {
-      color: gold;
-      margin-left: 20px;
-      text-decoration: none;
-    }
-    .video-background {
-      position: fixed;
-      top: 0; left: 0;
-      width: 100%; height: 100%;
-      object-fit: cover;
-      z-index: -2;
-    }
-    .overlay {
-      position: fixed;
-      top: 0; left: 0;
-      width: 100%; height: 100%;
-      background: rgba(0, 0, 0, 0.5);
-      z-index: -1;
-    }
+    body[data-theme="dark"] { background: #1a1a1a; color: #fff; }
+    .glass { background: rgba(255, 255, 255, 0.05); backdrop-filter: blur(10px); border: 1px solid rgba(255, 215, 0, 0.2); }
+    table.dataTable thead th { background: rgba(255, 255, 255, 0.1); }
   </style>
 </head>
-<body>
-  <video class="video-background" autoplay muted loop playsinline>
-    <source src="star-video.mp4" type="video/mp4" />
-  </video>
-  <div class="overlay"></div>
-
-  <nav>
-    <a href="Index.html"><img src="CBE_logo.PNG" alt="CBE Logo"></a>
-    <div>
-      <a href="Index.html">Home</a>
-      <a href="CBE_login.html">Login</a>
+<body data-theme="dark">
+  <div class="overlay" style="position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0, 0, 0, 0.6); z-index: -1;"></div>
+  <div id="toast-container" style="position: fixed; bottom: 1rem; right: 1rem; z-index: 1050;"></div>
+  <div class="d-flex glass" style="min-height: 100vh;">
+    <nav id="sidebar" class="d-flex flex-column p-3" style="width: 250px;">
+      <h3 style="color: gold;">CBE Admin</h3>
+      <ul id="menu" class="nav flex-column">
+        <li class="nav-item"><a class="nav-link text-white" href="admin-capital-applications.html">Capital Applications</a></li>
+        <li class="nav-item"><a class="nav-link text-white" href="admin-payments.html">Payments</a></li>
+        <li class="nav-item"><a class="nav-link text-white" href="admin-messages.html">Messages</a></li>
+        <li class="nav-item"><a class="nav-link text-white" href="admin-trade-history.html">Trade History</a></li>
+        <li class="nav-item"><a class="nav-link text-white" href="admin-trade-insights.html">Trade Insights</a></li>
+        <li class="nav-item"><a class="nav-link text-white" href="admin-signals.html">Signals</a></li>
+        <li class="nav-item"><a class="nav-link text-white" href="admin-testimonials.html">Testimonials</a></li>
+        <li class="nav-item"><a class="nav-link text-white" href="admin-settings-payment.html">Payment Settings</a></li>
+      </ul>
+    </nav>
+    <div id="content" class="d-flex flex-column flex-grow-1 p-3">
+      <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+          <span id="toggle-btn" style="cursor: pointer; font-size: 1.5rem;">⋮</span>
+          <button id="theme-toggle" class="btn btn-sm btn-outline-secondary ms-2">Light Mode</button>
+        </div>
+        <h2 id="section-title" style="color: gold;">Payments</h2>
+      </div>
+      <div class="p-4 glass">
+        <h4>Payment Approval</h4>
+        <button id="export-payments" class="btn btn-outline-secondary btn-sm mb-3">Export CSV/XLSX</button>
+        <table id="payments-table" class="table table-hover text-white" style="width: 100%;">
+          <thead>
+            <tr><th>#</th><th>User</th><th>Email</th><th>Amount</th><th>Payment Method</th><th>Date</th><th>Screenshot</th><th>Action</th></tr>
+          </thead>
+          <tbody></tbody>
+        </table>
+      </div>
     </div>
-  </nav>
-  <div style="height: 90px;"></div>
-
-  <header>
-    <h1>Admin Payment Settings</h1>
-    <p>Manage payment methods for CBE VIP subscriptions</p>
-  </header>
-
-  <section class="admin-section">
-    <div class="payment-method">
-      <label for="paystackKey">Paystack Public Key</label>
-      <input type="text" id="paystackKey" placeholder="e.g., pk_test_1234567890abcdef">
+  </div>
+  <div class="modal fade" id="screenshotModal">
+    <div class="modal-dialog modal-lg">
+      <div class="modal-content glass p-4">
+        <div class="modal-header">
+          <h5 class="modal-title">Screenshot</h5>
+          <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+        </div>
+        <div class="modal-body">
+          <img id="screenshot-img" src="" class="img-fluid" />
+        </div>
+      </div>
     </div>
-    <div class="payment-method">
-      <label for="btc">Bitcoin (BTC) Wallet Address</label>
-      <input type="text" id="btc" placeholder="e.g., bc1q...">
-    </div>
-    <div class="payment-method">
-      <label for="usdt">USDT (TRC20) Wallet Address</label>
-      <input type="text" id="usdt" placeholder="e.g., T...">
-    </div>
-    <div class="payment-method">
-      <label for="eth">Ethereum (ERC20) Wallet Address</label>
-      <input type="text" id="eth" placeholder="e.g., 0x...">
-    </div>
-    <div class="payment-method">
-      <label for="trx">TRON (TRC20) Wallet Address</label>
-      <input type="text" id="trx" placeholder="e.g., T...">
-    </div>
-    <button onclick="savePaymentSettings()">Save Payment Settings</button>
-    <p id="message" class="error"></p>
-  </section>
-
+  </div>
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+  <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+  <script src="https://cdn.datatables.net/1.13.4/js/jquery.dataTables.min.js"></script>
+  <script src="https://cdn.datatables.net/1.13.4/js/dataTables.bootstrap5.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script>
-    const supabase = supabase.createClient('https://dapwpgvnfjcfqqhrpxla.supabase.co', 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImRhcHdwZ3ZuZmpjZnFxaHJweGxhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDcwNDA4ODgsImV4cCI6MjA2MjYxNjg4OH0.ICC0UsLlzJDNre7rFCeD3k6iVzo6jOJgn3PhABpEMsQ');
+    if (localStorage.getItem('isLoggedIn') !== 'true') {
+      window.location.href = `admin-login.html?redirect=admin-payments.html`;
+    }
 
-    async function loadPaymentSettings() {
-      const { data, error } = await supabase.from('payment_settings').select('*');
-      if (error) {
-        document.getElementById('message').textContent = 'Error loading settings: ' + error.message;
-        document.getElementById('message').className = 'error';
-        return;
-      }
-      const inputs = ['paystackKey', 'btc', 'usdt', 'eth', 'trx'];
-      inputs.forEach(key => {
-        const setting = data.find(item => item.key === key);
-        document.getElementById(key).value = setting ? setting.value : '';
+    const supabase = window.supabase.createClient('https://dapwpgvnfjcfqqhrpxla.supabase.co', 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImRhcHdwZ3ZuZmpjZnFxaHJweGxhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDcwNDA4ODgsImV4cCI6MjA2MjYxNjg4OH0.ICC0UsLlzJDNre7rFCeD3k6iVzo6jOJgn3PhABpEMsQ');
+
+    function showToast(msg, ok = true) {
+      const id = 't' + Date.now();
+      document.getElementById('toast-container').innerHTML += `
+        <div id="${id}" class="toast align-items-center text-white ${ok ? 'bg-success' : 'bg-danger'} border-0" role="alert">
+          <div class="d-flex">
+            <div class="toast-body">${msg}</div>
+            <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast"></button>
+          </div>
+        </div>`;
+      new bootstrap.Toast(document.getElementById(id), { delay: 3000 }).show();
+    }
+
+    document.getElementById('theme-toggle').onclick = () => {
+      const next = document.body.getAttribute('data-theme') === 'dark' ? 'light' : 'dark';
+      document.body.setAttribute('data-theme', next);
+      document.getElementById('theme-toggle').textContent = next === 'dark' ? 'Light Mode' : 'Dark Mode';
+    };
+
+    document.getElementById('toggle-btn').onclick = () => {
+      document.getElementById('sidebar').classList.toggle('collapsed');
+    };
+
+    document.querySelectorAll('#menu .nav-link').forEach(link => {
+      if (link.href.endsWith('admin-payments.html')) link.classList.add('active');
+    });
+
+    $(document).ready(() => {
+      $('#payments-table').DataTable({
+        columns: [
+          { data: 'id' },
+          { data: 'users.name', defaultContent: 'Unknown' },
+          { data: 'email' },
+          { data: 'amount' },
+          { data: 'method' },
+          { data: 'date', render: data => new Date(data).toLocaleDateString() },
+          { data: 'screenshot', render: data => data ? `<button class="btn btn-sm btn-info" onclick="viewScreenshot('${data}')">View</button>` : '—' },
+          { data: null, render: (_, __, row) => row.status === 'Pending' ? `<button class="btn btn-sm btn-primary" onclick="approvePayment(${row.id})">Approve</button>` : '—' }
+        ]
       });
-    }
+      loadPayments();
+    });
 
-    async function savePaymentSettings() {
-      const settings = [
-        { key: 'paystackKey', value: document.getElementById('paystackKey').value.trim() },
-        { key: 'btc', value: document.getElementById('btc').value.trim() },
-        { key: 'usdt', value: document.getElementById('usdt').value.trim() },
-        { key: 'eth', value: document.getElementById('eth').value.trim() },
-        { key: 'trx', value: document.getElementById('trx').value.trim() }
-      ].filter(setting => setting.value); // Only save non-empty values
-
-      if (settings.length === 0) {
-        document.getElementById('message').textContent = 'Please enter at least one payment method.';
-        document.getElementById('message').className = 'error';
-        return;
-      }
-
-      const { error } = await supabase.from('payment_settings').upsert(settings, { onConflict: 'key' });
-      if (error) {
-        document.getElementById('message').textContent = 'Error saving settings: ' + error.message;
-        document.getElementById('message').className = 'error';
-      } else {
-        document.getElementById('message').textContent = 'Payment settings saved successfully!';
-        document.getElementById('message').className = 'success';
+    async function approvePayment(paymentId) {
+      try {
+        const { error } = await supabase.from('payments').update({ status: 'Approved' }).eq('id', paymentId);
+        if (error) throw error;
+        showToast('Payment approved successfully');
+        loadPayments();
+      } catch (error) {
+        console.error('Error approving payment:', error);
+        showToast('Error approving payment', false);
       }
     }
 
-    loadPaymentSettings();
+    function viewScreenshot(url) {
+      document.getElementById('screenshot-img').src = url;
+      new bootstrap.Modal(document.getElementById('screenshotModal')).show();
+    }
+
+    async function loadPayments() {
+      try {
+        const { data, error } = await supabase.from('payments').select('*, users(name)');
+        if (error) throw error;
+        $('#payments-table').DataTable().clear().rows.add(data || []).draw();
+      } catch (error) {
+        console.error('Error loading payments:', error);
+        showToast('Error loading payments', false);
+      }
+    }
   </script>
 </body>
 </html>
