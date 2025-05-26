@@ -1,153 +1,219 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" data-theme="dark">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>CBE Admin Dashboard</title>
-  <!-- Fonts, Bootstrap & Icons -->
-  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700&display=swap" rel="stylesheet" />
-  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet" />
-  <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css" rel="stylesheet" />
-  <!-- Charts & Drag&Drop -->
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Admin — CBE Dashboard</title>
+  <!-- Poppins & Bootstrap & Icons -->
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700&display=swap" rel="stylesheet">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css" rel="stylesheet">
+  <!-- Chart.js & Sortable.js -->
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.0/Sortable.min.js"></script>
-
   <style>
-    body { font-family: 'Poppins', sans-serif; }
-    .overlay { position: fixed; top:0; left:0; width:100%; height:100%; background: rgba(0,0,0,0.6); z-index:-1; }
-    /* Sidebar */
-    #sidebar {
-      width: 240px; background: #000; color: #ffd700; transition: width .3s;
-      display: flex; flex-direction: column;
+    /* === THEME VARIABLES & RESET === */
+    * { margin:0; padding:0; box-sizing:border-box; }
+    html { scroll-behavior: smooth; }
+    body {
+      font-family:'Poppins',sans-serif;
+      background:var(--bg); color:var(--text);
+      overflow-x:hidden;
     }
-    #sidebar.collapsed { width: 70px; }
-    #sidebar .brand {
-      display: flex; align-items: center; gap: .5rem;
-      padding: 1rem; border-bottom: 1px solid #333;
-    }
-    #sidebar .brand img { height: 32px; }
-    #sidebar .brand .title { font-size:1.25rem; font-weight:600; }
-    #sidebar.collapsed .brand .title { display: none; }
-    #sidebar .nav-link {
-      color: #ffd700; padding: .75rem 1rem; transition: background .2s, color .2s;
-    }
-    #sidebar .nav-link:hover,
-    #sidebar .nav-link.active {
-      background: #ffd700; color: #000;
-    }
-    #sidebar .nav-link .bi { font-size:1.2rem; vertical-align:-2px; }
-    #sidebar.collapsed .nav-link span.text { display: none; }
+    a { color:var(--gold); text-decoration:none; }
+    img { max-width:100%; display:block; }
 
-    /* Content */
-    #content {
-      flex: 1; margin-left: 240px; transition: margin-left .3s; padding: 2rem;
+    :root {
+      --bg:#000; --text:#fff;
+      --gold:#ffd700; --gold-dark:#cca300;
+      --overlay:rgba(0,0,0,0.15);
+      --glass-bg:rgba(255,255,255,0.05);
     }
-    #sidebar.collapsed ~ #content { margin-left: 70px; }
+    [data-theme="light"] {
+      --bg:#f5f5f5; --text:#333;
+      --gold:#cca300; --gold-dark:#b58900;
+      --overlay:rgba(255,255,255,0.15);
+      --glass-bg:rgba(0,0,0,0.05);
+    }
 
-    /* Stats cards */
-    .card-stat { color: #fff; border: none; }
-    .card-stat.bg-primary   { background: rgba(13,110,253,0.8); }
-    .card-stat.bg-success   { background: rgba(28,200,138,0.8); }
-    .card-stat.bg-info      { background: rgba(13,202,240,0.8); }
-    .card-stat.bg-secondary { background: rgba(108,117,125,0.8); }
-    .card-stat.bg-warning   { background: rgba(255,193,7,0.8); }
+    /* === OVERLAY & GLASS === */
+    .overlay {
+      position:fixed; top:0; left:0;
+      width:100%; height:100%;
+      background:var(--overlay); z-index:-1;
+    }
+    .glass { backdrop-filter:blur(10px); }
 
-    /* Glass effect */
-    .glass { backdrop-filter: blur(10px); }
+    /* === TOP BAR & NAV TOGGLE === */
+    header.admin-header {
+      display:flex; align-items:center; justify-content:space-between;
+      padding:1rem 2rem; background:rgba(0,0,0,0.6); position:relative;
+      border-bottom:1px solid var(--gold);
+    }
+    header.admin-header .logo img {
+      height:40px; cursor:pointer;
+    }
+    #menu-toggle {
+      background:none; border:none; cursor:pointer;
+      display:flex; flex-direction:column; gap:5px;
+      width:40px; height:40px;
+      justify-content:center; align-items:center;
+    }
+    #menu-toggle span {
+      width:30px; height:3px; background:var(--gold);
+      transition:all .3s ease;
+    }
+    #nav-panel {
+      position:absolute; top:100%; right:0;
+      width:250px; background:rgba(0,0,0,0.9);
+      border:1px solid var(--gold); border-radius:0 0 4px 4px;
+      transform:translateY(-20px); opacity:0;
+      transition:transform .3s,opacity .3s;
+      padding:1rem;
+    }
+    #nav-panel.show {
+      transform:translateY(0); opacity:1;
+    }
+    #nav-panel ul { list-style:none; }
+    #nav-panel li { margin:10px 0; }
+    #nav-panel a {
+      color:#fff; font-weight:500;
+      display:flex; align-items:center; gap:8px;
+    }
+    #nav-panel a:hover { color:var(--gold); }
 
-    /* Top bar controls */
-    #top-controls i { font-size:1.5rem; cursor:pointer; color:#ffd700; }
+    /* === STATS CARDS === */
+    .stats-row { display:grid; grid-template-columns:repeat(auto-fit,minmax(180px,1fr)); gap:1rem; margin:2rem 0; }
+    .card-stat {
+      background:var(--glass-bg); border:1px solid var(--gold);
+      color:#fff; padding:1rem; border-radius:8px; text-align:center;
+      backdrop-filter:blur(8px);
+    }
+    .card-stat h5 { margin-bottom:.5rem; color:var(--gold); }
+    .card-stat h2 { font-size:2rem; }
+
+    /* === CHARTS === */
+    .charts { display:grid; grid-template-columns:1fr 1fr; gap:1rem; }
+    @media(max-width:768px){ .charts { grid-template-columns:1fr; } }
+
+    /* === CLOCK & THEME BTN === */
+    #header-right { display:flex; align-items:center; gap:1rem; }
+    #current-datetime { color:#fff; }
+    #theme-toggle {
+      background:none; border:none; font-size:1.25rem;
+      cursor:pointer; color:var(--text);
+    }
   </style>
 </head>
-<body data-theme="dark">
-  <div class="overlay"></div>
-  <div id="toast-container" style="position:fixed; bottom:1rem; right:1rem; z-index:1050;"></div>
+<body>
 
-  <div class="d-flex glass" style="min-height:100vh;">
-    <!-- SIDEBAR -->
-    <nav id="sidebar">
-      <a href="admin-dashboard.html" class="brand">
-        <img src="CBE_logo.PNG" alt="CBE Logo">
-        <span class="title">CBE Admin</span>
-      </a>
-      <ul id="menu" class="nav nav-pills flex-column mt-3">
-        <li class="nav-item"><a href="admin-dashboard.html"           class="nav-link"><i class="bi-speedometer2"></i> <span class="text">Dashboard</span></a></li>
-        <li class="nav-item"><a href="admin-capital-applications.html" class="nav-link"><i class="bi-folder2-open"></i> <span class="text">Capital Applications</span></a></li>
-        <li class="nav-item"><a href="admin-messages.html"            class="nav-link"><i class="bi-chat-dots-fill"></i> <span class="text">Messages</span></a></li>
-        <li class="nav-item"><a href="admin-settings-payments.html"   class="nav-link"><i class="bi-credit-card"></i> <span class="text">Settings & Payments</span></a></li>
-        <li class="nav-item"><a href="admin-signals.html"             class="nav-link"><i class="bi-lightning-fill"></i> <span class="text">Signals</span></a></li>
-        <li class="nav-item"><a href="admin-testimonials.html"        class="nav-link"><i class="bi-chat-quote"></i> <span class="text">Testimonials</span></a></li>
-        <li class="nav-item"><a href="admin-trade-history.html"       class="nav-link"><i class="bi-clock-history"></i> <span class="text">Trade History</span></a></li>
-        <li class="nav-item"><a href="admin-trade-insights.html"      class="nav-link"><i class="bi-graph-up"></i> <span class="text">Trade Insights</span></a></li>
-        <li class="nav-item"><a href="admin-users.html"               class="nav-link"><i class="bi-people-fill"></i> <span class="text">Users</span></a></li>
-        <li class="nav-item mt-auto"><a href="logout.html"           class="nav-link"><i class="bi-box-arrow-right"></i> <span class="text">Logout</span></a></li>
+  <div class="overlay"></div>
+
+  <!-- HEADER -->
+  <header class="admin-header">
+    <button id="menu-toggle" aria-label="Toggle menu">
+      <span></span><span></span><span></span>
+    </button>
+    <div class="logo" onclick="goHome()">
+      <img src="CBE_logo.PNG" alt="CBE Logo">
+    </div>
+    <div id="header-right">
+      <small id="current-datetime"></small>
+      <button id="theme-toggle" aria-label="Toggle theme">🌞</button>
+    </div>
+
+    <nav id="nav-panel" aria-label="Admin navigation">
+      <ul>
+        <li><a href="admin-dashboard.html"><i class="bi-speedometer2"></i> Dashboard</a></li>
+        <li><a href="admin-capital-applications.html"><i class="bi-folder2-open"></i> Capital Apps</a></li>
+        <li><a href="admin-messages.html"><i class="bi-chat-dots-fill"></i> Messages</a></li>
+        <li><a href="admin-settings-payments.html"><i class="bi-credit-card"></i> Settings & Payments</a></li>
+        <li><a href="admin-signals.html"><i class="bi-lightning-fill"></i> Signals</a></li>
+        <li><a href="admin-testimonials.html"><i class="bi-chat-quote"></i> Testimonials</a></li>
+        <li><a href="admin-trade-history.html"><i class="bi-clock-history"></i> Trade History</a></li>
+        <li><a href="admin-trade-insights.html"><i class="bi-graph-up"></i> Trade Insights</a></li>
+        <li><a href="admin-users.html"><i class="bi-people-fill"></i> Users</a></li>
+        <li><a href="logout.html"><i class="bi-box-arrow-right"></i> Logout</a></li>
       </ul>
     </nav>
+  </header>
 
-    <!-- MAIN CONTENT -->
-    <div id="content">
-      <!-- Top Controls -->
-      <div class="d-flex justify-content-between align-items-center mb-4">
-        <div id="top-controls">
-          <i id="toggle-btn" class="bi-list"></i>
-          <button id="theme-toggle" class="btn btn-sm btn-outline-secondary ms-3">Light Mode</button>
-        </div>
-        <div class="d-flex align-items-baseline">
-          <h2 id="section-title" class="text-white me-3">Dashboard</h2>
-          <small id="current-datetime" class="text-white"></small>
-        </div>
+  <!-- MAIN DASHBOARD CONTENT -->
+  <main class="container py-4">
+    <div class="stats-row" id="stats-container">
+      <div class="card-stat" data-key="users">
+        <h5>Total Users</h5><h2 id="stat-users">0</h2>
       </div>
-
-      <!-- Stats Cards -->
-      <div class="row g-4" id="stats-container">
-        <div class="col-md-3">
-          <div class="card card-stat p-3 glass bg-primary" draggable="true" data-key="users">
-            <h5>Total Users</h5>
-            <h2 id="stat-users">0</h2>
-          </div>
-        </div>
-        <div class="col-md-3">
-          <div class="card card-stat p-3 glass bg-success" draggable="true" data-key="payments">
-            <h5>Pending Payments</h5>
-            <h2 id="stat-payments">0</h2>
-          </div>
-        </div>
-        <div class="col-md-3">
-          <div class="card card-stat p-3 glass bg-info" draggable="true" data-key="trades">
-            <h5>Trades This Month</h5>
-            <h2 id="stat-trades">0</h2>
-          </div>
-        </div>
-        <div class="col-md-3">
-          <div class="card card-stat p-3 glass bg-secondary" draggable="true" data-key="signals">
-            <h5>Signals Published</h5>
-            <h2 id="stat-signals">0</h2>
-          </div>
-        </div>
-        <div class="col-md-3">
-          <div class="card card-stat p-3 glass bg-warning" draggable="true" data-key="winrate">
-            <h5>Win Rate (%)</h5>
-            <h2 id="stat-winrate">0</h2>
-          </div>
-        </div>
+      <div class="card-stat" data-key="payments">
+        <h5>Pending Payments</h5><h2 id="stat-payments">0</h2>
       </div>
-
-      <!-- Charts -->
-      <div class="row g-4 mt-4">
-        <div class="col-md-6"><canvas id="chart-pnl"    height="200"></canvas></div>
-        <div class="col-md-6"><canvas id="chart-winrate" height="200"></canvas></div>
+      <div class="card-stat" data-key="trades">
+        <h5>Trades This Month</h5><h2 id="stat-trades">0</h2>
+      </div>
+      <div class="card-stat" data-key="signals">
+        <h5>Signals Published</h5><h2 id="stat-signals">0</h2>
+      </div>
+      <div class="card-stat" data-key="winrate">
+        <h5>Win Rate (%)</h5><h2 id="stat-winrate">0</h2>
       </div>
     </div>
-  </div>
+
+    <div class="charts">
+      <canvas id="chart-pnl" height="200"></canvas>
+      <canvas id="chart-winrate" height="200"></canvas>
+    </div>
+  </main>
 
   <!-- SCRIPTS -->
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script>
-    // Auth redirect
-    if (localStorage.getItem('isLoggedIn') !== 'true') {
-      const cur = window.location.pathname.split('/').pop();
-      window.location.href = `admin-login.html?redirect=${cur}`;
+    // Helpers
+    function goHome(){ window.location='admin-dashboard.html'; }
+    function showToast(msg,ok=true){
+      const t=document.createElement('div');
+      t.className=`toast align-items-center text-white ${ok?'bg-success':'bg-danger'} border-0`;
+      t.innerHTML=`<div class="d-flex">
+        <div class="toast-body">${msg}</div>
+        <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast"></button>
+      </div>`;
+      document.body.append(t);
+      new bootstrap.Toast(t,{delay:3000}).show();
+    }
+
+    // Theme toggle
+    const themeBtn=document.getElementById('theme-toggle');
+    themeBtn.onclick=()=>{
+      const nxt=document.documentElement.getAttribute('data-theme')==='dark'?'light':'dark';
+      document.documentElement.setAttribute('data-theme',nxt);
+      localStorage.setItem('theme',nxt);
+      themeBtn.textContent = nxt==='dark'?'🌞':'🌜';
+    };
+    // Init theme
+    const saved=localStorage.getItem('theme')||'dark';
+    document.documentElement.setAttribute('data-theme',saved);
+    themeBtn.textContent = saved==='dark'?'🌞':'🌜';
+
+    // Clock
+    function updateClock(){
+      document.getElementById('current-datetime')
+        .textContent=new Date().toLocaleString();
+    }
+    updateClock(); setInterval(updateClock,60000);
+
+    // Nav toggle
+    const menuToggle=document.getElementById('menu-toggle');
+    const navPanel=document.getElementById('nav-panel');
+    menuToggle.onclick=()=>{
+      navPanel.classList.toggle('show');
+      menuToggle.setAttribute('aria-expanded',
+        navPanel.classList.contains('show'));
+    };
+
+    // Redirect if not logged in
+    if(localStorage.getItem('isLoggedIn')!=='true'){
+      const cur=location.pathname.split('/').pop();
+      location.href=`admin-login.html?redirect=${cur}`;
     }
 
     // Supabase init
@@ -156,100 +222,60 @@
       'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImRhcHdwZ3ZuZmpjZnFxaHJweGxhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDcwNDA4ODgsImV4cCI6MjA2MjYxNjg4OH0.ICC0UsLlzJDNre7rFCeD3k6iVzo6jOJgn3PhABpEMsQ'
     );
 
-    // Toast helper
-    function showToast(msg, ok=true) {
-      const id = 't'+Date.now();
-      document.getElementById('toast-container').innerHTML +=
-        `<div id="${id}" class="toast align-items-center text-white ${ok?'bg-success':'bg-danger'} border-0" role="alert">
-           <div class="d-flex">
-             <div class="toast-body">${msg}</div>
-             <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast"></button>
-           </div>
-         </div>`;
-      new bootstrap.Toast(document.getElementById(id), { delay:3000 }).show();
-    }
-
-    // Theme switch
-    document.getElementById('theme-toggle').onclick = () => {
-      const next = document.body.getAttribute('data-theme')==='dark'?'light':'dark';
-      document.body.setAttribute('data-theme', next);
-      document.getElementById('theme-toggle').textContent = next==='dark'?'Light Mode':'Dark Mode';
-    };
-
-    // Sidebar collapse
-    document.getElementById('toggle-btn').onclick = () => {
-      document.getElementById('sidebar').classList.toggle('collapsed');
-    };
-
-    // Highlight current link
-    document.querySelectorAll('#menu .nav-link').forEach(link => {
-      if (link.href.endsWith(window.location.pathname.split('/').pop()))
-        link.classList.add('active');
-    });
-
-    // Drag & Drop stats
-    new Sortable(document.getElementById('stats-container'), { animation:150 });
-
     // Load stats & charts
-    async function loadDashboard() {
+    async function loadDashboard(){
       try {
-        const [{ data: u },{ data: p },{ data: t },{ data: s },{ data: i }] = await Promise.all([
+        const [u,p,t,s,i] = await Promise.all([
           supabase.from('users').select('id'),
           supabase.from('payments').select('id').eq('status','Pending'),
           supabase.from('trade_history').select('id'),
           supabase.from('signals').select('id'),
-          supabase.from('trade_insights').select('week_ending,pips').order('week_ending',{ascending:false})
+          supabase.from('trade_insights').select('week_ending,pips').order('week_ending',{ascending:false}),
         ]);
+        document.getElementById('stat-users').textContent=u.data.length;
+        document.getElementById('stat-payments').textContent=p.data.length;
+        document.getElementById('stat-trades').textContent=t.data.length;
+        document.getElementById('stat-signals').textContent=s.data.length;
+        const insights=i.data;
+        const wins=insights.filter(x=>x.pips>0).length;
+        const rate=insights.length ? Math.round(wins/insights.length*100):0;
+        document.getElementById('stat-winrate').textContent=rate;
 
-        document.getElementById('stat-users').textContent    = u.length;
-        document.getElementById('stat-payments').textContent = p.length;
-        document.getElementById('stat-trades').textContent   = t.length;
-        document.getElementById('stat-signals').textContent  = s.length;
-
-        const wins = i.filter(x => x.pips>0).length;
-        const total= i.length;
-        document.getElementById('stat-winrate').textContent = total?Math.round(wins/total*100):0;
-
-        // P&L chart
-        new Chart(document.getElementById('chart-pnl'), {
+        // P&L line
+        new Chart(document.getElementById('chart-pnl'),{
           type:'line',
           data:{
-            labels: i.map(x=>new Date(x.week_ending).toLocaleDateString()),
+            labels:insights.map(x=>new Date(x.week_ending).toLocaleDateString()),
             datasets:[{
-              data: i.map(x=>x.pips),
+              data:insights.map(x=>x.pips),
               tension:0.4,
-              borderColor:'#ffd700',
+              borderColor:var(--gold),
               backgroundColor:'rgba(255,215,0,0.2)'
             }]
           },
-          options:{ responsive:true, plugins:{ legend:{ display:false } } }
+          options:{responsive:true,plugins:{legend:{display:false}}}
         });
-
-        // Win-rate chart
-        new Chart(document.getElementById('chart-winrate'), {
+        // Win-rate bar
+        new Chart(document.getElementById('chart-winrate'),{
           type:'bar',
           data:{
-            labels: i.map(x=>new Date(x.week_ending).toLocaleDateString()),
+            labels:insights.map(x=>new Date(x.week_ending).toLocaleDateString()),
             datasets:[{
-              data: i.map(x=> x.pips>0?100:0 ),
+              data:insights.map(x=> x.pips>0?100:0 ),
               backgroundColor:'#1cc88a'
             }]
           },
-          options:{ responsive:true, plugins:{ legend:{ display:false } } }
+          options:{responsive:true,plugins:{legend:{display:false}}}
         });
 
-      } catch(e) {
+        // Draggable stats
+        new Sortable(document.getElementById('stats-container'),{animation:150});
+      }
+      catch(e){
         console.error(e);
-        showToast('Error loading dashboard', false);
+        showToast('Error loading dashboard',false);
       }
     }
-
-    // Live clock
-    function updateClock() {
-      document.getElementById('current-datetime').textContent = new Date().toLocaleString();
-    }
-    updateClock();
-    setInterval(updateClock, 60000);
 
     loadDashboard();
   </script>
