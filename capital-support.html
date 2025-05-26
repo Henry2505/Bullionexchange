@@ -116,7 +116,6 @@
     <button id="menu-toggle" aria-expanded="false"><span></span><span></span><span></span></button>
     <ul id="menu-list">
       <li><a href="index.html">Home</a></li>
-      <!-- other links -->
       <li><a href="CBE_apply.html">Apply</a></li>
       <li><a href="terms.html">Terms & Conditions</a></li>
     </ul>
@@ -161,7 +160,7 @@
       <label>WhatsApp Number</label><input type="tel" id="whatsapp" name="whatsapp" placeholder="+234...">
       <label>Telegram Handle</label><input type="text" id="telegram" name="telegram" placeholder="@yourhandle">
       <label>Trading Experience (years)</label><input type="number" id="experience" name="experience" min="0" placeholder="2">
-      <label>Why do you deserve Capital Support? *</label><textarea id="motivation" name="motivation" rows="4" placeholder="Your story..." required></textarea>
+      <label>Why do you deserve Capital Support? *</label><textarea id="reason" name="reason" rows="4" placeholder="Your story..." required></textarea>
       <label><input type="checkbox" id="terms" name="terms" required> I agree to the <a href="terms.html">Terms & Conditions</a></label>
       <button type="submit">Submit Application</button>
     </form>
@@ -199,7 +198,7 @@
   <!-- Supabase JS + Your Script -->
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script>
-    // 1) Init Supabase correctly
+    // Initialize Supabase client
     const supabase = window.supabase.createClient(
       'https://dapwpgvnfjcfqqhrpxla.supabase.co',
       'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImRhcHdwZ3ZuZmpjZnFxaHJweGxhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDcwNDA4ODgsImV4cCI6MjA2MjYxNjg4OH0.ICC0UsLlzJDNre7rFCeD3k6iVzo6jOJgn3PhABpEMsQ'
@@ -219,35 +218,40 @@
       setTimeout(()=>t.remove(),3000);
     }
 
-    // Form submission + error logging
+    // Form submission (using 'reason' instead of 'motivation')
     document.getElementById('capitalForm').addEventListener('submit', async e => {
       e.preventDefault();
       const btn = e.target.querySelector('button[type="submit"]');
       btn.disabled = true; btn.textContent = 'Submitting...';
+
       const payload = {
         full_name: e.target.fullName.value.trim(),
-        email: e.target.email.value.trim(),
-        whatsapp: e.target.whatsapp.value.trim(),
-        telegram: e.target.telegram.value.trim(),
-        experience: parseInt(e.target.experience.value)||0,
-        motivation: e.target.motivation.value.trim()
+        email:     e.target.email.value.trim(),
+        whatsapp:  e.target.whatsapp.value.trim(),
+        telegram:  e.target.telegram.value.trim(),
+        experience:parseInt(e.target.experience.value)||0,
+        reason:    e.target.reason.value.trim()
       };
+
       try {
-        const { error } = await supabase.from('capital_applications').insert([payload]);
+        const { error } = await supabase
+          .from('capital_applications')
+          .insert([payload]);
         if (error) throw error;
+
         showToast('✅ Application submitted!');
         e.target.reset();
         setTimeout(()=>location.reload(),1000);
       } catch (err) {
         console.error('Supabase error:', err);
-        showToast(`❌ Failed: ${err.message}`, false);
+        showToast(`❌ Submission failed: ${err.message}`, false);
         btn.disabled = false; btn.textContent = 'Submit Application';
       }
     });
 
     // Theme Toggle
     const themeBtn = document.getElementById('theme-toggle');
-    themeBtn.addEventListener('click', ()=>{
+    themeBtn.addEventListener('click', () => {
       const curr = document.documentElement.getAttribute('data-theme');
       const next = curr==='dark'?'light':'dark';
       document.documentElement.setAttribute('data-theme', next);
@@ -273,17 +277,17 @@
     // Slide-in Observer
     const obs = new IntersectionObserver(entries=>{
       entries.forEach(e=>{
-        if (e.isIntersecting) { e.target.classList.add('visible'); obs.unobserve(e.target); }
+        if(e.isIntersecting){ e.target.classList.add('visible'); obs.unobserve(e.target); }
       });
     },{threshold:0.3});
     document.querySelectorAll('.slide-in').forEach(el=>obs.observe(el));
 
     // FAQ Accordion
     document.querySelectorAll('.faq-item').forEach(item=>{
-      item.querySelector('.faq-question').addEventListener('click',()=>{
+      item.querySelector('.faq-question').addEventListener('click', ()=>{
         item.classList.toggle('faq-open');
         const ans = item.querySelector('.faq-answer');
-        ans.style.maxHeight = item.classList.contains('faq-open')? ans.scrollHeight+'px': null;
+        ans.style.maxHeight = item.classList.contains('faq-open') ? ans.scrollHeight+'px' : null;
       });
     });
 
