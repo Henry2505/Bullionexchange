@@ -8,11 +8,13 @@
   <link rel="stylesheet" href="theme.css"/>
   <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700&family=Roboto:wght@300;400;700&display=swap" rel="stylesheet"/>
   <script>
+    // Load saved theme
     const savedTheme = localStorage.getItem('theme') || 'dark';
     document.documentElement.setAttribute('data-theme', savedTheme);
   </script>
   <script src="https://kit.fontawesome.com/your-kit-code.js" crossorigin="anonymous"></script>
   <style>
+    /* — your existing styles — */
     * { margin:0; padding:0; box-sizing:border-box; }
     html { scroll-behavior:smooth; }
     body {
@@ -149,7 +151,7 @@
           <input type="checkbox" id="agree-terms"/>
           <label for="agree-terms">I agree to</label>
           <span class="terms-links">
-            <a href="privacy.html" target="_blank">Privacy Policy</a> & 
+            <a href="privacy.html" target="_blank">Privacy Policy</a> & 
             <a href="terms.html" target="_blank">Terms & Conditions</a>
           </span>
         </div>
@@ -161,8 +163,11 @@
   <footer class="slide-in">
     © 2025 Chukwuemeka Bullion Exchange. All rights reserved.
   </footer>
+
+  <!-- Supabase JS -->
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script>
+    // Slide-in animations
     document.addEventListener('DOMContentLoaded', () => {
       document.querySelectorAll('.slide-in').forEach(el => {
         const obs = new IntersectionObserver((entries, o) => {
@@ -176,73 +181,85 @@
         obs.observe(el);
       });
     });
+
+    // Theme toggler
     const toggle = document.getElementById('theme-toggle');
     toggle.addEventListener('click', () => {
-      const currentTheme = document.documentElement.getAttribute('data-theme');
-      const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
-      document.documentElement.setAttribute('data-theme', newTheme);
-      localStorage.setItem('theme', newTheme);
-      toggle.textContent = newTheme === 'dark' ? '🌞' : '🌜';
+      const current = document.documentElement.getAttribute('data-theme');
+      const next = current === 'dark' ? 'light' : 'dark';
+      document.documentElement.setAttribute('data-theme', next);
+      localStorage.setItem('theme', next);
+      toggle.textContent = next === 'dark' ? '🌞' : '🌜';
     });
-    const currentTheme = document.documentElement.getAttribute('data-theme');
-    toggle.textContent = currentTheme === 'dark' ? '🌞' : '🌜';
-    const SUPABASE_URL = 'https://dapwpgvnfjcfqqhrpxla.supabase.co';
-    const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImRhcHdwZ3ZuZmpjZnFxaHJweGxhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDcwNDA4ODgsImV4cCI6MjA2MjYxNjg4OH0.ICC0UsLlzJDNre7rFCeD3k6iVzo6jOJgn3PhABpEMsQ';
-    const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+    toggle.textContent = document.documentElement.getAttribute('data-theme') === 'dark' ? '🌞' : '🌜';
+
+    // Supabase client setup
+    const SUPABASE_URL     = 'https://dapwpgvnfjcfqqhrpxla.supabase.co';
+    const SUPABASE_ANON_KEY = 'eyJhbGciOi...'; // your anon key
+    const supabase         = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+    // Form elements
     const agreeCheckbox = document.getElementById('agree-terms');
-    const submitBtn = document.getElementById('submit-btn');
-    const form = document.getElementById('apply-form');
-    const alertDiv = document.getElementById('apply-alert');
+    const submitBtn     = document.getElementById('submit-btn');
+    const form          = document.getElementById('apply-form');
+    const alertDiv      = document.getElementById('apply-alert');
+
     agreeCheckbox.addEventListener('change', () => {
       submitBtn.classList.toggle('enabled', agreeCheckbox.checked);
     });
+
     form.addEventListener('submit', async e => {
       e.preventDefault();
       alertDiv.textContent = '';
+
+      // Must agree
       if (!agreeCheckbox.checked) {
         alertDiv.style.color = 'crimson';
-        return alertDiv.textContent = 'You must agree to the Privacy Policy and Terms to continue.';
+        alertDiv.textContent = 'You must agree to the Privacy Policy and Terms to continue.';
+        return;
       }
-      const full_name = document.getElementById('apply-name').value.trim();
-      const email = document.getElementById('apply-email').value.trim().toLowerCase();
-      const password = document.getElementById('apply-password').value;
-      const phone = document.getElementById('apply-phone').value.trim();
-      const experience = document.getElementById('apply-message').value.trim();
+
+      // Gather & validate
+      const full_name  = form['apply-name'].value.trim();
+      const email      = form['apply-email'].value.trim().toLowerCase();
+      const password   = form['apply-password'].value;
+      const phone      = form['apply-phone'].value.trim();
+      const experience = form['apply-message'].value.trim();
+
       if (!full_name || !email || !password || !phone || !experience) {
         alertDiv.style.color = 'crimson';
-        return alertDiv.textContent = 'Please complete all fields.';
+        alertDiv.textContent = 'Please complete all fields.';
+        return;
       }
-      if (!email.match(/^[^\s@]+@[^\s@]+\.[^\s@]+$/)) {
+      if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
         alertDiv.style.color = 'crimson';
-        return alertDiv.textContent = 'Please enter a valid email address.';
+        alertDiv.textContent = 'Please enter a valid email address.';
+        return;
       }
+
+      // Insert into users table
       try {
-        const { data: authData, error: authError } = await supabase.auth.signUp({
-          email,
-          password,
-          options: {
-            data: { name: full_name, phone },
-            emailRedirectTo: 'https://apexincomeoptions.com.ng/CBE_vip_subscription.html'
-          }
-        });
-        if (authError) throw new Error(authError.message);
-        const { data, error } = await supabase
-          .from('capital_applications')
+        const { error } = await supabase
+          .from('users')
           .insert([{
-            user_id: authData.user.id,
             full_name,
             email,
             phone,
+            password,
             experience,
             status: 'Pending'
           }]);
-        if (error) throw new Error(error.message);
+
+        if (error) throw error;
+
         alertDiv.style.color = 'lightgreen';
-        alertDiv.textContent = 'Application submitted—redirecting...';
-        setTimeout(() => window.location.href = 'CBE_vip_subscription.html', 1500);
-      } catch (error) {
+        alertDiv.textContent = 'Application submitted—thank you!';
+        form.reset();
+        submitBtn.classList.remove('enabled');
+      } catch (err) {
+        console.error(err);
         alertDiv.style.color = 'crimson';
-        alertDiv.textContent = `Error: ${error.message}`;
+        alertDiv.textContent = `Error: ${err.message}`;
       }
     });
   </script>
