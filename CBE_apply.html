@@ -4,101 +4,130 @@
   <meta charset="UTF-8"/>
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Apply • Chukwuemeka Bullion Exchange</title>
-  <meta name="description" content="Apply to join Chukwuemeka Bullion Exchange’s VIP trading community."/>
-  <link rel="stylesheet" href="theme.css"/>
-  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700&family=Roboto:wght@300;400;700&display=swap" rel="stylesheet"/>
-  <script>
-    // Load saved theme
-    const savedTheme = localStorage.getItem('theme') || 'dark';
-    document.documentElement.setAttribute('data-theme', savedTheme);
-  </script>
-  <script src="https://kit.fontawesome.com/your-kit-code.js" crossorigin="anonymous"></script>
+
+  <!-- Fallback dark‐mode variables in case theme.css isn't loading -->
   <style>
-    /* your existing CSS here… */
+    :root[data-theme="dark"] {
+      --bg: #121212;
+      --text: #f0f0f0;
+      --gold: #d4af37;
+      --gold-dark: #b3932b;
+      --glass-bg: rgba(30,30,30,0.6);
+      --text-light: #bbbbbb;
+      --text-muted: #888888;
+    }
+    :root[data-theme="light"] {
+      --bg: #fafafa;
+      --text: #222222;
+      --gold: #d4af37;
+      --gold-dark: #b3932b;
+      --glass-bg: rgba(255,255,255,0.6);
+      --text-light: #555555;
+      --text-muted: #666666;
+    }
+    body {
+      margin:0; padding:0;
+      font-family:'Roboto', sans-serif;
+      background: var(--bg);
+      color: var(--text);
+    }
+  </style>
+
+  <!-- Your theme.css (optional override) -->
+  <link rel="stylesheet" href="theme.css"/>
+
+  <!-- Google Fonts & Icons -->
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700&family=Roboto:wght@300;400;700&display=swap" rel="stylesheet"/>
+  <script src="https://kit.fontawesome.com/your-kit-code.js" crossorigin="anonymous"></script>
+
+  <!-- Minimal inline CSS for layout -->
+  <style>
+    * { box-sizing:border-box; }
+    body { overflow-x:hidden; line-height:1.6; }
+    .logo { position: fixed; top:20px; left:20px; z-index:10; }
+    .logo img { width:160px; }
+    #theme-toggle { position: fixed; top:20px; right:20px; background:none; border:none; font-size:1.5rem; color:var(--text); cursor:pointer; }
+    main {
+      display:flex; justify-content:center; align-items:flex-start;
+      min-height:100vh; padding-top:120px;
+    }
+    .apply-card {
+      width:100%; max-width:480px;
+      background:var(--glass-bg);
+      backdrop-filter:blur(8px);
+      padding:30px;
+      border-radius:12px;
+      box-shadow:0 4px 20px rgba(0,0,0,0.5);
+    }
+    .apply-card h1 { font-family:'Playfair Display',serif; text-align:center; color:var(--gold); margin-bottom:20px; }
+    form { display:flex; flex-direction:column; gap:15px; }
+    input, textarea {
+      padding:12px; border:none; border-radius:6px;
+      background:#1c1c1c; color:var(--text);
+    }
+    input:focus, textarea:focus { outline:none; box-shadow:0 0 6px var(--gold); }
+    .terms-container { display:flex; align-items:center; gap:8px; font-size:.9rem; color:var(--text-light); }
+    .terms-container input { width:18px; height:18px; }
+    button {
+      padding:12px; border:none; border-radius:6px;
+      background:var(--gold); color:#000; font-weight:700;
+      opacity:0.6; pointer-events:none;
+    }
+    button.enabled { opacity:1; pointer-events:auto; }
+    button.enabled:hover { background:var(--gold-dark); }
+    #apply-alert { margin-top:10px; text-align:center; font-weight:600; }
   </style>
 </head>
+
 <body>
+  <!-- Logo & theme toggle -->
   <div class="logo">
     <a href="Index.html"><img src="CBE_logo.PNG" alt="CBE Logo"/></a>
   </div>
-  <button id="theme-toggle" aria-label="Toggle light/dark">🌞</button>
+  <button id="theme-toggle" aria-label="Toggle theme">🌞</button>
+
+  <!-- Main Apply Card -->
   <main>
-    <div class="apply-card slide-in">
+    <div class="apply-card">
       <h1>Apply to Join CBE</h1>
       <form id="apply-form">
-        <input type="text" id="apply-name" placeholder="Full Name" required/>
-        <input type="email" id="apply-email" placeholder="Email Address" required/>
-        <input type="password" id="apply-password" placeholder="Password" required/>
-        <input type="tel" id="apply-phone" placeholder="Phone Number" required/>
-        <textarea id="apply-message" placeholder="Tell us about your trading experience" rows="4" required></textarea>
+        <input type="text"     id="apply-name"    placeholder="Full Name"                            required/>
+        <input type="email"    id="apply-email"   placeholder="Email Address"                        required/>
+        <input type="password" id="apply-password"placeholder="Password"                             required/>
+        <input type="tel"      id="apply-phone"   placeholder="Phone Number"                         required/>
+        <textarea             id="apply-message" placeholder="Tell us about your trading experience" rows="4" required></textarea>
         <div class="terms-container">
           <input type="checkbox" id="agree-terms"/>
           <label for="agree-terms">I agree to</label>
-          <span class="terms-links">
-            <a href="privacy.html" target="_blank">Privacy Policy</a> &amp; 
-            <a href="terms.html"   target="_blank">Terms & Conditions</a>
-          </span>
+          <a href="privacy.html" target="_blank">Privacy Policy</a> &amp;
+          <a href="terms.html"   target="_blank">Terms & Conditions</a>
         </div>
         <button type="submit" id="submit-btn">Submit Application</button>
       </form>
       <div id="apply-alert"></div>
     </div>
   </main>
-  <footer class="slide-in">
-    © 2025 Chukwuemeka Bullion Exchange. All rights reserved.
-  </footer>
 
-  <!-- 1) Load Supabase UMD build FIRST -->
+  <!-- Supabase UMD + init -->
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js/dist/umd/supabase.js"></script>
-
-  <!-- 2) Initialize client as `sb` -->
   <script>
-    const SUPABASE_URL     = 'https://dapwpgvnfjcfqqhrpxla.supabase.co';
-    const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImRhcHdwZ3ZuZmpjZnFxaHJweGxhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDcwNDA4ODgsImV4cCI6MjA2MjYxNjg4OH0.ICC0UsLlzJDNre7rFCeD3k6iVzo6jOJgn3PhABpEMsQ';
-
-    // Use `window.supabase` (the global) to create a client named `sb`
-    const sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
-
-    // Debug: verify initialization
-    console.log('Supabase URL:', SUPABASE_URL);
-    console.log('Supabase client:', sb);
-
-    // Quick test query
-    (async () => {
-      const { data, error } = await sb.from('users').select('id').limit(1);
-      console.log('Quick select test →', { data, error });
-    })();
-  </script>
-
-  <!-- 3) Your form logic, now using `sb` -->
-  <script>
-    // Slide-in animations
-    document.addEventListener('DOMContentLoaded', () => {
-      document.querySelectorAll('.slide-in').forEach(el => {
-        const obs = new IntersectionObserver((entries, o) => {
-          entries.forEach(e => {
-            if (e.isIntersecting) {
-              e.target.classList.add('visible');
-              o.unobserve(e.target);
-            }
-          });
-        }, { threshold: 0.2, rootMargin: '0px 0px -50px 0px' });
-        obs.observe(el);
-      });
-    });
-
-    // Theme toggler
+    // theme toggle
     const toggle = document.getElementById('theme-toggle');
     toggle.addEventListener('click', () => {
-      const current = document.documentElement.getAttribute('data-theme');
-      const next    = current === 'dark' ? 'light' : 'dark';
+      const cur = document.documentElement.getAttribute('data-theme');
+      const next = cur === 'dark' ? 'light' : 'dark';
       document.documentElement.setAttribute('data-theme', next);
       localStorage.setItem('theme', next);
       toggle.textContent = next === 'dark' ? '🌞' : '🌜';
     });
     toggle.textContent = document.documentElement.getAttribute('data-theme') === 'dark' ? '🌞' : '🌜';
 
-    // Form submission using sb
+    // Supabase client
+    const SUPABASE_URL     = 'https://dapwpgvnfjcfqqhrpxla.supabase.co';
+    const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImRhcHdwZ3ZuZmpjZnFxaHJweGxhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDcwNDA4ODgsImV4cCI6MjA2MjYxNjg4OH0.ICC0UsLlzJDNre7rFCeD3k6iVzo6jOJgn3PhABpEMsQ';
+    const sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+    // Form logic
     const form          = document.getElementById('apply-form');
     const agreeCheckbox = document.getElementById('agree-terms');
     const submitBtn     = document.getElementById('submit-btn');
@@ -114,8 +143,7 @@
 
       if (!agreeCheckbox.checked) {
         alertDiv.style.color = 'crimson';
-        alertDiv.textContent = 'You must agree to the Privacy Policy and Terms to continue.';
-        return;
+        return alertDiv.textContent = 'You must agree to the Privacy Policy and Terms to continue.';
       }
 
       const full_name  = form['apply-name'].value.trim();
@@ -126,27 +154,17 @@
 
       if (!full_name || !email || !password || !phone || !experience) {
         alertDiv.style.color = 'crimson';
-        alertDiv.textContent = 'Please complete all fields.';
-        return;
+        return alertDiv.textContent = 'Please complete all fields.';
       }
       if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
         alertDiv.style.color = 'crimson';
-        alertDiv.textContent = 'Please enter a valid email address.';
-        return;
+        return alertDiv.textContent = 'Please enter a valid email address.';
       }
 
       try {
         const { error } = await sb
           .from('users')
-          .insert([{
-            full_name,
-            email,
-            phone,
-            password,
-            experience,
-            status: 'Pending'
-          }]);
-
+          .insert([{ full_name, email, phone, password, experience, status:'Pending' }]);
         if (error) throw error;
 
         alertDiv.style.color = 'lightgreen';
