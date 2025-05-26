@@ -12,17 +12,14 @@
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.0/Sortable.min.js"></script>
   <style>
-    /* === THEME VARIABLES & RESET === */
+    /* RESET & THEME VARIABLES */
     * { margin:0; padding:0; box-sizing:border-box; }
-    html { scroll-behavior: smooth; }
+    html { scroll-behavior:smooth; }
     body {
       font-family:'Poppins',sans-serif;
       background:var(--bg); color:var(--text);
       overflow-x:hidden;
     }
-    a { color:var(--gold); text-decoration:none; }
-    img { max-width:100%; display:block; }
-
     :root {
       --bg:#000; --text:#fff;
       --gold:#ffd700; --gold-dark:#cca300;
@@ -35,73 +32,97 @@
       --overlay:rgba(255,255,255,0.15);
       --glass-bg:rgba(0,0,0,0.05);
     }
-
-    /* === OVERLAY & GLASS === */
+    a { color:var(--gold); text-decoration:none; }
+    img { max-width:100%; display:block; }
     .overlay {
-      position:fixed; top:0; left:0;
-      width:100%; height:100%;
-      background:var(--overlay); z-index:-1;
+      position:fixed;top:0;left:0;width:100%;height:100%;
+      background:var(--overlay);z-index:-1;
     }
     .glass { backdrop-filter:blur(10px); }
 
-    /* === TOP BAR & NAV TOGGLE === */
+    /* HEADER */
     header.admin-header {
-      display:flex; align-items:center; justify-content:space-between;
-      padding:1rem 2rem; background:rgba(0,0,0,0.6); position:relative;
+      position:relative;
+      display:flex; align-items:center;
+      justify-content:space-between;
+      padding:1rem 2rem;
+      background:rgba(0,0,0,0.6);
       border-bottom:1px solid var(--gold);
+      z-index:10;
     }
-    header.admin-header .logo img {
-      height:40px; cursor:pointer;
-    }
+    header.admin-header .logo { cursor:pointer; display:flex; align-items:center; }
+    header.admin-header .logo img { height:40px; }
     #menu-toggle {
       background:none; border:none; cursor:pointer;
       display:flex; flex-direction:column; gap:5px;
       width:40px; height:40px;
-      justify-content:center; align-items:center;
     }
     #menu-toggle span {
       width:30px; height:3px; background:var(--gold);
       transition:all .3s ease;
     }
+
+    /* NAV PANEL */
     #nav-panel {
-      position:absolute; top:100%; right:0;
-      width:250px; background:rgba(0,0,0,0.9);
-      border:1px solid var(--gold); border-radius:0 0 4px 4px;
-      transform:translateY(-20px); opacity:0;
+      position:absolute; top:100%; right:2rem;
+      width:240px;
+      background:rgba(0,0,0,0.9);
+      border:1px solid var(--gold);
+      border-radius:0 0 4px 4px;
+      padding:.75rem 1rem;
+      transform: translateY(-20px);
+      opacity:0;
       transition:transform .3s,opacity .3s;
-      padding:1rem;
+      pointer-events: none;
     }
     #nav-panel.show {
-      transform:translateY(0); opacity:1;
+      transform: translateY(0);
+      opacity:1;
+      pointer-events: auto;
     }
     #nav-panel ul { list-style:none; }
-    #nav-panel li { margin:10px 0; }
+    #nav-panel li { margin:.5rem 0; }
     #nav-panel a {
-      color:#fff; font-weight:500;
-      display:flex; align-items:center; gap:8px;
+      color:#fff; font-weight:500; display:flex; align-items:center; gap:.5rem;
     }
     #nav-panel a:hover { color:var(--gold); }
 
-    /* === STATS CARDS === */
-    .stats-row { display:grid; grid-template-columns:repeat(auto-fit,minmax(180px,1fr)); gap:1rem; margin:2rem 0; }
+    /* STATS CARDS */
+    .stats-row {
+      display:grid;
+      grid-template-columns:repeat(auto-fit,minmax(180px,1fr));
+      gap:1rem;
+      margin:2rem 0;
+    }
     .card-stat {
-      background:var(--glass-bg); border:1px solid var(--gold);
-      color:#fff; padding:1rem; border-radius:8px; text-align:center;
+      background:var(--glass-bg);
+      border:1px solid var(--gold);
+      border-radius:8px;
+      padding:1rem;
+      text-align:center;
+      color:#fff;
       backdrop-filter:blur(8px);
     }
-    .card-stat h5 { margin-bottom:.5rem; color:var(--gold); }
+    .card-stat h5 { color:var(--gold); margin-bottom:.5rem; }
     .card-stat h2 { font-size:2rem; }
 
-    /* === CHARTS === */
-    .charts { display:grid; grid-template-columns:1fr 1fr; gap:1rem; }
-    @media(max-width:768px){ .charts { grid-template-columns:1fr; } }
+    /* CHARTS */
+    .charts {
+      display:grid;
+      grid-template-columns:1fr 1fr;
+      gap:1rem;
+    }
+    @media(max-width:768px){
+      .charts { grid-template-columns:1fr; }
+    }
 
-    /* === CLOCK & THEME BTN === */
+    /* CLOCK & THEME */
     #header-right { display:flex; align-items:center; gap:1rem; }
     #current-datetime { color:#fff; }
     #theme-toggle {
-      background:none; border:none; font-size:1.25rem;
-      cursor:pointer; color:var(--text);
+      background:none; border:none;
+      font-size:1.25rem; cursor:pointer;
+      color:var(--text);
     }
   </style>
 </head>
@@ -114,9 +135,11 @@
     <button id="menu-toggle" aria-label="Toggle menu">
       <span></span><span></span><span></span>
     </button>
-    <div class="logo" onclick="goHome()">
+
+    <div class="logo" id="logo">
       <img src="CBE_logo.PNG" alt="CBE Logo">
     </div>
+
     <div id="header-right">
       <small id="current-datetime"></small>
       <button id="theme-toggle" aria-label="Toggle theme">🌞</button>
@@ -125,7 +148,7 @@
     <nav id="nav-panel" aria-label="Admin navigation">
       <ul>
         <li><a href="admin-dashboard.html"><i class="bi-speedometer2"></i> Dashboard</a></li>
-        <li><a href="admin-capital-applications.html"><i class="bi-folder2-open"></i> Capital Apps</a></li>
+        <li><a href="admin-capital-applications.html"><i class="bi-folder2-open"></i> Capital Applications</a></li>
         <li><a href="admin-messages.html"><i class="bi-chat-dots-fill"></i> Messages</a></li>
         <li><a href="admin-settings-payments.html"><i class="bi-credit-card"></i> Settings & Payments</a></li>
         <li><a href="admin-signals.html"><i class="bi-lightning-fill"></i> Signals</a></li>
@@ -138,7 +161,7 @@
     </nav>
   </header>
 
-  <!-- MAIN DASHBOARD CONTENT -->
+  <!-- MAIN CONTENT -->
   <main class="container py-4">
     <div class="stats-row" id="stats-container">
       <div class="card-stat" data-key="users">
@@ -168,52 +191,48 @@
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script>
-    // Helpers
-    function goHome(){ window.location='admin-dashboard.html'; }
-    function showToast(msg,ok=true){
-      const t=document.createElement('div');
-      t.className=`toast align-items-center text-white ${ok?'bg-success':'bg-danger'} border-0`;
-      t.innerHTML=`<div class="d-flex">
-        <div class="toast-body">${msg}</div>
-        <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast"></button>
-      </div>`;
-      document.body.append(t);
-      new bootstrap.Toast(t,{delay:3000}).show();
-    }
+    // Redirect home
+    document.getElementById('logo').addEventListener('click', () => {
+      window.location.href = 'admin-dashboard.html';
+    });
 
     // Theme toggle
-    const themeBtn=document.getElementById('theme-toggle');
-    themeBtn.onclick=()=>{
-      const nxt=document.documentElement.getAttribute('data-theme')==='dark'?'light':'dark';
-      document.documentElement.setAttribute('data-theme',nxt);
-      localStorage.setItem('theme',nxt);
-      themeBtn.textContent = nxt==='dark'?'🌞':'🌜';
-    };
-    // Init theme
-    const saved=localStorage.getItem('theme')||'dark';
-    document.documentElement.setAttribute('data-theme',saved);
-    themeBtn.textContent = saved==='dark'?'🌞':'🌜';
+    const themeBtn = document.getElementById('theme-toggle');
+    function updateThemeIcon() {
+      const theme = document.documentElement.getAttribute('data-theme');
+      themeBtn.textContent = theme === 'dark' ? '🌞' : '🌜';
+    }
+    themeBtn.addEventListener('click', () => {
+      const next = document.documentElement.getAttribute('data-theme') === 'dark' ? 'light' : 'dark';
+      document.documentElement.setAttribute('data-theme', next);
+      localStorage.setItem('theme', next);
+      updateThemeIcon();
+    });
+    // Initialize theme
+    const saved = localStorage.getItem('theme') || 'dark';
+    document.documentElement.setAttribute('data-theme', saved);
+    updateThemeIcon();
 
     // Clock
-    function updateClock(){
+    function updateClock() {
       document.getElementById('current-datetime')
-        .textContent=new Date().toLocaleString();
+        .textContent = new Date().toLocaleString();
     }
-    updateClock(); setInterval(updateClock,60000);
+    updateClock();
+    setInterval(updateClock, 60000);
 
-    // Nav toggle
-    const menuToggle=document.getElementById('menu-toggle');
-    const navPanel=document.getElementById('nav-panel');
-    menuToggle.onclick=()=>{
+    // Nav panel toggle
+    const menuToggle = document.getElementById('menu-toggle');
+    const navPanel   = document.getElementById('nav-panel');
+    menuToggle.addEventListener('click', () => {
       navPanel.classList.toggle('show');
-      menuToggle.setAttribute('aria-expanded',
-        navPanel.classList.contains('show'));
-    };
+      menuToggle.setAttribute('aria-expanded', navPanel.classList.contains('show'));
+    });
 
-    // Redirect if not logged in
-    if(localStorage.getItem('isLoggedIn')!=='true'){
-      const cur=location.pathname.split('/').pop();
-      location.href=`admin-login.html?redirect=${cur}`;
+    // Auth redirect
+    if (localStorage.getItem('isLoggedIn') !== 'true') {
+      const cur = window.location.pathname.split('/').pop();
+      window.location.href = `admin-login.html?redirect=${cur}`;
     }
 
     // Supabase init
@@ -222,61 +241,65 @@
       'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImRhcHdwZ3ZuZmpjZnFxaHJweGxhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDcwNDA4ODgsImV4cCI6MjA2MjYxNjg4OH0.ICC0UsLlzJDNre7rFCeD3k6iVzo6jOJgn3PhABpEMsQ'
     );
 
+    // Toast helper
+    function showToast(msg, ok = true) {
+      const t = document.createElement('div');
+      t.className = `toast align-items-center text-white ${ok?'bg-success':'bg-danger'} border-0 position-fixed top-0 end-0 m-3`;
+      t.innerHTML = `
+        <div class="d-flex">
+          <div class="toast-body">${msg}</div>
+          <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast"></button>
+        </div>`;
+      document.body.append(t);
+      new bootstrap.Toast(t, { delay: 3000 }).show();
+    }
+
     // Load stats & charts
-    async function loadDashboard(){
+    async function loadDashboard() {
       try {
         const [u,p,t,s,i] = await Promise.all([
           supabase.from('users').select('id'),
           supabase.from('payments').select('id').eq('status','Pending'),
           supabase.from('trade_history').select('id'),
           supabase.from('signals').select('id'),
-          supabase.from('trade_insights').select('week_ending,pips').order('week_ending',{ascending:false}),
+          supabase.from('trade_insights').select('week_ending,pips').order('week_ending',{ascending:false})
         ]);
-        document.getElementById('stat-users').textContent=u.data.length;
-        document.getElementById('stat-payments').textContent=p.data.length;
-        document.getElementById('stat-trades').textContent=t.data.length;
-        document.getElementById('stat-signals').textContent=s.data.length;
-        const insights=i.data;
-        const wins=insights.filter(x=>x.pips>0).length;
-        const rate=insights.length ? Math.round(wins/insights.length*100):0;
-        document.getElementById('stat-winrate').textContent=rate;
+        document.getElementById('stat-users').textContent    = u.data.length;
+        document.getElementById('stat-payments').textContent = p.data.length;
+        document.getElementById('stat-trades').textContent   = t.data.length;
+        document.getElementById('stat-signals').textContent  = s.data.length;
+        const insights = i.data;
+        const wins     = insights.filter(x=>x.pips>0).length;
+        const rate     = insights.length ? Math.round(wins/insights.length*100) : 0;
+        document.getElementById('stat-winrate').textContent = rate;
 
-        // P&L line
-        new Chart(document.getElementById('chart-pnl'),{
-          type:'line',
-          data:{
-            labels:insights.map(x=>new Date(x.week_ending).toLocaleDateString()),
-            datasets:[{
-              data:insights.map(x=>x.pips),
-              tension:0.4,
-              borderColor:var(--gold),
-              backgroundColor:'rgba(255,215,0,0.2)'
-            }]
+        // P&L line chart
+        new Chart(document.getElementById('chart-pnl'), {
+          type: 'line',
+          data: {
+            labels: insights.map(x=>new Date(x.week_ending).toLocaleDateString()),
+            datasets: [{ data: insights.map(x=>x.pips), tension:0.4, borderColor:'#ffd700', backgroundColor:'rgba(255,215,0,0.2)' }]
           },
-          options:{responsive:true,plugins:{legend:{display:false}}}
+          options: { responsive:true, plugins:{ legend:{ display:false } } }
         });
-        // Win-rate bar
-        new Chart(document.getElementById('chart-winrate'),{
-          type:'bar',
-          data:{
-            labels:insights.map(x=>new Date(x.week_ending).toLocaleDateString()),
-            datasets:[{
-              data:insights.map(x=> x.pips>0?100:0 ),
-              backgroundColor:'#1cc88a'
-            }]
+
+        // Win-rate bar chart
+        new Chart(document.getElementById('chart-winrate'), {
+          type: 'bar',
+          data: {
+            labels: insights.map(x=>new Date(x.week_ending).toLocaleDateString()),
+            datasets: [{ data: insights.map(x=>x.pips>0?100:0), backgroundColor:'#1cc88a' }]
           },
-          options:{responsive:true,plugins:{legend:{display:false}}}
+          options: { responsive:true, plugins:{ legend:{ display:false } } }
         });
 
         // Draggable stats
-        new Sortable(document.getElementById('stats-container'),{animation:150});
-      }
-      catch(e){
-        console.error(e);
-        showToast('Error loading dashboard',false);
+        new Sortable(document.getElementById('stats-container'), { animation:150 });
+      } catch (error) {
+        console.error(error);
+        showToast('Error loading dashboard', false);
       }
     }
-
     loadDashboard();
   </script>
 </body>
