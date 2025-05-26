@@ -54,7 +54,7 @@
     /* MAIN WRAPPER */
     main {
       max-width:900px; margin:0 auto;
-      padding:140px 20px 60px; /* allow for fixed header */
+      padding:140px 20px 60px;
     }
 
     /* HEADER CARD */
@@ -136,8 +136,20 @@
     .testimonial-card .byline {
       text-align:right; font-weight:500; color: var(--text-muted);
     }
-    .testimonial-card img {
-      display:block; max-width:80px; margin:15px auto 0; border-radius:6px;
+    .testimonial-card img,
+    .testimonial-card video {
+      display:block; max-width:100%; margin:15px auto 0;
+      border-radius:6px;
+    }
+    .company-response {
+      margin-top:20px;
+      padding:15px;
+      background: rgba(255,255,255,0.05);
+      border-radius:6px;
+    }
+    .company-response strong {
+      display:block; margin-bottom:8px;
+      color: var(--gold);
     }
 
     /* FOOTER */
@@ -184,9 +196,14 @@
           <textarea id="testimonial" name="testimonial" rows="4" required></textarea>
         </div>
         <div class="form-group">
-          <label for="screenshot">Upload Screenshot (optional)</label>
-          <input type="file" id="screenshot" name="screenshot" accept="image/*"/>
-          <small style="color:var(--text-muted);">Max. 2 MB</small>
+          <label for="media">Upload Photo or Video (optional)</label>
+          <input
+            type="file"
+            id="media"
+            name="media"
+            accept="image/*,video/*"
+          />
+          <small style="color:var(--text-muted);">Max. 20 MB</small>
         </div>
         <button type="submit">Submit for Review</button>
       </form>
@@ -195,7 +212,9 @@
 
     <!-- Approved Testimonials -->
     <section id="testimonialsSection" class="slide-in" style="transition-delay:.6s;">
-      <h2 style="font-family:'Playfair Display', serif; color:var(--gold); margin-bottom:20px;">Approved Testimonials</h2>
+      <h2 style="font-family:'Playfair Display', serif; color:var(--gold); margin-bottom:20px;">
+        Approved Testimonials
+      </h2>
       <div class="testimonials-grid" id="testimonialsGrid">
         <!-- Supabase-fetched cards go here -->
       </div>
@@ -210,7 +229,7 @@
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script>
     document.addEventListener('DOMContentLoaded', () => {
-      // reveal slide-ins
+      // slide-in reveal
       document.querySelectorAll('.slide-in').forEach(el => {
         const obs = new IntersectionObserver((entries, o) => {
           entries.forEach(e => {
@@ -240,14 +259,14 @@
 
       // Supabase init
       const SUPABASE_URL     = 'https://dapwpgvnfjcfqqhrpxla.supabase.co';
-      const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImRhcHdwZ3ZuZmpjZnFxaHJweGxhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDcwNDA4ODgsImV4cCI6MjA2MjYxNjg4OH0.ICC0UsLlzJDNre7rFCeD3k6iVzo6jOJgn3PhABpEMsQ';
+      const SUPABASE_ANON_KEY = 'YOUR_ANON_KEY';
       const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
       // fetch & render approved testimonials
       async function loadTestimonials() {
-        let { data, error } = await supabase
+        const { data, error } = await supabase
           .from('testimonials')
-          .select('name,testimonial,screenshot_url')
+          .select('name,testimonial,screenshot_url,video_url,company_response')
           .eq('status','approved')
           .order('created_at',{ ascending: false });
 
@@ -258,14 +277,32 @@
         const grid = document.getElementById('testimonialsGrid');
         grid.innerHTML = '';
         data.forEach(t => {
-          const div = document.createElement('div');
-          div.className = 'testimonial-card';
-          div.innerHTML = `
+          const card = document.createElement('div');
+          card.className = 'testimonial-card';
+          let html = `
             <blockquote>${t.testimonial}</blockquote>
             <div class="byline">— ${t.name}</div>
-            ${t.screenshot_url ? `<img src="${t.screenshot_url}" alt="screenshot"/>` : ''}
           `;
-          grid.appendChild(div);
+          if (t.screenshot_url) {
+            html += `<img src="${t.screenshot_url}" alt="testimonial image"/>`;
+          } else if (t.video_url) {
+            html += `
+              <video controls>
+                <source src="${t.video_url}" type="video/mp4"/>
+                Your browser doesn’t support video.
+              </video>
+            `;
+          }
+          if (t.company_response) {
+            html += `
+              <div class="company-response">
+                <strong>Our Response:</strong>
+                <p>${t.company_response}</p>
+              </div>
+            `;
+          }
+          card.innerHTML = html;
+          grid.appendChild(card);
 
           // observe for slide-in
           const obs = new IntersectionObserver((entries, o) => {
@@ -276,7 +313,7 @@
               }
             });
           }, { threshold:0.2 });
-          obs.observe(div);
+          obs.observe(card);
         });
       }
       loadTestimonials();
@@ -289,7 +326,7 @@
         alertDiv.textContent = '';
         const name = form.name.value.trim();
         const testimonial = form.testimonial.value.trim();
-        const file = form.screenshot.files[0];
+        const file = form.media.files[0];
 
         if (!name || !testimonial) {
           alertDiv.style.color = 'crimson';
@@ -297,12 +334,15 @@
           return;
         }
 
-        let publicURL = null;
+        let screenshot_url = null;
+        let video_url = null;
+
         if (file) {
-          const path = `testimonial-screenshots/${Date.now()}_${file.name}`;
+          const ext = file.type.startsWith('image/') ? 'screenshots' : 'videos';
+          const path = `testimonial-${ext}/${Date.now()}_${file.name}`;
           const { error: uploadErr } = await supabase
             .storage
-            .from('testimonial-screenshots')
+            .from(ext === 'screenshots' ? 'testimonial-screenshots' : 'testimonial-videos')
             .upload(path, file);
           if (uploadErr) {
             alertDiv.style.color = 'crimson';
@@ -311,16 +351,19 @@
           }
           const { data: urlData } = supabase
             .storage
-            .from('testimonial-screenshots')
+            .from(ext === 'screenshots' ? 'testimonial-screenshots' : 'testimonial-videos')
             .getPublicUrl(path);
-          publicURL = urlData.publicUrl;
+          if (ext === 'screenshots') screenshot_url = urlData.publicUrl;
+          else video_url = urlData.publicUrl;
         }
 
         const { error: insertErr } = await supabase
           .from('testimonials')
           .insert([{
-            name, testimonial,
-            screenshot_url: publicURL,
+            name,
+            testimonial,
+            screenshot_url,
+            video_url,
             status: 'pending'
           }]);
 
