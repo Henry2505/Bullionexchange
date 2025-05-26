@@ -110,7 +110,6 @@
       </div>
 
       <div id="sections">
-        <!-- Dashboard -->
         <div class="section" data-section="dashboard">
           <div class="row g-4" id="stats-container">
             <div class="col-md-3">
@@ -145,7 +144,6 @@
           </div>
         </div>
 
-        <!-- Users -->
         <div class="section d-none p-4 mb-4 glass" data-section="users">
           <h4>Users Verification</h4>
           <input id="user-search" class="form-control mb-3" placeholder="Search users…" />
@@ -155,7 +153,6 @@
           </table>
         </div>
 
-        <!-- Capital Applications -->
         <div class="section d-none p-4 mb-4 glass" data-section="capital-applications">
           <h4>Capital Applications</h4>
           <table id="applications-table" class="table table-hover text-white" style="width:100%">
@@ -164,7 +161,6 @@
           </table>
         </div>
 
-        <!-- Payments -->
         <div class="section d-none p-4 mb-4 glass" data-section="payments">
           <h4>Payment Approval</h4>
           <button id="export-payments" class="btn btn-outline-secondary btn-sm mb-3">Export CSV/XLSX</button>
@@ -185,7 +181,6 @@
           </table>
         </div>
 
-        <!-- Messages -->
         <div class="section d-none p-4 mb-4 glass" data-section="messages">
           <h4>Contact Messages</h4>
           <input id="msg-search" class="form-control mb-3" placeholder="Search messages…" />
@@ -195,7 +190,6 @@
           </table>
         </div>
 
-        <!-- Payment Settings -->
         <div class="section d-none p-4 mb-4 glass" data-section="settings-payment">
           <h4>Payment Settings</h4>
           <ul class="nav nav-pills mb-3">
@@ -223,7 +217,6 @@
           </div>
         </div>
 
-        <!-- Trade History -->
         <div class="section d-none p-4 mb-4 glass" data-section="trade-history">
           <h4>Trade History</h4>
           <div class="row g-2 mb-3 align-items-end">
@@ -254,7 +247,6 @@
           </table>
         </div>
 
-        <!-- Trade Insights -->
         <div class="section d-none p-4 mb-4 glass" data-section="trade-insights">
           <h4>Weekly Pips Insights</h4>
           <form id="insights-form" class="row g-3 mb-4">
@@ -266,7 +258,6 @@
           <ul class="list-group" id="insights-list"></ul>
         </div>
 
-        <!-- Signals -->
         <div class="section d-none p-4 mb-4 glass" data-section="signals">
           <h4>Publish Signals</h4>
           <form id="signals-form" class="border p-3 mb-4 glass">
@@ -315,7 +306,7 @@
           <ul class="list-group" id="signals-list"></ul>
         </div>
 
-        <!-- Testimonials Management -->
+        <!-- Updated Testimonials Section -->
         <div class="section d-none p-4 mb-4 glass" data-section="testimonials">
           <h4>Testimonials Management</h4>
           <input id="testimonial-search" class="form-control mb-3" placeholder="Search testimonials…" />
@@ -339,7 +330,6 @@
     </div>
   </div>
 
-  <!-- Reply Modal -->
   <div class="modal fade" id="replyModal"><div class="modal-dialog">
     <form class="modal-content glass p-4" id="reply-form">
       <div class="modal-header">
@@ -355,7 +345,6 @@
     </form>
   </div></div>
 
-  <!-- Screenshot Modal -->
   <div class="modal fade" id="screenshotModal"><div class="modal-dialog modal-lg">
     <div class="modal-content glass p-4">
       <div class="modal-header">
@@ -368,7 +357,7 @@
     </div>
   </div></div>
 
-  <!-- Company Response Modal -->
+  <!-- Added Company Response Modal -->
   <div class="modal fade" id="responseModal">
     <div class="modal-dialog">
       <form class="modal-content glass p-4" id="response-form">
@@ -431,6 +420,7 @@
     document.querySelectorAll('#menu .nav-link').forEach(link => {
       link.onclick = e => {
         e.preventDefault();
+        console.log(`Navigating to section: ${link.dataset.section}`);
         document.querySelectorAll('#menu .nav-link').forEach(l => l.classList.remove('active'));
         link.classList.add('active');
         document.getElementById('section-title').textContent = link.textContent;
@@ -438,17 +428,15 @@
           sec.classList.toggle('d-none', sec.dataset.section !== link.dataset.section)
         );
         try {
-          switch(link.dataset.section) {
-            case 'dashboard': loadDashboard(); break;
-            case 'users': loadUsers(); break;
-            case 'capital-applications': loadCapitalApplications(); break;
-            case 'payments': loadPayments(); break;
-            case 'messages': loadMessages(); break;
-            case 'trade-history': loadTradeHistory(); break;
-            case 'trade-insights': loadTradeInsights(); break;
-            case 'signals': loadSignals(); break;
-            case 'testimonials': loadTestimonials(); break;
-          }
+          if (link.dataset.section === 'dashboard') loadDashboard();
+          else if (link.dataset.section === 'users') loadUsers();
+          else if (link.dataset.section === 'capital-applications') loadCapitalApplications();
+          else if (link.dataset.section === 'payments') loadPayments();
+          else if (link.dataset.section === 'messages') loadMessages();
+          else if (link.dataset.section === 'trade-history') loadTradeHistory();
+          else if (link.dataset.section === 'trade-insights') loadTradeInsights();
+          else if (link.dataset.section === 'signals') loadSignals();
+          else if (link.dataset.section === 'testimonials') loadTestimonials();
         } catch (error) {
           console.error(`Error loading section ${link.dataset.section}:`, error);
           showToast(`Error loading ${link.textContent} section`, false);
@@ -472,125 +460,348 @@
       new bootstrap.Modal(document.getElementById('screenshotModal')).show();
     }
 
-    // Approvals
-    async function approveUser(id)    { await supabase.from('users') .update({status:'Approved'}).eq('id',id); loadUsers();    showToast('User approved successfully'); }
-    async function approveApplication(id){ await supabase.from('capital_applications').update({status:'Approved'}).eq('id',id); loadCapitalApplications(); showToast('Application approved successfully'); }
-    async function approvePayment(id) { await supabase.from('payments').update({status:'Approved'}).eq('id',id); loadPayments(); showToast('Payment approved successfully'); }
-    async function approveTestimonial(id){ await supabase.from('testimonials').update({status:'Approved'}).eq('id',id); loadTestimonials(); showToast('Testimonial approved successfully'); }
+    // Approve User
+    async function approveUser(userId) {
+      try {
+        const { error } = await supabase
+          .from('users')
+          .update({ status: 'Approved' })
+          .eq('id', userId);
+        if (error) throw error;
+        showToast('User approved successfully');
+        loadUsers();
+      } catch (error) {
+        console.error('Error approving user:', error);
+        showToast('Error approving user', false);
+      }
+    }
+
+    // Approve Capital Application
+    async function approveApplication(id) {
+      try {
+        const { error } = await supabase
+          .from('capital_applications')
+          .update({ status: 'Approved' })
+          .eq('id', id);
+        if (error) throw error;
+        showToast('Application approved successfully');
+        loadCapitalApplications();
+      } catch (error) {
+        console.error('Error approving application:', error);
+        showToast('Error approving application', false);
+      }
+    }
+
+    // Approve Payment
+    async function approvePayment(paymentId) {
+      try {
+        const { error } = await supabase
+          .from('payments')
+          .update({ status: 'Approved' })
+          .eq('id', paymentId);
+        if (error) throw error;
+        showToast('Payment approved successfully');
+        loadPayments();
+      } catch (error) {
+        console.error('Error approving payment:', error);
+        showToast('Error approving payment', false);
+      }
+    }
+
+    // Approve Testimonial
+    async function approveTestimonial(testimonialId) {
+      try {
+        const { error } = await supabase
+          .from('testimonials')
+          .update({ status: 'Approved' })
+          .eq('id', testimonialId);
+        if (error) throw error;
+        showToast('Testimonial approved successfully');
+        loadTestimonials();
+      } catch (error) {
+        console.error('Error approving testimonial:', error);
+        showToast('Error approving testimonial', false);
+      }
+    }
 
     // Upload File to Supabase Storage
     async function uploadFile(file, bucket, path) {
-      const { data, error } = await supabase.storage.from(bucket).upload(path, file, { upsert:true });
-      if (error) throw error;
-      return supabase.storage.from(bucket).getPublicUrl(path).data.publicUrl;
+      try {
+        const { data, error } = await supabase.storage
+          .from(bucket)
+          .upload(path, file, { upsert: true });
+        if (error) throw error;
+        const { publicUrl } = supabase.storage.from(bucket).getPublicUrl(path).data;
+        return publicUrl;
+      } catch (error) {
+        console.error('Error uploading file:', error);
+        throw error;
+      }
+    }
+
+    // Open the Response Modal
+    function openResponseModal(id, existing) {
+      document.getElementById('resp-testimonial-id').value = id;
+      document.getElementById('resp-body').value = existing || '';
+      new bootstrap.Modal(document.getElementById('responseModal')).show();
     }
 
     // Initialize DataTables
     $(document).ready(() => {
-      $('#users-table').DataTable({ columns: [
-          { data:'id' },{ data:'email' },{ data:'name' },
-          { data:'registered_at', render: d=>new Date(d).toLocaleDateString() },
-          { data:'status' },
-          { data:null, render:(_,__,r)=> r.status==='Pending'? `<button class="btn btn-sm btn-success" onclick="approveUser(${r.id})">Approve</button>`:'—' }
-      ]});
-      $('#applications-table').DataTable({ columns: [
-          { data:'id' },{ data:'full_name' },{ data:'email' },{ data:'phone' },
-          { data:'experience' },{ data:'status' },
-          { data:null, render:(_,__,r)=> r.status==='Pending'? `<button class="btn btn-sm btn-success" onclick="approveApplication(${r.id})">Approve</button>`:'—' }
-      ]});
-      $('#payments-table').DataTable({ columns: [
-          { data:'id' },{ data:'users.name', defaultContent:'Unknown' },
-          { data:'email' },{ data:'amount' },{ data:'method' },
-          { data:'date', render:d=>new Date(d).toLocaleDateString() },
-          { data:'screenshot', render:d=>d? `<button class="btn btn-sm btn-info" onclick="viewScreenshot('${d}')">View</button>`:'—' },
-          { data:null, render:(_,__,r)=> r.status==='Pending'? `<button class="btn btn-sm btn-primary" onclick="approvePayment(${r.id})">Approve</button>`:'—' }
-      ]});
-      $('#messages-table').DataTable({ columns: [
-          { data:'id' },{ data:'from_name' },{ data:'text' },
-          { data:'date', render:d=>new Date(d).toLocaleDateString() },
-          { data:null, render:(_,__,r)=> `<button class="btn btn-sm btn-success" onclick="openReply(${r.id},'${r.email}')">Reply</button>` }
-      ]});
-      $('#history-table').DataTable({ columns: [
-          { data:'date', render:d=>new Date(d).toLocaleDateString() },
-          { data:'asset' },{ data:'notes' },
-          { data:'screenshot', render:d=>d? `<img src="${d}" style="height:40px;object-fit:cover"/>`:'—' }
-      ]});
-      // Testimonials table init will be overridden below
+      $('#users-table').DataTable({
+        columns: [
+          { data: 'id' },
+          { data: 'email' },
+          { data: 'name' },
+          { data: 'registered_at', render: data => new Date(data).toLocaleDateString() },
+          { data: 'status' },
+          { data: null, render: (_, __, row) => row.status === 'Pending' ? `<button class="btn btn-sm btn-success" onclick="approveUser(${row.id})">Approve</button>` : '—' }
+        ]
+      });
+      $('#applications-table').DataTable({
+        columns: [
+          { data: 'id' },
+          { data: 'full_name' },
+          { data: 'email' },
+          { data: 'phone' },
+          { data: 'experience' },
+          { data: 'status' },
+          { data: null, render: (_, __, row) => row.status === 'Pending' ? `<button class="btn btn-sm btn-success" onclick="approveApplication(${row.id})">Approve</button>` : '—' }
+        ]
+      });
+      $('#payments-table').DataTable({
+        columns: [
+          { data: 'id' },
+          { data: 'users.name', defaultContent: 'Unknown' },
+          { data: 'email' },
+          { data: 'amount' },
+          { data: 'method' },
+          { data: 'date', render: data => new Date(data).toLocaleDateString() },
+          { data: 'screenshot', render: data => data ? `<button class="btn btn-sm btn-info" onclick="viewScreenshot('${data}')">View</button>` : '—' },
+          { data: null, render: (_, __, row) => row.status === 'Pending' ? `<button class="btn btn-sm btn-primary" onclick="approvePayment(${row.id})">Approve</button>` : '—' }
+        ]
+      });
+      $('#messages-table').DataTable({
+        columns: [
+          { data: 'id' },
+          { data: 'from_name' },
+          { data: 'text' },
+          { data: 'date', render: data => new Date(data).toLocaleDateString() },
+          { data: null, render: (_, __, row) => `<button class="btn btn-sm btn-success" onclick="openReply(${row.id}, '${row.email}')">Reply</button>` }
+        ]
+      });
+      $('#history-table').DataTable({
+        columns: [
+          { data: 'date', render: data => new Date(data).toLocaleDateString() },
+          { data: 'asset' },
+          { data: 'notes' },
+          { data: 'screenshot', render: data => data ? `<img src="${data}" style="height:40px;object-fit:cover"/>` : '—' }
+        ]
+      });
+      // Updated Testimonials DataTable Initialization
+      $('#testimonials-table').DataTable({
+        columns: [
+          { data: 'id' },
+          { data: 'users.name', defaultContent: 'Unknown' },
+          { data: 'testimonial_text' },
+          {
+            data: null,
+            render: (_, __, row) => {
+              if (row.screenshot_url) {
+                return `<button class="btn btn-sm btn-info" onclick="viewScreenshot('${row.screenshot_url}')">View Image</button>`;
+              }
+              if (row.video_url) {
+                return `<video width="80" controls>
+                          <source src="${row.video_url}" type="video/mp4"/>
+                          Your browser doesn’t support video.
+                        </video>`;
+              }
+              return '—';
+            }
+          },
+          { data: 'company_response', defaultContent: '—' },
+          { data: 'created_at', render: d => new Date(d).toLocaleDateString() },
+          { data: 'status' },
+          {
+            data: null,
+            render: (_, __, row) => {
+              if (row.status === 'Pending') {
+                return `<button class="btn btn-sm btn-success me-1" onclick="approveTestimonial(${row.id})">Approve</button>`;
+              } else {
+                const resp = row.company_response ? JSON.stringify(row.company_response) : "''";
+                return `<button class="btn btn-sm btn-warning" onclick="openResponseModal(${row.id}, ${resp})">Respond</button>`;
+              }
+            }
+          }
+        ]
+      });
     });
 
-    // Load functions...
+    // Load Dashboard
     async function loadDashboard() {
-      const [{data:ud}, {data:pd}, {data:td}, {data:sd}, {data:id}] = await Promise.all([
-        supabase.from('users').select('id'),
-        supabase.from('payments').select('id').eq('status','Pending'),
-        supabase.from('trade_history').select('id'),
-        supabase.from('signals').select('id'),
-        supabase.from('trade_insights').select('week_ending,pips').order('week_ending',{ascending:false})
-      ]);
-      document.getElementById('stat-users').textContent = ud.length;
-      document.getElementById('stat-payments').textContent = pd.length;
-      document.getElementById('stat-trades').textContent = td.length;
-      document.getElementById('stat-signals').textContent = sd.length;
-      const wins = id.filter(i=>i.pips>0).length, total=id.length;
-      document.getElementById('stat-winrate').textContent = total? Math.round(wins/total*100):0;
-      new Chart(document.getElementById('chart-pnl'), {
-        type:'line',
-        data:{ labels:id.map(i=>new Date(i.week_ending).toLocaleDateString()), datasets:[{ data:id.map(i=>i.pips), tension:0.4, borderColor:'#ffd700', backgroundColor:'rgba(255,215,0,0.2)' }]},
-        options:{responsive:true,plugins:{legend:{display:false}}}
-      });
-      new Chart(document.getElementById('chart-winrate'), {
-        type:'bar',
-        data:{ labels:id.map(i=>new Date(i.week_ending).toLocaleDateString()), datasets:[{ data:id.map(i=>i.pips>0?100:0), backgroundColor:'#1cc88a' }]},
-        options:{responsive:true,plugins:{legend:{display:false}}}
-      });
+      try {
+        const { data: usersData, error: usersError } = await supabase.from('users').select('id');
+        const { data: paymentsData, error: paymentsError } = await supabase.from('payments').select('id').eq('status', 'Pending');
+        const { data: tradesData, error: tradesError } = await supabase.from('trade_history').select('id');
+        const { data: signalsData, error: signalsError } = await supabase.from('signals').select('id');
+        const { data: insightsData, error: insightsError } = await supabase.from('trade_insights').select('week_ending, pips').order('week_ending', { ascending: false });
+
+        if (usersError) console.error('Error fetching users:', usersError);
+        if (paymentsError) console.error('Error fetching payments:', paymentsError);
+        if (tradesError) console.error('Error fetching trades:', tradesError);
+        if (signalsError) console.error('Error fetching signals:', signalsError);
+        if (insightsError) console.error('Error fetching insights:', insightsError);
+
+        const stats = {
+          users: usersError ? 0 : usersData.length,
+          payments: paymentsError ? 0 : paymentsData.length,
+          trades: tradesError ? 0 : tradesData.length,
+          signals: signalsError ? 0 : signalsData.length
+        };
+
+        document.getElementById('stat-users').textContent = stats.users;
+        document.getElementById('stat-payments').textContent = stats.payments;
+        document.getElementById('stat-trades').textContent = stats.trades;
+        document.getElementById('stat-signals').textContent = stats.signals;
+
+        const wins = insightsData ? insightsData.filter(i => i.pips > 0).length : 0;
+        const totalWeeks = insightsData ? insightsData.length : 0;
+        const winRate = totalWeeks > 0 ? Math.round((wins / totalWeeks) * 100) : 0;
+        document.getElementById('stat-winrate').textContent = winRate;
+
+        new Chart(document.getElementById('chart-pnl'), {
+          type: 'line',
+          data: {
+            labels: insightsData ? insightsData.map(i => new Date(i.week_ending).toLocaleDateString()) : ['W1', 'W2', 'W3', 'W4'],
+            datasets: [{
+              data: insightsData ? insightsData.map(i => i.pips) : [0, 0, 0, 0],
+              tension: 0.4,
+              borderColor: '#ffd700',
+              backgroundColor: 'rgba(255,215,0,0.2)'
+            }]
+          },
+          options: { responsive: true, plugins: { legend: { display: false } } }
+        });
+        new Chart(document.getElementById('chart-winrate'), {
+          type: 'bar',
+          data: {
+            labels: insightsData ? insightsData.map(i => new Date(i.week_ending).toLocaleDateString()) : ['W1', 'W2', 'W3', 'W4'],
+            datasets: [{
+              data: insightsData ? insightsData.map(i => i.pips > 0 ? 100 : 0) : [0, 0, 0, 0],
+              backgroundColor: '#1cc88a'
+            }]
+          },
+          options: { responsive: true, plugins: { legend: { display: false } } }
+        });
+      } catch (error) {
+        console.error('Error loading dashboard:', error);
+        showToast('Error loading dashboard', false);
+      }
     }
-    async function loadUsers()    { const {data} = await supabase.from('users').select('*'); $('#users-table').DataTable().clear().rows.add(data||[]).draw(); }
-    async function loadCapitalApplications(){ const {data} = await supabase.from('capital_applications').select('*').order('created_at',{ascending:false}); $('#applications-table').DataTable().clear().rows.add(data||[]).draw(); }
-    async function loadPayments(){ const {data} = await supabase.from('payments').select('*,users(name)'); $('#payments-table').DataTable().clear().rows.add(data||[]).draw(); }
-    async function loadMessages(){ const {data} = await supabase.from('messages').select('*'); $('#messages-table').DataTable().clear().rows.add(data||[]).draw(); }
-    async function loadTradeHistory(){ const {data} = await supabase.from('trade_history').select('*'); $('#history-table').DataTable().clear().rows.add(data||[]).draw(); }
-    async function loadTradeInsights(){ const {data} = await supabase.from('trade_insights').select('*').order('week_ending',{ascending:false}); const list=document.getElementById('insights-list'); list.innerHTML=''; data.forEach(i=> list.innerHTML+=`<li class="list-group-item"><strong>Week Ending ${new Date(i.week_ending).toLocaleDateString()}</strong>: ${i.pips} pips<br><small>${i.note||''}</small><br><small>Posted on ${new Date(i.created_at).toLocaleString()}</small></li>`); }
-    async function loadSignals(){ const {data} = await supabase.from('signals').select('*').order('created_at',{ascending:false}); const list=document.getElementById('signals-list'); list.innerHTML=''; data.forEach(s=> list.innerHTML+=`<li class="list-group-item"><strong>${s.asset}</strong> - ${s.type} at ${s.entry_level}, SL: ${s.sl}, TP1: ${s.tp1}, TP2: ${s.tp2||'N/A'}<br><small>${s.notes||''}</small><br><small>Published on ${new Date(s.created_at).toLocaleString()}</small></li>`); }
 
-    // Initialize Testimonials DataTable
-    $('#testimonials-table').DataTable({
-      columns: [
-        { data: 'id' },
-        { data: 'users.name', defaultContent: 'Unknown' },
-        { data: 'testimonial_text' },
-        {
-          data: null,
-          render: (_, __, row) => {
-            if (row.screenshot_url) {
-              return `<button class="btn btn-sm btn-info" onclick="viewScreenshot('${row.screenshot_url}')">View Image</button>`;
-            }
-            if (row.video_url) {
-              return `<video width="80" controls>
-                        <source src="${row.video_url}" type="video/mp4"/>
-                        Your browser doesn’t support video.
-                      </video>`;
-            }
-            return '—';
-          }
-        },
-        { data: 'company_response', defaultContent: '—' },
-        { data: 'created_at', render: d => new Date(d).toLocaleDateString() },
-        { data: 'status' },
-        {
-          data: null,
-          render: (_, __, row) => {
-            if (row.status === 'Pending') {
-              return `<button class="btn btn-sm btn-success me-1" onclick="approveTestimonial(${row.id})">Approve</button>`;
-            } else {
-              const resp = row.company_response ? JSON.stringify(row.company_response) : "''";
-              return `<button class="btn btn-sm btn-warning" onclick="openResponseModal(${row.id}, ${resp})">Respond</button>`;
-            }
-          }
-        }
-      ]
-    });
+    // Load Users
+    async function loadUsers() {
+      try {
+        const { data, error } = await supabase.from('users').select('*');
+        if (error) throw error;
+        $('#users-table').DataTable().clear().rows.add(data || []).draw();
+      } catch (error) {
+        console.error('Error loading users:', error);
+        showToast('Error loading users', false);
+      }
+    }
 
-    // Load Testimonials (override)
+    // Load Capital Applications
+    async function loadCapitalApplications() {
+      try {
+        const { data, error } = await supabase.from('capital_applications').select('*').order('created_at', { ascending: false });
+        if (error) throw error;
+        $('#applications-table').DataTable().clear().rows.add(data || []).draw();
+      } catch (error) {
+        console.error('Error loading applications:', error);
+        showToast('Error loading applications', false);
+      }
+    }
+
+    // Load Payments
+    async function loadPayments() {
+      try {
+        const { data, error } = await supabase.from('payments').select('*, users(name)');
+        if (error) throw error;
+        $('#payments-table').DataTable().clear().rows.add(data || []).draw();
+      } catch (error) {
+        console.error('Error loading payments:', error);
+        showToast('Error loading payments', false);
+      }
+    }
+
+    // Load Messages
+    async function loadMessages() {
+      try {
+        const { data, error } = await supabase.from('messages').select('*');
+        if (error) throw error;
+        $('#messages-table').DataTable().clear().rows.add(data || []).draw();
+      } catch (error) {
+        console.error('Error loading messages:', error);
+        showToast('Error loading messages', false);
+      }
+    }
+
+    // Load Trade History
+    async function loadTradeHistory() {
+      try {
+        const { data, error } = await supabase.from('trade_history').select('*');
+        if (error) throw error;
+        $('#history-table').DataTable().clear().rows.add(data || []).draw();
+      } catch (error) {
+        console.error('Error loading trade history:', error);
+        showToast('Error loading trade history', false);
+      }
+    }
+
+    // Load Trade Insights
+    async function loadTradeInsights() {
+      try {
+        const { data, error } = await supabase.from('trade_insights').select('*').order('week_ending', { ascending: false });
+        if (error) throw error;
+        const list = document.getElementById('insights-list');
+        list.innerHTML = '';
+        (data || []).forEach(insight => {
+          list.innerHTML += `
+            <li class="list-group-item">
+              <strong>Week Ending ${new Date(insight.week_ending).toLocaleDateString()}</strong>: ${insight.pips} pips<br>
+              <small>${insight.note || ''}</small><br>
+              <small>Posted on ${new Date(insight.created_at).toLocaleString()}</small>
+            </li>`;
+        });
+      } catch (error) {
+        console.error('Error loading trade insights:', error);
+        showToast('Error loading trade insights', false);
+      }
+    }
+
+    // Load Signals
+    async function loadSignals() {
+      try {
+        const { data, error } = await supabase.from('signals').select('*').order('created_at', { ascending: false });
+        if (error) throw error;
+        const list = document.getElementById('signals-list');
+        list.innerHTML = '';
+        (data || []).forEach(signal => {
+          list.innerHTML += `
+            <li class="list-group-item">
+              <strong>${signal.asset}</strong> - ${signal.type} at ${signal.entry_level}, SL: ${signal.sl}, TP1: ${signal.tp1}, TP2: ${signal.tp2 || 'N/A'}<br>
+              <small>${signal.notes || ''}</small><br>
+              <small>Published on ${new Date(signal.created_at).toLocaleString()}</small>
+            </li>`;
+        });
+      } catch (error) {
+        console.error('Error loading signals:', error);
+        showToast('Error loading signals', false);
+      }
+    }
+
+    // Updated Load Testimonials
     async function loadTestimonials() {
       try {
         const { data, error } = await supabase
@@ -609,14 +820,142 @@
       }
     }
 
-    // Open the response modal
-    function openResponseModal(id, existing) {
-      document.getElementById('resp-testimonial-id').value = id;
-      document.getElementById('resp-body').value = existing || '';
-      new bootstrap.Modal(document.getElementById('responseModal')).show();
-    }
+    // Signals Form Submission
+    document.getElementById('signals-form').addEventListener('submit', async e => {
+      e.preventDefault();
+      try {
+        const signal = {
+          asset: document.getElementById('signal-asset').value,
+          type: document.getElementById('signal-type').value,
+          entry_level: parseFloat(document.getElementById('signal-entry').value),
+          sl: parseFloat(document.getElementById('signal-sl').value),
+          tp1: parseFloat(document.getElementById('signal-tp1').value),
+          tp2: document.getElementById('signal-tp2').value ? parseFloat(document.getElementById('signal-tp2').value) : null,
+          notes: document.getElementById('signal-note').value,
+          created_at: new Date().toISOString()
+        };
+        const { error } = await supabase.from('signals').insert([signal]);
+        if (error) throw error;
+        showToast('Signal published successfully');
+        document.getElementById('signals-form').reset();
+        loadSignals();
+      } catch (error) {
+        console.error('Error publishing signal:', error);
+        showToast('Error publishing signal', false);
+      }
+    });
 
-    // Handle "Save Response"
+    // Trade Insights Form Submission
+    document.getElementById('insights-form').addEventListener('submit', async e => {
+      e.preventDefault();
+      try {
+        const insight = {
+          week_ending: document.getElementById('insight-week').value,
+          pips: parseInt(document.getElementById('insight-pips').value),
+          note: document.getElementById('insight-note').value,
+          created_at: new Date().toISOString()
+        };
+        const { error } = await supabase.from('trade_insights').insert([insight]);
+        if (error) throw error;
+        showToast('Insight posted successfully');
+        document.getElementById('insights-form').reset();
+        loadTradeInsights();
+        loadDashboard();
+      } catch (error) {
+        console.error('Error posting insight:', error);
+        showToast('Error posting insight', false);
+      }
+    });
+
+    // Trade History Form Submission
+    document.getElementById('trade-upload-form').addEventListener('submit', async e => {
+      e.preventDefault();
+      try {
+        const file = document.getElementById('trade-file').files[0];
+        let screenshotUrl = null;
+        if (file) {
+          const path = `screenshots/trades/${Date.now()}_${file.name}`;
+          screenshotUrl = await uploadFile(file, 'screenshots', path);
+        }
+        const trade = {
+          date: document.getElementById('trade-date').value,
+          asset: document.getElementById('trade-pair').value,
+          notes: document.getElementById('trade-notes').value,
+          screenshot: screenshotUrl,
+          created_at: new Date().toISOString()
+        };
+        const { error } = await supabase.from('trade_history').insert([trade]);
+        if (error) throw error;
+        showToast('Trade added successfully');
+        document.getElementById('trade-upload-form').reset();
+        loadTradeHistory();
+      } catch (error) {
+        console.error('Error submitting trade:', error);
+        showToast('Error submitting trade', false);
+      }
+    });
+
+    // Payment Settings Form Submission
+    document.getElementById('form-paystack').addEventListener('submit', async e => {
+      e.preventDefault();
+      try {
+        const settings = {
+          provider: 'Paystack',
+          public_key: document.getElementById('ps-public').value,
+          secret_key: document.getElementById('ps-secret').value,
+          wallet_address: document.getElementById('ps-link').value
+        };
+        const { error } = await supabase.from('payment_settings').upsert([settings]);
+        if (error) throw error;
+        showToast('Paystack settings saved successfully');
+        document.getElementById('form-paystack').reset();
+      } catch (error) {
+        console.error('Error saving Paystack settings:', error);
+        showToast('Error saving Paystack settings', false);
+      }
+    });
+    document.getElementById('form-crypto').addEventListener('submit', async e => {
+      e.preventDefault();
+      try {
+        const settings = [
+          { provider: 'BTC', wallet_address: document.getElementById('addr-btc').value },
+          { provider: 'ETH', wallet_address: document.getElementById('addr-eth').value },
+          { provider: 'TRX', wallet_address: document.getElementById('addr-trx').value },
+          { provider: 'USDT', wallet_address: document.getElementById('addr-usdt').value }
+        ];
+        const { error } = await supabase.from('payment_settings').upsert(settings);
+        if (error) throw error;
+        showToast('Crypto settings saved successfully');
+        document.getElementById('form-crypto').reset();
+      } catch (error) {
+        console.error('Error saving Crypto settings:', error);
+        showToast('Error saving Crypto settings', false);
+      }
+    });
+
+    // Reply Form Submission
+    document.getElementById('reply-form').addEventListener('submit', async e => {
+      e.preventDefault();
+      try {
+        const reply = {
+          message_id: parseInt(document.getElementById('reply-message-id').value),
+          to_email: document.getElementById('reply-to').value,
+          body: document.getElementById('reply-body').value,
+          created_at: new Date().toISOString()
+        };
+        const { error } = await supabase.from('replies').insert([reply]);
+        if (error) throw error;
+        showToast('Reply sent successfully');
+        document.getElementById('reply-form').reset();
+        bootstrap.Modal.getInstance(document.getElementById('replyModal')).hide();
+        loadMessages();
+      } catch (error) {
+        console.error('Error submitting reply:', error);
+        showToast('Error submitting reply', false);
+      }
+    });
+
+    // Handle "Save Response" for Testimonials
     document.getElementById('response-form').addEventListener('submit', async e => {
       e.preventDefault();
       const id = parseInt(document.getElementById('resp-testimonial-id').value);
@@ -633,128 +972,6 @@
       } catch (err) {
         console.error('Error saving response:', err);
         showToast('Error saving response', false);
-      }
-    });
-
-    // Signals Form Submission
-    document.getElementById('signals-form').addEventListener('submit', async e => {
-      e.preventDefault();
-      const signal = {
-        asset: document.getElementById('signal-asset').value,
-        type: document.getElementById('signal-type').value,
-        entry_level: parseFloat(document.getElementById('signal-entry').value),
-        sl: parseFloat(document.getElementById('signal-sl').value),
-        tp1: parseFloat(document.getElementById('signal-tp1').value),
-        tp2: document.getElementById('signal-tp2').value ? parseFloat(document.getElementById('signal-tp2').value) : null,
-        notes: document.getElementById('signal-note').value,
-        created_at: new Date().toISOString()
-      };
-      try {
-        await supabase.from('signals').insert([signal]);
-        showToast('Signal published successfully');
-        document.getElementById('signals-form').reset();
-        loadSignals();
-      } catch {
-        showToast('Error publishing signal', false);
-      }
-    });
-
-    // Trade Insights Form Submission
-    document.getElementById('insights-form').addEventListener('submit', async e => {
-      e.preventDefault();
-      const insight = {
-        week_ending: document.getElementById('insight-week').value,
-        pips: parseInt(document.getElementById('insight-pips').value),
-        note: document.getElementById('insight-note').value,
-        created_at: new Date().toISOString()
-      };
-      try {
-        await supabase.from('trade_insights').insert([insight]);
-        showToast('Insight posted successfully');
-        document.getElementById('insights-form').reset();
-        loadTradeInsights();
-        loadDashboard();
-      } catch {
-        showToast('Error posting insight', false);
-      }
-    });
-
-    // Trade History Form Submission
-    document.getElementById('trade-upload-form').addEventListener('submit', async e => {
-      e.preventDefault();
-      let screenshotUrl = null;
-      const file = document.getElementById('trade-file').files[0];
-      if (file) {
-        screenshotUrl = await uploadFile(file, 'screenshots', `trades/${Date.now()}_${file.name}`);
-      }
-      const trade = {
-        date: document.getElementById('trade-date').value,
-        asset: document.getElementById('trade-pair').value,
-        notes: document.getElementById('trade-notes').value,
-        screenshot: screenshotUrl,
-        created_at: new Date().toISOString()
-      };
-      try {
-        await supabase.from('trade_history').insert([trade]);
-        showToast('Trade added successfully');
-        document.getElementById('trade-upload-form').reset();
-        loadTradeHistory();
-      } catch {
-        showToast('Error submitting trade', false);
-      }
-    });
-
-    // Payment Settings Form Submission
-    document.getElementById('form-paystack').addEventListener('submit', async e => {
-      e.preventDefault();
-      const settings = {
-        provider: 'Paystack',
-        public_key: document.getElementById('ps-public').value,
-        secret_key: document.getElementById('ps-secret').value,
-        wallet_address: document.getElementById('ps-link').value
-      };
-      try {
-        await supabase.from('payment_settings').upsert([settings]);
-        showToast('Paystack settings saved successfully');
-        document.getElementById('form-paystack').reset();
-      } catch {
-        showToast('Error saving Paystack settings', false);
-      }
-    });
-    document.getElementById('form-crypto').addEventListener('submit', async e => {
-      e.preventDefault();
-      const settings = [
-        { provider: 'BTC', wallet_address: document.getElementById('addr-btc').value },
-        { provider: 'ETH', wallet_address: document.getElementById('addr-eth').value },
-        { provider: 'TRX', wallet_address: document.getElementById('addr-trx').value },
-        { provider: 'USDT', wallet_address: document.getElementById('addr-usdt').value }
-      ];
-      try {
-        await supabase.from('payment_settings').upsert(settings);
-        showToast('Crypto settings saved successfully');
-        document.getElementById('form-crypto').reset();
-      } catch {
-        showToast('Error saving Crypto settings', false);
-      }
-    });
-
-    // Reply Form Submission
-    document.getElementById('reply-form').addEventListener('submit', async e => {
-      e.preventDefault();
-      const reply = {
-        message_id: parseInt(document.getElementById('reply-message-id').value),
-        to_email: document.getElementById('reply-to').value,
-        body: document.getElementById('reply-body').value,
-        created_at: new Date().toISOString()
-      };
-      try {
-        await supabase.from('replies').insert([reply]);
-        showToast('Reply sent successfully');
-        document.getElementById('reply-form').reset();
-        bootstrap.Modal.getInstance(document.getElementById('replyModal')).hide();
-        loadMessages();
-      } catch {
-        showToast('Error submitting reply', false);
       }
     });
 
