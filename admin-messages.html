@@ -1,53 +1,104 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" data-theme="dark">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>CBE Admin - Messages</title>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>CBE Admin – Messages</title>
+  <!-- Fonts, Bootstrap, Icons, DataTables CSS -->
   <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700&display=swap" rel="stylesheet">
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css" rel="stylesheet">
   <link href="https://cdn.datatables.net/1.13.4/css/dataTables.bootstrap5.min.css" rel="stylesheet">
   <style>
-    body[data-theme="dark"] { background: #1a1a1a; color: #fff; }
-    .glass { background: rgba(255, 255, 255, 0.05); backdrop-filter: blur(10px); border: 1px solid rgba(255, 215, 0, 0.2); }
-    table.dataTable thead th { background: rgba(255, 255, 255, 0.1); }
+    :root {
+      --bg: #000; --text: #fff; --gold: #ffd700;
+      --glass-bg: rgba(255,255,255,0.05);
+      --overlay: rgba(0,0,0,0.6);
+    }
+    [data-theme="light"] {
+      --bg: #f5f5f5; --text: #333; --gold: #cca300;
+      --glass-bg: rgba(0,0,0,0.05);
+      --overlay: rgba(255,255,255,0.15);
+    }
+    * { margin:0; padding:0; box-sizing:border-box; }
+    body {
+      font-family:'Poppins',sans-serif;
+      background: var(--bg); color: var(--text);
+      overflow-x:hidden;
+    }
+    .overlay {
+      position:fixed; top:0; left:0; width:100%; height:100%;
+      background: var(--overlay); z-index:-1;
+    }
+    .glass {
+      background: var(--glass-bg);
+      backdrop-filter: blur(10px);
+      border:1px solid rgba(255,215,0,0.2);
+    }
+    a { color: var(--gold); text-decoration:none; }
+
+    /* Top header */
+    header.admin-header {
+      display:flex; align-items:center; justify-content:space-between;
+      padding:1rem 2rem; background:rgba(0,0,0,0.6);
+      border-bottom:1px solid var(--gold);
+      position:sticky; top:0; z-index:10;
+    }
+    .logo { cursor:pointer; display:flex; align-items:center; }
+    .logo img { height:40px; }
+    #theme-toggle {
+      background:none; border:none; font-size:1.25rem;
+      cursor:pointer; color:var(--text);
+    }
+
+    /* Page title */
+    #section-title {
+      color: var(--gold);
+      text-align:center;
+      margin:2rem 0 1rem;
+    }
+
+    /* Table panel */
+    .table-panel {
+      padding:2rem;
+      border-radius:8px;
+      margin-bottom:2rem;
+    }
+    .dataTables_wrapper .dataTables_filter input {
+      background: var(--bg); color: var(--text);
+      border:1px solid var(--gold);
+    }
+    table.dataTable th, table.dataTable td {
+      vertical-align:middle;
+    }
   </style>
 </head>
-<body data-theme="dark">
-  <div class="overlay" style="position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0, 0, 0, 0.6); z-index: -1;"></div>
-  <div id="toast-container" style="position: fixed; bottom: 1rem; right: 1rem; z-index: 1050;"></div>
-  <div class="d-flex glass" style="min-height: 100vh;">
-    <nav id="sidebar" class="d-flex flex-column p-3" style="width: 250px;">
-      <h3 style="color: gold;">CBE Admin</h3>
-      <ul id="menu" class="nav flex-column">
-        <li class="nav-item"><a class="nav-link text-white" href="admin-capital-applications.html">Capital Applications</a></li>
-        <li class="nav-item"><a class="nav-link text-white" href="admin-payments.html">Payments</a></li>
-        <li class="nav-item"><a class="nav-link text-white" href="admin-messages.html">Messages</a></li>
-        <li class="nav-item"><a class="nav-link text-white" href="admin-trade-history.html">Trade History</a></li>
-        <li class="nav-item"><a class="nav-link text-white" href="admin-trade-insights.html">Trade Insights</a></li>
-        <li class="nav-item"><a class="nav-link text-white" href="admin-signals.html">Signals</a></li>
-        <li class="nav-item"><a class="nav-link text-white" href="admin-testimonials.html">Testimonials</a></li>
-        <li class="nav-item"><a class="nav-link text-white" href="admin-settings-payment.html">Payment Settings</a></li>
-      </ul>
-    </nav>
-    <div id="content" class="d-flex flex-column flex-grow-1 p-3">
-      <div class="d-flex justify-content-between align-items-center mb-4">
-        <div>
-          <span id="toggle-btn" style="cursor: pointer; font-size: 1.5rem;">⋮</span>
-          <button id="theme-toggle" class="btn btn-sm btn-outline-secondary ms-2">Light Mode</button>
-        </div>
-        <h2 id="section-title" style="color: gold;">Messages</h2>
-      </div>
-      <div class="p-4 glass">
-        <h4>Contact Messages</h4>
-        <input id="msg-search" class="form-control mb-3" placeholder="Search messages…">
-        <table id="messages-table" class="table table-hover text-white" style="width: 100%;">
-          <thead><tr><th>#</th><th>From</th><th>Message</th><th>Date</th><th>Action</th></tr></thead>
-          <tbody></tbody>
-        </table>
-      </div>
+<body>
+  <div class="overlay"></div>
+
+  <!-- Header -->
+  <header class="admin-header glass">
+    <div class="logo" id="logo"><img src="CBE_logo.PNG" alt="CBE Logo"></div>
+    <button id="theme-toggle" aria-label="Toggle theme">🌞</button>
+  </header>
+
+  <!-- Main -->
+  <main class="container">
+    <h2 id="section-title">Messages</h2>
+    <div class="glass table-panel">
+      <input id="msg-search" class="form-control mb-3" placeholder="Search messages…" />
+      <table id="messages-table" class="table table-hover table-borderless text-white w-100">
+        <thead>
+          <tr>
+            <th>#</th><th>From</th><th>Message</th><th>Date</th><th>Action</th>
+          </tr>
+        </thead>
+        <tbody></tbody>
+      </table>
     </div>
-  </div>
+  </main>
+
+  <!-- Reply Modal -->
   <div class="modal fade" id="replyModal">
     <div class="modal-dialog">
       <form class="modal-content glass p-4" id="reply-form">
@@ -56,95 +107,120 @@
           <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
         </div>
         <div class="modal-body">
-          <input type="hidden" id="reply-message-id">
-          <div class="mb-3"><label>To</label><input id="reply-to" class="form-control" readonly></div>
-          <div class="mb-3"><label>Message</label><textarea id="reply-body" class="form-control" rows="4" required></textarea></div>
+          <input type="hidden" id="reply-message-id" />
+          <div class="mb-3">
+            <label>To</label>
+            <input id="reply-to" class="form-control" readonly />
+          </div>
+          <div class="mb-3">
+            <label>Message</label>
+            <textarea id="reply-body" class="form-control" rows="4" required></textarea>
+          </div>
         </div>
-        <div class="modal-footer"><button class="btn btn-success">Send Reply</button></div>
+        <div class="modal-footer">
+          <button class="btn btn-success">Send Reply</button>
+        </div>
       </form>
     </div>
   </div>
+
+  <!-- Scripts -->
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
   <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
   <script src="https://cdn.datatables.net/1.13.4/js/jquery.dataTables.min.js"></script>
   <script src="https://cdn.datatables.net/1.13.4/js/dataTables.bootstrap5.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script>
-    if (localStorage.getItem('isLoggedIn') !== 'true') {
-      window.location.href = `admin-login.html?redirect=admin-messages.html`;
-    }
+    document.addEventListener('DOMContentLoaded', () => {
+      // Logo → Dashboard
+      document.getElementById('logo').onclick = () => {
+        window.location.href = 'admin-dashboard.html';
+      };
 
-    const supabase = window.supabase.createClient('https://dapwpgvnfjcfqqhrpxla.supabase.co', 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImRhcHdwZ3ZuZmpjZnFxaHJweGxhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDcwNDA4ODgsImV4cCI6MjA2MjYxNjg4OH0.ICC0UsLlzJDNre7rFCeD3k6iVzo6jOJgn3PhABpEMsQ');
+      // Theme toggle
+      const themeBtn = document.getElementById('theme-toggle');
+      const setTheme = t => {
+        document.documentElement.setAttribute('data-theme', t);
+        localStorage.setItem('theme', t);
+        themeBtn.textContent = t === 'dark' ? '🌞' : '🌜';
+      };
+      themeBtn.onclick = () => {
+        const next = document.documentElement.getAttribute('data-theme') === 'dark' ? 'light' : 'dark';
+        setTheme(next);
+      };
+      setTheme(localStorage.getItem('theme') || 'dark');
 
-    function showToast(msg, ok = true) {
-      const id = 't' + Date.now();
-      document.getElementById('toast-container').innerHTML += `
-        <div id="${id}" class="toast align-items-center text-white ${ok ? 'bg-success' : 'bg-danger'} border-0" role="alert">
+      // Auth guard
+      if (localStorage.getItem('isLoggedIn') !== 'true') {
+        window.location.href = 'admin-login.html?redirect=admin-messages.html';
+      }
+
+      // Supabase init
+      const supabase = window.supabase.createClient(
+        'https://dapwpgvnfjcfqqhrpxla.supabase.co',
+        'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImRhcHdwZ3ZuZmpjZnFxaHJweGxhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDcwNDA4ODgsImV4cCI6MjA2MjYxNjg4OH0.ICC0UsLlzJDNre7rFCeD3k6iVzo6jOJgn3PhABpEMsQ'
+      );
+
+      // Toast helper
+      function showToast(msg, ok = true) {
+        const t = document.createElement('div');
+        t.className = `toast align-items-center text-white ${ok?'bg-success':'bg-danger'} border-0 position-fixed top-0 end-0 m-3`;
+        t.innerHTML = `
           <div class="d-flex">
             <div class="toast-body">${msg}</div>
             <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast"></button>
-          </div>
-        </div>`;
-      new bootstrap.Toast(document.getElementById(id), { delay: 3000 }).show();
-    }
+          </div>`;
+        document.body.append(t);
+        new bootstrap.Toast(t, { delay:3000 }).show();
+      }
 
-    document.getElementById('theme-toggle').onclick = () => {
-      const next = document.body.getAttribute('data-theme') === 'dark' ? 'light' : 'dark';
-      document.body.setAttribute('data-theme', next);
-      document.getElementById('theme-toggle').textContent = next === 'dark' ? 'Light Mode' : 'Dark Mode';
-    };
-
-    document.getElementById('toggle-btn').onclick = () => {
-      document.getElementById('sidebar').classList.toggle('collapsed');
-    };
-
-    document.querySelectorAll('#menu .nav-link').forEach(link => {
-      if (link.href.endsWith('admin-messages.html')) link.classList.add('active');
-    });
-
-    $(document).ready(() => {
-      $('#messages-table').DataTable({
+      // Setup DataTable
+      const table = $('#messages-table').DataTable({
         columns: [
           { data: 'id' },
           { data: 'from_name' },
           { data: 'text' },
-          { data: 'date', render: data => new Date(data).toLocaleDateString() },
-          { data: null, render: (_, __, row) => `<button class="btn btn-sm btn-success" onclick="openReply(${row.id}, '${row.email}')">Reply</button>` }
+          {
+            data: 'date',
+            render: d => new Date(d).toLocaleDateString()
+          },
+          {
+            data: null,
+            render: (_, __, row) =>
+              `<button class="btn btn-sm btn-success" onclick="openReply(${row.id}, '${row.email}')">Reply</button>`
+          }
         ]
       });
-      loadMessages();
-    });
 
-    function openReply(messageId, email) {
-      document.getElementById('reply-message-id').value = messageId;
-      document.getElementById('reply-to').value = email;
-      new bootstrap.Modal(document.getElementById('replyModal')).show();
-    }
+      // Load messages
+      async function loadMessages() {
+        try {
+          const { data, error } = await supabase.from('messages').select('*').order('date', { ascending:false });
+          if (error) throw error;
+          table.clear().rows.add(data||[]).draw();
+        } catch (err) {
+          console.error(err);
+          showToast('Error loading messages', false);
+        }
+      }
 
-    document.getElementById('reply-form').addEventListener('submit', async e => {
-      e.preventDefault();
-      const messageId = document.getElementById('reply-message-id').value;
-      const body = document.getElementById('reply-body').value;
-      try {
-        // Placeholder for sending reply (e.g., via email or Supabase)
+      // Open reply modal
+      window.openReply = (id, email) => {
+        document.getElementById('reply-message-id').value = id;
+        document.getElementById('reply-to').value = email;
+        new bootstrap.Modal(document.getElementById('replyModal')).show();
+      };
+
+      // Handle reply submit
+      document.getElementById('reply-form').addEventListener('submit', async e => {
+        e.preventDefault();
+        // placeholder: send reply via email or Supabase
         showToast('Reply sent successfully');
         bootstrap.Modal.getInstance(document.getElementById('replyModal')).hide();
-      } catch (error) {
-        console.error('Error sending reply:', error);
-        showToast('Error sending reply', false);
-      }
-    });
+      });
 
-    async function loadMessages() {
-      try {
-        const { data, error } = await supabase.from('messages').select('*');
-        if (error) throw error;
-        $('#messages-table').DataTable().clear().rows.add(data || []).draw();
-      } catch (error) {
-        console.error('Error loading messages:', error);
-        showToast('Error loading messages', false);
-      }
-    }
+      loadMessages();
+    });
   </script>
 </body>
 </html>
