@@ -168,6 +168,110 @@
         ]
       });
       loadUsers();
+      <script>
+  // Auth check
+  if (localStorage.getItem('isLoggedIn') !== 'true') {
+    const currentUrl = window.location.pathname.split('/').pop();
+    window.location.href = `admin-login.html?redirect=${currentUrl}`;
+  }
+
+  // Supabase client
+  const supabase = window.supabase.createClient(
+    'https://dapwpgvnfjcfqqhrpxla.supabase.co',
+    'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImRhcHdwZ3ZuZmpjZnFxaHJweGxhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDcwNDA4ODgsImV4cCI6MjA2MjYxNjg4OH0.ICC0UsLlzJDNre7rFCeD3k6iVzo6jOJgn3PhABpEMsQ'
+  );
+
+  // Toast message
+  function showToast(msg, ok = true) {
+    const id = 't' + Date.now();
+    document.getElementById('toast-container').innerHTML += `
+      <div id="${id}" class="toast align-items-center text-white ${ok ? 'bg-success' : 'bg-danger'} border-0" role="alert">
+        <div class="d-flex">
+          <div class="toast-body">${msg}</div>
+          <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast"></button>
+        </div>
+      </div>`;
+    new bootstrap.Toast(document.getElementById(id), { delay: 3000 }).show();
+  }
+
+  // Theme toggle
+  document.getElementById('theme-toggle').onclick = () => {
+    const body = document.body;
+    const next = body.getAttribute('data-theme') === 'dark' ? 'light' : 'dark';
+    body.setAttribute('data-theme', next);
+    document.getElementById('theme-toggle').textContent = next === 'dark' ? 'Light Mode' : 'Dark Mode';
+  };
+
+  // Approve user
+  async function approveUser(id) {
+    const { error } = await supabase.from('users').update({ status: 'Approved' }).eq('id', id);
+    if (error) return showToast('Error approving user', false);
+    showToast('User approved');
+    loadUsers();
+  }
+
+  // Reject user
+  async function rejectUser(id) {
+    const { error } = await supabase.from('users').update({ status: 'Rejected' }).eq('id', id);
+    if (error) return showToast('Error rejecting user', false);
+    showToast('User rejected');
+    loadUsers();
+  }
+
+  // Delete user
+  async function deleteUser(id) {
+    if (!confirm('Are you sure you want to delete this user?')) return;
+    const { error } = await supabase.from('users').delete().eq('id', id);
+    if (error) return showToast('Error deleting user', false);
+    showToast('User deleted');
+    loadUsers();
+  }
+
+  // Load users from Supabase
+  async function loadUsers() {
+    const { data, error } = await supabase.from('users').select('*').order('id', { ascending: false });
+    if (error) {
+      showToast('Error fetching users', false);
+      return;
+    }
+
+    const table = $('#users-table').DataTable();
+    table.clear();
+
+    data.forEach((user, index) => {
+      table.row.add({
+        id: index + 1,
+        email: user.email || '',
+        name: user.name || '',
+        registered_at: user.registered_at ? new Date(user.registered_at).toLocaleDateString() : '',
+        status: user.status || 'Pending',
+        action: `
+          ${user.status === 'Pending' ? `<button class="btn btn-sm btn-success me-1" onclick="approveUser(${user.id})">Approve</button>` : ''}
+          <button class="btn btn-sm btn-warning me-1" onclick="rejectUser(${user.id})">Reject</button>
+          <button class="btn btn-sm btn-danger" onclick="deleteUser(${user.id})">Delete</button>
+        `
+      });
+    });
+
+    table.draw();
+  }
+
+  // Initialize DataTable
+  $(document).ready(() => {
+    $('#users-table').DataTable({
+      columns: [
+        { data: 'id' },
+        { data: 'email' },
+        { data: 'name' },
+        { data: 'registered_at' },
+        { data: 'status' },
+        { data: 'action' }
+      ]
+    });
+
+    loadUsers();
+  });
+</script>
     });
   </script>
 </body>
