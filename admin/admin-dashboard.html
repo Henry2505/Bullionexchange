@@ -1,0 +1,144 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>CBE Admin - Dashboard</title>
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700&display=swap" rel="stylesheet"/>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet"/>
+  <link href="admin-style.css" rel="stylesheet"/>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.0/Sortable.min.js"></script>
+</head>
+<body data-theme="dark">
+  <div class="overlay" style="position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); z-index: -1;"></div>
+  <div id="toast-container"></div>
+
+  <div class="d-flex glass" style="min-height:100vh;">
+    <nav id="sidebar" class="d-flex flex-column p-3">
+      <h4 class="text-center">CBE Admin</h4>
+      <ul class="nav nav-pills flex-column mb-auto mt-4" id="menu">
+        <li><a class="nav-link active" href="admin-dashboard.html">Dashboard</a></li>
+        <li><a class="nav-link" href="admin-users.html">Users</a></li>
+        <li><a class="nav-link" href="admin-capital-applications.html">Capital Applications</a></li>
+        <li><a class="nav-link" href="admin-payments.html">Payments</a></li>
+        <li><a class="nav-link" href="admin-messages.html">Messages</a></li>
+        <li><a class="nav-link" href="admin-settings-payment.html">Payment Settings</a></li>
+        <li><a class="nav-link" href="admin-trade-history.html">Trade History</a></li>
+        <li><a class="nav-link" href="admin-trade-insights.html">Trade Insights</a></li>
+        <li><a class="nav-link" href="admin-signals.html">Signals</a></li>
+        <li><a class="nav-link" href="admin-testimonials.html">Testimonials</a></li>
+        <li class="mt-auto"><a class="nav-link text-danger" href="#" onclick="logout()">Logout</a></li>
+      </ul>
+    </nav>
+
+    <div id="content" class="d-flex flex-column">
+      <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+          <span id="toggle-btn" onclick="toggleSidebar()">⋮</span>
+          <button id="theme-toggle" class="btn btn-sm btn-outline-secondary ms-2" onclick="toggleTheme()">Light Mode</button>
+        </div>
+        <div class="d-flex align-items-baseline">
+          <h2 id="section-title">Dashboard</h2>
+          <small id="current-datetime" class="text-white ms-3"></small>
+        </div>
+      </div>
+      <div class="row g-4" id="stats-container">
+        <div class="col-md-3">
+          <div class="card card-stat p-3 glass bg-primary" draggable="true" data-key="users">
+            <h5>Total Users</h5><h2 id="stat-users">0</h2>
+          </div>
+        </div>
+        <div class="col-md-3">
+          <div class="card card-stat p-3 glass bg-success" draggable="true" data-key="payments">
+            <h5>Pending Payments</h5><h2 id="stat-payments">0</h2>
+          </div>
+        </div>
+        <div class="col-md-3">
+          <div class="card card-stat p-3 glass bg-info" draggable="true" data-key="trades">
+            <h5>Trades This Month</h5><h2 id="stat-trades">0</h2>
+          </div>
+        </div>
+        <div class="col-md-3">
+          <div class="card card-stat p-3 glass bg-secondary" draggable="true" data-key="signals">
+            <h5>Signals Published</h5><h2 id="stat-signals">0</h2>
+          </div>
+        </div>
+        <div class="col-md-3">
+          <div class="card card-stat p-3 glass bg-warning" draggable="true" data-key="winrate">
+            <h5>Win Rate (%)</h5><h2 id="stat-winrate">0</h2>
+          </div>
+        </div>
+      </div>
+      <div class="row g-4 mt-4">
+        <div class="col-md-6"><canvas id="chart-pnl" height="200"></canvas></div>
+        <div class="col-md-6"><canvas id="chart-winrate" height="200"></canvas></div>
+      </div>
+    </div>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="supabase-init.js"></script>
+  <script src="admin-common.js"></script>
+  <script>
+    checkSession();
+    initTheme();
+    initSidebar();
+    updateClock();
+    setInterval(updateClock, 60000);
+    new Sortable(document.getElementById('stats-container'), { animation: 150 });
+    loadDashboard();
+
+    async function loadDashboard() {
+      try {
+        const { data: usersData, error: usersError } = await supabase.from('users').select('id');
+        const { data: paymentsData, error: paymentsError } = await supabase.from('payments').select('id').eq('status', 'Pending');
+        const { data: tradesData, error: tradesError } = await supabase.from('trade_history').select('id');
+        const { data: signalsData, error: signalsError } = await supabase.from('signals').select('id');
+        const { data: insightsData, error: insightsError } = await supabase.from('trade_insights').select('week_ending, pips').order('week_ending', { ascending: false });
+
+        if (usersError || paymentsError || tradesError || signalsError || insightsError) throw new Error('Data fetch failed');
+
+        const stats = {
+          users: usersData.length,
+          payments: paymentsData.length,
+          trades: tradesData.length,
+          signals: signalsData.length
+        };
+
+        document.getElementById('stat-users').textContent = stats.users;
+        document.getElementById('stat-payments').textContent = stats.payments;
+        document.getElementById('stat-trades').textContent = stats.trades;
+        document.getElementById('stat-signals').textContent = stats.signals;
+
+        const wins = insightsData.filter(i => i.pips > 0).length;
+        const totalWeeks = insightsData.length;
+        const winRate = totalWeeks > 0 ? Math.round((wins / totalWeeks) * 100) : 0;
+        document.getElementById('stat-winrate').textContent = winRate;
+
+        new Chart(document.getElementById('chart-pnl'), {
+          type: 'line',
+          data: {
+            labels: insightsData.map(i => new Date(i.week_ending).toLocaleDateString()),
+            datasets: [{ data: insightsData.map(i => i.pips), tension: 0.4, borderColor: '#ffd700', backgroundColor: 'rgba(255,215,0,0.2)' }]
+          },
+          options: { responsive: true, plugins: { legend: { display: false } } }
+        });
+
+        new Chart(document.getElementById('chart-winrate'), {
+          type: 'bar',
+          data: {
+            labels: insightsData.map(i => new Date(i.week_ending).toLocaleDateString()),
+            datasets: [{ data: insightsData.map(i => i.pips > 0 ? 100 : 0), backgroundColor: '#1cc88a' }]
+          },
+          options: { responsive: true, plugins: { legend: { display: false } } }
+        });
+      } catch (error) {
+        console.error('Error loading dashboard:', error);
+        showToast('Error loading dashboard', false);
+      }
+    }
+  </script>
+</body>
+</html>
