@@ -80,7 +80,7 @@
       opacity:1;
       pointer-events: auto;
     }
-    #nav-panel ul { list-style:none; }
+    #nav-panel ul { list-style:none; padding:0; }
     #nav-panel li { margin:.5rem 0; }
     #nav-panel a {
       color:#fff; font-weight:500; display:flex; align-items:center; gap:.5rem;
@@ -106,14 +106,12 @@
     .card-stat h5 { color:var(--gold); margin-bottom:.5rem; }
     .card-stat h2 { font-size:2rem; }
 
-    /* CHARTS */
+    /* CHARTS GRID */
     .charts {
       display:grid;
-      grid-template-columns:1fr 1fr;
+      grid-template-columns:repeat(auto-fit,minmax(280px,1fr));
       gap:1rem;
-    }
-    @media(max-width:768px){
-      .charts { grid-template-columns:1fr; }
+      margin-bottom:2rem;
     }
 
     /* CLOCK & THEME */
@@ -163,6 +161,7 @@
 
   <!-- MAIN CONTENT -->
   <main class="container py-4">
+    <!-- Stats cards -->
     <div class="stats-row" id="stats-container">
       <div class="card-stat" data-key="users">
         <h5>Total Users</h5><h2 id="stat-users">0</h2>
@@ -181,9 +180,11 @@
       </div>
     </div>
 
+    <!-- All three charts -->
     <div class="charts">
-      <canvas id="chart-pnl" height="200"></canvas>
+      <canvas id="chart-pnl"    height="200"></canvas>
       <canvas id="chart-winrate" height="200"></canvas>
+      <canvas id="chart-status" height="200"></canvas>
     </div>
   </main>
 
@@ -191,7 +192,7 @@
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script>
-    // Redirect home
+    // Logo redirects
     document.getElementById('logo').addEventListener('click', () => {
       window.location.href = 'admin-dashboard.html';
     });
@@ -199,8 +200,7 @@
     // Theme toggle
     const themeBtn = document.getElementById('theme-toggle');
     function updateThemeIcon() {
-      const theme = document.documentElement.getAttribute('data-theme');
-      themeBtn.textContent = theme === 'dark' ? '🌞' : '🌜';
+      themeBtn.textContent = document.documentElement.getAttribute('data-theme') === 'dark' ? '🌞' : '🌜';
     }
     themeBtn.addEventListener('click', () => {
       const next = document.documentElement.getAttribute('data-theme') === 'dark' ? 'light' : 'dark';
@@ -257,13 +257,16 @@
     // Load stats & charts
     async function loadDashboard() {
       try {
+        // fetch all core data
         const [u,p,t,s,i] = await Promise.all([
-          supabase.from('users').select('id'),
+          supabase.from('users').select('id,status'),
           supabase.from('payments').select('id').eq('status','Pending'),
           supabase.from('trade_history').select('id'),
           supabase.from('signals').select('id'),
           supabase.from('trade_insights').select('week_ending,pips').order('week_ending',{ascending:false})
         ]);
+
+        // Stats cards
         document.getElementById('stat-users').textContent    = u.data.length;
         document.getElementById('stat-payments').textContent = p.data.length;
         document.getElementById('stat-trades').textContent   = t.data.length;
@@ -278,9 +281,14 @@
           type: 'line',
           data: {
             labels: insights.map(x=>new Date(x.week_ending).toLocaleDateString()),
-            datasets: [{ data: insights.map(x=>x.pips), tension:0.4, borderColor:'#ffd700', backgroundColor:'rgba(255,215,0,0.2)' }]
+            datasets: [{
+              data: insights.map(x=>x.pips),
+              tension:0.4,
+              borderColor:'#ffd700',
+              backgroundColor:'rgba(255,215,0,0.2)'
+            }]
           },
-          options: { responsive:true, plugins:{ legend:{ display:false } } }
+          options:{ responsive:true, plugins:{ legend:{ display:false } } }
         });
 
         // Win-rate bar chart
@@ -288,15 +296,29 @@
           type: 'bar',
           data: {
             labels: insights.map(x=>new Date(x.week_ending).toLocaleDateString()),
-            datasets: [{ data: insights.map(x=>x.pips>0?100:0), backgroundColor:'#1cc88a' }]
+            datasets:[{
+              data: insights.map(x=> x.pips>0?100:0 ),
+              backgroundColor:'#1cc88a'
+            }]
           },
-          options: { responsive:true, plugins:{ legend:{ display:false } } }
+          options:{ responsive:true, plugins:{ legend:{ display:false } } }
         });
 
-        // Draggable stats
+        // User-status doughnut chart
+        const counts = u.data.reduce((acc,u)=>(acc[u.status] = (acc[u.status]||0)+1, acc), {});
+        const labels = ['Active','Expired','Pending','Deleted'];
+        const data   = labels.map(l=> counts[l]||0 );
+        new Chart(document.getElementById('chart-status'), {
+          type: 'doughnut',
+          data: { labels, datasets:[{ data }] },
+          options: { responsive:true, plugins:{ legend:{ position:'bottom' } } }
+        });
+
+        // Make cards draggable
         new Sortable(document.getElementById('stats-container'), { animation:150 });
-      } catch (error) {
-        console.error(error);
+      }
+      catch(err){
+        console.error(err);
         showToast('Error loading dashboard', false);
       }
     }
