@@ -4,85 +4,60 @@
   <meta charset="utf-8"/>
   <meta name="viewport" content="width=device-width,initial-scale=1.0"/>
   <title>Trade Insights • CBE VIP</title>
+
+  <!-- 1️⃣ Enforce login first -->
+  <script>
+    if (localStorage.getItem('isLoggedIn') !== 'true') {
+      // preserve full path + query (in case you ever pass params)
+      const redirectTo = encodeURIComponent(window.location.pathname + window.location.search);
+      window.location.replace(`login.html?redirect=${redirectTo}`);
+    }
+  </script>
+
   <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;500;700&display=swap" rel="stylesheet"/>
   <style>
-    /* Disable selection & right-click globally */
-    * {
-      -webkit-user-select: none;
-      -moz-user-select: none;
-      -ms-user-select: none;
-      user-select: none;
-    }
+    * { user-select: none; }
     html, body {
-      margin:0; padding:0;
-      width:100%; height:100%;
-      overflow:hidden;
-      font-family:'Poppins',sans-serif;
+      margin:0; padding:0; width:100%; height:100%;
+      overflow:hidden; font-family:'Poppins',sans-serif;
       background:#000; color:#f5f5f5;
     }
-    /* Video background */
     video#bg-video {
-      position:fixed; top:0; left:0;
-      width:100%; height:100%;
+      position:fixed; top:0; left:0; width:100%; height:100%;
       object-fit:cover; z-index:-2;
     }
     .overlay {
-      position:fixed; top:0; left:0;
-      width:100%; height:100%;
+      position:fixed; top:0; left:0; width:100%; height:100%;
       background:rgba(0,0,0,0.6); z-index:-1;
     }
-    /* Header */
     header {
-      text-align:center;
-      padding:60px 20px 30px;
+      text-align:center; padding:60px 20px 30px;
       background:linear-gradient(135deg,#111,#1c1c1c);
       box-shadow:0 4px 10px rgba(0,0,0,0.5);
     }
-    header h1 {
-      margin:0; font-size:36px; color:gold;
-    }
-    header p {
-      margin:8px 0 0; font-size:16px; color:#ccc;
-    }
-    /* Warning */
+    header h1 { margin:0; font-size:36px; color:gold; }
+    header p  { margin:8px 0 0; font-size:16px; color:#ccc; }
     .notice {
-      text-align:center;
-      font-size:14px; color:#ffcc00;
+      text-align:center; font-size:14px; color:#ffcc00;
       margin:20px auto 40px;
     }
-    /* Grid layout */
     main {
       max-width:1200px; margin:0 auto 60px;
       padding:0 20px;
-      display:grid;
-      grid-template-columns:repeat(auto-fit,minmax(280px,1fr));
-      grid-gap:24px;
-      overflow-y:auto;
+      display:grid; grid-template-columns:repeat(auto-fit,minmax(280px,1fr));
+      grid-gap:24px; overflow-y:auto;
     }
-    /* Insight card */
     .insight-card {
-      background:#1a1a1a;
-      border-radius:10px;
+      background:#1a1a1a; border-radius:10px;
       box-shadow:0 0 12px rgba(0,0,0,0.5);
-      padding:20px;
-      display:flex;
-      flex-direction:column;
+      padding:20px; display:flex; flex-direction:column;
     }
-    .insight-date {
-      font-size:14px; color:#999; margin-bottom:8px;
-    }
-    .insight-pips {
-      font-size:18px; color:#fff; margin-bottom:12px;
-    }
-    .insight-note {
-      flex:1; font-size:16px; color:#eee;
-      line-height:1.4;
-    }
-    /* Footer */
+    .insight-date { font-size:14px; color:#999; margin-bottom:8px; }
+    .insight-pips { font-size:18px; color:#fff; margin-bottom:12px; }
+    .insight-note { flex:1; font-size:16px; color:#eee; line-height:1.4; }
     footer {
       text-align:center; padding:20px; font-size:14px;
-      color:#888; border-top:1px solid #222;
-      background:#0b0b0b;
+      color:#888; border-top:1px solid #222; background:#0b0b0b;
     }
   </style>
 </head>
@@ -107,7 +82,7 @@
 
   <!-- Insights Grid -->
   <main id="insightsContainer">
-    <!-- Cards injected here by JS -->
+    <!-- Cards will be injected here -->
   </main>
 
   <!-- Footer -->
@@ -115,47 +90,55 @@
     © 2025 CBE – Chukwuemeka Bullion Exchange. All rights reserved.
   </footer>
 
-  <!-- Supabase JS v2 -->
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <!-- 2️⃣ Supabase UMD build -->
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
   <script>
-    // Initialize Supabase (same URL & anon key as your admin page)
-    const SUPABASE_URL = 'https://dapwpgvnfjcfqqhrpxla.supabase.co';
+    // 3️⃣ Initialize Supabase client
+    const SUPABASE_URL     = 'https://dapwpgvnfjcfqqhrpxla.supabase.co';
     const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImRhcHdwZ3ZuZmpjZnFxaHJweGxhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDcwNDA4ODgsImV4cCI6MjA2MjYxNjg4OH0.ICC0UsLlzJDNre7rFCeD3k6iVzo6jOJgn3PhABpEMsQ';
-    const supabase = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+    const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
-    // Load published insights
+    // 4️⃣ Fetch & render insights
     async function loadTradeInsights() {
+      const container = document.getElementById('insightsContainer');
+
       const { data, error } = await supabase
         .from('trade_insights')
         .select('week_ending, pips, note')
         .order('week_ending', { ascending: false });
+
       if (error) {
-        console.error('Error fetching trade insights:', error);
-        return [];
+        console.error('Supabase error:', error);
+        container.innerHTML = '<p class="notice">Failed to load trade insights.</p>';
+        return;
       }
-      return data;
-    }
 
-    document.addEventListener('DOMContentLoaded', async () => {
-      const container = document.getElementById('insightsContainer');
-      const insights = await loadTradeInsights();
-
-      if (insights.length === 0) {
+      if (!data.length) {
         container.innerHTML = '<p class="notice">No trade insights available yet.</p>';
         return;
       }
 
-      insights.forEach(item => {
+      container.innerHTML = ''; // clear spinner / previous
+
+      data.forEach(({ week_ending, pips, note }) => {
         const card = document.createElement('div');
         card.className = 'insight-card';
         card.innerHTML = `
-          <div class="insight-date">Week Ending: ${new Date(item.week_ending).toLocaleDateString()}</div>
-          <div class="insight-pips">Pips Gained: +${item.pips}</div>
-          <div class="insight-note">${item.note || '-'}</div>
+          <div class="insight-date">
+            Week Ending: ${new Date(week_ending).toLocaleDateString()}
+          </div>
+          <div class="insight-pips">
+            Pips Gained: +${pips}
+          </div>
+          <div class="insight-note">
+            ${note ? note : '<em>No note provided</em>'}
+          </div>
         `;
         container.appendChild(card);
       });
-    });
+    }
+
+    document.addEventListener('DOMContentLoaded', loadTradeInsights);
   </script>
 </body>
 </html>
