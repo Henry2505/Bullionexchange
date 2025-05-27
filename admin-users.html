@@ -1,54 +1,146 @@
 <!DOCTYPE html>
 <html lang="en" data-theme="dark">
 <head>
-  <meta charset="UTF-8"/>
-  <meta name="viewport" content="width=device-width,initial-scale=1"/>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>CBE Admin – User Management</title>
 
-  <!-- Bootstrap CSS -->
+  <!-- Poppins font & FontAwesome -->
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;500;700&display=swap" rel="stylesheet"/>
+  <script src="https://kit.fontawesome.com/your-kit-code.js" crossorigin="anonymous"></script>
+
+  <!-- Bootstrap & DataTables CSS -->
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet"/>
-  <!-- DataTables CSS -->
   <link href="https://cdn.datatables.net/1.13.4/css/dataTables.bootstrap5.min.css" rel="stylesheet"/>
 
   <style>
+    /* THEME VARIABLES */
     :root[data-theme="dark"] {
-      --bg: #0f2027; --text: #fff; --glass: rgba(255,255,255,0.05);
+      --bg: #000;
+      --text: #fff;
+      --gold: #ffd700;
+      --gold-dark: #cca300;
+      --glass-bg: rgba(255,255,255,0.05);
     }
     :root[data-theme="light"] {
-      --bg: #fafafa; --text: #222; --glass: rgba(0,0,0,0.05);
+      --bg: #fafafa;
+      --text: #333;
+      --gold: #cca300;
+      --gold-dark: #b58900;
+      --glass-bg: rgba(0,0,0,0.05);
     }
-    body {
-      background: var(--bg); color: var(--text);
-      font-family: 'Poppins', sans-serif; margin:0; min-height:100vh;
+
+    /* RESET & BASE */
+    * { margin:0; padding:0; box-sizing:border-box;}
+    body, html {
+      width:100%; height:100%;
+      font-family:'Poppins', sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      overflow-x:hidden;
     }
+    a { color: var(--gold); text-decoration:none; }
+    .btn-gold {
+      background: var(--gold);
+      color: #000;
+      border: 2px solid var(--gold);
+      transition: background .3s;
+    }
+    .btn-gold:hover {
+      background: var(--gold-dark);
+      color: #000;
+    }
+
+    /* HEADER */
     header {
-      background: var(--bg); padding:1rem;
-      display:flex; justify-content:space-between; align-items:center;
+      padding: 1rem 2rem;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      background: var(--bg);
+    }
+    header h1 {
+      font-size: 1.5rem;
+      font-weight: 500;
+      color: var(--gold);
     }
     #theme-toggle {
-      border:1px solid var(--text); background:none; color:var(--text);
+      background: none;
+      border: none;
+      font-size: 1.5rem;
+      color: var(--text);
+      cursor: pointer;
     }
-    main { padding:2rem; }
+
+    /* MAIN PANEL */
+    main {
+      padding: 2rem;
+    }
     .glass {
-      background: var(--glass); backdrop-filter:blur(10px);
-      border-radius:10px; padding:2rem;
+      background: var(--glass-bg);
+      backdrop-filter: blur(10px);
+      border-radius: 12px;
+      padding: 2rem;
     }
-    .table td, .table th { color:var(--text); }
+    .glass h3 {
+      color: var(--gold);
+      margin-bottom: 1rem;
+      font-weight: 500;
+    }
+
+    /* TABLE */
+    .dataTables_wrapper .dataTables_filter input {
+      background: var(--bg);
+      border: 1px solid var(--gold);
+      color: var(--text);
+    }
+    .dataTables_wrapper .dataTables_length select {
+      background: var(--bg);
+      border: 1px solid var(--gold);
+      color: var(--text);
+    }
+    table.dataTable {
+      color: var(--text) !important;
+    }
+    table.dataTable thead th {
+      background: var(--gold-dark);
+      color: #000 !important;
+    }
+    table.dataTable tbody tr:nth-child(odd) {
+      background: rgba(255,255,255,0.02);
+    }
+    table.dataTable tbody tr:nth-child(even) {
+      background: rgba(255,255,255,0.04);
+    }
+    .btn-sm {
+      padding:.25rem .5rem;
+      font-size:.8rem;
+    }
+    .btn-action {
+      border:1px solid var(--gold);
+      color: var(--gold);
+      background: none;
+      transition: background .3s, color .3s;
+    }
+    .btn-action:hover {
+      background: var(--gold);
+      color: #000;
+    }
   </style>
 </head>
 <body>
 
   <header>
-    <h1 class="h4 mb-0">CBE Admin – Users</h1>
-    <button id="theme-toggle" class="btn btn-sm">Toggle Theme</button>
+    <h1>CBE Admin – User Management</h1>
+    <button id="theme-toggle" aria-label="Toggle theme">🌞</button>
   </header>
 
   <main class="container">
     <div class="glass">
-      <h3 class="mb-4">User Applications</h3>
+      <h3>User Applications</h3>
       <div class="table-responsive">
         <table id="users-table" class="table table-hover" style="width:100%">
-          <thead class="table-secondary" style="color:inherit;">
+          <thead>
             <tr>
               <th>#</th>
               <th>Email</th>
@@ -67,7 +159,7 @@
     </div>
   </main>
 
-  <!-- Dependencies -->
+  <!-- JS Dependencies -->
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
   <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
   <script src="https://cdn.datatables.net/1.13.4/js/jquery.dataTables.min.js"></script>
@@ -75,93 +167,99 @@
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js/dist/umd/supabase.js"></script>
 
   <script>
-  (async function() {
-    // Initialize theme toggle
-    const html = document.documentElement;
-    const tbtn = document.getElementById('theme-toggle');
-    let theme = localStorage.getItem('theme') || 'dark';
-    html.setAttribute('data-theme', theme);
-    tbtn.textContent = theme === 'dark' ? 'Light Mode' : 'Dark Mode';
-    tbtn.onclick = () => {
-      theme = theme === 'dark' ? 'light' : 'dark';
+    (async function() {
+      // Theme Toggle
+      const html = document.documentElement;
+      const toggleBtn = document.getElementById('theme-toggle');
+      let theme = localStorage.getItem('theme') || 'dark';
       html.setAttribute('data-theme', theme);
-      localStorage.setItem('theme', theme);
-      tbtn.textContent = theme === 'dark' ? 'Light Mode' : 'Dark Mode';
-    };
+      toggleBtn.textContent = theme === 'dark' ? '🌞' : '🌜';
+      toggleBtn.onclick = () => {
+        theme = theme === 'dark' ? 'light' : 'dark';
+        html.setAttribute('data-theme', theme);
+        localStorage.setItem('theme', theme);
+        toggleBtn.textContent = theme === 'dark' ? '🌞' : '🌜';
+      };
 
-    // Supabase client
-    const SUPABASE_URL     = 'https://dapwpgvnfjcfqqhrpxla.supabase.co';
-    const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImRhcHdwZ3ZuZmpjZnFxaHJweGxhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDcwNDA4ODgsImV4cCI6MjA2MjYxNjg4OH0.ICC0UsLlzJDNre7rFCeD3k6iVzo6jOJgn3PhABpEMsQ';
-    const sb = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+      // Supabase client
+      const SUPABASE_URL     = 'https://dapwpgvnfjcfqqhrpxla.supabase.co';
+      const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ...'; // your anon key
+      const sb = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
-    // DataTable setup
-    const table = $('#users-table').DataTable({
-      paging: true,
-      searching: true,
-      columnDefs: [{ orderable: false, targets: 8 }]
-    });
-
-    // CRUD actions exposed globally
-    window.approve = async id => {
-      await sb.from('users').update({ status: 'Approved' }).eq('id', id);
-      loadUsers();
-    };
-    window.reject = async id => {
-      await sb.from('users').update({ status: 'Rejected' }).eq('id', id);
-      loadUsers();
-    };
-    window.remove = async id => {
-      if (!confirm('Delete this user?')) return;
-      await sb.from('users').delete().eq('id', id);
-      loadUsers();
-    };
-    window.edit = async id => {
-      const { data, error } = await sb.from('users').select('*').eq('id', id).single();
-      if (error) return alert('Error fetching user');
-      const name  = prompt('New name:', data.name);
-      const email = prompt('New email:', data.email);
-      const phone = prompt('New phone:', data.phone);
-      const exp   = prompt('New experience:', data.experience);
-      if (!name || !email) return;
-      await sb.from('users')
-        .update({ name: name.trim(), email: email.trim().toLowerCase(), phone: phone.trim(), experience: exp.trim() })
-        .eq('id', id);
-      loadUsers();
-    };
-
-    // Load and render users
-    async function loadUsers() {
-      const { data, error } = await sb
-        .from('users')
-        .select('id,email,name,password,phone,experience,created_at,status')
-        .order('created_at', { ascending: false });
-      if (error) return console.error(error);
-
-      table.clear();
-      data.forEach((u, i) => {
-        table.row.add([
-          i + 1,
-          u.email,
-          u.name,
-          u.password,
-          u.phone,
-          u.experience,
-          new Date(u.created_at).toLocaleDateString(),
-          u.status,
-          `
-            ${u.status === 'Pending' ? `<button class="btn btn-sm btn-success me-1" onclick="approve('${u.id}')">Approve</button>` : ''}
-            <button class="btn btn-sm btn-warning me-1" onclick="reject('${u.id}')">Reject</button>
-            <button class="btn btn-sm btn-danger me-1" onclick="remove('${u.id}')">Delete</button>
-            <button class="btn btn-sm btn-primary" onclick="edit('${u.id}')">Edit</button>
-          `
-        ]);
+      // DataTable setup
+      const table = $('#users-table').DataTable({
+        paging: true,
+        searching: true,
+        columnDefs: [{ orderable: false, targets: 8 }]
       });
-      table.draw();
-    }
 
-    // Initial fetch
-    await loadUsers();
-  })();
+      // CRUD actions
+      window.approve = async id => {
+        await sb.from('users').update({ status:'Approved' }).eq('id',id);
+        loadUsers();
+      };
+      window.reject = async id => {
+        await sb.from('users').update({ status:'Rejected' }).eq('id',id);
+        loadUsers();
+      };
+      window.remove = async id => {
+        if (!confirm('Delete this user?')) return;
+        await sb.from('users').delete().eq('id',id);
+        loadUsers();
+      };
+      window.edit = async id => {
+        const { data } = await sb.from('users').select('*').eq('id',id).single();
+        const name  = prompt('Name:', data.name);
+        const email = prompt('Email:', data.email);
+        const phone = prompt('Phone:', data.phone);
+        const exp   = prompt('Experience:', data.experience);
+        if (!name || !email) return;
+        await sb.from('users')
+          .update({
+            name: name.trim(),
+            email: email.trim().toLowerCase(),
+            phone: phone.trim(),
+            experience: exp.trim()
+          })
+          .eq('id', id);
+        loadUsers();
+      };
+
+      // Load and render users
+      async function loadUsers() {
+        const { data, error } = await sb
+          .from('users')
+          .select('id,email,name,password,phone,experience,created_at,status')
+          .order('created_at',{ ascending:false });
+        if (error) return console.error(error);
+        table.clear();
+        data.forEach((u,i) => {
+          table.row.add([
+            i+1,
+            u.email,
+            u.name,
+            u.password,
+            u.phone,
+            u.experience,
+            new Date(u.created_at).toLocaleDateString(),
+            u.status,
+            `
+              ${u.status==='Pending' 
+                ? `<button class="btn btn-sm btn-gold me-1" onclick="approve('${u.id}')">Approve</button>` 
+                : ''}
+              <button class="btn btn-sm btn-gold me-1" onclick="reject('${u.id}')">Reject</button>
+              <button class="btn btn-sm btn-gold me-1" onclick="remove('${u.id}')">Delete</button>
+              <button class="btn btn-sm btn-gold" onclick="edit('${u.id}')">Edit</button>
+            `
+          ]);
+        });
+        table.draw();
+      }
+
+      // Initial fetch
+      await loadUsers();
+
+    })();
   </script>
 </body>
 </html>
