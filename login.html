@@ -4,19 +4,55 @@
   <meta charset="UTF-8"/>
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Login – CBE</title>
-  <meta name="description" content="Login to access your CBE VIP dashboard."/>
-  <!-- Minimal CSS for theme and layout -->
-  <link rel="stylesheet" href="theme.css"/>
   <style>
-    body { font-family: Arial, sans-serif; background: #000; color: #fff; display: flex; align-items: center; justify-content: center; height: 100vh; margin:0; }
-    .login-card { background: rgba(255,255,255,0.05); padding: 2rem; border-radius: 8px; width: 320px; }
-    .login-card h2 { margin-bottom: 1rem; color: #ffd700; }
-    .login-card label { display:block; margin:0.5rem 0 0.25rem; }
-    .login-card input { width:100%; padding:0.5rem; border:1px solid #444; border-radius:4px; background:#111; color:#fff; }
-    .login-card button { margin-top:1rem; width:100%; padding:0.75rem; background:#ffd700; border:none; border-radius:4px; font-weight:bold; cursor:pointer; }
-    .login-card button:hover { background:#e6bd00; }
+    body {
+      font-family: Arial, sans-serif;
+      background: #000;
+      color: #fff;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      height: 100vh;
+      margin: 0;
+    }
+    .login-card {
+      background: rgba(255,255,255,0.05);
+      padding: 2rem;
+      border-radius: 8px;
+      width: 320px;
+      box-shadow: 0 0 10px rgba(0,0,0,0.5);
+    }
+    .login-card h2 {
+      margin-bottom: 1rem;
+      color: #ffd700;
+      text-align: center;
+    }
+    .login-card label {
+      display: block;
+      margin: 0.5rem 0 0.25rem;
+    }
+    .login-card input {
+      width: 100%;
+      padding: 0.5rem;
+      border: 1px solid #444;
+      border-radius: 4px;
+      background: #111;
+      color: #fff;
+    }
+    .login-card button {
+      margin-top: 1rem;
+      width: 100%;
+      padding: 0.75rem;
+      background: #ffd700;
+      border: none;
+      border-radius: 4px;
+      font-weight: bold;
+      cursor: pointer;
+    }
+    .login-card button:hover {
+      background: #e6bd00;
+    }
   </style>
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
 </head>
 <body>
 
@@ -31,48 +67,59 @@
     </form>
   </div>
 
-  <script>
-    // Initialize Supabase
-    const SUPA_URL = 'https://dapwpgvnfjcfqqhrpxla.supabase.co';
-    const SUPA_KEY = 'YOUR_SUPABASE_ANON_KEY';
-    const supabase = window.supabase.createClient(SUPA_URL, SUPA_KEY);
+  <script type="module">
+    import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm'
+
+    // Supabase config
+    const SUPA_URL = 'https://dapwpgvnfjcfqqhrpxla.supabase.co'
+    const SUPA_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImRhcHdwZ3ZuZmpjZnFxaHJweGxhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDcwNDA4ODgsImV4cCI6MjA2MjYxNjg4OH0.ICC0UsLlzJDNre7rFCeD3k6iVzo6jOJgn3PhABpEMsQ'
+    const supabase = createClient(SUPA_URL, SUPA_KEY)
 
     document.getElementById('loginForm').addEventListener('submit', async e => {
-      e.preventDefault();
+      e.preventDefault()
+      const email = document.getElementById('email').value.trim().toLowerCase()
+      const password = document.getElementById('password').value
 
-      const email = document.getElementById('email').value.trim().toLowerCase();
-      const password = document.getElementById('password').value;
-
-      // 1) Attempt authentication
-      const { data: authData, error: authError } = await supabase.auth.signInWithPassword({ email, password });
-      if (authError) {
-        return alert('❌ Login failed: ' + authError.message);
+      if (!email || !password) {
+        return alert('❌ Please fill in both fields.')
       }
 
-      // 2) Check admin approval in "profiles"
-      const userId = authData.user.id;
-      const { data: profile, error: profileError } = await supabase
-        .from('profiles')
-        .select('status')
-        .eq('id', userId)
-        .single();
+      try {
+        // 1) Sign in
+        const { data: authData, error: authError } = await supabase.auth.signInWithPassword({ email, password })
+        if (authError) {
+          console.error('Auth error:', authError)
+          return alert('❌ Login failed: ' + authError.message)
+        }
 
-      if (profileError || !profile) {
-        // No profile row found → immediate sign-out
-        await supabase.auth.signOut();
-        return alert('❌ Your account profile is missing. Please contact support.');
+        // 2) Check admin approval
+        const userId = authData.user.id
+        const { data: profile, error: profileError } = await supabase
+          .from('profiles')
+          .select('status')
+          .eq('id', userId)
+          .single()
+
+        if (profileError || !profile) {
+          await supabase.auth.signOut()
+          console.error('Profile lookup error:', profileError)
+          return alert('❌ Unable to verify your account. Contact support.')
+        }
+
+        if (profile.status !== 'approved') {
+          await supabase.auth.signOut()
+          return alert('⏳ Your account is not yet approved by admin. Please wait.')
+        }
+
+        // 3) Approved → keep session & redirect
+        sessionStorage.setItem('cbeLoggedIn', 'true')
+        window.location.href = 'vip-dashboard.html'
       }
-
-      if (profile.status !== 'approved') {
-        // Not yet approved → sign-out & message
-        await supabase.auth.signOut();
-        return alert('⏳ Your account is not yet approved by admin. Please wait.');
+      catch (err) {
+        console.error('Unexpected error:', err)
+        alert('❌ A network error occurred. Check console for details.')
       }
-
-      // 3) Approved → keep session & redirect
-      sessionStorage.setItem('cbeLoggedIn', 'true');
-      window.location.href = 'vip-dashboard.html';
-    });
+    })
   </script>
 
 </body>
