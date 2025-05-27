@@ -1,152 +1,324 @@
 <!DOCTYPE html>
 <html lang="en" data-theme="dark">
 <head>
-  <meta charset="utf-8">
+  <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width,initial-scale=1">
   <title>Admin — CBE Dashboard</title>
-
   <!-- Poppins, Bootstrap & Icons -->
   <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700&display=swap" rel="stylesheet">
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
   <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css" rel="stylesheet">
-
+  <!-- Chart.js & Sortable.js -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.0/Sortable.min.js"></script>
   <style>
-    /* --- your existing styles here (omitted for brevity) --- */
+    /* RESET & THEME VARIABLES */
+    * { margin:0; padding:0; box-sizing:border-box; }
+    html { scroll-behavior:smooth; }
+    body {
+      font-family:'Poppins',sans-serif;
+      background:var(--bg); color:var(--text);
+      overflow-x:hidden;
+    }
+    :root {
+      --bg:#000; --text:#fff;
+      --gold:#ffd700; --gold-dark:#cca300;
+      --overlay:rgba(0,0,0,0.15);
+      --glass-bg:rgba(255,255,255,0.05);
+    }
+    [data-theme="light"] {
+      --bg:#f5f5f5; --text:#333;
+      --gold:#cca300; --gold-dark:#b58900;
+      --overlay:rgba(255,255,255,0.15);
+      --glass-bg:rgba(0,0,0,0.05);
+    }
+    a { color:var(--gold); text-decoration:none; }
+    img { max-width:100%; display:block; }
+    .overlay {
+      position:fixed; top:0; left:0;
+      width:100%; height:100%;
+      background:var(--overlay); z-index:-1;
+    }
+    .glass { backdrop-filter:blur(10px); }
 
-    /* Error banner */
-    #error-banner {
-      display: none;
-      position: fixed;
-      top: 0; left: 0; right: 0;
-      background: #dc3545; color: #fff;
-      text-align: center;
-      padding: .75rem;
-      z-index: 9999;
+    /* HEADER */
+    header.admin-header {
+      display:flex; justify-content:space-between; align-items:center;
+      padding:1rem 2rem; background:rgba(0,0,0,0.6);
+      border-bottom:1px solid var(--gold); position:relative; z-index:10;
+    }
+    #menu-toggle {
+      background:none; border:none; cursor:pointer;
+      display:flex; flex-direction:column; gap:5px;
+      width:40px; height:40px;
+    }
+    #menu-toggle span {
+      width:30px; height:3px; background:var(--gold);
+      transition:all .3s ease;
+    }
+    .logo { cursor:pointer; }
+    .logo img { height:40px; }
+
+    /* NAV PANEL */
+    #nav-panel {
+      position:absolute; top:100%; right:2rem;
+      width:240px; background:rgba(0,0,0,0.9);
+      border:1px solid var(--gold); border-radius:0 0 4px 4px;
+      padding:.75rem 1rem;
+      transform:translateY(-20px); opacity:0;
+      transition:transform .3s,opacity .3s;
+      pointer-events:none;
+    }
+    #nav-panel.show {
+      transform:translateY(0); opacity:1;
+      pointer-events:auto;
+    }
+    #nav-panel ul { list-style:none; margin:0; padding:0; }
+    #nav-panel li { margin:.5rem 0; }
+    #nav-panel a {
+      color:#fff; font-weight:500; display:flex; align-items:center; gap:.5rem;
+    }
+    #nav-panel a:hover { color:var(--gold); }
+
+    /* DRAG-AND-DROP STATS CARDS */
+    .stats-row {
+      display:grid;
+      grid-template-columns:repeat(auto-fill,minmax(200px,1fr));
+      gap:1rem; margin:2rem 0;
+    }
+    .card-stat {
+      background:var(--glass-bg);
+      border:1px solid var(--gold);
+      border-radius:8px;
+      padding:1rem;
+      text-align:center;
+      color:#fff;
+      backdrop-filter:blur(8px);
+      cursor:grab;
+      user-select:none;
+    }
+    .card-stat:active { cursor:grabbing; }
+    .card-stat h5 { color:var(--gold); margin-bottom:.5rem; }
+    .card-stat h2 { font-size:2rem; }
+
+    /* CHARTS LAYOUT */
+    .charts {
+      display:grid;
+      grid-template-columns:repeat(auto-fit,minmax(280px,1fr));
+      gap:1rem; margin-bottom:2rem;
+    }
+
+    /* HEADER-RIGHT */
+    #header-right { display:flex; align-items:center; gap:1rem; }
+    #current-datetime { color:#fff; }
+    #theme-toggle {
+      background:none; border:none;
+      font-size:1.25rem; cursor:pointer;
+      color:var(--text);
     }
   </style>
 </head>
 <body>
 
-  <div id="error-banner">Error loading dashboard. Check console for details.</div>
   <div class="overlay"></div>
 
-  <!-- HEADER (unchanged)… -->
-  <header class="admin-header glass"> … </header>
+  <!-- HEADER -->
+  <header class="admin-header glass">
+    <button id="menu-toggle" aria-label="Toggle menu">
+      <span></span><span></span><span></span>
+    </button>
+    <div class="logo" id="logo">
+      <img src="CBE_logo.PNG" alt="CBE Logo">
+    </div>
+    <div id="header-right">
+      <small id="current-datetime"></small>
+      <button id="theme-toggle" aria-label="Toggle theme">🌞</button>
+    </div>
+    <nav id="nav-panel" aria-label="Admin navigation">
+      <ul>
+        <li><a href="admin-dashboard.html"><i class="bi-speedometer2"></i> Dashboard</a></li>
+        <li><a href="admin-capital-applications.html"><i class="bi-folder2-open"></i> Capital Applications</a></li>
+        <li><a href="admin-messages.html"><i class="bi-chat-dots-fill"></i> Messages</a></li>
+        <li><a href="admin-settings-payments.html"><i class="bi-credit-card"></i> Settings & Payments</a></li>
+        <li><a href="admin-signals.html"><i class="bi-lightning-fill"></i> Signals</a></li>
+        <li><a href="admin-testimonials.html"><i class="bi-chat-quote"></i> Testimonials</a></li>
+        <li><a href="admin-trade-history.html"><i class="bi-clock-history"></i> Trade History</a></li>
+        <li><a href="admin-trade-insights.html"><i class="bi-graph-up"></i> Trade Insights</a></li>
+        <li><a href="admin-users.html"><i class="bi-people-fill"></i> Users</a></li>
+        <li><a href="logout.html"><i class="bi-box-arrow-right"></i> Logout</a></li>
+      </ul>
+    </nav>
+  </header>
 
   <!-- MAIN CONTENT -->
   <main class="container py-4">
+    <!-- Drag-and-Drop Stat Cards -->
     <div class="stats-row" id="stats-container">
-      <div class="card-stat" data-key="users"><h5>Total Users</h5><h2 id="stat-users">0</h2></div>
-      <div class="card-stat" data-key="payments"><h5>Pending Payments</h5><h2 id="stat-payments">0</h2></div>
-      <div class="card-stat" data-key="trades"><h5>Trades This Month</h5><h2 id="stat-trades">0</h2></div>
-      <div class="card-stat" data-key="signals"><h5>Signals Published</h5><h2 id="stat-signals">0</h2></div>
-      <div class="card-stat" data-key="winrate"><h5>Win Rate (%)</h5><h2 id="stat-winrate">0</h2></div>
+      <div class="card-stat" data-key="users">
+        <h5>Total Users</h5><h2 id="stat-users">0</h2>
+      </div>
+      <div class="card-stat" data-key="payments">
+        <h5>Pending Payments</h5><h2 id="stat-payments">0</h2>
+      </div>
+      <div class="card-stat" data-key="trades">
+        <h5>Trades This Month</h5><h2 id="stat-trades">0</h2>
+      </div>
+      <div class="card-stat" data-key="signals">
+        <h5>Signals Published</h5><h2 id="stat-signals">0</h2>
+      </div>
+      <div class="card-stat" data-key="winrate">
+        <h5>Win Rate (%)</h5><h2 id="stat-winrate">0</h2>
+      </div>
     </div>
+
+    <!-- Three Charts: P&L, Win-Rate, User Status -->
     <div class="charts">
-      <canvas id="chart-pnl" height="200"></canvas>
+      <canvas id="chart-pnl"    height="200"></canvas>
       <canvas id="chart-winrate" height="200"></canvas>
-      <canvas id="chart-status" height="200"></canvas>
+      <canvas id="chart-status"  height="200"></canvas>
     </div>
   </main>
 
-  <!-- Dependencies -->
-  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.0/Sortable.min.js"></script>
-
-  <!-- UMD Supabase -->
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.28.0/dist/umd/supabase.min.js"></script>
-
+  <!-- SCRIPTS -->
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script>
-    // — STEP 1: Initialize Supabase —
-    console.log('Initializing Supabase client');
-    const SUPA_URL = 'https://dapwpgvnfjcfqqhrpxla.supabase.co';
-    const SUPA_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImRhcHdwZ3ZuZmpjZnFxaHJweGxhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDcwNDA4ODgsImV4cCI6MjA2MjYxNjg4OH0.ICC0UsLlzJDNre7rFCeD3k6iVzo6jOJgn3PhABpEMsQ';
-    const supabase = window.supabase.createClient(SUPA_URL, SUPA_ANON_KEY);
-    console.log('Supabase initialized.');
-
     document.addEventListener('DOMContentLoaded', () => {
-      // Restore your existing initialization (theme toggle, auth guard, etc.)
-      // … your header, theme toggle, auth guard code …
+      // Redirect on logo click
+      document.getElementById('logo').onclick = () => {
+        window.location.href = 'admin-dashboard.html';
+      };
 
-      // — STEP 2: Load stats & charts —
+      // Theme toggle
+      const themeBtn = document.getElementById('theme-toggle');
+      const setTheme = t => {
+        document.documentElement.setAttribute('data-theme', t);
+        localStorage.setItem('theme', t);
+        themeBtn.textContent = t === 'dark' ? '🌞' : '🌜';
+      };
+      themeBtn.addEventListener('click', () => {
+        const next = document.documentElement.getAttribute('data-theme') === 'dark' ? 'light' : 'dark';
+        setTheme(next);
+      });
+      setTheme(localStorage.getItem('theme') || 'dark');
+
+      // Clock
+      const clk = () => {
+        document.getElementById('current-datetime').textContent = new Date().toLocaleString();
+      };
+      clk(); setInterval(clk, 60000);
+
+      // Nav toggle
+      const menuToggle = document.getElementById('menu-toggle');
+      const navPanel   = document.getElementById('nav-panel');
+      menuToggle.addEventListener('click', () => {
+        navPanel.classList.toggle('show');
+        menuToggle.setAttribute('aria-expanded', navPanel.classList.contains('show'));
+      });
+
+      // Auth guard
+      if (localStorage.getItem('isLoggedIn') !== 'true') {
+        const cur = window.location.pathname.split('/').pop();
+        window.location.href = `admin-login.html?redirect=${cur}`;
+      }
+
+      // Initialize Supabase
+      const supabase = window.supabase.createClient(
+        'https://dapwpgvnfjcfqqhrpxla.supabase.co',
+        'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImRhcHdwZ3ZuZmpjZnFxaHJweGxhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDcwNDA4ODgsImV4cCI6MjA2MjYxNjg4OH0.ICC0UsLlzJDNre7rFCeD3k6iVzo6jOJgn3PhABpEMsQ'
+      );
+
+      // Simple toast
+      function showToast(msg, ok=true) {
+        const t = document.createElement('div');
+        t.className = `toast align-items-center text-white ${ok?'bg-success':'bg-danger'} border-0 position-fixed top-0 end-0 m-3`;
+        t.innerHTML = `
+          <div class="d-flex">
+            <div class="toast-body">${msg}</div>
+            <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast"></button>
+          </div>`;
+        document.body.append(t);
+        new bootstrap.Toast(t, { delay: 3000 }).show();
+      }
+
+      // Load stats & charts
       (async () => {
         try {
-          console.log('Fetching stats from Supabase…');
           const [
-            { count: usersCount },
+            { data: users },
             { data: payments },
             { data: trades },
             { data: signals },
             { data: insights }
           ] = await Promise.all([
-            supabase.from('users').select('id', { head: true, count: 'exact' }),
+            supabase.from('users').select('id,status'),
             supabase.from('payments').select('id').eq('status','Pending'),
             supabase.from('trade_history').select('id'),
             supabase.from('signals').select('id'),
-            supabase.from('trade_insights').select('week_ending,pips').order('week_ending',{ ascending: false }),
+            supabase.from('trade_insights').select('week_ending,pips').order('week_ending',{ascending:false}),
           ]);
-          console.log('Stats received:', { usersCount, payments: payments.length, trades: trades.length, signals: signals.length, insights: insights.length });
 
           // Update stat cards
-          document.getElementById('stat-users').textContent    = usersCount;
+          document.getElementById('stat-users').textContent    = users.length;
           document.getElementById('stat-payments').textContent = payments.length;
           document.getElementById('stat-trades').textContent   = trades.length;
           document.getElementById('stat-signals').textContent  = signals.length;
-          const wins = insights.filter(x => x.pips > 0).length;
-          const rate = insights.length ? Math.round(wins / insights.length * 100) : 0;
+          const wins = insights.filter(x=>x.pips>0).length;
+          const rate = insights.length ? Math.round(wins/insights.length*100) : 0;
           document.getElementById('stat-winrate').textContent = rate;
 
-          // Make stats draggable
+          // Make cards draggable
           new Sortable(document.getElementById('stats-container'), {
-            animation: 150,
-            ghostClass: 'sortable-ghost',
-            dragClass: 'sortable-drag',
-            handle: '.card-stat'
+            animation:150,
+            ghostClass:'sortable-ghost',
+            dragClass:'sortable-drag',
+            handle:'.card-stat'
           });
 
-          // Build Charts
-          console.log('Rendering P&L line chart');
+          // P&L line chart
           new Chart(document.getElementById('chart-pnl'), {
-            type: 'line',
-            data: {
-              labels: insights.map(i => new Date(i.week_ending).toLocaleDateString()),
-              datasets: [{ data: insights.map(i => i.pips), tension: .4, borderColor: '#ffd700', backgroundColor: 'rgba(255,215,0,0.2)' }]
+            type:'line',
+            data:{
+              labels: insights.map(x=>new Date(x.week_ending).toLocaleDateString()),
+              datasets:[{
+                data: insights.map(x=>x.pips),
+                tension:0.4,
+                borderColor:'#ffd700',
+                backgroundColor:'rgba(255,215,0,0.2)'
+              }]
             },
-            options: { responsive: true, plugins: { legend: { display: false } } }
+            options:{ responsive:true, plugins:{ legend:{ display:false } } }
           });
 
-          console.log('Rendering Win-Rate bar chart');
+          // Win-rate bar chart
           new Chart(document.getElementById('chart-winrate'), {
-            type: 'bar',
-            data: {
-              labels: insights.map(i => new Date(i.week_ending).toLocaleDateString()),
-              datasets: [{ data: insights.map(i => i.pips > 0 ? 100 : 0) }]
+            type:'bar',
+            data:{
+              labels: insights.map(x=>new Date(x.week_ending).toLocaleDateString()),
+              datasets:[{
+                data: insights.map(x=> x.pips>0?100:0 ),
+                backgroundColor:'#1cc88a'
+              }]
             },
-            options: { responsive: true, plugins: { legend: { display: false } } }
+            options:{ responsive:true, plugins:{ legend:{ display:false } } }
           });
 
-          console.log('Rendering User-Status doughnut chart');
-          const { data: allUsers } = await supabase.from('users').select('status');
-          const statusCounts = allUsers.reduce((acc, u) => { acc[u.status] = (acc[u.status]||0) + 1; return acc; }, {});
+          // User-status doughnut chart
+          const statusCounts = users.reduce((acc,u)=>(acc[u.status]=(acc[u.status]||0)+1, acc), {});
+          const labels = ['Active','Expired','Pending','Deleted'];
+          const data   = labels.map(l=> statusCounts[l]||0);
           new Chart(document.getElementById('chart-status'), {
-            type: 'doughnut',
-            data: {
-              labels: ['Active','Expired','Pending','Deleted'],
-              datasets: [{ data: ['Active','Expired','Pending','Deleted'].map(l => statusCounts[l] || 0) }]
-            },
-            options: { responsive: true, plugins: { legend: { position: 'bottom' } } }
+            type:'doughnut',
+            data:{ labels, datasets:[{ data }] },
+            options:{ responsive:true, plugins:{ legend:{ position:'bottom' } } }
           });
-
-          console.log('All charts rendered successfully.');
-        } 
-        catch (err) {
-          console.error('Error loading stats or charts:', err);
-          // Show visible error banner
-          document.getElementById('error-banner').style.display = 'block';
+        }
+        catch(err) {
+          console.error(err);
+          showToast('Error loading dashboard', false);
         }
       })();
     });
   </script>
-
 </body>
 </html>
