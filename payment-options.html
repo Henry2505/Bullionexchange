@@ -1,18 +1,19 @@
 <!DOCTYPE html>
 <html lang="en" data-theme="dark">
 <head>
-  <meta charset="UTF-8"/>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <meta charset="UTF-8"/><meta name="viewport" content="width=device-width,initial-scale=1"/>
   <title>Payment Options – CBE</title>
   <link rel="stylesheet" href="theme.css"/>
   <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700&family=Roboto:wght@300;400;700&display=swap" rel="stylesheet"/>
   <script src="https://kit.fontawesome.com/your-kit-code.js" crossorigin="anonymous"></script>
   <style>
-    /* (keep your existing styles here) */
+    /* (Keep your existing CSS here) */
+    /* Hide proof form until a method is chosen */
+    #proof-section { display:none; }
   </style>
 </head>
 <body>
-  <!-- Logo & Theme Toggle… same as before -->
+  <!-- Logo & Theme Toggle (as before) -->
 
   <div class="container slide-in">
     <h1>Your Plan</h1>
@@ -25,15 +26,26 @@
       </ul>
     </div>
 
-    <!-- Dynamic payment-method buttons will go here -->
+    <!-- Methods will be injected here -->
     <div id="methods-container" class="slide-in"></div>
 
-    <!-- Crypto section injected if needed -->
-    <div class="crypto-section slide-in" id="cryptoSection">
-      <div class="crypto-grid" id="cryptoGrid"></div>
+    <!-- Proof Upload -->
+    <div class="form-wrapper slide-in" id="proof-section">
+      <form id="proofForm">
+        <input type="hidden" id="selectedMethodId"/>
+        <label for="emailInput">Your Email</label>
+        <input type="email" id="emailInput" placeholder="you@example.com" required/>
+
+        <label for="proofInput">Upload Payment Proof</label>
+        <input type="file" id="proofInput" accept="image/*,application/pdf" required/>
+
+        <button type="submit">Submit Payment</button>
+      </form>
+      <div id="successMessage" style="display:none; text-align:center; margin-top:1rem; color:var(--gold); font-weight:600;">
+        Your payment is pending verification!
+      </div>
     </div>
 
-    <!-- No more file upload / proof input -->
     <a href="vip-subscription.html" class="back-link slide-in">← Change Plan</a>
   </div>
 
@@ -41,25 +53,25 @@
 
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js"></script>
   <script>
-    // Plan details (unchanged)
-    const params = new URLSearchParams(location.search);
-    const key = params.get('plan') || 'weekly';
-    const cfg = {
-      weekly:  {n:'Weekly Plan',  p:50,  s:0},
-      monthly: {n:'Monthly Plan', p:150, s:50},
-      yearly:  {n:'Yearly Plan',  p:1500, s:300}
-    };
-    const ch = cfg[key];
+    // VIP plan details (unchanged)
+    const params = new URLSearchParams(location.search),
+          key    = params.get('plan')||'weekly',
+          cfg    = {
+            weekly:  {n:'Weekly Plan',  p:50,  s:0},
+            monthly: {n:'Monthly Plan', p:150, s:50},
+            yearly:  {n:'Yearly Plan',  p:1500, s:300},
+          },
+          ch = cfg[key];
     document.getElementById('plan-name').textContent  = ch.n;
     document.getElementById('plan-price').textContent = `$${ch.p}`;
     document.getElementById('plan-save').textContent  = `$${ch.s}`;
 
-    // Supabase init
-    const SUPABASE_URL = 'https://dapwpgvnfjcfqqhrpxla.supabase.co';
-    const SUPABASE_KEY = 'YOUR_ANON_KEY';
-    const supabase = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+    // Supabase
+    const URL = 'https://dapwpgvnfjcfqqhrpxla.supabase.co',
+          KEY = 'YOUR_SUPABASE_ANON_KEY';
+    const supabase = supabase.createClient(URL, KEY);
 
-    // Load payment methods
+    // Load and render methods
     async function loadMethods() {
       const { data, error } = await supabase
         .from('payment_methods')
@@ -70,59 +82,106 @@
       const container = document.getElementById('methods-container');
       container.innerHTML = '';
       data.forEach(m => {
-        if (m.type === 'card') {
-          // render a direct Pay button
-          const btn = document.createElement('button');
-          btn.className = 'btn-pay slide-in';
-          btn.textContent = m.name;
-          btn.onclick = () => window.location.href = JSON.parse(m.details).link;
-          container.appendChild(btn);
-
-        } else if (m.type === 'crypto') {
-          // crypto toggle
-          const btn = document.createElement('button');
-          btn.className = 'btn-crypto slide-in';
-          btn.textContent = m.name;
-          btn.onclick = toggleCrypto;
-          container.appendChild(btn);
-
-          // add to crypto grid
-          const obj = JSON.parse(m.details);
-          const card = document.createElement('div');
-          card.className = 'crypto-card';
-          card.innerHTML = `
-            <div class="label">${m.name}</div>
-            <div class="address">${obj.address}</div>
-            <button class="copy-btn">Copy</button>`;
-          document.getElementById('cryptoGrid').appendChild(card);
-        }
+        const btn = document.createElement('button');
+        btn.className = m.type==='card'?'btn-pay slide-in':'btn-crypto slide-in';
+        btn.textContent = m.name;
+        btn.onclick = () => onSelectMethod(m);
+        container.appendChild(btn);
       });
     }
 
-    function toggleCrypto() {
-      const sec = document.getElementById('cryptoSection');
-      if (sec.style.display === 'block') {
-        sec.style.display = 'none';
-      } else {
-        sec.style.display = 'block';
+    // When a method is clicked…
+    async function onSelectMethod(m) {
+      document.getElementById('selectedMethodId').value = m.id;
+
+      if (m.type === 'card') {
+        // redirect immediately
+        const { link } = m.details;
+        return window.location.href = link;
       }
+
+      // crypto: show addresses + proof form
+      renderCryptoGrid(m);
+      document.getElementById('proof-section').style.display = 'block';
     }
 
+    function renderCryptoGrid(m) {
+      // find all crypto methods
+      supabase
+        .from('payment_methods')
+        .select('*')
+        .eq('type','crypto')
+        .order('id')
+        .then(({ data }) => {
+          const grid = document.getElementById('cryptoGrid');
+          if (!grid) {
+            const sec = document.createElement('div');
+            sec.id = 'cryptoGrid';
+            sec.className = 'crypto-grid slide-in';
+            document.getElementById('proof-section').before(sec);
+          }
+          document.getElementById('cryptoGrid').innerHTML = '';
+          data.forEach(c => {
+            const { code, address } = c.details;
+            const card = document.createElement('div');
+            card.className = 'crypto-card';
+            card.innerHTML = `
+              <div class="label">${c.name}</div>
+              <div class="address">${address}</div>
+              <button class="copy-btn">Copy</button>`;
+            document.getElementById('cryptoGrid').appendChild(card);
+          });
+        });
+    }
+
+    // Copy handler
     document.addEventListener('click', e => {
       if (e.target.matches('.copy-btn')) {
-        const addr = e.target.previousElementSibling.textContent;
-        navigator.clipboard.writeText(addr).then(() => {
+        const addr = e.target.closest('.crypto-card').querySelector('.address').textContent;
+        navigator.clipboard.writeText(addr).then(()=>{
           e.target.textContent = 'Copied!';
-          setTimeout(() => e.target.textContent = 'Copy', 1500);
+          setTimeout(()=> e.target.textContent = 'Copy',1500);
         });
       }
     });
 
-    // initialize on DOMContentLoaded
-    document.addEventListener('DOMContentLoaded', () => {
-      loadMethods();
-      // your existing slide-in logic, theme toggle, etc.
+    // Proof form submission
+    document.getElementById('proofForm').addEventListener('submit', async e => {
+      e.preventDefault();
+      const fileEl = document.getElementById('proofInput');
+      const file   = fileEl.files[0];
+      const method_id = +document.getElementById('selectedMethodId').value;
+      const email  = document.getElementById('emailInput').value;
+
+      // 1) upload proof
+      const fileName = `${Date.now()}_${file.name}`;
+      let { error:upErr } = await supabase
+        .storage.from('payment-proofs')
+        .upload(fileName, file);
+      if (upErr) return alert(upErr.message);
+
+      // 2) get URL
+      const { data:urlData, error:urlErr } = await supabase
+        .storage.from('payment-proofs')
+        .getPublicUrl(fileName);
+      if (urlErr) return alert(urlErr.message);
+
+      // 3) insert payment record
+      const { error:insErr } = await supabase
+        .from('payments')
+        .insert([{
+          email, plan: ch.n,
+          method_id, proof_url: urlData.publicUrl
+        }]);
+      if (insErr) return alert(insErr.message);
+
+      // success
+      document.getElementById('successMessage').style.display = 'block';
+      e.target.reset();
+      setTimeout(()=>window.location.href='index.html',3000);
     });
+
+    document.addEventListener('DOMContentLoaded', loadMethods);
   </script>
 </body>
 </html>
