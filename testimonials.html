@@ -259,7 +259,7 @@
 
       // Supabase init
       const SUPABASE_URL     = 'https://dapwpgvnfjcfqqhrpxla.supabase.co';
-      const SUPABASE_ANON_KEY = 'YOUR_ANON_KEY';
+      const SUPABASE_ANON_KEY = 'YOUR_ANON_KEY'; // ← replace with your real anon key
       const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
       // fetch & render approved testimonials
@@ -338,22 +338,29 @@
         let video_url = null;
 
         if (file) {
-          const ext = file.type.startsWith('image/') ? 'screenshots' : 'videos';
-          const path = `testimonial-${ext}/${Date.now()}_${file.name}`;
-          const { error: uploadErr } = await supabase
+          const isImage = file.type.startsWith('image/');
+          const bucket  = isImage ? 'testimonial-screenshots' : 'testimonial-videos';
+          const path    = `${bucket}/${Date.now()}_${file.name}`;
+
+          // upload + detailed error logging
+          const { data: uploadData, error: uploadErr } = await supabase
             .storage
-            .from(ext === 'screenshots' ? 'testimonial-screenshots' : 'testimonial-videos')
+            .from(bucket)
             .upload(path, file);
+
           if (uploadErr) {
+            console.error('Upload Error →', uploadErr);
             alertDiv.style.color = 'crimson';
-            alertDiv.textContent = 'Upload failed.';
+            alertDiv.textContent = `Upload failed: ${uploadErr.message} (code ${uploadErr.status})`;
             return;
           }
+
           const { data: urlData } = supabase
             .storage
-            .from(ext === 'screenshots' ? 'testimonial-screenshots' : 'testimonial-videos')
+            .from(bucket)
             .getPublicUrl(path);
-          if (ext === 'screenshots') screenshot_url = urlData.publicUrl;
+
+          if (isImage) screenshot_url = urlData.publicUrl;
           else video_url = urlData.publicUrl;
         }
 
