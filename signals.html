@@ -8,14 +8,90 @@
   <!-- Poppins font -->
   <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700&display=swap" rel="stylesheet"/>
 
-  <!-- Supabase JS (UMD bundle provides a global `supabase`) -->
+  <!-- Supabase JS (v2 UMD) -->
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
   <!-- TradingView advanced chart -->
   <script src="https://s3.tradingview.com/tv.js"></script>
 
   <style>
-    /* … your existing CSS … */
+    /* … your original CSS exactly as before … */
+    * { margin:0; padding:0; box-sizing:border-box; }
+    html, body {
+      width:100%; min-height:100vh;
+      font-family:'Poppins',sans-serif;
+      background:#080808; color:#eee;
+      overflow-x:hidden;
+    }
+    a { text-decoration:none; color:inherit; }
+    .container {
+      max-width:1000px;
+      margin:60px auto;
+      padding:0 20px;
+    }
+    header { text-align:center; margin-bottom:20px; }
+    header h1 {
+      font-size:2.5rem; color:#ffd700;
+      margin-bottom:8px;
+    }
+    header p { color:#bbb; }
+    .notice {
+      text-align:center; color:#ff5555;
+      margin-bottom:20px;
+    }
+    .signal-card {
+      background: rgba(30,30,30,0.8);
+      border-radius:12px;
+      box-shadow:0 4px 20px rgba(0,0,0,0.7);
+      animation:fadeIn 0.8s ease;
+      overflow:hidden;
+      margin-bottom:40px;
+    }
+    @keyframes fadeIn {
+      from { opacity:0; transform: translateY(20px); }
+      to   { opacity:1; transform: translateY(0); }
+    }
+    .signal-header {
+      display:flex; justify-content:space-between;
+      background:#111; padding:16px 24px;
+    }
+    .signal-header h2 { color:#ffd700; font-size:1.4rem; }
+    .signal-header .time { color:#ccc; font-size:0.9rem; }
+    .signal-body {
+      display:grid; grid-template-columns:1fr auto;
+      gap:12px; padding:24px;
+    }
+    .detail {
+      background:#1a1a1a; padding:14px 18px;
+      border-radius:8px; display:flex;
+      justify-content:space-between; align-items:center;
+      font-size:1rem;
+    }
+    .detail span { font-weight:600; }
+    .copy-btn {
+      background:#ffd700; color:#000;
+      border:none; padding:6px 12px;
+      border-radius:6px; font-weight:bold;
+      cursor:pointer; transition:box-shadow .3s;
+    }
+    .copy-btn:hover { box-shadow:0 0 10px #ffd700; }
+    .admin-note {
+      background:#222; padding:14px 18px;
+      margin:0 24px 24px; border-left:4px solid #ffd700;
+      color:#ffcc00; font-style:italic; border-radius:6px;
+    }
+    #tradingview_embed {
+      height: 600px;
+      border: 1px solid rgba(255,255,255,0.2);
+      border-radius: 8px;
+      overflow: hidden;
+      margin-bottom: 60px;
+    }
+    footer {
+      text-align:center; padding:20px;
+      color:#666; font-size:0.9rem; margin-top:40px;
+      border-top:1px solid #222;
+    }
   </style>
 </head>
 <body>
@@ -38,33 +114,41 @@
   </div>
 
   <script>
-    // --- Supabase Setup ---
+    // ─── Supabase Client ─────────────────────────────────────────
     const SUPA_URL = 'https://dapwpgvnfjcfqqhrpxla.supabase.co';
     const SUPA_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...';
-    // Destructure createClient from the global UMD bundle:
     const { createClient } = supabase;
     const supabaseClient = createClient(SUPA_URL, SUPA_KEY);
 
-    // --- VIP Check ---
-    async function ensureVIP() {
-      const { data: { session }, error: sessErr } = await supabaseClient.auth.getSession();
-      if (sessErr || !session) {
-        // no session → redirect to login
+    // ─── Redirect if auth state changes (e.g. token expires) ─────
+    supabaseClient.auth.onAuthStateChange((event, session) => {
+      if (event === 'SIGNED_OUT' || !session) {
         return location.replace('login.html');
       }
-      const { data: userRow, error: userErr } = await supabaseClient
+    });
+
+    // ─── Ensure VIP ─────────────────────────────────────────────
+    async function ensureVIP() {
+      const { data: { user }, error: userErr } = await supabaseClient.auth.getUser();
+      if (userErr || !user) {
+        return location.replace('login.html');
+      }
+
+      const { data: userRow, error: fetchErr } = await supabaseClient
         .from('users')
         .select('status')
-        .eq('id', session.user.id)
+        .eq('id', user.id)
         .single();
-      if (userErr || userRow?.status !== 'Approved') {
+
+      if (fetchErr || userRow?.status !== 'Approved') {
         return location.replace('login.html');
       }
     }
 
-    // --- Load & Render Latest Signal ---
+    // ─── Load & Show Latest Signal ───────────────────────────────
     async function loadLatestSignal() {
       const card = document.getElementById('signalCard');
+
       try {
         const { data: signals, error } = await supabaseClient
           .from('signals')
@@ -73,19 +157,20 @@
           .limit(1);
 
         if (error) throw error;
-        if (!signals || signals.length === 0) {
-          card.innerHTML = `<p style="text-align:center;color:#ff5555;padding:40px;">
-                              No signals available at the moment.
-                            </p>`;
+        if (!signals?.length) {
+          card.innerHTML = `
+            <p style="text-align:center;color:#ff5555;padding:40px;">
+              No signals available at the moment.
+            </p>`;
           return;
         }
 
         const sig = signals[0];
-        const date = new Date(sig.created_at);
+        const dt  = new Date(sig.created_at);
         card.innerHTML = `
           <div class="signal-header">
-            <h2>${date.toLocaleDateString('en-GB')}</h2>
-            <div class="time">${date.toLocaleTimeString('en-GB')}</div>
+            <h2>${dt.toLocaleDateString('en-GB')}</h2>
+            <div class="time">${dt.toLocaleTimeString('en-GB')}</div>
           </div>
           <div class="signal-body">
             <div class="detail">Action: <span>${sig.action}</span></div>
@@ -106,21 +191,22 @@
           <div class="admin-note">Note: ${sig.note || 'Trade at your own risk.'}</div>
         `;
       } catch (err) {
-        console.error('Error loading signal:', err);
-        card.innerHTML = `<p style="text-align:center;color:#ff5555;padding:40px;">
-                            Unable to load signal. Please try again later.
-                          </p>`;
+        console.error('Signal load error:', err);
+        card.innerHTML = `
+          <p style="text-align:center;color:#ff5555;padding:40px;">
+            Unable to load signal. Please try again later.
+          </p>`;
       }
     }
 
-    // --- Clipboard Helper ---
+    // ─── Clipboard Helper ────────────────────────────────────────
     function copyText(txt) {
       navigator.clipboard.writeText(txt)
         .then(() => alert('Copied: ' + txt))
         .catch(() => alert('Failed to copy'));
     }
 
-    // --- TradingView Widget ---
+    // ─── TradingView Widget (exactly as before) ─────────────────
     new TradingView.widget({
       container_id: "tradingview_embed",
       autosize: true,
@@ -143,7 +229,7 @@
       calendar: false
     });
 
-    // --- Init Page ---
+    // ─── Page Init ───────────────────────────────────────────────
     (async () => {
       await ensureVIP();
       await loadLatestSignal();
