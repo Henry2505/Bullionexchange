@@ -4,21 +4,116 @@
   <meta charset="UTF-8"/>
   <meta name="viewport" content="width=device-width,initial-scale=1"/>
   <title>VIP Forex Signal • CBE</title>
+
+  <!-- Poppins font -->
   <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700&display=swap" rel="stylesheet"/>
+
+  <!-- Supabase UMD build -->
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js/dist/umd/supabase.min.js"></script>
+  <!-- TradingView widget -->
   <script src="https://s3.tradingview.com/tv.js"></script>
+
   <style>
     /* … your existing CSS … */
+    * { margin:0; padding:0; box-sizing:border-box; }
+    html, body {
+      width:100%; min-height:100vh;
+      font-family:'Poppins',sans-serif;
+      background:#080808; color:#eee;
+      overflow-x:hidden;
+    }
+    .container { max-width:1000px; margin:60px auto; padding:0 20px; position:relative; }
+    header { text-align:center; margin-bottom:20px; }
+    header h1 { font-size:2.5rem; color:#ffd700; margin-bottom:8px; }
+    header p { color:#bbb; }
+    .notice { text-align:center; color:#ff5555; margin-bottom:20px; }
+    .signal-card {
+      background: rgba(30,30,30,0.8);
+      border-radius:12px;
+      box-shadow:0 4px 20px rgba(0,0,0,0.7);
+      animation:fadeIn 0.8s ease;
+      overflow:hidden;
+      margin-bottom:40px;
+    }
+    @keyframes fadeIn {
+      from { opacity:0; transform: translateY(20px); }
+      to   { opacity:1; transform: translateY(0); }
+    }
+    .signal-header {
+      display:flex; justify-content:space-between;
+      background:#111; padding:16px 24px;
+    }
+    .signal-header h2 { color:#ffd700; font-size:1.4rem; }
+    .signal-header .time { color:#ccc; font-size:0.9rem; }
+    .signal-body {
+      display:grid; grid-template-columns:1fr auto;
+      gap:12px; padding:24px;
+    }
+    .detail {
+      background:#1a1a1a; padding:14px 18px;
+      border-radius:8px; display:flex;
+      justify-content:space-between; align-items:center;
+      font-size:1rem;
+    }
+    .detail span { font-weight:600; }
+    .copy-btn {
+      background:#ffd700; color:#000;
+      border:none; padding:6px 12px;
+      border-radius:6px; font-weight:bold;
+      cursor:pointer; transition:box-shadow .3s;
+    }
+    .copy-btn:hover { box-shadow:0 0 10px #ffd700; }
+    .admin-note {
+      background:#222; padding:14px 18px;
+      margin:0 24px 24px; border-left:4px solid #ffd700;
+      color:#ffcc00; font-style:italic; border-radius:6px;
+    }
+    #tradingview_embed {
+      height:600px;
+      border:1px solid rgba(255,255,255,0.2);
+      border-radius:8px;
+      overflow:hidden;
+      margin-bottom:60px;
+    }
+    footer {
+      text-align:center; padding:20px;
+      color:#666; font-size:0.9rem; margin-top:40px;
+      border-top:1px solid #222;
+    }
+
+    /* — Simple Modal for 2nd auth — */
+    #authModal {
+      position:fixed; top:0; left:0; right:0; bottom:0;
+      background:rgba(0,0,0,0.85); display:flex;
+      align-items:center; justify-content:center; z-index:100;
+    }
+    #authModal .modal-content {
+      background:#111; padding:30px; border-radius:8px;
+      text-align:center; max-width:320px; width:100%;
+    }
+    #authModal input {
+      width:100%; padding:10px; margin:15px 0;
+      border:none; border-radius:4px;
+    }
+    #authModal button {
+      padding:10px 20px; border:none;
+      background:#ffd700; color:#000;
+      font-weight:600; border-radius:4px;
+      cursor:pointer;
+    }
   </style>
 </head>
 <body>
+
   <div class="container">
     <header>
       <h1>VIP Forex Signal</h1>
       <p>Exclusively for approved CBE VIP members</p>
     </header>
 
-    <!-- will be replaced by script -->
+    <div class="notice">🔒 Unauthorized users will be redirected to login.</div>
+
+    <!-- placeholder; replaced after auth -->
     <div id="signalCard" class="signal-card">
       <p style="text-align:center;color:#999;padding:40px;">
         Loading latest signal…
@@ -26,6 +121,16 @@
     </div>
 
     <div id="tradingview_embed"></div>
+  </div>
+
+  <!-- Secondary authorization modal -->
+  <div id="authModal">
+    <div class="modal-content">
+      <h2>Enter VIP Access Code</h2>
+      <input type="password" id="vipCode" placeholder="Access Code">
+      <button id="submitCode">Unlock Signals</button>
+      <p style="color:#ff5555;font-size:.9rem;margin-top:10px;">Code required to proceed</p>
+    </div>
   </div>
 
   <footer>© 2025 CBE – Chukwuemeka Bullion Exchange</footer>
@@ -50,19 +155,26 @@
         return window.location.replace('login.html');
       }
 
-      // 3) Secondary “access code” prompt
-      const accessCode = prompt('Enter your VIP access code:');
-      // ← replace with your real check / 2FA!
-      if (accessCode !== 'VIP2025') {
-        alert('Invalid code – redirecting back.');
-        return window.location.replace('dashboard.html');
-      }
-
-      // 4) Load the signal & chart
-      await loadLatestSignal();
-      initTradingView();
+      // 3) Show 2nd-factor modal
+      document.getElementById('submitCode').onclick = handleSecondAuth;
     }
 
+    // Handle secondary access code
+    function handleSecondAuth() {
+      const code = document.getElementById('vipCode').value.trim();
+
+      // ← replace 'VIP2025' with real validation or API call
+      if (code === 'VIP2025') {
+        document.getElementById('authModal').style.display = 'none';
+        loadLatestSignal();
+        initTradingView();
+      } else {
+        alert('Invalid access code.');
+        document.getElementById('vipCode').value = '';
+      }
+    }
+
+    // Fetch & display the most recent signal
     async function loadLatestSignal() {
       const card = document.getElementById('signalCard');
       try {
@@ -113,6 +225,7 @@
       }
     }
 
+    // Initialize TradingView
     function initTradingView() {
       new TradingView.widget({
         container_id: "tradingview_embed",
@@ -135,13 +248,14 @@
       });
     }
 
+    // Copy helper
     function copyText(txt) {
       navigator.clipboard.writeText(txt)
         .then(() => alert('Copied: ' + txt))
         .catch(() => alert('Failed to copy'));
     }
 
-    // Start everything
+    // Run session & status checks, then wait for second auth
     init();
   </script>
 </body>
