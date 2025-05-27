@@ -1,23 +1,183 @@
 <!DOCTYPE html>
 <html lang="en" data-theme="dark">
 <head>
-  <meta charset="UTF-8"/><meta name="viewport" content="width=device-width,initial-scale=1"/>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Payment Options – CBE</title>
   <link rel="stylesheet" href="theme.css"/>
   <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700&family=Roboto:wght@300;400;700&display=swap" rel="stylesheet"/>
   <script src="https://kit.fontawesome.com/your-kit-code.js" crossorigin="anonymous"></script>
   <style>
-    /* (Keep your existing CSS here) */
-    /* Hide proof form until a method is chosen */
-    #proof-section { display:none; }
+    /* RESET & BASE */
+    * { margin:0; padding:0; box-sizing:border-box; }
+    body {
+      font-family:'Roboto',sans-serif;
+      color: var(--text); background: var(--bg);
+      overflow-x:hidden; line-height:1.6;
+    }
+    a { color:var(--gold); text-decoration:none; }
+    a:hover { text-decoration:underline; }
+
+    /* LOGO & THEME TOGGLE */
+    .logo {
+      position: fixed; top:20px; left:20px; z-index:10;
+    }
+    .logo img {
+      width:160px; cursor:pointer; transition:transform .3s;
+    }
+    .logo img:hover { transform:scale(1.05); }
+
+    #theme-toggle {
+      position: fixed; top:20px; right:20px; z-index:10;
+      background:none; border:none; font-size:1.5rem;
+      color: var(--text); cursor:pointer; transition:transform .3s;
+    }
+    #theme-toggle:hover { transform:scale(1.2); }
+
+    /* SLIDE-IN ANIMATION */
+    .slide-in {
+      opacity:0; transform:translateY(30px);
+      transition:opacity .7s ease-out, transform .7s ease-out;
+    }
+    .slide-in.visible {
+      opacity:1; transform:translateY(0);
+    }
+
+    /* MAIN CONTAINER */
+    .container {
+      max-width:700px; margin:0 auto;
+      padding:140px 20px 60px;
+    }
+    h1 {
+      font-family:'Playfair Display', serif;
+      font-size:2.8rem; text-align:center;
+      color: var(--gold); margin-bottom:10px;
+    }
+    .divider {
+      width:80px; height:3px; background:var(--gold);
+      margin:0 auto 30px; box-shadow:0 0 10px var(--gold-dark);
+    }
+
+    /* DETAILS PANEL */
+    .details-panel {
+      background: var(--glass-bg);
+      backdrop-filter: blur(8px);
+      padding:20px; border-radius:12px;
+      box-shadow:0 4px 30px rgba(0,0,0,0.5);
+      margin-bottom:30px;
+    }
+    .details-panel ul {
+      list-style:none; padding:0; margin:0;
+    }
+    .details-panel li {
+      display:flex; justify-content:space-between;
+      padding:8px 0; border-bottom:1px solid rgba(255,255,255,0.1);
+    }
+    .details-panel li:last-child { border: none; }
+
+    /* PAYMENT METHOD BUTTONS */
+    .btn-pay, .btn-crypto {
+      display:block; width:100%;
+      padding:14px; margin:15px 0;
+      border:none; border-radius:30px;
+      font-family:'Playfair Display', serif;
+      font-size:1.1rem; cursor:pointer;
+      transition:background .3s, box-shadow .3s;
+    }
+    .btn-pay {
+      background: var(--gold); color:#000;
+      box-shadow:0 0 10px var(--gold-glow);
+    }
+    .btn-pay:hover { background:#e6bd00; }
+    .btn-crypto {
+      background: var(--glass-bg); color:var(--text);
+      border:2px solid var(--gold);
+      box-shadow:0 0 8px var(--gold-glow);
+    }
+    .btn-crypto:hover { box-shadow:0 0 15px var(--gold-glow); }
+
+    /* CRYPTO SECTION */
+    .crypto-section {
+      display:none; margin-top:20px;
+    }
+    .crypto-grid {
+      display:grid;
+      grid-template-columns:repeat(auto-fit,minmax(240px,1fr));
+      gap:15px;
+    }
+    .crypto-card {
+      background: var(--glass-bg);
+      backdrop-filter: blur(6px);
+      padding:15px; border-radius:10px;
+      box-shadow:0 4px 20px rgba(0,0,0,0.5);
+      display:flex; flex-direction:column; justify-content:space-between;
+    }
+    .crypto-card .label {
+      font-weight:500; color: var(--text-muted);
+      margin-bottom:8px;
+    }
+    .crypto-card .address {
+      font-family:monospace; word-break:break-all;
+      color: var(--text); margin-bottom:12px;
+    }
+    .copy-btn {
+      align-self:flex-end; padding:6px 12px;
+      background: var(--gold); color:#000;
+      border:none; border-radius:20px;
+      font-size:.9rem; cursor:pointer;
+      box-shadow:0 0 8px var(--gold-glow);
+      transition:transform .3s;
+    }
+    .copy-btn:hover { transform:scale(1.05); }
+
+    /* EMAIL FORM */
+    .form-wrapper {
+      background: var(--glass-bg);
+      backdrop-filter: blur(8px);
+      padding:20px; border-radius:12px;
+      box-shadow:0 4px 30px rgba(0,0,0,0.5);
+      margin-top:30px; display:none;
+    }
+    .form-wrapper label {
+      display:block; margin:12px 0 6px;
+      color: var(--text-muted);
+    }
+    .form-wrapper input[type="email"] {
+      width:100%; padding:10px;
+      border:none; border-radius:8px;
+      background:rgba(255,255,255,0.1);
+      color:var(--text);
+    }
+    .form-wrapper button {
+      margin-top:15px; width:100%; padding:12px;
+      border:none; border-radius:30px;
+      background: var(--gold); color:#000;
+      font-weight:600; font-size:1rem;
+      box-shadow:0 0 10px var(--gold-glow);
+      cursor:pointer; transition:background .3s, transform .3s;
+    }
+    .form-wrapper button:hover {
+      background:#e6bd00; transform:scale(1.02);
+    }
+
+    /* BACK LINK */
+    .back-link {
+      display:block; text-align:center; margin-top:25px;
+      color: var(--text-muted);
+    }
+    .back-link:hover { color: var(--gold); }
   </style>
 </head>
 <body>
-  <!-- Logo & Theme Toggle (as before) -->
+
+  <!-- Logo & Theme -->
+  <div class="logo"><img src="CBE_logo.PNG" alt="CBE Logo" onclick="window.location='index.html'"/></div>
+  <button id="theme-toggle" aria-label="Toggle theme">🌞</button>
 
   <div class="container slide-in">
     <h1>Your Plan</h1>
     <div class="divider"></div>
+
     <div class="details-panel">
       <ul>
         <li><span>Plan:</span><span id="plan-name">—</span></li>
@@ -26,19 +186,19 @@
       </ul>
     </div>
 
-    <!-- Methods will be injected here -->
+    <!-- Methods injected here -->
     <div id="methods-container" class="slide-in"></div>
 
-    <!-- Proof Upload -->
-    <div class="form-wrapper slide-in" id="proof-section">
-      <form id="proofForm">
-        <input type="hidden" id="selectedMethodId"/>
-        <label for="emailInput">Your Email</label>
-        <input type="email" id="emailInput" placeholder="you@example.com" required/>
+    <!-- Crypto Addresses -->
+    <div class="crypto-section slide-in" id="cryptoSection">
+      <div class="crypto-grid" id="cryptoGrid"></div>
+    </div>
 
-        <label for="proofInput">Upload Payment Proof</label>
-        <input type="file" id="proofInput" accept="image/*,application/pdf" required/>
-
+    <!-- Email & Submit -->
+    <div class="form-wrapper slide-in" id="emailSection">
+      <form id="emailForm">
+        <label for="emailInput">Your Email (must match registration)</label>
+        <input type="email" id="emailInput" placeholder="you@yourdomain.com" required/>
         <button type="submit">Submit Payment</button>
       </form>
       <div id="successMessage" style="display:none; text-align:center; margin-top:1rem; color:var(--gold); font-weight:600;">
@@ -49,11 +209,27 @@
     <a href="vip-subscription.html" class="back-link slide-in">← Change Plan</a>
   </div>
 
-  <footer>© 2025 Chukwuemeka Bullion Exchange. All rights reserved.</footer>
+  <footer style="text-align:center; padding:20px; color:var(--text-muted);">
+    © 2025 Chukwuemeka Bullion Exchange. All rights reserved.
+  </footer>
 
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js"></script>
   <script>
-    // VIP plan details (unchanged)
+    // Theme toggle
+    const toggle = document.getElementById('theme-toggle');
+    toggle.addEventListener('click',() => {
+      const t = document.documentElement.getAttribute('data-theme')==='dark'?'light':'dark';
+      document.documentElement.setAttribute('data-theme',t);
+      localStorage.setItem('theme',t);
+      toggle.textContent = t==='dark'?'🌞':'🌜';
+    });
+    (()=>{
+      const t = localStorage.getItem('theme')||'dark';
+      document.documentElement.setAttribute('data-theme',t);
+      toggle.textContent = t==='dark'?'🌞':'🌜';
+    })();
+
+    // VIP plan details
     const params = new URLSearchParams(location.search),
           key    = params.get('plan')||'weekly',
           cfg    = {
@@ -66,12 +242,16 @@
     document.getElementById('plan-price').textContent = `$${ch.p}`;
     document.getElementById('plan-save').textContent  = `$${ch.s}`;
 
-    // Supabase
-    const URL = 'https://dapwpgvnfjcfqqhrpxla.supabase.co',
-          KEY = 'YOUR_SUPABASE_ANON_KEY';
-    const supabase = supabase.createClient(URL, KEY);
+    // Supabase init
+    const supabase = supabase.createClient(
+      'https://dapwpgvnfjcfqqhrpxla.supabase.co',
+      'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhZ3Nl...' +
+      'jPhABpEMsQ'
+    );
 
-    // Load and render methods
+    let selectedMethod = null;
+
+    // Load payment methods
     async function loadMethods() {
       const { data, error } = await supabase
         .from('payment_methods')
@@ -85,59 +265,47 @@
         const btn = document.createElement('button');
         btn.className = m.type==='card'?'btn-pay slide-in':'btn-crypto slide-in';
         btn.textContent = m.name;
-        btn.onclick = () => onSelectMethod(m);
+        btn.onclick = () => selectMethod(m);
         container.appendChild(btn);
+      });
+      // reveal slide-ins
+      document.querySelectorAll('.slide-in').forEach(el=>{
+        setTimeout(()=>el.classList.add('visible'),100);
       });
     }
 
-    // When a method is clicked…
-    async function onSelectMethod(m) {
-      document.getElementById('selectedMethodId').value = m.id;
-
-      if (m.type === 'card') {
-        // redirect immediately
-        const { link } = m.details;
-        return window.location.href = link;
+    // When a method is selected
+    function selectMethod(m) {
+      selectedMethod = m;
+      // Card/Bank → redirect immediately
+      if (m.type==='card') {
+        return window.location.href = m.details.link;
       }
-
-      // crypto: show addresses + proof form
-      renderCryptoGrid(m);
-      document.getElementById('proof-section').style.display = 'block';
-    }
-
-    function renderCryptoGrid(m) {
-      // find all crypto methods
-      supabase
-        .from('payment_methods')
-        .select('*')
-        .eq('type','crypto')
+      // Crypto → show addresses + email form
+      const grid = document.getElementById('cryptoGrid');
+      grid.innerHTML = '';
+      // gather all crypto in one grid:
+      supabase.from('payment_methods').select('*').eq('type','crypto')
         .order('id')
-        .then(({ data }) => {
-          const grid = document.getElementById('cryptoGrid');
-          if (!grid) {
-            const sec = document.createElement('div');
-            sec.id = 'cryptoGrid';
-            sec.className = 'crypto-grid slide-in';
-            document.getElementById('proof-section').before(sec);
-          }
-          document.getElementById('cryptoGrid').innerHTML = '';
+        .then(({data})=>{
           data.forEach(c => {
-            const { code, address } = c.details;
             const card = document.createElement('div');
             card.className = 'crypto-card';
             card.innerHTML = `
               <div class="label">${c.name}</div>
-              <div class="address">${address}</div>
+              <div class="address">${c.details.address}</div>
               <button class="copy-btn">Copy</button>`;
-            document.getElementById('cryptoGrid').appendChild(card);
+            grid.appendChild(card);
           });
+          document.getElementById('cryptoSection').style.display = 'block';
+          document.getElementById('emailSection').style.display = 'block';
         });
     }
 
-    // Copy handler
+    // Copy handlers
     document.addEventListener('click', e => {
       if (e.target.matches('.copy-btn')) {
-        const addr = e.target.closest('.crypto-card').querySelector('.address').textContent;
+        const addr = e.target.previousElementSibling.textContent;
         navigator.clipboard.writeText(addr).then(()=>{
           e.target.textContent = 'Copied!';
           setTimeout(()=> e.target.textContent = 'Copy',1500);
@@ -145,40 +313,22 @@
       }
     });
 
-    // Proof form submission
-    document.getElementById('proofForm').addEventListener('submit', async e => {
+    // Email form submission
+    document.getElementById('emailForm').addEventListener('submit', async e => {
       e.preventDefault();
-      const fileEl = document.getElementById('proofInput');
-      const file   = fileEl.files[0];
-      const method_id = +document.getElementById('selectedMethodId').value;
-      const email  = document.getElementById('emailInput').value;
+      const email = document.getElementById('emailInput').value.trim();
+      if (!selectedMethod) return alert('Choose a payment method first');
+      if (!email) return alert('Enter your registered email');
 
-      // 1) upload proof
-      const fileName = `${Date.now()}_${file.name}`;
-      let { error:upErr } = await supabase
-        .storage.from('payment-proofs')
-        .upload(fileName, file);
-      if (upErr) return alert(upErr.message);
-
-      // 2) get URL
-      const { data:urlData, error:urlErr } = await supabase
-        .storage.from('payment-proofs')
-        .getPublicUrl(fileName);
-      if (urlErr) return alert(urlErr.message);
-
-      // 3) insert payment record
-      const { error:insErr } = await supabase
+      // Insert into payments
+      const { error } = await supabase
         .from('payments')
-        .insert([{
-          email, plan: ch.n,
-          method_id, proof_url: urlData.publicUrl
-        }]);
-      if (insErr) return alert(insErr.message);
+        .insert([{ email, plan: ch.n, method_id: selectedMethod.id }]);
+      if (error) return alert('Submit failed: ' + error.message);
 
-      // success
       document.getElementById('successMessage').style.display = 'block';
       e.target.reset();
-      setTimeout(()=>window.location.href='index.html',3000);
+      setTimeout(()=> window.location.href='index.html',2000);
     });
 
     document.addEventListener('DOMContentLoaded', loadMethods);
