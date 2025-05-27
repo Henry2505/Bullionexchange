@@ -4,173 +4,174 @@
   <meta charset="UTF-8"/>
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Trade History • CBE VIP</title>
+
+  <!-- Poppins font -->
   <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;500;700&display=swap" rel="stylesheet"/>
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js"></script>
+
   <style>
-    * {
-      user-select: none;
-      -webkit-user-select: none;
-      -moz-user-select: none;
-      -ms-user-select: none;
-    }
+    /* Disable text selection & right-click */
+    * { user-select: none; -webkit-user-select: none; -moz-user-select: none; -ms-user-select: none; }
     html, body {
-      margin:0; padding:0;
-      width:100%; height:100%;
-      overflow-x:hidden; background:#0b0b0b; color:#f5f5f5;
-      font-family:'Poppins',sans-serif;
+      margin: 0; padding: 0;
+      width: 100%; height: 100%;
+      overflow-x: hidden;
+      background: var(--bg, #0b0b0b);
+      color: var(--text, #f5f5f5);
+      font-family: 'Poppins', sans-serif;
     }
-    video#bg-video {
-      position:fixed; top:0; left:0;
-      width:100%; height:100%; object-fit:cover;
-      z-index:-2;
-    }
-    .overlay {
-      position:fixed; top:0; left:0;
-      width:100%; height:100%;
-      background:rgba(0,0,0,0.6); z-index:-1;
-    }
+    :root[data-theme="dark"]  { --bg: #0b0b0b; --text: #f5f5f5; --gold: #ffd700; }
+    :root[data-theme="light"] { --bg: #fafafa; --text: #333;    --gold: #cca300; }
+
     header {
-      background:linear-gradient(135deg,#111,#1c1c1c);
-      padding:80px 20px; text-align:center;
-      box-shadow:0 4px 10px rgba(0,0,0,0.5);
+      background: linear-gradient(135deg, #111, #1c1c1c);
+      padding: 80px 20px;
+      text-align: center;
+      box-shadow: 0 4px 10px rgba(0,0,0,0.5);
     }
-    header h1 { margin:0; font-size:42px; color:gold; }
-    header p { margin-top:8px; font-size:18px; color:#ccc; }
+    header h1 { margin:0; font-size:42px; color: var(--gold); }
+    header p  { margin-top:8px; font-size:18px; color:#ccc; }
+
     .notice {
-      text-align:center; font-size:14px; color:#ffcc00;
-      margin:20px auto 40px;
+      text-align: center;
+      font-size: 14px;
+      color: #ffcc00;
+      margin: 20px auto 40px;
     }
-    main {
-      max-width:1200px; margin:0 auto 60px; padding:0 20px;
-      display:grid;
-      grid-template-columns:repeat(auto-fit,minmax(280px,1fr));
-      gap:24px; overflow-y:auto;
+
+    main#historyContainer {
+      max-width: 1200px;
+      margin: 0 auto 60px;
+      padding: 0 20px;
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(280px,1fr));
+      gap: 24px;
     }
+
     .history-card {
-      position:relative; background:#141414; border-radius:10px;
-      overflow:hidden; box-shadow:0 0 12px rgba(0,0,0,0.5);
-      display:flex; flex-direction:column;
+      position: relative;
+      background: #141414;
+      border-radius: 10px;
+      overflow: hidden;
+      box-shadow: 0 0 12px rgba(0,0,0,0.5);
+      display: flex;
+      flex-direction: column;
     }
     .history-card img {
-      width:100%; display:block;
-      pointer-events:none; user-drag:none; -webkit-user-drag:none;
+      width: 100%;
+      display: block;
+      pointer-events: none;
+      -webkit-user-drag: none;
     }
-    .history-card .img-blocker {
-      position:absolute; top:0; left:0;
-      width:100%; height:100%; z-index:1;
+    .img-blocker {
+      position: absolute;
+      top: 0; left: 0;
+      width: 100%; height: 100%;
+      z-index: 1;
     }
     .history-content {
-      position:relative; z-index:2;
-      padding:16px; flex:1; color:#eee;
+      position: relative;
+      z-index: 2;
+      padding: 16px;
+      flex: 1;
+      display: flex;
+      flex-direction: column;
     }
     .history-month {
-      font-size:18px; color:gold; margin-bottom:8px;
+      font-size: 18px;
+      color: var(--gold);
+      margin-bottom: 8px;
     }
     .history-note {
-      font-size:16px; line-height:1.4;
+      flex: 1;
+      font-size: 16px;
+      color: #eee;
+      line-height: 1.4;
+      margin-bottom: 12px;
     }
+
     footer {
-      text-align:center; padding:20px; font-size:14px;
-      color:#888; background:#0b0b0b; border-top:1px solid #222;
+      text-align: center;
+      padding: 20px;
+      font-size: 14px;
+      color: #888;
+      background: var(--bg);
+      border-top: 1px solid #222;
     }
   </style>
 </head>
-<body oncontextmenu="return false;">
 
-  <!-- Background Video & Overlay -->
-  <video id="bg-video" autoplay muted loop playsinline>
-    <source src="star-video.mp4" type="video/mp4"/>
-  </video>
-  <div class="overlay"></div>
-
+<body>
   <!-- Header -->
   <header>
     <h1>Trade History</h1>
     <p>Complete monthly trade records (VIP only)</p>
   </header>
 
-  <!-- Warning -->
   <p class="notice">
-    📢 Sharing or reselling these records is strictly prohibited and punishable by law.
+    📢 Unauthorized sharing or resale of these records is strictly prohibited.
   </p>
 
-  <!-- Grid Container -->
-  <main id="historyContainer">
-    <!-- Cards will be injected here -->
-  </main>
+  <!-- Container for trade-history cards -->
+  <main id="historyContainer"></main>
 
   <!-- Footer -->
   <footer>
     © 2025 CBE – Chukwuemeka Bullion Exchange. All rights reserved.
   </footer>
 
+  <!-- Supabase UMD Client -->
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js/dist/umd/supabase.js"></script>
   <script>
-    // Supabase Initialization
-    const SUPABASE_URL = 'https://dapwpgvnfjcfqqhrpxla.supabase.co';
-    const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImRhcHdwZ3ZuZmpjZnFxaHJweGxhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDcwNDA4ODgsImV4cCI6MjA2MjYxNjg4OH0.ICC0UsLlzJDNre7rFCeD3k6iVzo6jOJgn3PhABpEMsQ';
-    const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+    (async () => {
+      // Initialize theme from localStorage
+      const saved = localStorage.getItem('theme') || 'dark';
+      document.documentElement.setAttribute('data-theme', saved);
 
-    // Fetch data
-    async function loadTradeHistory() {
+      // Supabase client
+      const SUPA_URL = 'https://dapwpgvnfjcfqqhrpxla.supabase.co';
+      const SUPA_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImRhcHdwZ3ZuZmpjZnFxaHJweGxhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDcwNDA4ODgsImV4cCI6MjA2MjYxNjg4OH0.ICC0UsLlzJDNre7rFCeD3k6iVzo6jOJgn3PhABpEMsQ';
+      const supabase = window.supabase.createClient(SUPA_URL, SUPA_KEY);
+
+      // Auth guard: ensure user is signed in
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) {
+        return window.location.href = 'login.html';
+      }
+      // TODO: you can also check profiles table for approved status
+
+      // Fetch all trade history
       const { data, error } = await supabase
         .from('trade_history')
         .select('*')
         .order('date', { ascending: false });
+
+      const container = document.getElementById('historyContainer');
       if (error) {
         console.error('Error fetching trade history:', error);
-        return null;
-      }
-      return data;
-    }
-
-    // Render cards
-    document.addEventListener('DOMContentLoaded', async () => {
-      const container = document.getElementById('historyContainer');
-      const records = await loadTradeHistory();
-
-      if (!records) {
         container.innerHTML = '<p class="notice">Failed to load trade history.</p>';
         return;
       }
-      if (records.length === 0) {
-        container.innerHTML = '<p class="notice">No trade history uploaded yet.</p>';
+      if (!data.length) {
+        container.innerHTML = '<p class="notice">No trade history available yet.</p>';
         return;
       }
 
-      records.forEach(item => {
-        const dateObj = new Date(item.date);
-        const monthYear = dateObj.toLocaleString('default', { month: 'long', year: 'numeric' });
-
+      // Render each record as a card
+      data.forEach(item => {
         const card = document.createElement('div');
         card.className = 'history-card';
 
-        // Screenshot
-        const img = document.createElement('img');
-        img.src = item.screenshot;
-        img.alt = `Trade ${monthYear}`;
-        img.draggable = false;
-
-        // Transparent blocker
-        const blocker = document.createElement('div');
-        blocker.className = 'img-blocker';
-
-        // Content
-        const content = document.createElement('div');
-        content.className = 'history-content';
-        content.innerHTML = `
-          <div class="history-month">${monthYear}</div>
-          <div class="history-note">
-            <strong>Asset:</strong> ${item.asset}<br/>
-            <strong>Notes:</strong> ${item.notes || '—'}
+        card.innerHTML = `
+          <img src="${item.screenshot}" alt="${item.month} screenshot">
+          <div class="img-blocker"></div>
+          <div class="history-content">
+            <div class="history-month">${item.month}</div>
+            <div class="history-note">${item.notes || ''}</div>
           </div>
         `;
-
-        card.appendChild(img);
-        card.appendChild(blocker);
-        card.appendChild(content);
         container.appendChild(card);
       });
-    });
+    })();
   </script>
 </body>
 </html>
