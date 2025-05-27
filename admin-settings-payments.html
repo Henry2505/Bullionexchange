@@ -4,8 +4,7 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
   <title>CBE Admin – Payments & Methods</title>
-
-  <!-- Redirect if not logged in -->
+  <!-- Redirect to login if not authenticated -->
   <script>
     if (localStorage.getItem('isLoggedIn') !== 'true') {
       window.location.replace(
@@ -13,13 +12,11 @@
       );
     }
   </script>
-
-  <!-- Fonts, Bootstrap, Icons, DataTables CSS -->
+  <!-- Fonts, Bootstrap, DataTables CSS -->
   <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700&display=swap" rel="stylesheet">
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
   <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css" rel="stylesheet">
   <link href="https://cdn.datatables.net/1.13.4/css/dataTables.bootstrap5.min.css" rel="stylesheet">
-
   <style>
     :root {
       --bg: #000; --text: #fff; --gold: #ffd700;
@@ -46,7 +43,7 @@
       border:1px solid rgba(255,215,0,0.2);
     }
     a { color: var(--gold); text-decoration:none; }
-
+    a:hover { text-decoration:underline; }
     header.admin-header {
       display:flex; align-items:center; justify-content:space-between;
       padding:1rem 2rem; background:rgba(0,0,0,0.6);
@@ -59,13 +56,11 @@
       background:none; border:none; font-size:1.25rem;
       cursor:pointer; color:var(--text);
     }
-
     #section-title {
       color: var(--gold);
       text-align:center;
       margin:2rem 0 1rem;
     }
-
     .table-panel { padding:2rem; border-radius:8px; margin-bottom:2rem; }
     .dataTables_wrapper .dataTables_filter input {
       background: var(--bg); color: var(--text);
@@ -79,25 +74,23 @@
 <body>
   <div class="overlay"></div>
 
+  <!-- Header -->
   <header class="admin-header glass">
     <div class="logo" id="logo"><img src="CBE_logo.PNG" alt="CBE Logo"></div>
     <button id="theme-toggle" aria-label="Toggle theme">🌞</button>
   </header>
 
+  <!-- Main Content -->
   <main class="container">
     <h2 id="section-title">Admin: Payments & Methods</h2>
 
     <!-- Tabs -->
-    <ul class="nav nav-tabs mb-3" id="adminTabs">
+    <ul class="nav nav-tabs mb-3">
       <li class="nav-item">
-        <button class="nav-link active" data-bs-target="#tab-payments" data-bs-toggle="tab">
-          Payments
-        </button>
+        <button class="nav-link active" data-bs-toggle="tab" data-bs-target="#tab-payments">Payments</button>
       </li>
       <li class="nav-item">
-        <button class="nav-link" data-bs-target="#tab-methods" data-bs-toggle="tab">
-          Payment Methods
-        </button>
+        <button class="nav-link" data-bs-toggle="tab" data-bs-target="#tab-methods">Payment Methods</button>
       </li>
     </ul>
 
@@ -105,9 +98,7 @@
       <!-- Payments Table -->
       <div class="tab-pane fade show active" id="tab-payments">
         <div class="glass table-panel">
-          <button id="export-payments" class="btn btn-outline-secondary btn-sm mb-3">
-            Export CSV
-          </button>
+          <button id="export-payments" class="btn btn-outline-secondary btn-sm mb-3">Export CSV</button>
           <table id="payments-table" class="table table-hover table-borderless text-white w-100">
             <thead>
               <tr>
@@ -122,9 +113,7 @@
       <!-- Payment Methods CRUD -->
       <div class="tab-pane fade" id="tab-methods">
         <div class="glass table-panel">
-          <button id="addMethodBtn" class="btn btn-outline-success btn-sm mb-3">
-            Add Payment Method
-          </button>
+          <button id="addMethodBtn" class="btn btn-outline-success btn-sm mb-3">Add Payment Method</button>
           <table id="methods-table" class="table table-hover table-borderless text-white w-100">
             <thead>
               <tr>
@@ -155,17 +144,18 @@
   </div>
 
   <!-- Dependencies -->
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/index.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
   <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
   <script src="https://cdn.datatables.net/1.13.4/js/jquery.dataTables.min.js"></script>
   <script src="https://cdn.datatables.net/1.13.4/js/dataTables.bootstrap5.min.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
   <script>
   document.addEventListener('DOMContentLoaded', () => {
     // Logo → Dashboard
-    document.getElementById('logo').onclick = () =>
+    document.getElementById('logo').onclick = () => {
       window.location.href = 'admin-dashboard.html';
+    };
 
     // Theme toggle
     const themeBtn = document.getElementById('theme-toggle');
@@ -175,24 +165,18 @@
       themeBtn.textContent = t === 'dark' ? '🌞' : '🌜';
     };
     themeBtn.onclick = () =>
-      applyTheme(
-        document.documentElement.getAttribute('data-theme') === 'dark'
-          ? 'light' : 'dark'
-      );
+      applyTheme(document.documentElement.getAttribute('data-theme') === 'dark' ? 'light' : 'dark');
     applyTheme(localStorage.getItem('theme') || 'dark');
 
-    // Supabase client
-    const client = supabase.createClient(
-      'https://dapwpgvnfjcfqqhrpxla.supabase.co',
-      'YOUR_SUPABASE_ANON_KEY'
-    );
+    // Supabase client (capital “S”)
+    const SUPABASE_URL      = 'https://dapwpgvnfjcfqqhrpxla.supabase.co';
+    const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImRhcHdwZ3ZuZmpjZnFxaHJweGxhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDcwNDA4ODgsImV4cCI6MjA2MjYxNjg4OH0.ICC0UsLlzJDNre7rFCeD3k6iVzo6jOJgn3PhABpEMsQ';
+    const client = Supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
     // Toast helper
     function showToast(msg, ok = true) {
       const t = document.createElement('div');
-      t.className = `toast align-items-center text-white ${
-        ok?'bg-success':'bg-danger'
-      } border-0 position-fixed top-0 end-0 m-3`;
+      t.className = `toast align-items-center text-white ${ok?'bg-success':'bg-danger'} border-0 position-fixed top-0 end-0 m-3`;
       t.innerHTML = `
         <div class="d-flex">
           <div class="toast-body">${msg}</div>
@@ -209,19 +193,16 @@
         { data: 'email' },
         { data: 'plan' },
         { data: 'created_at', render: d => new Date(d).toLocaleDateString() },
-        {
-          data: 'proof_url',
+        { data: 'proof_url',
           render: url => url
-            ? `<button class="btn btn-sm btn-info"
-                  onclick="viewScreenshot('${url}')">View</button>`
+            ? `<button class="btn btn-sm btn-info" onclick="viewScreenshot('${url}')">View</button>`
             : '—'
         },
-        {
-          data: 'status',
-          render: (s,__,r) => s === 'Pending'
-            ? `<button class="btn btn-sm btn-primary"
-                       onclick="approvePayment('${r.id}')">Approve</button>`
-            : '—'
+        { data: 'status',
+          render: (s,__,r) =>
+            s === 'Pending'
+              ? `<button class="btn btn-sm btn-primary" onclick="approvePayment('${r.id}')">Approve</button>`
+              : '—'
         }
       ]
     });
@@ -230,7 +211,7 @@
       client
         .from('payments')
         .select('*')
-        .order('created_at', { ascending: false })
+        .order('created_at',{ ascending:false })
         .then(({ data, error }) => {
           if (error) {
             showToast('Error loading payments', false);
@@ -258,28 +239,26 @@
       new bootstrap.Modal(document.getElementById('screenshotModal')).show();
     };
 
-    document.getElementById('export-payments')
-      .addEventListener('click', () => {
-        const data = paymentsTable.rows().data().toArray();
-        const csv = [
-          ['ID','Email','Plan','Date'].join(','),
-          ...data.map(r => [
-            r.id, r.email, r.plan,
-            new Date(r.created_at).toISOString()
-          ].join(','))
-        ].join('\n');
-        const blob = new Blob([csv], { type: 'text/csv' });
-        const a = document.createElement('a');
-        a.href = URL.createObjectURL(blob);
-        a.download = 'payments.csv';
-        a.click();
-      });
+    document.getElementById('export-payments').onclick = () => {
+      const data = paymentsTable.rows().data().toArray();
+      const csv = [
+        ['ID','Email','Plan','Date'].join(','),
+        ...data.map(r =>
+          [r.id, r.email, r.plan, new Date(r.created_at).toISOString()].join(',')
+        )
+      ].join('\n');
+      const blob = new Blob([csv],{type:'text/csv'});
+      const a = document.createElement('a');
+      a.href = URL.createObjectURL(blob);
+      a.download = 'payments.csv';
+      a.click();
+    };
 
     loadPayments();
 
     // — Payment Methods CRUD —
 
-    // Inject Method Modal once
+    // Inject Method Modal
     const modalHTML = `
       <div class="modal fade" id="methodModal">
         <div class="modal-dialog"><div class="modal-content glass p-4">
@@ -297,22 +276,10 @@
                   <option value="card">Card/Bank</option>
                 </select>
               </div>
-              <div class="mb-3">
-                <label>Code (for crypto)</label>
-                <input type="text" id="methodCode" class="form-control" placeholder="btc, eth…" />
-              </div>
-              <div class="mb-3">
-                <label>Name</label>
-                <input type="text" id="methodName" class="form-control" required />
-              </div>
-              <div class="mb-3">
-                <label>Details (address or URL)</label>
-                <textarea id="methodDetails" class="form-control" required></textarea>
-              </div>
-              <div class="mb-3">
-                <label>Order</label>
-                <input type="number" id="methodOrder" class="form-control" value="0" />
-              </div>
+              <div class="mb-3"><label>Code (for crypto)</label><input type="text" id="methodCode" class="form-control" placeholder="btc, eth…" /></div>
+              <div class="mb-3"><label>Name</label><input type="text" id="methodName" class="form-control" required /></div>
+              <div class="mb-3"><label>Details (address or URL)</label><textarea id="methodDetails" class="form-control" required></textarea></div>
+              <div class="mb-3"><label>Order</label><input type="number" id="methodOrder" class="form-control" value="0" /></div>
             </form>
           </div>
           <div class="modal-footer">
@@ -342,22 +309,22 @@
       methodModal.show();
     };
 
-    // Bind Add Method button
+    // Bind Add button
     $('#addMethodBtn').on('click', () => openMethodModal());
 
-    // Init Methods DataTable
+    // Methods DataTable
     const methodsTable = $('#methods-table').DataTable({
       ajax: (d, cb) => {
         client
           .from('payment_methods')
           .select('*')
-          .order('sort_order', { ascending: true })
-          .then(({ data: rows, error }) => {
+          .order('sort_order',{ ascending:true })
+          .then(({ data, error }) => {
             if (error) {
               showToast('Error loading methods', false);
               return cb({ data: [] });
             }
-            cb({ data: rows });
+            cb({ data });
           });
       },
       columns: [
@@ -367,20 +334,13 @@
         { data: 'name' },
         { data: 'details' },
         { data: 'sort_order' },
-        {
-          data: null,
-          render: (_,__,r) => `
-            <button class="btn btn-sm btn-warning btn-edit" data-id="${r.id}">
-              Edit
-            </button>
-            <button class="btn btn-sm btn-danger btn-delete" data-id="${r.id}">
-              Delete
-            </button>`
-        }
+        { data: null, render: (_,__,r) => `
+          <button class="btn btn-sm btn-warning btn-edit" data-id="${r.id}">Edit</button>
+          <button class="btn btn-sm btn-danger btn-delete" data-id="${r.id}">Delete</button>` }
       ]
     });
 
-    // Delegate edit & delete
+    // Delegate edit/delete
     $('#methods-table tbody')
       .on('click', '.btn-edit', e => openMethodModal(e.currentTarget.dataset.id))
       .on('click', '.btn-delete', async e => {
@@ -392,7 +352,7 @@
         methodsTable.ajax.reload();
       });
 
-    // Save Method
+    // Save method
     $('#saveMethodBtn').on('click', async () => {
       const id = +$('#methodId').val();
       const payload = {
@@ -405,7 +365,6 @@
       let res = id
         ? await client.from('payment_methods').update(payload).eq('id', id)
         : await client.from('payment_methods').insert([payload]);
-
       if (res.error) {
         showToast('Error saving', false);
       } else {
