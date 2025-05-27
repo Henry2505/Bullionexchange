@@ -173,18 +173,25 @@
 
     <!-- Three Charts: P&L, Win-Rate, User Status -->
     <div class="charts">
-      <canvas id="chart-pnl"    height="200"></canvas>
+      <canvas id="chart-pnl" height="200"></canvas>
       <canvas id="chart-winrate" height="200"></canvas>
-      <canvas id="chart-status"  height="200"></canvas>
+      <canvas id="chart-status" height="200"></canvas>
     </div>
   </main>
 
   <!-- SCRIPTS -->
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+  <!-- UMD Supabase JS -->
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
   <script>
+    // Initialize Supabase with anon public key
+    const SUPA_URL = 'https://dapwpgvnfjcfqqhrpxla.supabase.co';
+    const SUPA_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImRhcHdwZ3ZuZmpjZnFxaHJweGxhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDcwNDA4ODgsImV4cCI6MjA2MjYxNjg4OH0.ICC0UsLlzJDNre7rFCeD3k6iVzo6jOJgn3PhABpEMsQ';
+    const supabase = window.supabase.createClient(SUPA_URL, SUPA_ANON_KEY);
+
     document.addEventListener('DOMContentLoaded', () => {
-      // Redirect on logo click
+      // Logo redirect
       document.getElementById('logo').onclick = () => {
         window.location.href = 'admin-dashboard.html';
       };
@@ -197,15 +204,12 @@
         themeBtn.textContent = t === 'dark' ? '🌞' : '🌜';
       };
       themeBtn.addEventListener('click', () => {
-        const next = document.documentElement.getAttribute('data-theme') === 'dark' ? 'light' : 'dark';
-        setTheme(next);
+        setTheme(document.documentElement.getAttribute('data-theme') === 'dark' ? 'light' : 'dark');
       });
       setTheme(localStorage.getItem('theme') || 'dark');
 
-      // Clock
-      const clk = () => {
-        document.getElementById('current-datetime').textContent = new Date().toLocaleString();
-      };
+      // Live clock
+      const clk = () => document.getElementById('current-datetime').textContent = new Date().toLocaleString();
       clk(); setInterval(clk, 60000);
 
       // Nav toggle
@@ -222,25 +226,6 @@
         window.location.href = `admin-login.html?redirect=${cur}`;
       }
 
-      // Initialize Supabase
-      const supabase = window.supabase.createClient(
-        'https://dapwpgvnfjcfqqhrpxla.supabase.co',
-        'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImRhcHdwZ3ZuZmpjZnFxaHJweGxhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDcwNDA4ODgsImV4cCI6MjA2MjYxNjg4OH0.ICC0UsLlzJDNre7rFCeD3k6iVzo6jOJgn3PhABpEMsQ'
-      );
-
-      // Simple toast
-      function showToast(msg, ok=true) {
-        const t = document.createElement('div');
-        t.className = `toast align-items-center text-white ${ok?'bg-success':'bg-danger'} border-0 position-fixed top-0 end-0 m-3`;
-        t.innerHTML = `
-          <div class="d-flex">
-            <div class="toast-body">${msg}</div>
-            <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast"></button>
-          </div>`;
-        document.body.append(t);
-        new bootstrap.Toast(t, { delay: 3000 }).show();
-      }
-
       // Load stats & charts
       (async () => {
         try {
@@ -251,14 +236,14 @@
             { data: signals },
             { data: insights }
           ] = await Promise.all([
-            supabase.from('users').select('id', { count: 'exact', head: true }),
+            supabase.from('users').select('id', { head: true, count: 'exact' }),
             supabase.from('payments').select('id').eq('status','Pending'),
             supabase.from('trade_history').select('id'),
             supabase.from('signals').select('id'),
-            supabase.from('trade_insights').select('week_ending,pips').order('week_ending',{ascending:false}),
+            supabase.from('trade_insights').select('week_ending,pips').order('week_ending',{ ascending: false }),
           ]);
 
-          // Update stat cards with exact counts
+          // Update stats cards
           document.getElementById('stat-users').textContent    = usersCount;
           document.getElementById('stat-payments').textContent = payments.length;
           document.getElementById('stat-trades').textContent   = trades.length;
@@ -275,53 +260,48 @@
             handle:'.card-stat'
           });
 
-          // P&L line chart
+          // P&L Line Chart
           new Chart(document.getElementById('chart-pnl'), {
             type:'line',
             data:{
-              labels: insights.map(x=>new Date(x.week_ending).toLocaleDateString()),
-              datasets:[{
-                data: insights.map(x=>x.pips),
-                tension:0.4,
-                borderColor:'#ffd700',
-                backgroundColor:'rgba(255,215,0,0.2)'
-              }]
+              labels: insights.map(i => new Date(i.week_ending).toLocaleDateString()),
+              datasets:[{ data: insights.map(i => i.pips), tension:0.4, borderColor:'#ffd700', backgroundColor:'rgba(255,215,0,0.2)' }]
             },
             options:{ responsive:true, plugins:{ legend:{ display:false } } }
           });
 
-          // Win-rate bar chart
+          // Win-Rate Bar Chart
           new Chart(document.getElementById('chart-winrate'), {
             type:'bar',
             data:{
-              labels: insights.map(x=>new Date(x.week_ending).toLocaleDateString()),
-              datasets:[{
-                data: insights.map(x=> x.pips>0?100:0 ),
-                backgroundColor:'#1cc88a'
-              }]
+              labels: insights.map(i => new Date(i.week_ending).toLocaleDateString()),
+              datasets:[{ data: insights.map(i => i.pips>0?100:0) }]
             },
             options:{ responsive:true, plugins:{ legend:{ display:false } } }
           });
 
-          // User-status doughnut chart
-          const statusCounts = usersCount /* count-only query */ 
-            ? await (async () => {
-                // Fetch full user statuses for chart
-                const { data: allUsers } = await supabase.from('users').select('status');
-                return allUsers.reduce((acc,u)=>(acc[u.status]=(acc[u.status]||0)+1, acc), {});
-              })()
-            : {};
-          const labels = ['Active','Expired','Pending','Deleted'];
-          const data   = labels.map(l=> statusCounts[l]||0);
+          // User-Status Doughnut Chart
+          const { data: allUsers } = await supabase.from('users').select('status');
+          const statusCounts = allUsers.reduce((acc,u) => (acc[u.status] = (acc[u.status]||0)+1, acc), {});
           new Chart(document.getElementById('chart-status'), {
             type:'doughnut',
-            data:{ labels, datasets:[{ data }] },
+            data:{
+              labels:['Active','Expired','Pending','Deleted'],
+              datasets:[{ data:['Active','Expired','Pending','Deleted'].map(l => statusCounts[l]||0) }]
+            },
             options:{ responsive:true, plugins:{ legend:{ position:'bottom' } } }
           });
-
         } catch(err) {
-          console.error(err);
-          showToast('Error loading dashboard', false);
+          console.error('Error loading dashboard:', err);
+          const t = document.createElement('div');
+          t.className = 'toast align-items-center text-white bg-danger border-0 position-fixed top-0 end-0 m-3';
+          t.innerHTML = `
+            <div class="d-flex">
+              <div class="toast-body">Error loading dashboard</div>
+              <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast"></button>
+            </div>`;
+          document.body.append(t);
+          new bootstrap.Toast(t, { delay:3000 }).show();
         }
       })();
     });
