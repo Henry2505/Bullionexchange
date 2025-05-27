@@ -3,9 +3,9 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>CBE Admin – Payment Methods</title>
+  <title>CBE Admin – Payment Methods & Approvals</title>
 
-  <!-- AUTH GUARD: redirect if not logged in -->
+  <!-- AUTH GUARD -->
   <script>
     if (localStorage.getItem('isLoggedIn') !== 'true') {
       window.location.replace(
@@ -14,7 +14,7 @@
     }
   </script>
 
-  <!-- Google Font, Bootstrap & Icons -->
+  <!-- Fonts, Bootstrap & Icons -->
   <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700&display=swap" rel="stylesheet">
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
   <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css" rel="stylesheet">
@@ -46,8 +46,6 @@
       border-radius:8px;
     }
     a { color: var(--gold); text-decoration:none; }
-
-    /* Header */
     header.admin-header {
       display:flex; align-items:center; justify-content:space-between;
       padding:1rem 2rem; background:rgba(0,0,0,0.6);
@@ -60,35 +58,29 @@
       background:none; border:none; font-size:1.25rem;
       cursor:pointer; color:var(--text);
     }
-
-    /* Title */
-    #section-title {
-      color: var(--gold);
-      text-align:center;
-      margin:2rem 0 1rem;
-    }
-
-    /* Form panel */
+    #section-title { color: var(--gold); text-align:center; margin:2rem 0 1rem; }
     .panel { margin-bottom:2rem; }
-    form.glass {
-      border-radius:8px; padding:1.5rem; margin-bottom:1rem;
-    }
+    form.glass { border-radius:8px; padding:1.5rem; margin-bottom:1rem; }
     .form-row { display:flex; gap:1rem; flex-wrap:wrap; }
     .form-row > div { flex:1; min-width:150px; }
-
-    /* List */
     #methods-list .list-group-item {
-      background:var(--glass-bg);
-      border:1px solid rgba(255,215,0,0.2);
-      color:var(--text);
-      margin-bottom:.5rem;
-      border-radius:4px;
+      background:var(--glass-bg); border:1px solid rgba(255,215,0,0.2);
+      color:var(--text); margin-bottom:.5rem; border-radius:4px;
       display:flex; justify-content:space-between; align-items:center;
     }
     .method-info { flex-grow:1; }
     .method-actions button { margin-left:.5rem; }
-
-    /* Toast */
+    /* Payments table */
+    .payments-table {
+      background: var(--glass-bg);
+      color: var(--text);
+      border-radius:8px;
+      overflow-x:auto;
+    }
+    .payments-table table {
+      min-width: 700px;
+    }
+    .btn-approve { margin-right: .5rem; }
     .toast { z-index:99999 !important; }
   </style>
 </head>
@@ -102,8 +94,9 @@
   </header>
 
   <main class="container py-4">
-    <h2 id="section-title">Payment Methods</h2>
 
+    <!-- Payment Methods Panel -->
+    <h2 id="section-title">Payment Methods</h2>
     <div class="panel">
       <form id="method-form" class="glass">
         <div class="form-row">
@@ -122,16 +115,36 @@
           <div>
             <label class="form-label">Details</label>
             <input type="text" id="pm-details" class="form-control"
-              placeholder="card → https://…  |  crypto → USDT:0xAbCd…" required>
+              placeholder="card → https://…  |  crypto → address" required>
           </div>
           <div class="d-flex align-items-end">
             <button type="button" id="save-btn" class="btn btn-primary w-100">Save</button>
           </div>
         </div>
       </form>
-
       <ul class="list-group" id="methods-list"></ul>
     </div>
+
+    <!-- User Payments Panel -->
+    <h2 id="section-title">User Payments</h2>
+    <div class="payments-table glass p-3 mb-5">
+      <table class="table table-borderless text-white mb-0">
+        <thead>
+          <tr>
+            <th>Email</th>
+            <th>Plan</th>
+            <th>Method</th>
+            <th>Date</th>
+            <th>Status</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody id="payments-list">
+          <!-- filled by JS -->
+        </tbody>
+      </table>
+    </div>
+
   </main>
 
   <!-- Supabase UMD -->
@@ -149,6 +162,7 @@
     const detailsInp = document.getElementById('pm-details');
     const saveBtn    = document.getElementById('save-btn');
     const listGroup  = document.getElementById('methods-list');
+    const paymentsTbody = document.getElementById('payments-list');
     const logo       = document.getElementById('logo');
     const themeBtn   = document.getElementById('theme-toggle');
     let editId = null;
@@ -166,16 +180,14 @@
       new bootstrap.Toast(t, { delay: 3000 }).show();
     }
 
-    // Load all methods
+    // Load payment methods
     async function loadMethods() {
       const { data, error } = await supabase
         .from('payment_methods')
         .select('*')
         .order('id', { ascending: true });
-      if (error) {
-        console.error('Load error:', error);
-        return showToast('Failed to load methods', false);
-      }
+      if (error) return showToast('Failed to load methods', false);
+
       listGroup.innerHTML = '';
       data.forEach(m => {
         const li = document.createElement('li');
@@ -183,9 +195,9 @@
 
         const info = document.createElement('div');
         info.className = 'method-info';
-        let detTxt = m.type === 'card'
+        const detTxt = m.type === 'card'
           ? m.details.link
-          : `${m.details.code} → ${m.details.address}`;
+          : m.details.address;
         info.innerHTML = `<strong>${m.name}</strong> <em>(${m.type})</em><br><small>${detTxt}</small>`;
 
         const actions = document.createElement('div');
@@ -203,104 +215,113 @@
       });
     }
 
-    // Add or update method
+    // Load user payments
+    async function loadPayments() {
+      // fetch methods to map ids → names
+      const { data: methods } = await supabase.from('payment_methods').select('id,name');
+      const methodMap = {};
+      methods.forEach(m => { methodMap[m.id] = m.name });
+
+      const { data, error } = await supabase
+        .from('payments')
+        .select('*')
+        .order('created_at', { ascending: false });
+      if (error) return showToast('Failed to load payments', false);
+
+      paymentsTbody.innerHTML = '';
+      data.forEach(p => {
+        const tr = document.createElement('tr');
+        tr.innerHTML = `
+          <td>${p.email}</td>
+          <td>${p.plan}</td>
+          <td>${methodMap[p.method_id]||p.method_id}</td>
+          <td>${new Date(p.created_at).toLocaleString()}</td>
+          <td id="status-${p.id}">${p.status}</td>
+          <td>
+            <button class="btn btn-sm btn-success btn-approve" onclick="updatePayment(${p.id},'approved')">
+              Approve
+            </button>
+            <button class="btn btn-sm btn-danger" onclick="updatePayment(${p.id},'rejected')">
+              Reject
+            </button>
+          </td>`;
+        paymentsTbody.append(tr);
+      });
+    }
+
+    // Update payment status
+    async function updatePayment(id, newStatus) {
+      const { error } = await supabase
+        .from('payments')
+        .update({ status: newStatus })
+        .eq('id', id);
+      if (error) return showToast('Update failed', false);
+      document.getElementById(`status-${id}`).textContent = newStatus;
+      showToast(`Payment ${newStatus}`);
+    }
+
+    // Add or update method (unchanged)
     saveBtn.addEventListener('click', async () => {
       saveBtn.disabled = true;
-      const name    = nameInp.value.trim();
-      const type    = typeInp.value;
-      const raw     = detailsInp.value.trim();
+      const name  = nameInp.value.trim();
+      const type  = typeInp.value;
+      const raw   = detailsInp.value.trim();
       if (!name || !type || !raw) {
         showToast('All fields required', false);
         saveBtn.disabled = false;
         return;
       }
-
       let details = {};
       if (type === 'card') {
         details.link = raw;
       } else {
-        // split on ":" or "→"
-        const parts = raw.split(/\s*[:→]\s*/);
-        if (parts.length < 2) {
-          showToast('Crypto must be in format CODE:ADDRESS or CODE → ADDRESS', false);
-          saveBtn.disabled = false;
-          return;
-        }
-        details = { code: parts[0], address: parts[1] };
+        details.address = raw;
       }
-
       try {
-        let res;
-        if (editId) {
-          res = await supabase
-            .from('payment_methods')
-            .update({ name, type, details })
-            .eq('id', editId);
-        } else {
-          res = await supabase
-            .from('payment_methods')
-            .insert([{ name, type, details }]);
-        }
+        const opts = editId
+          ? supabase.from('payment_methods').update({ name, type, details }).eq('id', editId)
+          : supabase.from('payment_methods').insert([{ name, type, details }]);
+        const res = await opts;
         if (res.error) throw res.error;
         showToast(editId ? 'Updated' : 'Added');
         form.reset();
         editId = null;
         saveBtn.textContent = 'Save';
         loadMethods();
+        loadPayments();
       } catch(err) {
-        console.error('Save error:', err);
         showToast(err.message, false);
       } finally {
         saveBtn.disabled = false;
       }
     });
 
-    // Edit handler
-    window.onEdit = async (id) => {
-      const { data, error } = await supabase
-        .from('payment_methods')
-        .select('*')
-        .eq('id', id)
-        .single();
-      if (error) {
-        console.error('Fetch error:', error);
-        return showToast('Failed to load method', false);
-      }
+    window.onEdit = async id => {
+      const { data, error } = await supabase.from('payment_methods').select('*').eq('id',id).single();
+      if (error) return showToast('Failed to load method', false);
       editId = id;
       nameInp.value    = data.name;
       typeInp.value    = data.type;
-      if (data.type === 'card') {
-        detailsInp.value = data.details.link;
-      } else {
-        detailsInp.value = `${data.details.code}:${data.details.address}`;
-      }
+      detailsInp.value = data.type === 'card'
+        ? data.details.link
+        : data.details.address;
       saveBtn.textContent = 'Update';
     };
 
-    // Delete handler
-    window.onDelete = async (id) => {
+    window.onDelete = async id => {
       if (!confirm('Delete this method?')) return;
-      const { error } = await supabase
-        .from('payment_methods')
-        .delete()
-        .eq('id', id);
-      if (error) {
-        console.error('Delete error:', error);
-        return showToast('Delete failed', false);
-      }
+      const { error } = await supabase.from('payment_methods').delete().eq('id',id);
+      if (error) return showToast('Delete failed', false);
       showToast('Deleted');
-      if (editId === id) {
-        form.reset();
-        editId = null;
-        saveBtn.textContent = 'Save';
-      }
+      form.reset();
+      editId = null;
+      saveBtn.textContent = 'Save';
       loadMethods();
+      loadPayments();
     };
 
-    // Logo → Dashboard
+    // Navigation & theme
     logo.onclick = () => location.href = 'admin-dashboard.html';
-
-    // Theme toggle
     const applyTheme = t => {
       document.documentElement.setAttribute('data-theme', t);
       localStorage.setItem('theme', t);
@@ -313,6 +334,7 @@
 
     // Initial load
     loadMethods();
+    loadPayments();
   </script>
 
   <!-- Bootstrap JS -->
