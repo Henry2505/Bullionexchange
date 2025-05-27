@@ -170,23 +170,24 @@
       document.getElementById('logo').onclick = () => location.href='admin-dashboard.html';
       const themeBtn = document.getElementById('theme-toggle');
       const setTheme = t => {
-        document.documentElement.setAttribute('data-theme',t);
-        localStorage.setItem('theme',t);
-        themeBtn.textContent = t==='dark'?'🌞':'🌜';
+        document.documentElement.setAttribute('data-theme', t);
+        localStorage.setItem('theme', t);
+        themeBtn.textContent = t === 'dark' ? '🌞' : '🌜';
       };
-      themeBtn.onclick = ()=> setTheme(document.documentElement.getAttribute('data-theme')==='dark'?'light':'dark');
-      setTheme(localStorage.getItem('theme')||'dark');
+      themeBtn.onclick = () => setTheme(
+        document.documentElement.getAttribute('data-theme') === 'dark' ? 'light' : 'dark'
+      );
+      setTheme(localStorage.getItem('theme') || 'dark');
 
-      // Simple auth guard
-      if (localStorage.getItem('isLoggedIn')!=='true') {
-        location.href='admin-login.html?redirect=admin-trade-history.html';
+      // Auth guard (ensure only admins reach here)
+      if (localStorage.getItem('isLoggedIn') !== 'true') {
+        location.href = 'admin-login.html?redirect=admin-trade-history.html';
       }
 
-      // Supabase client
-      const supabase = window.supabase.createClient(
-        'https://dapwpgvnfjcfqqhrpxla.supabase.co',
-        'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImRhcHdwZ3ZuZmpjZnFxaHJweGxhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDcwNDA4ODgsImV4cCI6MjA2MjYxNjg4OH0.ICC0UsLlzJDNre7rFCeD3k6iVzo6jOJgn3PhABpEMsQ'
-      );
+      // Supabase client with Service Role key
+      const SUPA_URL    = 'https://dapwpgvnfjcfqqhrpxla.supabase.co';
+      const SERVICE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InNlcnZpY2VjZV9yb2xlIiwiaWF0IjoxNzQ3MDQwODg4LCJleHAiOjIwNjI2MTY4ODh9.Xe1EO_BbF0Rtmp2QpM5L-dwCCvXvcfMu5A_ieRCyp5U';
+      const supabase    = window.supabase.createClient(SUPA_URL, SERVICE_KEY);
 
       // Error banner helper
       function showError(msg) {
@@ -197,9 +198,9 @@
       }
 
       // Toast helper
-      function showToast(msg, ok=true) {
+      function showToast(msg, ok = true) {
         const toastEl = document.createElement('div');
-        toastEl.className = `toast align-items-center text-white ${ok?'bg-success':'bg-danger'} border-0 position-fixed top-0 end-0 m-3`;
+        toastEl.className = `toast align-items-center text-white ${ok ? 'bg-success' : 'bg-danger'} border-0 position-fixed top-0 end-0 m-3`;
         toastEl.innerHTML = `
           <div class="d-flex">
             <div class="toast-body">${msg}</div>
@@ -243,10 +244,9 @@
             .order('date', { ascending: false });
           if (error) throw error;
           table.clear().rows.add(data || []).draw();
-          console.log('Loaded', data.length, 'records');
         } catch (err) {
           console.error('Load error:', err);
-          showError('Error loading trade history: ' + (err.message||err));
+          showError('Error loading trade history: ' + (err.message || err));
         }
       }
 
@@ -265,7 +265,7 @@
           loadTradeHistory();
         } catch (err) {
           console.error('Delete error:', err);
-          showError('Failed to delete: ' + (err.message||err));
+          showError('Failed to delete: ' + (err.message || err));
         }
       });
 
@@ -338,10 +338,11 @@
           loadTradeHistory();
         } catch (err) {
           console.error('Upload error:', err);
-          showError('Upload failed: ' + (err.message||JSON.stringify(err)));
+          showError('Upload failed: ' + (err.message || JSON.stringify(err)));
         }
       };
 
+      // Initial load
       loadTradeHistory();
     });
   </script>
