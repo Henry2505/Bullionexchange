@@ -3,138 +3,168 @@
 <head>
   <meta charset="UTF-8"/>
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Login – CBE</title>
+  <title>Login • Chukwuemeka Bullion Exchange</title>
+  <meta name="description" content="Login to Chukwuemeka Bullion Exchange’s VIP trading community."/>
   <style>
+    :root[data-theme="dark"] {
+      --bg: #121212; --text: #f0f0f0; --gold: #d4af37; --gold-dark: #b3932b;
+      --glass-bg: rgba(30,30,30,0.6); --text-light: #bbbbbb; --text-muted: #888888;
+    }
+    :root[data-theme="light"] {
+      --bg: #fafafa; --text: #222222; --gold: #d4af37; --gold-dark: #b3932b;
+      --glass-bg: rgba(255,255,255,0.6); --text-light: #555555; --text-muted: #666666;
+    }
+    * { margin:0; padding:0; box-sizing:border-box; }
     body {
-      font-family: 'Poppins', sans-serif;
-      background: #000;
-      color: #fff;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      height: 100vh;
-      margin: 0;
+      font-family:'Roboto', sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      display:flex; align-items:center; justify-content:center;
+      min-height:100vh;
     }
     .login-card {
-      background: rgba(255,255,255,0.05);
-      padding: 2rem;
-      border-radius: 8px;
-      width: 320px;
-      box-shadow: 0 0 10px rgba(0,0,0,0.5);
+      width:100%; max-width:400px;
+      background: var(--glass-bg);
+      backdrop-filter:blur(8px);
+      padding:30px 25px;
+      border-radius:10px;
+      box-shadow:0 4px 30px rgba(0,0,0,0.5);
+      opacity:0; transform: translateY(20px);
+      transition:opacity .6s ease-out, transform .6s ease-out;
     }
-    .login-card h2 {
-      margin-bottom: 1rem;
-      color: #ffd700;
-      text-align: center;
+    .login-card.visible {
+      opacity:1; transform: translateY(0);
     }
-    .login-card label {
-      display: block;
-      margin: 0.5rem 0 0.25rem;
+    .login-card h1 {
+      font-family:'Playfair Display', serif;
+      font-size:1.8rem; color: var(--gold);
+      text-align:center; margin-bottom:20px;
     }
-    .login-card input {
-      width: 100%;
-      padding: 0.5rem;
-      border: 1px solid #444;
-      border-radius: 4px;
-      background: #111;
-      color: #fff;
+    form { display:flex; flex-direction:column; gap:15px; }
+    label { font-size:.95rem; color: var(--text-light); }
+    input {
+      padding:10px; border:none; border-radius:6px;
+      background:#1c1c1c; color:var(--text);
+      font-size:1rem;
     }
-    .login-card button {
-      margin-top: 1rem;
-      width: 100%;
-      padding: 0.75rem;
-      background: #ffd700;
-      border: none;
-      border-radius: 4px;
-      font-weight: bold;
-      cursor: pointer;
+    input:focus {
+      outline:none; box-shadow:0 0 6px var(--gold);
     }
-    .login-card button:hover {
-      background: #e6bd00;
+    button {
+      padding:12px; border:none; border-radius:6px;
+      background: var(--gold); color:#000;
+      font-weight:700; cursor:pointer;
+      transition:background .3s, box-shadow .3s;
+    }
+    button:hover {
+      background: var(--gold-dark);
+      box-shadow:0 0 12px var(--gold);
+    }
+    #login-alert {
+      margin-top:12px; text-align:center; font-weight:600;
+    }
+    .logo { position: fixed; top:20px; left:20px; }
+    .logo img { width:130px; }
+    #theme-toggle {
+      position: fixed; top:20px; right:20px;
+      background:none; border:none; font-size:1.4rem; color: var(--text); cursor:pointer;
+    }
+    footer {
+      position: fixed; bottom:20px; width:100%; text-align:center;
+      color: var(--text-muted); font-size:.85rem;
     }
   </style>
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700&family=Roboto:wght@300;400;700&display=swap" rel="stylesheet"/>
 </head>
 <body>
 
-  <div class="login-card">
-    <h2>CBE Login</h2>
-    <form id="loginForm" autocomplete="off">
-      <label for="email">Email</label>
+  <div class="logo">
+    <a href="Index.html"><img src="CBE_logo.PNG" alt="CBE Logo"/></a>
+  </div>
+  <button id="theme-toggle" aria-label="Toggle theme">🌞</button>
+
+  <div class="login-card" id="login-card">
+    <h1>Member Login</h1>
+    <form id="login-form">
+      <label for="email">Email Address</label>
       <input type="email" id="email" required/>
       <label for="password">Password</label>
       <input type="password" id="password" required/>
-      <button type="submit">Login</button>
+      <button type="submit">Log In</button>
     </form>
+    <div id="login-alert"></div>
   </div>
 
-  <script type="module">
-    import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm';
+  <footer>© 2025 Chukwuemeka Bullion Exchange. All rights reserved.</footer>
 
-    // ── Supabase config ─────────────────────────────────────────────────────────
-    const SUPA_URL = 'https://dapwpgvnfjcfqqhrpxla.supabase.co';
-    const SUPA_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImRhcHdwZ3ZuZmpjZnFxaHJweGxhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDcwNDA4ODgsImV4cCI6MjA2MjYxNjg4OH0.ICC0UsLlzJDNre7rFCeD3k6iVzo6jOJgn3PhABpEMsQ';
-    const supabase = createClient(SUPA_URL, SUPA_KEY, {
-      auth: { persistSession: true }
+  <!-- Supabase UMD -->
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js/dist/umd/supabase.js"></script>
+  <script>
+    // ── Init ────────────────────────────────────────────────────────────────────
+    const SUPA_URL     = 'https://dapwpgvnfjcfqqhrpxla.supabase.co';
+    const SUPA_ANON_KEY= 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImRhcHdwZ3ZuZmpjZnFxaHJweGxhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDcwNDA4ODgsImV4cCI6MjA2MjYxNjg4OH0.ICC0UsLlzJDNre7rFCeD3k6iVzo6jOJgn3PhABpEMsQ';
+    const sb = supabase.createClient(SUPA_URL, SUPA_ANON_KEY, { auth: { persistSession: true } });
+
+    // ── Slide-in ────────────────────────────────────────────────────────────────
+    window.addEventListener('DOMContentLoaded', () => {
+      document.getElementById('login-card').classList.add('visible');
+      // theme init
+      const saved = localStorage.getItem('theme') || 'dark';
+      document.documentElement.setAttribute('data-theme', saved);
+      document.getElementById('theme-toggle').textContent = saved==='dark' ? '🌞' : '🌜';
     });
 
-    // ── Login handler ──────────────────────────────────────────────────────────
-    document.getElementById('loginForm').addEventListener('submit', async e => {
+    // ── Theme toggle ────────────────────────────────────────────────────────────
+    document.getElementById('theme-toggle').addEventListener('click', () => {
+      const cur = document.documentElement.getAttribute('data-theme');
+      const next = cur==='dark' ? 'light' : 'dark';
+      document.documentElement.setAttribute('data-theme', next);
+      localStorage.setItem('theme', next);
+      document.getElementById('theme-toggle').textContent = next==='dark' ? '🌞' : '🌜';
+    });
+
+    // ── Login logic ─────────────────────────────────────────────────────────────
+    document.getElementById('login-form').addEventListener('submit', async e => {
       e.preventDefault();
-
-      const emailEl = document.getElementById('email');
-      const passwordEl = document.getElementById('password');
-      const email = emailEl.value.trim().toLowerCase();
-      const password = passwordEl.value;
+      const alertDiv = document.getElementById('login-alert');
+      alertDiv.textContent = '';
+      const email    = document.getElementById('email').value.trim().toLowerCase();
+      const password = document.getElementById('password').value;
       if (!email || !password) {
-        return alert('❌ Please fill in both email and password.');
+        alertDiv.style.color = 'crimson';
+        return alertDiv.textContent = 'Please enter both email and password.';
       }
 
-      let session;
       try {
-        // 1) Sign in
-        const { data: authData, error: authError } = await supabase.auth.signInWithPassword({ email, password });
-        console.log('signInWithPassword →', authData, authError);
+        // 1) Sign In
+        const { data: authData, error: authError } = await sb.auth.signInWithPassword({ email, password });
+        console.log('signIn →', authData, authError);
         if (authError) throw authError;
-        if (!authData.session) {
-          throw new Error('No session returned from Supabase.');
-        }
-        session = authData.session;
-      } catch (err) {
-        console.error('Login error:', err);
-        return alert('❌ Login failed: ' + (err.message || err));
-      }
+        if (!authData.session) throw new Error('No session returned.');
 
-      let userRow;
-      try {
-        // 2) Check approval in "users" table
-        const { data, error: rowError } = await supabase
+        // 2) Check approval status
+        const { data: userRow, error: rowError } = await sb
           .from('users')
           .select('status')
           .eq('email', email)
           .single();
-        console.log('users table lookup →', data, rowError);
+        console.log('lookup →', userRow, rowError);
         if (rowError) throw rowError;
-        if (!data || !data.status) {
-          throw new Error('No user record found for this email.');
+        if (!userRow || userRow.status.toLowerCase() !== 'approved') {
+          await sb.auth.signOut();
+          throw new Error('Your account is not yet approved by admin.');
         }
-        userRow = data;
+
+        // 3) Success!
+        sessionStorage.setItem('cbeLoggedIn', 'true');
+        window.location.href = 'vip-dashboard.html';
+
       } catch (err) {
-        console.error('User-row lookup error:', err);
-        await supabase.auth.signOut();
-        return alert('❌ Unable to verify account status: ' + (err.message || err));
+        console.error(err);
+        alertDiv.style.color = err.message.includes('approved') ? 'orange' : 'crimson';
+        alertDiv.textContent = err.message;
       }
-
-      // 3) Approved?
-      if (userRow.status.toLowerCase() !== 'approved') {
-        await supabase.auth.signOut();
-        return alert('⏳ Your account is not yet approved by admin. Please check back later.');
-      }
-
-      // 4) Success!
-      sessionStorage.setItem('cbeLoggedIn', 'true');
-      window.location.href = 'vip-dashboard.html';
     });
   </script>
-
 </body>
 </html>
