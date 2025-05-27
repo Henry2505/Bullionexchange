@@ -10,34 +10,87 @@
   <link href="https://cdn.datatables.net/1.13.4/css/dataTables.bootstrap5.min.css" rel="stylesheet"/>
 
   <style>
-    body { font-family:sans-serif; margin:0; }
-    header { background:#222; color:#fff; padding:1rem; display:flex; justify-content:space-between; align-items:center; }
-    main { padding:1rem; }
-    .warning { background: #ffdddd; color: #900; padding:0.75rem; border:1px solid #900; margin-bottom:1rem; }
-    #debug { font-family:monospace; white-space:pre-wrap; background:#f5f5f5; color:#000; padding:0.5rem; height:8rem; overflow:auto; border:1px solid #ccc; }
+    :root[data-theme="dark"] {
+      --bg: #0f2027;
+      --text: #fff;
+      --glass: rgba(255,255,255,0.05);
+    }
+    :root[data-theme="light"] {
+      --bg: #fafafa;
+      --text: #222;
+      --glass: rgba(0,0,0,0.05);
+    }
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: 'Poppins', sans-serif;
+      min-height: 100vh;
+      margin: 0;
+    }
+    header {
+      background: var(--bg);
+      padding: 1rem;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    #theme-toggle {
+      color: var(--text);
+      border: 1px solid var(--text);
+    }
+    main {
+      padding: 2rem;
+    }
+    .glass {
+      background: var(--glass);
+      backdrop-filter: blur(10px);
+      border-radius: 10px;
+      padding: 2rem;
+    }
+    .dataTables_wrapper .dataTables_filter input {
+      width: auto !important;
+      display: inline-block;
+    }
+    /* Lift the pagination buttons a bit */
+    .dataTables_wrapper .dataTables_paginate .paginate_button {
+      padding: 0.2rem 0.6rem;
+      margin-left: 0.2rem;
+    }
   </style>
 </head>
+
 <body>
   <header>
-    <h1>CBE Admin – Users</h1>
-    <button id="theme-toggle" class="btn btn-light btn-sm">Toggle Theme</button>
+    <h1 class="h4 mb-0">CBE Admin – User Management</h1>
+    <button id="theme-toggle" class="btn btn-sm btn-outline-light">Toggle Theme</button>
   </header>
-  <main>
-    <div id="banner" class="warning" style="display:none;"></div>
-    <table id="users-table" class="table table-striped">
-      <thead>
-        <tr>
-          <th>#</th><th>Email</th><th>Name</th><th>Password</th><th>Phone</th>
-          <th>Experience</th><th>Registered At</th><th>Status</th><th>Actions</th>
-        </tr>
-      </thead>
-      <tbody></tbody>
-    </table>
 
-    <h5>Debug Panel</h5>
-    <div>Origin: <code id="dbg-origin"></code></div>
-    <div>Request URL: <code id="dbg-url"></code></div>
-    <div id="debug"></div>
+  <main class="container">
+    <div class="glass">
+      <div class="d-flex justify-content-between align-items-center mb-3">
+        <h3 class="mb-0">User Applications</h3>
+        <input id="external-search" class="form-control w-auto" placeholder="Search users…">
+      </div>
+
+      <div class="table-responsive">
+        <table id="users-table" class="table table-hover table-borderless" style="width:100%">
+          <thead class="table-secondary" style="color: inherit;">
+            <tr>
+              <th>#</th>
+              <th>Email</th>
+              <th>Name</th>
+              <th>Password</th>
+              <th>Phone</th>
+              <th>Experience</th>
+              <th>Registered At</th>
+              <th>Status</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody></tbody>
+        </table>
+      </div>
+    </div>
   </main>
 
   <!-- Dependencies -->
@@ -48,86 +101,151 @@
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js/dist/umd/supabase.js"></script>
 
   <script>
-    (async () => {
-      // Auth guard
-      if (localStorage.getItem('isLoggedIn') !== 'true') {
-        location.href = `admin-login.html?redirect=${location.pathname.split('/').pop()}`;
-        return;
-      }
+  (async () => {
+    // 1. Auth guard
+    if (localStorage.getItem('isLoggedIn') !== 'true') {
+      const page = location.pathname.split('/').pop();
+      location.href = `admin-login.html?redirect=${page}`;
+      return;
+    }
 
-      // Theme toggle
-      const html = document.documentElement;
-      const btn = document.getElementById('theme-toggle');
-      const t = localStorage.getItem('theme') || 'dark';
-      html.setAttribute('data-theme', t);
-      btn.textContent = t==='dark'?'Light Mode':'Dark Mode';
-      btn.onclick = () => {
-        const next = html.getAttribute('data-theme')==='dark'?'light':'dark';
-        html.setAttribute('data-theme', next);
-        localStorage.setItem('theme', next);
-        btn.textContent = next==='dark'?'Light Mode':'Dark Mode';
-      };
+    // 2. Theme toggle
+    const html = document.documentElement;
+    const btn  = document.getElementById('theme-toggle');
+    const t    = localStorage.getItem('theme') || 'dark';
+    html.setAttribute('data-theme', t);
+    btn.textContent = t==='dark' ? 'Light Mode' : 'Dark Mode';
+    btn.onclick = () => {
+      const next = html.getAttribute('data-theme')==='dark' ? 'light' : 'dark';
+      html.setAttribute('data-theme', next);
+      localStorage.setItem('theme', next);
+      btn.textContent = next==='dark' ? 'Light Mode' : 'Dark Mode';
+    };
 
-      // Diagnostics elements
-      const dbgOrigin = document.getElementById('dbg-origin');
-      const dbgUrl    = document.getElementById('dbg-url');
-      const debugDiv  = document.getElementById('debug');
-      const banner    = document.getElementById('banner');
-      dbgOrigin.textContent = location.origin;
+    // 3. Supabase client
+    const URL = 'https://dapwpgvnfjcfqqhrpxla.supabase.co';
+    const KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImRhcHdwZ3ZuZmpjZnFxaHJweGxhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDcwNDA4ODgsImV4cCI6MjA2MjYxNjg4OH0.ICC0UsLlzJDNre7rFCeD3k6iVzo6jOJgn3PhABpEMsQ';
+    const sb = supabase.createClient(URL, KEY);
 
-      // Supabase client
-      const URL = 'https://dapwpgvnfjcfqqhrpxla.supabase.co';
-      const KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImRhcHdwZ3ZuZmpjZnFxaHJweGxhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDcwNDA4ODgsImV4cCI6MjA2MjYxNjg4OH0.ICC0UsLlzJDNre7rFCeD3k6iVzo6jOJgn3PhABpEMsQ';
-      const sb = supabase.createClient(URL, KEY);
+    // 4. Toast helper
+    function showToast(msg, success=true) {
+      const id  = 't'+Date.now();
+      const cls = success ? 'bg-success' : 'bg-danger';
+      const html= `
+      <div id="${id}" class="toast align-items-center text-white ${cls} border-0" role="alert">
+        <div class="d-flex">
+          <div class="toast-body">${msg}</div>
+          <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast"></button>
+        </div>
+      </div>`;
+      document.getElementById('users-table').insertAdjacentHTML('beforebegin', html);
+      const toastEl = document.getElementById(id);
+      new bootstrap.Toast(toastEl, { delay: 3000 }).show();
+    }
 
-      // DataTable init
-      const table = $('#users-table').DataTable({ paging:true, searching:true, columnDefs:[{ orderable:false, targets:8 }] });
+    // 5. DataTable init with custom dom
+    const table = $('#users-table').DataTable({
+      dom: `
+        <"d-flex justify-content-between mb-3"
+          <"col-auto"l>
+          <"col-auto"f>
+        >
+        rt
+        <"d-flex justify-content-between mt-3"
+          <"col-auto"i>
+          <"col-auto"p>
+        >`,
+      paging:   true,
+      searching:false,  // disable built-in search
+      columnDefs: [{ orderable:false, targets:8 }]
+    });
 
-      // Load users
-      const rqUrl = `${URL}/rest/v1/users?select=id,email,name,password,phone,experience,created_at,status&order=created_at.desc`;
-      dbgUrl.textContent = rqUrl;
+    // Hook external search input
+    $('#external-search').on('keyup', e => {
+      table.search(e.target.value).draw();
+    });
 
+    // 6. CRUD & load
+    async function loadUsers() {
       try {
-        debugDiv.textContent += `→ Fetching users...\n`;
-        // Low-level fetch so we see CORS or 4xx:
-        const resp = await fetch(rqUrl, {
-          headers: { apikey: KEY, Authorization: 'Bearer '+KEY }
-        });
-        debugDiv.textContent += `→ HTTP ${resp.status} ${resp.statusText}\n`;
-        if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
-        const data = await resp.json();
-        debugDiv.textContent += `→ Received ${data.length} rows\n${JSON.stringify(data, null, 2)}\n`;
+        const { data, error } = await sb
+          .from('users')
+          .select('id,email,name,password,phone,experience,created_at,status')
+          .order('created_at', { ascending:false });
+        if (error) throw error;
 
-        if (!data.length) {
-          banner.textContent = 'No users returned. Check your Allowed Origins and that RLS is disabled.';
-          banner.style.display = 'block';
-        }
-
-        // Populate DataTable
         table.clear();
         data.forEach((u,i) => {
           table.row.add([
-            i+1, u.email, u.name, u.password, u.phone,
-            u.experience, new Date(u.created_at).toLocaleDateString(),
+            i+1,
+            u.email,
+            u.name,
+            u.password,
+            u.phone,
+            u.experience,
+            new Date(u.created_at).toLocaleDateString(),
             u.status,
-            `<button class="btn btn-sm btn-danger" onclick="deleteUser('${u.id}')">Delete</button>`
+            actionButtons(u)
           ]);
         });
         table.draw();
-
       } catch (err) {
-        debugDiv.textContent += `‼️ Error: ${err.message}\n`;
-        banner.textContent = `Error loading users: ${err.message}`;
-        banner.style.display = 'block';
+        console.error(err);
+        showToast('Error loading users', false);
       }
+    }
 
-      // Simple delete for testing
-      window.deleteUser = async id => {
-        if (!confirm('Delete?')) return;
-        await sb.from('users').delete().eq('id', id);
-        location.reload();
-      };
-    })();
+    function actionButtons(u) {
+      const approveBtn = u.status==='Pending'
+        ? `<button class="btn btn-sm btn-success me-1" onclick="approve('${u.id}')">Approve</button>` 
+        : '';
+      return `
+        ${approveBtn}
+        <button class="btn btn-sm btn-warning me-1" onclick="reject('${u.id}')">Reject</button>
+        <button class="btn btn-sm btn-danger me-1" onclick="remove('${u.id}')">Delete</button>
+        <button class="btn btn-sm btn-primary" onclick="edit('${u.id}')">Edit</button>
+      `;
+    }
+
+    window.approve = async id => {
+      await sb.from('users').update({ status:'Approved' }).eq('id',id);
+      showToast('User approved');
+      loadUsers();
+    };
+    window.reject = async id => {
+      await sb.from('users').update({ status:'Rejected' }).eq('id',id);
+      showToast('User rejected');
+      loadUsers();
+    };
+    window.remove = async id => {
+      if (!confirm('Delete this user?')) return;
+      await sb.from('users').delete().eq('id',id);
+      showToast('User deleted');
+      loadUsers();
+    };
+    window.edit = async id => {
+      const { data, error } = await sb.from('users').select('*').eq('id',id).single();
+      if (error) return showToast('Error fetching user', false);
+
+      const name  = prompt('Name:', data.name);
+      const email = prompt('Email:', data.email);
+      const phone = prompt('Phone:', data.phone);
+      const exp   = prompt('Experience:', data.experience);
+      if (!name||!email) return;
+
+      const { error: upd } = await sb
+        .from('users')
+        .update({ name, email: email.toLowerCase(), phone, experience:exp })
+        .eq('id',id);
+      if (upd) return showToast('Error updating', false);
+
+      showToast('User updated');
+      loadUsers();
+    };
+
+    // initial
+    await loadUsers();
+  })();
   </script>
 </body>
 </html>
