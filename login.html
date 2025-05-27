@@ -68,51 +68,49 @@
   </div>
 
   <script type="module">
-    import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm';
+    import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.27.1/+esm';
 
     const SUPA_URL = 'https://dapwpgvnfjcfqqhrpxla.supabase.co';
     const SUPA_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9…';
+
+    // 1) Setup client with session persistence
     const supabase = createClient(SUPA_URL, SUPA_KEY, {
       auth: {
         persistSession: true,
-        detectSessionInUrl: true
+        detectSessionInUrl: false   // don't auto-grab tokens from URL here
       }
     });
 
-    // If already signed in, go straight to dashboard
-    supabase.auth.getSession().then(({ data:{ session } }) => {
-      if (session) window.location.replace('vip-dashboard.html');
-    });
-    supabase.auth.onAuthStateChange((_, session) => {
-      if (session) window.location.replace('vip-dashboard.html');
-    });
-
+    // 2) On submit, sign in then check approval
     document.getElementById('loginForm').addEventListener('submit', async e => {
       e.preventDefault();
       const email = document.getElementById('email').value.trim().toLowerCase();
       const password = document.getElementById('password').value;
 
+      // Sign in
       const { error: authError } = await supabase.auth.signInWithPassword({ email, password });
       if (authError) {
         return alert('❌ Login failed: ' + authError.message);
       }
 
-      const { data:userRow, error: rowError } = await supabase
+      // Approval check
+      const { data: userRow, error: rowError } = await supabase
         .from('users')
         .select('status')
         .eq('email', email)
         .single();
 
-      if (rowError || userRow.status !== 'Approved') {
+      if (rowError) {
         await supabase.auth.signOut();
-        return alert(
-          rowError
-            ? '❌ Unable to verify account status.'
-            : '⏳ Your account is not yet approved.'
-        );
+        return alert('❌ Could not verify approval status.');
+      }
+      if (userRow.status !== 'Approved') {
+        await supabase.auth.signOut();
+        return alert('⏳ Your account is not yet approved. Please wait for admin approval.');
       }
 
-      // onAuthStateChange will redirect you
+      // All good → redirect to your dashboard
+      window.location.replace('vip-dashboard.html');
     });
   </script>
 
