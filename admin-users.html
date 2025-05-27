@@ -3,67 +3,245 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Minimal CBE Admin</title>
+  <title>CBE Admin – User Management</title>
+
+  <!-- Google Fonts & Bootstrap CSS -->
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700&display=swap" rel="stylesheet" />
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet" />
+
+  <!-- DataTables CSS -->
+  <link href="https://cdn.datatables.net/1.13.4/css/dataTables.bootstrap5.min.css" rel="stylesheet" />
+
   <style>
-    body { font-family: sans-serif; background:#121212; color:#f0f0f0; padding:20px; }
-    table { width:100%; border-collapse: collapse; margin-top:20px; }
-    th, td { border:1px solid #444; padding:8px; }
-    th { background:#1e1e1e; }
+    body {
+      font-family: 'Poppins', sans-serif;
+      background: linear-gradient(to right, #0f2027, #203a43, #2c5364);
+      color: #fff;
+      min-height: 100vh;
+      margin: 0;
+    }
+    .glass {
+      background: rgba(255, 255, 255, 0.05);
+      backdrop-filter: blur(10px);
+      border-radius: 10px;
+    }
+    #header-logo {
+      cursor: pointer;
+      font-size: 1.25rem;
+      font-weight: bold;
+      color: #fff;
+    }
+    #toast-container {
+      position: fixed;
+      bottom: 1rem;
+      right: 1rem;
+      z-index: 1050;
+    }
+    .btn-outline-secondary {
+      color: #fff;
+      border-color: #fff;
+    }
+    .btn-outline-secondary:hover {
+      background-color: #fff;
+      color: #000;
+    }
+    .table td, .table th {
+      color: #fff;
+    }
+    table.dataTable thead th {
+      background: rgba(255, 255, 255, 0.1);
+    }
   </style>
 </head>
+
 <body>
-  <h1>Admin — User List</h1>
-  <button id="refresh">Refresh</button>
-  <pre id="debug"></pre>
-  <table id="user-table">
-    <thead>
-      <tr><th>#</th><th>Email</th><th>Name</th><th>Status</th><th>Registered At</th></tr>
-    </thead>
-    <tbody></tbody>
-  </table>
+  <!-- Toast container -->
+  <div id="toast-container"></div>
 
-  <!-- Supabase UMD -->
+  <div class="container py-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+      <div id="header-logo" onclick="location.href='admin-dashboard.html'">CBE Admin</div>
+      <button id="theme-toggle" class="btn btn-sm btn-outline-secondary">Light Mode</button>
+    </div>
+
+    <div class="glass p-4">
+      <h3 class="mb-3">Users Verification</h3>
+      <input id="user-search" class="form-control mb-3" placeholder="Search users…" />
+
+      <div class="table-responsive">
+        <table id="users-table" class="table table-hover" style="width: 100%;">
+          <thead>
+            <tr>
+              <th>#</th>
+              <th>Email</th>
+              <th>Name</th>
+              <th>Phone</th>
+              <th>Experience</th>
+              <th>Registered At</th>
+              <th>Status</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- JS dependencies -->
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+  <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+  <script src="https://cdn.datatables.net/1.13.4/js/jquery.dataTables.min.js"></script>
+  <script src="https://cdn.datatables.net/1.13.4/js/dataTables.bootstrap5.min.js"></script>
+
+  <!-- Supabase UMD build -->
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js/dist/umd/supabase.js"></script>
-  <script>
-    // 1) Initialize client
-    const sb = window.supabase.createClient(
-      'https://dapwpgvnfjcfqqhrpxla.supabase.co',
-      'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSI...ICC0UsLlzJDNre7rFCeD3k6iVzo6jOJgn3PhABpEMsQ'
-    );
 
-    async function fetchUsers() {
+  <script>
+    // 1. Auth guard (assuming login system exists)
+    if (localStorage.getItem('isLoggedIn') !== 'true') {
+      const page = window.location.pathname.split('/').pop();
+      window.location.href = `admin-login.html?redirect=${page}`;
+    }
+
+    // 2. Supabase client setup
+    const SUPABASE_URL = 'https://dapwpgvnfjcfqqhrpxla.supabase.co';
+    const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImRhcHdwZ3ZuZmpjZnFxaHJweGxhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDcwNDA4ODgsImV4cCI6MjA2MjYxNjg4OH0.ICC0UsLlzJDNre7rFCeD3k6iVzo6jOJgn3PhABpEMsQ';
+    const sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+    // 3. Toast notification helper
+    function showToast(msg, success = true) {
+      const id = 't' + Date.now();
+      $('#toast-container').append(`
+        <div id="${id}" class="toast align-items-center text-white ${success ? 'bg-success' : 'bg-danger'} border-0" role="alert">
+          <div class="d-flex">
+            <div class="toast-body">${msg}</div>
+            <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast"></button>
+          </div>
+        </div>
+      `);
+      new bootstrap.Toast(document.getElementById(id), { delay: 3000 }).show();
+    }
+
+    // 4. Theme toggle
+    const themeBtn = document.getElementById('theme-toggle');
+    themeBtn.addEventListener('click', () => {
+      const next = document.body.getAttribute('data-theme') === 'dark' ? 'light' : 'dark';
+      document.body.setAttribute('data-theme', next);
+      themeBtn.textContent = next === 'dark' ? 'Light Mode' : 'Dark Mode';
+    });
+
+    // 5. DataTable and CRUD operations
+    let table;
+    async function loadUsers() {
       try {
-        const res = await sb
+        const { data, error } = await sb
           .from('users')
           .select('*')
-          .order('id', { ascending: false });
-        console.log('Supabase response:', res);
-        document.getElementById('debug').textContent = JSON.stringify(res, null, 2);
+          .order('created_at', { ascending: false });
 
-        const tbody = document.querySelector('#user-table tbody');
-        tbody.innerHTML = '';
-        (res.data || []).forEach((u, i) => {
-          const tr = document.createElement('tr');
-          tr.innerHTML = `
-            <td>${i+1}</td>
-            <td>${u.email||''}</td>
-            <td>${u.name||''}</td>
-            <td>${u.status||''}</td>
-            <td>${u.created_at ? new Date(u.created_at).toLocaleString() : ''}</td>
-          `;
-          tbody.appendChild(tr);
+        if (error) throw error;
+
+        console.log('Retrieved data from Supabase:', data); // Debug: Check fetched data
+
+        table.clear();
+        data.forEach((u, i) => {
+          table.row.add([
+            i + 1,
+            u.email || '',
+            u.name || '',
+            u.phone || '',
+            u.experience || '',
+            u.created_at ? new Date(u.created_at).toLocaleDateString() : 'N/A',
+            u.status || 'Pending',
+            `
+              ${u.status === 'Pending' ? `<button class="btn btn-sm btn-success me-1" onclick="approveUser('${u.id}')">Approve</button>` : ''}
+              <button class="btn btn-sm btn-warning me-1" onclick="rejectUser('${u.id}')">Reject</button>
+              <button class="btn btn-sm btn-danger me-1" onclick="deleteUser('${u.id}')">Delete</button>
+              <button class="btn btn-sm btn-primary" onclick="editUser('${u.id}', '${u.name?.replace(/'/g, "\\'") || ''}', '${u.email?.replace(/'/g, "\\'") || ''}', '${u.phone?.replace(/'/g, "\\'") || ''}', '${u.experience?.replace(/'/g, "\\'") || ''}')">Edit</button>
+            `
+          ]);
         });
-        if (!res.data || res.data.length === 0) {
-          tbody.innerHTML = '<tr><td colspan="5" style="text-align:center">No users found</td></tr>';
-        }
+        table.draw();
       } catch (err) {
-        console.error('Fetch error:', err);
-        document.getElementById('debug').textContent = 'Error: ' + err.message;
+        console.error('loadUsers error:', err);
+        showToast('Error loading users', false);
       }
     }
 
-    document.getElementById('refresh').onclick = fetchUsers;
-    fetchUsers();
+    async function approveUser(id) {
+      try {
+        await sb.from('users').update({ status: 'Approved' }).eq('id', id);
+        showToast('User approved');
+        loadUsers();
+      } catch (e) {
+        console.error(e);
+        showToast('Error approving user', false);
+      }
+    }
+
+    async function rejectUser(id) {
+      try {
+        await sb.from('users').update({ status: 'Rejected' }).eq('id', id);
+        showToast('User rejected');
+        loadUsers();
+      } catch (e) {
+        console.error(e);
+        showToast('Error rejecting user', false);
+      }
+    }
+
+    async function deleteUser(id) {
+      if (!confirm('Delete this user?')) return;
+      try {
+        await sb.from('users').delete().eq('id', id);
+        showToast('User deleted');
+        loadUsers();
+      } catch (e) {
+        console.error(e);
+        showToast('Error deleting user', false);
+      }
+    }
+
+    async function editUser(id, currentName, currentEmail, currentPhone, currentExperience) {
+      const name = prompt('Enter new name:', currentName);
+      const email = prompt('Enter new email:', currentEmail);
+      const phone = prompt('Enter new phone:', currentPhone);
+      const experience = prompt('Enter new experience:', currentExperience);
+      if (name === null || email === null || phone === null || experience === null) return; // Cancelled
+      if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+        showToast('Invalid email format', false);
+        return;
+      }
+      try {
+        await sb
+          .from('users')
+          .update({
+            name: name.trim(),
+            email: email.trim().toLowerCase(),
+            phone: phone.trim(),
+            experience: experience.trim()
+          })
+          .eq('id', id);
+        showToast('User updated');
+        loadUsers();
+      } catch (e) {
+        console.error(e);
+        showToast('Error updating user', false);
+      }
+    }
+
+    $(document).ready(() => {
+      table = $('#users-table').DataTable({
+        paging: true,
+        searching: true,
+        columnDefs: [{ orderable: false, targets: 7 }] // Actions column
+      });
+
+      $('#user-search').on('keyup', () => table.search($('#user-search').val()).draw());
+
+      loadUsers(); // Initial load
+    });
   </script>
 </body>
 </html>
