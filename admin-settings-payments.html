@@ -3,10 +3,13 @@
 <head>
   <meta charset="UTF-8" /><meta name="viewport" content="width=device-width,initial-scale=1"/>
   <title>CBE Admin – Payments & Methods</title>
+
   <!-- Redirect if not logged in -->
   <script>
     if (localStorage.getItem('isLoggedIn') !== 'true') {
-      location.replace('admin-login.html?redirect=' + encodeURIComponent(location.pathname));
+      location.replace(
+        'admin-login.html?redirect=' + encodeURIComponent(location.pathname)
+      );
     }
   </script>
 
@@ -20,14 +23,15 @@
     .glass { background:rgba(255,255,255,0.05); backdrop-filter:blur(8px); }
     header { position:sticky; top:0; z-index:1000; }
     .btn-add { z-index:2000; }
+    .tab-pane { display:none; }
+    .tab-pane.active { display:block; }
   </style>
 </head>
 <body>
-
   <!-- Header -->
   <header class="glass d-flex justify-content-between align-items-center p-3">
     <div style="cursor:pointer" onclick="location.href='admin-dashboard.html'">
-      <img src="CBE_logo.PNG" alt="Logo" style="height:40px">
+      <img src="CBE_logo.PNG" alt="Logo" style="height:40px"/>
     </div>
     <button id="theme-toggle" class="btn btn-outline-light btn-sm">🌞</button>
   </header>
@@ -38,47 +42,44 @@
     <!-- Tabs -->
     <ul class="nav nav-tabs mb-3">
       <li class="nav-item">
-        <button class="nav-link active" data-bs-toggle="tab" data-bs-target="#payments">Payments</button>
+        <button class="nav-link active" data-target="payments">Payments</button>
       </li>
       <li class="nav-item">
-        <button class="nav-link" data-bs-toggle="tab" data-bs-target="#methods">Payment Methods</button>
+        <button class="nav-link" data-target="methods">Payment Methods</button>
       </li>
     </ul>
 
-    <div class="tab-content">
-      <!-- Payments -->
-      <div class="tab-pane fade show active glass p-3 mb-4" id="payments">
-        <button id="export-payments" class="btn btn-outline-light btn-sm mb-2">Export CSV</button>
-        <table id="payments-table" class="table table-dark table-striped w-100">
-          <thead><tr>
-            <th>#</th><th>Email</th><th>Plan</th><th>Date</th><th>Proof</th><th>Action</th>
-          </tr></thead>
-          <tbody></tbody>
-        </table>
-      </div>
+    <!-- Payments Tab -->
+    <div id="payments" class="tab-pane active glass p-3 mb-4">
+      <button id="export-payments" class="btn btn-outline-light btn-sm mb-2">Export CSV</button>
+      <table id="payments-table" class="table table-dark table-striped w-100">
+        <thead><tr>
+          <th>#</th><th>Email</th><th>Plan</th><th>Date</th><th>Proof</th><th>Action</th>
+        </tr></thead>
+        <tbody></tbody>
+      </table>
+    </div>
 
-      <!-- Methods -->
-      <div class="tab-pane fade glass p-3" id="methods">
-        <!-- NB: Bootstraps own toggle -->
-        <button 
-          class="btn btn-success btn-sm mb-2 btn-add" 
-          data-bs-toggle="modal" 
-          data-bs-target="#methodModal"
-        >
-          Add Payment Method
-        </button>
-
-        <table id="methods-table" class="table table-dark table-striped w-100">
-          <thead><tr>
-            <th>#</th><th>Type</th><th>Code</th><th>Name</th><th>Details</th><th>Order</th><th>Action</th>
-          </tr></thead>
-          <tbody></tbody>
-        </table>
-      </div>
+    <!-- Methods Tab -->
+    <div id="methods" class="tab-pane glass p-3">
+      <button 
+        class="btn btn-success btn-sm mb-2 btn-add" 
+        data-bs-toggle="modal" 
+        data-bs-target="#methodModal"
+      >
+        Add Payment Method
+      </button>
+      <table id="methods-table" class="table table-dark table-striped w-100">
+        <thead><tr>
+          <th>#</th><th>Type</th><th>Code</th><th>Name</th>
+          <th>Details</th><th>Order</th><th>Action</th>
+        </tr></thead>
+        <tbody></tbody>
+      </table>
     </div>
   </main>
 
-  <!-- Payment Method Modal -->
+  <!-- Add/Edit Method Modal -->
   <div class="modal fade" id="methodModal" tabindex="-1">
     <div class="modal-dialog">
       <div class="modal-content glass p-3">
@@ -88,7 +89,7 @@
         </div>
         <div class="modal-body">
           <form id="methodForm">
-            <input type="hidden" id="methodId" />
+            <input type="hidden" id="methodId"/>
             <div class="mb-2">
               <label class="form-label">Type</label>
               <select id="methodType" class="form-select">
@@ -97,7 +98,7 @@
               </select>
             </div>
             <div class="mb-2">
-              <label class="form-label">Code (crypto)</label>
+              <label class="form-label">Code (crypto only)</label>
               <input id="methodCode" class="form-control" placeholder="e.g. btc"/>
             </div>
             <div class="mb-2">
@@ -115,129 +116,174 @@
           </form>
         </div>
         <div class="modal-footer">
-          <button id="saveMethodBtn" class="btn btn-success">Save</button>
+          <button id="saveMethodBtn" type="button" class="btn btn-success">Save</button>
         </div>
       </div>
     </div>
   </div>
 
-  <!-- Dependencies -->
+  <!-- Screenshot Modal -->
+  <div class="modal fade" id="screenshotModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+      <div class="modal-content glass p-3">
+        <div class="modal-header">
+          <h5 class="modal-title">Proof Screenshot</h5>
+          <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+        </div>
+        <div class="modal-body text-center">
+          <img id="screenshot-img" src="" class="img-fluid"/>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Scripts -->
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/index.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
   <script src="https://cdn.datatables.net/1.13.4/js/jquery.dataTables.min.js"></script>
 
   <script>
   document.addEventListener('DOMContentLoaded', () => {
+    // Tab switching
+    document.querySelectorAll('.nav-link').forEach(btn => {
+      btn.onclick = () => {
+        document.querySelectorAll('.tab-pane').forEach(p => p.classList.remove('active'));
+        document.getElementById(btn.dataset.target).classList.add('active');
+        document.querySelectorAll('.nav-link').forEach(n=>n.classList.remove('active'));
+        btn.classList.add('active');
+      };
+    });
+
     // Theme toggle
     const tgl = document.getElementById('theme-toggle');
     tgl.onclick = () => {
       const curr = document.documentElement.getAttribute('data-theme');
-      const next = curr==='dark'?'light':'dark';
-      document.documentElement.setAttribute('data-theme',next);
-      localStorage.setItem('theme',next);
-      tgl.textContent = next==='dark'?'🌞':'🌜';
+      const next = curr === 'dark' ? 'light' : 'dark';
+      document.documentElement.setAttribute('data-theme', next);
+      localStorage.setItem('theme', next);
+      tgl.textContent = next === 'dark' ? '🌞' : '🌜';
     };
     tgl.textContent = (localStorage.getItem('theme')||'dark')==='dark'?'🌞':'🌜';
 
-    // Supabase client
+    // Initialize Supabase
     const client = Supabase.createClient(
       'https://dapwpgvnfjcfqqhrpxla.supabase.co',
       'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImRhcHdwZ3ZuZmpjZnFxaHJweGxhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDcwNDA4ODgsImV4cCI6MjA2MjYxNjg4OH0.ICC0UsLlzJDNre7rFCeD3k6iVzo6jOJgn3PhABpEMsQ'
     );
 
-    // Toast
-    function toast(msg, ok=true) {
-      const div = document.createElement('div');
-      div.className = `toast text-white ${ok?'bg-success':'bg-danger'} position-fixed top-0 end-0 m-3`;
-      div.innerHTML = `<div class="d-flex"><div class="toast-body">${msg}</div>
-        <button class="btn-close btn-close-white ms-auto m-2" data-bs-dismiss="toast"></button></div>`;
-      document.body.append(div);
-      new bootstrap.Toast(div,{delay:3000}).show();
+    // Toast helper
+    function toast(msg, ok=true){
+      const d = document.createElement('div');
+      d.className = `toast text-white ${ok?'bg-success':'bg-danger'} position-fixed top-0 end-0 m-3`;
+      d.innerHTML = `<div class="d-flex">
+        <div class="toast-body">${msg}</div>
+        <button class="btn-close btn-close-white ms-auto m-2" data-bs-dismiss="toast"></button>
+      </div>`;
+      document.body.append(d);
+      new bootstrap.Toast(d,{delay:3000}).show();
     }
 
-    // Payments table
-    const pt = $('#payments-table').DataTable({columns:[
-      {data:'id'},{data:'email'},{data:'plan'},
-      {data:'created_at',render:d=>new Date(d).toLocaleDateString()},
-      {data:'proof_url',render:u=>u?`<button class="btn btn-sm btn-info" onclick="viewScreenshot('${u}')">View</button>`:'—'},
-      {data:'status',render:(s,_,r)=>s==='Pending'?`<button class="btn btn-sm btn-primary" onclick="approvePayment('${r.id}')">Approve</button>`:'—'}
+    // Payments DataTable
+    const payTbl = $('#payments-table').DataTable({ columns: [
+      { data:'id' },{ data:'email' },{ data:'plan' },
+      { data:'created_at', render:v=>new Date(v).toLocaleDateString() },
+      { data:'proof_url', render:u=>u
+          ? `<button class="btn btn-sm btn-info" onclick="viewScreenshot('${u}')">View</button>`
+          : '—'
+      },
+      { data:'status', render:(s,_,r)=> s==='Pending'
+          ? `<button class="btn btn-sm btn-primary" onclick="approvePayment('${r.id}')">Approve</button>`
+          : '—'
+      }
     ]});
-    window.loadPayments = ()=> client
+    window.loadPayments = () => client
       .from('payments').select('*').order('created_at',{ascending:false})
-      .then(({data,e})=>e?(toast('Load error',false),pt.clear().draw()):pt.clear().rows.add(data).draw());
-    window.approvePayment = id=> client
+      .then(({ data, error }) => {
+        if (error) toast('Error loading payments',false);
+        else payTbl.clear().rows.add(data).draw();
+      });
+    window.approvePayment = id => client
       .from('payments').update({status:'Approved'}).eq('id',id)
-      .then(({e})=>e?toast('Approve error',false):(toast('Approved'),loadPayments()));
-    window.viewScreenshot = url=>{
-      document.getElementById('screenshot-img').src=url;
+      .then(({ error }) => {
+        if (error) toast('Error approving',false);
+        else { toast('Approved'); loadPayments(); }
+      });
+    window.viewScreenshot = url => {
+      document.getElementById('screenshot-img').src = url;
       new bootstrap.Modal(document.getElementById('screenshotModal')).show();
     };
-    document.getElementById('export-payments').onclick = ()=>{
-      const data = pt.rows().data().toArray();
-      const csv  = [
+    document.getElementById('export-payments').onclick = () => {
+      const rows = payTbl.rows().data().toArray();
+      const csv = [
         ['ID','Email','Plan','Date'].join(','),
-        ...data.map(r=>[r.id,r.email,r.plan,new Date(r.created_at).toISOString()].join(','))
+        ...rows.map(r=>[r.id,r.email,r.plan,new Date(r.created_at).toISOString()].join(','))
       ].join('\n');
-      const blob=new Blob([csv],{type:'text/csv'}),a=document.createElement('a');
-      a.href=URL.createObjectURL(blob);a.download='payments.csv';a.click();
+      const blob = new Blob([csv],{type:'text/csv'}), a=document.createElement('a');
+      a.href=URL.createObjectURL(blob); a.download='payments.csv'; a.click();
     };
     loadPayments();
 
-    // Methods table
-    const mt = $('#methods-table').DataTable({ajax:(_,cb)=>{
+    // Methods DataTable
+    const methTbl = $('#methods-table').DataTable({ ajax:(_,cb) => {
       client.from('payment_methods').select('*').order('sort_order',{ascending:true})
-        .then(({data,e})=>e?(toast('Methods load error',false),cb({data:[]})):cb({data}));
-    },columns:[
-      {data:'id'},{data:'type'},{data:'code',defaultContent:'—'},{data:'name'},
-      {data:'details'},{data:'sort_order'},
-      {data:null,render:(_,__,r)=>`
+        .then(({ data, error }) => {
+          if (error) toast('Error loading methods',false), cb({data:[]});
+          else cb({data});
+        });
+    }, columns: [
+      { data:'id' },{ data:'type' },{ data:'code', defaultContent:'—' },
+      { data:'name' },{ data:'details' },{ data:'sort_order' },
+      { data:null, render:(_,__,r)=>`
         <button class="btn btn-sm btn-warning btn-edit" data-id="${r.id}">Edit</button>
-        <button class="btn btn-sm btn-danger btn-delete" data-id="${r.id}">Delete</button>`}
-    ]});
+        <button class="btn btn-sm btn-danger btn-delete" data-id="${r.id}">Delete</button>`
+      }
+    ] });
 
-    // Modal reference
-    const modal = new bootstrap.Modal(document.getElementById('methodModal'));
+    // Modal instance
+    const methodModal = new bootstrap.Modal(document.getElementById('methodModal'));
 
-    // Edit/Delete delegation
-    document.getElementById('methods-table').addEventListener('click',async e=>{
-      if(e.target.matches('.btn-edit')){
-        const id=e.target.dataset.id;
-        const {data:[m],e} = await client.from('payment_methods').select('*').eq('id',id);
-        if(!e&&m){
+    // Delegate Edit/Delete on methods table
+    document.getElementById('methods-table').addEventListener('click', async e => {
+      if (e.target.matches('.btn-edit')) {
+        const id = e.target.dataset.id;
+        const { data:[m], error } = await client.from('payment_methods').select('*').eq('id',id);
+        if (!error && m) {
           document.getElementById('methodId').value    = m.id;
           document.getElementById('methodType').value  = m.type;
           document.getElementById('methodCode').value  = m.code||'';
           document.getElementById('methodName').value  = m.name;
           document.getElementById('methodDetails').value = m.details;
           document.getElementById('methodOrder').value = m.sort_order;
-          modal.show();
+          methodModal.show();
         }
-      } else if(e.target.matches('.btn-delete')){
-        if(!confirm('Remove?')) return;
-        const id=e.target.dataset.id;
-        const {error} = await client.from('payment_methods').delete().eq('id',id);
-        if(error) toast('Delete error',false);
-        else mt.ajax.reload();
+      }
+      if (e.target.matches('.btn-delete')) {
+        if (!confirm('Remove this method?')) return;
+        const id = e.target.dataset.id;
+        const { error } = await client.from('payment_methods').delete().eq('id',id);
+        if (error) toast('Error deleting',false);
+        else methTbl.ajax.reload();
       }
     });
 
-    // Save method
-    document.getElementById('saveMethodBtn').addEventListener('click',async ()=>{
-      const id=+document.getElementById('methodId').value;
-      const p={
-        type:document.getElementById('methodType').value,
-        code:document.getElementById('methodCode').value||null,
-        name:document.getElementById('methodName').value,
-        details:document.getElementById('methodDetails').value,
-        sort_order:+document.getElementById('methodOrder').value
+    // Save Method handler
+    document.getElementById('saveMethodBtn').addEventListener('click', async () => {
+      const id      = +document.getElementById('methodId').value;
+      const payload = {
+        type:       document.getElementById('methodType').value,
+        code:       document.getElementById('methodCode').value || null,
+        name:       document.getElementById('methodName').value,
+        details:    document.getElementById('methodDetails').value,
+        sort_order: +document.getElementById('methodOrder').value
       };
       let res = id
-        ? await client.from('payment_methods').update(p).eq('id',id)
-        : await client.from('payment_methods').insert([p]);
-      if(res.error) toast('Save error',false);
-      else {toast('Saved');mt.ajax.reload();modal.hide();}
+        ? await client.from('payment_methods').update(payload).eq('id',id)
+        : await client.from('payment_methods').insert([payload]);
+      if (res.error) toast('Error saving',false);
+      else { toast('Saved'); methTbl.ajax.reload(); methodModal.hide(); }
     });
-  });
+
+  }); // end DOMContentLoaded
   </script>
 </body>
 </html>
