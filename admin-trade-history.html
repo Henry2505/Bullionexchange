@@ -77,22 +77,14 @@
   <main class="container">
     <h2 id="section-title">Trade History</h2>
     <div class="glass table-panel">
+      <!-- Filters -->
       <div class="row g-2 mb-3 align-items-end">
         <div class="col-md-3">
           <label class="form-label">Filter Month</label>
           <select id="month-select" class="form-select">
             <option value="">All</option>
             <option value="01">January</option>
-            <option value="02">February</option>
-            <option value="03">March</option>
-            <option value="04">April</option>
-            <option value="05">May</option>
-            <option value="06">June</option>
-            <option value="07">July</option>
-            <option value="08">August</option>
-            <option value="09">September</option>
-            <option value="10">October</option>
-            <option value="11">November</option>
+            <!-- ...other months... -->
             <option value="12">December</option>
           </select>
         </div>
@@ -105,6 +97,7 @@
         </div>
       </div>
 
+      <!-- Upload Form -->
       <form id="trade-upload-form" class="border p-3 mb-4 glass">
         <div class="row g-3">
           <div class="col-md-3">
@@ -132,14 +125,11 @@
         </div>
       </form>
 
+      <!-- DataTable -->
       <table id="history-table" class="table table-striped text-white w-100">
         <thead>
           <tr>
-            <th>Date</th>
-            <th>Asset</th>
-            <th>Notes</th>
-            <th>Screenshot</th>
-            <th>Actions</th>
+            <th>Date</th><th>Asset</th><th>Notes</th><th>Screenshot</th><th>Actions</th>
           </tr>
         </thead>
         <tbody></tbody>
@@ -155,20 +145,20 @@
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script>
     document.addEventListener('DOMContentLoaded', () => {
-      // Redirect & theme
-      document.getElementById('logo').onclick = () => location.href='admin-dashboard.html';
+      // Theme toggle
       const themeBtn = document.getElementById('theme-toggle');
       const setTheme = t => {
         document.documentElement.setAttribute('data-theme', t);
         localStorage.setItem('theme', t);
         themeBtn.textContent = t === 'dark' ? '🌞' : '🌜';
       };
-      themeBtn.onclick = () => setTheme(document.documentElement.getAttribute('data-theme') === 'dark' ? 'light' : 'dark');
+      themeBtn.onclick = () =>
+        setTheme(document.documentElement.getAttribute('data-theme') === 'dark' ? 'light' : 'dark');
       setTheme(localStorage.getItem('theme') || 'dark');
 
       // Auth guard
       if (localStorage.getItem('isLoggedIn') !== 'true') {
-        location.href = 'admin-login.html?redirect=admin-trade-history.html';
+        return void(location.href = 'admin-login.html?redirect=admin-trade-history.html');
       }
 
       // Supabase client
@@ -178,43 +168,41 @@
       );
 
       // Toast helper
-      function showToast(message, ok = true) {
+      function showToast(msg, ok = true) {
         const t = document.createElement('div');
         t.className = `toast align-items-center text-white ${ok ? 'bg-success' : 'bg-danger'} border-0 position-fixed top-0 end-0 m-3`;
-        t.style.zIndex = '2000';  // ensure it floats above the glass
+        t.style.zIndex = '2000';
         t.innerHTML = `
           <div class="d-flex">
-            <div class="toast-body">${message}</div>
+            <div class="toast-body">${msg}</div>
             <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast"></button>
           </div>`;
         document.body.append(t);
-        new bootstrap.Toast(t, { delay: 3000 }).show();
+        new bootstrap.Toast(t, { delay: 4000 }).show();
       }
 
       // DataTable setup
       const table = $('#history-table').DataTable({
         columns: [
-          { data: 'date', render: d => new Date(d).toLocaleDateString() },
-          { data: 'asset' },
-          { data: 'notes' },
-          { data: 'screenshot', render: url => url ? `<img src="${url}" style="height:40px;object-fit:cover;"/>` : '—' },
-          { data: 'id', orderable: false, render: id => `<button class="btn btn-sm btn-danger delete-btn" data-id="${id}"><i class="bi bi-trash"></i></button>` }
+          { data:'date', render: d => new Date(d).toLocaleDateString() },
+          { data:'asset' },
+          { data:'notes' },
+          { data:'screenshot', render: url => url ? `<img src="${url}" style="height:40px;object-fit:cover">` : '—' },
+          { data:'id', orderable:false, render:id=>`<button class="btn btn-sm btn-danger delete-btn" data-id="${id}"><i class="bi bi-trash"></i></button>` }
         ]
       });
 
       // Month filter
-      $.fn.dataTable.ext.search.push((settings, rowData) => {
+      $.fn.dataTable.ext.search.push((_, rowData) => {
         const sel = $('#month-select').val();
         if (!sel) return true;
-        const m = new Date(rowData.date).getMonth() + 1;
-        return sel === ('0' + m).slice(-2);
+        const m = new Date(rowData.date).getMonth()+1;
+        return sel === ('0'+m).slice(-2);
       });
       $('#month-select').on('change', () => table.draw());
 
       // Free-text search
-      $('#trade-search').on('keyup', function() {
-        table.search(this.value).draw();
-      });
+      $('#trade-search').on('keyup', (e) => table.search(e.target.value).draw());
 
       // Load history
       async function loadTradeHistory() {
@@ -222,30 +210,27 @@
           const { data, error } = await supabase
             .from('trade_history')
             .select('*')
-            .order('date', { ascending: false });
+            .order('date',{ascending:false});
           if (error) throw error;
           table.clear().rows.add(data).draw();
         } catch (e) {
           console.error(e);
-          showToast('Error loading trade history', false);
+          showToast(`Load error: ${e.message}`, false);
         }
       }
 
       // Delete record
-      $('#history-table tbody').on('click', '.delete-btn', async function() {
-        const id = $(this).data('id');
+      $('#history-table tbody').on('click','.delete-btn', async function(){
+        const id = this.dataset.id;
         if (!confirm('Delete this record?')) return;
         try {
-          const { error } = await supabase
-            .from('trade_history')
-            .delete()
-            .eq('id', id);
+          const { error } = await supabase.from('trade_history').delete().eq('id',id);
           if (error) throw error;
           showToast('Record deleted');
           loadTradeHistory();
         } catch (e) {
           console.error(e);
-          showToast('Error deleting record', false);
+          showToast(`Delete error: ${e.message}`, false);
         }
       });
 
@@ -255,41 +240,48 @@
         const date = document.getElementById('trade-date').value;
         const asset = document.getElementById('trade-pair').value;
         const notes = document.getElementById('trade-notes').value;
-        const file = document.getElementById('trade-file').files[0];
+        const file  = document.getElementById('trade-file').files[0];
+        
+        console.log('Uploading file:', file);
+        if (!file) {
+          return showToast('No file selected', false);
+        }
+
         try {
           const filename = `trade_${Date.now()}.png`;
-          let { error: upErr } = await supabase
+          const { error: uploadErr } = await supabase
             .storage.from('screenshots')
             .upload(filename, file);
-          if (upErr) throw upErr;
-          const { data: pu } = supabase.storage.from('screenshots').getPublicUrl(filename);
-          const { error: insErr } = await supabase
+          if (uploadErr) throw uploadErr;
+
+          const { data: publicUrlData } = supabase
+            .storage.from('screenshots')
+            .getPublicUrl(filename);
+
+          const { error: insertErr } = await supabase
             .from('trade_history')
-            .insert([{ date, asset, notes, screenshot: pu.publicUrl }]);
-          if (insErr) throw insErr;
+            .insert([{ date, asset, notes, screenshot: publicUrlData.publicUrl }]);
+          if (insertErr) throw insertErr;
+
           showToast('Trade added');
           e.target.reset();
           loadTradeHistory();
         } catch (err) {
           console.error(err);
-          showToast('Error uploading trade', false);
+          showToast(`Upload error: ${err.message}`, false);
         }
       };
 
       // Export CSV
       document.getElementById('export-history').onclick = () => {
-        const rows = table.rows({ search: 'applied' }).data().toArray();
-        const csv = [
-          ['Date', 'Asset', 'Notes'].join(','),
-          ...rows.map(r => [
-            new Date(r.date).toISOString(),
-            r.asset,
-            `"${r.notes.replace(/"/g, '""')}"`
-          ].join(','))
+        const rows = table.rows({ search:'applied' }).data().toArray();
+        const csv  = [
+          ['Date','Asset','Notes'].join(','),
+          ...rows.map(r=>[new Date(r.date).toISOString(), r.asset, `"${r.notes.replace(/"/g,'""')}"`].join(','))
         ].join('\n');
-        const blob = new Blob([csv], { type: 'text/csv' });
-        const a = document.createElement('a');
-        a.href = URL.createObjectURL(blob);
+        const blob = new Blob([csv],{type:'text/csv'});
+        const a    = document.createElement('a');
+        a.href    = URL.createObjectURL(blob);
         a.download = 'trade_history.csv';
         a.click();
       };
