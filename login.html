@@ -101,20 +101,17 @@
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js/dist/umd/supabase.js"></script>
   <script>
     // ── Init ────────────────────────────────────────────────────────────────────
-    const SUPA_URL     = 'https://dapwpgvnfjcfqqhrpxla.supabase.co';
-    const SUPA_ANON_KEY= 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImRhcHdwZ3ZuZmpjZnFxaHJweGxhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDcwNDA4ODgsImV4cCI6MjA2MjYxNjg4OH0.ICC0UsLlzJDNre7rFCeD3k6iVzo6jOJgn3PhABpEMsQ';
-    const sb = supabase.createClient(SUPA_URL, SUPA_ANON_KEY, { auth: { persistSession: true } });
+    const SUPA_URL      = 'https://dapwpgvnfjcfqqhrpxla.supabase.co';
+    const SUPA_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImRhcHdwZ3ZuZmpjZnFxaHJweGxhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDcwNDA4ODgsImV4cCI6MjA2MjYxNjg4OH0.ICC0UsLlzJDNre7rFCeD3k6iVzo6jOJgn3PhABpEMsQ';
+    const sb = supabase.createClient(SUPA_URL, SUPA_ANON_KEY);
 
-    // ── Slide-in ────────────────────────────────────────────────────────────────
+    // ── Slide-in & Theme ─────────────────────────────────────────────────────────
     window.addEventListener('DOMContentLoaded', () => {
       document.getElementById('login-card').classList.add('visible');
-      // theme init
       const saved = localStorage.getItem('theme') || 'dark';
       document.documentElement.setAttribute('data-theme', saved);
       document.getElementById('theme-toggle').textContent = saved==='dark' ? '🌞' : '🌜';
     });
-
-    // ── Theme toggle ────────────────────────────────────────────────────────────
     document.getElementById('theme-toggle').addEventListener('click', () => {
       const cur = document.documentElement.getAttribute('data-theme');
       const next = cur==='dark' ? 'light' : 'dark';
@@ -123,11 +120,12 @@
       document.getElementById('theme-toggle').textContent = next==='dark' ? '🌞' : '🌜';
     });
 
-    // ── Login logic ─────────────────────────────────────────────────────────────
+    // ── Login via users table ────────────────────────────────────────────────────
     document.getElementById('login-form').addEventListener('submit', async e => {
       e.preventDefault();
       const alertDiv = document.getElementById('login-alert');
       alertDiv.textContent = '';
+
       const email    = document.getElementById('email').value.trim().toLowerCase();
       const password = document.getElementById('password').value;
       if (!email || !password) {
@@ -136,26 +134,25 @@
       }
 
       try {
-        // 1) Sign In
-        const { data: authData, error: authError } = await sb.auth.signInWithPassword({ email, password });
-        console.log('signIn →', authData, authError);
-        if (authError) throw authError;
-        if (!authData.session) throw new Error('No session returned.');
-
-        // 2) Check approval status
-        const { data: userRow, error: rowError } = await sb
+        // 1) Fetch the row from your users table
+        const { data: userRow, error } = await sb
           .from('users')
-          .select('status')
+          .select('password,status')
           .eq('email', email)
           .single();
-        console.log('lookup →', userRow, rowError);
-        if (rowError) throw rowError;
-        if (!userRow || userRow.status.toLowerCase() !== 'approved') {
-          await sb.auth.signOut();
+        if (error) throw error;
+
+        // 2) Check plaintext password match
+        if (userRow.password !== password) {
+          throw new Error('Invalid login credentials');
+        }
+
+        // 3) Check approval status
+        if (!userRow.status || userRow.status.toLowerCase() !== 'approved') {
           throw new Error('Your account is not yet approved by admin.');
         }
 
-        // 3) Success!
+        // 4) Success! Set your flag and redirect
         sessionStorage.setItem('cbeLoggedIn', 'true');
         window.location.href = 'vip-dashboard.html';
 
