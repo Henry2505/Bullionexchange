@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width,initial-scale=1" />
   <title>CBE Admin – Payment Methods</title>
 
-  <!-- AUTH GUARD: redirect if not logged in -->
+  <!-- AUTH GUARD -->
   <script>
     if (localStorage.getItem('isLoggedIn') !== 'true') {
       window.location.replace(
@@ -40,7 +40,7 @@
       --overlay: rgba(255,255,255,0.15);
     }
     * { margin:0; padding:0; box-sizing:border-box; }
-    body { font-family:'Poppins',sans-serif; background:var(--bg); color:var(--text); overflow-x:hidden; }
+    body { font-family:'Poppins',sans-serif; background:var(--bg); color:var(--text); }
     .overlay { position:fixed; top:0; left:0; width:100%; height:100%; background:var(--overlay); z-index:-1; }
     .glass { background:var(--glass-bg); backdrop-filter:blur(10px); border:1px solid rgba(255,215,0,0.2); border-radius:8px; }
 
@@ -54,7 +54,7 @@
     .logo img { height:40px; }
     #theme-toggle { background:none; border:none; font-size:1.25rem; cursor:pointer; color:var(--text); }
 
-    main.container { padding-top:2rem; }
+    main.container { padding:2rem 1rem; }
     #section-title { color:var(--gold); text-align:center; margin-bottom:1.5rem; }
     .panel { margin-bottom:2rem; }
     form.glass { padding:1.5rem; }
@@ -76,9 +76,7 @@
 
   <!-- Header -->
   <header class="admin-header glass">
-    <div class="logo" id="logo">
-      <img src="CBE_logo.PNG" alt="CBE Logo"/>
-    </div>
+    <div class="logo" id="logo"><img src="CBE_logo.PNG" alt="CBE Logo"/></div>
     <button id="theme-toggle" aria-label="Toggle theme">🌞</button>
   </header>
 
@@ -88,7 +86,7 @@
     <div class="panel">
       <div class="glass mb-4">
         <h4 class="px-3 pt-3">Add / Edit Method</h4>
-        <form id="method-form" class="border-top p-3 glass">
+        <form id="method-form" class="border-top p-3 glass" onsubmit="return false;">
           <div class="row g-3">
             <div class="col-md-4">
               <label class="form-label">Name</label>
@@ -108,7 +106,8 @@
                 placeholder="card → https://…   |   crypto → BTC:1A2b…" required>
             </div>
             <div class="col-12 text-end">
-              <button type="submit" id="save-btn" class="btn btn-primary">Save</button>
+              <!-- changed to type="button" -->
+              <button type="button" id="save-btn" class="btn btn-primary">Save</button>
             </div>
           </div>
         </form>
@@ -127,9 +126,7 @@
   <script>
     document.addEventListener('DOMContentLoaded', () => {
       // Logo → Dashboard
-      document.getElementById('logo').onclick = () => {
-        location.href = 'admin-dashboard.html';
-      };
+      document.getElementById('logo').onclick = () => location.href = 'admin-dashboard.html';
 
       // Theme toggle
       const themeBtn = document.getElementById('theme-toggle');
@@ -138,15 +135,13 @@
         localStorage.setItem('theme', t);
         themeBtn.textContent = t === 'dark' ? '🌞' : '🌜';
       };
-      themeBtn.onclick = () => applyTheme(
-        document.documentElement.getAttribute('data-theme') === 'dark' ? 'light' : 'dark'
-      );
+      themeBtn.onclick = () => applyTheme(document.documentElement.getAttribute('data-theme') === 'dark' ? 'light' : 'dark');
       applyTheme(localStorage.getItem('theme') || 'dark');
 
-      // Supabase client
+      // Supabase client with your credentials
       const supabase = supabase.createClient(
         'https://dapwpgvnfjcfqqhrpxla.supabase.co',
-        'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImRhcHdwZ3ZuZmpjZnFxaHJweGxhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDcwNDA4ODgsImV4cCI6MjA2MjYxNjg4OH0.ICC0UsLlzJDNre7rFCeD3k6iVzo6jOJgn3PhABpEMsQ'
+        'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhZ…YOUR_FULL_KEY_HERE…EMsQ'
       );
 
       // Toast helper
@@ -156,29 +151,25 @@
         t.innerHTML = `
           <div class="d-flex">
             <div class="toast-body">${msg}</div>
-            <button type="button" class="btn-close btn-close-white me-2 m-auto"
-              data-bs-dismiss="toast"></button>
+            <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast"></button>
           </div>`;
         document.body.append(t);
         new bootstrap.Toast(t, { delay: 3000 }).show();
       }
 
-      // Form & list elements
-      const form       = document.getElementById('method-form');
+      // Elements
       const nameInp    = document.getElementById('pm-name');
       const typeInp    = document.getElementById('pm-type');
       const detailsInp = document.getElementById('pm-details');
       const saveBtn    = document.getElementById('save-btn');
       const listGroup  = document.getElementById('methods-list');
-
       let editId = null;
 
-      // Load and render all methods
+      // Load list
       async function loadMethods() {
         const { data, error } = await supabase
           .from('payment_methods')
-          .select('*')
-          .order('id', { ascending: true });
+          .select('*').order('id');
         if (error) return showToast('Load failed: ' + error.message, false);
 
         listGroup.innerHTML = '';
@@ -186,18 +177,13 @@
           const li = document.createElement('li');
           li.className = 'list-group-item';
 
-          // Info
           const info = document.createElement('div');
           info.className = 'method-info';
-          let detTxt = '';
-          if (m.type === 'card') {
-            detTxt = m.details.link;
-          } else {
-            detTxt = `${m.details.code} → ${m.details.address}`;
-          }
+          const detTxt = m.type === 'card'
+            ? m.details.link
+            : `${m.details.code} → ${m.details.address}`;
           info.innerHTML = `<strong>${m.name}</strong> <em>(${m.type})</em><br><small>${detTxt}</small>`;
 
-          // Actions
           const actions = document.createElement('div');
           actions.className = 'method-actions';
           actions.innerHTML = `
@@ -213,50 +199,41 @@
         });
       }
 
-      // Edit handler
-      window.onEdit = async (id) => {
-        const { data, error } = await supabase
-          .from('payment_methods')
-          .select('*').eq('id', id).single();
+      // Edit
+      window.onEdit = async id => {
+        const { data, error } = await supabase.from('payment_methods').select('*').eq('id', id).single();
         if (error) return showToast('Fetch failed: ' + error.message, false);
-
         editId = id;
-        nameInp.value    = data.name;
-        typeInp.value    = data.type;
-        if (data.type === 'card') {
-          detailsInp.value = data.details.link;
-        } else {
-          detailsInp.value = `${data.details.code}:${data.details.address}`;
-        }
+        nameInp.value = data.name;
+        typeInp.value = data.type;
+        detailsInp.value = data.type === 'card'
+          ? data.details.link
+          : `${data.details.code}:${data.details.address}`;
         saveBtn.textContent = 'Update';
       };
 
-      // Delete handler
-      window.onDelete = async (id) => {
+      // Delete
+      window.onDelete = async id => {
         if (!confirm('Delete this method?')) return;
-        const { error } = await supabase
-          .from('payment_methods')
-          .delete().eq('id', id);
+        const { error } = await supabase.from('payment_methods').delete().eq('id', id);
         if (error) return showToast('Delete failed: ' + error.message, false);
         showToast('Deleted');
         if (editId === id) {
           editId = null;
-          form.reset();
+          document.getElementById('method-form').reset();
           saveBtn.textContent = 'Save';
         }
         loadMethods();
       };
 
-      // Form submit → add/update
-      form.addEventListener('submit', async e => {
-        e.preventDefault();
+      // Save (Add or Update)
+      saveBtn.addEventListener('click', async () => {
         saveBtn.disabled = true;
-
-        const name    = nameInp.value.trim();
-        const type    = typeInp.value;
-        const raw     = detailsInp.value.trim();
+        const name = nameInp.value.trim();
+        const type = typeInp.value;
+        const raw  = detailsInp.value.trim();
         if (!name || !type || !raw) {
-          showToast('All fields are required', false);
+          showToast('All fields required', false);
           saveBtn.disabled = false;
           return;
         }
@@ -285,11 +262,12 @@
             .from('payment_methods')
             .insert([{ name, type, details }]);
         }
+
         if (res.error) {
           showToast('Save failed: ' + res.error.message, false);
         } else {
           showToast(editId ? 'Updated' : 'Added');
-          form.reset();
+          document.getElementById('method-form').reset();
           editId = null;
           saveBtn.textContent = 'Save';
           loadMethods();
