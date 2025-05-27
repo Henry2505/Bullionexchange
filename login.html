@@ -9,30 +9,49 @@
       font-family: 'Poppins', sans-serif;
       background: #000;
       color: #fff;
-      display: flex; align-items: center; justify-content: center;
-      height: 100vh; margin: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      height: 100vh;
+      margin: 0;
     }
     .login-card {
       background: rgba(255,255,255,0.05);
-      padding: 2rem; border-radius: 8px; width: 320px;
+      padding: 2rem;
+      border-radius: 8px;
+      width: 320px;
       box-shadow: 0 0 10px rgba(0,0,0,0.5);
     }
     .login-card h2 {
-      margin-bottom: 1rem; color: #ffd700; text-align: center;
+      margin-bottom: 1rem;
+      color: #ffd700;
+      text-align: center;
     }
     .login-card label {
-      display: block; margin: 0.5rem 0 0.25rem;
+      display: block;
+      margin: 0.5rem 0 0.25rem;
     }
     .login-card input {
-      width: 100%; padding: 0.5rem; border: 1px solid #444;
-      border-radius: 4px; background: #111; color: #fff;
+      width: 100%;
+      padding: 0.5rem;
+      border: 1px solid #444;
+      border-radius: 4px;
+      background: #111;
+      color: #fff;
     }
     .login-card button {
-      margin-top: 1rem; width: 100%; padding: 0.75rem;
-      background: #ffd700; border: none; border-radius: 4px;
-      font-weight: bold; cursor: pointer;
+      margin-top: 1rem;
+      width: 100%;
+      padding: 0.75rem;
+      background: #ffd700;
+      border: none;
+      border-radius: 4px;
+      font-weight: bold;
+      cursor: pointer;
     }
-    .login-card button:hover { background: #e6bd00; }
+    .login-card button:hover {
+      background: #e6bd00;
+    }
   </style>
 </head>
 <body>
@@ -41,65 +60,59 @@
     <h2>CBE Login</h2>
     <form id="loginForm" autocomplete="off">
       <label for="email">Email</label>
-      <input type="email" id="email" required />
+      <input type="email" id="email" required/>
       <label for="password">Password</label>
-      <input type="password" id="password" required />
+      <input type="password" id="password" required/>
       <button type="submit">Login</button>
     </form>
   </div>
 
   <script type="module">
-    import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.27.1/+esm';
+    import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm';
 
-    // 1) Initialize Supabase with session persistence
+    // Supabase config
     const SUPA_URL = 'https://dapwpgvnfjcfqqhrpxla.supabase.co';
-    const SUPA_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9…';
-    const supabase = createClient(SUPA_URL, SUPA_KEY, {
-      auth: {
-        persistSession: true,
-        detectSessionInUrl: false
-      }
-    });
+    const SUPA_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImRhcHdwZ3ZuZmpjZnFxaHJweGxhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDcwNDA4ODgsImV4cCI6MjA2MjYxNjg4OH0.ICC0UsLlzJDNre7rFCeD3k6iVzo6jOJgn3PhABpEMsQ';
+    const supabase = createClient(SUPA_URL, SUPA_KEY);
 
-    // 2) Handle form submit
     document.getElementById('loginForm').addEventListener('submit', async e => {
       e.preventDefault();
 
-      const email    = document.getElementById('email').value.trim().toLowerCase();
+      const email = document.getElementById('email').value.trim().toLowerCase();
       const password = document.getElementById('password').value;
 
-      // 2a) Sign in and get back session & user
-      const { data: authData, error: authError } = await supabase.auth.signInWithPassword({
-        email, password
-      });
+      if (!email || !password) {
+        return alert('❌ Please fill in both email and password.');
+      }
+
+      // 1) Sign in
+      const { data: authData, error: authError } = await supabase.auth.signInWithPassword({ email, password });
       if (authError) {
         return alert('❌ Login failed: ' + authError.message);
       }
-      const user = authData.user;
-      if (!user) {
-        return alert('❌ Unexpected error: no user returned.');
-      }
 
-      // 2b) Check your approval status by user ID
+      // 2) Check approval status in "users" table
       const { data: userRow, error: rowError } = await supabase
         .from('users')
         .select('status')
-        .eq('id', user.id)
+        .eq('email', email)
         .single();
 
       if (rowError) {
-        // if we couldn’t read your status, sign you out
+        // Something went wrong—sign out and alert
         await supabase.auth.signOut();
-        return alert('❌ Could not verify approval status. Please try again.');
+        return alert('❌ Unable to verify account status.');
       }
+
       if (userRow.status !== 'Approved') {
-        // not approved yet—sign out and inform
+        // Not yet approved—sign out and inform
         await supabase.auth.signOut();
         return alert('⏳ Your account is not yet approved by admin. Please check back later.');
       }
 
-      // 2c) Approved! Redirect to VIP Dashboard
-      window.location.replace('vip-dashboard.html');
+      // 3) Approved! Store a flag and redirect
+      sessionStorage.setItem('cbeLoggedIn', 'true');
+      window.location.href = 'vip-dashboard.html';
     });
   </script>
 
