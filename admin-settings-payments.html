@@ -219,13 +219,14 @@
       if (type === 'card') {
         details.link = raw;
       } else {
-        const [code, address] = raw.split(':');
-        if (!code || !address) {
-          showToast('Crypto must be code:address', false);
+        // split on ":" or "→"
+        const parts = raw.split(/\s*[:→]\s*/);
+        if (parts.length < 2) {
+          showToast('Crypto must be in format CODE:ADDRESS or CODE → ADDRESS', false);
           saveBtn.disabled = false;
           return;
         }
-        details = { code, address };
+        details = { code: parts[0], address: parts[1] };
       }
 
       try {
