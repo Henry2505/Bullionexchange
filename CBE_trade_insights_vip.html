@@ -1,12 +1,10 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" data-theme="dark">
 <head>
   <meta charset="utf-8"/>
   <meta name="viewport" content="width=device-width,initial-scale=1.0"/>
   <title>Trade Insights • CBE VIP</title>
   <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;500;700&display=swap" rel="stylesheet"/>
-  <!-- Supabase JavaScript Client -->
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js"></script>
   <style>
     /* Disable selection & right-click globally */
     * {
@@ -63,37 +61,22 @@
     }
     /* Insight card */
     .insight-card {
-      position:relative;
-      background:#1a1a1a; border-radius:10px;
-      overflow:hidden; box-shadow:0 0 12px rgba(0,0,0,0.5);
-      display:flex; flex-direction:column;
-    }
-    .insight-card img {
-      width:100%; height:auto;
-      display:block;
-      pointer-events:none;             /* disable pointer events */
-      -webkit-user-drag:none;          /* disable drag in WebKit */
-      user-drag:none;                  /* non-standard but some browsers */
-    }
-    /* Transparent overlay to block saving */
-    .insight-card .img-blocker {
-      position:absolute; top:0; left:0;
-      width:100%; height:auto;
-      padding-bottom: calc( (100% * var(--img-height)) / var(--img-width) );
-      /* preserve aspect ratio if needed */
-      z-index:1;
-    }
-    .insight-content {
-      position:relative; z-index:2;
-      padding:16px; flex:1;
-      display:flex; flex-direction:column;
+      background:#1a1a1a;
+      border-radius:10px;
+      box-shadow:0 0 12px rgba(0,0,0,0.5);
+      padding:20px;
+      display:flex;
+      flex-direction:column;
     }
     .insight-date {
       font-size:14px; color:#999; margin-bottom:8px;
     }
+    .insight-pips {
+      font-size:18px; color:#fff; margin-bottom:12px;
+    }
     .insight-note {
       flex:1; font-size:16px; color:#eee;
-      line-height:1.4; margin-bottom:12px;
+      line-height:1.4;
     }
     /* Footer */
     footer {
@@ -132,36 +115,30 @@
     © 2025 CBE – Chukwuemeka Bullion Exchange. All rights reserved.
   </footer>
 
+  <!-- Supabase JS v2 -->
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script>
-    // Supabase Initialization
+    // Initialize Supabase (same URL & anon key as your admin page)
     const SUPABASE_URL = 'https://dapwpgvnfjcfqqhrpxla.supabase.co';
     const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImRhcHdwZ3ZuZmpjZnFxaHJweGxhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDcwNDA4ODgsImV4cCI6MjA2MjYxNjg4OH0.ICC0UsLlzJDNre7rFCeD3k6iVzo6jOJgn3PhABpEMsQ';
-    const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+    const supabase = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
-    // Function to load trade insights from Supabase
+    // Load published insights
     async function loadTradeInsights() {
-      try {
-        const { data, error } = await supabase
-          .from('trade_insights')
-          .select('*')
-          .order('date', { ascending: false }); // Show recent first
-        if (error) throw error;
-        return data;
-      } catch (error) {
+      const { data, error } = await supabase
+        .from('trade_insights')
+        .select('week_ending, pips, note')
+        .order('week_ending', { ascending: false });
+      if (error) {
         console.error('Error fetching trade insights:', error);
-        return null;
+        return [];
       }
+      return data;
     }
 
-    // DOMContentLoaded event listener
     document.addEventListener('DOMContentLoaded', async () => {
       const container = document.getElementById('insightsContainer');
       const insights = await loadTradeInsights();
-
-      if (!insights) {
-        container.innerHTML = '<p class="notice">Failed to load trade insights.</p>';
-        return;
-      }
 
       if (insights.length === 0) {
         container.innerHTML = '<p class="notice">No trade insights available yet.</p>';
@@ -169,31 +146,13 @@
       }
 
       insights.forEach(item => {
-        // Create card
         const card = document.createElement('div');
         card.className = 'insight-card';
-
-        // Image
-        const img = document.createElement('img');
-        img.src = item.image;
-        img.alt = `Insight ${item.date}`;
-        img.draggable = false;
-
-        // Blocker overlay
-        const blocker = document.createElement('div');
-        blocker.className = 'img-blocker';
-
-        // Content
-        const content = document.createElement('div');
-        content.className = 'insight-content';
-        content.innerHTML = `
-          <div class="insight-date">${item.date}</div>
-          <div class="insight-note">${item.note}</div>
+        card.innerHTML = `
+          <div class="insight-date">Week Ending: ${new Date(item.week_ending).toLocaleDateString()}</div>
+          <div class="insight-pips">Pips Gained: +${item.pips}</div>
+          <div class="insight-note">${item.note || '-'}</div>
         `;
-
-        card.appendChild(img);
-        card.appendChild(blocker);
-        card.appendChild(content);
         container.appendChild(card);
       });
     });
