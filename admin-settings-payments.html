@@ -1,162 +1,304 @@
 <!DOCTYPE html>
 <html lang="en" data-theme="dark">
 <head>
-  <meta charset="UTF-8" /><meta name="viewport" content="width=device-width,initial-scale=1"/>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
   <title>CBE Admin – Payment Methods</title>
-  <!-- Bootstrap & DataTables -->
-  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet"/>
-  <link href="https://cdn.datatables.net/1.13.4/css/dataTables.bootstrap5.min.css" rel="stylesheet"/>
+
+  <!-- AUTH GUARD: redirect if not logged in -->
+  <script>
+    if (localStorage.getItem('isLoggedIn') !== 'true') {
+      window.location.replace(
+        'admin-login.html?redirect=' + encodeURIComponent(window.location.pathname)
+      );
+    }
+  </script>
+
+  <!-- Fonts, Bootstrap & Icons -->
+  <link
+    href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700&display=swap"
+    rel="stylesheet"
+  >
+  <link
+    href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css"
+    rel="stylesheet"
+  >
+  <link
+    href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css"
+    rel="stylesheet"
+  >
+
   <style>
-    body { font-family:sans-serif; }
-    nav { min-height:100vh; background:#111; }
-    nav a { color:#ddd; text-decoration:none; display:block; padding:1rem; }
-    nav a:hover, nav a.active { background:#222; color:#fff; }
-    .content { padding:2rem; }
+    :root {
+      --bg: #000; --text: #fff; --gold: #ffd700;
+      --glass-bg: rgba(255,255,255,0.05);
+      --overlay: rgba(0,0,0,0.6);
+    }
+    [data-theme="light"] {
+      --bg: #f5f5f5; --text: #333; --gold: #cca300;
+      --glass-bg: rgba(0,0,0,0.05);
+      --overlay: rgba(255,255,255,0.15);
+    }
+    * { margin:0; padding:0; box-sizing:border-box; }
+    body { font-family:'Poppins',sans-serif; background:var(--bg); color:var(--text); overflow-x:hidden; }
+    .overlay { position:fixed; top:0; left:0; width:100%; height:100%; background:var(--overlay); z-index:-1; }
+    .glass { background:var(--glass-bg); backdrop-filter:blur(10px); border:1px solid rgba(255,215,0,0.2); border-radius:8px; }
+
+    header.admin-header {
+      display:flex; align-items:center; justify-content:space-between;
+      padding:1rem 2rem; background:rgba(0,0,0,0.6);
+      border-bottom:1px solid var(--gold);
+      position:sticky; top:0; z-index:10;
+    }
+    .logo { cursor:pointer; display:flex; align-items:center; }
+    .logo img { height:40px; }
+    #theme-toggle { background:none; border:none; font-size:1.25rem; cursor:pointer; color:var(--text); }
+
+    main.container { padding-top:2rem; }
+    #section-title { color:var(--gold); text-align:center; margin-bottom:1.5rem; }
+    .panel { margin-bottom:2rem; }
+    form.glass { padding:1.5rem; }
+    #methods-list .list-group-item {
+      background:var(--glass-bg);
+      border:1px solid rgba(255,215,0,0.2);
+      color:var(--text);
+      margin-bottom:.5rem;
+      border-radius:4px;
+      display:flex; justify-content:space-between; align-items:center;
+    }
+    .method-info { flex-grow:1; }
+    .method-actions button { margin-left:.5rem; }
+    .toast { z-index:99999 !important; }
   </style>
 </head>
 <body>
-  <div class="d-flex">
-    <!-- Sidebar -->
-    <nav class="col-2">
-      <a href="admin-dashboard.html">Dashboard</a>
-      <a href="admin-settings-payments.html" class="active">Payment Methods</a>
-      <a href="admin-payments.html">User Payments</a>
-      <a href="admin-settings.html">Settings</a>
-    </nav>
+  <div class="overlay"></div>
 
-    <div class="content flex-grow-1">
-      <h2 class="mb-4">Manage Payment Methods</h2>
+  <!-- Header -->
+  <header class="admin-header glass">
+    <div class="logo" id="logo">
+      <img src="CBE_logo.PNG" alt="CBE Logo"/>
+    </div>
+    <button id="theme-toggle" aria-label="Toggle theme">🌞</button>
+  </header>
 
-      <!-- Form -->
-      <div class="card mb-4 p-4">
-        <h5 id="form-title">Add New Method</h5>
-        <div class="row g-3 align-items-end">
-          <div class="col-md-4">
-            <label class="form-label">Name</label>
-            <input id="pm-name" class="form-control" placeholder="e.g. Bitcoin (BTC)"/>
+  <main class="container">
+    <h2 id="section-title">Payment Methods</h2>
+
+    <div class="panel">
+      <div class="glass mb-4">
+        <h4 class="px-3 pt-3">Add / Edit Method</h4>
+        <form id="method-form" class="border-top p-3 glass">
+          <div class="row g-3">
+            <div class="col-md-4">
+              <label class="form-label">Name</label>
+              <input type="text" id="pm-name" class="form-control" placeholder="e.g. Pay ₦ via Card/Bank" required>
+            </div>
+            <div class="col-md-3">
+              <label class="form-label">Type</label>
+              <select id="pm-type" class="form-select" required>
+                <option value="">-- Select --</option>
+                <option value="card">Card/Bank</option>
+                <option value="crypto">Crypto</option>
+              </select>
+            </div>
+            <div class="col-md-5">
+              <label class="form-label">Details</label>
+              <input type="text" id="pm-details" class="form-control"
+                placeholder="card → https://…   |   crypto → BTC:1A2b…" required>
+            </div>
+            <div class="col-12 text-end">
+              <button type="submit" id="save-btn" class="btn btn-primary">Save</button>
+            </div>
           </div>
-          <div class="col-md-3">
-            <label class="form-label">Type</label>
-            <select id="pm-type" class="form-select">
-              <option value="">-- Select --</option>
-              <option value="card">Card/Bank</option>
-              <option value="crypto">Crypto</option>
-            </select>
-          </div>
-          <div class="col-md-4">
-            <label class="form-label">Details</label>
-            <input id="pm-details" class="form-control"
-              placeholder='card → link, crypto → code:address'/>
-          </div>
-          <div class="col-md-1 d-grid">
-            <button id="save-pm" class="btn btn-primary">Save</button>
-          </div>
-        </div>
+        </form>
       </div>
 
-      <!-- Table -->
-      <table id="methods-table" class="table table-striped">
-        <thead>
-          <tr><th>ID</th><th>Name</th><th>Type</th><th>Details</th><th>Actions</th></tr>
-        </thead>
-        <tbody></tbody>
-      </table>
+      <ul class="list-group" id="methods-list"></ul>
     </div>
-  </div>
+  </main>
 
-  <!-- Scripts -->
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js"></script>
-  <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
-  <script src="https://cdn.datatables.net/1.13.4/js/jquery.dataTables.min.js"></script>
-  <script src="https://cdn.datatables.net/1.13.4/js/dataTables.bootstrap5.min.js"></script>
+  <!-- Bootstrap JS -->
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+
+  <!-- Supabase UMD -->
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js/dist/umd/supabase.min.js"></script>
+
   <script>
-    // Supabase init
-    const URL = 'https://dapwpgvnfjcfqqhrpxla.supabase.co',
-          KEY = 'YOUR_SUPABASE_ANON_KEY';
-    const supabase = supabase.createClient(URL, KEY);
+    document.addEventListener('DOMContentLoaded', () => {
+      // Logo → Dashboard
+      document.getElementById('logo').onclick = () => {
+        location.href = 'admin-dashboard.html';
+      };
 
-    let editId = null;
-    const table = $('#methods-table').DataTable({
-      columns: [
-        { data: 'id' },
-        { data: 'name' },
-        { data: 'type' },
-        { data: d => JSON.stringify(d.details) },
-        { data: null,
-          render: (_,__,row) =>
-            `<button class="btn btn-sm btn-warning me-1" onclick="onEdit(${row.id})">Edit</button>
-             <button class="btn btn-sm btn-danger" onclick="onDelete(${row.id})">Delete</button>`
+      // Theme toggle
+      const themeBtn = document.getElementById('theme-toggle');
+      const applyTheme = t => {
+        document.documentElement.setAttribute('data-theme', t);
+        localStorage.setItem('theme', t);
+        themeBtn.textContent = t === 'dark' ? '🌞' : '🌜';
+      };
+      themeBtn.onclick = () => applyTheme(
+        document.documentElement.getAttribute('data-theme') === 'dark' ? 'light' : 'dark'
+      );
+      applyTheme(localStorage.getItem('theme') || 'dark');
+
+      // Supabase client
+      const supabase = supabase.createClient(
+        'https://dapwpgvnfjcfqqhrpxla.supabase.co',
+        'YOUR_SUPABASE_ANON_KEY'
+      );
+
+      // Toast helper
+      function showToast(msg, success = true) {
+        const t = document.createElement('div');
+        t.className = `toast align-items-center text-white ${success?'bg-success':'bg-danger'} border-0 position-fixed top-0 end-0 m-3`;
+        t.innerHTML = `
+          <div class="d-flex">
+            <div class="toast-body">${msg}</div>
+            <button type="button" class="btn-close btn-close-white me-2 m-auto"
+              data-bs-dismiss="toast"></button>
+          </div>`;
+        document.body.append(t);
+        new bootstrap.Toast(t, { delay: 3000 }).show();
+      }
+
+      // Form & list elements
+      const form       = document.getElementById('method-form');
+      const nameInp    = document.getElementById('pm-name');
+      const typeInp    = document.getElementById('pm-type');
+      const detailsInp = document.getElementById('pm-details');
+      const saveBtn    = document.getElementById('save-btn');
+      const listGroup  = document.getElementById('methods-list');
+
+      let editId = null;
+
+      // Load and render all methods
+      async function loadMethods() {
+        const { data, error } = await supabase
+          .from('payment_methods')
+          .select('*')
+          .order('id', { ascending: true });
+        if (error) return showToast('Load failed: ' + error.message, false);
+
+        listGroup.innerHTML = '';
+        data.forEach(m => {
+          const li = document.createElement('li');
+          li.className = 'list-group-item';
+
+          // Info
+          const info = document.createElement('div');
+          info.className = 'method-info';
+          let detTxt = '';
+          if (m.type === 'card') {
+            detTxt = m.details.link;
+          } else {
+            detTxt = `${m.details.code} → ${m.details.address}`;
+          }
+          info.innerHTML = `<strong>${m.name}</strong> <em>(${m.type})</em><br><small>${detTxt}</small>`;
+
+          // Actions
+          const actions = document.createElement('div');
+          actions.className = 'method-actions';
+          actions.innerHTML = `
+            <button class="btn btn-sm btn-warning" onclick="onEdit(${m.id})">
+              <i class="bi bi-pencil"></i>
+            </button>
+            <button class="btn btn-sm btn-danger" onclick="onDelete(${m.id})">
+              <i class="bi bi-trash"></i>
+            </button>`;
+
+          li.append(info, actions);
+          listGroup.append(li);
+        });
+      }
+
+      // Edit handler
+      window.onEdit = async (id) => {
+        const { data, error } = await supabase
+          .from('payment_methods')
+          .select('*').eq('id', id).single();
+        if (error) return showToast('Fetch failed: ' + error.message, false);
+
+        editId = id;
+        nameInp.value    = data.name;
+        typeInp.value    = data.type;
+        if (data.type === 'card') {
+          detailsInp.value = data.details.link;
+        } else {
+          detailsInp.value = `${data.details.code}:${data.details.address}`;
         }
-      ]
-    });
+        saveBtn.textContent = 'Update';
+      };
 
-    async function loadMethods() {
-      const { data, error } = await supabase
-        .from('payment_methods')
-        .select('*')
-        .order('id');
-      if (error) return alert(error.message);
-      table.clear().rows.add(data).draw();
-    }
-
-    async function onDelete(id) {
-      if (!confirm('Delete this method?')) return;
-      const { error } = await supabase.from('payment_methods').delete().eq('id',id);
-      if (error) alert(error.message);
-      else loadMethods();
-    }
-
-    window.onEdit = async id => {
-      const { data, error } = await supabase
-        .from('payment_methods')
-        .select('*').eq('id',id).single();
-      if (error) return alert(error.message);
-      editId = id;
-      $('#form-title').text(`Edit #${id}`);
-      $('#pm-name').val(data.name);
-      $('#pm-type').val(data.type);
-      const det = data.details;
-      if (data.type === 'card')
-        $('#pm-details').val(det.link);
-      else
-        $('#pm-details').val(`${det.code}:${det.address}`);
-      $('#save-pm').text('Update');
-    };
-
-    $('#save-pm').click(async () => {
-      const name = $('#pm-name').val().trim();
-      const type = $('#pm-type').val();
-      const raw = $('#pm-details').val().trim();
-      if (!name || !type || !raw) return alert('All fields are required');
-      let details = {};
-      if (type === 'card') {
-        details.link = raw;
-      } else {
-        const [code,address] = raw.split(':');
-        if (!code||!address) return alert('crypto details must be code:address');
-        details = { code, address };
-      }
-
-      let res;
-      if (editId) {
-        res = await supabase
+      // Delete handler
+      window.onDelete = async (id) => {
+        if (!confirm('Delete this method?')) return;
+        const { error } = await supabase
           .from('payment_methods')
-          .update({ name, type, details }).eq('id',editId);
-      } else {
-        res = await supabase
-          .from('payment_methods')
-          .insert([{ name, type, details }]);
-      }
-      if (res.error) return alert(res.error.message);
-      // reset form
-      editId = null;
-      $('#form-title').text('Add New Method');
-      $('#save-pm').text('Save');
-      $('#pm-name,#pm-type,#pm-details').val('');
+          .delete().eq('id', id);
+        if (error) return showToast('Delete failed: ' + error.message, false);
+        showToast('Deleted');
+        if (editId === id) {
+          editId = null;
+          form.reset();
+          saveBtn.textContent = 'Save';
+        }
+        loadMethods();
+      };
+
+      // Form submit → add/update
+      form.addEventListener('submit', async e => {
+        e.preventDefault();
+        saveBtn.disabled = true;
+
+        const name    = nameInp.value.trim();
+        const type    = typeInp.value;
+        const raw     = detailsInp.value.trim();
+        if (!name || !type || !raw) {
+          showToast('All fields are required', false);
+          saveBtn.disabled = false;
+          return;
+        }
+
+        let details = {};
+        if (type === 'card') {
+          details = { link: raw };
+        } else {
+          const [code, address] = raw.split(':');
+          if (!code || !address) {
+            showToast('Crypto must be code:address', false);
+            saveBtn.disabled = false;
+            return;
+          }
+          details = { code, address };
+        }
+
+        let res;
+        if (editId) {
+          res = await supabase
+            .from('payment_methods')
+            .update({ name, type, details })
+            .eq('id', editId);
+        } else {
+          res = await supabase
+            .from('payment_methods')
+            .insert([{ name, type, details }]);
+        }
+        if (res.error) {
+          showToast('Save failed: ' + res.error.message, false);
+        } else {
+          showToast(editId ? 'Updated' : 'Added');
+          form.reset();
+          editId = null;
+          saveBtn.textContent = 'Save';
+          loadMethods();
+        }
+        saveBtn.disabled = false;
+      });
+
       loadMethods();
     });
-
-    $(document).ready(loadMethods);
   </script>
 </body>
 </html>
