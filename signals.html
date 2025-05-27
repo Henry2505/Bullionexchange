@@ -14,74 +14,10 @@
   <script src="https://s3.tradingview.com/tv.js"></script>
 
   <style>
-    * { margin:0; padding:0; box-sizing:border-box; }
-    html, body {
-      width:100%; min-height:100vh;
-      font-family:'Poppins',sans-serif;
-      background:#080808; color:#eee;
-      overflow-x:hidden;
-    }
-    .container { max-width:1000px; margin:60px auto; padding:0 20px; }
-    header { text-align:center; margin-bottom:20px; }
-    header h1 { font-size:2.5rem; color:#ffd700; margin-bottom:8px; }
-    header p { color:#bbb; }
-    .notice { text-align:center; color:#ff5555; margin-bottom:20px; }
-    .signal-card {
-      background: rgba(30,30,30,0.8);
-      border-radius:12px;
-      box-shadow:0 4px 20px rgba(0,0,0,0.7);
-      animation:fadeIn 0.8s ease;
-      overflow:hidden;
-      margin-bottom:40px;
-    }
-    @keyframes fadeIn {
-      from { opacity:0; transform: translateY(20px); }
-      to   { opacity:1; transform: translateY(0); }
-    }
-    .signal-header {
-      display:flex; justify-content:space-between;
-      background:#111; padding:16px 24px;
-    }
-    .signal-header h2 { color:#ffd700; font-size:1.4rem; }
-    .signal-header .time { color:#ccc; font-size:0.9rem; }
-    .signal-body {
-      display:grid; grid-template-columns:1fr auto;
-      gap:12px; padding:24px;
-    }
-    .detail {
-      background:#1a1a1a; padding:14px 18px;
-      border-radius:8px; display:flex;
-      justify-content:space-between; align-items:center;
-      font-size:1rem;
-    }
-    .detail span { font-weight:600; }
-    .copy-btn {
-      background:#ffd700; color:#000;
-      border:none; padding:6px 12px;
-      border-radius:6px; font-weight:bold;
-      cursor:pointer; transition:box-shadow .3s;
-    }
-    .copy-btn:hover { box-shadow:0 0 10px #ffd700; }
-    .admin-note {
-      background:#222; padding:14px 18px;
-      margin:0 24px 24px; border-left:4px solid #ffd700;
-      color:#ffcc00; font-style:italic; border-radius:6px;
-    }
-    #tradingview_embed {
-      height:600px;
-      border:1px solid rgba(255,255,255,0.2);
-      border-radius:8px; overflow:hidden;
-      margin-bottom:60px;
-    }
-    footer {
-      text-align:center; padding:20px;
-      color:#666; font-size:0.9rem; margin-top:40px;
-      border-top:1px solid #222;
-    }
+    /* ... your existing styles ... */
   </style>
 </head>
 <body>
-
   <div class="container">
     <header>
       <h1>VIP Forex Signal</h1>
@@ -102,41 +38,46 @@
   <footer>© 2025 CBE – Chukwuemeka Bullion Exchange</footer>
 
   <script>
-    // 1) Create Supabase client
+    // 1) Create Supabase client (anon key must allow DELETE via RLS)
     const SUPA_URL = 'https://dapwpgvnfjcfqqhrpxla.supabase.co';
-    const SUPA_KEY = 'YOUR_SUPABASE_ANON_KEY';
+    const SUPA_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImRhcHdwZ3ZuZmpjZnFxaHJweGxhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDcwNDA4ODgsImV4cCI6MjA2MjYxNjg4OH0.ICC0UsLlzJDNre7rFCeD3k6iVzo6jOJgn3PhABpEMsQ';
     const supabase = window.supabase.createClient(SUPA_URL, SUPA_KEY);
 
     // 2) Redirect if not signed in
     supabase.auth.onAuthStateChange((_, session) => {
       if (!session) window.location.replace('login.html');
     });
-    // 3) Immediately check session & load
+    // check immediately
     supabase.auth.getSession().then(({ data: { session } }) => {
       if (!session) return window.location.replace('login.html');
       loadLatestSignal();
       initTradingView();
     });
 
-    // 4) Load latest signal
+    // 3) Load the newest signal and then delete all older ones
     async function loadLatestSignal() {
       const card = document.getElementById('signalCard');
+
       try {
-        const { data, error } = await supabase
+        // Fetch latest signal
+        let { data: signals, error } = await supabase
           .from('signals')
-          .select('*')
+          .select('id,action,asset,sl,tp1,tp2,note,created_at')
           .order('created_at', { ascending: false })
           .limit(1);
 
         if (error) throw error;
-        if (!data.length) {
+        if (!signals.length) {
           card.innerHTML = `<p style="text-align:center;color:#ff5555;padding:40px;">
                               No signals available right now.
                             </p>`;
           return;
         }
-        const sig = data[0];
-        const dt = new Date(sig.created_at);
+
+        const sig = signals[0];
+        const dt  = new Date(sig.created_at);
+
+        // Render it
         card.innerHTML = `
           <div class="signal-header">
             <h2>${dt.toLocaleDateString('en-GB')}</h2>
@@ -160,12 +101,28 @@
           </div>
           <div class="admin-note">Note: ${sig.note || 'Trade at your own risk.'}</div>
         `;
+
+        // Delete all older signals
+        await deleteOlderSignals(sig.id);
+
       } catch (err) {
         console.error(err);
-        document.getElementById('signalCard').innerHTML = `
+        card.innerHTML = `
           <p style="text-align:center;color:#ff5555;padding:40px;">
             Unable to load signal. Please try again later.
           </p>`;
+      }
+    }
+
+    // 4) Deletes any row whose ID is not the current one
+    async function deleteOlderSignals(currentId) {
+      const { error } = await supabase
+        .from('signals')
+        .delete()
+        .neq('id', currentId);
+
+      if (error) {
+        console.warn('Could not clean up old signals:', error);
       }
     }
 
