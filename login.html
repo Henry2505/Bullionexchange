@@ -100,20 +100,18 @@
   <!-- Supabase UMD -->
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js/dist/umd/supabase.js"></script>
   <script>
-    // Init Supabase client
+    // ── Init Supabase ───────────────────────────────────────────────────────────
     const SUPA_URL      = 'https://dapwpgvnfjcfqqhrpxla.supabase.co';
     const SUPA_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImRhcHdwZ3ZuZmpjZnFxaHJweGxhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDcwNDA4ODgsImV4cCI6MjA2MjYxNjg4OH0.ICC0UsLlzJDNre7rFCeD3k6iVzo6jOJgn3PhABpEMsQ';
     const sb = supabase.createClient(SUPA_URL, SUPA_ANON_KEY);
 
-    // Slide-in animation & theme init
+    // ── UI Setup ────────────────────────────────────────────────────────────────
     window.addEventListener('DOMContentLoaded', () => {
       document.getElementById('login-card').classList.add('visible');
       const saved = localStorage.getItem('theme') || 'dark';
       document.documentElement.setAttribute('data-theme', saved);
       document.getElementById('theme-toggle').textContent = saved === 'dark' ? '🌞' : '🌜';
     });
-
-    // Theme toggle
     document.getElementById('theme-toggle').addEventListener('click', () => {
       const cur = document.documentElement.getAttribute('data-theme');
       const next = cur === 'dark' ? 'light' : 'dark';
@@ -122,7 +120,7 @@
       document.getElementById('theme-toggle').textContent = next === 'dark' ? '🌞' : '🌜';
     });
 
-    // Login form handler with debug
+    // ── Login Logic with count-check ────────────────────────────────────────────
     document.getElementById('login-form').addEventListener('submit', async e => {
       e.preventDefault();
       const alertDiv = document.getElementById('login-alert');
@@ -137,15 +135,25 @@
       }
 
       try {
-        // 1) Case-insensitive fetch via ILIKE
-        const { data: userRow, error } = await sb
+        // 1) Fetch up to 1 matching row, get exact count
+        const { data: userRow, error, count } = await sb
           .from('users')
-          .select('email,password,status')
+          .select('email,password,status', { count: 'exact' })
           .ilike('email', email)
-          .single();
+          .limit(1)
+          .maybeSingle();
+
         if (error) throw error;
 
-        // Debug logging
+        // 2) Handle no or multiple matches
+        if (count === 0) {
+          throw new Error('No account found for that email.');
+        }
+        if (count > 1) {
+          console.warn(`⚠️ ${count} users matched "${email}". Using the first.`);
+        }
+
+        // 3) Debug logging
         console.group('🔍 Debug login');
         console.log('Entered email:', rawEmail, '→ normalized:', email);
         console.log('DB email:', userRow.email);
@@ -154,17 +162,17 @@
         console.log('Status:', userRow.status);
         console.groupEnd();
 
-        // 2) Password check
+        // 4) Password match
         if (userRow.password !== password) {
           throw new Error('Invalid login credentials');
         }
 
-        // 3) Approval check
+        // 5) Approval check
         if (!userRow.status || userRow.status.toLowerCase() !== 'approved') {
           throw new Error('Your account is not yet approved by admin.');
         }
 
-        // 4) Success!
+        // 6) Success!
         sessionStorage.setItem('cbeLoggedIn', 'true');
         window.location.href = 'vip-dashboard.html';
 
