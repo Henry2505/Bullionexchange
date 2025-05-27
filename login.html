@@ -6,7 +6,7 @@
   <title>Login – CBE</title>
   <style>
     body {
-      font-family: Arial, sans-serif;
+      font-family: 'Poppins', sans-serif;
       background: #000;
       color: #fff;
       display: flex;
@@ -70,64 +70,49 @@
   <script type="module">
     import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm';
 
-    // Supabase config (your project URL and anon key)
+    // Supabase config
     const SUPA_URL = 'https://dapwpgvnfjcfqqhrpxla.supabase.co';
     const SUPA_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImRhcHdwZ3ZuZmpjZnFxaHJweGxhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDcwNDA4ODgsImV4cCI6MjA2MjYxNjg4OH0.ICC0UsLlzJDNre7rFCeD3k6iVzo6jOJgn3PhABpEMsQ';
     const supabase = createClient(SUPA_URL, SUPA_KEY);
 
-    document.addEventListener('DOMContentLoaded', () => {
-      const form = document.getElementById('loginForm');
-      form.addEventListener('submit', async e => {
-        e.preventDefault();
-        console.log('Submit handler fired');
+    document.getElementById('loginForm').addEventListener('submit', async e => {
+      e.preventDefault();
 
-        const emailInput = document.getElementById('email');
-        const passwordInput = document.getElementById('password');
-        const email = emailInput.value.trim().toLowerCase();
-        const password = passwordInput.value;
+      const email = document.getElementById('email').value.trim().toLowerCase();
+      const password = document.getElementById('password').value;
 
-        console.log('Email:', email);
-        if (!email || !password) {
-          return alert('❌ Please fill in both email and password.');
-        }
+      if (!email || !password) {
+        return alert('❌ Please fill in both email and password.');
+      }
 
-        try {
-          console.log('Calling signInWithPassword...');
-          const { data: authData, error: authError } = await supabase.auth.signInWithPassword({ email, password });
-          if (authError) {
-            console.error('Auth error:', authError);
-            return alert('❌ Login failed: ' + authError.message);
-          }
-          console.log('Auth success, user id:', authData.user.id);
+      // 1) Sign in
+      const { data: authData, error: authError } = await supabase.auth.signInWithPassword({ email, password });
+      if (authError) {
+        return alert('❌ Login failed: ' + authError.message);
+      }
 
-          console.log('Fetching profile status...');
-          const { data: profile, error: profileError } = await supabase
-            .from('profiles')
-            .select('status')
-            .eq('id', authData.user.id)
-            .single();
+      // 2) Check approval status in "users" table
+      const { data: userRow, error: rowError } = await supabase
+        .from('users')
+        .select('status')
+        .eq('email', email)
+        .single();
 
-          if (profileError || !profile) {
-            console.error('Profile lookup error:', profileError);
-            await supabase.auth.signOut();
-            return alert('❌ Unable to verify your account. Contact support.');
-          }
-          console.log('Profile status:', profile.status);
+      if (rowError) {
+        // Something went wrong—sign out and alert
+        await supabase.auth.signOut();
+        return alert('❌ Unable to verify account status.');
+      }
 
-          if (profile.status !== 'approved') {
-            await supabase.auth.signOut();
-            return alert('⏳ Your account is not yet approved by admin. Please wait.');
-          }
+      if (userRow.status !== 'Approved') {
+        // Not yet approved—sign out and inform
+        await supabase.auth.signOut();
+        return alert('⏳ Your account is not yet approved by admin. Please check back later.');
+      }
 
-          // Approved → success
-          sessionStorage.setItem('cbeLoggedIn', 'true');
-          console.log('Redirecting to dashboard...');
-          window.location.href = 'vip-dashboard.html';
-        } catch (err) {
-          console.error('Unexpected error:', err);
-          alert('❌ A network error occurred. See console for details.');
-        }
-      });
+      // 3) Approved! Store a flag and redirect
+      sessionStorage.setItem('cbeLoggedIn', 'true');
+      window.location.href = 'vip-dashboard.html';
     });
   </script>
 
