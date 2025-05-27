@@ -5,347 +5,259 @@
   <meta name="viewport" content="width=device-width,initial-scale=1" />
   <title>CBE Admin – Payments & Methods</title>
 
-  <!-- Redirect if not logged in -->
+  <!-- Redirect to login if not authenticated -->
   <script>
     if (localStorage.getItem('isLoggedIn') !== 'true') {
-      window.location.replace(
-        'admin-login.html?redirect=' + encodeURIComponent(window.location.pathname)
-      );
+      location.replace('admin-login.html?redirect=' + encodeURIComponent(location.pathname));
     }
   </script>
 
   <!-- CSS & Fonts -->
-  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700&display=swap" rel="stylesheet">
-  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-  <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css" rel="stylesheet">
-  <link href="https://cdn.datatables.net/1.13.4/css/dataTables.bootstrap5.min.css" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700&display=swap" rel="stylesheet"/>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet"/>
+  <link href="https://cdn.datatables.net/1.13.4/css/dataTables.bootstrap5.min.css" rel="stylesheet"/>
 
   <style>
     :root {
       --bg: #000; --text: #fff; --gold: #ffd700;
       --glass-bg: rgba(255,255,255,0.05);
-      --overlay: rgba(0,0,0,0.6);
     }
     [data-theme="light"] {
       --bg: #f5f5f5; --text: #333; --gold: #cca300;
       --glass-bg: rgba(0,0,0,0.05);
-      --overlay: rgba(255,255,255,0.15);
     }
     * { margin:0; padding:0; box-sizing:border-box; }
     body {
       font-family:'Poppins',sans-serif;
-      background: var(--bg); color: var(--text);
+      background:var(--bg); color:var(--text);
     }
-    .overlay {
-      position:fixed; top:0; left:0; width:100%; height:100%;
-      background: var(--overlay); z-index:-1;
+    .glass { background:var(--glass-bg); backdrop-filter:blur(8px); }
+    header { padding:1rem; background:rgba(0,0,0,0.6); position:sticky; top:0; z-index:10; }
+    h2 { color:var(--gold); text-align:center; margin:1rem 0; }
+    .btn-add {
+      background: #198754; color:#fff;
+      position:relative; z-index:20;
     }
-    .glass {
-      background: var(--glass-bg);
-      backdrop-filter: blur(10px);
-      border:1px solid rgba(255,215,0,0.2);
-    }
-    a { color: var(--gold); text-decoration:none; } a:hover { text-decoration:underline; }
-    header.admin-header {
-      display:flex; align-items:center; justify-content:space-between;
-      padding:1rem 2rem; background:rgba(0,0,0,0.6);
-      border-bottom:1px solid var(--gold);
-      position:sticky; top:0; z-index:10;
-    }
-    .logo { cursor:pointer; } .logo img { height:40px; }
-    #theme-toggle {
-      background:none; border:none; font-size:1.25rem;
-      cursor:pointer; color:var(--text);
-    }
-    #section-title {
-      color: var(--gold); text-align:center; margin:2rem 0 1rem;
-    }
-    .table-panel { padding:2rem; border-radius:8px; margin-bottom:2rem; }
-    .dataTables_wrapper .dataTables_filter input {
-      background: var(--bg); color: var(--text); border:1px solid var(--gold);
-    }
-    table.dataTable th, table.dataTable td { vertical-align:middle; }
   </style>
 </head>
-<body>
-  <div class="overlay"></div>
 
-  <!-- Header -->
-  <header class="admin-header glass">
-    <div class="logo" id="logo"><img src="CBE_logo.PNG" alt="CBE Logo"></div>
-    <button id="theme-toggle" aria-label="Toggle theme">🌞</button>
+<body>
+  <header class="glass d-flex justify-content-between align-items-center">
+    <div style="cursor:pointer" onclick="location.href='admin-dashboard.html'">
+      <img src="CBE_logo.PNG" alt="Logo" style="height:40px;">
+    </div>
+    <button id="theme-toggle" class="btn btn-sm btn-outline-light">🌞</button>
   </header>
 
-  <!-- Main Content -->
-  <main class="container">
-    <h2 id="section-title">Admin: Payments & Methods</h2>
+  <main class="container py-4">
+    <h2>Admin: Payments & Methods</h2>
 
     <!-- Tabs -->
-    <ul class="nav nav-tabs mb-3">
+    <ul class="nav nav-tabs mb-3" id="tabs">
       <li class="nav-item">
-        <button class="nav-link active" data-bs-toggle="tab" data-bs-target="#tab-payments">Payments</button>
+        <button class="nav-link active" data-target="payments">Payments</button>
       </li>
       <li class="nav-item">
-        <button class="nav-link" data-bs-toggle="tab" data-bs-target="#tab-methods">Payment Methods</button>
+        <button class="nav-link" data-target="methods">Payment Methods</button>
       </li>
     </ul>
 
-    <div class="tab-content">
-      <!-- Payments Tab -->
-      <div class="tab-pane fade show active" id="tab-payments">
-        <div class="glass table-panel">
-          <button id="export-payments" class="btn btn-outline-secondary btn-sm mb-3">Export CSV</button>
-          <table id="payments-table" class="table table-hover table-borderless text-white w-100">
-            <thead>
-              <tr>
-                <th>#</th><th>Email</th><th>Plan</th><th>Date</th><th>Screenshot</th><th>Action</th>
-              </tr>
-            </thead>
-            <tbody></tbody>
-          </table>
-        </div>
-      </div>
+    <!-- Payments Content -->
+    <section id="payments" class="tab-content show glass p-3 mb-4">
+      <button id="export-payments" class="btn btn-outline-light btn-sm mb-2">Export CSV</button>
+      <table id="payments-table" class="table table-dark table-striped">
+        <thead>
+          <tr><th>#</th><th>Email</th><th>Plan</th><th>Date</th><th>Proof</th><th>Action</th></tr>
+        </thead>
+        <tbody></tbody>
+      </table>
+    </section>
 
-      <!-- Methods Tab -->
-      <div class="tab-pane fade" id="tab-methods">
-        <div class="glass table-panel">
-          <button id="addMethodBtn" class="btn btn-outline-success btn-sm mb-3">
-            Add Payment Method
-          </button>
-          <table id="methods-table" class="table table-hover table-borderless text-white w-100">
-            <thead>
-              <tr>
-                <th>ID</th><th>Type</th><th>Code</th><th>Name</th>
-                <th>Details</th><th>Order</th><th>Actions</th>
-              </tr>
-            </thead>
-            <tbody></tbody>
-          </table>
-        </div>
-      </div>
-    </div>
+    <!-- Methods Content -->
+    <section id="methods" class="tab-content glass p-3" style="display:none;">
+      <button id="addMethodBtn" class="btn btn-add mb-2">Add Payment Method</button>
+      <table id="methods-table" class="table table-dark table-striped">
+        <thead>
+          <tr><th>#</th><th>Type</th><th>Code</th><th>Name</th><th>Details</th><th>Order</th><th>Action</th></tr>
+        </thead>
+        <tbody></tbody>
+      </table>
+    </section>
   </main>
 
   <!-- Screenshot Modal -->
-  <div class="modal fade" id="screenshotModal">
-    <div class="modal-dialog modal-lg">
-      <div class="modal-content glass p-4">
-        <div class="modal-header">
-          <h5 class="modal-title">Screenshot</h5>
-          <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
-        </div>
-        <div class="modal-body">
-          <img id="screenshot-img" src="" class="img-fluid" alt="Payment screenshot"/>
-        </div>
+  <div class="modal fade" id="screenshotModal"><div class="modal-dialog modal-lg">
+    <div class="modal-content glass p-3">
+      <div class="modal-header">
+        <h5 class="modal-title">Proof Screenshot</h5>
+        <button class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body text-center">
+        <img id="screenshot-img" src="" class="img-fluid">
       </div>
     </div>
-  </div>
+  </div></div>
 
-  <!-- Dependencies -->
+  <!-- Payment Method Modal -->
+  <div class="modal fade" id="methodModal"><div class="modal-dialog">
+    <div class="modal-content glass p-3">
+      <div class="modal-header">
+        <h5 class="modal-title">Payment Method</h5>
+        <button class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body">
+        <form id="methodForm">
+          <input type="hidden" id="methodId">
+          <div class="mb-2">
+            <label>Type</label>
+            <select id="methodType" class="form-select">
+              <option value="crypto">Crypto</option><option value="card">Card/Bank</option>
+            </select>
+          </div>
+          <div class="mb-2"><label>Code</label><input id="methodCode" class="form-control"></div>
+          <div class="mb-2"><label>Name</label><input id="methodName" class="form-control" required></div>
+          <div class="mb-2"><label>Details</label><textarea id="methodDetails" class="form-control" required></textarea></div>
+          <div class="mb-2"><label>Order</label><input type="number" id="methodOrder" class="form-control" value="0"></div>
+        </form>
+      </div>
+      <div class="modal-footer">
+        <button id="saveMethodBtn" class="btn btn-success">Save</button>
+      </div>
+    </div>
+  </div></div>
+
+  <!-- Scripts -->
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/index.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
   <script src="https://cdn.datatables.net/1.13.4/js/jquery.dataTables.min.js"></script>
-  <script src="https://cdn.datatables.net/1.13.4/js/dataTables.bootstrap5.min.js"></script>
-
-  <!-- Method Modal (injected) & Main Script -->
   <script>
   document.addEventListener('DOMContentLoaded', () => {
-    // Logo → Dashboard
-    document.getElementById('logo').onclick = () => location.href = 'admin-dashboard.html';
+    // Tab switching
+    document.querySelectorAll('#tabs button').forEach(btn=>{
+      btn.onclick = () => {
+        document.querySelectorAll('.tab-content').forEach(s=>s.style.display='none');
+        document.getElementById(btn.dataset.target).style.display='block';
+        document.querySelectorAll('#tabs .nav-link').forEach(n=>n.classList.remove('active'));
+        btn.classList.add('active');
+      };
+    });
 
-    // Theme toggle
+    // Theme
     const themeBtn = document.getElementById('theme-toggle');
-    const applyTheme = t => {
-      document.documentElement.setAttribute('data-theme', t);
-      localStorage.setItem('theme', t);
-      themeBtn.textContent = t === 'dark' ? '🌞' : '🌜';
+    themeBtn.onclick = ()=>{
+      const curr = document.documentElement.getAttribute('data-theme');
+      const next = curr==='dark'?'light':'dark';
+      document.documentElement.setAttribute('data-theme',next);
+      localStorage.setItem('theme',next);
+      themeBtn.textContent = next==='dark'?'🌞':'🌜';
     };
-    themeBtn.onclick = () => applyTheme(
-      document.documentElement.getAttribute('data-theme') === 'dark' ? 'light' : 'dark'
-    );
-    applyTheme(localStorage.getItem('theme') || 'dark');
+    themeBtn.textContent = (localStorage.getItem('theme')||'dark')==='dark'?'🌞':'🌜';
 
     // Supabase client
-    const SUPABASE_URL      = 'https://dapwpgvnfjcfqqhrpxla.supabase.co';
-    const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImRhcHdwZ3ZuZmpjZnFxaHJweGxhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDcwNDA4ODgsImV4cCI6MjA2MjYxNjg4OH0.ICC0UsLlzJDNre7rFCeD3k6iVzo6jOJgn3PhABpEMsQ';
-    const client = Supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+    const client = Supabase.createClient(
+      'https://dapwpgvnfjcfqqhrpxla.supabase.co',
+      'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImRhcHdwZ3ZuZmpjZnFxaHJweGxhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDcwNDA4ODgsImV4cCI6MjA2MjYxNjg4OH0.ICC0UsLlzJDNre7rFCeD3k6iVzo6jOJgn3PhABpEMsQ'
+    );
 
     // Toast helper
-    function showToast(msg, ok = true) {
-      const t = document.createElement('div');
-      t.className = `toast align-items-center text-white ${ok?'bg-success':'bg-danger'} border-0 position-fixed top-0 end-0 m-3`;
-      t.innerHTML = `
-        <div class="d-flex">
-          <div class="toast-body">${msg}</div>
-          <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast"></button>
-        </div>`;
+    function toast(msg, ok=true){
+      const t=document.createElement('div');
+      t.className=`toast text-white ${ok?'bg-success':'bg-danger'} position-fixed top-0 end-0 m-3`;
+      t.innerHTML=`<div class="d-flex"><div class="toast-body">${msg}</div>
+        <button class="btn-close btn-close-white ms-auto m-2" data-bs-dismiss="toast"></button></div>`;
       document.body.append(t);
-      new bootstrap.Toast(t, { delay: 3000 }).show();
+      new bootstrap.Toast(t,{delay:3000}).show();
     }
 
-    // — Payments Table —
-    const paymentsTable = $('#payments-table').DataTable({
-      columns: [
-        { data:'id' },
-        { data:'email' },
-        { data:'plan' },
-        { data:'created_at', render: d=>new Date(d).toLocaleDateString() },
-        { data:'proof_url', render: u=> u
-            ? `<button class="btn btn-sm btn-info" onclick="viewScreenshot('${u}')">View</button>`
-            : '—'
-        },
-        { data:'status', render:(s,_,r)=> s==='Pending'
-            ? `<button class="btn btn-sm btn-primary" onclick="approvePayment('${r.id}')">Approve</button>`
-            : '—'
-        }
-      ]
-    });
-    function loadPayments() {
-      client.from('payments').select('*').order('created_at',{ascending:false})
-        .then(({data,error})=>{
-          if(error){ showToast('Error loading payments',false); paymentsTable.clear().draw(); }
-          else       { paymentsTable.clear().rows.add(data).draw(); }
-        });
-    }
-    window.approvePayment = id=>{
-      client.from('payments').update({status:'Approved'}).eq('id',id)
-        .then(({error})=>{
-          if(error) showToast('Error approving',false);
-          else{ showToast('Payment approved'); loadPayments(); }
-        });
-    };
-    window.viewScreenshot = url=>{
-      document.getElementById('screenshot-img').src = url;
+    // Payments DataTable
+    const payTable = $('#payments-table').DataTable({columns:[
+      {data:'id'},{data:'email'},{data:'plan'},
+      {data:'created_at',render:d=>new Date(d).toLocaleDateString()},
+      {data:'proof_url',render:u=>u?`<button class="btn btn-sm btn-info" onclick="viewScreenshot('${u}')">View</button>`:'—'},
+      {data:'status',render:(s,_,r)=>s==='Pending'?`<button class="btn btn-sm btn-primary" onclick="approvePayment('${r.id}')">Approve</button>`:'—'}
+    ]});
+    window.loadPayments = ()=>client.from('payments').select('*').order('created_at',{ascending:false})
+      .then(({data,e})=>e?toast('Load error',false):payTable.clear().rows.add(data).draw());
+    window.approvePayment = id=>client.from('payments').update({status:'Approved'}).eq('id',id)
+      .then(({e})=>e?toast('Approve error',false):(toast('Approved'),loadPayments()));
+    window.viewScreenshot=url=>{
+      document.getElementById('screenshot-img').src=url;
       new bootstrap.Modal(document.getElementById('screenshotModal')).show();
     };
-    document.getElementById('export-payments').onclick = ()=>{
-      const data = paymentsTable.rows().data().toArray();
-      const csv  = [
-        ['ID','Email','Plan','Date'].join(','),
-        ...data.map(r=>[r.id,r.email,r.plan,new Date(r.created_at).toISOString()].join(','))
-      ].join('\n');
-      const blob=new Blob([csv],{type:'text/csv'}), a=document.createElement('a');
-      a.href=URL.createObjectURL(blob); a.download='payments.csv'; a.click();
+    document.getElementById('export-payments').onclick=()=>{
+      const data=payTable.rows().data().toArray();
+      const csv=[['ID','Email','Plan','Date'].join(','),
+        ...data.map(r=>[r.id,r.email,r.plan,new Date(r.created_at).toISOString()].join(','))].join('\n');
+      const blob=new Blob([csv],{type:'text/csv'}),a=document.createElement('a');
+      a.href=URL.createObjectURL(blob);a.download='payments.csv';a.click();
     };
     loadPayments();
 
-    // — Inject Payment Method Modal —
-    const modalHTML = `
-      <div class="modal fade" id="methodModal">
-        <div class="modal-dialog"><div class="modal-content glass p-4">
-          <div class="modal-header">
-            <h5 class="modal-title">Payment Method</h5>
-            <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
-          </div>
-          <div class="modal-body">
-            <form id="methodForm">
-              <input type="hidden" id="methodId">
-              <div class="mb-3">
-                <label>Type</label>
-                <select id="methodType" class="form-select">
-                  <option value="crypto">Crypto</option>
-                  <option value="card">Card/Bank</option>
-                </select>
-              </div>
-              <div class="mb-3">
-                <label>Code (for crypto)</label>
-                <input type="text" id="methodCode" class="form-control" placeholder="btc, eth…">
-              </div>
-              <div class="mb-3">
-                <label>Name</label>
-                <input type="text" id="methodName" class="form-control" required>
-              </div>
-              <div class="mb-3">
-                <label>Details (address or URL)</label>
-                <textarea id="methodDetails" class="form-control" required></textarea>
-              </div>
-              <div class="mb-3">
-                <label>Order</label>
-                <input type="number" id="methodOrder" class="form-control" value="0">
-              </div>
-            </form>
-          </div>
-          <div class="modal-footer">
-            <button id="saveMethodBtn" class="btn btn-success">Save</button>
-          </div>
-        </div></div>
-      </div>`;
-    document.body.insertAdjacentHTML('beforeend', modalHTML);
+    // Methods DataTable
+    const methTable = $('#methods-table').DataTable({ajax:(_,cb)=>{
+      client.from('payment_methods').select('*').order('sort_order',{ascending:true})
+        .then(({data,e})=>e?(toast('Load methods error',false),cb({data:[]})):cb({data}));
+    },columns:[
+      {data:'id'},{data:'type'},{data:'code',defaultContent:'—'},{data:'name'},
+      {data:'details'},{data:'sort_order'},
+      {data:null,render:(_,__,r)=>`
+        <button class="btn btn-sm btn-warning btn-edit" data-id="${r.id}">Edit</button>
+        <button class="btn btn-sm btn-danger btn-delete" data-id="${r.id}">Delete</button>`}
+    ]});
+
+    // Modal references
     const methodModal = new bootstrap.Modal(document.getElementById('methodModal'));
 
-    // — Add Method Button Binding —
+    // Add Method button
     const addBtn = document.getElementById('addMethodBtn');
-    console.log('Found addMethodBtn?', addBtn);
-    addBtn.addEventListener('click', ()=>{
-      console.log('Add Payment Method clicked');
+    console.log('[DEBUG] Add button found:',addBtn);
+    addBtn.addEventListener('click',()=>{
+      console.log('[DEBUG] Add button clicked');
       document.getElementById('methodForm').reset();
       methodModal.show();
     });
 
-    // — Methods Table & CRUD —
-    const methodsTable = $('#methods-table').DataTable({
-      ajax: (d,cb)=>{
-        client.from('payment_methods').select('*').order('sort_order',{ascending:true})
-          .then(({data,error})=>{
-            if(error){ showToast('Error loading methods',false); return cb({data:[]}); }
-            cb({data});
-          });
-      },
-      columns: [
-        { data:'id' },
-        { data:'type' },
-        { data:'code', defaultContent:'—' },
-        { data:'name' },
-        { data:'details' },
-        { data:'sort_order' },
-        { data:null, render:(_,__,r)=>`
-          <button class="btn btn-sm btn-warning btn-edit" data-id="${r.id}">Edit</button>
-          <button class="btn btn-sm btn-danger btn-delete" data-id="${r.id}">Delete</button>` }
-      ]
-    });
-
-    // Delegate Edit/Delete
-    document.getElementById('methods-table').addEventListener('click', async e=>{
-      if(e.target.matches('.btn-edit')) {
-        const id = e.target.dataset.id;
-        const { data:[m], error } = await client.from('payment_methods').select('*').eq('id',id);
-        if(!error && m){
-          document.getElementById('methodId').value    = m.id;
-          document.getElementById('methodType').value  = m.type;
-          document.getElementById('methodCode').value  = m.code||'';
-          document.getElementById('methodName').value  = m.name;
-          document.getElementById('methodDetails').value = m.details;
-          document.getElementById('methodOrder').value = m.sort_order;
+    // Delegate edit/delete on methods table
+    document.getElementById('methods-table').addEventListener('click',async e=>{
+      if(e.target.matches('.btn-edit')){
+        const id=e.target.dataset.id;
+        const {data:[m],e}=await client.from('payment_methods').select('*').eq('id',id);
+        if(!e&&m){
+          document.getElementById('methodId').value=m.id;
+          document.getElementById('methodType').value=m.type;
+          document.getElementById('methodCode').value=m.code||'';
+          document.getElementById('methodName').value=m.name;
+          document.getElementById('methodDetails').value=m.details;
+          document.getElementById('methodOrder').value=m.sort_order;
           methodModal.show();
         }
-      } else if(e.target.matches('.btn-delete')) {
+      } else if(e.target.matches('.btn-delete')){
         if(!confirm('Remove this method?')) return;
-        const id = e.target.dataset.id;
-        const { error } = await client.from('payment_methods').delete().eq('id',id);
-        if(error) showToast('Error deleting',false);
-        else methodsTable.ajax.reload();
+        const id=e.target.dataset.id;
+        const {error}=await client.from('payment_methods').delete().eq('id',id);
+        if(error) toast('Delete error',false);
+        else methTable.ajax.reload();
       }
     });
 
     // Save Method
-    document.getElementById('saveMethodBtn').addEventListener('click', async ()=>{
-      const id      = +document.getElementById('methodId').value;
-      const payload = {
-        type:       document.getElementById('methodType').value,
-        code:       document.getElementById('methodCode').value || null,
-        name:       document.getElementById('methodName').value,
-        details:    document.getElementById('methodDetails').value,
-        sort_order: +document.getElementById('methodOrder').value
+    document.getElementById('saveMethodBtn').addEventListener('click',async ()=>{
+      const id=+document.getElementById('methodId').value;
+      const payload={
+        type:document.getElementById('methodType').value,
+        code:document.getElementById('methodCode').value||null,
+        name:document.getElementById('methodName').value,
+        details:document.getElementById('methodDetails').value,
+        sort_order:+document.getElementById('methodOrder').value
       };
-      let res;
-      if(id) res = await client.from('payment_methods').update(payload).eq('id',id);
-      else   res = await client.from('payment_methods').insert([payload]);
-
-      if(res.error) showToast('Error saving',false);
-      else { showToast('Saved'); methodsTable.ajax.reload(); methodModal.hide(); }
+      let res=id
+        ?await client.from('payment_methods').update(payload).eq('id',id)
+        :await client.from('payment_methods').insert([payload]);
+      if(res.error) toast('Save error',false);
+      else{toast('Saved');methTable.ajax.reload();methodModal.hide();}
     });
 
-  }); // end DOMContentLoaded
+  }); // DOMContentLoaded
   </script>
 </body>
 </html>
