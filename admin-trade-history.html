@@ -4,7 +4,6 @@
   <meta charset="UTF-8"/>
   <meta name="viewport" content="width=device-width,initial-scale=1"/>
   <title>CBE Admin – Trade History</title>
-  <!-- Fonts, Bootstrap, Icons, DataTables CSS -->
   <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700&display=swap" rel="stylesheet"/>
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet"/>
   <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css" rel="stylesheet"/>
@@ -36,55 +35,36 @@
       border:1px solid rgba(255,215,0,0.2);
       border-radius:8px;
     }
-    a { color: var(--gold); text-decoration:none; }
-    header.admin-header {
-      display:flex; align-items:center; justify-content:space-between;
-      padding:1rem 2rem; background:rgba(0,0,0,0.6);
-      border-bottom:1px solid var(--gold); position:sticky; top:0; z-index:10;
-    }
-    .logo { cursor:pointer; }
-    .logo img { height:40px; }
-    #theme-toggle {
-      background:none; border:none; font-size:1.25rem;
-      cursor:pointer; color:var(--text);
-    }
-    #section-title {
-      color: var(--gold); text-align:center; margin:2rem 0 1rem;
-    }
-    .table-panel { padding:2rem; margin-bottom:2rem; }
-    .dataTables_wrapper .dataTables_filter input {
-      background: var(--bg); color: var(--text);
-      border:1px solid var(--gold);
-    }
-    table.dataTable th, table.dataTable td { vertical-align:middle; }
-
-    /* Toast fix: ensure toasts appear above all glass panels */
-    .toast {
-      z-index: 2000 !important;
-    }
+    /* ensure toasts float above glass */
+    .toast { z-index:2000!important; }
   </style>
 </head>
 <body>
   <div class="overlay"></div>
-
-  <!-- Header -->
-  <header class="admin-header glass">
-    <div class="logo" id="logo"><img src="CBE_logo.PNG" alt="CBE Logo"/></div>
-    <button id="theme-toggle" aria-label="Toggle theme">🌞</button>
+  <header class="admin-header glass d-flex justify-content-between align-items-center p-3">
+    <div class="logo" id="logo"><img src="CBE_logo.PNG" alt="CBE Logo" height="40"/></div>
+    <button id="theme-toggle" class="btn btn-sm">🌞</button>
   </header>
 
-  <!-- Main Content -->
-  <main class="container">
-    <h2 id="section-title">Trade History</h2>
-    <div class="glass table-panel">
-      <!-- Filters -->
-      <div class="row g-2 mb-3 align-items-end">
+  <main class="container my-4">
+    <h2 class="text-center text-warning mb-4">Trade History</h2>
+    <div class="glass p-4 mb-4">
+      <div class="row g-3 mb-3">
         <div class="col-md-3">
           <label class="form-label">Filter Month</label>
           <select id="month-select" class="form-select">
             <option value="">All</option>
             <option value="01">January</option>
-            <!-- ...other months... -->
+            <option value="02">February</option>
+            <option value="03">March</option>
+            <option value="04">April</option>
+            <option value="05">May</option>
+            <option value="06">June</option>
+            <option value="07">July</option>
+            <option value="08">August</option>
+            <option value="09">September</option>
+            <option value="10">October</option>
+            <option value="11">November</option>
             <option value="12">December</option>
           </select>
         </div>
@@ -92,32 +72,31 @@
           <label class="form-label">Search</label>
           <input id="trade-search" class="form-control" placeholder="Search..."/>
         </div>
-        <div class="col-auto">
-          <button id="export-history" class="btn btn-outline-secondary">Export CSV</button>
+        <div class="col-auto align-self-end">
+          <button id="export-history" class="btn btn-outline-light">Export CSV</button>
         </div>
       </div>
 
-      <!-- Upload Form -->
       <form id="trade-upload-form" class="border p-3 mb-4 glass">
         <div class="row g-3">
           <div class="col-md-3">
             <label class="form-label">Date</label>
-            <input type="date" class="form-control" id="trade-date" required/>
+            <input type="date" id="trade-date" class="form-control" required/>
           </div>
           <div class="col-md-3">
             <label class="form-label">Asset</label>
-            <input list="asset-list" class="form-control" id="trade-pair" required/>
+            <input list="asset-list" id="trade-pair" class="form-control" required/>
             <datalist id="asset-list">
               <option value="EUR/USD"/><option value="GOLD"/><option value="BTC/USD"/>
             </datalist>
           </div>
           <div class="col-md-3">
             <label class="form-label">Notes</label>
-            <input type="text" class="form-control" id="trade-notes"/>
+            <input type="text" id="trade-notes" class="form-control"/>
           </div>
           <div class="col-md-3">
             <label class="form-label">Screenshot</label>
-            <input type="file" accept="image/*" class="form-control" id="trade-file" required/>
+            <input type="file" id="trade-file" class="form-control" accept="image/*" required/>
           </div>
         </div>
         <div class="mt-3">
@@ -125,11 +104,10 @@
         </div>
       </form>
 
-      <!-- DataTable -->
-      <table id="history-table" class="table table-striped text-white w-100">
+      <table id="history-table" class="table table-dark table-striped w-100">
         <thead>
           <tr>
-            <th>Date</th><th>Asset</th><th>Notes</th><th>Screenshot</th><th>Actions</th>
+            <th>Date</th><th>Asset</th><th>Notes</th><th>Screenshot</th><th>Action</th>
           </tr>
         </thead>
         <tbody></tbody>
@@ -137,7 +115,6 @@
     </div>
   </main>
 
-  <!-- Scripts -->
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
   <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
   <script src="https://cdn.datatables.net/1.13.4/js/jquery.dataTables.min.js"></script>
@@ -146,147 +123,126 @@
   <script>
     document.addEventListener('DOMContentLoaded', () => {
       // Theme toggle
-      const themeBtn = document.getElementById('theme-toggle');
-      const setTheme = t => {
-        document.documentElement.setAttribute('data-theme', t);
-        localStorage.setItem('theme', t);
-        themeBtn.textContent = t === 'dark' ? '🌞' : '🌜';
+      const tBtn = document.getElementById('theme-toggle');
+      tBtn.onclick = () => {
+        const newTheme = document.documentElement.getAttribute('data-theme') === 'dark' ? 'light' : 'dark';
+        document.documentElement.setAttribute('data-theme', newTheme);
+        localStorage.setItem('theme', newTheme);
+        tBtn.textContent = newTheme === 'dark' ? '🌞' : '🌜';
       };
-      themeBtn.onclick = () =>
-        setTheme(document.documentElement.getAttribute('data-theme') === 'dark' ? 'light' : 'dark');
-      setTheme(localStorage.getItem('theme') || 'dark');
+      document.documentElement.setAttribute('data-theme', localStorage.getItem('theme') || 'dark');
 
       // Auth guard
       if (localStorage.getItem('isLoggedIn') !== 'true') {
-        return void(location.href = 'admin-login.html?redirect=admin-trade-history.html');
+        location.href = 'admin-login.html?redirect=admin-trade-history.html';
+        return;
       }
 
       // Supabase client
       const supabase = window.supabase.createClient(
         'https://dapwpgvnfjcfqqhrpxla.supabase.co',
-        'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImRhcHdwZ3ZuZmpjZnFxaHJweGxhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDcwNDA4ODgsImV4cCI6MjA2MjYxNjg4OH0.ICC0UsLlzJDNre7rFCeD3k6iVzo6jOJgn3PhABpEMsQ'
+        'YOUR_ANON_KEY'
       );
 
       // Toast helper
       function showToast(msg, ok = true) {
-        const t = document.createElement('div');
-        t.className = `toast align-items-center text-white ${ok ? 'bg-success' : 'bg-danger'} border-0 position-fixed top-0 end-0 m-3`;
-        t.style.zIndex = '2000';
-        t.innerHTML = `
+        const el = document.createElement('div');
+        el.className = `toast align-items-center text-white ${ok ? 'bg-success' : 'bg-danger'} border-0 position-fixed top-0 end-0 m-3`;
+        el.style.zIndex = '2000';
+        el.innerHTML = `
           <div class="d-flex">
             <div class="toast-body">${msg}</div>
             <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast"></button>
           </div>`;
-        document.body.append(t);
-        new bootstrap.Toast(t, { delay: 4000 }).show();
+        document.body.append(el);
+        new bootstrap.Toast(el, { delay: 3000 }).show();
       }
 
-      // DataTable setup
+      // DataTable
       const table = $('#history-table').DataTable({
         columns: [
-          { data:'date', render: d => new Date(d).toLocaleDateString() },
-          { data:'asset' },
-          { data:'notes' },
-          { data:'screenshot', render: url => url ? `<img src="${url}" style="height:40px;object-fit:cover">` : '—' },
-          { data:'id', orderable:false, render:id=>`<button class="btn btn-sm btn-danger delete-btn" data-id="${id}"><i class="bi bi-trash"></i></button>` }
+          { data: 'date', render: d => new Date(d).toLocaleDateString() },
+          { data: 'asset' },
+          { data: 'notes' },
+          { data: 'screenshot', render: url => url ? `<img src="${url}" style="height:40px;object-fit:cover"/>` : '—' },
+          { data: 'id', orderable: false, render: id => `<button class="btn btn-sm btn-danger delete-btn" data-id="${id}">🗑️</button>` }
         ]
       });
 
-      // Month filter
-      $.fn.dataTable.ext.search.push((_, rowData) => {
+      // Month filter & search
+      $.fn.dataTable.ext.search.push((_, row) => {
         const sel = $('#month-select').val();
-        if (!sel) return true;
-        const m = new Date(rowData.date).getMonth()+1;
-        return sel === ('0'+m).slice(-2);
+        return !sel || ('0'+(new Date(row.date).getMonth()+1)).slice(-2) === sel;
       });
       $('#month-select').on('change', () => table.draw());
+      $('#trade-search').on('keyup', e => table.search(e.target.value).draw());
 
-      // Free-text search
-      $('#trade-search').on('keyup', (e) => table.search(e.target.value).draw());
-
-      // Load history
-      async function loadTradeHistory() {
-        try {
-          const { data, error } = await supabase
-            .from('trade_history')
-            .select('*')
-            .order('date',{ascending:false});
-          if (error) throw error;
-          table.clear().rows.add(data).draw();
-        } catch (e) {
-          console.error(e);
-          showToast(`Load error: ${e.message}`, false);
+      // Load
+      async function loadTrades() {
+        const { data, error } = await supabase
+          .from('trade_history')
+          .select('*')
+          .order('date', { ascending: false });
+        if (error) {
+          return showToast(`Load error: ${error.message}`, false);
         }
+        table.clear().rows.add(data).draw();
       }
 
-      // Delete record
-      $('#history-table tbody').on('click','.delete-btn', async function(){
-        const id = this.dataset.id;
+      // Delete
+      $('#history-table').on('click', '.delete-btn', async function() {
         if (!confirm('Delete this record?')) return;
-        try {
-          const { error } = await supabase.from('trade_history').delete().eq('id',id);
-          if (error) throw error;
-          showToast('Record deleted');
-          loadTradeHistory();
-        } catch (e) {
-          console.error(e);
-          showToast(`Delete error: ${e.message}`, false);
-        }
+        const id = this.dataset.id;
+        const { error } = await supabase.from('trade_history').delete().eq('id', id);
+        if (error) return showToast(`Delete error: ${error.message}`, false);
+        showToast('Deleted');
+        loadTrades();
       });
 
-      // Upload form
+      // Upload
       document.getElementById('trade-upload-form').onsubmit = async e => {
         e.preventDefault();
-        const date = document.getElementById('trade-date').value;
-        const asset = document.getElementById('trade-pair').value;
-        const notes = document.getElementById('trade-notes').value;
-        const file  = document.getElementById('trade-file').files[0];
-        
-        console.log('Uploading file:', file);
-        if (!file) {
-          return showToast('No file selected', false);
-        }
+        const file = document.getElementById('trade-file').files[0];
+        if (!file) return showToast('No file selected', false);
+
+        const date = e.target.tradeDate.value;
+        const asset = e.target.tradePair.value;
+        const notes = e.target.tradeNotes.value;
 
         try {
-          const filename = `trade_${Date.now()}.png`;
-          const { error: uploadErr } = await supabase
-            .storage.from('screenshots')
-            .upload(filename, file);
-          if (uploadErr) throw uploadErr;
+          const fn = `trade_${Date.now()}.png`;
+          const { error: upErr } = await supabase.storage.from('screenshots').upload(fn, file);
+          if (upErr) throw upErr;
+          const { data: urlData } = supabase.storage.from('screenshots').getPublicUrl(fn);
 
-          const { data: publicUrlData } = supabase
-            .storage.from('screenshots')
-            .getPublicUrl(filename);
-
-          const { error: insertErr } = await supabase
+          const { error: insErr } = await supabase
             .from('trade_history')
-            .insert([{ date, asset, notes, screenshot: publicUrlData.publicUrl }]);
-          if (insertErr) throw insertErr;
+            .insert([{ date, asset, notes, screenshot: urlData.publicUrl }]);
+          if (insErr) throw insErr;
 
           showToast('Trade added');
           e.target.reset();
-          loadTradeHistory();
+          loadTrades();
         } catch (err) {
           console.error(err);
           showToast(`Upload error: ${err.message}`, false);
         }
       };
 
-      // Export CSV
-      document.getElementById('export-history').onclick = () => {
-        const rows = table.rows({ search:'applied' }).data().toArray();
-        const csv  = [
+      $('#export-history').on('click', () => {
+        const rows = table.rows({ search: 'applied' }).data().toArray();
+        const csv = [
           ['Date','Asset','Notes'].join(','),
-          ...rows.map(r=>[new Date(r.date).toISOString(), r.asset, `"${r.notes.replace(/"/g,'""')}"`].join(','))
+          ...rows.map(r => [new Date(r.date).toISOString(), r.asset, `"${r.notes.replace(/"/g,'""')}"`].join(','))
         ].join('\n');
-        const blob = new Blob([csv],{type:'text/csv'});
-        const a    = document.createElement('a');
-        a.href    = URL.createObjectURL(blob);
+        const blob = new Blob([csv], { type: 'text/csv' });
+        const a = document.createElement('a');
+        a.href = URL.createObjectURL(blob);
         a.download = 'trade_history.csv';
         a.click();
-      };
+      });
 
-      loadTradeHistory();
+      loadTrades();
     });
   </script>
 </body>
