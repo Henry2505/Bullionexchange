@@ -1,219 +1,278 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" data-theme="dark">
 <head>
-  <meta charset="UTF-8" />
+  <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>VIP Dashboard - CBE</title>
 
-  <!-- Poppins font & FontAwesome -->
-  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;500;700&display=swap" rel="stylesheet">
+  <!-- Favicons -->
+  <link rel="shortcut icon" href="/favicon.ico"/>
+  <link rel="icon" href="/favicon.ico"/>
+  <link rel="icon" type="image/png" sizes="48x48" href="/favicon.png"/>
+  <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png"/>
+
+  <!-- Poppins & FontAwesome -->
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;500;700&display=swap" rel="stylesheet"/>
   <script src="https://kit.fontawesome.com/your-kit-code.js" crossorigin="anonymous"></script>
 
   <style>
-    body {
-      margin: 0;
-      font-family: 'Poppins', sans-serif;
-      background: linear-gradient(to bottom, #0b0b0b, #1a1a1a);
-      color: #f5f5f5;
-      overflow-x: hidden;
+    /* RESET & BASE */
+    * { margin:0; padding:0; box-sizing:border-box; }
+    html { scroll-behavior: smooth; }
+    body, html {
+      width:100%; height:100%;
+      font-family:'Poppins', sans-serif;
+      color: var(--text);
+      overflow-x:hidden;
+      background: var(--bg);
     }
-    /* Video background & overlay */
-    .video-background {
-      position: fixed;
-      top: 0; left: 0;
-      width: 100%; height: 100%;
-      object-fit: cover; z-index: -2;
+    a { color: var(--gold); text-decoration:none; }
+    img { max-width:100%; display:block; }
+
+    /* THEME VARIABLES */
+    :root {
+      --bg: #000;
+      --text: #fff;
+      --gold: #ffd700;
+      --gold-dark: #cca300;
+      --overlay: rgba(0,0,0,0.15);
+      --glass-bg: rgba(255,255,255,0.05);
     }
-    .overlay {
-      position: fixed;
-      top: 0; left: 0;
-      width: 100%; height: 100%;
-      background: rgba(0,0,0,0.5); z-index: -1;
+    [data-theme="light"] {
+      --bg: #f5f5f5;
+      --text: #333;
+      --gold: #cca300;
+      --gold-dark: #b58900;
+      --overlay: rgba(255,255,255,0.15);
+      --glass-bg: rgba(0,0,0,0.05);
     }
-    /* Navigation Bar */
-    nav {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      padding: 20px 40px;
-      background: rgba(0, 0, 0, 0.8);
-      position: fixed; top: 0; width: 100%; z-index: 1000;
-      border-bottom: 1px solid #333;
-      box-shadow: 0 0 10px gold;
+
+    /* BACKGROUND VIDEO & OVERLAY */
+    #bg-video {
+      position:fixed; top:0; left:0;
+      width:100%; height:100%;
+      object-fit:cover; z-index:-2;
     }
-    nav a.logo {
-      display: flex;
-      align-items: center;
-      text-decoration: none;
+    #overlay {
+      position:fixed; top:0; left:0;
+      width:100%; height:100%;
+      background:var(--overlay); z-index:-1;
     }
-    nav a.logo img {
-      height: 40px;
-      margin-right: 10px;
+
+    /* THEME TOGGLE BUTTON */
+    #theme-toggle {
+      position: fixed; top: 20px; left: 20px;
+      background: none; border: none;
+      font-size: 1.5rem; cursor: pointer;
+      color: var(--text); z-index: 10;
     }
-    nav a.logo span {
-      font-size: 1.25rem;
-      font-weight: bold;
-      color: gold;
+
+    /* NAVIGATION MENU */
+    #nav-menu {
+      position: fixed; top: 20px; right: 20px; z-index: 10;
     }
-    nav .links a {
-      margin: 0 15px;
-      color: gold;
-      text-decoration: none;
-      font-weight: 500;
+    #menu-toggle {
+      background: none; border: none; cursor: pointer;
+      padding: 10px; display: flex; flex-direction: column; gap: 5px;
+      width: 40px; height: 40px; justify-content: center; align-items: center;
     }
-    /* Spacer */
-    .spacer { height: 90px; }
-    /* Header */
+    #menu-toggle span {
+      width: 30px; height: 3px; background: var(--gold);
+      transition: all 0.3s ease;
+    }
+    #menu-toggle.active span:nth-child(1) {
+      transform: rotate(45deg) translate(7px, 7px);
+    }
+    #menu-toggle.active span:nth-child(2) {
+      opacity: 0;
+    }
+    #menu-toggle.active span:nth-child(3) {
+      transform: rotate(-45deg) translate(8px, -8px);
+    }
+    #menu-list {
+      list-style: none; margin: 0; padding: 20px;
+      background: rgba(0, 0, 0, 0.9); position: absolute;
+      top: 50px; right: -250px; width: 250px;
+      transition: right 0.3s ease;
+      border: 1px solid var(--gold); border-radius: 4px;
+    }
+    #menu-list.active { right: 0; }
+    #menu-list li { margin: 10px 0; }
+    #menu-list a { color: #fff; font-weight: 500; }
+    #menu-list a:hover { color: var(--gold); }
+
+    /* HERO */
     header {
-      padding: 80px 20px 50px;
-      text-align: center;
-      position: relative;
+      padding:120px 20px 60px; text-align:center; position:relative;
     }
+    header .logo { margin-bottom:20px; }
+    header .logo img {
+      width:160px; cursor:pointer; transition:transform .3s;
+    }
+    header .logo img:hover { transform:scale(1.05); }
     header h1 {
-      font-size: 40px;
-      color: gold;
-      margin-bottom: 10px;
+      font-size:3.5rem; margin-bottom:.5em; line-height:1.1;
+      color: var(--gold);
     }
     header p {
-      font-size: 16px;
-      color: #bbb;
-    }
-    .welcome {
-      font-size: 22px;
-      color: #fff;
-      margin-top: 25px;
-      background-color: #1c1c1c;
-      padding: 10px 20px;
-      display: inline-block;
-      border-radius: 8px;
-      box-shadow: 0 0 10px rgba(255, 215, 0, 0.2);
-    }
-    /* Main cards */
-    main {
-      max-width: 1000px;
-      margin: 40px auto;
-      padding: 20px;
-    }
-    .card {
-      background-color: #141414;
-      padding: 30px;
-      border-radius: 12px;
-      margin-bottom: 30px;
-      box-shadow: 0 4px 20px rgba(0,0,0,0.4);
-      transition: transform 0.3s, box-shadow 0.3s;
-    }
-    .card:hover {
-      transform: translateY(-5px);
-      box-shadow: 0 6px 30px rgba(0,0,0,0.6);
-    }
-    .card h2 {
-      color: gold;
-      margin-bottom: 12px;
-    }
-    .card p {
-      color: #ccc;
-      font-size: 15px;
-      line-height: 1.6;
+      font-size:1.2rem; margin:0 auto 1.5em; max-width:700px;
+      color: var(--text);
     }
     .btn {
-      background-color: gold;
-      color: #000;
-      padding: 12px 24px;
-      font-weight: bold;
-      font-size: 15px;
-      border: none;
-      border-radius: 6px;
-      text-decoration: none;
-      display: inline-block;
-      margin-top: 15px;
-      transition: background-color 0.3s ease;
+      display:inline-block; padding:12px 30px;
+      border:2px solid var(--gold); border-radius:4px;
+      font-weight:600; transition:.3s;
     }
-    .btn:hover {
-      background-color: #e6c200;
+    .btn-gold { background:var(--gold); color:#000; }
+    .btn:hover { transform: translateY(-2px); }
+
+    /* SLIDE-IN ANIMATION */
+    section, main .card {
+      opacity:0; transform: translateY(50px);
+      transition: all 0.8s ease-out;
     }
-    /* Footer */
+    section.visible, main .card.visible {
+      opacity:1; transform: translateY(0);
+    }
+
+    /* MAIN CONTENT CARDS */
+    main {
+      padding:80px 20px; max-width:1000px; margin:auto;
+    }
+    .cards {
+      display:grid; grid-template-columns:repeat(auto-fit,minmax(280px,1fr));
+      gap:20px;
+    }
+    .card {
+      background:var(--glass-bg);
+      backdrop-filter:blur(8px);
+      border-radius:16px; padding:2rem 1.5rem;
+      box-shadow:0 4px 30px rgba(0,0,0,0.5);
+      border:1px solid rgba(255,255,255,0.2);
+      text-align:center; position:relative;
+    }
+    .card h2 {
+      color:var(--gold); font-size:1.8rem; margin-bottom:.5em;
+    }
+    .card p {
+      color:#ddd; text-align:left; margin:1rem 0;
+    }
+    .card .btn-gold { margin-top:1rem; }
+
+    /* FOOTER */
     footer {
-      text-align: center;
-      padding: 20px;
-      font-size: 14px;
-      color: #888;
-      border-top: 1px solid #222;
-      background-color: #0b0b0b;
+      text-align:center; padding:40px 20px;
+      background:rgba(0,0,0,0.8); font-size:.9rem;
     }
+    footer a { color: var(--gold); }
   </style>
 </head>
 <body>
 
-  <!-- Video Background & Overlay -->
-  <video class="video-background" autoplay muted loop playsinline>
-    <source src="star-video.mp4" type="video/mp4">
-  </video>
-  <div class="overlay"></div>
+  <!-- Theme toggle -->
+  <button id="theme-toggle" aria-label="Toggle theme">🌞</button>
 
-  <!-- Navigation -->
-  <nav>
-    <a href="index.html" class="logo">
-      <img src="CBE_logo.png" alt="CBE Logo">
-      <span>CBE</span>
-    </a>
-    <div class="links">
-      <a href="index.html">Home</a>
-      <a href="about.html">About</a>
-      <a href="services.html">Services</a>
-      <a href="FAQ.html">FAQ</a>
-      <a href="CBE_apply.html">Apply</a>
-      <a href="CBE_contact.html">Contact</a>
-    </div>
+  <!-- Navigation Menu -->
+  <nav id="nav-menu" aria-label="Main navigation">
+    <button id="menu-toggle" aria-expanded="false">
+      <span></span><span></span><span></span>
+    </button>
+    <ul id="menu-list">
+      <li><a href="index.html">Home</a></li>
+      <li><a href="about.html">About</a></li>
+      <li><a href="services.html">Services</a></li>
+      <li><a href="FAQ.html">FAQ</a></li>
+      <li><a href="CBE_trade_insights_public.html">Trade Insights</a></li>
+      <li><a href="CBE_apply.html">Apply</a></li>
+      <li><a href="CBE_contact.html">Contact</a></li>
+      <li><a href="CBE_login.html">Login</a></li>
+    </ul>
   </nav>
-  <div class="spacer"></div>
 
-  <!-- Hero -->
-  <header>
+  <!-- Video Background & Overlay -->
+  <video id="bg-video" autoplay muted loop playsinline>
+    <source src="star-video.mp4" type="video/mp4"/>
+  </video>
+  <div id="overlay"></div>
+
+  <!-- Hero Section -->
+  <header class="slide-in">
+    <div class="logo">
+      <a href="index.html"><img src="CBE_logo.png" alt="CBE Logo"/></a>
+    </div>
     <h1>Welcome to Your VIP Dashboard</h1>
-    <p>Gain full access to premium signals and exclusive features</p>
-    <div class="welcome">Hello, <strong id="userName">Trader</strong>!</div>
+    <p>Precision Forex, Simplified — access your exclusive tools below.</p>
   </header>
 
   <!-- Main Content -->
   <main>
-    <div class="card">
-      <h2>Today's Forex Signals</h2>
-      <p>Click below to view your premium signals curated by our experts.</p>
-      <a href="signals.html" class="btn">Access Signals</a>
-    </div>
-
-    <div class="card">
-      <h2>Account Settings</h2>
-      <p>Update your personal information, change your password, or customize your preferences.</p>
-      <a href="#" class="btn">Manage Account</a>
-    </div>
-
-    <div class="card">
-      <h2>Contact Support</h2>
-      <p>Need help? Reach out to our dedicated support team for quick assistance.</p>
-      <a href="#" class="btn">Get Support</a>
-    </div>
-
-    <div class="card">
-      <h2>Trade Insights</h2>
-      <p>View in-depth trading analysis, screenshots, and strategies uploaded by our team.</p>
-      <a href="CBE_trade_insights_vip.html" class="btn">View Trade Insights</a>
-    </div>
-
-    <div class="card">
-      <h2>Trade History</h2>
-      <p>Access the complete record of our monthly trades from January to December.</p>
-      <a href="CBE_trade_history_vip.html" class="btn">View Trade History</a>
+    <div class="cards">
+      <div class="card slide-in">
+        <h2>Premium Signals</h2>
+        <p>View today’s curated Forex signals, complete with entry, stop, and target levels.</p>
+        <a href="signals.html" class="btn btn-gold">Access Signals</a>
+      </div>
+      <div class="card slide-in">
+        <h2>Account Settings</h2>
+        <p>Update your profile, change password, or manage your contact information.</p>
+        <a href="#" class="btn btn-gold">Manage Account</a>
+      </div>
+      <div class="card slide-in">
+        <h2>Trade Insights</h2>
+        <p>Explore detailed trade rationales, screenshots, and expert analysis.</p>
+        <a href="CBE_trade_insights_vip.html" class="btn btn-gold">View Insights</a>
+      </div>
+      <div class="card slide-in">
+        <h2>Trade History</h2>
+        <p>Review our monthly performance logs from January through December.</p>
+        <a href="CBE_trade_history_vip.html" class="btn btn-gold">View History</a>
+      </div>
+      <div class="card slide-in">
+        <h2>Contact Support</h2>
+        <p>Need assistance? Our dedicated support team is here to help 24/7.</p>
+        <a href="#" class="btn btn-gold">Get Support</a>
+      </div>
     </div>
   </main>
 
+  <!-- Footer -->
   <footer>
-    © 2025 CBE - Chukwuemeka Bullion Exchange. All rights reserved.
+    © 2025 Chukwuemeka Bullion Exchange. All rights reserved.<br/>
+    <a href="privacy.html">Privacy Policy</a> | <a href="terms.html">Terms & Conditions</a>
   </footer>
 
+  <!-- Scripts -->
   <script>
-    // Populate the trader's name (this would come from your auth/session in prod)
-    document.getElementById("userName").textContent = localStorage.getItem('cbeUserName') || "Trader";
+    // Theme toggle
+    const html = document.documentElement, tbtn = document.getElementById('theme-toggle');
+    let theme = localStorage.getItem('theme') || 'dark';
+    html.setAttribute('data-theme', theme);
+    tbtn.textContent = theme==='dark' ? '🌞' : '🌜';
+    tbtn.onclick = ()=>{
+      theme = theme==='dark' ? 'light' : 'dark';
+      html.setAttribute('data-theme', theme);
+      localStorage.setItem('theme', theme);
+      tbtn.textContent = theme==='dark' ? '🌞' : '🌜';
+    };
+
+    // Menu toggle
+    document.getElementById('menu-toggle').addEventListener('click', function(){
+      this.classList.toggle('active');
+      document.getElementById('menu-list').classList.toggle('active');
+      const e = this.getAttribute('aria-expanded')==='true';
+      this.setAttribute('aria-expanded', !e);
+    });
+
+    // Slide-in animations
+    const observer = new IntersectionObserver(entries=>{
+      entries.forEach(e=>{
+        if(e.isIntersecting){
+          e.target.classList.add('visible');
+          observer.unobserve(e.target);
+        }
+      });
+    }, { threshold:0.3 });
+    document.querySelectorAll('.slide-in').forEach(el=>observer.observe(el));
   </script>
 </body>
 </html>
