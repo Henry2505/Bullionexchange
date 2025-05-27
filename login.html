@@ -100,33 +100,36 @@
   <!-- Supabase UMD -->
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js/dist/umd/supabase.js"></script>
   <script>
-    // ── Init ────────────────────────────────────────────────────────────────────
+    // Init Supabase client
     const SUPA_URL      = 'https://dapwpgvnfjcfqqhrpxla.supabase.co';
     const SUPA_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImRhcHdwZ3ZuZmpjZnFxaHJweGxhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDcwNDA4ODgsImV4cCI6MjA2MjYxNjg4OH0.ICC0UsLlzJDNre7rFCeD3k6iVzo6jOJgn3PhABpEMsQ';
     const sb = supabase.createClient(SUPA_URL, SUPA_ANON_KEY);
 
-    // ── Slide-in & Theme ─────────────────────────────────────────────────────────
+    // Slide-in animation & theme init
     window.addEventListener('DOMContentLoaded', () => {
       document.getElementById('login-card').classList.add('visible');
       const saved = localStorage.getItem('theme') || 'dark';
       document.documentElement.setAttribute('data-theme', saved);
-      document.getElementById('theme-toggle').textContent = saved==='dark' ? '🌞' : '🌜';
-    });
-    document.getElementById('theme-toggle').addEventListener('click', () => {
-      const cur = document.documentElement.getAttribute('data-theme');
-      const next = cur==='dark' ? 'light' : 'dark';
-      document.documentElement.setAttribute('data-theme', next);
-      localStorage.setItem('theme', next);
-      document.getElementById('theme-toggle').textContent = next==='dark' ? '🌞' : '🌜';
+      document.getElementById('theme-toggle').textContent = saved === 'dark' ? '🌞' : '🌜';
     });
 
-    // ── Login via users table ────────────────────────────────────────────────────
+    // Theme toggle
+    document.getElementById('theme-toggle').addEventListener('click', () => {
+      const cur = document.documentElement.getAttribute('data-theme');
+      const next = cur === 'dark' ? 'light' : 'dark';
+      document.documentElement.setAttribute('data-theme', next);
+      localStorage.setItem('theme', next);
+      document.getElementById('theme-toggle').textContent = next === 'dark' ? '🌞' : '🌜';
+    });
+
+    // Login form handler with debug
     document.getElementById('login-form').addEventListener('submit', async e => {
       e.preventDefault();
       const alertDiv = document.getElementById('login-alert');
       alertDiv.textContent = '';
 
-      const email    = document.getElementById('email').value.trim().toLowerCase();
+      const rawEmail = document.getElementById('email').value.trim();
+      const email    = rawEmail.toLowerCase();
       const password = document.getElementById('password').value;
       if (!email || !password) {
         alertDiv.style.color = 'crimson';
@@ -134,30 +137,39 @@
       }
 
       try {
-        // 1) Fetch the row from your users table
+        // 1) Case-insensitive fetch via ILIKE
         const { data: userRow, error } = await sb
           .from('users')
-          .select('password,status')
-          .eq('email', email)
+          .select('email,password,status')
+          .ilike('email', email)
           .single();
         if (error) throw error;
 
-        // 2) Check plaintext password match
+        // Debug logging
+        console.group('🔍 Debug login');
+        console.log('Entered email:', rawEmail, '→ normalized:', email);
+        console.log('DB email:', userRow.email);
+        console.log('Entered password:', password);
+        console.log('DB password:', userRow.password);
+        console.log('Status:', userRow.status);
+        console.groupEnd();
+
+        // 2) Password check
         if (userRow.password !== password) {
           throw new Error('Invalid login credentials');
         }
 
-        // 3) Check approval status
+        // 3) Approval check
         if (!userRow.status || userRow.status.toLowerCase() !== 'approved') {
           throw new Error('Your account is not yet approved by admin.');
         }
 
-        // 4) Success! Set your flag and redirect
+        // 4) Success!
         sessionStorage.setItem('cbeLoggedIn', 'true');
         window.location.href = 'vip-dashboard.html';
 
       } catch (err) {
-        console.error(err);
+        console.error('Login error:', err);
         alertDiv.style.color = err.message.includes('approved') ? 'orange' : 'crimson';
         alertDiv.textContent = err.message;
       }
