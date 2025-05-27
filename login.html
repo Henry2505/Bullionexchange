@@ -67,59 +67,61 @@
     </form>
   </div>
 
-  <script type="module">
-    import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm'
+  <!-- Load the UMD bundle -->
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.28.0/dist/umd/supabase.min.js"></script>
+  <script>
+    // Replace these with your exact values
+    const SUPA_URL = 'https://dapwpgvnfjcfqqhrpxla.supabase.co';
+    const SUPA_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImRhcHdwZ3ZuZmpjZnFxaHJweGxhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDcwNDA4ODgsImV4cCI6MjA2MjYxNjg4OH0.ICC0UsLlzJDNre7rFCeD3k6iVzo6jOJgn3PhABpEMsQ';
 
-    // Supabase config
-    const SUPA_URL = 'https://dapwpgvnfjcfqqhrpxla.supabase.co'
-    const SUPA_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImRhcHdwZ3ZuZmpjZnFxaHJweGxhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDcwNDA4ODgsImV4cCI6MjA2MjYxNjg4OH0.ICC0UsLlzJDNre7rFCeD3k6iVzo6jOJgn3PhABpEMsQ'
-    const supabase = createClient(SUPA_URL, SUPA_KEY)
+    // Initialize Supabase client
+    const supabase = supabase.createClient(SUPA_URL, SUPA_KEY);
 
     document.getElementById('loginForm').addEventListener('submit', async e => {
-      e.preventDefault()
-      const email = document.getElementById('email').value.trim().toLowerCase()
-      const password = document.getElementById('password').value
+      e.preventDefault();
+
+      const email = document.getElementById('email').value.trim().toLowerCase();
+      const password = document.getElementById('password').value;
 
       if (!email || !password) {
-        return alert('❌ Please fill in both fields.')
+        return alert('❌ Please fill in both fields.');
       }
 
       try {
         // 1) Sign in
-        const { data: authData, error: authError } = await supabase.auth.signInWithPassword({ email, password })
+        const { data: authData, error: authError } = await supabase.auth.signInWithPassword({ email, password });
         if (authError) {
-          console.error('Auth error:', authError)
-          return alert('❌ Login failed: ' + authError.message)
+          console.error('Auth error:', authError);
+          return alert('❌ Login failed: ' + authError.message);
         }
 
-        // 2) Check admin approval
-        const userId = authData.user.id
+        // 2) Check admin approval in your "profiles" table
+        const userId = authData.user.id;
         const { data: profile, error: profileError } = await supabase
           .from('profiles')
           .select('status')
           .eq('id', userId)
-          .single()
+          .single();
 
         if (profileError || !profile) {
-          await supabase.auth.signOut()
-          console.error('Profile lookup error:', profileError)
-          return alert('❌ Unable to verify your account. Contact support.')
+          await supabase.auth.signOut();
+          console.error('Profile lookup error:', profileError);
+          return alert('❌ Unable to verify your account. Contact support.');
         }
 
         if (profile.status !== 'approved') {
-          await supabase.auth.signOut()
-          return alert('⏳ Your account is not yet approved by admin. Please wait.')
+          await supabase.auth.signOut();
+          return alert('⏳ Your account is not yet approved by admin. Please wait.');
         }
 
-        // 3) Approved → keep session & redirect
-        sessionStorage.setItem('cbeLoggedIn', 'true')
-        window.location.href = 'vip-dashboard.html'
+        // 3) Approved! Keep session and redirect
+        sessionStorage.setItem('cbeLoggedIn', 'true');
+        window.location.href = 'vip-dashboard.html';
+      } catch (err) {
+        console.error('Unexpected error:', err);
+        alert('❌ A network error occurred. Check console for details.');
       }
-      catch (err) {
-        console.error('Unexpected error:', err)
-        alert('❌ A network error occurred. Check console for details.')
-      }
-    })
+    });
   </script>
 
 </body>
