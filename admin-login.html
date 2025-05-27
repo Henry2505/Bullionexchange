@@ -110,6 +110,7 @@
       font-weight: 600;
       margin-top: 0.5rem;
       text-align: center;
+      display: none;
     }
   </style>
 </head>
@@ -126,7 +127,6 @@
           placeholder="Enter your email"
           required
           autocomplete="username"
-          aria-describedby="emailHelp"
         />
       </div>
 
@@ -139,7 +139,6 @@
           placeholder="Enter your password"
           required
           autocomplete="current-password"
-          aria-describedby="passwordHelp"
         />
         <div id="passwordHelp" class="form-text">
           Password is case-sensitive.
@@ -147,38 +146,41 @@
       </div>
 
       <button type="submit" class="btn btn-primary">Login</button>
-      <div id="error-msg" class="error-message" role="alert" aria-live="assertive" style="display:none"></div>
+      <div id="error-msg" class="error-message" role="alert" aria-live="assertive"></div>
     </form>
   </div>
 
   <script>
-    (() => {
-      const validEmail = "henrychukwuemeka215@icloud.com";
-      const validPassword = "Blessed@123";
+    (function() {
+      const VALID_EMAIL    = "henrychukwuemeka215@icloud.com";
+      const VALID_PASSWORD = "Blessed@123";
 
-      const form = document.getElementById("login-form");
+      const form     = document.getElementById("login-form");
+      const emailEl  = document.getElementById("email");
+      const passEl   = document.getElementById("password");
       const errorMsg = document.getElementById("error-msg");
 
       form.addEventListener("submit", (e) => {
         e.preventDefault();
         errorMsg.style.display = "none";
-        const emailInput = form.email.value.trim().toLowerCase();
-        const passwordInput = form.password.value;
 
-        if (emailInput === validEmail && passwordInput === validPassword) {
+        const emailInput    = emailEl.value.trim().toLowerCase();
+        const passwordInput = passEl.value;
+
+        if (emailInput === VALID_EMAIL && passwordInput === VALID_PASSWORD) {
+          // mark as logged in
           localStorage.setItem("isLoggedIn", "true");
 
-          // Check if redirected from another page
-          const params = new URLSearchParams(window.location.search);
+          // handle optional redirect param
+          const params   = new URLSearchParams(window.location.search);
           const redirect = params.get("redirect");
-
-          // Redirect to the intended page or dashboard
-          window.location.href = redirect ? redirect : "admin-dashboard.html";
+          window.location.href = redirect || "admin-dashboard.html";
         } else {
+          // show error
           errorMsg.textContent = "Invalid email or password.";
           errorMsg.style.display = "block";
-          form.password.value = "";
-          form.password.focus();
+          passEl.value = "";
+          passEl.focus();
         }
       });
     })();
