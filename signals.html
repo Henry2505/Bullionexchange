@@ -38,15 +38,6 @@
     }
     header p { color:#bbb; }
 
-    /* Signal Chart */
-    #tradingview_embed {
-      height: 600px;
-      border: 1px solid rgba(255,255,255,0.2);
-      border-radius: 8px;
-      margin-bottom: 40px;
-      overflow: hidden;
-    }
-
     /* Notice */
     .notice {
       text-align:center; color:#ff5555;
@@ -60,6 +51,7 @@
       box-shadow:0 4px 20px rgba(0,0,0,0.7);
       animation:fadeIn 0.8s ease;
       overflow:hidden;
+      margin-bottom:40px;
     }
     @keyframes fadeIn {
       from { opacity:0; transform: translateY(20px); }
@@ -97,6 +89,15 @@
       color:#ffcc00; font-style:italic; border-radius:6px;
     }
 
+    /* Chart Section */
+    #tradingview_embed {
+      height: 600px;
+      border: 1px solid rgba(255,255,255,0.2);
+      border-radius: 8px;
+      overflow: hidden;
+      margin-bottom: 60px;
+    }
+
     /* Footer */
     footer {
       text-align:center; padding:20px;
@@ -114,9 +115,6 @@
       <p>Exclusively for approved CBE VIP members</p>
     </header>
 
-    <!-- Advanced Gold Chart -->
-    <div id="tradingview_embed"></div>
-
     <!-- Notice -->
     <div class="notice">🔒 Unauthorized users will be redirected to login.</div>
 
@@ -126,6 +124,9 @@
         Loading latest signal…
       </p>
     </div>
+
+    <!-- Advanced Gold Chart (below the signal) -->
+    <div id="tradingview_embed"></div>
   </div>
 
   <!-- TradingView Widget Initialization -->
@@ -149,8 +150,7 @@
       "hidelegend": false,
       "save_image": false,
       "hotlist": true,
-      "calendar": false,
-      "container_id": "tradingview_embed"
+      "calendar": false
     });
   </script>
 
@@ -164,7 +164,6 @@
     async function ensureVIP() {
       const { data:{ session }, error } = await supabase.auth.getSession();
       if (error || !session) return location.href='login.html';
-
       const { data:userRow } = await supabase
         .from('users')
         .select('status')
@@ -215,14 +214,14 @@
       }
     }
 
-    // 3) Copy helper
+    // Copy helper
     function copyText(txt) {
       navigator.clipboard.writeText(txt).then(()=>{
         alert('Copied: '+txt);
       });
     }
 
-    // Init
+    // Initialize
     (async()=>{
       await ensureVIP();
       await loadLatestSignal();
