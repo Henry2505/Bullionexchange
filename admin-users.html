@@ -9,15 +9,13 @@
   <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;500;700&display=swap" rel="stylesheet"/>
   <script src="https://kit.fontawesome.com/your-kit-code.js" crossorigin="anonymous"></script>
 
-  <!-- Bootstrap CSS -->
+  <!-- Bootstrap & DataTables CSS -->
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet"/>
-  <!-- DataTables CSS -->
   <link href="https://cdn.datatables.net/1.13.4/css/dataTables.bootstrap5.min.css" rel="stylesheet"/>
-  <!-- DataTables Buttons CSS -->
   <link href="https://cdn.datatables.net/buttons/2.3.6/css/buttons.bootstrap5.min.css" rel="stylesheet"/>
 
   <style>
-    /* VARIABLES */
+    /* THEME VARIABLES */
     :root[data-theme="dark"] {
       --bg: #000;
       --text: #fff;
@@ -42,7 +40,7 @@
       color: var(--text);
       overflow-x:hidden;
     }
-    a { color: var(--gold); text-decoration:none; }
+    a { text-decoration:none; }
     .btn-gold {
       background: var(--gold);
       color: #000;
@@ -53,62 +51,99 @@
 
     /* HEADER */
     header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
       background: var(--bg);
-      padding:1rem 2rem;
-      display:flex;
-      justify-content:space-between;
-      align-items:center;
+      padding: 0.5rem 1rem;
+      border-bottom: 1px solid rgba(255,255,255,0.1);
     }
-    header h1 { font-size:1.5rem; color:var(--gold); }
+    .header-left {
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+    }
+    .header-left img {
+      height: 40px;
+      cursor: pointer;
+    }
+    header h1 {
+      font-size: 1.25rem;
+      font-weight: 500;
+      color: var(--gold);
+    }
     #theme-toggle {
-      background:none;
-      border:none;
-      font-size:1.5rem;
-      cursor:pointer;
-      color:var(--text);
+      background: none;
+      border: none;
+      font-size: 1.5rem;
+      cursor: pointer;
+      color: var(--text);
     }
 
-    /* MAIN */
-    main { padding:2rem; }
+    /* MAIN PANEL */
+    main {
+      padding: 1.5rem;
+    }
     .glass {
       background: var(--glass);
       backdrop-filter: blur(10px);
-      border-radius:12px;
-      padding:2rem;
+      border-radius: 12px;
+      padding: 1.5rem;
     }
-    .glass h3 { color: var(--gold); margin-bottom:1rem; }
+    .glass h3 {
+      color: var(--gold);
+      margin-bottom: 1rem;
+      font-weight: 500;
+    }
 
-    /* DATA TABLE */
-    .dataTables_wrapper .dt-buttons .btn {
-      margin-right:0.5rem;
-      background:none;
-      border:1px solid var(--gold);
-      color:var(--gold);
+    /* DATATABLE */
+    .dt-buttons .btn {
+      margin-right: 0.5rem;
+      background: none;
+      border: 1px solid var(--gold);
+      color: var(--gold);
     }
-    .dataTables_wrapper .dt-buttons .btn:hover {
-      background:var(--gold-dark);
-      color:#000;
+    .dt-buttons .btn:hover {
+      background: var(--gold-dark);
+      color: #000;
     }
     table.dataTable {
       color: var(--text) !important;
+      width: 100% !important;
     }
     table.dataTable thead th {
       background: var(--gold-dark) !important;
       color: #000 !important;
+      padding: 0.75rem;
+      text-align: center;
     }
-    table.dataTable tbody tr:nth-child(odd) {
-      background: rgba(255,255,255,0.02);
+    table.dataTable tbody td {
+      padding: 0.6rem;
+      vertical-align: middle;
     }
-    table.dataTable tbody tr:nth-child(even) {
-      background: rgba(255,255,255,0.04);
+    table.dataTable tbody tr {
+      transition: background .2s, box-shadow .2s;
     }
-    .btn-sm { padding:.25rem .5rem; font-size:.8rem; }
+    table.dataTable tbody tr:hover {
+      background: rgba(255,255,255,0.08);
+      box-shadow: inset 0 0 10px rgba(0,0,0,0.5);
+    }
+    /* center numeric/text columns */
+    .col-index, .col-registered, .col-status, .col-actions {
+      text-align: center;
+    }
+    .btn-sm { padding: .25rem .5rem; font-size: .8rem; }
   </style>
 </head>
 
 <body>
   <header>
-    <h1>CBE Admin – Users</h1>
+    <div class="header-left">
+      <a href="admin-dashboard.html">
+        <img src="CBE_logo.PNG" alt="CBE Logo"/>
+      </a>
+      <h1>User Management</h1>
+    </div>
     <button id="theme-toggle" aria-label="Toggle theme">🌞</button>
   </header>
 
@@ -119,15 +154,15 @@
         <table id="users-table" class="table table-hover" style="width:100%">
           <thead>
             <tr>
-              <th>#</th>
+              <th class="col-index">#</th>
               <th>Email</th>
               <th>Name</th>
               <th>Password</th>
               <th>Phone</th>
               <th>Experience</th>
-              <th>Registered At</th>
-              <th>Status</th>
-              <th>Actions</th>
+              <th class="col-registered">Registered</th>
+              <th class="col-status">Status</th>
+              <th class="col-actions">Actions</th>
             </tr>
           </thead>
           <tbody></tbody>
@@ -155,7 +190,7 @@
 
   <script>
   (async () => {
-    // Theme toggle
+    // Theme toggle logic
     const html = document.documentElement;
     const btn  = document.getElementById('theme-toggle');
     let theme  = localStorage.getItem('theme') || 'dark';
@@ -173,7 +208,7 @@
     const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImRhcHdwZ3ZuZmpjZnFxaHJweGxhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDcwNDA4ODgsImV4cCI6MjA2MjYxNjg4OH0.ICC0UsLlzJDNre7rFCeD3k6iVzo6jOJgn3PhABpEMsQ';
     const sb = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
-    // DataTable + Buttons
+    // Initialize DataTable + Buttons
     const table = $('#users-table').DataTable({
       dom: `<"d-flex justify-content-between mb-3"
               <"dt-buttons"B>
@@ -185,15 +220,15 @@
               <"col-auto"p>
             >`,
       buttons: [
-        { extend: 'csvHtml5', text: 'Export CSV' },
-        { extend: 'pdfHtml5', text: 'Export PDF' }
+        { extend:'csvHtml5', text:'Export CSV' },
+        { extend:'pdfHtml5', text:'Export PDF' }
       ],
       paging: true,
       searching: true,
-      columnDefs: [{ orderable: false, targets: 8 }]
+      columnDefs: [{ orderable:false, targets:8 }]
     });
 
-    // Expose CRUD actions
+    // CRUD actions
     window.approve = async id => {
       await sb.from('users').update({ status:'Approved' }).eq('id',id);
       loadUsers();
@@ -216,16 +251,16 @@
       if (!name||!email) return;
       await sb.from('users')
         .update({
-          name:name.trim(),
-          email:email.trim().toLowerCase(),
-          phone:phone.trim(),
-          experience:exp.trim()
+          name: name.trim(),
+          email: email.trim().toLowerCase(),
+          phone: phone.trim(),
+          experience: exp.trim()
         })
         .eq('id',id);
       loadUsers();
     };
 
-    // Fetch & render
+    // Load and render users
     async function loadUsers() {
       const { data, error } = await sb
         .from('users')
@@ -236,27 +271,28 @@
       table.clear();
       data.forEach((u,i) => {
         table.row.add([
-          i+1,
-          u.email,
-          u.name,
-          u.password,
-          u.phone,
-          u.experience,
-          new Date(u.created_at).toLocaleDateString(),
-          u.status,
-          `
-          ${u.status==='Pending' 
-            ? `<button class="btn btn-sm btn-gold me-1" onclick="approve('${u.id}')">Approve</button>` 
-            : ''}
-          <button class="btn btn-sm btn-gold me-1" onclick="reject('${u.id}')">Reject</button>
-          <button class="btn btn-sm btn-gold me-1" onclick="remove('${u.id}')">Delete</button>
-          <button class="btn btn-sm btn-gold" onclick="edit('${u.id}')">Edit</button>
-          `
+          `<span>${i+1}</span>`,
+          `<span>${u.email}</span>`,
+          `<span>${u.name}</span>`,
+          `<span>${u.password}</span>`,
+          `<span>${u.phone}</span>`,
+          `<span>${u.experience}</span>`,
+          `<span class="col-registered">${new Date(u.created_at).toLocaleDateString()}</span>`,
+          `<span class="col-status">${u.status}</span>`,
+          `<div class="col-actions">
+            ${u.status==='Pending'
+              ? `<button class="btn btn-sm btn-gold me-1" onclick="approve('${u.id}')">Approve</button>`
+              : ``}
+            <button class="btn btn-sm btn-gold me-1" onclick="reject('${u.id}')">Reject</button>
+            <button class="btn btn-sm btn-gold me-1" onclick="remove('${u.id}')">Delete</button>
+            <button class="btn btn-sm btn-gold" onclick="edit('${u.id}')">Edit</button>
+          </div>`
         ]);
       });
       table.draw();
     }
 
+    // Initial load
     await loadUsers();
   })();
   </script>
