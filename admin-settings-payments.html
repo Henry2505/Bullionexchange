@@ -111,12 +111,7 @@
           <table id="payments-table" class="table table-hover table-borderless text-white w-100">
             <thead>
               <tr>
-                <th>#</th>
-                <th>Email</th>
-                <th>Plan</th>
-                <th>Date</th>
-                <th>Screenshot</th>
-                <th>Action</th>
+                <th>#</th><th>Email</th><th>Plan</th><th>Date</th><th>Screenshot</th><th>Action</th>
               </tr>
             </thead>
             <tbody></tbody>
@@ -144,6 +139,7 @@
     </div>
   </main>
 
+  <!-- Screenshot Modal -->
   <div class="modal fade" id="screenshotModal">
     <div class="modal-dialog modal-lg">
       <div class="modal-content glass p-4">
@@ -168,9 +164,8 @@
   <script>
   document.addEventListener('DOMContentLoaded', () => {
     // Logo → Dashboard
-    document.getElementById('logo').onclick = () => {
+    document.getElementById('logo').onclick = () =>
       window.location.href = 'admin-dashboard.html';
-    };
 
     // Theme toggle
     const themeBtn = document.getElementById('theme-toggle');
@@ -179,9 +174,11 @@
       localStorage.setItem('theme', t);
       themeBtn.textContent = t === 'dark' ? '🌞' : '🌜';
     };
-    themeBtn.onclick = () => applyTheme(
-      document.documentElement.getAttribute('data-theme') === 'dark' ? 'light' : 'dark'
-    );
+    themeBtn.onclick = () =>
+      applyTheme(
+        document.documentElement.getAttribute('data-theme') === 'dark'
+          ? 'light' : 'dark'
+      );
     applyTheme(localStorage.getItem('theme') || 'dark');
 
     // Supabase client
@@ -194,7 +191,7 @@
     function showToast(msg, ok = true) {
       const t = document.createElement('div');
       t.className = `toast align-items-center text-white ${
-        ok ? 'bg-success' : 'bg-danger'
+        ok?'bg-success':'bg-danger'
       } border-0 position-fixed top-0 end-0 m-3`;
       t.innerHTML = `
         <div class="d-flex">
@@ -211,24 +208,20 @@
         { data: 'id' },
         { data: 'email' },
         { data: 'plan' },
-        {
-          data: 'created_at',
-          render: d => new Date(d).toLocaleDateString()
-        },
+        { data: 'created_at', render: d => new Date(d).toLocaleDateString() },
         {
           data: 'proof_url',
           render: url => url
-            ? `<button class="btn btn-sm btn-info" onclick="viewScreenshot('${url}')">View</button>`
+            ? `<button class="btn btn-sm btn-info"
+                  onclick="viewScreenshot('${url}')">View</button>`
             : '—'
         },
         {
           data: 'status',
-          render: (s, __, row) =>
-            s === 'Pending'
-              ? `<button class="btn btn-sm btn-primary" onclick="approvePayment('${row.id}')">
-                   Approve
-                 </button>`
-              : '—'
+          render: (s,__,r) => s === 'Pending'
+            ? `<button class="btn btn-sm btn-primary"
+                       onclick="approvePayment('${r.id}')">Approve</button>`
+            : '—'
         }
       ]
     });
@@ -265,15 +258,15 @@
       new bootstrap.Modal(document.getElementById('screenshotModal')).show();
     };
 
-    document
-      .getElementById('export-payments')
+    document.getElementById('export-payments')
       .addEventListener('click', () => {
         const data = paymentsTable.rows().data().toArray();
         const csv = [
-          ['ID', 'Email', 'Plan', 'Date'].join(','),
-          ...data.map(r =>
-            [r.id, r.email, r.plan, new Date(r.created_at).toISOString()].join(',')
-          )
+          ['ID','Email','Plan','Date'].join(','),
+          ...data.map(r => [
+            r.id, r.email, r.plan,
+            new Date(r.created_at).toISOString()
+          ].join(','))
         ].join('\n');
         const blob = new Blob([csv], { type: 'text/csv' });
         const a = document.createElement('a');
@@ -285,145 +278,143 @@
     loadPayments();
 
     // — Payment Methods CRUD —
-    initMethodsTable();
 
-    function initMethodsTable() {
-      const methodsTable = $('#methods-table').DataTable({
-        ajax: (data, callback) => {
-          client
-            .from('payment_methods')
-            .select('*')
-            .order('sort_order', { ascending: true })
-            .then(({ data: rows, error }) => {
-              if (error) {
-                showToast('Error loading methods', false);
-                return callback({ data: [] });
-              }
-              callback({ data: rows });
-            });
-        },
-        columns: [
-          { data: 'id' },
-          { data: 'type' },
-          { data: 'code', defaultContent: '—' },
-          { data: 'name' },
-          { data: 'details' },
-          { data: 'sort_order' },
-          {
-            data: null,
-            render: (_, __, row) => `
-              <button class="btn btn-sm btn-warning btn-edit" data-id="${row.id}">Edit</button>
-              <button class="btn btn-sm btn-danger btn-delete" data-id="${row.id}">Delete</button>`
-          }
-        ]
+    // Inject Method Modal once
+    const modalHTML = `
+      <div class="modal fade" id="methodModal">
+        <div class="modal-dialog"><div class="modal-content glass p-4">
+          <div class="modal-header">
+            <h5 class="modal-title">Payment Method</h5>
+            <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+          </div>
+          <div class="modal-body">
+            <form id="methodForm">
+              <input type="hidden" id="methodId" />
+              <div class="mb-3">
+                <label>Type</label>
+                <select id="methodType" class="form-select">
+                  <option value="crypto">Crypto</option>
+                  <option value="card">Card/Bank</option>
+                </select>
+              </div>
+              <div class="mb-3">
+                <label>Code (for crypto)</label>
+                <input type="text" id="methodCode" class="form-control" placeholder="btc, eth…" />
+              </div>
+              <div class="mb-3">
+                <label>Name</label>
+                <input type="text" id="methodName" class="form-control" required />
+              </div>
+              <div class="mb-3">
+                <label>Details (address or URL)</label>
+                <textarea id="methodDetails" class="form-control" required></textarea>
+              </div>
+              <div class="mb-3">
+                <label>Order</label>
+                <input type="number" id="methodOrder" class="form-control" value="0" />
+              </div>
+            </form>
+          </div>
+          <div class="modal-footer">
+            <button id="saveMethodBtn" class="btn btn-success">Save</button>
+          </div>
+        </div></div>
+      </div>`;
+    $('body').append(modalHTML);
+    const methodModal = new bootstrap.Modal(document.getElementById('methodModal'));
+
+    // Global opener
+    window.openMethodModal = async id => {
+      $('#methodForm')[0].reset();
+      $('#methodId').val('');
+      if (id) {
+        const { data:[m], error } = await client
+          .from('payment_methods').select('*').eq('id', id);
+        if (!error && m) {
+          $('#methodId').val(m.id);
+          $('#methodType').val(m.type);
+          $('#methodCode').val(m.code);
+          $('#methodName').val(m.name);
+          $('#methodDetails').val(m.details);
+          $('#methodOrder').val(m.sort_order);
+        }
+      }
+      methodModal.show();
+    };
+
+    // Bind Add Method button
+    $('#addMethodBtn').on('click', () => openMethodModal());
+
+    // Init Methods DataTable
+    const methodsTable = $('#methods-table').DataTable({
+      ajax: (d, cb) => {
+        client
+          .from('payment_methods')
+          .select('*')
+          .order('sort_order', { ascending: true })
+          .then(({ data: rows, error }) => {
+            if (error) {
+              showToast('Error loading methods', false);
+              return cb({ data: [] });
+            }
+            cb({ data: rows });
+          });
+      },
+      columns: [
+        { data: 'id' },
+        { data: 'type' },
+        { data: 'code', defaultContent: '—' },
+        { data: 'name' },
+        { data: 'details' },
+        { data: 'sort_order' },
+        {
+          data: null,
+          render: (_,__,r) => `
+            <button class="btn btn-sm btn-warning btn-edit" data-id="${r.id}">
+              Edit
+            </button>
+            <button class="btn btn-sm btn-danger btn-delete" data-id="${r.id}">
+              Delete
+            </button>`
+        }
+      ]
+    });
+
+    // Delegate edit & delete
+    $('#methods-table tbody')
+      .on('click', '.btn-edit', e => openMethodModal(e.currentTarget.dataset.id))
+      .on('click', '.btn-delete', async e => {
+        const id = e.currentTarget.dataset.id;
+        if (!confirm('Remove this method?')) return;
+        const { error } = await client
+          .from('payment_methods').delete().eq('id', id);
+        if (error) return showToast('Error deleting', false);
+        methodsTable.ajax.reload();
       });
 
-      // Inject Method Modal
-      const modalHTML = `
-        <div class="modal fade" id="methodModal">
-          <div class="modal-dialog">
-            <div class="modal-content glass p-4">
-              <div class="modal-header">
-                <h5 class="modal-title">Payment Method</h5>
-                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
-              </div>
-              <div class="modal-body">
-                <form id="methodForm">
-                  <input type="hidden" id="methodId" />
-                  <div class="mb-3">
-                    <label>Type</label>
-                    <select id="methodType" class="form-select">
-                      <option value="crypto">Crypto</option>
-                      <option value="card">Card/Bank</option>
-                    </select>
-                  </div>
-                  <div class="mb-3">
-                    <label>Code (for crypto)</label>
-                    <input type="text" id="methodCode" class="form-control" placeholder="btc, eth…" />
-                  </div>
-                  <div class="mb-3">
-                    <label>Name</label>
-                    <input type="text" id="methodName" class="form-control" required />
-                  </div>
-                  <div class="mb-3">
-                    <label>Details (address or URL)</label>
-                    <textarea id="methodDetails" class="form-control" required></textarea>
-                  </div>
-                  <div class="mb-3">
-                    <label>Order</label>
-                    <input type="number" id="methodOrder" class="form-control" value="0" />
-                  </div>
-                </form>
-              </div>
-              <div class="modal-footer">
-                <button id="saveMethodBtn" class="btn btn-success">Save</button>
-              </div>
-            </div>
-          </div>
-        </div>`;
-      $('body').append(modalHTML);
-      const methodModal = new bootstrap.Modal(document.getElementById('methodModal'));
-
-      // Open add/edit
-      window.openMethodModal = async id => {
-        $('#methodForm')[0].reset();
-        $('#methodId').val('');
-        if (id) {
-          const { data:[m], error } = await client
-            .from('payment_methods')
-            .select('*')
-            .eq('id', id);
-          if (!error && m) {
-            $('#methodId').val(m.id);
-            $('#methodType').val(m.type);
-            $('#methodCode').val(m.code);
-            $('#methodName').val(m.name);
-            $('#methodDetails').val(m.details);
-            $('#methodOrder').val(m.sort_order);
-          }
-        }
-        methodModal.show();
+    // Save Method
+    $('#saveMethodBtn').on('click', async () => {
+      const id = +$('#methodId').val();
+      const payload = {
+        type:       $('#methodType').val(),
+        code:       $('#methodCode').val() || null,
+        name:       $('#methodName').val(),
+        details:    $('#methodDetails').val(),
+        sort_order: +$('#methodOrder').val()
       };
+      let res = id
+        ? await client.from('payment_methods').update(payload).eq('id', id)
+        : await client.from('payment_methods').insert([payload]);
 
-      // Button bindings
-      $('#methods-table tbody')
-        .on('click', '.btn-edit', e => openMethodModal(e.currentTarget.dataset.id))
-        .on('click', '.btn-delete', async e => {
-          const id = e.currentTarget.dataset.id;
-          if (!confirm('Remove this method?')) return;
-          const { error } = await client
-            .from('payment_methods')
-            .delete()
-            .eq('id', id);
-          if (error) return showToast('Error deleting', false);
-          methodsTable.ajax.reload();
-        });
-
-      document.getElementById('addMethodBtn').onclick = () => openMethodModal();
-
-      // Save method
-      document.getElementById('saveMethodBtn').onclick = async () => {
-        const id = +$('#methodId').val();
-        const payload = {
-          type:       $('#methodType').val(),
-          code:       $('#methodCode').val() || null,
-          name:       $('#methodName').val(),
-          details:    $('#methodDetails').val(),
-          sort_order: +$('#methodOrder').val()
-        };
-        let res = id
-          ? await client.from('payment_methods').update(payload).eq('id', id)
-          : await client.from('payment_methods').insert([payload]);
-
-        if (res.error) {
-          showToast('Error saving', false);
-        } else {
-          showToast('Saved');
-          methodsTable.ajax.reload();
-          methodModal.hide();
-        }
-      };
+      if (res.error) {
+        showToast('Error saving', false);
+      } else {
+        showToast('Saved');
+        methodsTable.ajax.reload();
+        methodModal.hide();
+      }
     });
+  });
   </script>
 </body>
 </html>
