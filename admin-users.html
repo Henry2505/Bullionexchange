@@ -1,31 +1,28 @@
 <!DOCTYPE html>
 <html lang="en" data-theme="dark">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width,initial-scale=1"/>
   <title>CBE Admin – User Management</title>
 
   <!-- Bootstrap & DataTables CSS -->
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet"/>
   <link href="https://cdn.datatables.net/1.13.4/css/dataTables.bootstrap5.min.css" rel="stylesheet"/>
+  <link href="https://cdn.datatables.net/buttons/2.3.6/css/buttons.bootstrap5.min.css" rel="stylesheet"/>
 
   <style>
     :root[data-theme="dark"] {
-      --bg: #0f2027;
-      --text: #fff;
-      --glass: rgba(255,255,255,0.05);
+      --bg: #0f2027; --text: #fff; --glass: rgba(255,255,255,0.05);
     }
     :root[data-theme="light"] {
-      --bg: #fafafa;
-      --text: #222;
-      --glass: rgba(0,0,0,0.05);
+      --bg: #fafafa; --text: #222; --glass: rgba(0,0,0,0.05);
     }
     body {
       background: var(--bg);
       color: var(--text);
       font-family: 'Poppins', sans-serif;
-      min-height: 100vh;
       margin: 0;
+      min-height: 100vh;
     }
     header {
       background: var(--bg);
@@ -34,216 +31,178 @@
       justify-content: space-between;
       align-items: center;
     }
-    #theme-toggle {
-      color: var(--text);
-      border: 1px solid var(--text);
-    }
-    main {
-      padding: 2rem;
-    }
+    main { padding: 2rem; }
     .glass {
       background: var(--glass);
       backdrop-filter: blur(10px);
       border-radius: 10px;
       padding: 2rem;
     }
-    .dataTables_wrapper .dataTables_filter input {
-      width: auto !important;
-      display: inline-block;
+    .dataTables_wrapper .dt-buttons .btn {
+      margin-right: 0.5rem;
     }
-    /* Lift the pagination buttons a bit */
-    .dataTables_wrapper .dataTables_paginate .paginate_button {
-      padding: 0.2rem 0.6rem;
-      margin-left: 0.2rem;
-    }
+    /* checkbox column */
+    th.select-col, td.select-col { width: 2rem; text-align: center; }
   </style>
 </head>
-
 <body>
   <header>
-    <h1 class="h4 mb-0">CBE Admin – User Management</h1>
-    <button id="theme-toggle" class="btn btn-sm btn-outline-light">Toggle Theme</button>
+    <h1 class="h4 mb-0">CBE Admin</h1>
+    <div>
+      <button id="bulk-approve" class="btn btn-success btn-sm me-2">Approve Selected</button>
+      <button id="bulk-reject"  class="btn btn-warning btn-sm me-2">Reject Selected</button>
+      <button id="theme-toggle" class="btn btn-outline-light btn-sm">Toggle Theme</button>
+    </div>
   </header>
 
   <main class="container">
     <div class="glass">
-      <div class="d-flex justify-content-between align-items-center mb-3">
-        <h3 class="mb-0">User Applications</h3>
-        <input id="external-search" class="form-control w-auto" placeholder="Search users…">
-      </div>
-
-      <div class="table-responsive">
-        <table id="users-table" class="table table-hover table-borderless" style="width:100%">
-          <thead class="table-secondary" style="color: inherit;">
-            <tr>
-              <th>#</th>
-              <th>Email</th>
-              <th>Name</th>
-              <th>Password</th>
-              <th>Phone</th>
-              <th>Experience</th>
-              <th>Registered At</th>
-              <th>Status</th>
-              <th>Actions</th>
-            </tr>
-          </thead>
-          <tbody></tbody>
-        </table>
-      </div>
+      <h3 class="mb-3">User Applications</h3>
+      <table id="users-table" class="table table-hover table-borderless" style="width:100%;">
+        <thead class="table-secondary">
+          <tr>
+            <th class="select-col"><input type="checkbox" id="select-all"/></th>
+            <th>#</th>
+            <th>Email</th>
+            <th>Name</th>
+            <th>Password</th>
+            <th>Phone</th>
+            <th>Experience</th>
+            <th>Registered At</th>
+            <th>Status</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody></tbody>
+      </table>
     </div>
   </main>
 
-  <!-- Dependencies -->
+  <!-- JS Dependencies -->
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
   <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
   <script src="https://cdn.datatables.net/1.13.4/js/jquery.dataTables.min.js"></script>
   <script src="https://cdn.datatables.net/1.13.4/js/dataTables.bootstrap5.min.js"></script>
+  <script src="https://cdn.datatables.net/buttons/2.3.6/js/dataTables.buttons.min.js"></script>
+  <script src="https://cdn.datatables.net/buttons/2.3.6/js/buttons.bootstrap5.min.js"></script>
+  <script src="https://cdn.datatables.net/buttons/2.3.6/js/buttons.html5.min.js"></script>
+  <script src="https://cdn.datatables.net/buttons/2.3.6/js/buttons.pdfmake.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.2.7/pdfmake.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.2.7/vfs_fonts.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js/dist/umd/supabase.js"></script>
 
   <script>
-  (async () => {
-    // 1. Auth guard
-    if (localStorage.getItem('isLoggedIn') !== 'true') {
-      const page = location.pathname.split('/').pop();
-      location.href = `admin-login.html?redirect=${page}`;
+  (async()=>{
+    // Auth guard
+    if(localStorage.getItem('isLoggedIn')!=='true'){
+      location.href = `admin-login.html?redirect=${location.pathname.split('/').pop()}`;
       return;
     }
 
-    // 2. Theme toggle
+    // Theme toggle
     const html = document.documentElement;
-    const btn  = document.getElementById('theme-toggle');
-    const t    = localStorage.getItem('theme') || 'dark';
-    html.setAttribute('data-theme', t);
-    btn.textContent = t==='dark' ? 'Light Mode' : 'Dark Mode';
-    btn.onclick = () => {
-      const next = html.getAttribute('data-theme')==='dark' ? 'light' : 'dark';
-      html.setAttribute('data-theme', next);
-      localStorage.setItem('theme', next);
-      btn.textContent = next==='dark' ? 'Light Mode' : 'Dark Mode';
+    const tbtn = document.getElementById('theme-toggle');
+    let theme = localStorage.getItem('theme')||'dark';
+    html.setAttribute('data-theme', theme);
+    tbtn.textContent = theme==='dark'?'Light Mode':'Dark Mode';
+    tbtn.onclick = ()=>{
+      theme = theme==='dark'?'light':'dark';
+      html.setAttribute('data-theme', theme);
+      localStorage.setItem('theme', theme);
+      tbtn.textContent = theme==='dark'?'Light Mode':'Dark Mode';
     };
 
-    // 3. Supabase client
+    // Supabase
     const URL = 'https://dapwpgvnfjcfqqhrpxla.supabase.co';
-    const KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImRhcHdwZ3ZuZmpjZnFxaHJweGxhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDcwNDA4ODgsImV4cCI6MjA2MjYxNjg4OH0.ICC0UsLlzJDNre7rFCeD3k6iVzo6jOJgn3PhABpEMsQ';
+    const KEY = 'YOUR_ANON_KEY_HERE';
     const sb = supabase.createClient(URL, KEY);
 
-    // 4. Toast helper
-    function showToast(msg, success=true) {
-      const id  = 't'+Date.now();
-      const cls = success ? 'bg-success' : 'bg-danger';
-      const html= `
-      <div id="${id}" class="toast align-items-center text-white ${cls} border-0" role="alert">
-        <div class="d-flex">
-          <div class="toast-body">${msg}</div>
-          <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast"></button>
-        </div>
-      </div>`;
-      document.getElementById('users-table').insertAdjacentHTML('beforebegin', html);
-      const toastEl = document.getElementById(id);
-      new bootstrap.Toast(toastEl, { delay: 3000 }).show();
-    }
-
-    // 5. DataTable init with custom dom
+    // DataTable
     const table = $('#users-table').DataTable({
-      dom: `
-        <"d-flex justify-content-between mb-3"
-          <"col-auto"l>
-          <"col-auto"f>
-        >
-        rt
-        <"d-flex justify-content-between mt-3"
-          <"col-auto"i>
-          <"col-auto"p>
-        >`,
-      paging:   true,
-      searching:false,  // disable built-in search
-      columnDefs: [{ orderable:false, targets:8 }]
+      dom: `<"d-flex justify-content-between mb-3"
+              <"dt-buttons"B>
+              <"search-container"f>
+            >rt
+            <"d-flex justify-content-between mt-3"
+              <"length-container"l>
+              <"pagination-container"p>
+            >`,
+      buttons: [
+        { extend:'csvHtml5', text:'Export CSV' },
+        { extend:'pdfHtml5', text:'Export PDF' }
+      ],
+      columnDefs: [
+        { orderable:false, targets:[0,9] },
+        {
+          targets:0, className:'select-col',
+          render:(data,type,row)=>`<input type="checkbox" class="select-row" data-id="${row[1]}"/>`
+        }
+      ],
+      paging: true,
+      searching: true
     });
 
-    // Hook external search input
-    $('#external-search').on('keyup', e => {
-      table.search(e.target.value).draw();
+    // “Select All” handler
+    $('#select-all').on('click',function(){
+      $('.select-row').prop('checked', this.checked);
     });
 
-    // 6. CRUD & load
-    async function loadUsers() {
-      try {
-        const { data, error } = await sb
-          .from('users')
-          .select('id,email,name,password,phone,experience,created_at,status')
-          .order('created_at', { ascending:false });
-        if (error) throw error;
-
-        table.clear();
-        data.forEach((u,i) => {
-          table.row.add([
-            i+1,
-            u.email,
-            u.name,
-            u.password,
-            u.phone,
-            u.experience,
-            new Date(u.created_at).toLocaleDateString(),
-            u.status,
-            actionButtons(u)
-          ]);
-        });
-        table.draw();
-      } catch (err) {
-        console.error(err);
-        showToast('Error loading users', false);
+    // Bulk actions
+    async function bulkUpdate(status){
+      const ids = $('.select-row:checked').map((_,el)=>$(el).data('id')).get();
+      if(!ids.length) return alert('No users selected');
+      // Update in Supabase
+      await sb.from('users').update({ status }).in('id', ids);
+      // Send emails
+      const { data: rows } = await sb.from('users').select('email').in('id', ids);
+      for(const u of rows){
+        sb.functions.invoke('send_status_email',{ body:{ email:u.email, status } });
       }
+      loadUsers();
+    }
+    $('#bulk-approve').click(()=>bulkUpdate('Approved'));
+    $('#bulk-reject').click(()=>bulkUpdate('Rejected'));
+
+    // Single-row actions & reload
+    window.approve =    async id=>{ await bulkUpdate.call(null,'Approved',[id]); };
+    window.reject  =    async id=>{ await bulkUpdate.call(null,'Rejected',[id]); };
+    window.remove  =    async id=>{ if(confirm('Delete?')){ await sb.from('users').delete().eq('id',id); loadUsers(); } };
+    window.edit    =    async id=>{
+      const { data } = await sb.from('users').select('*').eq('id',id).single();
+      const name   = prompt('Name:', data.name);
+      const email  = prompt('Email:', data.email);
+      const phone  = prompt('Phone:', data.phone);
+      const exp    = prompt('Experience:', data.experience);
+      if(!name||!email) return;
+      await sb.from('users').update({ name, email:email.toLowerCase(), phone, experience:exp }).eq('id',id);
+      loadUsers();
+    };
+
+    // Load & render
+    async function loadUsers(){
+      const { data, error } = await sb.from('users')
+        .select('id,email,name,password,phone,experience,created_at,status')
+        .order('created_at',{ ascending:false });
+      if(error){ console.error(error); return; }
+      table.clear();
+      data.forEach((u,i)=>{
+        table.row.add([
+          '',     // checkbox col
+          i+1,
+          u.email,
+          u.name,
+          u.password,
+          u.phone,
+          u.experience,
+          new Date(u.created_at).toLocaleDateString(),
+          u.status,
+          `<button class="btn btn-sm btn-danger" onclick="remove('${u.id}')">Delete</button>
+           <button class="btn btn-sm btn-warning ms-1" onclick="edit('${u.id}')">Edit</button>`
+        ]);
+      });
+      table.draw();
     }
 
-    function actionButtons(u) {
-      const approveBtn = u.status==='Pending'
-        ? `<button class="btn btn-sm btn-success me-1" onclick="approve('${u.id}')">Approve</button>` 
-        : '';
-      return `
-        ${approveBtn}
-        <button class="btn btn-sm btn-warning me-1" onclick="reject('${u.id}')">Reject</button>
-        <button class="btn btn-sm btn-danger me-1" onclick="remove('${u.id}')">Delete</button>
-        <button class="btn btn-sm btn-primary" onclick="edit('${u.id}')">Edit</button>
-      `;
-    }
-
-    window.approve = async id => {
-      await sb.from('users').update({ status:'Approved' }).eq('id',id);
-      showToast('User approved');
-      loadUsers();
-    };
-    window.reject = async id => {
-      await sb.from('users').update({ status:'Rejected' }).eq('id',id);
-      showToast('User rejected');
-      loadUsers();
-    };
-    window.remove = async id => {
-      if (!confirm('Delete this user?')) return;
-      await sb.from('users').delete().eq('id',id);
-      showToast('User deleted');
-      loadUsers();
-    };
-    window.edit = async id => {
-      const { data, error } = await sb.from('users').select('*').eq('id',id).single();
-      if (error) return showToast('Error fetching user', false);
-
-      const name  = prompt('Name:', data.name);
-      const email = prompt('Email:', data.email);
-      const phone = prompt('Phone:', data.phone);
-      const exp   = prompt('Experience:', data.experience);
-      if (!name||!email) return;
-
-      const { error: upd } = await sb
-        .from('users')
-        .update({ name, email: email.toLowerCase(), phone, experience:exp })
-        .eq('id',id);
-      if (upd) return showToast('Error updating', false);
-
-      showToast('User updated');
-      loadUsers();
-    };
-
-    // initial
     await loadUsers();
   })();
   </script>
