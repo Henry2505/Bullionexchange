@@ -41,47 +41,58 @@
     <h2>CBE Login</h2>
     <form id="loginForm" autocomplete="off">
       <label for="email">Email</label>
-      <input type="email" id="email" required/>
+      <input type="email" id="email" required />
       <label for="password">Password</label>
-      <input type="password" id="password" required/>
+      <input type="password" id="password" required />
       <button type="submit">Login</button>
     </form>
   </div>
 
-  <!-- 1) Load Supabase UMD -->
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js/dist/umd/supabase.min.js"></script>
-  <script>
-    // 2) Instantiate client
+  <script type="module">
+    import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.27.1/+esm';
+
+    // 1) Init Supabase with session persistence
     const SUPA_URL = 'https://dapwpgvnfjcfqqhrpxla.supabase.co';
     const SUPA_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9…';
-    const supabase = window.supabase.createClient(SUPA_URL, SUPA_KEY);
+    const supabase = createClient(SUPA_URL, SUPA_KEY, {
+      auth: { persistSession: true, detectSessionInUrl: true }
+    });
 
-    // 3) Handle form submission
+    // 2) Form handler
     document.getElementById('loginForm').addEventListener('submit', async e => {
       e.preventDefault();
       const email    = document.getElementById('email').value.trim().toLowerCase();
       const password = document.getElementById('password').value;
+      if (!email || !password) {
+        return alert('❌ Please fill in both email and password.');
+      }
 
-      // Sign in
-      const { data: authData, error: authError } = await supabase.auth.signInWithPassword({ email, password });
-      if (authError) return alert('❌ Login failed: ' + authError.message);
+      // 2a) Sign in
+      const { data, error: signInError } = await supabase.auth.signInWithPassword({ email, password });
+      if (signInError) {
+        return alert('❌ Login failed: ' + signInError.message);
+      }
+      const user = data.user;
+      if (!user) {
+        return alert('❌ Unexpected: no user returned');
+      }
 
-      // Check approval
+      // 2b) Check approval by user.id
       const { data: userRow, error: rowError } = await supabase
         .from('users')
         .select('status')
-        .eq('email', email)
+        .eq('id', user.id)
         .single();
       if (rowError) {
         await supabase.auth.signOut();
-        return alert('❌ Could not verify your approval status.');
+        return alert('❌ Could not verify approval status.');
       }
       if (userRow.status !== 'Approved') {
         await supabase.auth.signOut();
         return alert('⏳ Your account is not yet approved.');
       }
 
-      // Success! Redirect to dashboard
+      // 2c) All good → redirect
       window.location.replace('vip-dashboard.html');
     });
   </script>
