@@ -5,96 +5,38 @@
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>CBE Admin – User Management</title>
 
-  <!-- Google Fonts & Bootstrap CSS -->
-  <link
-    href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700&display=swap"
-    rel="stylesheet"
-  />
-  <link
-    href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css"
-    rel="stylesheet"
-  />
-
-  <!-- DataTables CSS -->
-  <link
-    href="https://cdn.datatables.net/1.13.4/css/dataTables.bootstrap5.min.css"
-    rel="stylesheet"
-  />
+  <!-- Bootstrap & DataTables CSS -->
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet"/>
+  <link href="https://cdn.datatables.net/1.13.4/css/dataTables.bootstrap5.min.css" rel="stylesheet"/>
 
   <style>
     body {
       font-family: 'Poppins', sans-serif;
       background: linear-gradient(to right, #0f2027, #203a43, #2c5364);
-      color: #fff;
-      min-height: 100vh;
-      margin: 0;
+      color: #fff; margin:0; min-height:100vh;
     }
-    .glass {
-      background: rgba(255, 255, 255, 0.05);
-      backdrop-filter: blur(10px);
-      border-radius: 10px;
-    }
-    #header-logo {
-      cursor: pointer;
-      font-size: 1.25rem;
-      font-weight: bold;
-      color: #fff;
-    }
-    #toast-container {
-      position: fixed;
-      bottom: 1rem;
-      right: 1rem;
-      z-index: 1050;
-    }
-    .btn-outline-secondary {
-      color: #fff;
-      border-color: #fff;
-    }
-    .btn-outline-secondary:hover {
-      background-color: #fff;
-      color: #000;
-    }
-    .table td,
-    .table th {
-      color: #fff;
-    }
-    table.dataTable thead th {
-      background: rgba(255, 255, 255, 0.1);
-    }
+    .glass { background: rgba(255,255,255,0.05); backdrop-filter:blur(10px); border-radius:10px; }
+    #toast-container { position:fixed; bottom:1rem; right:1rem; z-index:1050; }
+    table.dataTable thead th { background: rgba(255,255,255,0.1); color:#fff; }
+    .table td, .table th { color:#fff; }
   </style>
 </head>
 <body>
-  <!-- Toasts -->
   <div id="toast-container"></div>
-
   <div class="container py-4">
     <div class="d-flex justify-content-between align-items-center mb-4">
-      <div id="header-logo" onclick="location.href='admin-dashboard.html'">
-        CBE Admin
-      </div>
-      <button id="theme-toggle" class="btn btn-sm btn-outline-secondary">
-        Light Mode
-      </button>
+      <div id="header-logo" style="font-size:1.25rem;cursor:pointer" onclick="location.href='admin-dashboard.html'">CBE Admin</div>
+      <button id="theme-toggle" class="btn btn-sm btn-outline-light">Light Mode</button>
     </div>
 
     <div class="glass p-4">
       <h3 class="mb-3">Users Verification</h3>
-      <input
-        id="user-search"
-        class="form-control mb-3"
-        placeholder="Search users…"
-      />
-
+      <input id="user-search" class="form-control mb-3" placeholder="Search users…" />
       <div class="table-responsive">
-        <table id="users-table" class="table table-hover" style="width: 100%;">
+        <table id="users-table" class="table table-hover" style="width:100%">
           <thead>
             <tr>
-              <th>#</th>
-              <th>Email</th>
-              <th>Name</th>
-              <th>Registered At</th>
-              <th>Status</th>
-              <th>Actions</th>
+              <th>#</th><th>Email</th><th>Name</th><th>Registered At</th><th>Status</th><th>Actions</th>
             </tr>
           </thead>
           <tbody></tbody>
@@ -103,142 +45,118 @@
     </div>
   </div>
 
-  <!-- Dependencies: jQuery, Bootstrap, DataTables -->
+  <!-- Dependencies -->
   <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
   <script src="https://cdn.datatables.net/1.13.4/js/jquery.dataTables.min.js"></script>
   <script src="https://cdn.datatables.net/1.13.4/js/dataTables.bootstrap5.min.js"></script>
 
-  <!-- 1) UMD build of Supabase (must come before your code) -->
+  <!-- Supabase UMD -->
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js/dist/umd/supabase.js"></script>
 
-  <!-- 2) Your custom admin script -->
   <script>
-    // --- Auth Guard ---
+    // Auth guard
     if (localStorage.getItem('isLoggedIn') !== 'true') {
-      const page = window.location.pathname.split('/').pop();
-      window.location.href = `admin-login.html?redirect=${page}`;
+      const page = location.pathname.split('/').pop();
+      location.href = `admin-login.html?redirect=${page}`;
     }
 
-    // --- Supabase Client ---
-    const SUPABASE_URL = 'https://dapwpgvnfjcfqqhrpxla.supabase.co';
-    const SUPABASE_ANON_KEY =
-      'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSI...' +
-      'ICC0UsLlzJDNre7rFCeD3k6iVzo6jOJgn3PhABpEMsQ';
-    const sb = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+    // Supabase client
+    const sb = supabase.createClient(
+      'https://dapwpgvnfjcfqqhrpxla.supabase.co',
+      'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSI...ICC0UsLlzJDNre7rFCeD3k6iVzo6jOJgn3PhABpEMsQ'
+    );
 
-    // --- Toast Helper ---
-    function showToast(msg, success = true) {
-      const id = 't' + Date.now();
+    // Toast helper
+    function showToast(msg, ok=true) {
+      const id = 't'+Date.now();
       $('#toast-container').append(`
-        <div id="${id}" class="toast align-items-center text-white ${
-        success ? 'bg-success' : 'bg-danger'
-      } border-0" role="alert">
+        <div id="${id}" class="toast align-items-center text-white ${ok?'bg-success':'bg-danger'} border-0" role="alert">
           <div class="d-flex">
             <div class="toast-body">${msg}</div>
-            <button type="button" class="btn-close btn-close-white me-2 m-auto"
-              data-bs-dismiss="toast"></button>
+            <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast"></button>
           </div>
-        </div>
-      `);
-      new bootstrap.Toast(document.getElementById(id), { delay: 3000 }).show();
+        </div>`);
+      new bootstrap.Toast(document.getElementById(id), { delay:3000 }).show();
     }
 
-    // --- Theme Toggle ---
-    const themeBtn = document.getElementById('theme-toggle');
-    themeBtn.addEventListener('click', () => {
-      const next = document.body.getAttribute('data-theme') === 'dark' ? 'light' : 'dark';
-      document.body.setAttribute('data-theme', next);
-      themeBtn.textContent = next === 'dark' ? 'Light Mode' : 'Dark Mode';
+    // Theme toggle
+    $('#theme-toggle').click(() => {
+      const next = $('body').attr('data-theme') === 'dark' ? 'light' : 'dark';
+      $('body').attr('data-theme', next);
+      $('#theme-toggle').text(next==='dark'?'Light Mode':'Dark Mode');
     });
 
-    // --- DataTable & CRUD ---
     let table;
     async function loadUsers() {
       try {
-        // Fetch rows, order by id descending
+        // Fetch only needed columns
         const res = await sb
           .from('users')
-          .select('id, email, name, created_at, status')
-          .order('id', { ascending: false });
-
+          .select('id,email,name,created_at,status')
+          .order('id',{ascending:false});
         console.log('Supabase response:', res);
+
         if (res.error) throw res.error;
 
+        const rows = res.data;
         table.clear();
-        res.data.forEach((u, i) => {
-          table.row.add([
-            i + 1,
-            u.email,
-            u.name,
-            u.created_at ? new Date(u.created_at).toLocaleDateString() : '',
-            u.status,
-            `
-              ${u.status === 'Pending'
-                ? `<button class="btn btn-sm btn-success me-1" onclick="approveUser('${u.id}')">Approve</button>`
-                : ''
-              }
-              <button class="btn btn-sm btn-warning me-1" onclick="rejectUser('${u.id}')">Reject</button>
-              <button class="btn btn-sm btn-danger" onclick="deleteUser('${u.id}')">Delete</button>
-            `
-          ]);
-        });
+        if (rows.length === 0) {
+          // show placeholder
+          table.row.add([ '', '—', '—', '—', '—', 'No users found' ]);
+        } else {
+          rows.forEach((u,i) => {
+            table.row.add([
+              i+1,
+              u.email||'',
+              u.name||'',
+              u.created_at?new Date(u.created_at).toLocaleDateString():'',
+              u.status||'',
+              `
+                ${u.status==='Pending'?`<button class="btn btn-sm btn-success me-1" onclick="approve('${u.id}')">Approve</button>`:''}
+                <button class="btn btn-sm btn-warning me-1" onclick="reject('${u.id}')">Reject</button>
+                <button class="btn btn-sm btn-danger" onclick="del('${u.id}')">Delete</button>
+              `
+            ]);
+          });
+        }
         table.draw();
       } catch (err) {
         console.error('loadUsers error:', err);
-        showToast('Error loading users', false);
+        showToast('Error loading users',false);
       }
     }
 
-    async function approveUser(id) {
+    async function approve(id) {
       try {
-        const { error } = await sb.from('users').update({ status: 'Approved' }).eq('id', id);
-        if (error) throw error;
+        await sb.from('users').update({status:'Approved'}).eq('id',id);
         showToast('User approved');
         loadUsers();
-      } catch (err) {
-        console.error(err);
-        showToast('Error approving user', false);
-      }
+      } catch(e){ console.error(e); showToast('Error approving',false); }
     }
-
-    async function rejectUser(id) {
+    async function reject(id) {
       try {
-        const { error } = await sb.from('users').update({ status: 'Rejected' }).eq('id', id);
-        if (error) throw error;
+        await sb.from('users').update({status:'Rejected'}).eq('id',id);
         showToast('User rejected');
         loadUsers();
-      } catch (err) {
-        console.error(err);
-        showToast('Error rejecting user', false);
-      }
+      } catch(e){ console.error(e); showToast('Error rejecting',false); }
     }
-
-    async function deleteUser(id) {
-      if (!confirm('Delete this user?')) return;
+    async function del(id) {
+      if(!confirm('Delete this user?'))return;
       try {
-        const { error } = await sb.from('users').delete().eq('id', id);
-        if (error) throw error;
+        await sb.from('users').delete().eq('id',id);
         showToast('User deleted');
         loadUsers();
-      } catch (err) {
-        console.error(err);
-        showToast('Error deleting user', false);
-      }
+      } catch(e){ console.error(e); showToast('Error deleting',false); }
     }
 
-    // --- Initialize on DOM ready ---
-    $(document).ready(() => {
+    $(document).ready(()=>{
       table = $('#users-table').DataTable({
-        paging: true,
-        searching: true,
-        columnDefs: [{ orderable: false, targets: 5 }]
+        paging:true,
+        searching:true,
+        columnDefs:[{orderable:false,targets:5}]
       });
-
-      $('#user-search').on('keyup', () => {
-        table.search($('#user-search').val()).draw();
-      });
-
+      $('#user-search').on('keyup',()=>table.search($('#user-search').val()).draw());
       loadUsers();
     });
   </script>
