@@ -4,30 +4,51 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
   <title>CBE Admin – Signals</title>
+
   <!-- Fonts, Bootstrap & Icons -->
   <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700&display=swap" rel="stylesheet">
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
   <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css" rel="stylesheet">
+
   <style>
     :root { --bg:#000;--text:#fff;--gold:#ffd700;--glass-bg:rgba(255,255,255,0.05);--overlay:rgba(0,0,0,0.6); }
     [data-theme="light"] { --bg:#f5f5f5;--text:#333;--gold:#cca300;--glass-bg:rgba(0,0,0,0.05);--overlay:rgba(255,255,255,0.15); }
     *{margin:0;padding:0;box-sizing:border-box;}
-    body { font-family:'Poppins',sans-serif; background:var(--bg); color:var(--text); overflow-x:hidden;}
+    body{font-family:'Poppins',sans-serif;background:var(--bg);color:var(--text);overflow-x:hidden;}
     .overlay{position:fixed;top:0;left:0;width:100%;height:100%;background:var(--overlay);z-index:-1;}
     .glass{background:var(--glass-bg);backdrop-filter:blur(10px);border:1px solid rgba(255,215,0,0.2);}
     a{color:var(--gold);text-decoration:none;}
-    header.admin-header{display:flex;align-items:center;justify-content:space-between;padding:1rem 2rem;background:rgba(0,0,0,0.6);border-bottom:1px solid var(--gold);position:sticky;top:0;z-index:10;}
+
+    header.admin-header {
+      display:flex;align-items:center;justify-content:space-between;
+      padding:1rem 2rem;background:rgba(0,0,0,0.6);
+      border-bottom:1px solid var(--gold);
+      position:sticky;top:0;z-index:10;
+    }
     .logo{cursor:pointer;display:flex;align-items:center;} .logo img{height:40px;}
     #theme-toggle{background:none;border:none;font-size:1.25rem;cursor:pointer;color:var(--text);}
+
     #section-title{color:var(--gold);text-align:center;margin:2rem 0 1rem;}
     .panel{margin-bottom:2rem;}
     form.glass{border-radius:8px;padding:1.5rem;}
-    #signals-list .list-group-item{background:var(--glass-bg);border:1px solid rgba(255,215,0,0.2);color:var(--text);margin-bottom:.5rem;border-radius:4px;}
+    #signals-list .list-group-item {
+      background:var(--glass-bg);
+      border:1px solid rgba(255,215,0,0.2);
+      color:var(--text);
+      margin-bottom:.5rem;
+      border-radius:4px;
+    }
+
+    /* Ensure toasts sit on top */
+    .toast {
+      z-index: 99999 !important;
+    }
   </style>
 </head>
 <body>
   <div class="overlay"></div>
 
+  <!-- Header -->
   <header class="admin-header glass">
     <div class="logo" id="logo"><img src="CBE_logo.PNG" alt="CBE Logo"></div>
     <button id="theme-toggle" aria-label="Toggle theme">🌞</button>
@@ -41,6 +62,7 @@
         <h4 class="px-3 pt-3">Publish Signal</h4>
         <form id="signals-form" class="border-top p-3 glass">
           <div class="row g-3">
+            <!-- form fields as before -->
             <div class="col-md-3">
               <label class="form-label">Asset / Pair</label>
               <input list="asset-list" id="signal-asset" class="form-control" required>
@@ -86,12 +108,12 @@
 
   <!-- Dependencies -->
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-  <!-- Supabase UMD build -->
+  <!-- Use the UMD build so window.supabase exists -->
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js/dist/umd/supabase.js"></script>
 
   <script>
     document.addEventListener('DOMContentLoaded', () => {
-      console.log('Admin Signals page loaded');
+      console.log('Admin Signals loaded');
 
       // Logo → Dashboard
       document.getElementById('logo').onclick = () => location.href = 'admin-dashboard.html';
@@ -101,42 +123,43 @@
       const applyTheme = t => {
         document.documentElement.setAttribute('data-theme', t);
         localStorage.setItem('theme', t);
-        themeBtn.textContent = t === 'dark' ? '🌞' : '🌜';
+        themeBtn.textContent = t==='dark'?'🌞':'🌜';
       };
-      themeBtn.onclick = () => applyTheme(
-        document.documentElement.getAttribute('data-theme') === 'dark' ? 'light' : 'dark'
+      themeBtn.onclick = ()=>applyTheme(
+        document.documentElement.getAttribute('data-theme')==='dark'?'light':'dark'
       );
-      applyTheme(localStorage.getItem('theme') || 'dark');
+      applyTheme(localStorage.getItem('theme')||'dark');
 
-      // Supabase client
+      // Init Supabase client
       const supabase = window.supabase.createClient(
         'https://dapwpgvnfjcfqqhrpxla.supabase.co',
-        'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImRhcHdwZ3ZuZmpjZnFxaHJweGxhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDcwNDA4ODgsImV4cCI6MjA2MjYxNjg4OH0.ICC0UsLlzJDNre7rFCeD3k6iVzo6jOJgn3PhABpEMsQ'
+        'YOUR_ANON_KEY_HERE'
       );
-      console.log('Supabase client initialized');
+      console.log('Supabase client ready');
 
       // Auth guard
-      (async () => {
+      (async ()=>{
         const { data:{ session }, error } = await supabase.auth.getSession();
-        console.log('Auth session:', session, error);
+        console.log('Session:', session, 'Error:', error);
         if (error || !session) {
-          alert('Not logged in—redirecting to login');
-          return location.href = 'admin-login.html?redirect=admin-signals.html';
+          alert('Not logged in – redirecting');
+          return location.href='admin-login.html?redirect=admin-signals.html';
         }
       })();
 
-      // Toast helper
-      function showToast(msg, success = true) {
-        console.log('Toast:', msg);
+      // Toast helper + alert fallback
+      function showToast(msg, ok=true) {
+        alert(msg);  // fallback so you never miss it
         const t = document.createElement('div');
-        t.className = `toast align-items-center text-white ${success?'bg-success':'bg-danger'} border-0 position-fixed top-0 end-0 m-3`;
+        t.className = `toast align-items-center text-white ${ok?'bg-success':'bg-danger'} border-0 position-fixed top-0 end-0 m-3`;
+        t.style.zIndex = 99999;
         t.innerHTML = `
           <div class="d-flex">
             <div class="toast-body">${msg}</div>
             <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast"></button>
           </div>`;
         document.body.append(t);
-        new bootstrap.Toast(t, { delay:3000 }).show();
+        new bootstrap.Toast(t,{delay:3000}).show();
       }
 
       // Publish handler
@@ -155,20 +178,18 @@
           tp2:    parseFloat(form['signal-tp2'].value) || null,
           note:   form['signal-note'].value.trim()
         };
-        console.log('Publishing payload:', payload);
+        console.log('Publishing:', payload);
 
         try {
-          let { data, error } = await supabase
-            .from('signals')
-            .insert([payload]);
+          const { data, error } = await supabase.from('signals').insert([payload]);
           console.log('Insert result:', data, error);
           if (error) throw error;
-          showToast('Signal published');
+          showToast('Signal published ✔️');
           form.reset();
           await loadSignals();
         } catch (err) {
           console.error('Publish error:', err);
-          showToast('Publish failed', false);
+          showToast(`Publish failed: ${err.message}`, false);
         } finally {
           btn.disabled = false;
         }
@@ -178,26 +199,26 @@
       async function loadSignals() {
         console.log('Loading signals...');
         try {
-          const { data, error } = await supabase
-            .from('signals')
-            .select('*')
-            .order('created_at', { ascending:false });
-          console.log('Load result:', data, error);
+          const { data, error } = await supabase.from('signals')
+            .select('*').order('created_at',{ascending:false});
+          console.log('Loaded:', data, error);
           if (error) throw error;
 
           const list = document.getElementById('signals-list');
           list.innerHTML = '';
           data.forEach(sig => {
-            list.insertAdjacentHTML('beforeend', `
+            list.insertAdjacentHTML('beforeend',`
               <li class="list-group-item">
-                <strong>${sig.asset}</strong> – ${sig.action} @ ${sig.entry.toFixed(4)}, SL: ${sig.sl.toFixed(4)}, TP1: ${sig.tp1.toFixed(4)}, TP2: ${sig.tp2?sig.tp2.toFixed(4):'N/A'}<br>
+                <strong>${sig.asset}</strong> – ${sig.action} @ ${sig.entry.toFixed(4)},
+                SL: ${sig.sl.toFixed(4)}, TP1: ${sig.tp1.toFixed(4)},
+                TP2: ${sig.tp2?sig.tp2.toFixed(4):'N/A'}<br>
                 <small>${sig.note||''}</small><br>
-                <small>Published ${new Date(sig.created_at).toLocaleString()}</small>
+                <small>${new Date(sig.created_at).toLocaleString()}</small>
               </li>`);
           });
         } catch (err) {
           console.error('Load error:', err);
-          showToast('Failed to load signals', false);
+          showToast(`Load failed: ${err.message}`, false);
         }
       }
 
