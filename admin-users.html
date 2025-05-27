@@ -127,8 +127,8 @@
     // 2. Supabase client
     const SUPABASE_URL = 'https://dapwpgvnfjcfqqhrpxla.supabase.co';
     const SUPABASE_ANON_KEY =
-      'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFz...' +
-      'PhABpEMsQ'; // truncated for brevity
+      'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSI...' +
+      'ICC0UsLlzJDNre7rFCeD3k6iVzo6jOJgn3PhABpEMsQ';
     const sb = window.supabase.createClient(
       SUPABASE_URL,
       SUPABASE_ANON_KEY
@@ -182,19 +182,19 @@
               : '',
             u.status || '',
             `
-            ${
-              u.status === 'Pending'
-                ? `<button class="btn btn-sm btn-success me-1" onclick="approveUser('${u.id}')">Approve</button>`
-                : ''
-            }
-            <button class="btn btn-sm btn-warning me-1" onclick="rejectUser('${u.id}')">Reject</button>
-            <button class="btn btn-sm btn-danger" onclick="deleteUser('${u.id}')">Delete</button>
+              ${
+                u.status === 'Pending'
+                  ? `<button class="btn btn-sm btn-success me-1" onclick="approveUser('${u.id}')">Approve</button>`
+                  : ''
+              }
+              <button class="btn btn-sm btn-warning me-1" onclick="rejectUser('${u.id}')">Reject</button>
+              <button class="btn btn-sm btn-danger" onclick="deleteUser('${u.id}')">Delete</button>
             `
           ]);
         });
         table.draw();
       } catch (err) {
-        console.error(err);
+        console.error('loadUsers error:', err);
         showToast('Error loading users', false);
       }
     }
@@ -235,10 +235,9 @@
         columnDefs: [{ orderable: false, targets: 5 }]
       });
 
-      // wire up external search box
-      $('#user-search').on('keyup', function () {
-        table.search(this.value).draw();
-      });
+      $('#user-search').on('keyup', () =>
+        table.search($('#user-search').val()).draw()
+      );
 
       loadUsers();
     });
