@@ -245,26 +245,26 @@
       (async () => {
         try {
           const [
-            { data: users },
+            { count: usersCount },
             { data: payments },
             { data: trades },
             { data: signals },
             { data: insights }
           ] = await Promise.all([
-            supabase.from('users').select('id,status'),
+            supabase.from('users').select('id', { count: 'exact', head: true }),
             supabase.from('payments').select('id').eq('status','Pending'),
             supabase.from('trade_history').select('id'),
             supabase.from('signals').select('id'),
             supabase.from('trade_insights').select('week_ending,pips').order('week_ending',{ascending:false}),
           ]);
 
-          // Update stat cards
-          document.getElementById('stat-users').textContent    = users.length;
+          // Update stat cards with exact counts
+          document.getElementById('stat-users').textContent    = usersCount;
           document.getElementById('stat-payments').textContent = payments.length;
           document.getElementById('stat-trades').textContent   = trades.length;
           document.getElementById('stat-signals').textContent  = signals.length;
-          const wins = insights.filter(x=>x.pips>0).length;
-          const rate = insights.length ? Math.round(wins/insights.length*100) : 0;
+          const wins = insights.filter(x => x.pips > 0).length;
+          const rate = insights.length ? Math.round(wins / insights.length * 100) : 0;
           document.getElementById('stat-winrate').textContent = rate;
 
           // Make cards draggable
@@ -304,7 +304,13 @@
           });
 
           // User-status doughnut chart
-          const statusCounts = users.reduce((acc,u)=>(acc[u.status]=(acc[u.status]||0)+1, acc), {});
+          const statusCounts = usersCount /* count-only query */ 
+            ? await (async () => {
+                // Fetch full user statuses for chart
+                const { data: allUsers } = await supabase.from('users').select('status');
+                return allUsers.reduce((acc,u)=>(acc[u.status]=(acc[u.status]||0)+1, acc), {});
+              })()
+            : {};
           const labels = ['Active','Expired','Pending','Deleted'];
           const data   = labels.map(l=> statusCounts[l]||0);
           new Chart(document.getElementById('chart-status'), {
@@ -312,8 +318,8 @@
             data:{ labels, datasets:[{ data }] },
             options:{ responsive:true, plugins:{ legend:{ position:'bottom' } } }
           });
-        }
-        catch(err) {
+
+        } catch(err) {
           console.error(err);
           showToast('Error loading dashboard', false);
         }
