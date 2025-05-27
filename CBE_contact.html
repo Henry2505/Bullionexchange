@@ -7,14 +7,15 @@
 
   <!-- Central theme stylesheet -->
   <link rel="stylesheet" href="theme.css">
+
   <script>
     // Initialize theme from localStorage or default to dark
     const saved = localStorage.getItem('theme');
     document.documentElement.setAttribute('data-theme', saved || 'dark');
   </script>
 
-  <!-- Supabase client -->
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <!-- Supabase UMD build (must load before you call window.supabase) -->
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
 
   <style>
     * { margin: 0; padding: 0; box-sizing: border-box; }
@@ -159,7 +160,6 @@
   <!-- Background Video -->
   <video class="bg-video" autoplay muted loop playsinline>
     <source src="star-video.mp4" type="video/mp4">
-    Your browser does not support the video tag.
   </video>
 
   <!-- Theme toggle control -->
@@ -190,44 +190,54 @@
     </div>
   </div>
 
-  <!-- Supabase Submission Script & theme toggle logic -->
   <script>
-    // Initialize Supabase client with your credentials
-    const supabase = supabase.createClient(
+    // 1️⃣ Initialize your Supabase client AFTER the UMD script has loaded
+    const supabase = window.supabase.createClient(
       'https://dapwpgvnfjcfqqhrpxla.supabase.co',
       'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImRhcHdwZ3ZuZmpjZnFxaHJweGxhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDcwNDA4ODgsImV4cCI6MjA2MjYxNjg4OH0.ICC0UsLlzJDNre7rFCeD3k6iVzo6jOJgn3PhABpEMsQ'
     );
 
-    // Contact form handling
-    const form = document.getElementById('contact-form');
-    const alertBox = document.getElementById('form-alert');
-    const spinner = document.getElementById('spinner');
+    // 2️⃣ Grab elements once
+    const form      = document.getElementById('contact-form');
+    const alertBox  = document.getElementById('form-alert');
+    const spinner   = document.getElementById('spinner');
+
+    // 3️⃣ Form submission handler
     form.addEventListener('submit', async e => {
       e.preventDefault();
       alertBox.innerHTML = '';
       spinner.style.display = 'block';
-      const name = document.getElementById('contact-name').value.trim();
-      const email = document.getElementById('contact-email').value.trim();
+
+      const name    = document.getElementById('contact-name').value.trim();
+      const email   = document.getElementById('contact-email').value.trim();
       const message = document.getElementById('contact-message').value.trim();
+
       if (!name || !email || !message) {
         spinner.style.display = 'none';
         return alertBox.innerHTML = `<div class="error">Please fill in all fields.</div>`;
       }
+
+      // Insert into your `messages` table
       const { error } = await supabase
         .from('messages')
-        .insert([{ name, email, message, date: new Date().toISOString() }]);
+        .insert([{ name, email, message }]);
+
       spinner.style.display = 'none';
-      alertBox.innerHTML = error
-        ? `<div class="error">Failed to send message. Try again.</div>`
-        : `<div class="success">Message sent successfully!</div>`;
-      if (!error) form.reset();
+
+      if (error) {
+        console.error('Insert error:', error);
+        alertBox.innerHTML = `<div class="error">Failed to send message. Try again.</div>`;
+      } else {
+        alertBox.innerHTML = `<div class="success">Message sent successfully!</div>`;
+        form.reset();
+      }
     });
 
-    // Theme toggle
+    // 4️⃣ Theme toggle logic
     const toggle = document.getElementById('theme-toggle');
     toggle.addEventListener('click', () => {
       const current = document.documentElement.getAttribute('data-theme');
-      const next = current === 'dark' ? 'light' : 'dark';
+      const next    = current === 'dark' ? 'light' : 'dark';
       document.documentElement.setAttribute('data-theme', next);
       localStorage.setItem('theme', next);
       toggle.textContent = next === 'dark' ? '🌞' : '🌜';
