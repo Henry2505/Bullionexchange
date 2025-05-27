@@ -1,185 +1,201 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" data-theme="dark">
 <head>
   <meta charset="UTF-8"/>
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>VIP Forex Signal • CBE</title>
-  <link
-    href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700&display=swap"
-    rel="stylesheet"
-  />
-  <!-- Supabase JavaScript Client -->
+
+  <!-- Poppins font -->
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700&display=swap" rel="stylesheet"/>
+
+  <!-- Supabase JS -->
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js"></script>
+
   <style>
-    /* --- Reset & Base --- */
+    /* Reset & base */
     * { margin:0; padding:0; box-sizing:border-box; }
     html, body {
-      width:100%; height:100%;
+      width:100%; min-height:100vh;
       font-family:'Poppins',sans-serif;
-      background:#000; color:#fff;
-      user-select:none;
-      overflow-x:hidden;
+      background: #080808;
+      color: #eee;
+      overflow-x: hidden;
     }
     a { text-decoration:none; color:inherit; }
 
-    /* --- Video Background & Overlay --- */
-    video#bg {
-      position:fixed; top:0; left:0;
-      width:100%; height:100%;
-      object-fit:cover; z-index:-2;
-    }
-    .overlay {
-      position:fixed; top:0; left:0;
-      width:100%; height:100%;
-      background:rgba(0,0,0,0.6);
-      z-index:-1;
+    /* Container */
+    .container {
+      max-width: 800px;
+      margin: 60px auto;
+      padding: 0 20px;
     }
 
-    /* --- Header --- */
+    /* Header */
     header {
-      text-align:center;
-      padding:60px 20px 20px;
+      text-align: center;
+      margin-bottom: 30px;
     }
     header h1 {
-      font-size:2.8rem; color:#ffd700; letter-spacing:1px;
-      text-shadow:0 0 10px rgba(255,215,0,0.7);
+      font-size: 2.5rem;
+      color: #ffd700;
+      margin-bottom: 8px;
     }
     header p {
-      margin-top:8px;
-      font-size:1rem; color:#ccc;
+      color: #bbb;
     }
 
-    /* --- Notice --- */
-    .notice {
-      text-align:center; font-size:0.9rem;
-      color:#ff4444; margin:10px 0 30px;
-    }
-
-    /* --- Signal Card --- */
+    /* Signal Card */
     .signal-card {
-      max-width:720px; margin:0 auto 60px;
-      background:rgba(20,20,20,0.8);
-      border-radius:12px;
-      box-shadow:0 0 30px rgba(255,215,0,0.2);
-      overflow:hidden;
-      animation:fadeIn 1s ease;
+      background: rgba(30,30,30,0.8);
+      border-radius: 12px;
+      box-shadow: 0 4px 20px rgba(0,0,0,0.7);
+      overflow: hidden;
+      animation: fadeIn 0.8s ease;
     }
-    @keyframes fadeIn { from{opacity:0;transform:scale(0.95)} to{opacity:1;transform:scale(1)} }
-
-    /* Date & Time */
+    @keyframes fadeIn {
+      from { opacity:0; transform: translateY(20px); }
+      to   { opacity:1; transform: translateY(0); }
+    }
     .signal-header {
-      background:linear-gradient(90deg,#111,#222);
-      padding:18px 24px;
-      display:flex; justify-content:space-between; align-items:center;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      background: #111;
+      padding: 16px 24px;
     }
     .signal-header h2 {
-      font-size:1.5rem; color:gold; margin:0;
+      color: #ffd700;
+      font-size: 1.4rem;
     }
     .signal-header .time {
-      font-size:0.9rem; color:#aaa;
+      color: #ccc;
+      font-size: 0.9rem;
     }
-
-    /* Details Grid */
     .signal-body {
-      display:grid; grid-template-columns:1fr auto;
-      gap:12px; padding:24px;
+      display: grid;
+      grid-template-columns: 1fr auto;
+      gap: 12px;
+      padding: 24px;
     }
-    .signal-body .detail {
-      font-size:1.1rem; color:#eee;
-      padding:12px 16px;
-      background:#1a1a1a; border-radius:8px;
-      display:flex; justify-content:space-between; align-items:center;
+    .detail {
+      background: #1a1a1a;
+      padding: 14px 18px;
+      border-radius: 8px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-size: 1rem;
     }
-    .signal-body .detail span {
-      font-weight:600;
+    .detail span {
+      font-weight: 600;
     }
-
-    /* Copy Button */
     .copy-btn {
-      background:#ffd700; color:#000;
-      border:none; padding:6px 12px; font-size:0.9rem;
-      font-weight:bold; border-radius:6px;
-      cursor:pointer; position:relative;
-      overflow:hidden;
-      animation:glow 2s infinite ease-in-out;
+      background: #ffd700;
+      color: #000;
+      border: none;
+      padding: 6px 12px;
+      border-radius: 6px;
+      font-weight: bold;
+      cursor: pointer;
+      transition: box-shadow .3s;
     }
-    @keyframes glow {
-      0%,100% { box-shadow:0 0 6px #ffd700; }
-      50%   { box-shadow:0 0 20px #ffd700; }
+    .copy-btn:hover {
+      box-shadow: 0 0 10px #ffd700;
+    }
+    .admin-note {
+      background: #222;
+      padding: 14px 18px;
+      margin: 0 24px 24px;
+      border-left: 4px solid #ffd700;
+      color: #ffcc00;
+      font-style: italic;
+      border-radius: 6px;
     }
 
-    /* Admin Note */
-    .admin-note {
-      margin:20px 24px 30px;
-      background:#222; padding:14px;
-      border-left:4px solid gold;
-      font-style:italic; color:#ffcc00;
-      border-radius:6px;
+    /* Notice */
+    .notice {
+      text-align: center;
+      color: #ff5555;
+      margin-bottom: 20px;
     }
 
     /* Footer */
     footer {
-      text-align:center; padding:20px;
-      font-size:0.9rem; color:#888;
-      border-top:1px solid #222;
-      margin-top:auto;
+      text-align: center;
+      padding: 20px;
+      color: #666;
+      font-size: 0.9rem;
+      margin-top: 40px;
+      border-top: 1px solid #222;
     }
   </style>
 </head>
-<body oncontextmenu="return false" onkeydown="if(event.key==='PrintScreen'){navigator.clipboard.writeText('');alert('Screenshots disabled');}">
+<body>
 
-  <!-- Video BG -->
-  <video id="bg" autoplay muted loop>
-    <source src="star-video.MP4" type="video/mp4"/>
-  </video>
-  <div class="overlay"></div>
+  <div class="container">
+    <!-- Header -->
+    <header>
+      <h1>VIP Forex Signal</h1>
+      <p>Exclusively for approved CBE VIP members</p>
+    </header>
 
-  <!-- Header -->
-  <header>
-    <h1>VIP Forex Signal</h1>
-    <p>Strictly for approved CBE VIP members — unauthorized use is punishable by law.</p>
-  </header>
+    <!-- Notice -->
+    <div class="notice">🔒 Unauthorized access will be redirected to login.</div>
 
-  <!-- Notice -->
-  <div class="notice">
-    🔒 Do not share, resell, or screenshot these signals.
+    <!-- Signal Card -->
+    <div id="signalCard" class="signal-card">
+      <p style="text-align:center; color:#999; padding:40px;">Loading latest signal…</p>
+    </div>
   </div>
 
-  <!-- Signal Card -->
-  <div class="signal-card" id="signalCard">
-    <p style="text-align:center;color:#aaa;padding:40px;">Loading latest signal…</p>
+  <!-- Market Overview Widget -->
+  <div class="container">
+    <div class="tradingview-widget-container">
+      <div class="tradingview-widget-container__widget"></div>
+      <script type="text/javascript" src="https://s3.tradingview.com/external-embedding/embed-widget-market-overview.js" async>
+      {
+        "colorTheme":"dark","dateRange":"12M","showChart":true,"locale":"en",
+        "width":"100%","height":400,
+        "tabs":[
+          {
+            "title":"Commodities",
+            "symbols":[
+              {"s":"OANDA:XAUUSD","d":"Gold / USD"},
+              {"s":"OANDA:XAGUSD","d":"Silver / USD"}
+            ]
+          }
+        ]
+      }
+      </script>
+    </div>
   </div>
 
   <!-- Footer -->
-  <footer>
-    © 2025 CBE – Chukwuemeka Bullion Exchange
-  </footer>
+  <footer>© 2025 CBE – Chukwuemeka Bullion Exchange</footer>
 
   <script>
-    // Supabase Initialization
-    const SUPABASE_URL = 'https://dapwpgvnfjcfqqhrpxla.supabase.co';
-    const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImRhcHdwZ3ZuZmpjZnFxaHJweGxhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDcwNDA4ODgsImV4cCI6MjA2MjYxNjg4OH0.ICC0UsLlzJDNre7rFCeD3k6iVzo6jOJgn3PhABpEMsQ';
-    const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+    // Supabase setup
+    const SUPA_URL = 'https://dapwpgvnfjcfqqhrpxla.supabase.co';
+    const SUPA_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImRhcHdwZ3ZuZmpjZnFxaHJweGxhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDcwNDA4ODgsImV4cCI6MjA2MjYxNjg4OH0.ICC0UsLlzJDNre7rFCeD3k6iVzo6jOJgn3PhABpEMsQ';
+    const supabase = supabase.createClient(SUPA_URL, SUPA_KEY);
 
-    // 1️⃣ Check session & VIP access
+    // 1) VIP guard
     async function ensureVIP() {
-      try {
-        const { data: { session }, error } = await supabase.auth.getSession();
-        if (error || !session) throw new Error('No active session');
-        const userId = session.user.id;
-        const { data: user, error: userError } = await supabase
-          .from('users')
-          .select('role')
-          .eq('id', userId)
-          .single();
-        if (userError || !user || user.role !== 'vip') throw new Error('Not a VIP user');
-      } catch {
-        alert('Please log in as VIP to view signals.');
-        return window.location.href = 'login.html';
+      const { data: { session }, error } = await supabase.auth.getSession();
+      if (error || !session) {
+        return location.href = 'login.html';
+      }
+      const { data: userRow, error: rowErr } = await supabase
+        .from('users')
+        .select('status')
+        .eq('id', session.user.id)
+        .single();
+      if (rowErr || userRow.status !== 'Approved') {
+        return location.href = 'login.html';
       }
     }
 
-    // 2️⃣ Fetch latest signal from Supabase
+    // 2) Load latest signal
     async function loadLatestSignal() {
       const card = document.getElementById('signalCard');
       try {
@@ -188,11 +204,7 @@
           .select('*')
           .order('created_at', { ascending: false })
           .limit(1);
-        if (error) throw error;
-        if (!signals.length) {
-          card.innerHTML = '<p style="text-align:center;color:#aaa;padding:40px;">No signals published yet.</p>';
-          return;
-        }
+        if (error || !signals.length) throw error || new Error('No signals');
         const sig = signals[0];
         card.innerHTML = `
           <div class="signal-header">
@@ -200,97 +212,33 @@
             <div class="time">${new Date(sig.created_at).toLocaleTimeString()}</div>
           </div>
           <div class="signal-body">
-            <div class="detail">Action: <span>${sig.action}</span></div>
-            <div class="detail">Asset: <span>${sig.asset}</span></div>
-            <div class="detail">SL: <span id="slValue">${sig.sl}</span> <button class="copy-btn" onclick="copyText('${sig.sl}')">Copy</button></div>
-            <div class="detail">TP1: <span id="tp1Value">${sig.tp1}</span> <button class="copy-btn" onclick="copyText('${sig.tp1}')">Copy</button></div>
-            <div class="detail">TP2: <span id="tp2Value">${sig.tp2}</span> <button class="copy-btn" onclick="copyText('${sig.tp2}')">Copy</button></div>
+            <div class="detail">Action:<span>${sig.action}</span></div>
+            <div class="detail">Asset:<span>${sig.asset}</span></div>
+            <div class="detail">SL:<span>${sig.sl}</span><button class="copy-btn" onclick="copyText('${sig.sl}')">Copy</button></div>
+            <div class="detail">TP1:<span>${sig.tp1}</span><button class="copy-btn" onclick="copyText('${sig.tp1}')">Copy</button></div>
+            <div class="detail">TP2:<span>${sig.tp2}</span><button class="copy-btn" onclick="copyText('${sig.tp2}')">Copy</button></div>
           </div>
-          <div class="admin-note">
-            Note: ${sig.note || 'Trade at your own risk — always manage your risk!'}
-          </div>
+          <div class="admin-note">Note: ${sig.note || 'Trade at your own risk.'}</div>
         `;
-      } catch (err) {
-        card.innerHTML = '<p style="text-align:center;color:#ff4444;padding:40px;">Failed to load signal.</p>';
-        console.error(err);
+      } catch {
+        card.innerHTML = `<p style="text-align:center;color:#ff5555;padding:40px;">
+          Unable to load signal.
+        </p>`;
       }
     }
 
-    // 3️⃣ Utility: copy to clipboard
+    // Copy utility
     function copyText(txt) {
-      navigator.clipboard.writeText(txt).then(_ => {
+      navigator.clipboard.writeText(txt).then(()=>{
         alert('Copied: ' + txt);
       });
     }
 
-    // 4️⃣ Kick it off
-    (async function init() {
+    // Initialize
+    (async () => {
       await ensureVIP();
       await loadLatestSignal();
     })();
   </script>
-
-    <!-- ─── TradingView Market Overview Widget ─── -->
-  <div class="tradingview-widget-container" style="margin:40px auto; max-width: 100%;">
-    <div class="tradingview-widget-container__widget"></div>
-    <script type="text/javascript" src="https://s3.tradingview.com/external-embedding/embed-widget-market-overview.js" async>
-    {
-      "colorTheme": "dark",
-      "dateRange": "12M",
-      "showChart": true,
-      "locale": "en",
-      "largeChartUrl": "",
-      "isTransparent": false,
-      "width": "100%",
-      "height": 600,
-      "plotLineColorGrowing": "rgba(33, 150, 243, 1)",
-      "plotLineColorFalling": "rgba(33, 150, 243, 1)",
-      "gridLineColor": "rgba(42, 46, 57, 0)",
-      "scaleFontColor": "rgba(131, 136, 142, 1)",
-      "belowLineFillColorGrowing": "rgba(33, 150, 243, 0.12)",
-      "belowLineFillColorFalling": "rgba(33, 150, 243, 0.12)",
-      "symbolActiveColor": "rgba(33, 150, 243, 0.12)",
-      "tabs": [
-        {
-          "title": "Commodities",
-          "symbols": [
-            { "s": "OANDA:XAUUSD", "d": "Gold / USD" },
-            { "s": "OANDA:XAGUSD", "d": "Silver / USD" },
-            { "s": "ICE:USOIL",   "d": "Crude Oil" },
-            { "s": "NYMEX:NG1!",  "d": "Natural Gas" }
-          ]
-        },
-        {
-          "title": "Forex Majors",
-          "symbols": [
-            { "s": "OANDA:EURUSD", "d": "EUR/USD" },
-            { "s": "OANDA:GBPUSD", "d": "GBP/USD" },
-            { "s": "OANDA:USDJPY", "d": "USD/JPY" },
-            { "s": "OANDA:USDCHF", "d": "USD/CHF" }
-          ]
-        },
-        {
-          "title": "Indices",
-          "symbols": [
-            { "s": "INDEX:SPX",   "d": "S&P 500" },
-            { "s": "INDEX:IUXX",  "d": "NASDAQ 100" },
-            { "s": "INDEX:DJI",   "d": "Dow 30" },
-            { "s": "INDEX:FTSE",  "d": "FTSE 100" }
-          ]
-        },
-        {
-          "title": "Crypto",
-          "symbols": [
-            { "s": "COINBASE:BTCUSD", "d": "Bitcoin / USD" },
-            { "s": "COINBASE:ETHUSD", "d": "Ethereum / USD" },
-            { "s": "BINANCE:BNBUSDT","d": "BNB / USDT" },
-            { "s": "BINANCE:ADAUSDT","d": "Cardano / USDT" }
-          ]
-        }
-      ]
-    }
-    </script>
-  </div>
-  <!-- ─────────────────────────────────────────── -->
 </body>
 </html>
