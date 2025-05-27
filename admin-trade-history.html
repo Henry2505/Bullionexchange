@@ -57,6 +57,11 @@
       border:1px solid var(--gold);
     }
     table.dataTable th, table.dataTable td { vertical-align:middle; }
+
+    /* Toast fix: ensure toasts appear above all glass panels */
+    .toast {
+      z-index: 2000 !important;
+    }
   </style>
 </head>
 <body>
@@ -150,7 +155,7 @@
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script>
     document.addEventListener('DOMContentLoaded', () => {
-      // Redirect & Theme Toggle
+      // Redirect & theme
       document.getElementById('logo').onclick = () => location.href='admin-dashboard.html';
       const themeBtn = document.getElementById('theme-toggle');
       const setTheme = t => {
@@ -174,15 +179,16 @@
 
       // Toast helper
       function showToast(message, ok = true) {
-        const toast = document.createElement('div');
-        toast.className = `toast align-items-center text-white ${ok ? 'bg-success' : 'bg-danger'} border-0 position-fixed top-0 end-0 m-3`;
-        toast.innerHTML = `
+        const t = document.createElement('div');
+        t.className = `toast align-items-center text-white ${ok ? 'bg-success' : 'bg-danger'} border-0 position-fixed top-0 end-0 m-3`;
+        t.style.zIndex = '2000';  // ensure it floats above the glass
+        t.innerHTML = `
           <div class="d-flex">
             <div class="toast-body">${message}</div>
             <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast"></button>
           </div>`;
-        document.body.append(toast);
-        new bootstrap.Toast(toast, { delay: 3000 }).show();
+        document.body.append(t);
+        new bootstrap.Toast(t, { delay: 3000 }).show();
       }
 
       // DataTable setup
@@ -210,7 +216,7 @@
         table.search(this.value).draw();
       });
 
-      // Load all history
+      // Load history
       async function loadTradeHistory() {
         try {
           const { data, error } = await supabase
@@ -225,7 +231,7 @@
         }
       }
 
-      // Delete row
+      // Delete record
       $('#history-table tbody').on('click', '.delete-btn', async function() {
         const id = $(this).data('id');
         if (!confirm('Delete this record?')) return;
@@ -243,7 +249,7 @@
         }
       });
 
-      // Upload new trade
+      // Upload form
       document.getElementById('trade-upload-form').onsubmit = async e => {
         e.preventDefault();
         const date = document.getElementById('trade-date').value;
