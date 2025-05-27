@@ -14,11 +14,165 @@
   <script src="https://s3.tradingview.com/tv.js"></script>
 
   <style>
-    /* (all your existing CSS unchanged) */
-    /* … */
+    /* Base resets */
+    * { margin:0; padding:0; box-sizing:border-box; }
+    html, body {
+      width:100%; min-height:100vh;
+      font-family:'Poppins',sans-serif;
+      background:linear-gradient(135deg,#000000 0%,#111111 100%);
+      color:#f5f5f5;
+      overflow-x:hidden;
+    }
+    a, button { font-family:inherit; }
+
+    /* Container */
+    .container {
+      max-width: 900px;
+      margin: 80px auto;
+      padding: 0 20px;
+    }
+
+    /* Header */
+    header {
+      text-align:center;
+      margin-bottom:40px;
+    }
+    header h1 {
+      font-size:3rem;
+      color:#ffd700;
+      text-shadow:0 0 8px rgba(255,215,0,0.6);
+    }
+    header p {
+      color:#ccc;
+      font-size:1.1rem;
+    }
+
+    /* Warning banner */
+    .warning {
+      background:rgba(255,215,0,0.1);
+      border:2px solid #ffd700;
+      color:#ffd700;
+      padding:16px;
+      border-radius:8px;
+      font-weight:600;
+      text-align:center;
+      margin-bottom:30px;
+      animation:pulse 2s infinite;
+    }
+    @keyframes pulse {
+      0%,100% { box-shadow:0 0 12px rgba(255,215,0,0.5); }
+      50%     { box-shadow:0 0 24px rgba(255,215,0,0.8); }
+    }
+
+    /* Notice (login) */
+    .notice {
+      text-align:center;
+      color:#ff5555;
+      font-size:1rem;
+      margin-bottom:25px;
+    }
+
+    /* Signal card */
+    .signal-card {
+      background:rgba(20,20,20,0.8);
+      border:2px solid #333;
+      border-radius:16px;
+      box-shadow:0 6px 30px rgba(0,0,0,0.8);
+      overflow:hidden;
+      animation:fadeInUp .8s ease both;
+      margin-bottom:50px;
+    }
+    @keyframes fadeInUp {
+      from { opacity:0; transform: translateY(30px); }
+      to   { opacity:1; transform: translateY(0); }
+    }
+    .signal-header {
+      display:flex; justify-content:space-between;
+      background:#111; padding:20px 28px;
+      border-bottom:1px solid #333;
+    }
+    .signal-header h2 {
+      color:#ffd700;
+      font-size:1.6rem;
+      letter-spacing:1px;
+    }
+    .signal-header .time {
+      color:#bbb;
+      font-size:1rem;
+      align-self:center;
+    }
+    .signal-body {
+      display:grid;
+      grid-template-columns:1fr 1fr;
+      gap:16px;
+      padding:28px;
+    }
+    .detail {
+      background:#1a1a1a;
+      padding:16px 20px;
+      border-radius:10px;
+      display:flex;
+      justify-content:space-between;
+      align-items:center;
+      font-size:1.05rem;
+      border:1px solid #333;
+    }
+    .detail span {
+      font-weight:600;
+      color:#ffd700;
+    }
+    .copy-btn {
+      background:#ffd700;
+      color:#111;
+      border:none;
+      padding:8px 14px;
+      border-radius:6px;
+      font-weight:bold;
+      cursor:pointer;
+      transition:transform .2s, box-shadow .2s;
+    }
+    .copy-btn:hover {
+      transform:translateY(-2px);
+      box-shadow:0 0 12px #ffd700;
+    }
+    .admin-note {
+      background:#222;
+      padding:16px 24px;
+      margin:0 28px 28px;
+      border-left:4px solid #ffd700;
+      color:#ffcc00;
+      font-style:italic;
+      border-radius:6px;
+    }
+
+    /* TradingView embed */
+    #tradingview_embed {
+      height:650px;
+      border:2px solid rgba(255,215,0,0.3);
+      border-radius:12px;
+      margin-bottom:80px;
+      box-shadow:0 4px 20px rgba(0,0,0,0.7);
+    }
+
+    /* Footer */
+    footer {
+      text-align:center;
+      color:#666;
+      font-size:0.9rem;
+      margin-top:60px;
+      padding-top:20px;
+      border-top:1px solid #333;
+    }
   </style>
 </head>
 <body>
+
+  <script>
+    // ── AUTH GUARD ─────────────────────────────────────────────────────────────
+    if (sessionStorage.getItem('cbeLoggedIn') !== 'true') {
+      window.location.replace('login.html');
+    }
+  </script>
 
   <div class="container">
     <header>
@@ -31,8 +185,7 @@
     </div>
 
     <div class="notice">
-      <!-- you can leave this or change wording if you like -->
-      🔓 Live signals are now available.
+      🔓 Live signals are now available to approved members.
     </div>
 
     <div id="signalCard" class="signal-card">
@@ -47,29 +200,22 @@
   <footer>© 2025 CBE – Chukwuemeka Bullion Exchange. All rights reserved.</footer>
 
   <script>
-    // ── AUTH GUARD ─────────────────────────────────────────────────────────────
-    // If the login page set sessionStorage.cbeLoggedIn = 'true', allow.
-    // Otherwise redirect immediately.
-    if (sessionStorage.getItem('cbeLoggedIn') !== 'true') {
-      window.location.replace('login.html');
-    }
-
-    // ── Supabase Setup (unchanged) ─────────────────────────────────────────────
+    // Supabase Setup
     const SUPA_URL = 'https://dapwpgvnfjcfqqhrpxla.supabase.co';
     const SUPA_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImRhcHdwZ3ZuZmpjZnFxaHJweGxhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDcwNDA4ODgsImV4cCI6MjA2MjYxNjg4OH0.ICC0UsLlzJDNre7rFCeD3k6iVzo6jOJgn3PhABpEMsQ';
     const supabase = window.supabase.createClient(SUPA_URL, SUPA_KEY);
 
-    // ── On page load ────────────────────────────────────────────────────────────
+    // On load: fetch signal + TradingView
     window.addEventListener('DOMContentLoaded', () => {
       loadLatestSignal();
       initTradingView();
     });
 
-    // ── Load & display newest signal, then delete older ─────────────────────────
+    // Fetch & display latest signal, then delete older ones
     async function loadLatestSignal() {
       const card = document.getElementById('signalCard');
       try {
-        let { data: signals, error } = await supabase
+        const { data: signals, error } = await supabase
           .from('signals')
           .select('id,action,asset,sl,tp1,tp2,note,created_at')
           .order('created_at', { ascending: false })
@@ -107,10 +253,13 @@
           </div>
           <div class="admin-note">Note: ${sig.note || 'Trade at your own risk.'}</div>
         `;
+
+        // cleanup older signals
         await supabase
           .from('signals')
           .delete()
           .neq('id', sig.id);
+
       } catch (err) {
         console.error(err);
         card.innerHTML = `<p style="text-align:center;color:#ff5555;padding:40px;">
@@ -119,7 +268,7 @@
       }
     }
 
-    // ── TradingView widget ──────────────────────────────────────────────────────
+    // TradingView embed
     function initTradingView() {
       new TradingView.widget({
         container_id: "tradingview_embed",
@@ -142,7 +291,7 @@
       });
     }
 
-    // ── Copy helper ─────────────────────────────────────────────────────────────
+    // Copy helper
     function copyText(txt) {
       navigator.clipboard.writeText(txt)
         .then(() => alert('Copied: ' + txt))
