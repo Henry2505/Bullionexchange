@@ -36,69 +36,53 @@
   </style>
 </head>
 <body>
+
   <div class="login-card">
     <h2>CBE Login</h2>
     <form id="loginForm" autocomplete="off">
       <label for="email">Email</label>
-      <input type="email" id="email" required />
+      <input type="email" id="email" required/>
       <label for="password">Password</label>
-      <input type="password" id="password" required />
+      <input type="password" id="password" required/>
       <button type="submit">Login</button>
     </form>
   </div>
 
-  <script type="module">
-    import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.27.1/+esm';
-
+  <!-- 1) Load Supabase UMD -->
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js/dist/umd/supabase.min.js"></script>
+  <script>
+    // 2) Instantiate client
     const SUPA_URL = 'https://dapwpgvnfjcfqqhrpxla.supabase.co';
     const SUPA_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9…';
-    const supabase = createClient(SUPA_URL, SUPA_KEY, {
-      auth: {
-        persistSession: true,
-        detectSessionInUrl: true
-      }
-    });
+    const supabase = window.supabase.createClient(SUPA_URL, SUPA_KEY);
 
-    // Immediately capture any auth tokens from URL (magic links, etc.)
-    // then clear the hash so you don't accidentally re-process it.
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      if (session) window.location.replace('vip-dashboard.html');
-    });
-
-    supabase.auth.onAuthStateChange((event, session) => {
-      // After sign-in we'll get here too
-      if (session) window.location.replace('vip-dashboard.html');
-    });
-
+    // 3) Handle form submission
     document.getElementById('loginForm').addEventListener('submit', async e => {
       e.preventDefault();
       const email    = document.getElementById('email').value.trim().toLowerCase();
       const password = document.getElementById('password').value;
 
-      // 1) Sign in
+      // Sign in
       const { data: authData, error: authError } = await supabase.auth.signInWithPassword({ email, password });
-      if (authError) {
-        return alert('❌ Login failed: ' + authError.message);
-      }
+      if (authError) return alert('❌ Login failed: ' + authError.message);
 
-      // 2) Check approval status by the returned user ID
-      const userId = authData.user.id;
+      // Check approval
       const { data: userRow, error: rowError } = await supabase
         .from('users')
         .select('status')
-        .eq('id', userId)
+        .eq('email', email)
         .single();
-
       if (rowError) {
         await supabase.auth.signOut();
-        return alert('❌ Could not verify your account status. Please try again.');
+        return alert('❌ Could not verify your approval status.');
       }
       if (userRow.status !== 'Approved') {
         await supabase.auth.signOut();
-        return alert('⏳ Your account is not yet approved by admin. Please check back later.');
+        return alert('⏳ Your account is not yet approved.');
       }
 
-      // 3) Approved! onAuthStateChange will fire and redirect you.
+      // Success! Redirect to dashboard
+      window.location.replace('vip-dashboard.html');
     });
   </script>
 </body>
