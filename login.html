@@ -79,7 +79,7 @@
 <body>
 
   <div class="logo">
-    <a href="Index.html"><img src="CBE_logo.PNG" alt="CBE Logo"/></a>
+    <a href="index.html"><img src="CBE_logo.PNG" alt="CBE Logo"/></a>
   </div>
   <button id="theme-toggle" aria-label="Toggle theme">🌞</button>
 
@@ -98,7 +98,7 @@
   <footer>© 2025 Chukwuemeka Bullion Exchange. All rights reserved.</footer>
 
   <!-- Supabase UMD -->
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js/dist/umd/supabase.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js/dist/umd/supabase.min.js"></script>
   <script>
     // ── Init Supabase ───────────────────────────────────────────────────────────
     const SUPA_URL      = 'https://dapwpgvnfjcfqqhrpxla.supabase.co';
@@ -110,17 +110,19 @@
       document.getElementById('login-card').classList.add('visible');
       const saved = localStorage.getItem('theme') || 'dark';
       document.documentElement.setAttribute('data-theme', saved);
-      document.getElementById('theme-toggle').textContent = saved === 'dark' ? '🌞' : '🌜';
+      document.getElementById('theme-toggle')
+        .textContent = saved === 'dark' ? '🌞' : '🌜';
     });
     document.getElementById('theme-toggle').addEventListener('click', () => {
       const cur = document.documentElement.getAttribute('data-theme');
       const next = cur === 'dark' ? 'light' : 'dark';
       document.documentElement.setAttribute('data-theme', next);
       localStorage.setItem('theme', next);
-      document.getElementById('theme-toggle').textContent = next === 'dark' ? '🌞' : '🌜';
+      document.getElementById('theme-toggle')
+        .textContent = next === 'dark' ? '🌞' : '🌜';
     });
 
-    // ── Login Logic with count-check ────────────────────────────────────────────
+    // ── Login Logic ─────────────────────────────────────────────────────────────
     document.getElementById('login-form').addEventListener('submit', async e => {
       e.preventDefault();
       const alertDiv = document.getElementById('login-alert');
@@ -129,13 +131,14 @@
       const rawEmail = document.getElementById('email').value.trim();
       const email    = rawEmail.toLowerCase();
       const password = document.getElementById('password').value;
+
       if (!email || !password) {
         alertDiv.style.color = 'crimson';
         return alertDiv.textContent = 'Please enter both email and password.';
       }
 
       try {
-        // 1) Fetch up to 1 matching row, get exact count
+        // 1) Fetch user row (and count)
         const { data: userRow, error, count } = await sb
           .from('users')
           .select('email,password,status', { count: 'exact' })
@@ -144,41 +147,42 @@
           .maybeSingle();
 
         if (error) throw error;
+        if (count === 0) throw new Error('No account found for that email.');
+        if (count > 1) console.warn(`⚠️ ${count} users matched "${email}".`);
 
-        // 2) Handle no or multiple matches
-        if (count === 0) {
-          throw new Error('No account found for that email.');
-        }
-        if (count > 1) {
-          console.warn(`⚠️ ${count} users matched "${email}". Using the first.`);
-        }
-
-        // 3) Debug logging
-        console.group('🔍 Debug login');
-        console.log('Entered email:', rawEmail, '→ normalized:', email);
-        console.log('DB email:', userRow.email);
-        console.log('Entered password:', password);
-        console.log('DB password:', userRow.password);
-        console.log('Status:', userRow.status);
-        console.groupEnd();
-
-        // 4) Password match
+        // 2) Password check
         if (userRow.password !== password) {
-          throw new Error('Invalid login credentials');
+          throw new Error('Invalid login credentials.');
         }
 
-        // 5) Approval check
+        // 3) Account-approval check
         if (!userRow.status || userRow.status.toLowerCase() !== 'approved') {
           throw new Error('Your account is not yet approved by admin.');
         }
 
-        // 6) Success!
+        // 4) Payment-approval check
+        const { data: payments } = await sb
+          .from('payments')
+          .select('id')
+          .eq('email', email)
+          .eq('status', 'approved');
+
+        if (!payments || payments.length === 0) {
+          alertDiv.style.color = 'orange';
+          alertDiv.textContent = 'Your payment is still pending approval.';
+          // redirect after showing message
+          return setTimeout(() => {
+            window.location.href = 'vip-subscription.html';
+          }, 2000);
+        }
+
+        // 5) Success! store session and go to dashboard
         sessionStorage.setItem('cbeLoggedIn', 'true');
         window.location.href = 'vip-dashboard.html';
 
       } catch (err) {
         console.error('Login error:', err);
-        alertDiv.style.color = err.message.includes('approved') ? 'orange' : 'crimson';
+        alertDiv.style.color = err.message.includes('pending') ? 'orange' : 'crimson';
         alertDiv.textContent = err.message;
       }
     });
