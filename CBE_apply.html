@@ -130,7 +130,7 @@
     const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImRhcHdwZ3ZuZmpjZnFxaHJweGxhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDcwNDA4ODgsImV4cCI6MjA2MjYxNjg4OH0.ICC0UsLlzJDNre7rFCeD3k6iVzo6jOJgn3PhABpEMsQ';
     const sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
-    // Slide-in
+    // Slide-in effect
     window.addEventListener('DOMContentLoaded', () => {
       document.getElementById('apply-card').classList.add('visible');
     });
@@ -146,7 +146,7 @@
     });
     toggle.textContent = document.documentElement.getAttribute('data-theme') === 'dark' ? '🌞' : '🌜';
 
-    // Form logic
+    // Form submission
     const form          = document.getElementById('apply-form');
     const agreeCheckbox = document.getElementById('agree-terms');
     const submitBtn     = document.getElementById('submit-btn');
@@ -165,13 +165,15 @@
         return alertDiv.textContent = 'You must agree to the Privacy Policy and Terms to continue.';
       }
 
-      const full_name  = form['apply-name'].value.trim();
-      const email      = form['apply-email'].value.trim().toLowerCase();
-      const password   = form['apply-password'].value;
-      const phone      = form['apply-phone'].value.trim();
-      const experience = form['apply-message'].value.trim();
+      // read fields
+      const name        = form['apply-name'].value.trim();
+      const email       = form['apply-email'].value.trim().toLowerCase();
+      const password    = form['apply-password'].value;
+      const phone       = form['apply-phone'].value.trim();
+      const experience  = form['apply-message'].value.trim();
 
-      if (!full_name || !email || !password || !phone || !experience) {
+      // validate
+      if (!name || !email || !password || !phone || !experience) {
         alertDiv.style.color = 'crimson';
         return alertDiv.textContent = 'Please complete all fields.';
       }
@@ -180,10 +182,19 @@
         return alertDiv.textContent = 'Please enter a valid email address.';
       }
 
+      // insert into "users" table, writing into "name" (not full_name)
       try {
         const { error } = await sb
           .from('users')
-          .insert([{ full_name, email, phone, password, experience, status:'Pending' }]);
+          .insert([{
+            name,          // <— the required column
+            email,
+            phone,
+            password,
+            experience,
+            status: 'Pending'
+          }]);
+
         if (error) throw error;
 
         alertDiv.style.color = 'lightgreen';
