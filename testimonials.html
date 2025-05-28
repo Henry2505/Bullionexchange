@@ -255,7 +255,6 @@
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2" defer></script>
     <script defer>
       document.addEventListener("DOMContentLoaded", () => {
-        // slide-in reveal
         document.querySelectorAll(".slide-in").forEach((el) => {
           new IntersectionObserver(
             (entries, obs) => {
@@ -270,7 +269,6 @@
           ).observe(el);
         });
 
-        // theme toggle
         const toggle = document.getElementById("theme-toggle");
         const setTheme = (t) => {
           document.documentElement.setAttribute("data-theme", t);
@@ -286,7 +284,6 @@
         );
         setTheme(localStorage.getItem("theme") || "dark");
 
-        // Supabase init
         const SUPABASE_URL = "https://dapwpgvnfjcfqqhrpxla.supabase.co";
         const SUPABASE_ANON_KEY =
           "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImRhcHdwZ3ZuZmpjZnFxaHJweGxhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDcwNDA4ODgsImV4cCI6MjA2MjYxNjg4OH0.ICC0UsLlzJDNre7rFCeD3k6iVzo6jOJgn3PhABpEMsQ";
@@ -295,7 +292,6 @@
           SUPABASE_ANON_KEY
         );
 
-        // Load approved testimonials
         async function loadTestimonials() {
           const { data, error } = await supabase
             .from("testimonials")
@@ -303,7 +299,6 @@
             .eq("status", "approved")
             .order("created_at", { ascending: false });
           if (error) return console.error("Fetch error:", error);
-
           const grid = document.getElementById("testimonialsGrid");
           grid.innerHTML = "";
           data.forEach((t) => {
@@ -336,7 +331,6 @@
         }
         loadTestimonials();
 
-        // Submission handler
         const form = document.getElementById("testimonialForm");
         const alertDiv = document.getElementById("submitAlert");
         const submitBtn = document.getElementById("submitBtn");
@@ -365,7 +359,6 @@
           let screenshot_url = null, video_url = null;
           const file = form.media.files[0];
           if (file) {
-            // Only enforce size on images
             if (file.type.startsWith("image/") && file.size > 5 * 1024 * 1024) {
               alertDiv.style.color = "crimson";
               alertDiv.textContent = "Image must be under 5 MB.";
@@ -379,7 +372,6 @@
               : "testimonial-videos";
             const path = `${bucket}/${Date.now()}_${file.name}`;
 
-            // Upload with progress
             const { error: uploadErr } = await supabase.storage
               .from(bucket)
               .upload(path, file, {
@@ -398,7 +390,6 @@
               return;
             }
 
-            // Get public URL
             const { data: urlData, error: urlErr } = await supabase.storage
               .from(bucket)
               .getPublicUrl(path);
@@ -407,7 +398,7 @@
               alertDiv.style.color = "crimson";
               alertDiv.textContent = `Couldn’t get URL: ${urlErr.message}`;
               submitBtn.disabled = false;
-              progressContainer.style.display = "none";
+      progressContainer.style.display = "none";
               return;
             }
 
@@ -415,7 +406,6 @@
             else video_url = urlData.publicUrl;
           }
 
-          // Insert testimonial
           const { error: insertErr } = await supabase
             .from("testimonials")
             .insert([
@@ -438,6 +428,15 @@
     </script>
 
     <!-- Smartsupp Live Chat script -->
-    <script defer src="https://www.smartsuppchat.com/loader.js?"></script>
+    <script type="text/javascript">
+      var _smartsupp = _smartsupp || {};
+      _smartsupp.key = '018a8bbd868518221e725341a7b2601231ec7ce8';
+      window.smartsupp||(function(d) {
+        var s,c,o=smartsupp=function(){ o._.push(arguments)};o._=[];
+        s=d.getElementsByTagName('script')[0];c=d.createElement('script');
+        c.type='text/javascript';c.charset='utf-8';c.async=true;
+        c.src='https://www.smartsuppchat.com/loader.js?';s.parentNode.insertBefore(c,s);
+      })(document);
+    </script>
   </body>
 </html>
