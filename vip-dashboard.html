@@ -256,30 +256,31 @@
     const SUPA_KEY = 'YOUR_SUPABASE_ANON_KEY';
     const supabase = createClient(SUPA_URL, SUPA_KEY);
 
-    // ─── AUTH GUARD ─────────────────────────────────────────────────────────────
+    // ─── AUTH & APPROVAL GUARD ─────────────────────────────────────────────────
     (async () => {
-      // 1. Check for an active session
-      const { data: { session } } = await supabase.auth.getSession();
-      if (!session) {
+      // 1. Get the current user
+      const { data: { user }, error: userError } = await supabase.auth.getUser();
+      if (!user || userError) {
+        // not signed in → redirect
         window.location.replace('login.html');
         return;
       }
 
-      // 2. Verify the user is approved
-      const { data: profile, error } = await supabase
+      // 2. Check their "approved" flag
+      const { data: profile, error: profileError } = await supabase
         .from('users')
         .select('approved')
-        .eq('id', session.user.id)
+        .eq('id', user.id)
         .single();
 
-      if (error || !profile?.approved) {
+      if (profileError || !profile?.approved) {
+        // either DB error or not approved → sign out & redirect
         await supabase.auth.signOut();
         window.location.replace('login.html');
         return;
       }
 
-      // If we reach here, user is signed in AND approved:
-      // fall through to the rest of your code below
+      // 3. They’re signed in AND approved — fall through to your UI code
     })();
 
     // Personalize greeting
