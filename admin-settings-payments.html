@@ -70,7 +70,6 @@
     }
     .method-info { flex-grow:1; }
     .method-actions button { margin-left:.5rem; }
-    /* Payments table */
     .payments-table {
       background: var(--glass-bg);
       color: var(--text);
@@ -78,7 +77,7 @@
       overflow-x:auto;
     }
     .payments-table table {
-      min-width: 700px;
+      min-width: 800px;
     }
     .btn-approve { margin-right: .5rem; }
     .toast { z-index:99999 !important; }
@@ -134,6 +133,7 @@
             <th>Email</th>
             <th>Plan</th>
             <th>Method</th>
+            <th>Proof</th>
             <th>Date</th>
             <th>Status</th>
             <th>Actions</th>
@@ -156,15 +156,15 @@
     const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
     // DOM refs
-    const form       = document.getElementById('method-form');
-    const nameInp    = document.getElementById('pm-name');
-    const typeInp    = document.getElementById('pm-type');
-    const detailsInp = document.getElementById('pm-details');
-    const saveBtn    = document.getElementById('save-btn');
-    const listGroup  = document.getElementById('methods-list');
+    const form          = document.getElementById('method-form');
+    const nameInp       = document.getElementById('pm-name');
+    const typeInp       = document.getElementById('pm-type');
+    const detailsInp    = document.getElementById('pm-details');
+    const saveBtn       = document.getElementById('save-btn');
+    const listGroup     = document.getElementById('methods-list');
     const paymentsTbody = document.getElementById('payments-list');
-    const logo       = document.getElementById('logo');
-    const themeBtn   = document.getElementById('theme-toggle');
+    const logo          = document.getElementById('logo');
+    const themeBtn      = document.getElementById('theme-toggle');
     let editId = null;
 
     // Toast helper
@@ -217,10 +217,9 @@
 
     // Load user payments
     async function loadPayments() {
-      // fetch methods to map ids → names
+      // fetch methods map
       const { data: methods } = await supabase.from('payment_methods').select('id,name');
-      const methodMap = {};
-      methods.forEach(m => { methodMap[m.id] = m.name });
+      const methodMap = methods.reduce((acc,m)=>{ acc[m.id]=m.name; return acc; },{});
 
       const { data, error } = await supabase
         .from('payments')
@@ -235,15 +234,16 @@
           <td>${p.email}</td>
           <td>${p.plan}</td>
           <td>${methodMap[p.method_id]||p.method_id}</td>
+          <td>
+            ${p.proof_url
+              ? `<button class="btn btn-sm btn-info" onclick="window.open('${p.proof_url}','_blank')">View Proof</button>`
+              : '—'}
+          </td>
           <td>${new Date(p.created_at).toLocaleString()}</td>
           <td id="status-${p.id}">${p.status}</td>
           <td>
-            <button class="btn btn-sm btn-success btn-approve" onclick="updatePayment(${p.id},'approved')">
-              Approve
-            </button>
-            <button class="btn btn-sm btn-danger" onclick="updatePayment(${p.id},'rejected')">
-              Reject
-            </button>
+            <button class="btn btn-sm btn-success btn-approve" onclick="updatePayment(${p.id},'approved')">Approve</button>
+            <button class="btn btn-sm btn-danger" onclick="updatePayment(${p.id},'rejected')">Reject</button>
           </td>`;
         paymentsTbody.append(tr);
       });
@@ -260,7 +260,7 @@
       showToast(`Payment ${newStatus}`);
     }
 
-    // Add or update method (unchanged)
+    // Add or update method
     saveBtn.addEventListener('click', async () => {
       saveBtn.disabled = true;
       const name  = nameInp.value.trim();
@@ -272,16 +272,16 @@
         return;
       }
       let details = {};
-      if (type === 'card') {
-        details.link = raw;
-      } else {
-        details.address = raw;
-      }
+      if (type === 'card') details.link = raw;
+      else details.address = raw;
+
       try {
-        const opts = editId
-          ? supabase.from('payment_methods').update({ name, type, details }).eq('id', editId)
-          : supabase.from('payment_methods').insert([{ name, type, details }]);
-        const res = await opts;
+        let res;
+        if (editId) {
+          res = await supabase.from('payment_methods').update({ name, type, details }).eq('id', editId);
+        } else {
+          res = await supabase.from('payment_methods').insert([{ name, type, details }]);
+        }
         if (res.error) throw res.error;
         showToast(editId ? 'Updated' : 'Added');
         form.reset();
@@ -302,9 +302,7 @@
       editId = id;
       nameInp.value    = data.name;
       typeInp.value    = data.type;
-      detailsInp.value = data.type === 'card'
-        ? data.details.link
-        : data.details.address;
+      detailsInp.value = data.type === 'card' ? data.details.link : data.details.address;
       saveBtn.textContent = 'Update';
     };
 
