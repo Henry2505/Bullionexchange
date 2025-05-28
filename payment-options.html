@@ -31,12 +31,8 @@
     a:hover { text-decoration:underline; }
 
     /* LOGO & THEME TOGGLE */
-    .logo {
-      position: fixed; top:20px; left:20px; z-index:10;
-    }
-    .logo img {
-      width:160px; cursor:pointer; transition:transform .3s;
-    }
+    .logo { position: fixed; top:20px; left:20px; z-index:10; }
+    .logo img { width:160px; cursor:pointer; transition:transform .3s; }
     .logo img:hover { transform:scale(1.05); }
 
     #theme-toggle {
@@ -56,10 +52,7 @@
     }
 
     /* MAIN CONTAINER */
-    .container {
-      max-width:700px; margin:0 auto;
-      padding:140px 20px 60px;
-    }
+    .container { max-width:700px; margin:0 auto; padding:140px 20px 60px; }
     @media(max-width:768px){
       .container {padding:120px 15px 40px;}
     }
@@ -75,8 +68,7 @@
 
     /* DETAILS PANEL */
     .details-panel {
-      background: var(--glass-bg);
-      backdrop-filter: blur(8px);
+      background: var(--glass-bg); backdrop-filter: blur(8px);
       padding:20px; border-radius:12px;
       box-shadow:0 4px 30px rgba(0,0,0,0.5);
       margin-bottom:30px;
@@ -116,8 +108,7 @@
       gap:15px;
     }
     .crypto-card {
-      background: var(--glass-bg);
-      backdrop-filter: blur(6px);
+      background: var(--glass-bg); backdrop-filter: blur(6px);
       padding:15px; border-radius:10px;
       box-shadow:0 4px 20px rgba(0,0,0,0.5);
       display:flex; flex-direction:column; justify-content:space-between;
@@ -139,24 +130,24 @@
     }
     .copy-btn:hover { transform:scale(1.05); }
 
-    /* EMAIL FORM */
+    /* EMAIL + PROOF FORM */
     .form-wrapper {
-      background: var(--glass-bg);
-      backdrop-filter: blur(8px);
+      background: var(--glass-bg); backdrop-filter: blur(8px);
       padding:20px; border-radius:12px;
       box-shadow:0 4px 30px rgba(0,0,0,0.5);
       margin-top:30px; display:none;
     }
     .form-wrapper label {
-      display:block; margin-bottom:6px;
-      color: var(--text-muted);
+      display:block; margin-bottom:6px; color: var(--text-muted);
     }
+    .form-wrapper input[type="file"],
     .form-wrapper input[type="email"] {
       width:100%; padding:10px; border:none; border-radius:8px;
       background:rgba(255,255,255,0.1); color:var(--text);
+      margin-bottom:12px;
     }
     .form-wrapper button {
-      margin-top:15px; width:100%; padding:12px;
+      width:100%; padding:12px;
       border:none; border-radius:30px;
       background: var(--gold); color:#000;
       font-weight:600; font-size:1rem;
@@ -213,8 +204,14 @@
 
     <div class="form-wrapper slide-in" id="emailSection">
       <form id="paymentForm">
+        <!-- Proof of Payment Upload -->
+        <label for="proofFile">Proof of Payment (Screenshot)</label>
+        <input type="file" id="proofFile" accept="image/*" required/>
+
+        <!-- Email Input -->
         <label for="emailInput">Your Email (must match registration)</label>
         <input type="email" id="emailInput" placeholder="you@example.com" required/>
+
         <button type="submit">I’ve Paid</button>
       </form>
       <div id="successMessage">Your payment is pending verification!</div>
@@ -229,28 +226,28 @@
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js/dist/umd/supabase.min.js"></script>
   <script>
     document.addEventListener('DOMContentLoaded', () => {
-      // Slide-ins
+      // Slide-in animation
       document.querySelectorAll('.slide-in').forEach((el, i) =>
         setTimeout(() => el.classList.add('visible'), (i+1)*150)
       );
 
-      // Theme
+      // Theme toggle
       const toggle = document.getElementById('theme-toggle');
       const applyTheme = () => {
         const curr = document.documentElement.getAttribute('data-theme');
-        const next = curr==='dark'?'light':'dark';
+        const next = curr === 'dark' ? 'light' : 'dark';
         document.documentElement.setAttribute('data-theme', next);
         localStorage.setItem('theme', next);
         toggle.textContent = next==='dark'?'🌞':'🌜';
       };
       toggle.addEventListener('click', applyTheme);
-      const saved = localStorage.getItem('theme')||'dark';
+      const saved = localStorage.getItem('theme') || 'dark';
       document.documentElement.setAttribute('data-theme', saved);
       toggle.textContent = saved==='dark'?'🌞':'🌜';
 
-      // Plan
+      // Plan configuration
       const params = new URLSearchParams(location.search);
-      const key = params.get('plan')||'weekly';
+      const key = params.get('plan') || 'weekly';
       const cfg = {
         weekly:  {n:'Weekly Plan',  p:50,   s:0},
         monthly: {n:'Monthly Plan', p:150,  s:50},
@@ -261,14 +258,14 @@
       document.getElementById('plan-price').textContent = `$${ch.p}`;
       document.getElementById('plan-save').textContent  = `$${ch.s}`;
 
-      // Supabase client
+      // Supabase init
       const SUPABASE_URL = 'https://dapwpgvnfjcfqqhrpxla.supabase.co';
       const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImRhcHdwZ3ZuZmpjZnFxaHJweGxhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDcwNDA4ODgsImV4cCI6MjA2MjYxNjg4OH0.ICC0UsLlzJDNre7rFCeD3k6iVzo6jOJgn3PhABpEMsQ';
       const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
       let selectedMethodId = null;
 
-      // Load methods
+      // Load payment methods
       supabase
         .from('payment_methods')
         .select('*')
@@ -280,8 +277,8 @@
             return;
           }
 
-          // Card
-          const card = data.find(m => m.type==='card');
+          // Card method
+          const card = data.find(m => m.type === 'card');
           const payBtn = document.getElementById('paystackBtn');
           if (card) {
             payBtn.textContent = card.name;
@@ -298,48 +295,66 @@
           document.getElementById('cryptoBtn').onclick = () => {
             const sec = document.getElementById('cryptoSection');
             const frm = document.getElementById('emailSection');
-            const show = sec.style.display!=='block';
-            sec.style.display = show?'block':'none';
-            frm.style.display = show?'block':'none';
+            const show = sec.style.display !== 'block';
+            sec.style.display = show ? 'block' : 'none';
+            frm.style.display = show ? 'block' : 'none';
           };
 
           // Crypto cards
           const grid = document.getElementById('cryptoGrid');
-          data.filter(m => m.type==='crypto')
-            .forEach(c => {
-              const div = document.createElement('div');
-              div.className = 'crypto-card';
-              div.innerHTML = `
-                <div class="label">${c.name}</div>
-                <div class="address">${c.details.address}</div>
-                <button class="copy-btn">Copy</button>`;
-              grid.append(div);
-              div.querySelector('.copy-btn').onclick = () => {
-                navigator.clipboard.writeText(c.details.address).then(()=>{
-                  const btn = div.querySelector('.copy-btn');
-                  btn.textContent = 'Copied!';
-                  setTimeout(()=> btn.textContent='Copy',1500);
-                });
-                selectedMethodId = c.id;
-              };
-            });
+          data.filter(m => m.type === 'crypto').forEach(c => {
+            const div = document.createElement('div');
+            div.className = 'crypto-card';
+            div.innerHTML = `
+              <div class="label">${c.name}</div>
+              <div class="address">${c.details.address}</div>
+              <button class="copy-btn">Copy</button>`;
+            grid.append(div);
+            div.querySelector('.copy-btn').onclick = () => {
+              navigator.clipboard.writeText(c.details.address).then(() => {
+                const btn = div.querySelector('.copy-btn');
+                btn.textContent = 'Copied!';
+                setTimeout(() => btn.textContent = 'Copy', 1500);
+              });
+              selectedMethodId = c.id;
+            };
+          });
         });
 
-      // Submit payment
+      // Handle form submission with proof upload
       document.getElementById('paymentForm').onsubmit = async e => {
         e.preventDefault();
         const email = document.getElementById('emailInput').value.trim();
         if (!email) return alert('Enter your registered email.');
         if (!selectedMethodId) return alert('Select a payment method first.');
-        const { error } = await supabase
+
+        // Upload proof file
+        const file = document.getElementById('proofFile').files[0];
+        if (!file) return alert('Please upload proof of payment.');
+        const path = `proof_${Date.now()}_${file.name}`;
+        const { error: upErr } = await supabase
+          .storage
+          .from('payment-proofs')
+          .upload(path, file);
+        if (upErr) return alert('Proof upload failed: ' + upErr.message);
+        const { data: { publicUrl: proofUrl } } = supabase
+          .storage
+          .from('payment-proofs')
+          .getPublicUrl(path);
+
+        // Insert payment record
+        const { error: insErr } = await supabase
           .from('payments')
-          .insert([{ email, plan: ch.n, method_id: selectedMethodId }]);
-        if (error) {
-          alert('Submission failed: '+error.message);
-        } else {
-          document.getElementById('successMessage').style.display='block';
-          setTimeout(()=> window.location.href='index.html',3000);
-        }
+          .insert([{
+            email,
+            plan: ch.n,
+            method_id: selectedMethodId,
+            proof_url: proofUrl
+          }]);
+        if (insErr) return alert('Submission failed: ' + insErr.message);
+
+        document.getElementById('successMessage').style.display = 'block';
+        setTimeout(() => window.location.href = 'index.html', 3000);
       };
     });
   </script>
