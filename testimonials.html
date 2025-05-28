@@ -90,8 +90,12 @@
       font-size:1.1rem; border:none; border-radius:30px;
       cursor:pointer; transition:transform .3s, box-shadow .3s;
     }
-    .form-card button:hover {
+    .form-card button:hover:enabled {
       transform:scale(1.05); box-shadow:0 8px 30px rgba(0,0,0,0.6);
+    }
+    .form-card button:disabled {
+      opacity: 0.6;
+      cursor: not-allowed;
     }
 
     /* TESTIMONIAL GRID */
@@ -165,7 +169,6 @@
         </div>
         <div class="form-group">
           <label for="testimonial">Your Testimonial<span style="color:red;">*</span></label>
-          <!-- id remains 'testimonial' for JS, name maps to testimonial_text -->
           <textarea id="testimonial" name="testimonial_text" rows="4" required></textarea>
         </div>
         <div class="form-group">
@@ -173,7 +176,7 @@
           <input type="file" id="media" name="media" accept="image/*,video/*"/>
           <small style="color:var(--text-muted);">Max. 20 MB</small>
         </div>
-        <button type="submit">Submit for Review</button>
+        <button type="submit" id="submitBtn">Submit for Review</button>
       </form>
       <div id="submitAlert" style="text-align:center; margin-top:15px; font-weight:600;"></div>
     </div>
@@ -221,7 +224,7 @@
 
       // Supabase init
       const SUPABASE_URL     = 'https://dapwpgvnfjcfqqhrpxla.supabase.co';
-      const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImRhcHdwZ3ZuZmpjZnFxaHJweGxhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDcwNDA4ODgsImV4cCI6MjA2MjYxNjg4OH0.ICC0UsLlzJDNre7rFCeD3k6iVzo6jOJgn3PhABpEMsQ';
+      const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZXBhcyIsInJlZiI6ImRhcHdwZ3ZuZmpjZnFxaHJweGxhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDcwNDA4ODgsImV4cCI6MjA2MjYxNjg4OH0.ICC0UsLlzJDNre7rFCeD3k6iVzo6jOJgn3PhABpEMsQ';
       const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
       // load and render approved testimonials
@@ -264,16 +267,23 @@
       loadTestimonials();
 
       // handle new submission
-      const form = document.getElementById('testimonialForm');
-      const alertDiv = document.getElementById('submitAlert');
+      const form      = document.getElementById('testimonialForm');
+      const alertDiv  = document.getElementById('submitAlert');
+      const submitBtn = document.getElementById('submitBtn');
+
       form.addEventListener('submit', async e => {
         e.preventDefault();
         alertDiv.textContent = '';
+        submitBtn.disabled = true;
+        alertDiv.style.color = 'var(--text)';
+        alertDiv.textContent = 'Uploading…';
+
         const name = form.name.value.trim();
-        const text = form.testimonial.value.trim();  // keep using `id="testimonial"`
+        const text = form.testimonial.value.trim();
         if (!name || !text) {
           alertDiv.style.color = 'crimson';
           alertDiv.textContent = 'Please fill both name & testimonial.';
+          submitBtn.disabled = false;
           return;
         }
 
@@ -292,10 +302,11 @@
             console.error('Upload Error →', uploadErr);
             alertDiv.style.color = 'crimson';
             alertDiv.textContent = `Upload failed: ${uploadErr.message}`;
+            submitBtn.disabled = false;
             return;
           }
 
-          const { data: urlData, error: urlErr } = supabase
+          const { data: urlData, error: urlErr } = await supabase
             .storage
             .from(bucket)
             .getPublicUrl(path);
@@ -303,6 +314,7 @@
             console.error('GetPublicUrl Error →', urlErr);
             alertDiv.style.color = 'crimson';
             alertDiv.textContent = `Couldn’t get URL: ${urlErr.message}`;
+            submitBtn.disabled = false;
             return;
           }
           if (isImage) screenshot_url = urlData.publicUrl;
@@ -327,6 +339,7 @@
           alertDiv.textContent = 'Thanks—awaiting approval!';
           form.reset();
         }
+        submitBtn.disabled = false;
       });
     });
   </script>
