@@ -1,13 +1,17 @@
 <!DOCTYPE html>
 <html lang="en" data-theme="dark">
 <head>
-  <!-- Disable scroll restoration and force top on every load -->
+  <!-- Prevent any saved scroll position and force top immediately -->
   <script>
+    // Turn off Chrome/Firefox scroll restoration
     if ('scrollRestoration' in history) {
       history.scrollRestoration = 'manual';
     }
-    window.addEventListener('load', () => {
-      window.scrollTo(0, 0);
+    // Jump to top right away
+    window.scrollTo(0, 0);
+    // In case something else scrolls you, bounce back on DOM ready
+    window.addEventListener('DOMContentLoaded', () => {
+      setTimeout(() => window.scrollTo(0, 0), 1);
     });
   </script>
 
@@ -246,7 +250,9 @@
     footer a { color:var(--gold); }
   </style>
 </head>
-<body id="top">
+
+<!-- Add onload bounce as extra insurance -->
+<body id="top" onload="window.scrollTo(0,0)">
 
   <!-- Theme toggle -->
   <button id="theme-toggle" aria-label="Toggle light/dark">🌞</button>
@@ -267,7 +273,6 @@
   <!-- About -->
   <section id="about" class="slide-in">
     <h2>About CBE</h2>
-    <p>CBE empowers traders of all levels with:</p>
     <ul>
       <li>Daily Trading Signals</li>
       <li>One-on-One Mentorship</li>
@@ -298,7 +303,7 @@
   <section id="plans" class="slide-in">
     <h2>VIP Subscription Plans</h2>
     <div class="plans">
-      <!-- ... plan cards as before ... -->
+      <!-- plan cards unchanged -->
     </div>
   </section>
 
@@ -312,7 +317,7 @@
 
   <!-- FAQ -->
   <section id="faq" class="slide-in">
-    <!-- ... FAQ items as before ... -->
+    <!-- FAQ items unchanged -->
   </section>
 
   <!-- Live Gold Chart -->
@@ -323,7 +328,6 @@
   <!-- Footer -->
   <footer>
     <p>© 2025 Chukwuemeka Bullion Exchange. All rights reserved.</p>
-    <p>CBE offers mentorship, signals & capital support. Forex trading involves risk. 18+ only.</p>
     <p><a href="privacy.html">Privacy Policy</a> | <a href="terms.html">Terms & Conditions</a></p>
   </footer>
 
@@ -352,11 +356,10 @@
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
   <script>
     const SUPA_URL      = 'https://dapwpgvnfjcfqqhrpxla.supabase.co';
-    const SUPA_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9…'; // truncated for brevity
+    const SUPA_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9…';
     const supabase      = window.supabase.createClient(SUPA_URL, SUPA_ANON_KEY);
 
     document.addEventListener('DOMContentLoaded', () => {
-      // slide-in animations
       document.querySelectorAll('.slide-in').forEach(el => {
         const io = new IntersectionObserver((entries, obs) => {
           entries.forEach(e => {
@@ -369,7 +372,6 @@
         io.observe(el);
       });
 
-      // stats observer
       const statsSection = document.getElementById('stats');
       new IntersectionObserver((entries, obs) => {
         entries.forEach(e => {
@@ -425,7 +427,7 @@
     })(document);
   </script>
 
-  <!-- Site Scripts (theme toggle & FAQ) -->
+  <!-- Theme toggle & FAQ -->
   <script>
     const btn = document.getElementById('theme-toggle');
     btn.addEventListener('click', () => {
@@ -441,14 +443,13 @@
       btn.textContent = t==='dark'?'🌞':'🌜';
     })();
 
-    document.querySelectorAll('.faq-question').forEach(q=>
-      q.addEventListener('click', ()=>{
+    document.querySelectorAll('.faq-question').forEach(q =>
+      q.addEventListener('click', () => {
         const ans = q.nextElementSibling;
         ans.style.maxHeight = ans.style.maxHeight ? null : ans.scrollHeight+'px';
         q.querySelector('i').classList.toggle('fa-chevron-up');
       })
     );
   </script>
-
 </body>
 </html>
