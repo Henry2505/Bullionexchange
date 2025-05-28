@@ -173,24 +173,19 @@
   </head>
 
   <body>
-    <!-- Logo -->
     <div class="logo slide-in">
       <a href="index.html"><img src="CBE_logo.PNG" alt="CBE Logo" /></a>
     </div>
-
-    <!-- Theme Toggle -->
     <button id="theme-toggle" aria-label="Toggle light/dark" class="slide-in">
       🌞
     </button>
 
     <main>
-      <!-- Header -->
       <div class="header-card slide-in">
         <h1>What Our Members Are Saying</h1>
         <p>Real feedback from traders who’ve grown with CBE.</p>
       </div>
 
-      <!-- Submission Form -->
       <div class="form-card slide-in" style="transition-delay: 0.3s;">
         <h2>Share Your Experience</h2>
         <form id="testimonialForm">
@@ -218,11 +213,10 @@
               accept="image/*,video/*"
             />
             <small style="color: var(--text-muted);">
-              Max. 5 MB (images), 100 MB (videos)
+              Max. 5 MB (images), no limit (videos)
             </small>
           </div>
 
-          <!-- Progress bar -->
           <div id="progressContainer">
             <div id="progressBar"></div>
           </div>
@@ -235,7 +229,6 @@
         ></div>
       </div>
 
-      <!-- Approved Testimonials -->
       <section
         id="testimonialsSection"
         class="slide-in"
@@ -302,19 +295,15 @@
           SUPABASE_ANON_KEY
         );
 
-        // load testimonials
+        // Load approved testimonials
         async function loadTestimonials() {
           const { data, error } = await supabase
             .from("testimonials")
-            .select(
-              "name,testimonial_text,screenshot_url,video_url,company_response"
-            )
+            .select("name,testimonial_text,screenshot_url,video_url,company_response")
             .eq("status", "approved")
             .order("created_at", { ascending: false });
-          if (error) {
-            console.error("Fetch error:", error);
-            return;
-          }
+          if (error) return console.error("Fetch error:", error);
+
           const grid = document.getElementById("testimonialsGrid");
           grid.innerHTML = "";
           data.forEach((t) => {
@@ -347,7 +336,7 @@
         }
         loadTestimonials();
 
-        // handle submission
+        // Submission handler
         const form = document.getElementById("testimonialForm");
         const alertDiv = document.getElementById("submitAlert");
         const submitBtn = document.getElementById("submitBtn");
@@ -373,25 +362,24 @@
             return;
           }
 
-          let screenshot_url = null,
-            video_url = null;
+          let screenshot_url = null, video_url = null;
           const file = form.media.files[0];
           if (file) {
-            const isImage = file.type.startsWith("image/");
-            const maxMB = isImage ? 5 : 100;
-            if (file.size > maxMB * 1024 * 1024) {
+            // Only enforce size on images
+            if (file.type.startsWith("image/") && file.size > 5 * 1024 * 1024) {
               alertDiv.style.color = "crimson";
-              alertDiv.textContent = `File must be under ${maxMB} MB.`;
+              alertDiv.textContent = "Image must be under 5 MB.";
               submitBtn.disabled = false;
               progressContainer.style.display = "none";
               return;
             }
 
-            const bucket = isImage
+            const bucket = file.type.startsWith("image/")
               ? "testimonial-screenshots"
               : "testimonial-videos";
             const path = `${bucket}/${Date.now()}_${file.name}`;
 
+            // Upload with progress
             const { error: uploadErr } = await supabase.storage
               .from(bucket)
               .upload(path, file, {
@@ -410,6 +398,7 @@
               return;
             }
 
+            // Get public URL
             const { data: urlData, error: urlErr } = await supabase.storage
               .from(bucket)
               .getPublicUrl(path);
@@ -422,20 +411,15 @@
               return;
             }
 
-            if (isImage) screenshot_url = urlData.publicUrl;
+            if (file.type.startsWith("image/")) screenshot_url = urlData.publicUrl;
             else video_url = urlData.publicUrl;
           }
 
+          // Insert testimonial
           const { error: insertErr } = await supabase
             .from("testimonials")
             .insert([
-              {
-                name,
-                testimonial_text: text,
-                screenshot_url,
-                video_url,
-                status: "pending",
-              },
+              { name, testimonial_text: text, screenshot_url, video_url, status: "pending" },
             ]);
           if (insertErr) {
             console.error("Insert Error →", insertErr);
