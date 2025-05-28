@@ -140,9 +140,8 @@
   <script>
     document.addEventListener('DOMContentLoaded', () => {
       // Logo → Dashboard
-      document.getElementById('logo').onclick = () => {
+      document.getElementById('logo').onclick = () =>
         window.location.href = 'admin-dashboard.html';
-      };
 
       // Theme toggle
       const themeBtn = document.getElementById('theme-toggle');
@@ -151,10 +150,9 @@
         localStorage.setItem('theme', t);
         themeBtn.textContent = t === 'dark' ? '🌞' : '🌜';
       };
-      themeBtn.onclick = () => {
-        const next = document.documentElement.getAttribute('data-theme') === 'dark' ? 'light' : 'dark';
-        applyTheme(next);
-      };
+      themeBtn.onclick = () => applyTheme(
+        document.documentElement.getAttribute('data-theme') === 'dark' ? 'light' : 'dark'
+      );
       applyTheme(localStorage.getItem('theme') || 'dark');
 
       // Auth guard
@@ -185,8 +183,8 @@
       const table = $('#testimonials-table').DataTable({
         columns: [
           { data: 'id' },
-          { data: 'users.name', defaultContent: 'Unknown' },
-          { data: 'testimonial' },                        // ← updated
+          { data: 'name', defaultContent: 'Unknown' },
+          { data: 'testimonial_text' },
           {
             data: null,
             render: (_, __, row) => {
@@ -208,12 +206,17 @@
           {
             data: null,
             render: (_, __, row) => {
-              if (row.status === 'Pending') {
-                return `<button class="btn btn-sm btn-success me-1" onclick="approveTestimonial(${row.id})">Approve</button>`;
-              } else {
-                const resp = row.company_response ? JSON.stringify(row.company_response) : "''";
-                return `<button class="btn btn-sm btn-warning" onclick="openResponseModal(${row.id}, ${resp})">Respond</button>`;
+              const actions = [];
+              if (row.status === 'pending') {
+                actions.push(`<button class="btn btn-sm btn-success me-1" onclick="updateStatus(${row.id}, 'approved')">Approve</button>`);
+                actions.push(`<button class="btn btn-sm btn-danger me-1" onclick="updateStatus(${row.id}, 'rejected')">Reject</button>`);
+              } else if (row.status === 'approved') {
+                actions.push(`<button class="btn btn-sm btn-warning me-1" onclick="openResponseModal(${row.id}, ${JSON.stringify(row.company_response)})">Respond</button>`);
+                actions.push(`<button class="btn btn-sm btn-danger me-1" onclick="updateStatus(${row.id}, 'rejected')">Reject</button>`);
+              } else { // rejected
+                actions.push(`<button class="btn btn-sm btn-outline-danger" onclick="deleteTestimonial(${row.id})">Delete</button>`);
               }
+              return actions.join('');
             }
           }
         ]
@@ -224,46 +227,64 @@
         try {
           const { data, error } = await supabase
             .from('testimonials')
-            .select('id, testimonial, screenshot_url, video_url, company_response, status, created_at, users(name)') // ← updated
+            .select('id,name,testimonial_text,screenshot_url,video_url,company_response,status,created_at')
             .order('created_at', { ascending: false });
           if (error) throw error;
-          const formatted = (data || []).map(t => {
-            return { ...t, 'users.name': t.users?.name };
-          });
-          table.clear().rows.add(formatted).draw();
+          table.clear().rows.add(data).draw();
         } catch (err) {
           console.error(err);
           showToast('Error loading testimonials', false);
         }
       }
 
-      // Approve
-      window.approveTestimonial = async id => {
+      // Update status (approve/reject)
+      window.updateStatus = async (id, newStatus) => {
         try {
-          const { error } = await supabase.from('testimonials').update({ status: 'Approved' }).eq('id', id);
+          const { error } = await supabase
+            .from('testimonials')
+            .update({ status: newStatus })
+            .eq('id', id);
           if (error) throw error;
-          showToast('Testimonial approved');
+          showToast(`Testimonial ${newStatus}`);
           loadTestimonials();
         } catch (err) {
           console.error(err);
-          showToast('Error approving testimonial', false);
+          showToast(`Error setting ${newStatus}`, false);
         }
       };
 
-      // Open response modal
-      window.openResponseModal = (id, existing) => {
-        document.getElementById('resp-testimonial-id').value = id;
-        document.getElementById('resp-body').value = existing ? existing.replace(/"/g, '') : '';
-        new bootstrap.Modal(document.getElementById('responseModal')).show();
+      // Delete testimonial permanently
+      window.deleteTestimonial = async id => {
+        if (!confirm('Delete this testimonial forever?')) return;
+        try {
+          const { error } = await supabase
+            .from('testimonials')
+            .delete()
+            .eq('id', id);
+          if (error) throw error;
+          showToast('Testimonial deleted');
+          loadTestimonials();
+        } catch (err) {
+          console.error(err);
+          showToast('Error deleting testimonial', false);
+        }
       };
 
-      // Handle response save
+      // Open / save company response
+      window.openResponseModal = (id, existing) => {
+        document.getElementById('resp-testimonial-id').value = id;
+        document.getElementById('resp-body').value = existing || '';
+        new bootstrap.Modal(document.getElementById('responseModal')).show();
+      };
       document.getElementById('response-form').addEventListener('submit', async e => {
         e.preventDefault();
         const id = document.getElementById('resp-testimonial-id').value;
         const response = document.getElementById('resp-body').value;
         try {
-          const { error } = await supabase.from('testimonials').update({ company_response: response }).eq('id', id);
+          const { error } = await supabase
+            .from('testimonials')
+            .update({ company_response: response })
+            .eq('id', id);
           if (error) throw error;
           showToast('Response saved');
           bootstrap.Modal.getInstance(document.getElementById('responseModal')).hide();
@@ -274,11 +295,10 @@
         }
       });
 
-      // View screenshot
-      window.viewScreenshot = url => {
-        window.open(url, '_blank');
-      };
+      // View screenshot helper
+      window.viewScreenshot = url => window.open(url, '_blank');
 
+      // Initial load
       loadTestimonials();
     });
   </script>
