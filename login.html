@@ -83,7 +83,7 @@
   </div>
   <button id="theme-toggle" aria-label="Toggle theme">🌞</button>
 
-  <div class="login-card" id="login-card">
+  <div class="login-card visible" id="login-card">
     <h1>Member Login</h1>
     <form id="login-form">
       <label for="email">Email Address</label>
@@ -100,14 +100,12 @@
   <!-- Supabase UMD -->
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js/dist/umd/supabase.min.js"></script>
   <script>
-    // ── Init Supabase ───────────────────────────────────────────────────────────
     const SUPA_URL      = 'https://dapwpgvnfjcfqqhrpxla.supabase.co';
-    const SUPA_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzYSIsInJlZiI6ImRhcHdwZ3ZuZmpjZnFxaHJweGxhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDcwNDA4ODgsImV4cCI6MjA2MjYxNjg4OH0.ICC0UsLlzJDNre7rFCeD3k6iVzo6jOJgn3PhABpEMsQ';
+    const SUPA_ANON_KEY = 'YOUR_ANON_KEY_HERE';
     const sb = supabase.createClient(SUPA_URL, SUPA_ANON_KEY);
 
-    // ── Theme Toggle ────────────────────────────────────────────────────────────
-    window.addEventListener('DOMContentLoaded', () => {
-      document.getElementById('login-card').classList.add('visible');
+    // Theme toggle
+    document.addEventListener('DOMContentLoaded', () => {
       const saved = localStorage.getItem('theme') || 'dark';
       document.documentElement.setAttribute('data-theme', saved);
       document.getElementById('theme-toggle')
@@ -122,37 +120,34 @@
         .textContent = next === 'dark' ? '🌞' : '🌜';
     });
 
-    // ── Login Logic (only checks “approved” status) ─────────────────────────────
+    // Login Logic (only checks approved status; no payment step)
     document.getElementById('login-form').addEventListener('submit', async e => {
       e.preventDefault();
       const alertDiv = document.getElementById('login-alert');
       alertDiv.textContent = '';
 
-      const rawEmail = document.getElementById('email').value.trim();
-      const email    = rawEmail.toLowerCase();
+      const email    = document.getElementById('email').value.trim().toLowerCase();
       const password = document.getElementById('password').value;
 
       try {
-        // Fetch user by email
-        const { data: userRow, error, count } = await sb
+        const { data: user, error, count } = await sb
           .from('users')
-          .select('id,email,password,status,name', { count: 'exact' })
+          .select('id, email, password, status, name', { count: 'exact' })
           .ilike('email', email)
           .limit(1)
           .maybeSingle();
 
         if (error) throw error;
         if (count === 0) throw new Error('No account found for that email.');
-        if (userRow.password !== password) throw new Error('Invalid login credentials.');
-        // Only allow if status = "approved"
-        if (!userRow.status || userRow.status.toLowerCase() !== 'approved') {
+        if (user.password !== password) throw new Error('Invalid login credentials.');
+        if (user.status.toLowerCase() !== 'approved') {
           throw new Error('Your account is not yet approved by admin.');
         }
 
-        // SUCCESS: Save session and redirect
+        // Success: store session & redirect
         sessionStorage.setItem('cbeLoggedIn', 'true');
-        sessionStorage.setItem('cbeUserId',   userRow.id);
-        sessionStorage.setItem('cbeUserName', userRow.name);
+        sessionStorage.setItem('cbeUserId',   user.id);
+        sessionStorage.setItem('cbeUserName', user.name);
         window.location.href = 'vip-dashboard.html';
 
       } catch (err) {
