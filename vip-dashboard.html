@@ -4,91 +4,46 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>VIP Dashboard – CBE Global FX</title>
-
   <!-- Auth Guard -->
   <script>
-    if (sessionStorage.getItem('cbeLoggedIn') !== 'true') {
-      window.location.replace('login.html');
-    }
+    if (sessionStorage.getItem('cbeLoggedIn')!=='true') window.location.replace('login.html');
   </script>
 
-  <!-- Bootstrap, Icons, Fonts -->
+  <!-- CSS + Icons + Fonts -->
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
   <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css" rel="stylesheet">
   <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;700&display=swap" rel="stylesheet">
 
-  <!-- Supabase, TradingView, Smartsupp -->
+  <!-- Supabase + TradingView + Chart.js + Smartsupp -->
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js/dist/umd/supabase.min.js"></script>
   <script src="https://s3.tradingview.com/tv.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <script>
-    // Smartsupp chat loader
-    var _smartsupp = _smartsupp || {};
-    _smartsupp.key = '018a8bbd868518221e725341a7b2601231ec7ce8';
-    (function(d) {
-      var s, c, o = smartsupp = function() { o._.push(arguments) }; o._ = [];
-      s = d.getElementsByTagName('script')[0]; c = d.createElement('script');
-      c.async = true; c.src = 'https://www.smartsuppchat.com/loader.js?';
-      s.parentNode.insertBefore(c, s);
+    // Smartsupp loader
+    var _smartsupp=_smartsupp||{};_smartsupp.key='018a8bbd868518221e725341a7b2601231ec7ce8';
+    (function(d){
+      var s,c,o=smartsupp=function(){o._.push(arguments)};o._=[];
+      s=d.getElementsByTagName('script')[0];
+      c=d.createElement('script');c.async=true;
+      c.src='https://www.smartsuppchat.com/loader.js?';
+      s.parentNode.insertBefore(c,s);
     })(document);
   </script>
 
   <style>
-    :root {
-      --bg: #1a1a1a;
-      --panel: rgba(30, 30, 30, 0.95);
-      --gold: #d4af37;
-      --text: #e0e0e0;
-      --muted: #888;
-      --green: #00cc66;
-      --red: #ff4444;
-    }
-    [data-theme="light"] {
-      --bg: #f0f2f5;
-      --panel: rgba(255, 255, 255, 0.95);
-      --text: #333;
-      --gold: #b8860b;
-      --green: #00b359;
-      --red: #cc0000;
-    }
-    body {
-      background: linear-gradient(135deg, var(--bg), #222);
-      color: var(--text);
-      font-family: 'Roboto', sans-serif;
-      overflow-x: hidden;
-    }
-    .bg-panel {
-      background: var(--panel);
-      border-radius: 10px;
-      box-shadow: 0 8px 16px rgba(0, 0, 0, 0.3);
-    }
-    .card {
-      transition: transform 0.3s, box-shadow 0.3s;
-    }
-    .card:hover {
-      transform: translateY(-5px);
-      box-shadow: 0 12px 24px rgba(0, 0, 0, 0.4);
-    }
-    .text-gold { color: var(--gold); }
-    .btn-gold {
-      background: var(--gold);
-      color: #000;
-      border: none;
-      border-radius: 5px;
-      transition: transform 0.2s;
-    }
-    .btn-gold:hover { transform: scale(1.05); }
-    .blink-nav a {
-      animation: blink 1.5s infinite;
-    }
-    @keyframes blink { 0%, 100% { opacity: 1; } 50% { opacity: 0.7; } }
-    .fade-in { animation: fadeIn 0.8s ease-in; }
-    @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
-    #tv_chart_4h { height: 400px; }
-    .circle {
-      width: 10px; height: 10px; border-radius: 50%; margin: 0 2px;
-    }
-    .circle.win { background: var(--green); }
-    .circle.loss { background: var(--red); }
+    :root{--bg:#1a1a1a;--panel:rgba(30,30,30,0.95);--gold:#d4af37;--text:#e0e0e0;--muted:#888;--green:#00cc66;--red:#ff4444}
+    [data-theme="light"]{--bg:#f0f2f5;--panel:rgba(255,255,255,0.95);--text:#333;--gold:#b8860b;--green:#00b359;--red:#cc0000}
+    body{background:linear-gradient(135deg,var(--bg),#222);color:var(--text);font-family:'Roboto';overflow-x:hidden}
+    .bg-panel{background:var(--panel);border-radius:10px;box-shadow:0 8px 16px rgba(0,0,0,0.3)}
+    .card{transition:transform .3s,box-shadow .3s}
+    .card:hover{transform:translateY(-5px);box-shadow:0 12px 24px rgba(0,0,0,0.4)}
+    .text-gold{color:var(--gold)}.btn-gold{background:var(--gold);color:#000;border:none;border-radius:5px;transition:transform .2s}
+    .btn-gold:hover{transform:scale(1.05)}.blink-nav a{animation:blink 1.5s infinite}
+    @keyframes blink{0%,100%{opacity:1}50%{opacity:0.7}}
+    .fade-in{animation:fadeIn .8s ease-in}@keyframes fadeIn{from{opacity:0}to{opacity:1}}
+    #tv_chart_4h{height:400px}#tv_chart_apple{height:400px}
+    .circle{width:10px;height:10px;border-radius:50%;margin:0 2px}
+    .circle.win{background:var(--green)}.circle.loss{background:var(--red)}
   </style>
 </head>
 
@@ -97,7 +52,7 @@
   <div class="offcanvas offcanvas-start bg-panel" id="sidebar">
     <div class="offcanvas-body">
       <div class="text-center mb-4">
-        <img src="CBE_logo.PNG" alt="CBE Logo" style="width: 120px; cursor: pointer;" onclick="location.href='index.html'">
+        <img src="CBE_logo.PNG" alt="CBE Logo" style="width:120px;cursor:pointer" onclick="location.href='index.html'">
       </div>
       <ul class="nav nav-pills flex-column">
         <li class="nav-item"><a class="nav-link active text-light" href="#"><i class="bi-speedometer2 me-2"></i>Dashboard</a></li>
@@ -121,12 +76,11 @@
           </div>
         </div>
         <div class="position-relative">
-          <!-- Notification Bell with Dropdown -->
           <button id="notif-btn" class="btn btn-link text-light position-relative">
             <i class="bi-bell-fill"></i>
             <span class="position-absolute top-0 start-100 translate-middle badge bg-danger" id="notif-count">0</span>
           </button>
-          <div id="notif-menu" class="dropdown-menu dropdown-menu-end p-2" style="min-width: 250px;">
+          <div id="notif-menu" class="dropdown-menu dropdown-menu-end p-2" style="min-width:250px">
             <h6 class="dropdown-header">Notifications</h6>
             <div id="notif-list" class="text-muted">No new notifications</div>
           </div>
@@ -149,7 +103,7 @@
             <h2 class="text-gold">Latest Signal</h2>
             <div>
               <button id="refresh-signal" class="btn btn-sm btn-gold me-2"><i class="bi-arrow-clockwise"></i></button>
-              <small class="text-muted" id="signal-time">--</small>
+              <small id="signal-time">--</small>
             </div>
           </div>
           <div id="signal-body" class="text-center text-muted">Loading latest signal...</div>
@@ -163,13 +117,19 @@
           <div class="col-md-3"><div class="card bg-panel p-4 text-center"><h6 class="text-gold"><i class="bi-percent me-2"></i>Win Rate</h6><p id="stat-winrate" class="fs-3 mb-0 text-gold">0%</p></div></div>
         </div>
 
-        <!-- 4H TradingView Chart -->
+        <!-- 4H XAU/USD -->
         <div class="card bg-panel p-4 mb-4 fade-in">
           <h2 class="text-gold mb-3">XAU/USD (4H)</h2>
           <div id="tv_chart_4h"></div>
         </div>
 
-        <!-- Live Gold News Widget -->
+        <!-- Apple AAPL Chart -->
+        <div class="card bg-panel p-4 mb-4 fade-in">
+          <h2 class="text-gold mb-3">AAPL Stock (Daily)</h2>
+          <div id="tv_chart_apple"></div>
+        </div>
+
+        <!-- Gold News -->
         <div class="card bg-panel p-4 mb-4 fade-in">
           <h2 class="text-gold mb-3">Gold News</h2>
           <div id="news-widget"></div>
@@ -179,6 +139,24 @@
         <div class="card bg-panel p-4 mb-4 fade-in">
           <h2 class="text-gold mb-3">Economic Calendar</h2>
           <div id="calendar-widget"></div>
+        </div>
+
+        <!-- AI-Driven Price Prediction -->
+        <div class="card bg-panel p-4 mb-4 fade-in">
+          <h2 class="text-gold mb-3">AI Price Prediction (Gold)</h2>
+          <div id="ai-prediction" class="text-center text-muted">Loading prediction...</div>
+        </div>
+
+        <!-- Portfolio Heatmap -->
+        <div class="card bg-panel p-4 mb-4 fade-in">
+          <h2 class="text-gold mb-3">Portfolio Heatmap</h2>
+          <canvas id="heatmapCanvas"></canvas>
+        </div>
+
+        <!-- Price-Movement Alerts -->
+        <div class="card bg-panel p-4 mb-4 fade-in">
+          <h2 class="text-gold mb-3">Price Alerts (±1% / 1h)</h2>
+          <div id="price-alerts" class="text-center text-muted">Checking price…</div>
         </div>
 
         <!-- Trade Insights Search & Sparkline -->
@@ -191,167 +169,177 @@
           <div id="sparkline" class="d-flex justify-content-center mb-3"></div>
           <div id="trade-list" class="text-muted">Loading trades...</div>
         </div>
+
       </div>
       <footer class="text-center py-3 text-muted fade-in">© 2025 CBE Global FX</footer>
     </div>
   </div>
 
   <!-- Smartsupp Chat Bubble -->
-  <div class="position-fixed bottom-0 end-0 m-4" style="z-index: 1000;">
-    <button class="btn btn-gold rounded-circle p-3" onclick="smartsupp('chat:open')">
-      <i class="bi-chat-dots"></i>
-    </button>
+  <div class="position-fixed bottom-0 end-0 m-4" style="z-index:1000">
+    <button class="btn btn-gold rounded-circle p-3" onclick="smartsupp('chat:open')"><i class="bi-chat-dots"></i></button>
   </div>
 
   <audio id="notif-sound" src="ding.mp3" preload="auto"></audio>
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 
   <script>
-    // Supabase client
-    const SUPA_URL = 'https://dapwpgvnfjcfqqhrpxla.supabase.co';
-    const SUPA_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImRhcHdwZ3ZuZmpjZnFxaHJweGxhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDcwNDA4ODgsImV4cCI6MjA2MjYxNjg4OH0.ICC0UsLlzJDNre7rFCeD3k6iVzo6jOJgn3PhABpEMsQ';
+    // Supabase init
+    const SUPA_URL='https://dapwpgvnfjcfqqhrpxla.supabase.co',
+          SUPA_KEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImRhcHdwZ3ZuZmpjZnFxaHJweGxhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDcwNDA4ODgsImV4cCI6MjA2MjYxNjg4OH0.ICC0UsLlzJDNre7rFCeD3k6iVzo6jOJgn3PhABpEMsQ';
     const supabase = window.supabase.createClient(SUPA_URL, SUPA_KEY);
 
-    // Helper: format timestamp
-    function fmtTime(ts) {
-      return new Date(ts).toLocaleString();
-    }
+    // Helpers
+    const fmtTime = ts => new Date(ts).toLocaleString();
 
-    // Load and render latest signal
-    async function loadLatestSignal() {
+    // Latest Signal
+    async function loadLatestSignal(){
       const { data:[sig], error } = await supabase
-        .from('signals')
-        .select('*')
-        .order('created_at', { ascending: false })
-        .limit(1);
-      if (error || !sig) {
-        document.getElementById('signal-body').textContent = 'Error loading signal';
-        return;
-      }
-      document.getElementById('signal-body').innerHTML = `
+        .from('signals').select('*').order('created_at',{ascending:false}).limit(1);
+      if(error||!sig){ document.getElementById('signal-body').textContent='Error'; return; }
+      document.getElementById('signal-body').innerHTML=`
         <p><strong>${sig.asset}</strong> — ${sig.direction.toUpperCase()} @ ${sig.price}</p>
-        <p class="text-muted">${sig.note || ''}</p>`;
-      document.getElementById('signal-time').textContent = fmtTime(sig.created_at);
+        <p class="text-muted">${sig.note||''}</p>`;
+      document.getElementById('signal-time').textContent=fmtTime(sig.created_at);
     }
 
-    // Load stats
-    async function loadStats() {
+    // Stats + Insights + Heatmap + Trade List + AI Prediction + Alerts
+    async function loadDashboard(){
       const today = new Date().toISOString().split('T')[0];
-      // Signals Today
-      const { count: sigCount } = await supabase
-        .from('signals')
-        .select('id', { count: 'exact' })
-        .gte('created_at', today);
-      document.getElementById('stat-signals').textContent = sigCount;
-      // Insights count
-      const { count: insCount } = await supabase
-        .from('insights')
-        .select('id', { count: 'exact' });
-      document.getElementById('stat-insights').textContent = insCount;
-      // Recent Trades count & win rate
-      const { data: trades } = await supabase
-        .from('trades')
-        .select('*')
-        .order('timestamp', { ascending: false })
-        .limit(5);
-      document.getElementById('stat-trades').textContent = trades.length;
-      const wins = trades.filter(t => t.result==='win').length;
-      const wr = trades.length ? ((wins/trades.length)*100).toFixed(2)+'%' : '0%';
-      document.getElementById('stat-winrate').textContent = wr;
+
+      // 1) Stats
+      const [{count:signalsToday}] = await supabase.from('signals').select('id',{count:'exact'}).gte('created_at',today);
+      document.getElementById('stat-signals').textContent=signalsToday;
+      const [{count:insCount}]    = await supabase.from('insights').select('id',{count:'exact'});
+      document.getElementById('stat-insights').textContent=insCount;
+
+      // 2) Recent trades + win rate + portfolio heatmap
+      const { data:trades } = await supabase.from('trades')
+        .select('asset,pips,result,entry_price,exit_price').order('timestamp',{ascending:false}).limit(50);
+      // Recent-5
+      const recent5 = trades.slice(0,5);
+      document.getElementById('stat-trades').textContent=recent5.length;
+      const wins = recent5.filter(t=>t.result==='win').length;
+      document.getElementById('stat-winrate').textContent = recent5.length ? ((wins/recent5.length)*100).toFixed(2)+'%' : '0%';
       // Sparkline & list
-      document.getElementById('sparkline').innerHTML = trades.map(t=>`<div class="circle ${t.result}"></div>`).join('');
-      document.getElementById('trade-list').innerHTML = trades
-        .map(t=>`<p>${t.asset} — ${new Date(t.timestamp).toLocaleDateString()} — ${t.pips} pips</p>`).join('') || 'No trades';
+      document.getElementById('sparkline').innerHTML = recent5.map(t=>`<div class="circle ${t.result}"></div>`).join('');
+      document.getElementById('trade-list').innerHTML = recent5.map(t=>`<p>${t.asset} — ${t.pips} pips</p>`).join('') || 'No trades';
+
+      // Portfolio Heatmap (P&L by asset)
+      const pnlByAsset = trades.reduce((acc,t)=>{
+        const pnl = (t.exit_price - t.entry_price) * (t.result==='win'?1:-1);
+        acc[t.asset] = (acc[t.asset]||0) + pnl;
+        return acc;
+      },{});
+      const ctx = document.getElementById('heatmapCanvas').getContext('2d');
+      new Chart(ctx, {
+        type: 'bar',
+        data: {
+          labels: Object.keys(pnlByAsset),
+          datasets: [{
+            label: 'P&L',
+            data: Object.values(pnlByAsset)
+          }]
+        },
+        options: { responsive:true, plugins:{ legend:{display:false} } }
+      });
+
+      // AI Price Prediction
+      const { data:[pred] } = await supabase.from('predictions')
+        .select('forecast,created_at').order('created_at',{ascending:false}).limit(1);
+      document.getElementById('ai-prediction').textContent = pred
+        ? `On ${fmtTime(pred.created_at)} → ${pred.forecast}`
+        : 'No prediction available';
+
+      // Price-Movement Alerts
+      // compare now vs one hour ago
+      const now = Date.now(), hrAgo = now - 3600*1000;
+      const tvQuotes = await TradingView.getQuote('OANDA:XAUUSD'); // pseudo-API
+      const change = (tvQuotes.close - tvQuotes.open_1h) / tvQuotes.open_1h * 100;
+      const alertText = Math.abs(change)>=1
+        ? `XAUUSD moved ${change.toFixed(2)}% in the last hour`
+        : 'No significant movement';
+      document.getElementById('price-alerts').textContent = alertText;
     }
 
-    // Real-time listener for signals
-    supabase
-      .from('signals')
-      .on('INSERT', _ => {
-        loadLatestSignal();
-        loadStats();
-        addNotification('New signal received');
-        playNotifSound();
-      })
-      .subscribe();
+    // Real-time listener for Signals
+    supabase.from('signals').on('INSERT',_=>{
+      loadLatestSignal(); loadDashboard();
+      addNotification('New signal arrived');
+      document.getElementById('notif-sound').play();
+    }).subscribe();
 
     // Notifications
-    function addNotification(txt) {
-      const li = document.createElement('p');
-      li.textContent = txt;
-      const list = document.getElementById('notif-list');
-      list.prepend(li);
-      const count = +document.getElementById('notif-count').textContent + 1;
-      document.getElementById('notif-count').textContent = count;
-    }
-    function playNotifSound() { document.getElementById('notif-sound').play(); }
+    const addNotification = txt=>{
+      const p=document.createElement('p');p.textContent=txt;
+      document.getElementById('notif-list').prepend(p);
+      document.getElementById('notif-count').textContent =
+        +document.getElementById('notif-count').textContent + 1;
+    };
 
-    // CSV export for trades
-    document.getElementById('export-trades').onclick = async () => {
+    // CSV Export
+    document.getElementById('export-trades').onclick = async ()=>{
       const { data } = await supabase.from('trades').select('*');
-      const csv = [
-        Object.keys(data[0]).join(','),
-        ...data.map(r => Object.values(r).join(','))
-      ].join('\n');
-      const blob = new Blob([csv], { type: 'text/csv' });
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = url; a.download = 'trades.csv'; a.click();
+      const csv = [Object.keys(data[0]).join(','),...data.map(r=>Object.values(r).join(','))].join('\n');
+      const blob=new Blob([csv],{type:'text/csv'});
+      const url=URL.createObjectURL(blob);
+      const a=document.createElement('a');
+      a.href=url; a.download='trades.csv'; a.click();
       URL.revokeObjectURL(url);
     };
 
-    // TradingView embeds
-    function initWidgets() {
-      new TradingView.widget({
-        container_id: 'tv_chart_4h', width: '100%', height: 400,
-        symbol: 'OANDA:XAUUSD', interval: '240',
-        timezone: 'Etc/UTC', theme: localStorage.getItem('theme'),
-        style: '1', toolbar_bg: '#f1f3f6', allow_symbol_change: true
+    // TradingView Widgets
+    function initWidgets(){
+      new TradingView.widget({ container_id:'tv_chart_4h',width:'100%',height:400,
+        symbol:'OANDA:XAUUSD',interval:'240',timezone:'Etc/UTC',theme:localStorage.getItem('theme')
+      });
+      new TradingView.widget({ container_id:'tv_chart_apple',width:'100%',height:400,
+        symbol:'NASDAQ:AAPL',interval:'D',timezone:'Etc/UTC',theme:localStorage.getItem('theme')
       });
       new TradingView.widget({
-        container_id: 'news-widget', width: '100%', height: 400,
-        symbol: 'OANDA:XAUUSD', interval: 'D', theme: localStorage.getItem('theme'),
-        toolbar_bg: '#f1f3f6', allow_symbol_change: true, show_popup_button: true
+        container_id:'news-widget',width:'100%',height:400,
+        symbol:'OANDA:XAUUSD',interval:'D',theme:localStorage.getItem('theme'),
+        toolbar_bg:'#f1f3f6',allow_symbol_change:true,show_popup_button:true
       });
       new TradingView.widget({
-        container_id: 'calendar-widget', width: '100%', height: 400,
-        colorTheme: localStorage.getItem('theme'), isTransparent: false,
-        displayMode: 'regular', locale: 'en', importanceFilter: '1', countryFilter: 'US'
+        container_id:'calendar-widget',width:'100%',height:400,
+        colorTheme:localStorage.getItem('theme'),isTransparent:false,
+        displayMode:'regular',locale:'en',importanceFilter:'1',countryFilter:'US'
       });
     }
 
-    // Clock & theme toggle
+    // Clock + Theme + Sidebar + Notifs
     (function(){
-      const timeEl = document.getElementById('currentTime');
-      function updateClock(){ timeEl.textContent = new Date().toLocaleString(); }
-      updateClock(); setInterval(updateClock,1000);
-      const btn = document.getElementById('theme-toggle');
-      let theme = localStorage.getItem('theme') || 'dark';
-      document.documentElement.setAttribute('data-theme', theme);
-      btn.innerHTML = theme==='dark' ? '<i class="bi-sun-fill"></i>' : '<i class="bi-moon-fill"></i>';
-      btn.onclick = () => {
+      // Clock
+      const timeEl=document.getElementById('currentTime');
+      setInterval(()=>timeEl.textContent=new Date().toLocaleString(),1000);
+      // Theme
+      const btn=document.getElementById('theme-toggle');
+      let theme=localStorage.getItem('theme')||'dark';
+      document.documentElement.setAttribute('data-theme',theme);
+      btn.innerHTML=theme==='dark'?'<i class="bi-sun-fill"></i>':'<i class="bi-moon-fill"></i>';
+      btn.onclick=()=>{
         theme = theme==='dark'?'light':'dark';
-        document.documentElement.setAttribute('data-theme', theme);
-        localStorage.setItem('theme', theme);
-        btn.innerHTML = theme==='dark'?'<i class="bi-sun-fill"></i>':'<i class="bi-moon-fill"></i>';
+        document.documentElement.setAttribute('data-theme',theme);
+        localStorage.setItem('theme',theme);
+        btn.innerHTML=theme==='dark'?'<i class="bi-sun-fill"></i>':'<i class="bi-moon-fill"></i>';
         initWidgets();
       };
+      // Sidebar chat
+      document.getElementById('chat-launch').onclick=e=>{e.preventDefault();smartsupp('chat:open')};
+      // Notif dropdown
+      document.getElementById('notif-btn').addEventListener('click',()=>{
+        new bootstrap.Dropdown(document.getElementById('notif-btn')).toggle();
+      });
     })();
 
-    // Sidebar toggles
-    document.getElementById('chat-launch').onclick = e => { e.preventDefault(); smartsupp('chat:open'); };
-    document.getElementById('notif-btn').addEventListener('click', () => {
-      const menu = new bootstrap.Dropdown(document.getElementById('notif-btn'));
-      menu.toggle();
-    });
-
     // Initial load
-    document.addEventListener('DOMContentLoaded', () => {
-      document.getElementById('userName').textContent = sessionStorage.getItem('cbeUserName')||'Trader';
+    document.addEventListener('DOMContentLoaded',()=>{
+      document.getElementById('userName').textContent=sessionStorage.getItem('cbeUserName')||'Trader';
       loadLatestSignal();
-      loadStats();
+      loadDashboard();
       initWidgets();
-      document.getElementById('refresh-signal').onclick = loadLatestSignal;
+      document.getElementById('refresh-signal').onclick=loadLatestSignal;
     });
   </script>
 </body>
