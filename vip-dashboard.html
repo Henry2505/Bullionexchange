@@ -90,6 +90,53 @@
     #menu-list a{ color:#fff; font-weight:500; }
     #menu-list a:hover{ color:var(--gold); }
 
+    /* ─── Notification Bell & Dropdown ───────────────── */
+    .btn-icon {
+      position: relative;
+      background: none;
+      border: none;
+      color: var(--text);
+      font-size: 1.5rem;
+      margin-left: 15px;
+      cursor: pointer;
+    }
+    #notif-badge {
+      position: absolute;
+      top: -4px;
+      right: -4px;
+      background: var(--gold);
+      color: #000;
+      font-size: 0.65rem;
+      font-weight: 700;
+      line-height: 1;
+      padding: 2px 5px;
+      border-radius: 50%;
+    }
+    .notif-dropdown {
+      display: none;
+      position: absolute;
+      top: 65px;
+      right: 65px;
+      background: var(--overlay);
+      list-style: none;
+      padding: 10px;
+      margin: 0;
+      border: 1px solid var(--gold);
+      border-radius: 4px;
+      width: 220px;
+      z-index: 20;
+    }
+    .notif-dropdown .notif-item {
+      padding: 8px;
+      color: var(--text);
+      font-size: 0.9rem;
+      border-bottom: 1px solid rgba(255,255,255,0.1);
+    }
+    .notif-dropdown .notif-item:last-child {
+      border-bottom: none;
+    }
+    /* ─────────────────────────────────────────────────── */
+
     /* HERO */
     header {
       padding:120px 20px 60px; text-align:center;
@@ -185,6 +232,16 @@
     <button id="menu-toggle" aria-expanded="false">
       <span></span><span></span><span></span>
     </button>
+
+    <!-- Notification Bell -->
+    <button id="notif-button" aria-label="Notifications" class="btn-icon">
+      <i class="fas fa-bell"></i>
+      <span id="notif-badge">0</span>
+    </button>
+    <ul id="notif-list" class="notif-dropdown">
+      <li class="notif-item">No new notifications</li>
+    </ul>
+
     <ul id="menu-list">
       <li><a href="index.html">Home</a></li>
       <li><a href="about.html">About</a></li>
@@ -301,6 +358,38 @@
       });
     }, { threshold: 0.3 });
     document.querySelectorAll('.slide-in').forEach(el => obs.observe(el));
+
+    // ─── Notification Bell Logic ───────────────────────────
+    const notifButton = document.getElementById('notif-button');
+    const notifList   = document.getElementById('notif-list');
+    const notifBadge  = document.getElementById('notif-badge');
+
+    // Example: Fetch notification count from sessionStorage or API
+    let count = parseInt(sessionStorage.getItem('cbeNewSignals')) || 0;
+    notifBadge.textContent = count;
+
+    // Example: Populate list (replace with real data later)
+    let notifications = [];
+    if (count > 0) {
+      notifications = JSON.parse(sessionStorage.getItem('cbeNotifArray')) || [];
+    } else {
+      notifications = ['No new notifications'];
+    }
+    notifList.innerHTML = notifications.map(msg =>
+      `<li class="notif-item">${msg}</li>`
+    ).join('');
+
+    // Toggle dropdown on bell click
+    notifButton.addEventListener('click', e => {
+      e.stopPropagation();
+      notifList.style.display = notifList.style.display === 'block' ? 'none' : 'block';
+    });
+
+    // Hide if clicking outside
+    document.addEventListener('click', () => {
+      notifList.style.display = 'none';
+    });
+    // ────────────────────────────────────────────────────────
   </script>
 
   <!-- Smartsupp Live Chat -->
