@@ -111,6 +111,17 @@
       to { opacity: 1; }
     }
     .fade-in { animation: fadeIn 1s ease-in; }
+    #chat-bubble button {
+      animation: pulse 2s infinite;
+      width: 60px;
+      height: 60px;
+      font-size: 1.5rem;
+    }
+    @keyframes pulse {
+      0% { transform: scale(1); }
+      50% { transform: scale(1.1); }
+      100% { transform: scale(1); }
+    }
   </style>
 </head>
 <body>
@@ -135,7 +146,6 @@
     <!-- HEADER -->
     <header class="bg-panel d-flex justify-content-between align-items-center px-4 py-2 sticky-top fade-in">
       <div>
-        <img src="CBE_logo.PNG" alt="CBE Logo" style="height:40px; cursor:pointer;" onclick="location.href='index.html'">
         <h5 class="mb-0 text-gold">Welcome back, <span id="userName" class="fw-bold text-gold">Trader</span>!</h5>
         <small id="currentTime" class="text-muted"></small>
       </div>
@@ -156,6 +166,9 @@
         <div class="col-sm-6 col-lg-3"><div class="card bg-panel text-center p-3"><h6 class="text-gold">Trade Logs</h6><p id="stat-history" class="fs-2 mb-0 text-gold">0</p></div></div>
         <div class="col-sm-6 col-lg-3"><div class="card bg-panel text-center p-3"><h6 class="text-gold">Pips Today</h6><p id="stat-pips" class="fs-2 mb-0 text-gold">0</p></div></div>
         <div class="col-sm-6 col-lg-3"><div class="card bg-panel text-center p-3"><h6 class="text-gold">Win Rate (%)</h6><p id="stat-winrate" class="fs-2 mb-0 text-gold">0</p></div></div>
+        <div class="col-sm-6 col-lg-3"><div class="card bg-panel text-center p-3"><h6 class="text-gold">Average Pips</h6><p id="stat-avg-pips" class="fs-2 mb-0 text-gold">0</p></div></div>
+        <div class="col-sm-6 col-lg-3"><div class="card bg-panel text-center p-3"><h6 class="text-gold">Best Trade (Pips)</h6><p id="stat-best-trade" class="fs-2 mb-0 text-gold">0</p></div></div>
+        <div class="col-sm-6 col-lg-3"><div class="card bg-panel text-center p-3"><h6 class="text-gold">Worst Trade (Pips)</h6><p id="stat-worst-trade" class="fs-2 mb-0 text-gold">0</p></div></div>
         <div class="col-12"><div class="card bg-panel p-3"><h6 class="text-gold">Latest Signal</h6><p id="signal-text" class="mb-0 text-gold">Loading...</p></div></div>
       </div>
     </div>
@@ -163,14 +176,12 @@
     <!-- UNIQUE FEATURES -->
     <div class="container-fluid px-4 mb-4 fade-in">
       <div class="row g-3">
-        <!-- Real-Time Gold Price Ticker -->
         <div class="col-md-4">
           <div class="card bg-panel p-3">
             <h6 class="text-gold">Live Gold Price (XAUUSD)</h6>
             <p id="gold-price" class="fs-2 mb-0 text-gold">Loading...</p>
           </div>
         </div>
-        <!-- Gold Sentiment Gauge -->
         <div class="col-md-4">
           <div class="card bg-panel p-3">
             <h6 class="text-gold">Gold Sentiment</h6>
@@ -178,7 +189,6 @@
             <p id="sentiment-text" class="text-center mt-2 text-gold">Neutral</p>
           </div>
         </div>
-        <!-- Gold News Feed -->
         <div class="col-md-4">
           <div class="card bg-panel p-3">
             <h6 class="text-gold">Latest Gold News</h6>
@@ -188,22 +198,27 @@
           </div>
         </div>
       </div>
-      <!-- NEW FEATURES -->
-      <div class="row g-3 mt-4">
-        <div class="col-md-6">
-          <div class="card bg-panel p-3">
-            <h6 class="text-gold">Gold Price Prediction</h6>
-            <p id="prediction-text" class="mb-0 text-gold">Predicted Price: $1800.00 (Confidence: 85%)</p>
-          </div>
-        </div>
-        <div class="col-md-6">
-          <div class="card bg-panel p-3">
-            <h6 class="text-gold">Latest Gold Trading Signal</h6>
-            <p id="signal-text-new" class="mb-0 text-gold">Buy at $1795.00 (Reason: RSI Oversold)</p>
-          </div>
-        </div>
+    </div>
+
+    <!-- ECONOMIC CALENDAR -->
+    <div class="container-fluid px-4 mb-4 fade-in">
+      <div class="card bg-panel p-3">
+        <h6 class="text-gold">Economic Events Impacting Gold</h6>
+        <div id="economic-calendar" class="mt-2"></div>
       </div>
     </div>
+    <script type="text/javascript" src="https://s3.tradingview.com/external-embedding/embed-widget-events.js" async></script>
+    <script type="text/javascript">
+      new TradingView.widget({
+        "container_id": "economic-calendar",
+        "width": "100%",
+        "height": 400,
+        "colorTheme": "dark",
+        "isTransparent": true,
+        "locale": "en",
+        "importanceFilter": "-1,0,1"
+      });
+    </script>
 
     <!-- CHART -->
     <div id="chart-container" class="fade-in">
@@ -213,6 +228,13 @@
 
     <footer class="text-center py-3 text-muted fade-in">© 2025 CBE Global FX</footer>
   </div>
+</div>
+
+<!-- CHAT BUBBLE -->
+<div id="chat-bubble" class="position-fixed bottom-0 end-0 m-3" style="z-index:1000;">
+  <button class="btn btn-gold rounded-circle p-3" onclick="smartsupp('chat:open')">
+    <i class="bi-chat-dots"></i>
+  </button>
 </div>
 
 <!-- SOUND -->
@@ -226,14 +248,10 @@
   const userName = sessionStorage.getItem('cbeUserName') || 'Trader';
   document.getElementById('userName').textContent = userName;
 
-  // Clock with Visitor's Local Time
+  // Clock
   const timeEl = document.getElementById('currentTime');
-  function updateClock() {
-    const options = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric', hour: 'numeric', minute: 'numeric', second: 'numeric' };
-    timeEl.textContent = new Intl.DateTimeFormat(navigator.language, options).format(new Date());
-  }
-  updateClock();
-  setInterval(updateClock, 60000);
+  function updateClock() { timeEl.textContent = new Date().toLocaleString(); }
+  updateClock(); setInterval(updateClock, 60000);
 
   // Theme Toggle
   const themeBtn = document.getElementById('theme-toggle');
@@ -247,32 +265,29 @@
     themeBtn.innerHTML = theme === 'dark' ? '<i class="bi-sun-fill"></i>' : '<i class="bi-moon-fill"></i>';
   };
 
-  // Chat Launcher & Customization
+  // Chat Launcher
   document.getElementById('chat-launch').onclick = e => { e.preventDefault(); smartsupp('chat:open'); };
-  _smartsupp.width = 400;  // Longer chat window
-  _smartsupp.height = 600; // Taller chat window
-  _smartsupp.color = '#cca300'; // Gold-themed chat
 
   // Supabase Init
   const SUPA_URL = 'https://dapwpgvnfjcfqqhrpxla.supabase.co';
   const SUPA_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImRhcHdwZ3ZuZmpjZnFxaHJweGxhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDcwNDA4ODgsImV4cCI6MjA2MjYxNjg4OH0.ICC0UsLlzJDNre7rFCeD3k6iVzo6jOJgn3PhABpEMsQ';
   const supabase = window.supabase.createClient(SUPA_URL, SUPA_KEY);
 
-  // TradingView Chart (MT5-Like)
+  // TradingView Chart (Gold - XAUUSD)
   try {
     new TradingView.widget({
       container_id: 'tv_chart',
       width: '100%',
       height: '100%',
       symbol: 'OANDA:XAUUSD',
-      interval: '60', // Default zoom like MT5
-      theme: document.documentElement.getAttribute('data-theme') || 'dark',
-      style: '1', // Candlesticks like MT5
+      interval: 'D',
+      theme: 'dark',
+      style: '1',
       locale: 'en',
       toolbar_bg: '#000',
-      hide_side_toolbar: false, // Zoom controls available
+      hide_side_toolbar: false,
       enable_publishing: false,
-      allow_symbol_change: false // Locked to gold
+      allow_symbol_change: false
     });
   } catch (err) {
     console.error('TradingView widget failed to load:', err);
@@ -298,6 +313,7 @@
     const text = document.getElementById('sentiment-text');
     bar.style.width = sentiment + '%';
     if (sentiment > 60) {
+```html
       text.textContent = 'Bullish';
       text.className = 'text-center mt-2 trend-up';
     } else if (sentiment < 40) {
@@ -319,43 +335,7 @@
   ];
   document.getElementById('news-feed').innerHTML = news.map(n => `<p class="mb-1 text-gold">${n}</p>`).join('');
 
-  // Stat Cards Initialization
-  async function initStats() {
-    const userId = sessionStorage.getItem('cbeUserId') || 'unknown';
-    if (userId === 'unknown') {
-      console.error('User ID not found');
-      return;
-    }
-    const today = new Date().toISOString().split('T')[0];
-    try {
-      const [
-        { count: signalsToday },
-        { count: insights },
-        { count: tradeLogs },
-        { data: tradesToday },
-        { data: allTrades }
-      ] = await Promise.all([
-        supabase.from('signals').select('*', { count: 'exact' }).gte('created_at', today),
-        supabase.from('trade_insights').select('*', { count: 'exact' }),
-        supabase.from('trade_history').select('*', { count: 'exact' }).eq('user_id', userId),
-        supabase.from('trade_history').select('pips').eq('user_id', userId).gte('created_at', today),
-        supabase.from('trade_history').select('pips').eq('user_id', userId)
-      ]);
-      const pipsToday = tradesToday.reduce((sum, t) => sum + t.pips, 0);
-      const wins = allTrades.filter(t => t.pips > 0).length;
-      const winrate = allTrades.length ? Math.round((wins / allTrades.length) * 100) : 0;
-      document.getElementById('stat-signals').textContent = signalsToday;
-      document.getElementById('stat-insights').textContent = insights;
-      document.getElementById('stat-history').textContent = tradeLogs;
-      document.getElementById('stat-pips').textContent = pipsToday;
-      document.getElementById('stat-winrate').textContent = winrate;
-    } catch (err) {
-      console.error('Error fetching stats:', err);
-    }
-  }
-  initStats();
-
-  // Real-Time Subscriptions
+  // Supabase Real-Time Subscriptions
   const userId = sessionStorage.getItem('cbeUserId') || 'unknown';
   const notifCnt = document.getElementById('notif-count');
   const notifList = document.createElement('ul');
@@ -378,46 +358,86 @@
   };
   document.addEventListener('click', () => notifList.style.display = 'none');
 
-  const today = new Date().toISOString().split('T')[0];
-  const channelSignals = supabase.channel('signals')
-    .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'signals' }, payload => {
-      const createdAt = new Date(payload.new.created_at).toISOString().split('T')[0];
-      if (createdAt === today) {
-        const current = parseInt(document.getElementById('stat-signals').textContent);
-        document.getElementById('stat-signals').textContent = current + 1;
-      }
-      updateNotifs('Signal', new Date(payload.new.created_at).toLocaleString());
-    })
-    .subscribe();
+  const signalsChannel = supabase.channel('signals').on('postgres_changes', {
+    event: 'INSERT',
+    schema: 'public',
+    table: 'signals'
+  }, payload => {
+    const signalDate = new Date(payload.new.created_at);
+    const now = new Date();
+    if (signalDate.toDateString() === now.toDateString()) {
+      const currentCount = parseInt(document.getElementById('stat-signals').textContent);
+      document.getElementById('stat-signals').textContent = currentCount + 1;
+    }
+    updateNotifs('signals', signalDate.toLocaleString());
+  }).subscribe();
 
-  const channelInsights = supabase.channel('trade_insights')
-    .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'trade_insights' }, payload => {
-      const current = parseInt(document.getElementById('stat-insights').textContent);
-      document.getElementById('stat-insights').textContent = current + 1;
-      updateNotifs('Insight', new Date(payload.new.created_at).toLocaleString());
-    })
-    .subscribe();
+  const insightsChannel = supabase.channel('trade_insights').on('postgres_changes', {
+    event: 'INSERT',
+    schema: 'public',
+    table: 'trade_insights'
+  }, payload => {
+    const currentCount = parseInt(document.getElementById('stat-insights').textContent);
+    document.getElementById('stat-insights').textContent = currentCount + 1;
+    updateNotifs('trade_insights', new Date(payload.new.created_at).toLocaleString());
+  }).subscribe();
 
-  const channelHistory = supabase.channel('trade_history')
-    .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'trade_history', filter: `user_id=eq.${userId}` }, payload => {
-      const currentLogs = parseInt(document.getElementById('stat-history').textContent);
-      document.getElementById('stat-history').textContent = currentLogs + 1;
-      const createdAt = new Date(payload.new.created_at).toISOString().split('T')[0];
-      if (createdAt === today) {
+  if (userId !== 'unknown') {
+    const historyChannel = supabase.channel('trade_history').on('postgres_changes', {
+      event: 'INSERT',
+      schema: 'public',
+      table: 'trade_history',
+      filter: `user_id=eq.${userId}`
+    }, payload => {
+      const currentCount = parseInt(document.getElementById('stat-history').textContent);
+      document.getElementById('stat-history').textContent = currentCount + 1;
+      const tradeDate = new Date(payload.new.created_at).toISOString().slice(0, 10);
+      const today = new Date().toISOString().slice(0, 10);
+      if (tradeDate === today) {
         const currentPips = parseInt(document.getElementById('stat-pips').textContent);
         document.getElementById('stat-pips').textContent = currentPips + payload.new.pips;
+        document.getElementById('stat-pips').className = (currentPips + payload.new.pips) > 0 ? 'fs-2 mb-0 trend-up' : 'fs-2 mb-0 trend-down';
       }
-      updateNotifs('Trade', new Date(payload.new.created_at).toLocaleString());
-    })
-    .subscribe();
+      updateNotifs('trade_history', new Date(payload.new.created_at).toLocaleString());
+    }).subscribe();
+  }
 
-  // Update Win Rate Periodically
-  setInterval(async () => {
-    const { data: allTrades } = await supabase.from('trade_history').select('pips').eq('user_id', userId);
-    const wins = allTrades.filter(t => t.pips > 0).length;
-    const winrate = allTrades.length ? Math.round((wins / allTrades.length) * 100) : 0;
-    document.getElementById('stat-winrate').textContent = winrate;
-  }, 60000);
+  // Initial Data Fetch
+  (async () => {
+    try {
+      const now = new Date();
+      const startOfDay = new Date(now.getFullYear(), now.getMonth(), now.getDate()).toISOString();
+      const [{ count: signalsToday }, { count: ci }, { data: trades }] = await Promise.all([
+        supabase.from('signals').select('*', { count: 'exact' }).gte('created_at', startOfDay),
+        supabase.from('trade_insights').select('*', { count: 'exact' }),
+        supabase.from('trade_history').select('pips, created_at').eq('user_id', userId)
+      ]);
+      document.getElementById('stat-signals').textContent = signalsToday;
+      document.getElementById('stat-insights').textContent = ci;
+      document.getElementById('stat-history').textContent = trades.length;
+
+      const wins = trades.filter(t => t.pips > 0).length;
+      const winrate = trades.length ? Math.round((wins / trades.length) * 100) : 0;
+      document.getElementById('stat-winrate').textContent = winrate;
+
+      const today = now.toISOString().slice(0, 10);
+      const pipsToday = trades.filter(t => t.created_at.slice(0, 10) === today).reduce((sum, t) => sum + t.pips, 0);
+      document.getElementById('stat-pips').textContent = pipsToday;
+      document.getElementById('stat-pips').className = pipsToday > 0 ? 'fs-2 mb-0 trend-up' : 'fs-2 mb-0 trend-down';
+
+      const totalPips = trades.reduce((sum, t) => sum + t.pips, 0);
+      const averagePips = trades.length ? (totalPips / trades.length).toFixed(2) : 0;
+      const bestTrade = trades.length ? Math.max(...trades.map(t => t.pips)) : 0;
+      const worstTrade = trades.length ? Math.min(...trades.map(t => t.pips)) : 0;
+      document.getElementById('stat-avg-pips').textContent = averagePips;
+      document.getElementById('stat-best-trade').textContent = bestTrade;
+      document.getElementById('stat-worst-trade').textContent = worstTrade;
+
+      notifCnt.textContent = signalsToday + ci + trades.length;
+    } catch (err) {
+      console.error('Error fetching initial counts:', err);
+    }
+  })();
 
   // Latest Signal
   async function fetchLatestSignal() {
