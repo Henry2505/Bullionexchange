@@ -100,21 +100,74 @@
       border-radius: 10px;
       overflow: hidden;
     }
-    /* Signal Card Styles (copied from your signals page) */
-    .signal-card { position: relative; overflow: hidden; background: rgba(20,20,20,0.85); border:2px solid #333; border-radius:16px; box-shadow:0 6px 30px rgba(0,0,0,0.8); margin-bottom:1.5rem; }
-    .signal-header { display:flex; justify-content:space-between; background:#111; padding:16px; border-bottom:1px solid #333; }
-    .signal-header h2 { color:#ffd700; font-size:1.25rem; }
-    .signal-header .time { color:#bbb; }
-    .signal-body { display:grid; grid-template-columns:repeat(auto-fit,minmax(140px,1fr)); gap:12px; padding:16px; }
-    .detail { background:#1a1a1a; border:1px solid #333; border-radius:8px; padding:12px; display:flex; justify-content:space-between; align-items:center; position:relative; }
-    .detail[data-type="entry"]::before, .detail[data-type="entry"]::after { content:"★"; position:absolute; color:#ffd700; font-size:.8rem; animation:twinkle 1.5s infinite; }
-    .detail[data-type="entry"]::before { top:4px; left:4px; animation-delay:0; }
-    .detail[data-type="entry"]::after  { bottom:4px; right:4px; animation-delay:.8s; }
-    @keyframes twinkle { 0%,100%{opacity:.3;transform:scale(.8);} 50%{opacity:1;transform:scale(1.2);} }
-    .detail span { font-weight:600; color:#ffd700; }
-    .copy-btn { background:#ffd700; color:#111; border:none; padding:4px 8px; border-radius:6px; font-size:.85rem; cursor:pointer; }
-    .copy-btn:hover { box-shadow:0 0 8px #ffd700; }
-    .admin-note { background:#222; padding:12px; margin:0 16px 16px; border-left:4px solid #ffd700; color:#ffcc00; font-style:italic; border-radius:6px; font-size:.9rem; }
+    .circle {
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      margin: 0 2px;
+    }
+    .circle.win {
+      background: var(--green);
+    }
+    .circle.loss {
+      background: var(--red);
+    }
+    /* Enhanced Signal Styling */
+    .signal-header {
+      display: flex;
+      justify-content: space-between;
+      background: #111;
+      padding: 20px;
+      border-bottom: 1px solid #333;
+    }
+    .signal-header h2 {
+      color: #ffd700;
+      font-size: 1.6rem;
+    }
+    .signal-header .time {
+      color: #bbb;
+    }
+    .signal-body {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+      gap: 16px;
+      padding: 28px;
+    }
+    .detail {
+      background: #1a1a1a;
+      border: 1px solid #333;
+      border-radius: 10px;
+      padding: 16px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      position: relative;
+    }
+    .detail span {
+      font-weight: 600;
+      color: #ffd700;
+    }
+    .copy-btn {
+      background: #ffd700;
+      color: #111;
+      border: none;
+      padding: 6px 12px;
+      border-radius: 6px;
+      font-weight: bold;
+      cursor: pointer;
+    }
+    .copy-btn:hover {
+      box-shadow: 0 0 10px #ffd700;
+    }
+    .admin-note {
+      background: #222;
+      padding: 16px;
+      margin: 0 28px 28px;
+      border-left: 4px solid #ffd700;
+      color: #ffcc00;
+      font-style: italic;
+      border-radius: 6px;
+    }
   </style>
 </head>
 
@@ -162,8 +215,15 @@
       <!-- Main Content -->
       <div class="container-fluid p-4">
         <!-- Latest Signal Card -->
-        <div id="signalCard" class="signal-card fade-in">
-          <p style="text-align:center;color:#999;padding:60px;">Loading latest signal…</p>
+        <div class="card bg-panel p-4 mb-4 fade-in">
+          <div class="d-flex justify-content-between align-items-center mb-3">
+            <h2 class="text-gold">Latest Signal</h2>
+            <div>
+              <button id="refresh-signal" class="btn btn-sm btn-gold me-2"><i class="bi-arrow-clockwise"></i></button>
+              <small id="signal-time" class="text-gold">--</small>
+            </div>
+          </div>
+          <div id="signal-body" class="text-center text-gold">Loading latest signal...</div>
         </div>
 
         <!-- Stats Row + 24h Change -->
@@ -193,34 +253,6 @@
             <div class="card bg-panel p-4 text-center">
               <h6 class="text-gold"><i class="bi-currency-exchange me-2"></i>24h Gold Δ</h6>
               <p id="stat-gold-change" class="fs-3 mb-0 text-gold">--%</p>
-            </div>
-          </div>
-        </div>
-
-        <!-- Company Info Row -->
-        <div class="row g-4 mb-4 fade-in">
-          <div class="col-md-3">
-            <div class="card bg-panel p-4 text-center">
-              <h6 class="text-gold"><i class="bi-people-fill me-2"></i>Total Users</h6>
-              <p id="stat-users" class="fs-3 mb-2 text-gold">0</p>
-            </div>
-          </div>
-          <div class="col-md-3">
-            <div class="card bg-panel p-4 text-center">
-              <h6 class="text-gold"><i class="bi-credit-card me-2"></i>Pending Payments</h6>
-              <p id="stat-payments" class="fs-3 mb-2 text-gold">0</p>
-            </div>
-          </div>
-          <div class="col-md-3">
-            <div class="card bg-panel p-4 text-center">
-              <h6 class="text-gold"><i class="bi-clock-history me-2"></i>Trades This Month</h6>
-              <p id="stat-trades-month" class="fs-3 mb-2 text-gold">0</p>
-            </div>
-          </div>
-          <div class="col-md-3">
-            <div class="card bg-panel p-4 text-center">
-              <h6 class="text-gold"><i class="bi-lightning me-2"></i>Signals Published</h6>
-              <p id="stat-signals-pub" class="fs-3 mb-2 text-gold">0</p>
             </div>
           </div>
         </div>
@@ -269,175 +301,199 @@
   <script>
     // Supabase Initialization
     const SUPA_URL = 'https://dapwpgvnfjcfqqhrpxla.supabase.co';
-    const SUPA_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImRhcHdwZ3ZuZmpjZnFxaHJweGxhIiwicm9sZS I6ImFub24iLCJpYXQiOjE3NDcwNDA4ODgsImV4cCI6MjA2MjYxNjg4OH0.ICC0UsLlzJDNre7rFCeD3k6iVzo6jOJgn3PhABpEMsQ';
+    const SUPA_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImRhcHdwZ3ZuZmpjZnFxaHJweGxhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDcwNDA4ODgsImV4cCI6MjA2MjYxNjg4OH0.ICC0UsLlzJDNre7rFCeD3k6iVzo6jOJgn3PhABpEMsQ';
     const supabase = window.supabase.createClient(SUPA_URL, SUPA_KEY);
 
-    // Copy helper
-    function copyText(txt) {
-      navigator.clipboard.writeText(txt)
-        .then(() => alert('Copied: '+txt))
-        .catch(() => alert('Copy failed'));
-    }
+    const fmtTime = ts => new Date(ts).toLocaleString();
 
-    // Load Latest Signal (with auto-clean)
+    // Load Latest Signal
     async function loadLatestSignal() {
-      const card = document.getElementById('signalCard');
-      card.innerHTML = `<p style="text-align:center;color:#999;padding:60px;">Loading latest signal…</p>`;
+      const signalBody = document.getElementById('signal-body');
+      signalBody.innerHTML = `<p style="text-align:center;color:#999;padding:60px;">Loading latest signal…</p>`;
       try {
-        let { data, error } = await supabase
+        let { data: signals, error } = await supabase
           .from('signals')
           .select('id,action,asset,entry,sl,tp1,tp2,note,created_at')
           .order('created_at', { ascending: false })
           .limit(1);
         if (error) throw error;
-        if (!data.length) {
-          card.innerHTML = `<p style="text-align:center;color:#ff5555;padding:40px;">No signals available.</p>`;
+        if (!signals.length) {
+          signalBody.innerHTML = `<p style="text-align:center;color:#ff5555;padding:40px;">No signals available.</p>`;
           return;
         }
-        const sig = data[0];
-        const dt  = new Date(sig.created_at);
-        card.innerHTML = `
+        const sig = signals[0];
+        const dt = new Date(sig.created_at);
+        signalBody.innerHTML = `
           <div class="signal-header">
-            <h2>${sig.asset} — ${sig.direction?.toUpperCase()||sig.action.toUpperCase()}</h2>
-            <div class="time">${dt.toLocaleDateString()} ${dt.toLocaleTimeString()}</div>
+            <h2>${dt.toLocaleDateString('en-GB')}</h2>
+            <div class="time">${dt.toLocaleTimeString('en-GB')}</div>
           </div>
           <div class="signal-body">
-            <div class="detail" data-type="entry">Entry: <span>${sig.entry}</span>
-              <button class="copy-btn" onclick="copyText('${sig.entry}')">Copy</button>
+            <div class="detail">
+              Entry: <span>${sig.entry}</span><button class="copy-btn" onclick="copyText('${sig.entry}')">Copy</button>
             </div>
-            <div class="detail">SL: <span>${sig.sl}</span>
-              <button class="copy-btn" onclick="copyText('${sig.sl}')">Copy</button>
+            <div class="detail">
+              SL: <span>${sig.sl}</span><button class="copy-btn" onclick="copyText('${sig.sl}')">Copy</button>
             </div>
-            <div class="detail">TP1: <span>${sig.tp1}</span>
-              <button class="copy-btn" onclick="copyText('${sig.tp1}')">Copy</button>
+            <div class="detail">
+              TP1: <span>${sig.tp1}</span><button class="copy-btn" onclick="copyText('${sig.tp1}')">Copy</button>
             </div>
-            <div class="detail">TP2: <span>${sig.tp2}</span>
-              <button class="copy-btn" onclick="copyText('${sig.tp2}')">Copy</button>
+            <div class="detail">
+              TP2: <span>${sig.tp2}</span><button class="copy-btn" onclick="copyText('${sig.tp2}')">Copy</button>
             </div>
           </div>
           <div class="admin-note">Note: ${sig.note || 'Trade at your own risk.'}</div>`;
-        // delete older signals
-        await supabase
-          .from('signals')
-          .delete()
-          .neq('id', sig.id);
+        document.getElementById('signal-time').textContent = fmtTime(sig.created_at);
+        // Delete older signals
+        await supabase.from('signals').delete().neq('id', sig.id);
       } catch (err) {
         console.error(err);
-        document.getElementById('signalCard').innerHTML =
-          `<p style="text-align:center;color:#ff5555;padding:40px;">Unable to load signal.</p>`;
+        signalBody.innerHTML = `<p style="text-align:center;color:#ff5555;padding:40px;">Unable to load signal.</p>`;
       }
     }
 
-    // Other Dashboard Stats...
+    // Copy to Clipboard Function
+    function copyText(txt) {
+      navigator.clipboard.writeText(txt)
+        .then(() => alert('Copied: ' + txt))
+        .catch(() => alert('Copy failed'));
+    }
+
+    // Load Dashboard Stats
     async function loadDashboard() {
       const today = new Date().toISOString().split('T')[0];
-      const [{ count }] = await supabase
+
+      // Signals Today
+      const [{ count: signalsToday }] = await supabase
         .from('signals')
         .select('id', { count: 'exact' })
         .gte('created_at', today);
-      document.getElementById('stat-signals').textContent = count || 0;
-      const [{ count: iCnt }] = await supabase.from('insights').select('id', { count: 'exact' });
-      document.getElementById('stat-insights').textContent = iCnt||0;
-      const { data:tr } = await supabase.from('trades').select('id');
-      document.getElementById('stat-trades').textContent = tr?.length||0;
+      document.getElementById('stat-signals').textContent = signalsToday || 0;
+
+      // Insights Count
+      const [{ count: insCount }] = await supabase
+        .from('insights')
+        .select('id', { count: 'exact' });
+      document.getElementById('stat-insights').textContent = insCount || 0;
+
+      // Recent Trades
+      const { data: trades } = await supabase
+        .from('trades')
+        .select('asset, pips, result')
+        .order('timestamp', { ascending: false })
+        .limit(5);
+      document.getElementById('stat-trades').textContent = trades ? trades.length : 0;
+
+      // 24h Gold Change (Mocked)
       document.getElementById('stat-gold-change').textContent = 'N/A';
-      // watchlist
-      const list=JSON.parse(localStorage.getItem('watchlist')||'[]');
-      const ul=document.getElementById('watch-list'); ul.innerHTML='';
-      list.forEach(sym=>{
-        const li=document.createElement('li');
-        li.className='list-group-item bg-panel d-flex justify-content-between align-items-center text-gold';
-        li.innerHTML=`<span>${sym}</span><button class="btn btn-sm btn-danger">×</button>`;
-        li.querySelector('button').onclick=()=>{
-          const upd=list.filter(s=>s!==sym);
-          localStorage.setItem('watchlist',JSON.stringify(upd));
+
+      // Watchlist Rendering
+      const list = JSON.parse(localStorage.getItem('watchlist') || '[]');
+      const ul = document.getElementById('watch-list');
+      ul.innerHTML = '';
+      list.forEach(sym => {
+        const li = document.createElement('li');
+        li.className = 'list-group-item bg-panel d-flex justify-content-between align-items-center text-gold';
+        li.innerHTML = `<span>${sym}</span><button class="btn btn-sm btn-danger">×</button>`;
+        li.querySelector('button').onclick = () => {
+          const updated = list.filter(s => s !== sym);
+          localStorage.setItem('watchlist', JSON.stringify(updated));
           loadDashboard();
         };
         ul.appendChild(li);
       });
     }
 
-    // Company Stats
-    async function loadCompanyStats() {
-      const now=new Date();
-      const monthAgo=new Date(now.getFullYear(),now.getMonth(),1).toISOString();
-      const [
-        { count: uCnt },
-        { count: pCnt },
-        { count: tCnt },
-        { count: sCnt }
-      ] = await Promise.all([
-        supabase.from('users').select('id',{ head:true, count:'exact' }),
-        supabase.from('payments').select('id',{ head:true, count:'exact' }).eq('status','Pending'),
-        supabase.from('trade_history').select('id',{ head:true, count:'exact' }).gte('timestamp',monthAgo),
-        supabase.from('signals').select('id',{ head:true, count:'exact' })
-      ]);
-      document.getElementById('stat-users').textContent        = uCnt;
-      document.getElementById('stat-payments').textContent     = pCnt;
-      document.getElementById('stat-trades-month').textContent = tCnt;
-      document.getElementById('stat-signals-pub').textContent   = sCnt;
-    }
-
-    // TradingView & Widgets
+    // Initialize TradingView Widgets
     function initWidgets() {
       new TradingView.widget({
         container_id: 'tv_chart_4h',
-        width: '100%', height: '600',
-        symbol: 'OANDA:XAUUSD', interval: '240',
-        timezone: 'Etc/UTC', theme: localStorage.getItem('theme')||'dark',
-        toolbar_bg: '#1a1a1a', allow_symbol_change: true,
-        withdateranges: true, studies:['MASimple@tv-basicstudies']
+        width: '100%',
+        height: '600',
+        symbol: 'OANDA:XAUUSD',
+        interval: '240',
+        timezone: 'Etc/UTC',
+        theme: localStorage.getItem('theme') || 'dark',
+        toolbar_bg: '#1a1a1a',
+        allow_symbol_change: true,
+        withdateranges: true,
+        studies: ['MASimple@tv-basicstudies'],
       });
       new TradingView.widget({
         container_id: 'news-widget',
-        width: '100%', height: '600',
-        symbol: 'OANDA:XAUUSD', interval: 'D',
-        theme: localStorage.getItem('theme')||'dark',
-        toolbar_bg: '#1a1a1a', allow_symbol_change:false, show_popup_button:false
+        width: '100%',
+        height: '600',
+        symbol: 'OANDA:XAUUSD',
+        interval: 'D',
+        theme: localStorage.getItem('theme') || 'dark',
+        toolbar_bg: '#1a1a1a',
+        allow_symbol_change: false,
+        show_popup_button: false,
       });
       new TradingView.widget({
-        container_id:'calendar-widget', width:'100%', height:'600',
-        colorTheme:localStorage.getItem('theme')||'dark',
-        isTransparent:false, displayMode:'regular', locale:'en',
-        importanceFilter:'1', countryFilter:'US'
+        container_id: 'calendar-widget',
+        width: '100%',
+        height: '600',
+        colorTheme: localStorage.getItem('theme') || 'dark',
+        isTransparent: false,
+        displayMode: 'regular',
+        locale: 'en',
+        importanceFilter: '1',
+        countryFilter: 'US',
       });
     }
 
-    // Real-time Subscriptions
-    supabase.from('signals').on('INSERT', loadLatestSignal).subscribe();
-    ['users','payments','trade_history','signals']
-      .forEach(tbl => supabase.from(tbl).on('*', loadCompanyStats).subscribe());
+    // Real-time Signals Listener
+    supabase.from('signals').on('INSERT', () => {
+      loadLatestSignal();
+      loadDashboard();
+      const p = document.createElement('p');
+      p.textContent = 'New signal received';
+      document.getElementById('notif-list').prepend(p);
+      document.getElementById('notif-count').textContent =
+        +document.getElementById('notif-count').textContent + 1;
+      document.getElementById('notif-sound').play();
+    }).subscribe();
 
-    // Clock, Theme, Notifications
-    (function(){
-      setInterval(()=> document.getElementById('currentTime').textContent=new Date().toLocaleString(),1000);
-      const btn=document.getElementById('theme-toggle');
-      let theme=localStorage.getItem('theme')||'dark';
-      document.documentElement.setAttribute('data-theme',theme);
-      btn.innerHTML= theme==='dark'?'<i class="bi-sun-fill"></i>':'<i class="bi-moon-fill"></i>';
-      btn.onclick=()=>{
-        theme=theme==='dark'?'light':'dark';
-        document.documentElement.setAttribute('data-theme',theme);
-        localStorage.setItem('theme',theme);
-        btn.innerHTML= theme==='dark'?'<i class="bi-sun-fill"></i>':'<i class="bi-moon-fill"></i>';
-        initWidgets();
+    // Clock, Theme, Sidebar, and Notifications
+    (function() {
+      // Clock
+      setInterval(() => {
+        document.getElementById('currentTime').textContent = new Date().toLocaleString();
+      }, 1000);
+
+      // Theme Toggle
+      const btn = document.getElementById('theme-toggle');
+      let theme = localStorage.getItem('theme') || 'dark';
+      document.documentElement.setAttribute('data-theme', theme);
+      btn.innerHTML = theme === 'dark' ? '<i class="bi-sun-fill"></i>' : '<i class="bi-moon-fill"></i>';
+      btn.onclick = () => {
+        theme = theme === 'dark' ? 'light' : 'dark';
+        document.documentElement.setAttribute('data-theme', theme);
+        localStorage.setItem('theme', theme);
+        btn.innerHTML = theme === 'dark' ? '<i class="bi-sun-fill"></i>' : '<i class="bi-moon-fill"></i>';
+        initWidgets(); // Re-initialize widgets with new theme
       };
-      document.getElementById('chat-launch').onclick=e=>{ e.preventDefault(); smartsupp('chat:open'); };
-      document.getElementById('notif-btn').addEventListener('click',()=> {
+
+      // Sidebar Chat
+      document.getElementById('chat-launch').onclick = e => {
+        e.preventDefault();
+        smartsupp('chat:open');
+      };
+
+      // Notification Dropdown
+      document.getElementById('notif-btn').addEventListener('click', () => {
         new bootstrap.Dropdown(document.getElementById('notif-btn')).toggle();
       });
     })();
 
     // Initial Load
-    document.addEventListener('DOMContentLoaded',()=>{
-      document.getElementById('userName').textContent=sessionStorage.getItem('cbeUserName')||'Trader';
+    document.addEventListener('DOMContentLoaded', () => {
+      document.getElementById('userName').textContent = sessionStorage.getItem('cbeUserName') || 'Trader';
       loadLatestSignal();
       loadDashboard();
-      loadCompanyStats();
       initWidgets();
-      document.getElementById('refresh-signal')?.addEventListener('click',loadLatestSignal);
-      // auto-refresh every 15s
-      setInterval(loadLatestSignal,15000);
+      document.getElementById('refresh-signal').onclick = loadLatestSignal;
     });
   </script>
 </body>
