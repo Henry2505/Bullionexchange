@@ -1,16 +1,31 @@
-// Unhide the page
+// ── Redirect if not logged in ────────────────────────────────────────────────
+document.addEventListener("DOMContentLoaded", () => {
+  console.log("✅ ui.js loaded");
+
+  const loggedIn = sessionStorage.getItem("cbeLoggedIn");
+  console.log("Session value:", loggedIn);
+
+  if (!loggedIn || loggedIn !== "true") {
+    console.log("🚫 Not logged in. Redirecting to login.html...");
+    window.location.href = "login.html";
+  } else {
+    console.log("✅ Logged in. Staying on this page.");
+  }
+});
+
+// ── Unhide the page ──────────────────────────────────────────────────────────
 if (document.body) {
   document.body.style.visibility = 'visible';
 }
 
-// Greeting
+// ── Greeting ─────────────────────────────────────────────────────────────────
 const name = sessionStorage.getItem('cbeUserName') || 'Trader';
 const greetEl = document.getElementById('greeting');
 if (greetEl) {
   greetEl.textContent = `Welcome back, ${name}!`;
 }
 
-// Theme toggle
+// ── Theme toggle ─────────────────────────────────────────────────────────────
 const htmlEl = document.documentElement;
 const tbtn = document.getElementById('theme-toggle');
 if (tbtn) {
@@ -25,7 +40,7 @@ if (tbtn) {
   });
 }
 
-// Menu toggle
+// ── Menu toggle ──────────────────────────────────────────────────────────────
 const menuToggle = document.getElementById('menu-toggle');
 const menuList   = document.getElementById('menu-list');
 if (menuToggle && menuList) {
@@ -36,7 +51,7 @@ if (menuToggle && menuList) {
   });
 }
 
-// Slide-ins
+// ── Slide-ins ────────────────────────────────────────────────────────────────
 const slides = document.querySelectorAll('.slide-in');
 if (slides.length) {
   const obs = new IntersectionObserver(entries => {
