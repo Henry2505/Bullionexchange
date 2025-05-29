@@ -5,25 +5,65 @@
   <meta name="viewport" content="width=device-width,initial-scale=1"/>
   <title>VIP Dashboard – CBE</title>
 
+  <!-- ─── LOCAL-STORAGE + SUPABASE GUARD ──────────────────────────────────────── -->
+  <script type="module">
+    import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm';
+
+    // 1) LocalStorage check
+    const userId = localStorage.getItem('userId');
+    if (!userId) {
+      window.location.replace('login.html');
+      throw new Error('Redirecting to login—no userId in localStorage');
+    }
+
+    // 2) Supabase client
+    const SUPA_URL = 'https://dapwpgvnfjcfqqhrpxla.supabase.co';
+    const SUPA_KEY = 'YOUR_SUPABASE_ANON_KEY';
+    const supabase = createClient(SUPA_URL, SUPA_KEY);
+
+    (async () => {
+      // 3) Fetch approval & name
+      const { data: profile, error } = await supabase
+        .from('users')
+        .select('approved, name')
+        .eq('id', userId)
+        .single();
+
+      if (error || !profile?.approved) {
+        // clear localStorage & redirect
+        localStorage.removeItem('userId');
+        localStorage.removeItem('userName');
+        window.location.replace('login.html');
+        return;
+      }
+
+      // 4) All good: store name (in case login page didn’t)
+      localStorage.setItem('userName', profile.name);
+
+      // 5) Unhide page now that checks passed
+      document.documentElement.dataset.theme; // forces head to finish
+      document.body.style.visibility = 'visible';
+
+      // 6) Personalize greeting
+      const greetEl = document.getElementById('greeting');
+      if (greetEl) greetEl.textContent = `Welcome back, ${profile.name}!`;
+    })();
+  </script>
+  <!-- ────────────────────────────────────────────────────────────────────────── -->
+
   <!-- Favicons -->
   <link rel="shortcut icon" href="/favicon.ico"/>
   <link rel="icon" href="/favicon.ico"/>
   <link rel="icon" type="image/png" sizes="48x48" href="/favicon.png"/>
   <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png"/>
 
-  <!-- Local-Storage Guard (fallback for direct-link) -->
-  <script>
-    // If you want an extra client-side guard before Supabase kicks in:
-    // if (localStorage.getItem('isLoggedIn') !== 'true') {
-    //   window.location.replace('login.html');
-    // }
-  </script>
-
   <!-- Poppins & FontAwesome -->
   <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;500;700&display=swap" rel="stylesheet"/>
   <script src="https://kit.fontawesome.com/your-kit-code.js" crossorigin="anonymous"></script>
 
   <style>
+    /* make body hidden until guard un-hides it */
+    body { visibility: hidden; }
     /* RESET & BASE */
     * { margin:0; padding:0; box-sizing:border-box; }
     html { scroll-behavior: smooth; }
@@ -171,7 +211,7 @@
     footer a{ color:var(--gold); }
   </style>
 </head>
-<body style="visibility:hidden;">
+<body>
 
   <!-- Theme toggle -->
   <button id="theme-toggle" aria-label="Toggle theme">🌞</button>
@@ -237,7 +277,7 @@
   <footer>
     © 2025 Chukwuemeka Bullion Exchange. All rights reserved.
     <a href="privacy.html">Privacy Policy</a> |
-    <a href="terms.html">Terms & Conditions</a>
+    <a href="terms.html">Terms &amp; Conditions</a>
   </footer>
 
   <!-- TradingView Widget -->
@@ -257,51 +297,8 @@
     });
   </script>
 
-  <!-- Supabase + Auth/Approve + Greeting-by-Name -->
-  <script type="module">
-    import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm';
-    const SUPA_URL = 'https://dapwpgvnfjcfqqhrpxla.supabase.co';
-    const SUPA_KEY = 'YOUR_SUPABASE_ANON_KEY';
-    const supabase = createClient(SUPA_URL, SUPA_KEY);
-
-    // 1) Listen for auth changes, including INITIAL_SESSION
-    supabase.auth.onAuthStateChange(async (_, session) => {
-      // No session → redirect to login
-      if (!session) {
-        return window.location.replace('login.html');
-      }
-
-      // 2) Fetch approved flag + name in one query
-      const { data: profile, error } = await supabase
-        .from('users')
-        .select('approved, name')
-        .eq('id', session.user.id)
-        .single();
-
-      // Not approved or error → sign out & redirect
-      if (error || !profile?.approved) {
-        await supabase.auth.signOut();
-        return window.location.replace('login.html');
-      }
-
-      // 3) Approved & signed-in → unhide page
-      document.body.style.visibility = 'visible';
-
-      // 4) Inject their real name
-      const greetEl = document.getElementById('greeting');
-      if (greetEl) {
-        greetEl.textContent = `Welcome back, ${profile.name}!`;
-      }
-    });
-
-    // 5) Initial session check (in case onAuthStateChange fires later)
-    (async () => {
-      const { data: { session } } = await supabase.auth.getSession();
-      if (!session) {
-        window.location.replace('login.html');
-      }
-    })();
-
+  <!-- Theme, Menu & Slide-ins -->
+  <script>
     // Theme toggle
     const html = document.documentElement;
     const tbtn = document.getElementById('theme-toggle');
@@ -347,6 +344,5 @@
       c.src='https://www.smartsuppchat.com/loader.js?';s.parentNode.insertBefore(c,s);
     })(document);
   </script>
-
 </body>
 </html>
