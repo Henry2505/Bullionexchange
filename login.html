@@ -83,7 +83,7 @@
   </div>
   <button id="theme-toggle" aria-label="Toggle theme">🌞</button>
 
-  <div class="login-card visible" id="login-card">
+  <div class="login-card" id="login-card">
     <h1>Member Login</h1>
     <form id="login-form">
       <label for="email">Email Address</label>
@@ -100,12 +100,14 @@
   <!-- Supabase UMD -->
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js/dist/umd/supabase.min.js"></script>
   <script>
+    // ── Init Supabase ───────────────────────────────────────────────────────────
     const SUPA_URL      = 'https://dapwpgvnfjcfqqhrpxla.supabase.co';
-    const SUPA_ANON_KEY = 'YOUR_ANON_KEY_HERE';
+    const SUPA_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImRhcHdwZ3ZuZmpjZnFxaHJweGxhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDcwNDA4ODgsImV4cCI6MjA2MjYxNjg4OH0.ICC0UsLlzJDNre7rFCeD3k6iVzo6jOJgn3PhABpEMsQ';
     const sb = supabase.createClient(SUPA_URL, SUPA_ANON_KEY);
 
-    // Theme toggle
-    document.addEventListener('DOMContentLoaded', () => {
+    // ── UI & Theme Toggle ────────────────────────────────────────────────────────
+    window.addEventListener('DOMContentLoaded', () => {
+      document.getElementById('login-card').classList.add('visible');
       const saved = localStorage.getItem('theme') || 'dark';
       document.documentElement.setAttribute('data-theme', saved);
       document.getElementById('theme-toggle')
@@ -120,7 +122,7 @@
         .textContent = next === 'dark' ? '🌞' : '🌜';
     });
 
-    // Login Logic (only checks approved status; no payment step)
+    // ── Login Logic ─────────────────────────────────────────────────────────────
     document.getElementById('login-form').addEventListener('submit', async e => {
       e.preventDefault();
       const alertDiv = document.getElementById('login-alert');
@@ -130,6 +132,7 @@
       const password = document.getElementById('password').value;
 
       try {
+        // Fetch user and enforce only approved accounts
         const { data: user, error, count } = await sb
           .from('users')
           .select('id, email, password, status, name', { count: 'exact' })
