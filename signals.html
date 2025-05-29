@@ -1,13 +1,14 @@
 <!DOCTYPE html>
- <script src="auth-guard.js"></script>
-  <!-- …rest of your head… -->
-</head>
+<html lang="en" data-theme="dark">
+<head>
   <meta charset="UTF-8"/>
   <meta name="viewport" content="width=device-width,initial-scale=1"/>
   <title>VIP Forex Signals • CBE</title>
 
   <!-- Poppins font -->
-  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700&display=swap" rel="stylesheet"/>
+  <link
+    href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700&display=swap"
+    rel="stylesheet"/>
 
   <!-- Supabase UMD build -->
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js/dist/umd/supabase.min.js"></script>
@@ -15,153 +16,131 @@
   <script src="https://s3.tradingview.com/tv.js"></script>
 
   <style>
-    /* Base resets */
+    /* Base resets & theming */
     * { margin:0; padding:0; box-sizing:border-box; }
-    html, body {
-      width:100%; min-height:100vh;
+    body {
       font-family:'Poppins',sans-serif;
-      background:linear-gradient(135deg,#000000 0%,#111111 100%);
-      color:#f5f5f5;
+      background: linear-gradient(135deg,#000,#111);
+      color: #f5f5f5;
       overflow-x:hidden;
     }
-    a, button { font-family:inherit; }
-
-    /* Container */
-    .container {
-      max-width: 900px;
-      margin: 80px auto;
-      padding: 0 20px;
-    }
+    .container { max-width:900px; margin:80px auto; padding:0 20px; }
 
     /* Header */
-    header {
-      text-align:center;
-      margin-bottom:40px;
-    }
+    header { text-align:center; margin-bottom:40px; }
     header h1 {
-      font-size:3rem;
-      color:#ffd700;
+      font-size:3rem; color:#ffd700;
       text-shadow:0 0 8px rgba(255,215,0,0.6);
     }
-    header p {
-      color:#ccc;
-      font-size:1.1rem;
-    }
+    header p { color:#ccc; font-size:1.1rem; }
 
-    /* Warning banner */
+    /* Warning */
     .warning {
       background:rgba(255,215,0,0.1);
-      border:2px solid #ffd700;
-      color:#ffd700;
-      padding:16px;
-      border-radius:8px;
-      font-weight:600;
-      text-align:center;
-      margin-bottom:30px;
+      border:2px solid #ffd700; color:#ffd700;
+      padding:16px; border-radius:8px;
+      text-align:center; font-weight:600;
       animation:pulse 2s infinite;
+      margin-bottom:30px;
     }
     @keyframes pulse {
       0%,100% { box-shadow:0 0 12px rgba(255,215,0,0.5); }
       50%     { box-shadow:0 0 24px rgba(255,215,0,0.8); }
     }
 
-    /* Notice (login) */
+    /* Notice */
     .notice {
-      text-align:center;
-      color:#ff5555;
-      font-size:1rem;
-      margin-bottom:25px;
+      text-align:center; color:#ff5555;
+      font-size:1rem; margin-bottom:25px;
     }
 
-    /* Signal card */
+    /* Signal card + slide-in */
     .signal-card {
-      background:rgba(20,20,20,0.8);
-      border:2px solid #333;
-      border-radius:16px;
+      background:rgba(20,20,20,0.85);
+      border:2px solid #333; border-radius:16px;
       box-shadow:0 6px 30px rgba(0,0,0,0.8);
-      overflow:hidden;
-      animation:fadeInUp .8s ease both;
-      margin-bottom:50px;
+      overflow:hidden; margin-bottom:50px;
+      animation:slideInUp 0.8s ease both;
     }
-    @keyframes fadeInUp {
-      from { opacity:0; transform: translateY(30px); }
+    @keyframes slideInUp {
+      from { opacity:0; transform: translateY(40px); }
       to   { opacity:1; transform: translateY(0); }
     }
+
     .signal-header {
       display:flex; justify-content:space-between;
       background:#111; padding:20px 28px;
       border-bottom:1px solid #333;
     }
-    .signal-header h2 {
-      color:#ffd700;
-      font-size:1.6rem;
-      letter-spacing:1px;
-    }
-    .signal-header .time {
-      color:#bbb;
-      font-size:1rem;
-      align-self:center;
-    }
+    .signal-header h2 { color:#ffd700; font-size:1.6rem; }
+    .signal-header .time { color:#bbb; font-size:1rem; }
+
     .signal-body {
-      display:grid;
-      grid-template-columns:1fr 1fr;
-      gap:16px;
-      padding:28px;
+      display:grid; grid-template-columns:1fr 1fr;
+      gap:16px; padding:28px;
     }
     .detail {
-      background:#1a1a1a;
-      padding:16px 20px;
-      border-radius:10px;
-      display:flex;
+      background:#1a1a1a; padding:16px 20px;
+      border-radius:10px; display:flex;
       justify-content:space-between;
-      align-items:center;
-      font-size:1.05rem;
+      align-items:center; font-size:1.05rem;
       border:1px solid #333;
+      position:relative;
     }
     .detail span {
-      font-weight:600;
-      color:#ffd700;
+      font-weight:600; color:#ffd700;
+      position:relative; z-index:1;
     }
+
+    /* Tiny gold stars decoration */
+    .detail[data-type="entry"]::before,
+    .detail[data-type="entry"]::after {
+      content: "★";
+      position:absolute; color:#ffd700;
+      font-size:0.8rem; animation:twinkle 1.5s infinite;
+    }
+    .detail[data-type="entry"]::before {
+      top:8px; left:8px; animation-delay:0s;
+    }
+    .detail[data-type="entry"]::after {
+      bottom:8px; right:8px; animation-delay:0.8s;
+    }
+    @keyframes twinkle {
+      0%,100% { opacity:0.3; transform: scale(0.8); }
+      50%     { opacity:1;   transform: scale(1.2); }
+    }
+
     .copy-btn {
-      background:#ffd700;
-      color:#111;
-      border:none;
-      padding:8px 14px;
-      border-radius:6px;
-      font-weight:bold;
-      cursor:pointer;
-      transition:transform .2s, box-shadow .2s;
+      background:#ffd700; color:#111;
+      border:none; padding:8px 14px;
+      border-radius:6px; font-weight:bold;
+      cursor:pointer; transition:transform .2s, box-shadow .2s;
     }
     .copy-btn:hover {
       transform:translateY(-2px);
       box-shadow:0 0 12px #ffd700;
     }
+
     .admin-note {
-      background:#222;
-      padding:16px 24px;
+      background:#222; padding:16px 24px;
       margin:0 28px 28px;
       border-left:4px solid #ffd700;
-      color:#ffcc00;
-      font-style:italic;
+      color:#ffcc00; font-style:italic;
       border-radius:6px;
     }
 
     /* TradingView embed */
     #tradingview_embed {
-      height:650px;
+      height: 100vh; /* full screen */
       border:2px solid rgba(255,215,0,0.3);
-      border-radius:12px;
-      margin-bottom:80px;
+      border-radius:12px; margin-bottom:0;
       box-shadow:0 4px 20px rgba(0,0,0,0.7);
     }
 
     /* Footer */
     footer {
-      text-align:center;
-      color:#666;
-      font-size:0.9rem;
-      margin-top:60px;
-      padding-top:20px;
+      text-align:center; color:#666; font-size:0.9rem;
+      margin-top:40px; padding-top:20px;
       border-top:1px solid #333;
     }
   </style>
@@ -169,7 +148,7 @@
 <body>
 
   <script>
-    // ── AUTH GUARD ─────────────────────────────────────────────────────────────
+    // AUTH GUARD
     if (sessionStorage.getItem('cbeLoggedIn') !== 'true') {
       window.location.replace('login.html');
     }
@@ -182,7 +161,8 @@
     </header>
 
     <div class="warning">
-      ⚠️ Resale, redistribution or sharing of these signals is <strong>strictly prohibited</strong> and punishable by law. Use is limited to authorized members ONLY.
+      ⚠️ Resale, redistribution or sharing of these signals is
+      <strong>strictly prohibited</strong> and punishable by law.
     </div>
 
     <div class="notice">
@@ -194,31 +174,29 @@
         Loading latest signal…
       </p>
     </div>
-
-    <div id="tradingview_embed"></div>
   </div>
+
+  <div id="tradingview_embed"></div>
 
   <footer>© 2025 CBE – Chukwuemeka Bullion Exchange. All rights reserved.</footer>
 
   <script>
     // Supabase Setup
     const SUPA_URL = 'https://dapwpgvnfjcfqqhrpxla.supabase.co';
-    const SUPA_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImRhcHdwZ3ZuZmpjZnFxaHJweGxhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDcwNDA4ODgsImV4cCI6MjA2MjYxNjg4OH0.ICC0UsLlzJDNre7rFCeD3k6iVzo6jOJgn3PhABpEMsQ';
+    const SUPA_KEY = 'YOUR_ANON_KEY_HERE';
     const supabase = window.supabase.createClient(SUPA_URL, SUPA_KEY);
 
-    // On load: fetch signal + TradingView
     window.addEventListener('DOMContentLoaded', () => {
       loadLatestSignal();
       initTradingView();
     });
 
-    // Fetch & display latest signal, then delete older ones
     async function loadLatestSignal() {
       const card = document.getElementById('signalCard');
       try {
         const { data: signals, error } = await supabase
           .from('signals')
-          .select('id,action,asset,sl,tp1,tp2,note,created_at')
+          .select('id,action,asset,entry,sl,tp1,tp2,note,created_at')
           .order('created_at', { ascending: false })
           .limit(1);
         if (error) throw error;
@@ -237,8 +215,11 @@
             <div class="time">${dt.toLocaleTimeString('en-GB')}</div>
           </div>
           <div class="signal-body">
-            <div class="detail">Action: <span>${sig.action}</span></div>
-            <div class="detail">Asset:  <span>${sig.asset}</span></div>
+            <div class="detail">${/* hidden for spacing */''}</div>
+            <div class="detail" data-type="entry">
+              Entry: <span>${sig.entry}</span>
+              <button class="copy-btn" onclick="copyText('${sig.entry}')">Copy</button>
+            </div>
             <div class="detail">
               SL: <span>${sig.sl}</span>
               <button class="copy-btn" onclick="copyText('${sig.sl}')">Copy</button>
@@ -252,10 +233,12 @@
               <button class="copy-btn" onclick="copyText('${sig.tp2}')">Copy</button>
             </div>
           </div>
-          <div class="admin-note">Note: ${sig.note || 'Trade at your own risk.'}</div>
+          <div class="admin-note">
+            Note: ${sig.note || 'Trade at your own risk.'}
+          </div>
         `;
 
-        // cleanup older signals
+        // delete older signals
         await supabase
           .from('signals')
           .delete()
@@ -269,7 +252,6 @@
       }
     }
 
-    // TradingView embed
     function initTradingView() {
       new TradingView.widget({
         container_id: "tradingview_embed",
@@ -292,7 +274,6 @@
       });
     }
 
-    // Copy helper
     function copyText(txt) {
       navigator.clipboard.writeText(txt)
         .then(() => alert('Copied: ' + txt))
@@ -300,17 +281,6 @@
     }
   </script>
 
-  <!-- Smartsupp Live Chat script -->
-  <script type="text/javascript">
-    var _smartsupp = _smartsupp || {};
-    _smartsupp.key = '018a8bbd868518221e725341a7b2601231ec7ce8';
-    window.smartsupp||(function(d) {
-      var s,c,o=smartsupp=function(){ o._.push(arguments)};o._=[];
-      s=d.getElementsByTagName('script')[0];c=d.createElement('script');
-      c.type='text/javascript';c.charset='utf-8';c.async=true;
-      c.src='https://www.smartsuppchat.com/loader.js?';s.parentNode.insertBefore(c,s);
-    })(document);
-    
-  <script src="ui.js"></script>
+  <!-- (your Smartsupp script…) -->
 </body>
 </html>
