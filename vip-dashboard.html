@@ -3,105 +3,464 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>VIP — CBE Dashboard</title>
+  <title>VIP Dashboard – CBE Global FX</title>
 
   <!-- Auth Guard -->
   <script>
-    if (localStorage.getItem('isLoggedIn') !== 'true') {
-      const current = 'vip-dashboard.html';
-      window.location.replace(`admin-login.html?redirect=${current}`);
+    if (sessionStorage.getItem('cbeLoggedIn') !== 'true') {
+      window.location.replace('login.html');
     }
   </script>
 
-  <!-- Styles & Fonts -->
-  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700&display=swap" rel="stylesheet">
+  <!-- CSS + Icons + Fonts -->
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
   <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;700&display=swap" rel="stylesheet">
+
+  <!-- Supabase + TradingView + Chart.js + Smartsupp -->
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js/dist/umd/supabase.min.js"></script>
+  <script src="https://s3.tradingview.com/tv.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <script>
+    // Smartsupp loader
+    var _smartsupp = _smartsupp || {};
+    _smartsupp.key = '018a8bbd868518221e725341a7b2601231ec7ce8';
+    (function(d) {
+      var s, c, o = smartsupp = function() { o._.push(arguments); };
+      o._ = [];
+      s = d.getElementsByTagName('script')[0];
+      c = d.createElement('script');
+      c.async = true;
+      c.src = 'https://www.smartsuppchat.com/loader.js?';
+      s.parentNode.insertBefore(c, s);
+    })(document);
+  </script>
 
   <style>
-    * { margin: 0; padding: 0; box-sizing: border-box; }
+    :root {
+      --bg: #1a1a1a;
+      --panel: rgba(30, 30, 30, 0.95);
+      --gold: #d4af37;
+      --text: var(--gold);
+      --green: #00cc66;
+      --red: #ff4444;
+    }
+    [data-theme="light"] {
+      --bg: #f0f2f5;
+      --panel: rgba(255, 255, 255, 0.95);
+      --text: #b8860b;
+      --gold: #b8860b;
+    }
     body {
-      font-family: 'Poppins', sans-serif;
-      background: #000;
-      color: #fff;
+      background: linear-gradient(135deg, var(--bg), #222);
+      color: var(--text);
+      font-family: 'Roboto', sans-serif;
       overflow-x: hidden;
     }
-    :root {
-      --bg: #000;
-      --text: #fff;
-      --gold: #ffd700;
-      --glass-bg: rgba(255, 255, 255, 0.05);
+    .bg-panel {
+      background: var(--panel);
+      border-radius: 15px;
+      box-shadow: 0 8px 20px rgba(0, 0, 0, 0.4);
     }
-    .container { padding: 2rem; }
-    .stats-card {
-      background: var(--glass-bg);
-      border: 1px solid var(--gold);
+    .card {
+      transition: transform 0.3s, box-shadow 0.3s;
+      border: none;
+    }
+    .card:hover {
+      transform: translateY(-8px);
+      box-shadow: 0 12px 30px rgba(0, 0, 0, 0.5);
+    }
+    .text-gold {
+      color: var(--gold) !important;
+    }
+    .btn-gold {
+      background: var(--gold);
+      color: #1a1a1a;
+      border: none;
       border-radius: 8px;
-      padding: 1rem49;
-      text-align: center;
-      color: #fff;
-      backdrop-filter: blur(8px);
+      padding: 8px 16px;
+      transition: transform 0.2s, box-shadow 0.2s;
+      font-weight: 500;
     }
-    .stats-card h5 { color: var(--gold); margin-bottom: 0.5rem; }
-    .stats-card p { font-size: 1.5rem; margin: 0; }
-    .text-gold { color: var(--gold); }
+    .btn-gold:hover {
+      transform: scale(1.05);
+      box-shadow: 0 4px 15px rgba(212, 175, 55, 0.6);
+    }
+    .fade-in {
+      animation: fadeIn 0.8s ease-in;
+    }
+    @keyframes fadeIn {
+      from { opacity: 0; }
+      to { opacity: 1; }
+    }
+    #tv_chart_4h, #news-widget, #calendar-widget {
+      width: 100%;
+      height: 600px;
+      border-radius: 10px;
+      overflow: hidden;
+    }
+    /* Signal Card Styles */
+    .signal-card {
+      position: relative;
+      overflow: hidden;
+      background: rgba(20,20,20,0.85);
+      border:2px solid #333;
+      border-radius:16px;
+      box-shadow:0 6px 30px rgba(0,0,0,0.8);
+      margin-bottom:1.5rem;
+    }
+    .signal-header {
+      display:flex;
+      justify-content:space-between;
+      background:#111;
+      padding:16px;
+      border-bottom:1px solid #333;
+    }
+    .signal-header h2 {
+      color:#ffd700;
+      font-size:1.25rem;
+    }
+    .signal-header .time {
+      color:#bbb;
+    }
+    .signal-body {
+      display:grid;
+      grid-template-columns:repeat(auto-fit,minmax(140px,1fr));
+      gap:12px;
+      padding:16px;
+    }
+    .detail {
+      background:#1a1a1a;
+      border:1px solid #333;
+      border-radius:8px;
+      padding:12px;
+      display:flex;
+      justify-content:space-between;
+      align-items:center;
+      position:relative;
+    }
+    .detail[data-type="entry"]::before,
+    .detail[data-type="entry"]::after {
+      content:"★";
+      position:absolute;
+      color:#ffd700;
+      font-size:.8rem;
+      animation:twinkle 1.5s infinite;
+    }
+    .detail[data-type="entry"]::before {
+      top:4px; left:4px; animation-delay:0;
+    }
+    .detail[data-type="entry"]::after {
+      bottom:4px; right:4px; animation-delay:.8s;
+    }
+    @keyframes twinkle {
+      0%,100%{opacity:.3;transform:scale(.8);}
+      50%{opacity:1;transform:scale(1.2);}
+    }
+    .detail span {
+      font-weight:600;
+      color:#ffd700;
+    }
+    .copy-btn {
+      background:#ffd700;
+      color:#111;
+      border:none;
+      padding:4px 8px;
+      border-radius:6px;
+      font-size:.85rem;
+      cursor:pointer;
+    }
+    .copy-btn:hover {
+      box-shadow:0 0 8px #ffd700;
+    }
+    .admin-note {
+      background:#222;
+      padding:12px;
+      margin:0 16px 16px;
+      border-left:4px solid #ffd700;
+      color:#ffcc00;
+      font-style:italic;
+      border-radius:6px;
+      font-size:.9rem;
+    }
   </style>
 </head>
+
 <body>
-  <div class="container">
-    <!-- Stat Card -->
-    <div class="stats-card">
-      <h5>Dashboard Stats</h5>
-      <p>Signals Published: <span id="stat-signals" class="text-gold">0</span></p>
-      <p>Trades: <span id="stat-trades" class="text-gold">0</span></p>
-      <p>Trade Insights: <span id="stat-insights" class="text-gold">0</span></p>
+  <!-- Sidebar -->
+  <div class="offcanvas offcanvas-start bg-panel" id="sidebar">
+    <div class="offcanvas-body">
+      <div class="text-center mb-4">
+        <img src="CBE_logo.PNG" alt="CBE Logo" style="width:120px; cursor:pointer;" onclick="location.href='index.html'">
+      </div>
+      <ul class="nav nav-pills flex-column text-gold">
+        <li class="nav-item"><a class="nav-link active text-gold" href="#"><i class="bi-speedometer2 me-2"></i>Dashboard</a></li>
+        <li class="nav-item"><a class="nav-link text-gold" href="signals.html"><i class="bi-lightning me-2"></i>Signals</a></li>
+        <li class="nav-item"><a class="nav-link text-gold" href="CBE_trade_insights_vip.html"><i class="bi-graph-up me-2"></i>Insights</a></li>
+        <li class="nav-item"><a class="nav-link text-gold" href="CBE_trade_history_vip.html"><i class="bi-clock-history me-2"></i>History</a></li>
+        <li class="nav-item"><a class="nav-link text-gold" href="#" id="chat-launch"><i class="bi-chat-dots me-2"></i>Support</a></li>
+      </ul>
     </div>
   </div>
 
-  <!-- Scripts -->
+  <div class="d-flex">
+    <div class="flex-fill">
+      <!-- Header -->
+      <header class="d-flex justify-content-between align-items-center bg-panel p-3 sticky-top fade-in">
+        <div class="d-flex align-items-center">
+          <button class="btn btn-link text-gold d-md-none me-2" data-bs-toggle="offcanvas" data-bs-target="#sidebar"><i class="bi-list"></i></button>
+          <div>
+            <h5 class="mb-1 text-gold">Welcome, <span id="userName">Trader</span>!</h5>
+            <small id="currentTime" class="text-gold"></small>
+          </div>
+        </div>
+        <div class="position-relative">
+          <button id="notif-btn" class="btn btn-link text-gold position-relative">
+            <i class="bi-bell-fill"></i>
+            <span class="position-absolute top-0 start-100 translate-middle badge bg-danger" id="notif-count">0</span>
+          </button>
+          <div id="notif-menu" class="dropdown-menu dropdown-menu-end p-2 bg-panel">
+            <h6 class="dropdown-header text-gold">Notifications</h6>
+            <div id="notif-list" class="text-gold">No new notifications</div>
+          </div>
+        </div>
+        <button id="theme-toggle" class="btn btn-link text-gold"><i class="bi-sun-fill"></i></button>
+      </header>
+
+      <!-- Main Content -->
+      <div class="container-fluid p-4">
+        <!-- Latest Signal Card -->
+        <div id="signalCard" class="signal-card fade-in">
+          <p style="text-align:center;color:#999;padding:60px;">Loading latest signal…</p>
+        </div>
+
+        <!-- Stats Row + 24h Change -->
+        <div class="row g-4 mb-4 fade-in">
+          <div class="col-md-3">
+            <div class="card bg-panel p-4 text-center">
+              <h6 class="text-gold"><i class="bi-lightning me-2"></i>Signals Today</h6>
+              <p id="stat-signals" class="fs-3 mb-2 text-gold">0</p>
+              <a href="signals.html" class="btn btn-gold">Access Signals</a>
+            </div>
+          </div>
+          <div class="col-md-3">
+            <div class="card bg-panel p-4 text-center">
+              <h6 class="text-gold"><i class="bi-graph-up me-2"></i>Insights</h6>
+              <p id="stat-insights" class="fs-3 mb-2 text-gold">0</p>
+              <a href="CBE_trade_insights_vip.html" class="btn btn-gold">View Insights</a>
+            </div>
+          </div>
+          <div class="col-md-3">
+            <div class="card bg-panel p-4 text-center">
+              <h6 class="text-gold"><i class="bi-clock-history me-2"></i>Recent Trades</h6>
+              <p id="stat-trades" class="fs-3 mb-2 text-gold">0</p>
+              <a href="CBE_trade_history_vip.html" class="btn btn-gold">View History</a>
+            </div>
+          </div>
+          <div class="col-md-3">
+            <div class="card bg-panel p-4 text-center">
+              <h6 class="text-gold"><i class="bi-currency-exchange me-2"></i>24h Gold Δ</h6>
+              <p id="stat-gold-change" class="fs-3 mb-0 text-gold">--%</p>
+            </div>
+          </div>
+        </div>
+
+        <!-- 4H XAU/USD Chart -->
+        <div class="card bg-panel p-4 mb-4 fade-in">
+          <h2 class="text-gold mb-3">XAU/USD (4H)</h2>
+          <div id="tv_chart_4h"></div>
+        </div>
+
+        <!-- Gold News -->
+        <div class="card bg-panel p-4 mb-4 fade-in">
+          <h2 class="text-gold mb-3">Gold News</h2>
+          <div id="news-widget"></div>
+        </div>
+
+        <!-- Economic Calendar -->
+        <div class="card bg-panel p-4 mb-4 fade-in">
+          <h2 class="text-gold mb-3">Economic Calendar</h2>
+          <div id="calendar-widget"></div>
+        </div>
+
+        <!-- Custom Watchlist -->
+        <div class="card bg-panel p-4 mb-4 fade-in">
+          <h2 class="text-gold mb-3">My Watchlist</h2>
+          <div class="d-flex mb-3">
+            <input type="text" id="watch-input" class="form-control me-3" placeholder="Add symbol (e.g., EURUSD)">
+            <button id="add-watch" class="btn btn-gold"><i class="bi-plus"></i> Add</button>
+          </div>
+          <ul id="watch-list" class="list-group text-gold"></ul>
+        </div>
+      </div>
+
+      <footer class="text-center py-3 text-gold fade-in">© 2025 CBE Global FX</footer>
+    </div>
+  </div>
+
+  <!-- Smartsupp Chat Bubble -->
+  <div class="position-fixed bottom-0 end-0 m-4" style="z-index:1000;">
+    <button class="btn btn-gold rounded-circle p-3" onclick="smartsupp('chat:open')"><i class="bi-chat-dots"></i></button>
+  </div>
+
+  <audio id="notif-sound" src="ding.mp3" preload="auto"></audio>
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+
   <script>
-    // Initialize Supabase
+    // Supabase Initialization
     const SUPA_URL = 'https://dapwpgvnfjcfqqhrpxla.supabase.co';
-    const SUPA_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImRhcHdwZ3ZuZmpjZnFxaHJweGxhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDcwNDA4ODgsImV4cCI6MjA2MjYxNjg4OH0.ICC0UsLlzJDNre7rFCeD3k6iVzo6jOJgn3PhABpEMsQ';
-    const supabase = window.supabase.createClient(SUPA_URL, SUPA_ANON_KEY);
+    const SUPA_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImRhcHdwZ3ZuZmpjZnFxaHJweGxhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDcwNDA4ODgsImV4cCI6MjA2MjYxNjg4OH0.ICC0UsLlzJDNre7rFCeD3k6iVzo6jOJgn3PhABpEMsQ';
+    const supabase = window.supabase.createClient(SUPA_URL, SUPA_KEY);
 
-    // Load Dashboard Data
-    async function loadDashboard() {
+    // Copy helper
+    function copyText(txt) {
+      navigator.clipboard.writeText(txt);
+    }
+
+    // Load Latest Signal
+    async function loadLatestSignal() {
+      const card = document.getElementById('signalCard');
+      card.innerHTML = `<p style="text-align:center;color:#999;padding:60px;">Loading latest signal…</p>`;
       try {
-        // Fetch data from Supabase
-        const [
-          { data: signals },
-          { data: trades },
-          { data: insights }
-        ] = await Promise.all([
-          supabase.from('signals').select('id'),
-          supabase.from('trade_history').select('id'),
-          supabase.from('trade_insights').select('id')
-        ]);
-
-        // Update stat card
-        document.getElementById('stat-signals').textContent = signals.length || 0;
-        document.getElementById('stat-trades').textContent = trades.length || 0;
-        document.getElementById('stat-insights').textContent = insights.length || 0;
+        const { data, error } = await supabase
+          .from('signals')
+          .select('id,action,asset,entry,sl,tp1,tp2,note,created_at')
+          .order('created_at', { ascending: false })
+          .limit(1);
+        if (error) throw error;
+        if (!data.length) {
+          card.innerHTML = `<p style="text-align:center;color:#ff5555;padding:40px;">No signals available.</p>`;
+          return;
+        }
+        const sig = data[0];
+        const dt  = new Date(sig.created_at);
+        card.innerHTML = `
+          <div class="signal-header">
+            <h2>${sig.asset} — ${sig.action.toUpperCase()}</h2>
+            <div class="time">${dt.toLocaleDateString()} ${dt.toLocaleTimeString()}</div>
+          </div>
+          <div class="signal-body">
+            <div class="detail" data-type="entry">
+              Entry: <span>${sig.entry}</span>
+              <button class="copy-btn" onclick="copyText('${sig.entry}')">Copy</button>
+            </div>
+            <div class="detail">
+              SL: <span>${sig.sl}</span>
+              <button class="copy-btn" onclick="copyText('${sig.sl}')">Copy</button>
+            </div>
+            <div class="detail">
+              TP1: <span>${sig.tp1}</span>
+              <button class="copy-btn" onclick="copyText('${sig.tp1}')">Copy</button>
+            </div>
+            <div class="detail">
+              TP2: <span>${sig.tp2}</span>
+              <button class="copy-btn" onclick="copyText('${sig.tp2}')">Copy</button>
+            </div>
+          </div>
+          <div class="admin-note">Note: ${sig.note || 'Trade at your own risk.'}</div>`;
+        // remove older signals
+        await supabase.from('signals').delete().neq('id', sig.id);
       } catch (err) {
-        console.error('Error loading VIP dashboard:', err);
-        alert('Failed to load dashboard data. Please try again.');
+        console.error(err);
+        card.innerHTML = `<p style="text-align:center;color:#ff5555;padding:40px;">Unable to load signal.</p>`;
       }
     }
 
-    // Initial Load
-    document.addEventListener('DOMContentLoaded', () => {
-      loadDashboard();
-    });
+    // Dashboard stats
+    async function loadDashboard() {
+      const today = new Date().toISOString().split('T')[0];
+      const [{ count: sCount }] = await supabase.from('signals').select('id',{ count:'exact' }).gte('created_at', today);
+      document.getElementById('stat-signals').textContent = sCount || 0;
+      const [{ count: iCount }] = await supabase.from('insights').select('id',{ count:'exact' });
+      document.getElementById('stat-insights').textContent = iCount || 0;
+      const { data: trades } = await supabase.from('trades').select('id');
+      document.getElementById('stat-trades').textContent = trades.length || 0;
+      document.getElementById('stat-gold-change').textContent = 'N/A';
+      // watchlist
+      const list = JSON.parse(localStorage.getItem('watchlist') || '[]');
+      const ul   = document.getElementById('watch-list');
+      ul.innerHTML = '';
+      list.forEach(sym => {
+        const li = document.createElement('li');
+        li.className = 'list-group-item bg-panel d-flex justify-content-between align-items-center text-gold';
+        li.innerHTML = `<span>${sym}</span><button class="btn btn-sm btn-danger">×</button>`;
+        li.querySelector('button').onclick = () => {
+          const upd = list.filter(s => s !== sym);
+          localStorage.setItem('watchlist', JSON.stringify(upd));
+          loadDashboard();
+        };
+        ul.appendChild(li);
+      });
+    }
 
-    // Real-time Updates
-    supabase.channel('vip-dashboard-updates')
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'signals' }, () => loadDashboard())
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'trade_history' }, () => loadDashboard())
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'trade_insights' }, () => loadDashboard())
-      .subscribe();
+    // TradingView widgets
+    function initWidgets() {
+      new TradingView.widget({
+        container_id: 'tv_chart_4h',
+        width: '100%', height: '600',
+        symbol: 'OANDA:XAUUSD', interval: '240',
+        timezone: 'Etc/UTC', theme: localStorage.getItem('theme')||'dark',
+        toolbar_bg: '#1a1a1a', allow_symbol_change: true,
+        withdateranges: true, studies:['MASimple@tv-basicstudies']
+      });
+      new TradingView.widget({
+        container_id: 'news-widget',
+        width: '100%', height: '600',
+        symbol: 'OANDA:XAUUSD', interval: 'D',
+        theme: localStorage.getItem('theme')||'dark',
+        toolbar_bg: '#1a1a1a', allow_symbol_change:false, show_popup_button:false
+      });
+      new TradingView.widget({
+        container_id:'calendar-widget',
+        width:'100%', height:'600',
+        colorTheme:localStorage.getItem('theme')||'dark',
+        isTransparent:false, displayMode:'regular',
+        locale:'en', importanceFilter:'1', countryFilter:'US'
+      });
+    }
+
+    // Real-time subscription
+    supabase.from('signals').on('INSERT', loadLatestSignal).subscribe();
+
+    // Clock, theme, notifications, chat
+    (function(){
+      setInterval(() => {
+        document.getElementById('currentTime').textContent = new Date().toLocaleString();
+      }, 1000);
+      const btn = document.getElementById('theme-toggle');
+      let theme = localStorage.getItem('theme') || 'dark';
+      document.documentElement.setAttribute('data-theme', theme);
+      btn.innerHTML = theme==='dark'?'<i class="bi-sun-fill"></i>':'<i class="bi-moon-fill"></i>';
+      btn.onclick = () => {
+        theme = theme==='dark'?'light':'dark';
+        document.documentElement.setAttribute('data-theme', theme);
+        localStorage.setItem('theme', theme);
+        btn.innerHTML = theme==='dark'?'<i class="bi-sun-fill"></i>':'<i class="bi-moon-fill"></i>';
+        initWidgets();
+      };
+      document.getElementById('chat-launch').onclick = e => { e.preventDefault(); smartsupp('chat:open'); };
+      document.getElementById('notif-btn').addEventListener('click', ()=> {
+        new bootstrap.Dropdown(document.getElementById('notif-btn')).toggle();
+      });
+    })();
+
+    // Initial load
+    document.addEventListener('DOMContentLoaded', () => {
+      document.getElementById('userName').textContent = sessionStorage.getItem('cbeUserName') || 'Trader';
+      loadLatestSignal();
+      loadDashboard();
+      initWidgets();
+      setInterval(loadLatestSignal, 15000);
+      document.getElementById('add-watch').onclick = () => {
+        const sym = document.getElementById('watch-input').value.trim().toUpperCase();
+        if (!sym) return;
+        const list = JSON.parse(localStorage.getItem('watchlist') || '[]');
+        if (!list.includes(sym)) list.push(sym);
+        localStorage.setItem('watchlist', JSON.stringify(list));
+        document.getElementById('watch-input').value = '';
+        loadDashboard();
+      };
+    });
   </script>
 </body>
 </html>
