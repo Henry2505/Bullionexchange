@@ -42,6 +42,7 @@
       --panel: rgba(30, 30, 30, 0.95);
       --gold: #d4af37;
       --text: var(--gold);
+      --muted: #888;
       --green: #00cc66;
       --red: #ff4444;
     }
@@ -99,89 +100,27 @@
       border-radius: 10px;
       overflow: hidden;
     }
-    /* Signal Card Styles */
-    .signal-card {
-      position: relative;
-      overflow: hidden;
-      background: rgba(20,20,20,0.85);
-      border:2px solid #333;
-      border-radius:16px;
-      box-shadow:0 6px 30px rgba(0,0,0,0.8);
-      margin-bottom:1.5rem;
+    .circle {
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      margin: 0 2px;
     }
-    .signal-header {
-      display:flex;
-      justify-content:space-between;
-      background:#111;
-      padding:16px;
-      border-bottom:1px solid #333;
+    .circle.win {
+      background: var(--green);
     }
-    .signal-header h2 {
-      color:#ffd700;
-      font-size:1.25rem;
+    .circle.loss {
+      background: var(--red);
     }
-    .signal-header .time {
-      color:#bbb;
-    }
-    .signal-body {
-      display:grid;
-      grid-template-columns:repeat(auto-fit,minmax(140px,1fr));
-      gap:12px;
-      padding:16px;
-    }
-    .detail {
-      background:#1a1a1a;
-      border:1px solid #333;
-      border-radius:8px;
-      padding:12px;
-      display:flex;
-      justify-content:space-between;
-      align-items:center;
-      position:relative;
-    }
-    .detail[data-type="entry"]::before,
-    .detail[data-type="entry"]::after {
-      content:"★";
-      position:absolute;
-      color:#ffd700;
-      font-size:.8rem;
-      animation:twinkle 1.5s infinite;
-    }
-    .detail[data-type="entry"]::before {
-      top:4px; left:4px; animation-delay:0;
-    }
-    .detail[data-type="entry"]::after {
-      bottom:4px; right:4px; animation-delay:.8s;
-    }
-    @keyframes twinkle {
-      0%,100%{opacity:.3;transform:scale(.8);}
-      50%{opacity:1;transform:scale(1.2);}
-    }
-    .detail span {
-      font-weight:600;
-      color:#ffd700;
-    }
-    .copy-btn {
-      background:#ffd700;
-      color:#111;
-      border:none;
-      padding:4px 8px;
-      border-radius:6px;
-      font-size:.85rem;
-      cursor:pointer;
-    }
-    .copy-btn:hover {
-      box-shadow:0 0 8px #ffd700;
-    }
-    .admin-note {
-      background:#222;
-      padding:12px;
-      margin:0 16px 16px;
-      border-left:4px solid #ffd700;
-      color:#ffcc00;
-      font-style:italic;
-      border-radius:6px;
-      font-size:.9rem;
+    .fullscreen {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      z-index: 9999;
+      background: var(--bg);
+      padding: 0;
     }
   </style>
 </head>
@@ -191,7 +130,7 @@
   <div class="offcanvas offcanvas-start bg-panel" id="sidebar">
     <div class="offcanvas-body">
       <div class="text-center mb-4">
-        <img src="CBE_logo.PNG" alt="CBE Logo" style="width:120px; cursor:pointer;" onclick="location.href='index.html'">
+        <img src="CBE_logo.PNG" alt="CBE Logo" style="width: 120px; cursor: pointer;" onclick="location.href='index.html'">
       </div>
       <ul class="nav nav-pills flex-column text-gold">
         <li class="nav-item"><a class="nav-link active text-gold" href="#"><i class="bi-speedometer2 me-2"></i>Dashboard</a></li>
@@ -230,8 +169,15 @@
       <!-- Main Content -->
       <div class="container-fluid p-4">
         <!-- Latest Signal Card -->
-        <div id="signalCard" class="signal-card fade-in">
-          <p style="text-align:center;color:#999;padding:60px;">Loading latest signal…</p>
+        <div class="card bg-panel p-4 mb-4 fade-in">
+          <div class="d-flex justify-content-between align-items-center mb-3">
+            <h2 class="text-gold">Latest Signal</h2>
+            <div>
+              <button id="refresh-signal" class="btn btn-sm btn-gold me-2"><i class="bi-arrow-clockwise"></i></button>
+              <small id="signal-time" class="text-gold">--</small>
+            </div>
+          </div>
+          <div id="signal-body" class="text-center text-gold">Loading latest signal...</div>
         </div>
 
         <!-- Stats Row + 24h Change -->
@@ -240,21 +186,21 @@
             <div class="card bg-panel p-4 text-center">
               <h6 class="text-gold"><i class="bi-lightning me-2"></i>Signals Today</h6>
               <p id="stat-signals" class="fs-3 mb-2 text-gold">0</p>
-              <a href="signals.html" class="btn btn-gold">Access Signals</a>
+              <a href="signals.html" class="btn btn-gold">Click Here to Access Latest Signals</a>
             </div>
           </div>
           <div class="col-md-3">
             <div class="card bg-panel p-4 text-center">
               <h6 class="text-gold"><i class="bi-graph-up me-2"></i>Insights</h6>
               <p id="stat-insights" class="fs-3 mb-2 text-gold">0</p>
-              <a href="CBE_trade_insights_vip.html" class="btn btn-gold">View Insights</a>
+              <a href="CBE_trade_insights_vip.html" class="btn btn-gold">Click Here to View Trade Insights</a>
             </div>
           </div>
           <div class="col-md-3">
             <div class="card bg-panel p-4 text-center">
               <h6 class="text-gold"><i class="bi-clock-history me-2"></i>Recent Trades</h6>
               <p id="stat-trades" class="fs-3 mb-2 text-gold">0</p>
-              <a href="CBE_trade_history_vip.html" class="btn btn-gold">View History</a>
+              <a href="CBE_trade_history_vip.html" class="btn btn-gold">Click Here to View Trade History</a>
             </div>
           </div>
           <div class="col-md-3">
@@ -266,9 +212,12 @@
         </div>
 
         <!-- 4H XAU/USD Chart -->
-        <div class="card bg-panel p-4 mb-4 fade-in">
-          <h2 class="text-gold mb-3">XAU/USD (4H)</h2>
-          <div id="tv_chart_4h"></div>
+        <div class="card bg-panel p-4 mb-4 fade-in" id="chart-card">
+          <div class="d-flex justify-content-between align-items-center mb-3">
+            <h2 class="text-gold">XAU/USD (4H)</h2>
+            <button id="fullscreen-chart" class="btn btn-sm btn-gold">Full Screen</button>
+          </div>
+          <div id="tv_chart_4h" style="height: 600px;"></div>
         </div>
 
         <!-- Gold News -->
@@ -299,7 +248,7 @@
   </div>
 
   <!-- Smartsupp Chat Bubble -->
-  <div class="position-fixed bottom-0 end-0 m-4" style="z-index:1000;">
+  <div class="position-fixed bottom-0 end-0 m-4" style="z-index: 1000;">
     <button class="btn btn-gold rounded-circle p-3" onclick="smartsupp('chat:open')"><i class="bi-chat-dots"></i></button>
   </div>
 
@@ -312,153 +261,207 @@
     const SUPA_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImRhcHdwZ3ZuZmpjZnFxaHJweGxhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDcwNDA4ODgsImV4cCI6MjA2MjYxNjg4OH0.ICC0UsLlzJDNre7rFCeD3k6iVzo6jOJgn3PhABpEMsQ';
     const supabase = window.supabase.createClient(SUPA_URL, SUPA_KEY);
 
-    // Copy helper
-    function copyText(txt) {
-      navigator.clipboard.writeText(txt);
-    }
+    const fmtTime = ts => new Date(ts).toLocaleString();
 
     // Load Latest Signal
     async function loadLatestSignal() {
-      const card = document.getElementById('signalCard');
-      card.innerHTML = `<p style="text-align:center;color:#999;padding:60px;">Loading latest signal…</p>`;
-      try {
-        const { data, error } = await supabase
-          .from('signals')
-          .select('id,action,asset,entry,sl,tp1,tp2,note,created_at')
-          .order('created_at', { ascending: false })
-          .limit(1);
-        if (error) throw error;
-        if (!data.length) {
-          card.innerHTML = `<p style="text-align:center;color:#ff5555;padding:40px;">No signals available.</p>`;
-          return;
-        }
-        const sig = data[0];
-        const dt  = new Date(sig.created_at);
-        card.innerHTML = `
-          <div class="signal-header">
-            <h2>${sig.asset} — ${sig.action.toUpperCase()}</h2>
-            <div class="time">${dt.toLocaleDateString()} ${dt.toLocaleTimeString()}</div>
-          </div>
-          <div class="signal-body">
-            <div class="detail" data-type="entry">
-              Entry: <span>${sig.entry}</span>
-              <button class="copy-btn" onclick="copyText('${sig.entry}')">Copy</button>
-            </div>
-            <div class="detail">
-              SL: <span>${sig.sl}</span>
-              <button class="copy-btn" onclick="copyText('${sig.sl}')">Copy</button>
-            </div>
-            <div class="detail">
-              TP1: <span>${sig.tp1}</span>
-              <button class="copy-btn" onclick="copyText('${sig.tp1}')">Copy</button>
-            </div>
-            <div class="detail">
-              TP2: <span>${sig.tp2}</span>
-              <button class="copy-btn" onclick="copyText('${sig.tp2}')">Copy</button>
-            </div>
-          </div>
-          <div class="admin-note">Note: ${sig.note || 'Trade at your own risk.'}</div>`;
-        // remove older signals
-        await supabase.from('signals').delete().neq('id', sig.id);
-      } catch (err) {
-        console.error(err);
-        card.innerHTML = `<p style="text-align:center;color:#ff5555;padding:40px;">Unable to load signal.</p>`;
+      const { data: [sig], error } = await supabase
+        .from('signals')
+        .select('*')
+        .order('created_at', { ascending: false })
+        .limit(1);
+      if (error || !sig) {
+        document.getElementById('signal-body').textContent = 'Error loading signal';
+        return;
       }
+      document.getElementById('signal-body').innerHTML = `
+        <p><strong>${sig.asset}</strong> — ${sig.direction.toUpperCase()} @ ${sig.price}</p>
+        <p>${sig.note || ''}</p>`;
+      document.getElementById('signal-time').textContent = fmtTime(sig.created_at);
     }
 
-    // Dashboard stats
+    // Load Dashboard Stats
     async function loadDashboard() {
       const today = new Date().toISOString().split('T')[0];
-      const [{ count: sCount }] = await supabase.from('signals').select('id',{ count:'exact' }).gte('created_at', today);
-      document.getElementById('stat-signals').textContent = sCount || 0;
-      const [{ count: iCount }] = await supabase.from('insights').select('id',{ count:'exact' });
-      document.getElementById('stat-insights').textContent = iCount || 0;
-      const { data: trades } = await supabase.from('trades').select('id');
-      document.getElementById('stat-trades').textContent = trades.length || 0;
+
+      // Signals Today
+      const [{ count: signalsToday }] = await supabase
+        .from('signals')
+        .select('id', { count: 'exact' })
+        .gte('created_at', today);
+      document.getElementById('stat-signals').textContent = signalsToday || 0;
+
+      // Insights Count
+      const [{ count: insCount }] = await supabase
+        .from('insights')
+        .select('id', { count: 'exact' });
+      document.getElementById('stat-insights').textContent = insCount || 0;
+
+      // Recent Trades
+      const { data: trades } = await supabase
+        .from('trades')
+        .select('asset, pips, result')
+        .order('timestamp', { ascending: false })
+        .limit(5);
+      document.getElementById('stat-trades').textContent = trades ? trades.length : 0;
+
+      // 24h Gold Change (Mocked)
       document.getElementById('stat-gold-change').textContent = 'N/A';
-      // watchlist
+
+      // Watchlist Rendering
       const list = JSON.parse(localStorage.getItem('watchlist') || '[]');
-      const ul   = document.getElementById('watch-list');
+      const ul = document.getElementById('watch-list');
       ul.innerHTML = '';
       list.forEach(sym => {
         const li = document.createElement('li');
         li.className = 'list-group-item bg-panel d-flex justify-content-between align-items-center text-gold';
         li.innerHTML = `<span>${sym}</span><button class="btn btn-sm btn-danger">×</button>`;
         li.querySelector('button').onclick = () => {
-          const upd = list.filter(s => s !== sym);
-          localStorage.setItem('watchlist', JSON.stringify(upd));
+          const updated = list.filter(s => s !== sym);
+          localStorage.setItem('watchlist', JSON.stringify(updated));
           loadDashboard();
         };
         ul.appendChild(li);
       });
     }
 
-    // TradingView widgets
-    function initWidgets() {
-      new TradingView.widget({
-        container_id: 'tv_chart_4h',
-        width: '100%', height: '600',
-        symbol: 'OANDA:XAUUSD', interval: '240',
-        timezone: 'Etc/UTC', theme: localStorage.getItem('theme')||'dark',
-        toolbar_bg: '#1a1a1a', allow_symbol_change: true,
-        withdateranges: true, studies:['MASimple@tv-basicstudies']
-      });
-      new TradingView.widget({
-        container_id: 'news-widget',
-        width: '100%', height: '600',
-        symbol: 'OANDA:XAUUSD', interval: 'D',
-        theme: localStorage.getItem('theme')||'dark',
-        toolbar_bg: '#1a1a1a', allow_symbol_change:false, show_popup_button:false
-      });
-      new TradingView.widget({
-        container_id:'calendar-widget',
-        width:'100%', height:'600',
-        colorTheme:localStorage.getItem('theme')||'dark',
-        isTransparent:false, displayMode:'regular',
-        locale:'en', importanceFilter:'1', countryFilter:'US'
+    // Chart Widget Initialization
+    let chartWidget;
+
+    function initChartWidget(containerId, height) {
+      if (chartWidget) {
+        chartWidget.remove();
+      }
+      chartWidget = new TradingView.widget({
+        container_id: containerId,
+        width: '100%',
+        height: height,
+        symbol: 'OANDA:XAUUSD',
+        interval: '240',
+        timezone: 'Etc/UTC',
+        theme: localStorage.getItem('theme') || 'dark',
+        toolbar_bg: '#1a1a1a',
+        allow_symbol_change: true,
+        withdateranges: true,
+        studies: ['MASimple@tv-basicstudies'],
       });
     }
 
-    // Real-time subscription
-    supabase.from('signals').on('INSERT', loadLatestSignal).subscribe();
+    // Other Widgets Initialization
+    function initWidgets() {
+      new TradingView.widget({
+        container_id: 'news-widget',
+        width: '100%',
+        height: '600',
+        symbol: 'OANDA:XAUUSD',
+        interval: 'D',
+        theme: localStorage.getItem('theme') || 'dark',
+        toolbar_bg: '#1a1a1a',
+        allow_symbol_change: false,
+        show_popup_button: false,
+      });
+      new TradingView.widget({
+        container_id: 'calendar-widget',
+        width: '100%',
+        height: '600',
+        colorTheme: localStorage.getItem('theme') || 'dark',
+        isTransparent: false,
+        displayMode: 'regular',
+        locale: 'en',
+        importanceFilter: '1',
+        countryFilter: 'US',
+      });
+    }
 
-    // Clock, theme, notifications, chat
-    (function(){
+    // Real-time Signals Listener
+    supabase.from('signals').on('INSERT', () => {
+      loadLatestSignal();
+      loadDashboard();
+      const p = document.createElement('p');
+      p.textContent = 'New signal received';
+      document.getElementById('notif-list').prepend(p);
+      document.getElementById('notif-count').textContent =
+        +document.getElementById('notif-count').textContent + 1;
+      document.getElementById('notif-sound').play();
+    }).subscribe();
+
+    // Clock, Theme, Sidebar, Notifications, and Full-Screen Toggle
+    (function() {
+      // Clock
       setInterval(() => {
         document.getElementById('currentTime').textContent = new Date().toLocaleString();
       }, 1000);
+
+      // Theme Toggle
       const btn = document.getElementById('theme-toggle');
       let theme = localStorage.getItem('theme') || 'dark';
       document.documentElement.setAttribute('data-theme', theme);
-      btn.innerHTML = theme==='dark'?'<i class="bi-sun-fill"></i>':'<i class="bi-moon-fill"></i>';
+      btn.innerHTML = theme === 'dark' ? '<i class="bi-sun-fill"></i>' : '<i class="bi-moon-fill"></i>';
       btn.onclick = () => {
-        theme = theme==='dark'?'light':'dark';
+        theme = theme === 'dark' ? 'light' : 'dark';
         document.documentElement.setAttribute('data-theme', theme);
         localStorage.setItem('theme', theme);
-        btn.innerHTML = theme==='dark'?'<i class="bi-sun-fill"></i>':'<i class="bi-moon-fill"></i>';
+        btn.innerHTML = theme === 'dark' ? '<i class="bi-sun-fill"></i>' : '<i class="bi-moon-fill"></i>';
+        const chartContainer = document.getElementById('tv_chart_4h');
+        const currentHeight = chartContainer.style.height.replace('px', '') || 600;
+        initChartWidget('tv_chart_4h', currentHeight);
         initWidgets();
       };
-      document.getElementById('chat-launch').onclick = e => { e.preventDefault(); smartsupp('chat:open'); };
-      document.getElementById('notif-btn').addEventListener('click', ()=> {
+
+      // Sidebar Chat
+      document.getElementById('chat-launch').onclick = e => {
+        e.preventDefault();
+        smartsupp('chat:open');
+      };
+
+      // Notification Dropdown
+      document.getElementById('notif-btn').addEventListener('click', () => {
         new bootstrap.Dropdown(document.getElementById('notif-btn')).toggle();
+      });
+
+      // Full-Screen Toggle for Chart
+      document.getElementById('fullscreen-chart').addEventListener('click', () => {
+        const chartCard = document.getElementById('chart-card');
+        const chartContainer = document.getElementById('tv_chart_4h');
+        if (chartCard.classList.contains('fullscreen')) {
+          chartCard.classList.remove('fullscreen');
+          chartContainer.style.height = '600px';
+          initChartWidget('tv_chart_4h', 600);
+          document.getElementById('fullscreen-chart').textContent = 'Full Screen';
+          document.body.style.overflow = 'auto';
+        } else {
+          chartCard.classList.add('fullscreen');
+          const fullHeight = window.innerHeight;
+          chartContainer.style.height = `${fullHeight}px`;
+          initChartWidget('tv_chart_4h', fullHeight);
+          document.getElementById('fullscreen-chart').textContent = 'Exit Full Screen';
+          document.body.style.overflow = 'hidden';
+        }
       });
     })();
 
-    // Initial load
+    // Initial Load
     document.addEventListener('DOMContentLoaded', () => {
       document.getElementById('userName').textContent = sessionStorage.getItem('cbeUserName') || 'Trader';
       loadLatestSignal();
       loadDashboard();
+      initChartWidget('tv_chart_4h', 600);
       initWidgets();
-      setInterval(loadLatestSignal, 15000);
+      document.getElementById('refresh-signal').onclick = loadLatestSignal;
+
+      // Watchlist Add Functionality
       document.getElementById('add-watch').onclick = () => {
-        const sym = document.getElementById('watch-input').value.trim().toUpperCase();
-        if (!sym) return;
-        const list = JSON.parse(localStorage.getItem('watchlist') || '[]');
-        if (!list.includes(sym)) list.push(sym);
-        localStorage.setItem('watchlist', JSON.stringify(list));
-        document.getElementById('watch-input').value = '';
-        loadDashboard();
+        const input = document.getElementById('watch-input');
+        const sym = input.value.trim().toUpperCase();
+        if (sym) {
+          const list = JSON.parse(localStorage.getItem('watchlist') || '[]');
+          if (!list.includes(sym)) {
+            list.push(sym);
+            localStorage.setItem('watchlist', JSON.stringify(list));
+            loadDashboard();
+          }
+          input.value = '';
+        }
       };
     });
   </script>
