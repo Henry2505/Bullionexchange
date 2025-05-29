@@ -24,7 +24,7 @@
     html::before {
       content:""; position:fixed; inset:0;
       background:
-        linear-gradient(135deg,#000,#111),
+        linear-gradient(135deg,#black,#111),
         radial-gradient(circle at 10% 20%,#ffd700 1px,transparent 0),
         radial-gradient(circle at 30% 40%,#ffd700 1px,transparent 0),
         radial-gradient(circle at 50% 15%,#ffd700 1px,transparent 0),
@@ -132,18 +132,22 @@
       color:#ffcc00; font-style:italic; border-radius:6px;
     }
 
-    /* CHART SECTION – EDGE-TO-EDGE, FULL-HEIGHT */
-    #gold-chart { margin:0; padding:0; }
-    #gold-chart h2 {
-      text-align:center; color:#ffd700; margin:20px 0;
-      font-size:2rem;
-    }
-    #tradingview_chart {
+    /* CHART SECTION – FULL SCREEN */
+    #gold-chart {
+      margin: 0;
+      padding: 0;
+      width: 100vw;
+      height: 100vh;
       position: relative;
-      left: 50%; 
-      width: 100vw; 
-      height: 80vh; /* “super large” – adjust if you want more */
+      left: 50%;
       margin-left: -50vw;
+    }
+
+    #tradingview_chart {
+      position: absolute;
+      top: 0; left: 0;
+      width: 100%;
+      height: 100%;
     }
 
     /* FOOTER */
@@ -176,7 +180,7 @@
     </div>
   </div>
 
-  <!-- Gold Chart – now truly edge-to-edge and tall -->
+  <!-- Gold Chart – now truly full-screen -->
   <section id="gold-chart">
     <h2>Gold (XAU/USD) Real-Time Chart</h2>
     <div id="tradingview_chart"></div>
@@ -203,7 +207,7 @@
   <!-- Supabase & Signals Logic -->
   <script>
     const SUPA_URL = 'https://dapwpgvnfjcfqqhrpxla.supabase.co';
-    const SUPA_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImRhcHdwZ3ZuZmpjZnFxaHJweGxhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDcwNDA4ODgsImV4cCI6MjA2MjYxNjg4OH0.ICC0UsLlzJDNre7rFCeD3k6iVzo6jOJgn3PhABpEMsQ';
+    const SUPA_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImRhcHdwZ3ZuZmpjZnFxaHJweGxhIiwicm9sIjo...';
     const supabase = window.supabase.createClient(SUPA_URL, SUPA_KEY);
 
     async function loadLatestSignal() {
@@ -250,7 +254,6 @@
             </div>
           </div>
           <div class="admin-note">Note: ${sig.note || 'Trade at your own risk.'}</div>`;
-        // remove older
         await supabase.from('signals').delete().neq('id', sig.id);
       } catch (err) {
         console.error(err);
