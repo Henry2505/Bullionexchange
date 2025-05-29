@@ -106,8 +106,12 @@
       border-radius: 50%;
       margin: 0 2px;
     }
-    .circle.win { background: var(--green); }
-    .circle.loss { background: var(--red); }
+    .circle.win {
+      background: var(--green);
+    }
+    .circle.loss {
+      background: var(--red);
+    }
   </style>
 </head>
 
@@ -226,7 +230,7 @@
         </div>
       </div>
 
-      <footer class="text-center py-3 text-gold fade-in">© 2025 CBE Global FX</footer>
+      <footer class="text-center py-3 text-gold fade-in">2025 CBE Global FX</footer>
     </div>
   </div>
 
@@ -241,7 +245,7 @@
   <script>
     // Supabase Initialization
     const SUPA_URL = 'https://dapwpgvnfjcfqqhrpxla.supabase.co';
-    const SUPA_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImRhcHdwZ3ZuZmpjZnFxaHJweGxhIiwicm9sZS I6ImFub24iLCJpYXQiOjE3NDcwNDA4ODgsImV4cCI6MjA2MjYxNjg4OH0.ICC0UsLlzJDNre7rFCeD3k6iVzo6jOJgn3PhABpEMsQ';
+    const SUPA_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImRhcHdwZ3ZuZmpjZnFxaHJweGxhIiciwm9sZSI6ImFub24iLCJpYXQiOjE3NDcwNDA4ODgsImV4cCI6MjA2MjYxNjg4OH0.ICC0UsLlzJDNre7rFCeD3k6iVzo6jOJgn3PhABpEMsQ';
     const supabase = window.supabase.createClient(SUPA_URL, SUPA_KEY);
 
     const fmtTime = ts => new Date(ts).toLocaleString();
@@ -281,10 +285,12 @@
       document.getElementById('stat-insights').textContent = insCount || 0;
 
       // Recent Trades
-      const [{ count: tradesCount }] = await supabase
+      const { data: trades } = await supabase
         .from('trades')
-        .select('id', { count: 'exact' });
-      document.getElementById('stat-trades').textContent = tradesCount || 0;
+        .select('asset, pips, result')
+        .order('timestamp', { ascending: false })
+        .limit(5);
+      document.getElementById('stat-trades').textContent = trades ? trades.length : 0;
 
       // 24h Gold Change (Mocked)
       document.getElementById('stat-gold-change').textContent = 'N/A';
@@ -295,7 +301,7 @@
       ul.innerHTML = '';
       list.forEach(sym => {
         const li = document.createElement('li');
-        li.className = 'list-group-item bg-panel d-flex justify-content-between align-items-center text-gold';
+        li.className = 'list-group-item	bg-panel d-flex	justify-content-between align-items-center text-gold';
         li.innerHTML = `<span>${sym}</span><button class="btn btn-sm btn-danger">×</button>`;
         li.querySelector('button').onclick = () => {
           const updated = list.filter(s => s !== sym);
@@ -320,6 +326,7 @@
         allow_symbol_change: true,
         withdateranges: true,
         studies: ['MASimple@tv-basicstudies'],
+        fullscreen: true
       });
       new TradingView.widget({
         container_id: 'news-widget',
@@ -345,24 +352,16 @@
       });
     }
 
-    // Real-time Listeners for Stat Updates
+    // Real-time Signals Listener
     supabase.from('signals').on('INSERT', () => {
       loadLatestSignal();
       loadDashboard();
-      document.getElementById('notif-count').textContent =
-        +document.getElementById('notif-count').textContent + 1;
       const p = document.createElement('p');
       p.textContent = 'New signal received';
       document.getElementById('notif-list').prepend(p);
+      document.getElementById('notif-count').textContent =
+        +document.getElementById('notif-count').textContent + 1;
       document.getElementById('notif-sound').play();
-    }).subscribe();
-
-    supabase.from('insights').on('INSERT', () => {
-      loadDashboard();
-    }).subscribe();
-
-    supabase.from('trades').on('INSERT', () => {
-      loadDashboard();
     }).subscribe();
 
     // Clock, Theme, Sidebar, and Notifications
@@ -381,8 +380,7 @@
         theme = theme === 'dark' ? 'light' : 'dark';
         document.documentElement.setAttribute('data-theme', theme);
         localStorage.setItem('theme', theme);
-        btn.innerHTML = theme === 'dark' ? '<i class="bi-sun-fill"></i>' : '<i class="bi-moon-fill"></i>';
-        initWidgets();
+        initWidgets(); // Re-initialize widgets with new theme
       };
 
       // Sidebar Chat
@@ -404,20 +402,8 @@
       loadDashboard();
       initWidgets();
       document.getElementById('refresh-signal').onclick = loadLatestSignal;
-      document.getElementById('add-watch').onclick = () => {
-        const inp = document.getElementById('watch-input');
-        const sym = inp.value.trim().toUpperCase();
-        if (sym) {
-          const list = JSON.parse(localStorage.getItem('watchlist') || '[]');
-          if (!list.includes(sym)) {
-            list.push(sym);
-            localStorage.setItem('watchlist', JSON.stringify(list));
-            loadDashboard();
-          }
-          inp.value = '';
-        }
-      };
     });
   </script>
 </body>
 </html>
+
