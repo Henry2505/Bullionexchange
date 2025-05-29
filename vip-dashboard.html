@@ -3,33 +3,16 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>VIP Dashboard – CBE Global FX</title>
-
-  <!-- Auth Guard -->
-  <script>
-    if (sessionStorage.getItem('cbeLoggedIn') !== 'true') {
-      window.location.replace('login.html');
-    }
-  </script>
+  <title>VIP Gold Dashboard – CBE Global FX</title>
 
   <!-- Bootstrap, Icons, Fonts -->
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
   <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css" rel="stylesheet">
   <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;700&display=swap" rel="stylesheet">
 
-  <!-- Supabase, TradingView, Smartsupp -->
+  <!-- Supabase and TradingView -->
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js/dist/umd/supabase.min.js"></script>
   <script src="https://s3.tradingview.com/tv.js"></script>
-  <script>
-    var _smartsupp = _smartsupp || {};
-    _smartsupp.key = '018a8bbd868518221e725341a7b2601231ec7ce8';
-    (function(d) {
-      var s, c, o = smartsupp = function() { o._.push(arguments) }; o._ = [];
-      s = d.getElementsByTagName('script')[0]; c = d.createElement('script');
-      c.async = true; c.src = 'https://www.smartsuppchat.com/loader.js?';
-      s.parentNode.insertBefore(c, s);
-    })(document);
-  </script>
 
   <style>
     :root {
@@ -37,240 +20,93 @@
       --panel: rgba(30, 30, 30, 0.95);
       --gold: #d4af37;
       --text: #e0e0e0;
-      --muted: #888;
-      --green: #00cc66;
-      --red: #ff4444;
-    }
-    [data-theme="light"] {
-      --bg: #f0f2f5;
-      --panel: rgba(255, 255, 255, 0.95);
-      --text: #333;
-      --gold: #b8860b;
-      --green: #00b359;
-      --red: #cc0000;
     }
     body {
       background: linear-gradient(135deg, var(--bg), #222);
       color: var(--text);
       font-family: 'Roboto', sans-serif;
-      overflow-x: hidden;
     }
     .bg-panel {
       background: var(--panel);
       border-radius: 10px;
       box-shadow: 0 8px 16px rgba(0, 0, 0, 0.3);
     }
-    .card {
-      transition: transform 0.3s, box-shadow 0.3s;
-    }
+    .text-gold { color: var(--gold); }
     .card:hover {
       transform: translateY(-5px);
       box-shadow: 0 12px 24px rgba(0, 0, 0, 0.4);
     }
-    .text-gold { color: var(--gold); }
-    .btn-gold {
-      background: var(--gold);
-      color: #000;
-      border: none;
-      border-radius: 5px;
-      transition: transform 0.2s;
-    }
-    .btn-gold:hover { transform: scale(1.05); }
-    .blink-nav a {
-      animation: blink 1.5s infinite;
-    }
-    @keyframes blink { 0%, 100% { opacity: 1; } 50% { opacity: 0.7; } }
-    .fade-in { animation: fadeIn 0.8s ease-in; }
-    @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
-    #tv_chart { height: 400px; }
+    #tv_chart { height: 600px; width: 100%; }
     #news-feed a { color: var(--gold); text-decoration: none; }
     #news-feed a:hover { text-decoration: underline; }
+    .fade-in { animation: fadeIn 0.8s ease-in; }
+    @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
   </style>
 </head>
 
 <body>
-  <!-- Sidebar -->
-  <div class="offcanvas offcanvas-start bg-panel" id="sidebar">
-    <div class="offcanvas-body">
-      <div class="text-center mb-4">
-        <img src="CBE_logo.PNG" alt="CBE Logo" style="width: 120px; cursor: pointer;" onclick="location.href='index.html'">
-      </div>
-      <ul class="nav nav-pills flex-column">
-        <li class="nav-item"><a class="nav-link active text-light" href="#"><i class="bi-speedometer2 me-2"></i>Dashboard</a></li>
-        <li class="nav-item"><a class="nav-link text-light" href="signals.html"><i class="bi-lightning me-2"></i>Signals</a></li>
-        <li class="nav-item"><a class="nav-link text-light" href="CBE_trade_insights_vip.html"><i class="bi-graph-up me-2"></i>Insights</a></li>
-        <li class="nav-item"><a class="nav-link text-light" href="CBE_trade_history_vip.html"><i class="bi-clock-history me-2"></i>Trade History</a></li>
-        <li class="nav-item"><a class="nav-link text-light" href="#" id="chat-launch"><i class="bi-chat-dots me-2"></i>Support</a></li>
-      </ul>
+  <!-- Header -->
+  <header class="bg-panel p-3 sticky-top fade-in">
+    <h5 class="text-gold">Welcome, Trader!</h5>
+  </header>
+
+  <!-- Main Content -->
+  <div class="container-fluid p-4">
+    <!-- Real-Time Gold Price Ticker -->
+    <div class="card bg-panel p-4 mb-4 fade-in">
+      <h2 class="text-gold mb-3">Live Gold Price</h2>
+      <div id="price-ticker" style="height: 100px;"></div>
+    </div>
+
+    <!-- Latest Signal -->
+    <div class="card bg-panel p-4 mb-4 fade-in">
+      <h2 class="text-gold mb-3">Latest Signal</h2>
+      <div id="signal-body" class="text-center">Loading...</div>
+    </div>
+
+    <!-- XAUUSD Chart -->
+    <div class="card bg-panel p-4 mb-4 fade-in">
+      <h2 class="text-gold mb-3">XAUUSD Chart (Daily)</h2>
+      <div id="tv_chart"></div>
+    </div>
+
+    <!-- Gold News -->
+    <div class="card bg-panel p-4 mb-4 fade-in">
+      <h2 class="text-gold mb-3">Gold News</h2>
+      <div id="news-feed">Loading news...</div>
     </div>
   </div>
 
-  <div class="d-flex">
-    <div class="flex-fill">
-      <!-- Header -->
-      <header class="d-flex justify-content-between align-items-center bg-panel p-3 sticky-top fade-in">
-        <div class="d-flex align-items-center">
-          <button class="btn btn-link text-light d-md-none me-2" data-bs-toggle="offcanvas" data-bs-target="#sidebar">
-            <i class="bi-list"></i>
-          </button>
-          <div>
-            <h5 class="mb-1 text-gold">Welcome, <span id="userName">Trader</span>!</h5>
-            <small id="currentTime" class="text-muted"></small>
-          </div>
-        </div>
-        <div>
-          <button id="theme-toggle" class="btn btn-link text-light"><i class="bi-sun-fill"></i></button>
-          <button id="notif-btn" class="btn btn-link text-light position-relative">
-            <i class="bi-bell-fill"></i>
-            <span class="position-absolute top-0 start-100 translate-middle badge bg-danger" id="notif-count">0</span>
-          </button>
-        </div>
-      </header>
-
-      <!-- Blinking Navigation -->
-      <div class="blink-nav text-center py-3 fade-in">
-        <a class="btn btn-gold mx-2" href="signals.html">Signals</a>
-        <a class="btn btn-gold mx-2" href="CBE_trade_insights_vip.html">Insights</a>
-        <a class="btn btn-gold mx-2" href="CBE_trade_history_vip.html">Trade History</a>
-      </div>
-
-      <!-- Main Content -->
-      <div class="container-fluid p-4">
-        <!-- Signal Card -->
-        <div class="card bg-panel p-4 mb-4 fade-in">
-          <h2 class="text-gold mb-3">Latest Signal</h2>
-          <div id="signal-body" class="text-center text-muted">Loading latest signal...</div>
-          <button id="refresh-signal" class="btn btn-gold mt-2">Refresh</button>
-        </div>
-
-        <!-- TradingView Chart -->
-        <div class="card bg-panel p-4 mb-4 fade-in">
-          <h2 class="text-gold mb-3">XAUUSD Chart (4-Hour)</h2>
-          <div id="tv_chart" style="height: 400px;"></div>
-        </div>
-
-        <!-- Gold News -->
-        <div class="card bg-panel p-4 mb-4 fade-in">
-          <h2 class="text-gold mb-3">Gold News</h2>
-          <div id="news-feed" class="text-muted">Loading news...</div>
-        </div>
-
-        <!-- Economic Calendar -->
-        <div class="card bg-panel p-4 mb-4 fade-in">
-          <h2 class="text-gold mb-3">Economic Calendar</h2>
-          <p class="text-muted">Note: High-impact events (e.g., FOMC, NFP, inflation) can move Gold/USD prices.</p>
-          <div id="calendar-widget" style="height: 400px;"></div>
-        </div>
-
-        <!-- Stats Cards -->
-        <div class="row g-4 mb-4 fade-in">
-          <div class="col-md-3">
-            <div class="card bg-panel p-4 text-center">
-              <h6 class="text-gold"><i class="bi-lightning me-2"></i>Signals Today</h6>
-              <p id="stat-signals" class="fs-3 mb-0 text-gold">0</p>
-            </div>
-          </div>
-          <div class="col-md-3">
-            <div class="card bg-panel p-4 text-center">
-              <h6 class="text-gold"><i class="bi-lightbulb me-2"></i>Insights</h6>
-              <p id="stat-insights" class="fs-3 mb-0 text-gold">0</p>
-            </div>
-          </div>
-          <div class="col-md-3">
-            <div class="card bg-panel p-4 text-center">
-              <h6 class="text-gold"><i class="bi-clock-history me-2"></i>Recent Trades</h6>
-              <p id="stat-recent-trades" class="fs-3 mb-0 text-gold">0</p>
-            </div>
-          </div>
-          <div class="col-md-3">
-            <div class="card bg-panel p-4 text-center">
-              <h6 class="text-gold"><i class="bi-graph-up me-2"></i>Win Rate</h6>
-              <p id="stat-win-rate" class="fs-3 mb-0 text-gold">0%</p>
-            </div>
-          </div>
-        </div>
-
-        <!-- Trade Insights -->
-        <div class="card bg-panel p-4 mb-4 fade-in">
-          <h2 class="text-gold mb-3">Trade Insights</h2>
-          <input type="text" id="trade-filter" class="form-control mb-3" placeholder="Filter by asset">
-          <div id="trade-list" class="text-muted">Loading trades...</div>
-        </div>
-
-        <footer class="text-center py-3 text-muted fade-in">© 2025 CBE Global FX</footer>
-      </div>
-    </div>
-  </div>
-
-  <!-- Chat Bubble -->
-  <div class="position-fixed bottom-0 end-0 m-4" style="z-index: 1000;">
-    <button class="btn btn-gold rounded-circle p-3" onclick="smartsupp('chat:open')">
-      <i class="bi-chat-dots"></i>
-    </button>
-  </div>
-
-  <audio id="notif-sound" src="ding.mp3" preload="auto"></audio>
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 
   <script>
-    // Initial Setup
-    document.body.style.visibility = 'visible';
-    const userName = sessionStorage.getItem('cbeUserName') || 'Trader';
-    document.getElementById('userName').textContent = userName;
-
-    // Clock
-    const timeEl = document.getElementById('currentTime');
-    function updateClock() {
-      timeEl.textContent = new Date().toLocaleString();
-    }
-    updateClock();
-    setInterval(updateClock, 1000);
-
-    // Theme Toggle
-    const themeBtn = document.getElementById('theme-toggle');
-    let theme = localStorage.getItem('theme') || 'dark';
-    document.documentElement.setAttribute('data-theme', theme);
-    themeBtn.innerHTML = theme === 'dark' ? '<i class="bi-sun-fill"></i>' : '<i class="bi-moon-fill"></i>';
-    themeBtn.onclick = () => {
-      theme = theme === 'dark' ? 'light' : 'dark';
-      document.documentElement.setAttribute('data-theme', theme);
-      localStorage.setItem('theme', theme);
-      themeBtn.innerHTML = theme === 'dark' ? '<i class="bi-sun-fill"></i>' : '<i class="bi-moon-fill"></i>';
-      loadWidgets();
-    };
-
-    // Supabase
+    // Supabase Setup
     const SUPA_URL = 'https://dapwpgvnfjcfqqhrpxla.supabase.co';
     const SUPA_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImRhcHdwZ3ZuZmpjZnFxaHJweGxhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDcwNDA4ODgsImV4cCI6MjA2MjYxNjg4OH0.ICC0UsLlzJDNre7rFCeD3k6iVzo6jOJgn3PhABpEMsQ';
     const supabase = window.supabase.createClient(SUPA_URL, SUPA_KEY);
 
     // TradingView Widgets
     function loadWidgets() {
-      new TradingView.widget({
+      // Price Ticker
+      new TradingView.MiniSymbolOverviewWidget({
+        "container_id": "price-ticker",
         "width": "100%",
-        "height": 400,
+        "height": 100,
         "symbol": "OANDA:XAUUSD",
-        "interval": "240",
-        "timezone": "Etc/UTC",
-        "theme": theme,
-        "style": "1",
-        "locale": "en",
-        "toolbar_bg": "#f1f3f6",
-        "enable_publishing": false,
-        "allow_symbol_change": false,
-        "container_id": "tv_chart"
+        "colorTheme": "dark",
+        "locale": "en"
       });
 
+      // XAUUSD Chart with RSI
       new TradingView.widget({
-        "container_id": "calendar-widget",
         "width": "100%",
-        "height": 400,
-        "colorTheme": theme,
-        "isTransparent": false,
-        "displayMode": "regular",
+        "height": 600,
+        "symbol": "OANDA:XAUUSD",
+        "interval": "D", // Daily view
+        "theme": "dark",
         "locale": "en",
-        "importanceFilter": "1",
-        "countryFilter": "US"
+        "studies": ["RSI@tv-basicstudies"], // RSI Indicator
+        "container_id": "tv_chart"
       });
     }
     loadWidgets();
@@ -291,53 +127,16 @@
         <p>Asset: ${signal.asset}</p>
         <p>Direction: ${signal.direction}</p>
         <p>Entry: ${signal.entry}</p>
-        <p>Stop Loss: ${signal.stop_loss}</p>
-        <p>Take Profit: ${signal.take_profit}</p>
-        <p>Timestamp: ${new Date(signal.timestamp).toLocaleString()}</p>
       ` : 'No signals found';
     }
     fetchLatestSignal();
-    document.getElementById('refresh-signal').addEventListener('click', fetchLatestSignal);
 
-    // Stats
-    async function fetchSignalsToday() {
-      const today = new Date().toISOString().split('T')[0];
-      const { count } = await supabase.from('signals').select('*', { count: 'exact' }).gte('timestamp', today + 'T00:00:00');
-      document.getElementById('stat-signals').textContent = count || 0;
-    }
-    async function fetchInsightsCount() {
-      const { count } = await supabase.from('insights').select('*', { count: 'exact' });
-      document.getElementById('stat-insights').textContent = count || 0;
-    }
-    async function fetchRecentTradeCount() {
-      const sevenDaysAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString();
-      const { count } = await supabase.from('trades').select('*', { count: 'exact' }).gte('timestamp', sevenDaysAgo);
-      document.getElementById('stat-recent-trades').textContent = count || 0;
-    }
-    async function fetchWinRate() {
-      const { data } = await supabase.from('trades').select('result');
-      const total = data.length;
-      const wins = data.filter(t => t.result === 'win').length;
-      const winRate = total ? (wins / total * 100).toFixed(2) + '%' : '0%';
-      document.getElementById('stat-win-rate').textContent = winRate;
-    }
-    fetchSignalsToday();
-    fetchInsightsCount();
-    fetchRecentTradeCount();
-    fetchWinRate();
+    // Real-Time Signal Updates
+    supabase.channel('signals').on('INSERT', () => {
+      fetchLatestSignal();
+    }).subscribe();
 
-    // Trade Insights
-    async function loadTrades() {
-      const filter = document.getElementById('trade-filter').value;
-      const { data } = await supabase.from('trades').select('*').ilike('asset', `%${filter}%`).order('timestamp', { ascending: false }).limit(5);
-      const trades = data || [];
-      const tradeList = trades.map(t => `<p>${t.asset} - ${new Date(t.timestamp).toLocaleString()} - ${t.pips} pips</p>`).join('');
-      document.getElementById('trade-list').innerHTML = tradeList || 'No trades found';
-    }
-    document.getElementById('trade-filter').addEventListener('input', loadTrades);
-    loadTrades();
-
-    // Gold News from Kitco
+    // Fetch Gold News from Kitco
     async function loadNews() {
       const rssUrl = 'https://www.kitco.com/rss/gold.xml';
       const apiUrl = `https://api.rss2json.com/v1/api.json?rss_url=${encodeURIComponent(rssUrl)}`;
@@ -345,30 +144,16 @@
         const response = await fetch(apiUrl);
         const data = await response.json();
         if (data.status === 'ok') {
-          const newsItems = data.items.slice(0, 5).map(item => `<p><a href="${item.link}" target="_blank">${item.title}</a> - ${new Date(item.pubDate).toLocaleDateString()}</p>`).join('');
+          const newsItems = data.items.slice(0, 5).map(item => `
+            <p><a href="${item.link}" target="_blank">${item.title}</a> - ${new Date(item.pubDate).toLocaleDateString()}</p>
+          `).join('');
           document.getElementById('news-feed').innerHTML = newsItems || 'No news found';
-        } else {
-          document.getElementById('news-feed').innerHTML = 'Error loading news';
         }
       } catch (error) {
         document.getElementById('news-feed').innerHTML = 'Error loading news';
       }
     }
     loadNews();
-
-    // Real-Time Listener for Signals
-    supabase.channel('signals').on('INSERT', () => {
-      fetchLatestSignal();
-      fetchSignalsToday();
-      document.getElementById('notif-count').textContent = parseInt(document.getElementById('notif-count').textContent) + 1;
-      document.getElementById('notif-sound').play();
-    }).subscribe();
-
-    // Support Chat
-    document.getElementById('chat-launch').onclick = (e) => {
-      e.preventDefault();
-      smartsupp('chat:open');
-    };
   </script>
 </body>
 </html>
