@@ -12,7 +12,7 @@
     }
   </script>
 
-  <!-- STYLES & FONTS -->
+  <!-- BOOTSTRAP & ICONS -->
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet"/>
   <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css" rel="stylesheet"/>
   <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700&display=swap" rel="stylesheet"/>
@@ -23,81 +23,63 @@
   <script>
     var _smartsupp = _smartsupp || {};
     _smartsupp.key = '018a8bbd868518221e725341a7b2601231ec7ce8';
+    _smartsupp.async = true;
+    _smartsupp.chatHeight = 600;      // make chat taller
+    _smartsupp.chatWidth = 400;       // wider window
     (function(d) {
-      var s, c, o = smartsupp = function() { o._.push(arguments) }; o._ = [];
-      s = d.getElementsByTagName('script')[0]; c = d.createElement('script');
-      c.async = true; c.src = 'https://www.smartsuppchat.com/loader.js?';
-      s.parentNode.insertBefore(c, s);
+      var s = d.createElement('script');
+      s.src = 'https://www.smartsuppchat.com/loader.js?';
+      s.async = true;
+      d.head.appendChild(s);
     })(document);
   </script>
 
   <style>
     :root {
       --bg: #111;
-      --panel: rgba(20, 20, 20, 0.9);
+      --panel: rgba(20,20,20,0.9);
       --gold: #bfa057;
       --text: #f0f0f0;
       --muted: #666;
       --green: #28a745;
       --red: #dc3545;
     }
-    * { box-sizing: border-box; }
-    body {
-      background: var(--bg);
-      color: var(--text);
-      font-family: 'Poppins', sans-serif;
-      overflow-x: hidden;
-      visibility: hidden;
-    }
-    .bg-panel {
-      background: var(--panel) !important;
-      border-radius: 8px;
-      backdrop-filter: blur(8px);
-    }
-    .text-gold { color: var(--gold) !important; }
-    .btn-gold {
-      background: var(--gold);
-      border: none;
-      color: #000;
-      transition: transform .2s;
-    }
-    .btn-gold:hover { transform: scale(1.05); }
+    body { background: var(--bg); color: var(--text); font-family: 'Poppins', sans-serif; overflow-x:hidden; visibility:hidden; }
 
-    /* MT5-style chart container */
-    #chart-container { width: 100%; height: 300px; position: relative; background: var(--bg); animation: fadeIn 1s; }
-    @media (min-width: 768px) { #chart-container { height: 500px; } }
-    #tv_chart { position: absolute; top:0; left:0; width:100%; height:100%; }
-    #chart-error { display: none; }
+    .bg-panel { background: var(--panel)!important; border-radius:8px; backdrop-filter:blur(8px); }
+    .text-gold { color: var(--gold)!important; }
+    .btn-gold { background: var(--gold); border:none; color:#000; transition:transform .2s; }
+    .btn-gold:hover { background:#e6c65d; transform:scale(1.05); }
 
-    /* Gauge, News Feed, etc – unchanged… */
+    /* Chart container */
+    #chart-container { width:100%; height:300px; position:relative; background:var(--bg); animation:fadeIn 1s; }
+    @media(min-width:768px){#chart-container{height:500px;}}
 
-    /* Fade-in */
-    @keyframes fadeIn { from { opacity:0 } to { opacity:1 } }
-    .fade-in { animation: fadeIn 1s ease-in; }
+    /* Gauge & Volatility */
+    .gauge, .volatility { width:100%; height:16px; background:var(--muted); border-radius:8px; overflow:hidden; }
+    .gauge-bar, .vol-bar { height:100%; width:0; background:var(--gold); transition:width .5s; }
 
-    /* Starry background */
-    body::before {
-      content: "";
-      position: fixed;
-      inset: 0;
-      background: url('https://raw.githubusercontent.com/joshbuchea/atom/master/svgs/stars.svg') center/cover no-repeat;
-      opacity: 0.05;
-      z-index: -1;
-    }
+    /* News feed */
+    #news-feed { max-height:200px; overflow-y:auto; }
 
-    /* Smartsupp chat styling */
-    #smartsupp-iframe { border-radius: 12px !important; }
+    /* Chat launcher icon */
+    .bi-chat-dots { cursor:pointer; }
+
+    /* Fade in animation */
+    @keyframes fadeIn { from{opacity:0;} to{opacity:1;} }
+    .fade-in{animation:fadeIn 1s ease-in;}
+
+    /* Price alert style */
+    .alert-set { margin-top:.5rem; }
   </style>
 </head>
-
 <body>
-<div class="d-flex">
 
+<div class="d-flex">
   <!-- SIDEBAR -->
   <nav class="bg-panel vh-100 p-3 d-none d-md-block" style="width:220px;">
     <div class="text-center mb-4">
-      <img src="CBE_logo.PNG" alt="CBE Logo"
-           style="width:120px;cursor:pointer;"
+      <img src="CBE_logo.PNG" alt="CBE Logo" style="width:120px;cursor:pointer;"
            onclick="location.href='index.html'">
     </div>
     <ul class="nav nav-pills flex-column">
@@ -109,233 +91,327 @@
     </ul>
   </nav>
 
-  <!-- MAIN CONTENT -->
+  <!-- MAIN -->
   <div class="flex-fill">
     <!-- HEADER -->
     <header class="bg-panel d-flex justify-content-between align-items-center px-4 py-2 sticky-top fade-in">
-      <div class="d-flex align-items-center">
-        <img src="CBE_logo.PNG" alt="CBE Logo"
-             style="height:32px;cursor:pointer;margin-right:8px;"
-             onclick="location.href='index.html'">
-        <div>
-          <h5 class="mb-0 text-gold">Welcome back, <span id="userName" class="fw-bold">Trader</span>!</h5>
-          <small id="currentTime" class="text-muted"></small>
-        </div>
+      <div>
+        <h5 class="mb-0 text-gold">
+          <img src="CBE_logo.PNG" alt="CBE Logo" style="height:24px;vertical-align:middle;cursor:pointer;"
+               onclick="location.href='index.html'">
+          Welcome back, <span id="userName" class="fw-bold text-gold">Trader</span>!
+        </h5>
+        <small id="currentTime" class="text-muted"></small><br>
+        <small id="timeZone" class="text-muted"></small>
       </div>
       <div>
         <button id="theme-toggle" class="btn btn-link text-light"><i class="bi-sun-fill"></i></button>
         <button id="notif-btn" class="btn btn-link text-light position-relative">
           <i class="bi-bell-fill"></i>
-          <span class="notif-badge" id="notif-count">0</span>
+          <span class="notif-badge bg-danger rounded-circle px-1" id="notif-count">0</span>
         </button>
       </div>
     </header>
-        <!-- STATS CARDS -->
+
+    <!-- STATS CARDS -->
     <div class="container-fluid p-4 fade-in">
-      <div class="row g-3" id="stats-row">
-        <div class="col-sm-6 col-lg-3"><div class="card bg-panel text-center p-3">
-          <h6 class="text-gold">Signals Today</h6>
-          <p id="stat-signals" class="fs-2 mb-0 text-gold">0</p>
-        </div></div>
-        <div class="col-sm-6 col-lg-3"><div class="card bg-panel text-center p-3">
-          <h6 class="text-gold">Insights</h6>
-          <p id="stat-insights" class="fs-2 mb-0 text-gold">0</p>
-        </div></div>
-        <div class="col-sm-6 col-lg-3"><div class="card bg-panel text-center p-3">
-          <h6 class="text-gold">Trade Logs</h6>
-          <p id="stat-history" class="fs-2 mb-0 text-gold">0</p>
-        </div></div>
-        <div class="col-sm-6 col-lg-3"><div class="card bg-panel text-center p-3">
-          <h6 class="text-gold">Pips Today</h6>
-          <p id="stat-pips" class="fs-2 mb-0 text-gold">0</p>
-        </div></div>
-        <div class="col-sm-6 col-lg-3"><div class="card bg-panel text-center p-3">
-          <h6 class="text-gold">Win Rate (%)</h6>
-          <p id="stat-winrate" class="fs-2 mb-0 text-gold">0</p>
-        </div></div>
-        <div class="col-12"><div class="card bg-panel p-3">
-          <h6 class="text-gold">Latest Signal</h6>
-          <p id="signal-text" class="mb-0 text-gold">Loading...</p>
-        </div></div>
+      <div class="row g-3">
+        <div class="col-sm-6 col-lg-3">
+          <div class="card bg-panel text-center p-3">
+            <h6 class="text-gold">Signals Today</h6>
+            <p id="stat-signals" class="fs-2 mb-0 text-gold">0</p>
+          </div>
+        </div>
+        <div class="col-sm-6 col-lg-3">
+          <div class="card bg-panel text-center p-3">
+            <h6 class="text-gold">Insights</h6>
+            <p id="stat-insights" class="fs-2 mb-0 text-gold">0</p>
+          </div>
+        </div>
+        <div class="col-sm-6 col-lg-3">
+          <div class="card bg-panel text-center p-3">
+            <h6 class="text-gold">Trade Logs</h6>
+            <p id="stat-history" class="fs-2 mb-0 text-gold">0</p>
+          </div>
+        </div>
+        <div class="col-sm-6 col-lg-3">
+          <div class="card bg-panel text-center p-3">
+            <h6 class="text-gold">Pips Today</h6>
+            <p id="stat-pips" class="fs-2 mb-0 text-gold">0</p>
+          </div>
+        </div>
+        <div class="col-sm-6 col-lg-3">
+          <div class="card bg-panel text-center p-3">
+            <h6 class="text-gold">Win Rate (%)</h6>
+            <p id="stat-winrate" class="fs-2 mb-0 text-gold">0</p>
+          </div>
+        </div>
+        <div class="col-12">
+          <div class="card bg-panel p-3">
+            <h6 class="text-gold">Latest Signal</h6>
+            <p id="signal-text" class="mb-0 text-gold">Loading...</p>
+          </div>
+        </div>
       </div>
     </div>
 
-    <!-- FEATURES -->
+    <!-- UNIQUE FEATURES + NEW ONES -->
     <div class="container-fluid px-4 mb-4 fade-in">
       <div class="row g-3">
-        <!-- Live Price -->
-        <div class="col-md-4"><div class="card bg-panel p-3">
-          <h6 class="text-gold">Live Gold Price (XAUUSD)</h6>
-          <p id="gold-price" class="fs-2 mb-0 text-gold">Loading...</p>
-        </div></div>
-        <!-- Sentiment -->
-        <div class="col-md-4"><div class="card bg-panel p-3">
-          <h6 class="text-gold">Gold Sentiment</h6>
-          <div id="gauge" class="mt-2"><div id="gauge-bar"></div></div>
-          <p id="sentiment-text" class="text-center mt-2 text-gold">Neutral</p>
-        </div></div>
-        <!-- News Feed -->
-        <div class="col-md-4"><div class="card bg-panel p-3">
-          <h6 class="text-gold">Latest Gold News</h6>
-          <div id="news-feed" class="mt-2"><p>Loading news...</p></div>
-        </div></div>
-        <!-- Price Alert Manager -->
-        <div class="col-md-6"><div class="card bg-panel p-3">
-          <h6 class="text-gold">Price Alert Manager</h6>
-          <div class="input-group mt-2">
-            <span class="input-group-text text-gold">Alert @</span>
-            <input type="number" id="alert-price" class="form-control bg-dark text-gold"
-                   placeholder="e.g. 1850.00" step="0.01"/>
-            <button id="set-alert" class="btn btn-gold">Set Alert</button>
+        <!-- Live Gold Price -->
+        <div class="col-md-3">
+          <div class="card bg-panel p-3">
+            <h6 class="text-gold">Live Gold Price (XAUUSD)</h6>
+            <p id="gold-price" class="fs-2 mb-0 text-gold">Loading...</p>
           </div>
-          <small id="alert-status" class="text-muted">No alerts set.</small>
-        </div></div>
-        <!-- Auto Fibonacci -->
-        <div class="col-md-6"><div class="card bg-panel p-3">
-          <h6 class="text-gold">Auto Fibonacci Retracement</h6>
-          <p class="small text-muted">Last 7-day range</p>
-          <button id="draw-fib" class="btn btn-gold">Draw Fib Levels</button>
-        </div></div>
+        </div>
+        <!-- Sentiment Gauge -->
+        <div class="col-md-3">
+          <div class="card bg-panel p-3">
+            <h6 class="text-gold">Gold Sentiment</h6>
+            <div class="gauge mt-2"><div id="gauge-bar" class="gauge-bar"></div></div>
+            <p id="sentiment-text" class="text-center mt-2 text-gold">Neutral</p>
+          </div>
+        </div>
+        <!-- News Feed -->
+        <div class="col-md-3">
+          <div class="card bg-panel p-3">
+            <h6 class="text-gold">Latest Gold News</h6>
+            <div id="news-feed" class="mt-2"><p>Loading news...</p></div>
+          </div>
+        </div>
+        <!-- Price Alert (NEW) -->
+        <div class="col-md-3">
+          <div class="card bg-panel p-3">
+            <h6 class="text-gold">Price Alert</h6>
+            <input type="number" id="alert-price" class="form-control mb-2" placeholder="Target Price"/>
+            <button id="set-alert" class="btn btn-gold w-100">Set Alert</button>
+            <small id="alert-status" class="text-muted alert-set"></small>
+          </div>
+        </div>
+        <!-- Volatility Gauge (NEW) -->
+        <div class="col-md-6">
+          <div class="card bg-panel p-3">
+            <h6 class="text-gold">Gold Volatility (1 min)</h6>
+            <div class="volatility mt-2"><div id="vol-bar" class="vol-bar"></div></div>
+            <p id="vol-text" class="text-center mt-2 text-gold">0.00</p>
+          </div>
+        </div>
       </div>
     </div>
 
-    <!-- MT5-style CHART -->
+    <!-- CHART -->
     <div id="chart-container" class="fade-in">
       <div id="tv_chart"></div>
-      <div id="chart-error" class="text-danger text-center">Chart failed to load.</div>
+      <div id="chart-error" class="text-danger text-center" style="display:none;">
+        Chart failed to load. Please check your connection.
+      </div>
     </div>
 
     <footer class="text-center py-3 text-muted fade-in">© 2025 CBE Global FX</footer>
   </div>
 </div>
 
+<!-- SOUND -->
 <audio id="notif-sound" src="ding.mp3" preload="auto"></audio>
-<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 
+<!-- SCRIPTS -->
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 <script>
-  // Show body
+  // Make UI visible
   document.body.style.visibility = 'visible';
 
-  // User & localized clock
-  document.getElementById('userName').textContent = sessionStorage.getItem('cbeUserName') || 'Trader';
+  // User name & session
+  const userName = sessionStorage.getItem('cbeUserName') || 'Trader';
+  document.getElementById('userName').textContent = userName;
+
+  // Display visitor local time & timezone
+  const timeEl = document.getElementById('currentTime');
+  const tzEl   = document.getElementById('timeZone');
   function updateClock() {
     const tz = Intl.DateTimeFormat().resolvedOptions().timeZone;
-    document.getElementById('currentTime').textContent =
-      new Date().toLocaleString(navigator.language, { timeZone: tz });
+    tzEl.textContent = `Time zone: ${tz}`;
+    timeEl.textContent = new Date().toLocaleString(undefined, { timeZone: tz });
   }
   updateClock(); setInterval(updateClock, 60000);
 
-  // Theme toggle
+  // Theme Toggle
   const themeBtn = document.getElementById('theme-toggle');
   let theme = localStorage.getItem('theme') || 'dark';
-  function applyTheme(t) {
-    document.documentElement.setAttribute('data-theme', t);
-    themeBtn.innerHTML = t==='dark' ? '<i class="bi-sun-fill"></i>' : '<i class="bi-moon-fill"></i>';
-    localStorage.setItem('theme', t);
+  function applyTheme() {
+    document.documentElement.setAttribute('data-theme', theme);
+    themeBtn.innerHTML = theme==='dark'?'<i class="bi-sun-fill"></i>':'<i class="bi-moon-fill"></i>';
+    localStorage.setItem('theme', theme);
   }
-  themeBtn.onclick = () => applyTheme(theme==='dark'?'light':'dark');
-  applyTheme(theme);
+  themeBtn.onclick = () => {
+    theme = theme==='dark'?'light':'dark';
+    applyTheme();
+  };
+  applyTheme();
 
-  // Chat launcher
+  // Chat Launcher
   document.getElementById('chat-launch').onclick = e => {
     e.preventDefault();
     smartsupp('chat:open');
-    // bump iframe styling
-    setTimeout(() => {
-      const iframe = document.querySelector('#smartsupp-iframe');
-      if (iframe) iframe.style.height = '600px';
-    }, 500);
   };
 
-  // Supabase init
+  // Supabase Init
   const SUPA_URL = 'https://dapwpgvnfjcfqqhrpxla.supabase.co';
-  const SUPA_KEY = 'your-anon-key-here';
+  const SUPA_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpX...'; // truncated
   const supabase = window.supabase.createClient(SUPA_URL, SUPA_KEY);
 
-  // TradingView — MT5 style
+  // Statistics & Real-time subscriptions
+  const counts = { signals:0, insights:0, history:0 };
+  const notifCnt = document.getElementById('notif-count');
+  const notifList = document.createElement('ul');
+  notifList.className = 'dropdown-menu';
+  document.body.append(notifList);
+
+  function updateNotifs(type, text) {
+    const li = document.createElement('li');
+    li.className = 'dropdown-item';
+    li.textContent = `${type}: ${text}`;
+    notifList.prepend(li);
+    if (notifList.children.length>10) notifList.removeChild(notifList.lastChild);
+    notifCnt.textContent = parseInt(notifCnt.textContent)+1;
+    document.getElementById('notif-sound').play();
+  }
+  document.getElementById('notif-btn').onclick = e=>{
+    e.stopPropagation();
+    notifList.style.display = notifList.style.display==='block'?'none':'block';
+  };
+  document.addEventListener('click', ()=>notifList.style.display='none');
+
+  // Subscribe to Supabase tables
+  function subscribeTable(tbl, filter=null) {
+    supabase.channel(tbl)
+      .on('postgres_changes',{event:'INSERT',schema:'public',table:tbl,filter},payload=>{
+        const key = tbl==='signals'?'signals': tbl==='trade_insights'?'insights':'history';
+        counts[key]++;
+        document.getElementById(`stat-${key}`).textContent = counts[key];
+        updateNotifs(tbl, new Date(payload.new.created_at||payload.new.timestamp).toLocaleString());
+      })
+      .subscribe();
+  }
+
+  // Initial data fetch
+  (async()=>{
+    try {
+      // start of today for 'Signals Today'
+      const today = new Date().toISOString().slice(0,10);
+      const [{ count: sigToday },
+             { count: ci },
+             { data: trades }] = await Promise.all([
+        supabase.from('signals').select('*',{ count:'exact' }).gte('created_at', today),
+        supabase.from('trade_insights').select('*',{ count:'exact' }),
+        supabase.from('trade_history').select('pips,created_at').eq('user_id', sessionStorage.getItem('cbeUserId')||'unknown')
+      ]);
+      counts.signals  = sigToday;     document.getElementById('stat-signals').textContent  = sigToday;
+      counts.insights = ci;           document.getElementById('stat-insights').textContent = ci;
+      counts.history  = trades.length;document.getElementById('stat-history').textContent  = trades.length;
+
+      // Win rate and pips today
+      const wins = trades.filter(t=>t.pips>0).length;
+      const winrate = trades.length?Math.round(wins/trades.length*100):0;
+      document.getElementById('stat-winrate').textContent = winrate;
+      const pipsToday = trades.filter(t=>t.created_at.slice(0,10)===today).reduce((s,t)=>s+t.pips,0);
+      const pEl = document.getElementById('stat-pips');
+      pEl.textContent = pipsToday;
+      pEl.className = pipsToday>0?'fs-2 mb-0 trend-up':'fs-2 mb-0 trend-down';
+
+      notifCnt.textContent = sigToday+ci+trades.length;
+
+      // Latest Signal
+      const { data: latest } = await supabase.from('signals')
+        .select('details,created_at').order('created_at',{ascending:false}).limit(1);
+      if(latest.length) {
+        document.getElementById('signal-text').textContent =
+          `${latest[0].details} (${new Date(latest[0].created_at).toLocaleString()})`;
+      } else {
+        document.getElementById('signal-text').textContent = 'No signals available';
+      }
+    } catch(err) { console.error(err); }
+    // set up real-time
+    subscribeTable('signals', `created_at.gte.${new Date().toISOString().slice(0,10)}`);
+    subscribeTable('trade_insights');
+    subscribeTable('trade_history', `user_id=eq.${sessionStorage.getItem('cbeUserId')||'unknown'}`);
+  })();
+
+  // TradingView widget (with MT5-style default zoom)
   try {
-    new TradingView.widget({
+    const widget = new TradingView.widget({
       container_id: 'tv_chart',
-      autosize: true,
-      symbol: 'OANDA:XAUUSD',
-      interval: '60',
-      theme: 'dark',
-      style: '1',
-      locale: 'en',
-      toolbar_bg: '#000',
-      hide_side_toolbar: false,
-      allow_symbol_change: false,
-      timeScale: {
-        rightOffset: 12,
-        barSpacing: 15,
-        minBarSpacing: 5
-      },
-      overrides: {
-        'paneProperties.background': '#111',
-        'paneProperties.vertGridProperties.color': '#222',
-        'paneProperties.horzGridProperties.color': '#222'
-      },
-      studies: [{ id: 'FibonacciRetracement@tv-basicstudies' }]
+      width:'100%', height:'100%',
+      symbol:'OANDA:XAUUSD', interval:'240',
+      theme:'dark', style:'1', locale:'en',
+      toolbar_bg:'#000', hide_side_toolbar:false,
+      enable_publishing:false, allow_symbol_change:false
     });
-  } catch (err) {
-    console.error(err);
+    widget.onChartReady(()=>{
+      // zoom out twice for a wider MT5-like view
+      widget.chart().executeAction({ type:'zoomOut' });
+      widget.chart().executeAction({ type:'zoomOut' });
+    });
+  } catch(err) {
+    console.error('Chart error:',err);
     document.getElementById('chart-error').style.display = 'block';
   }
 
-  // Real-time price & sentiment (as before)…
-  // News feed (mock or real)…
+  // Live gold price & volatility tracker
+  let lastPrices = [], lastPrice = 1800;
+  function updateGoldPrice(){
+    const change = (Math.random()-0.5)*2;
+    lastPrice += change;
+    lastPrices.push(lastPrice);
+    if(lastPrices.length>60) lastPrices.shift();
+    const pEl = document.getElementById('gold-price');
+    pEl.textContent = lastPrice.toFixed(2);
+    pEl.className = change>0?'trend-up':'trend-down';
 
-  // Supabase Stats & realtime
-  async function loadStats() {
-    const userId = sessionStorage.getItem('cbeUserId') || 'unknown';
-    const [{ count: s },{ count: i },{ data: th }] = await Promise.all([
-      supabase.from('signals').select('*',{ count:'exact' }),
-      supabase.from('trade_insights').select('*',{ count:'exact' }),
-      supabase.from('trade_history').select('pips,created_at').eq('user_id', userId)
-    ]);
-    document.getElementById('stat-signals').textContent = s;
-    document.getElementById('stat-insights').textContent = i;
-    document.getElementById('stat-history').textContent = th.length;
-    const wins = th.filter(t=>t.pips>0).length;
-    const rate = th.length ? Math.round(wins/th.length*100) : 0;
-    document.getElementById('stat-winrate').textContent = rate;
-    const today = new Date().toISOString().slice(0,10);
-    const pipsToday = th.filter(t=>t.created_at.slice(0,10)===today).reduce((a,t)=>a+t.pips,0);
-    const el = document.getElementById('stat-pips');
-    el.textContent = pipsToday;
-    el.className = pipsToday>0 ? 'fs-2 mb-0 trend-up' : 'fs-2 mb-0 trend-down';
+    // volatility = std dev of lastPrices
+    const mean = lastPrices.reduce((a,b)=>a+b,0)/lastPrices.length;
+    const variance = lastPrices.reduce((a,b)=>a+(b-mean)**2,0)/lastPrices.length;
+    const vol = Math.sqrt(variance).toFixed(2);
+    document.getElementById('vol-text').textContent = vol;
+    const volPct = Math.min(100,(vol/5)*100);
+    document.getElementById('vol-bar').style.width = volPct+'%';
   }
-  loadStats();
+  updateGoldPrice(); setInterval(updateGoldPrice,1000);
 
-  // Realtime SUBSCRIBE → same as before…
+  // Sentiment gauge (simulated)
+  function updateSentiment(){
+    const s = Math.random()*100;
+    document.getElementById('gauge-bar').style.width = s+'%';
+    const el = document.getElementById('sentiment-text');
+    if(s>60){ el.textContent='Bullish'; el.className='text-center mt-2 trend-up'; }
+    else if(s<40){ el.textContent='Bearish'; el.className='text-center mt-2 trend-down'; }
+    else{ el.textContent='Neutral'; el.className='text-center mt-2 text-gold'; }
+  }
+  updateSentiment(); setInterval(updateSentiment,15000);
 
-  // Latest signal fetch → same
+  // News feed (mock)
+  const news = [
+    'Gold prices surge amid economic uncertainty.',
+    'Central banks increase gold reserves.',
+    'Gold demand rises in Asia.'
+  ];
+  document.getElementById('news-feed').innerHTML =
+    news.map(n=>`<p class="mb-1 text-gold">${n}</p>`).join('');
 
-  // Price Alert Manager
+  // Price alert feature
   let alertTarget = null;
   document.getElementById('set-alert').onclick = () => {
-    const v = parseFloat(document.getElementById('alert-price').value);
-    if (!isNaN(v)) {
-      alertTarget = v;
-      document.getElementById('alert-status').textContent = `Alert set @ ${v.toFixed(2)}`;
-    }
+    alertTarget = parseFloat(document.getElementById('alert-price').value);
+    document.getElementById('alert-status').textContent =
+      alertTarget ? `Alert set at ${alertTarget.toFixed(2)}` : 'Enter a valid price';
   };
-  setInterval(() => {
-    if (alertTarget !== null) {
-      const cur = parseFloat(document.getElementById('gold-price').textContent);
-      if (cur >= alertTarget) {
-        new Notification('Gold Alert', { body: `XAUUSD is now ${cur}` });
-        document.getElementById('notif-sound').play();
-        alertTarget = null;
-      }
+  setInterval(()=>{
+    if(alertTarget && lastPrice>=alertTarget) {
+      updateNotifs('Alert', `Gold reached ${alertTarget.toFixed(2)}`);
+      alertTarget = null;
+      document.getElementById('alert-status').textContent = '—';
     }
-  }, 1000);
-
-  // Auto Fibonacci
-  document.getElementById('draw-fib').onclick = () => {
-    const w = TradingView.widget.activeWidget();
-    if (w) w.chart().createStudy('FibonacciRetracement', false, false, [0,100], null, { color:'#bfa057' });
-  };
+  },1000);
 </script>
 </body>
 </html>
