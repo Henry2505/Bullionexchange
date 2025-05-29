@@ -2,67 +2,59 @@
 <html lang="en" data-theme="dark">
 <head>
   <meta charset="UTF-8"/>
-  <meta name="viewport" content="width=device-width,initial-scale=1"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>VIP Forex Signals • CBE</title>
 
-  <!-- Poppins font -->
-  <link
-    href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700&display=swap"
-    rel="stylesheet"/>
+  <!-- ── CLIENT-SIDE GUARD ─────────────────────────────────────────────────── -->
+  <script>
+    if (sessionStorage.getItem('cbeLoggedIn') !== 'true') {
+      window.location.replace('login.html');
+    }
+  </script>
 
-  <!-- Supabase UMD build -->
+  <!-- Poppins & Supabase -->
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700&display=swap" rel="stylesheet"/>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js/dist/umd/supabase.min.js"></script>
-  <!-- TradingView widget -->
+  <!-- TradingView core (needed for widget) -->
   <script src="https://s3.tradingview.com/tv.js"></script>
 
   <style>
     /* ── GLOBAL WATERMARK & STAR BACKGROUND ───────────────────────────────── */
-    html {
-      position: relative; height: 100%;
-    }
+    html { position: relative; height: 100%; }
     html::before {
-      content: "";
-      position: fixed; inset: 0;
+      content:""; position:fixed; inset:0;
       background:
         linear-gradient(135deg,#000,#111),
-        radial-gradient(circle at 10% 20%, #ffd700 1px, transparent 0),
-        radial-gradient(circle at 30% 40%, #ffd700 1px, transparent 0),
-        radial-gradient(circle at 50% 15%, #ffd700 1px, transparent 0),
-        radial-gradient(circle at 70% 60%, #ffd700 1px, transparent 0),
-        radial-gradient(circle at 85% 25%, #ffd700 1px, transparent 0),
-        radial-gradient(circle at 40% 80%, #ffd700 1px, transparent 0),
-        radial-gradient(circle at 60% 30%, #ffd700 1px, transparent 0),
-        radial-gradient(circle at 20% 70%, #ffd700 1px, transparent 0),
-        radial-gradient(circle at 80% 50%, #ffd700 1px, transparent 0);
-      background-repeat: no-repeat;
-      z-index: -3;
+        radial-gradient(circle at 10% 20%,#ffd700 1px,transparent 0),
+        radial-gradient(circle at 30% 40%,#ffd700 1px,transparent 0),
+        radial-gradient(circle at 50% 15%,#ffd700 1px,transparent 0),
+        radial-gradient(circle at 70% 60%,#ffd700 1px,transparent 0),
+        radial-gradient(circle at 85% 25%,#ffd700 1px,transparent 0),
+        radial-gradient(circle at 40% 80%,#ffd700 1px,transparent 0);
+      background-repeat:no-repeat; z-index:-3;
     }
     html::after {
-      content: "apexincomeoptions signal";
-      position: fixed;
-      top: 50%; left: 50%;
-      transform: translate(-50%,-50%) rotate(-30deg);
-      font-size: 8rem; font-weight:800;
-      color: #ffd700; opacity: 0.04;
-      white-space: nowrap; pointer-events: none;
-      z-index: -2;
+      content:"apexincomeoptions signal";
+      position:fixed; top:50%; left:50%;
+      transform:translate(-50%,-50%) rotate(-30deg);
+      font-size:8rem; font-weight:800;
+      color:#ffd700; opacity:0.04;
+      pointer-events:none; white-space:nowrap;
+      z-index:-2;
     }
 
     /* ── RESET & BASE ─────────────────────────────────────────────────────── */
     * { margin:0; padding:0; box-sizing:border-box; }
     body {
-      height:100%; font-family:'Poppins',sans-serif;
-      color:#f5f5f5; overflow-x:hidden;
-      position: relative; z-index:1;
+      font-family:'Poppins',sans-serif;
+      color:#f5f5f5; background:transparent;
+      overflow-x:hidden; position:relative; z-index:1;
     }
     .container { max-width:900px; margin:80px auto; padding:0 20px; }
 
-    /* ── HEADER & NOTICES ───────────────────────────────────────────────── */
+    /* ── HEADER & NOTICE ─────────────────────────────────────────────────── */
     header { text-align:center; margin-bottom:40px; }
-    header h1 {
-      font-size:3rem; color:#ffd700;
-      text-shadow:0 0 8px rgba(255,215,0,0.6);
-    }
+    header h1 { font-size:3rem; color:#ffd700; text-shadow:0 0 8px rgba(255,215,0,0.6); }
     header p { color:#ccc; font-size:1.1rem; }
     .warning {
       background:rgba(255,215,0,0.1); border:2px solid #ffd700;
@@ -71,23 +63,20 @@
       animation:pulse 2s infinite;
     }
     @keyframes pulse {
-      0%,100% { box-shadow:0 0 12px rgba(255,215,0,0.5); }
-      50%     { box-shadow:0 0 24px rgba(255,215,0,0.8); }
+      0%,100%{box-shadow:0 0 12px rgba(255,215,0,0.5);}
+      50%{box-shadow:0 0 24px rgba(255,215,0,0.8);}
     }
-    .notice {
-      text-align:center; color:#ff5555;
-      font-size:1rem; margin-bottom:25px;
-    }
+    .notice { text-align:center; color:#ff5555; font-size:1rem; margin-bottom:25px; }
 
     /* ── SIGNAL CARD + CARD WATERMARK ───────────────────────────────────── */
     .signal-card {
       position:relative; overflow:hidden;
       background:rgba(20,20,20,0.85); border:2px solid #333;
       border-radius:16px; box-shadow:0 6px 30px rgba(0,0,0,0.8);
-      margin-bottom:50px; animation:slideInUp 0.8s ease both;
+      margin-bottom:50px; animation:slideInUp .8s ease both;
     }
     .signal-card::before {
-      content: "apexincomeoptions signal";
+      content:"apexincomeoptions signal";
       position:absolute; top:50%; left:50%;
       transform:translate(-50%,-50%) rotate(-20deg);
       font-size:4rem; font-weight:800;
@@ -95,14 +84,12 @@
       pointer-events:none; white-space:nowrap;
     }
     @keyframes slideInUp {
-      from { opacity:0; transform: translateY(40px); }
-      to   { opacity:1; transform: translateY(0); }
+      from{opacity:0; transform:translateY(40px);} to{opacity:1; transform:translateY(0);}
     }
     .signal-header {
       position:relative; z-index:1;
       display:flex; justify-content:space-between;
-      background:#111; padding:20px 28px;
-      border-bottom:1px solid #333;
+      background:#111; padding:20px 28px; border-bottom:1px solid #333;
     }
     .signal-header h2 { color:#ffd700; font-size:1.6rem; }
     .signal-header .time { color:#bbb; font-size:1rem; }
@@ -121,27 +108,21 @@
     .detail[data-type="entry"]::before,
     .detail[data-type="entry"]::after {
       content:"★"; position:absolute; color:#ffd700;
-      font-size:0.8rem; animation:twinkle 1.5s infinite;
+      font-size:.8rem; animation:twinkle 1.5s infinite;
     }
-    .detail[data-type="entry"]::before {
-      top:6px; left:6px; animation-delay:0;
-    }
-    .detail[data-type="entry"]::after {
-      bottom:6px; right:6px; animation-delay:0.8s;
-    }
+    .detail[data-type="entry"]::before { top:6px; left:6px; animation-delay:0; }
+    .detail[data-type="entry"]::after { bottom:6px; right:6px; animation-delay:.8s; }
     @keyframes twinkle {
-      0%,100% { opacity:0.3; transform: scale(0.8); }
-      50%     { opacity:1;   transform: scale(1.2); }
+      0%,100%{opacity:.3;transform:scale(.8);}50%{opacity:1;transform:scale(1.2);}
     }
     .detail span { font-weight:600; color:#ffd700; }
     .copy-btn {
       background:#ffd700; color:#111; border:none;
       padding:6px 12px; border-radius:6px; font-weight:bold;
-      cursor:pointer; transition:transform .2s, box-shadow .2s;
+      cursor:pointer; transition:transform .2s,box-shadow .2s;
     }
     .copy-btn:hover {
-      transform:translateY(-2px);
-      box-shadow:0 0 10px #ffd700;
+      transform:translateY(-2px); box-shadow:0 0 10px #ffd700;
     }
     .admin-note {
       position:relative; z-index:1;
@@ -150,30 +131,28 @@
       color:#ffcc00; font-style:italic; border-radius:6px;
     }
 
-    /* ── FULL-SCREEN LIVE CHART (TradingView) ─────────────────────────────── */
-    #tv_chart_container {
-      position:relative; z-index:0;
-      width:100vw; height:100vh;
-      margin:0; border:none;
+    /* ── CHART SECTION ────────────────────────────────────────────────────── */
+    #gold-chart {
+      padding:40px 20px; max-width:1200px; margin:40px auto;
+      text-align:center;
+    }
+    #gold-chart h2 {
+      color:#ffd700; margin-bottom:20px; font-size:2rem;
+    }
+    #tradingview_chart {
+      height:600px; border:1px solid rgba(255,255,255,0.2);
+      border-radius:8px; overflow:hidden;
     }
 
-    /* ── FOOTER ─────────────────────────────────────────────────────────── */
+    /* ── FOOTER ──────────────────────────────────────────────────────────── */
     footer {
-      position:relative; z-index:1;
-      text-align:center; color:#666;
-      font-size:0.9rem; padding:20px 0;
-      background:rgba(0,0,0,0.7);
+      text-align:center; padding:40px 20px;
+      background:rgba(0,0,0,0.8); font-size:.9rem;
+      color:#666;
     }
   </style>
 </head>
 <body>
-
-  <!-- AUTH GUARD -->
-  <script>
-    if (sessionStorage.getItem('cbeLoggedIn') !== 'true') {
-      window.location.replace('login.html');
-    }
-  </script>
 
   <div class="container">
     <header>
@@ -188,36 +167,44 @@
       🔓 Live signals are only for approved members.
     </div>
 
+    <!-- ── Signal Card ─────────────────────────────────────────────────────── -->
     <div id="signalCard" class="signal-card">
       <p style="text-align:center;color:#999;padding:60px;position:relative;z-index:1;">
         Loading latest signal…
       </p>
     </div>
-  </div>
 
-  <!-- Full-screen TradingView chart -->
-  <div id="tv_chart_container"></div>
+    <!-- ── Gold Chart Section ───────────────────────────────────────────────── -->
+    <section id="gold-chart">
+      <h2>Gold (XAU/USD) Real-Time Chart</h2>
+      <div id="tradingview_chart"></div>
+    </section>
+  </div>
 
   <footer>© 2025 CBE – Chukwuemeka Bullion Exchange. All rights reserved.</footer>
 
+  <!-- ── TradingView Widget ───────────────────────────────────────────────── -->
   <script>
-    // ── Supabase Setup ─────────────────────────────────────────────────────────
+    new TradingView.widget({
+      container_id: "tradingview_chart",
+      width: "100%", height: "100%",
+      symbol: "OANDA:XAUUSD", interval: "60",
+      timezone: "Etc/UTC", theme: "dark", style: "1",
+      locale: "en", toolbar_bg: "#1f1f1f",
+      enable_publishing: false, hide_side_toolbar: false,
+      allow_symbol_change: true, details: true,
+      studies: ["MACD@tv-basicstudies","RSI@tv-basicstudies"],
+      withdateranges: true, show_popup_button: true,
+      popup_width: "1000", popup_height: "650"
+    });
+  </script>
+
+  <!-- ── Supabase & Signals Logic ─────────────────────────────────────────── -->
+  <script>
     const SUPA_URL = 'https://dapwpgvnfjcfqqhrpxla.supabase.co';
     const SUPA_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImRhcHdwZ3ZuZmpjZnFxaHJweGxhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDcwNDA4ODgsImV4cCI6MjA2MjYxNjg4OH0.ICC0UsLlzJDNre7rFCeD3k6iVzo6jOJgn3PhABpEMsQ';
     const supabase = window.supabase.createClient(SUPA_URL, SUPA_KEY);
 
-    // ── INIT ──────────────────────────────────────────────────────────────────
-    window.addEventListener('DOMContentLoaded', () => {
-      loadLatestSignal();
-      setInterval(loadLatestSignal, 15000);
-      supabase
-        .from('signals')
-        .on('INSERT', () => loadLatestSignal())
-        .subscribe();
-      initTradingView();
-    });
-
-    // ── FETCH, RENDER & CLEANUP ────────────────────────────────────────────────
     async function loadLatestSignal() {
       const card = document.getElementById('signalCard');
       card.innerHTML = `<p style="text-align:center;color:#999;padding:60px;position:relative;z-index:1;">
@@ -227,9 +214,8 @@
         let { data: signals, error } = await supabase
           .from('signals')
           .select('id,action,asset,entry,sl,tp1,tp2,note,created_at')
-          .order('created_at', { ascending: false })
+          .order('created_at',{ascending:false})
           .limit(1);
-
         if (error) throw error;
         if (!signals.length) {
           card.innerHTML = `<p style="text-align:center;color:#ff5555;padding:40px;position:relative;z-index:1;">
@@ -238,8 +224,7 @@
           return;
         }
         const sig = signals[0];
-        const dt  = new Date(sig.created_at);
-
+        const dt = new Date(sig.created_at);
         card.innerHTML = `
           <div class="signal-header">
             <h2>${dt.toLocaleDateString('en-GB')}</h2>
@@ -263,45 +248,23 @@
               <button class="copy-btn" onclick="copyText('${sig.tp2}')">Copy</button>
             </div>
           </div>
-          <div class="admin-note">
-            Note: ${sig.note || 'Trade at your own risk.'}
-          </div>
-        `;
+          <div class="admin-note">Note: ${sig.note||'Trade at your own risk.'}</div>`;
         // delete older
         await supabase.from('signals').delete().neq('id', sig.id);
-
       } catch (err) {
-        console.error('Load error:', err);
+        console.error(err);
         card.innerHTML = `<p style="text-align:center;color:#ff5555;padding:40px;position:relative;z-index:1;">
                             Unable to load signal. Please try again later.
                           </p>`;
       }
     }
 
-    // ── LIVE CHART ────────────────────────────────────────────────────────────
-    function initTradingView() {
-      new TradingView.widget({
-        container_id: "tv_chart_container",
-        autosize: true,
-        symbol: "OANDA:XAUUSD",
-        interval: "60",
-        timezone: "Etc/UTC",
-        theme: "dark",
-        style: "1",
-        locale: "en",
-        toolbar_bg: "#1f1f1f",
-        enable_publishing: false,
-        hide_side_toolbar: false,
-        allow_symbol_change: true,
-        details: true,
-        studies: ["MACD@tv-basicstudies","RSI@tv-basicstudies"],
-        withdateranges: true,
-        hotlist: true,
-        calendar: false
-      });
-    }
+    window.addEventListener('DOMContentLoaded', () => {
+      loadLatestSignal();
+      setInterval(loadLatestSignal, 15000);
+      supabase.from('signals').on('INSERT', ()=>loadLatestSignal()).subscribe();
+    });
 
-    // ── COPY ───────────────────────────────────────────────────────────────────
     function copyText(txt) {
       navigator.clipboard.writeText(txt)
         .then(()=>alert('Copied: '+txt))
