@@ -106,22 +106,8 @@
       border-radius: 50%;
       margin: 0 2px;
     }
-    .circle.win {
-      background: var(--green);
-    }
-    .circle.loss {
-      background: var(--red);
-    }
-    .fullscreen {
-      position: fixed;
-      top: 0;
-      left: 0;
-      width: 100%;
-      height: 100%;
-      z-index: 9999;
-      background: var(--bg);
-      padding: 0;
-    }
+    .circle.win { background: var(--green); }
+    .circle.loss { background: var(--red); }
   </style>
 </head>
 
@@ -212,12 +198,9 @@
         </div>
 
         <!-- 4H XAU/USD Chart -->
-        <div class="card bg-panel p-4 mb-4 fade-in" id="chart-card">
-          <div class="d-flex justify-content-between align-items-center mb-3">
-            <h2 class="text-gold">XAU/USD (4H)</h2>
-            <button id="fullscreen-chart" class="btn btn-sm btn-gold">Full Screen</button>
-          </div>
-          <div id="tv_chart_4h" style="height: 600px;"></div>
+        <div class="card bg-panel p-4 mb-4 fade-in">
+          <h2 class="text-gold mb-3">XAU/USD (4H)</h2>
+          <div id="tv_chart_4h"></div>
         </div>
 
         <!-- Gold News -->
@@ -258,7 +241,7 @@
   <script>
     // Supabase Initialization
     const SUPA_URL = 'https://dapwpgvnfjcfqqhrpxla.supabase.co';
-    const SUPA_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImRhcHdwZ3ZuZmpjZnFxaHJweGxhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDcwNDA4ODgsImV4cCI6MjA2MjYxNjg4OH0.ICC0UsLlzJDNre7rFCeD3k6iVzo6jOJgn3PhABpEMsQ';
+    const SUPA_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImRhcHdwZ3ZuZmpjZnFxaHJweGxhIiwicm9sZS I6ImFub24iLCJpYXQiOjE3NDcwNDA4ODgsImV4cCI6MjA2MjYxNjg4OH0.ICC0UsLlzJDNre7rFCeD3k6iVzo6jOJgn3PhABpEMsQ';
     const supabase = window.supabase.createClient(SUPA_URL, SUPA_KEY);
 
     const fmtTime = ts => new Date(ts).toLocaleString();
@@ -298,12 +281,10 @@
       document.getElementById('stat-insights').textContent = insCount || 0;
 
       // Recent Trades
-      const { data: trades } = await supabase
+      const [{ count: tradesCount }] = await supabase
         .from('trades')
-        .select('asset, pips, result')
-        .order('timestamp', { ascending: false })
-        .limit(5);
-      document.getElementById('stat-trades').textContent = trades ? trades.length : 0;
+        .select('id', { count: 'exact' });
+      document.getElementById('stat-trades').textContent = tradesCount || 0;
 
       // 24h Gold Change (Mocked)
       document.getElementById('stat-gold-change').textContent = 'N/A';
@@ -325,17 +306,12 @@
       });
     }
 
-    // Chart Widget Initialization
-    let chartWidget;
-
-    function initChartWidget(containerId, height) {
-      if (chartWidget) {
-        chartWidget.remove();
-      }
-      chartWidget = new TradingView.widget({
-        container_id: containerId,
+    // Initialize TradingView Widgets
+    function initWidgets() {
+      new TradingView.widget({
+        container_id: 'tv_chart_4h',
         width: '100%',
-        height: height,
+        height: '600',
         symbol: 'OANDA:XAUUSD',
         interval: '240',
         timezone: 'Etc/UTC',
@@ -345,10 +321,6 @@
         withdateranges: true,
         studies: ['MASimple@tv-basicstudies'],
       });
-    }
-
-    // Other Widgets Initialization
-    function initWidgets() {
       new TradingView.widget({
         container_id: 'news-widget',
         width: '100%',
@@ -373,19 +345,27 @@
       });
     }
 
-    // Real-time Signals Listener
+    // Real-time Listeners for Stat Updates
     supabase.from('signals').on('INSERT', () => {
       loadLatestSignal();
       loadDashboard();
+      document.getElementById('notif-count').textContent =
+        +document.getElementById('notif-count').textContent + 1;
       const p = document.createElement('p');
       p.textContent = 'New signal received';
       document.getElementById('notif-list').prepend(p);
-      document.getElementById('notif-count').textContent =
-        +document.getElementById('notif-count').textContent + 1;
       document.getElementById('notif-sound').play();
     }).subscribe();
 
-    // Clock, Theme, Sidebar, Notifications, and Full-Screen Toggle
+    supabase.from('insights').on('INSERT', () => {
+      loadDashboard();
+    }).subscribe();
+
+    supabase.from('trades').on('INSERT', () => {
+      loadDashboard();
+    }).subscribe();
+
+    // Clock, Theme, Sidebar, and Notifications
     (function() {
       // Clock
       setInterval(() => {
@@ -402,9 +382,6 @@
         document.documentElement.setAttribute('data-theme', theme);
         localStorage.setItem('theme', theme);
         btn.innerHTML = theme === 'dark' ? '<i class="bi-sun-fill"></i>' : '<i class="bi-moon-fill"></i>';
-        const chartContainer = document.getElementById('tv_chart_4h');
-        const currentHeight = chartContainer.style.height.replace('px', '') || 600;
-        initChartWidget('tv_chart_4h', currentHeight);
         initWidgets();
       };
 
@@ -418,26 +395,6 @@
       document.getElementById('notif-btn').addEventListener('click', () => {
         new bootstrap.Dropdown(document.getElementById('notif-btn')).toggle();
       });
-
-      // Full-Screen Toggle for Chart
-      document.getElementById('fullscreen-chart').addEventListener('click', () => {
-        const chartCard = document.getElementById('chart-card');
-        const chartContainer = document.getElementById('tv_chart_4h');
-        if (chartCard.classList.contains('fullscreen')) {
-          chartCard.classList.remove('fullscreen');
-          chartContainer.style.height = '600px';
-          initChartWidget('tv_chart_4h', 600);
-          document.getElementById('fullscreen-chart').textContent = 'Full Screen';
-          document.body.style.overflow = 'auto';
-        } else {
-          chartCard.classList.add('fullscreen');
-          const fullHeight = window.innerHeight;
-          chartContainer.style.height = `${fullHeight}px`;
-          initChartWidget('tv_chart_4h', fullHeight);
-          document.getElementById('fullscreen-chart').textContent = 'Exit Full Screen';
-          document.body.style.overflow = 'hidden';
-        }
-      });
     })();
 
     // Initial Load
@@ -445,14 +402,11 @@
       document.getElementById('userName').textContent = sessionStorage.getItem('cbeUserName') || 'Trader';
       loadLatestSignal();
       loadDashboard();
-      initChartWidget('tv_chart_4h', 600);
       initWidgets();
       document.getElementById('refresh-signal').onclick = loadLatestSignal;
-
-      // Watchlist Add Functionality
       document.getElementById('add-watch').onclick = () => {
-        const input = document.getElementById('watch-input');
-        const sym = input.value.trim().toUpperCase();
+        const inp = document.getElementById('watch-input');
+        const sym = inp.value.trim().toUpperCase();
         if (sym) {
           const list = JSON.parse(localStorage.getItem('watchlist') || '[]');
           if (!list.includes(sym)) {
@@ -460,7 +414,7 @@
             localStorage.setItem('watchlist', JSON.stringify(list));
             loadDashboard();
           }
-          input.value = '';
+          inp.value = '';
         }
       };
     });
