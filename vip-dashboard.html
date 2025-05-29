@@ -1,6 +1,14 @@
 <!DOCTYPE html>
 <html lang="en" data-theme="dark">
 <head>
+  <!-- ─── LOCAL-STORAGE GUARD ───────────────────────────────────────────────── -->
+  <script>
+    if (localStorage.getItem('isLoggedIn') !== 'true') {
+      window.location.replace('login.html');
+    }
+  </script>
+  <!-- ────────────────────────────────────────────────────────────────────────── -->
+
   <meta charset="UTF-8"/>
   <meta name="viewport" content="width=device-width,initial-scale=1"/>
   <title>VIP Dashboard – CBE</title>
@@ -249,49 +257,13 @@
     });
   </script>
 
-  <!-- Supabase + Personalization & UI Scripts -->
-  <script type="module">
-    import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm';
-    const SUPA_URL = 'https://dapwpgvnfjcfqqhrpxla.supabase.co';
-    const SUPA_KEY = 'YOUR_SUPABASE_ANON_KEY';
-    const supabase = createClient(SUPA_URL, SUPA_KEY);
-
-    // ─── AUTH & APPROVAL GUARD ─────────────────────────────────────────────────
-    (async () => {
-      // 1. Get the current user
-      const { data: { user }, error: userError } = await supabase.auth.getUser();
-      if (!user || userError) {
-        // not signed in → redirect
-        window.location.replace('login.html');
-        return;
-      }
-
-      // 2. Check their "approved" flag
-      const { data: profile, error: profileError } = await supabase
-        .from('users')
-        .select('approved')
-        .eq('id', user.id)
-        .single();
-
-      if (profileError || !profile?.approved) {
-        // either DB error or not approved → sign out & redirect
-        await supabase.auth.signOut();
-        window.location.replace('login.html');
-        return;
-      }
-
-      // 3. They’re signed in AND approved — fall through to your UI code
-    })();
-
-    // Personalize greeting
-    (async()=>{
-      const { data: { user } } = await supabase.auth.getUser();
-      const { data: row } = await supabase
-        .from('users').select('name').eq('id', user.id).single();
-      const name = row?.name || 'Trader';
-      document.getElementById('greeting').textContent = `Welcome back, ${name}!`;
-    })();
-
+  <!-- UI Scripts -->
+  <script>
+    // Personalize greeting if you have a name in localStorage
+    const storedName = localStorage.getItem('userName');
+    if (storedName) {
+      document.getElementById('greeting').textContent = `Welcome back, ${storedName}!`;
+    }
     // Theme toggle
     const html = document.documentElement;
     const tbtn = document.getElementById('theme-toggle');
@@ -326,7 +298,7 @@
     document.querySelectorAll('.slide-in').forEach(el => obs.observe(el));
   </script>
 
-  <!-- Smartsupp Live Chat script -->
+  <!-- Smartsupp Live Chat -->
   <script type="text/javascript">
     var _smartsupp = _smartsupp || {};
     _smartsupp.key = '018a8bbd868518221e725341a7b2601231ec7ce8';
@@ -337,6 +309,5 @@
       c.src='https://www.smartsuppchat.com/loader.js?';s.parentNode.insertBefore(c,s);
     })(document);
   </script>
-
 </body>
 </html>
