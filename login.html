@@ -102,10 +102,10 @@
   <script>
     // ── Init Supabase ───────────────────────────────────────────────────────────
     const SUPA_URL      = 'https://dapwpgvnfjcfqqhrpxla.supabase.co';
-    const SUPA_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImRhcHdwZ3ZuZmpjZnFxaHJweGxhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDcwNDA4ODgsImV4cCI6MjA2MjYxNjg4OH0.ICC0UsLlzJDNre7rFCeD3k6iVzo6jOJgn3PhABpEMsQ';
+    const SUPA_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzYSIsInJlZiI6ImRhcHdwZ3ZuZmpjZnFxaHJweGxhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDcwNDA4ODgsImV4cCI6MjA2MjYxNjg4OH0.ICC0UsLlzJDNre7rFCeD3k6iVzo6jOJgn3PhABpEMsQ';
     const sb = supabase.createClient(SUPA_URL, SUPA_ANON_KEY);
 
-    // ── UI Setup ────────────────────────────────────────────────────────────────
+    // ── Theme Toggle ────────────────────────────────────────────────────────────
     window.addEventListener('DOMContentLoaded', () => {
       document.getElementById('login-card').classList.add('visible');
       const saved = localStorage.getItem('theme') || 'dark';
@@ -122,7 +122,7 @@
         .textContent = next === 'dark' ? '🌞' : '🌜';
     });
 
-    // ── Login Logic ─────────────────────────────────────────────────────────────
+    // ── Login Logic (only checks “approved” status) ─────────────────────────────
     document.getElementById('login-form').addEventListener('submit', async e => {
       e.preventDefault();
       const alertDiv = document.getElementById('login-alert');
@@ -133,7 +133,7 @@
       const password = document.getElementById('password').value;
 
       try {
-        // 1) Fetch user row (including id & name)
+        // Fetch user by email
         const { data: userRow, error, count } = await sb
           .from('users')
           .select('id,email,password,status,name', { count: 'exact' })
@@ -144,11 +144,12 @@
         if (error) throw error;
         if (count === 0) throw new Error('No account found for that email.');
         if (userRow.password !== password) throw new Error('Invalid login credentials.');
+        // Only allow if status = "approved"
         if (!userRow.status || userRow.status.toLowerCase() !== 'approved') {
           throw new Error('Your account is not yet approved by admin.');
         }
 
-        // 2) SUCCESS! store session and go to dashboard
+        // SUCCESS: Save session and redirect
         sessionStorage.setItem('cbeLoggedIn', 'true');
         sessionStorage.setItem('cbeUserId',   userRow.id);
         sessionStorage.setItem('cbeUserName', userRow.name);
@@ -162,7 +163,7 @@
     });
   </script>
 
-  <!-- Smartsupp Live Chat script -->
+  <!-- Smartsupp Live Chat -->
   <script type="text/javascript">
     var _smartsupp = _smartsupp || {};
     _smartsupp.key = '018a8bbd868518221e725341a7b2601231ec7ce8';
