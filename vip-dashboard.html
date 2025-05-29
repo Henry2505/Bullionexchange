@@ -2,7 +2,7 @@
 <html lang="en" data-theme="dark">
 <head>
   <meta charset="UTF-8"/>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <meta name="viewport" content="width=device-width,initial-scale=1.0"/>
   <title>VIP Dashboard – CBE Global FX</title>
 
   <!-- Redirect if not logged in -->
@@ -30,7 +30,7 @@
     :root {
       --bg: #000;
       --panel-bg: rgba(0,0,0,0.85);
-      --gold: #ffd700;
+      --gold: #e6be8a;
       --muted: #555;
       --text: #eee;
       --card-bg: rgba(20,20,20,0.85);
@@ -46,21 +46,25 @@
     }
 
     body {
-      display:flex; background:var(--bg); color:var(--text);
+      display:flex;
+      background:var(--bg);
+      color:var(--text);
       visibility:hidden;
     }
 
     /* STAR BACKGROUND */
     body::before {
-      content:""; position:fixed; top:0; left:0; width:100%; height:100%;
+      content:"";
+      position:fixed; top:0; left:0; width:100%; height:100%;
       background:url('https://raw.githubusercontent.com/joshbuchea/atom/master/svgs/stars.svg') center/cover no-repeat;
       opacity:0.1; pointer-events:none; z-index:-1;
     }
 
     /* SIDEBAR */
     #sidebar {
-      width:240px; background:var(--panel-bg); display:flex; flex-direction:column;
-      align-items:center; padding:2rem 1rem;
+      width:240px; background:var(--panel-bg);
+      display:flex; flex-direction:column; align-items:center;
+      padding:2rem 1rem;
     }
     #sidebar .logo { cursor:pointer; margin-bottom:2rem; }
     #sidebar .logo img { width:140px; }
@@ -81,7 +85,10 @@
       padding:1rem 2rem; background:var(--panel-bg);
       box-shadow:0 2px 8px var(--overlay); position:sticky; top:0; z-index:10;
     }
-    #topbar .greeting { font-size:1.25rem; }
+    #topbar .left { display:flex; align-items:center; }
+    #topbar .greeting { font-size:1.25rem; margin-right:2rem; }
+    #topbar .user-name { font-weight:700; color:var(--gold); }
+    #topbar .datetime { font-size:.9rem; color:var(--text); }
     #topbar .actions { display:flex; align-items:center; }
     .btn-icon, #theme-toggle {
       background:none; border:none; color:var(--text);
@@ -100,7 +107,7 @@
     }
     .stat-card {
       background:var(--card-bg); padding:1.2rem; border-radius:8px;
-      box-shadow:0 4px 20px var(--overlay);
+      box-shadow:0 4px 20px var(--overlay); text-align:center;
     }
     .stat-card h3 { color:var(--muted); margin-bottom:.4rem; }
     .stat-card p { font-size:1.8rem; font-weight:600; color:var(--gold); }
@@ -127,20 +134,36 @@
     .card-body a.btn:hover { opacity:.8; }
 
     /* FULLSCREEN CHART */
-    #gold-chart { position:relative; height:100vh; margin-top:2rem; }
-    #gold-chart h2 { text-align:center; color:var(--gold); padding-top:1rem; }
+    #gold-chart {
+      position:relative; width:100%; height:100vh; margin-top:2rem; overflow:hidden;
+    }
+    #gold-chart h2 {
+      text-align:center; color:var(--gold); padding-top:1rem;
+    }
     #tradingview_chart {
       position:absolute; top:0; left:0; width:100%; height:100%;
     }
+
+    /* NOTIFICATIONS DROPDOWN */
+    .notif-dropdown {
+      display:none; position:absolute; top:60px; right:30px;
+      background:var(--panel-bg); list-style:none; padding:10px; margin:0;
+      border:1px solid var(--gold); border-radius:4px; max-width:300px; z-index:20;
+    }
+    .notif-dropdown .notif-item {
+      padding:8px; color:var(--text); font-size:.9rem;
+      border-bottom:1px solid rgba(255,255,255,0.1);
+    }
+    .notif-dropdown .notif-item:last-child { border-bottom:none; }
 
     /* FOOTER */
     footer { text-align:center; padding:1rem; background:var(--panel-bg); color:var(--muted); }
 
     /* RESPONSIVE */
     @media(max-width:768px){
-      #sidebar{display:none;}
-      body{flex-direction:column;}
-      #topbar,#stats,section{padding:1rem;}
+      #sidebar { display:none; }
+      body { flex-direction:column; }
+      #topbar,#stats,section { padding:1rem; }
     }
   </style>
 </head>
@@ -148,8 +171,8 @@
 
   <!-- SIDEBAR -->
   <aside id="sidebar">
-    <div class="logo" onclick="window.location='index.html'">
-      <img src="CBE_logo.PNG" alt="CBE Global FX Logo"/>
+    <div class="logo" onclick="location.href='index.html'">
+      <img src="CBE_logo.PNG" alt="CBE Logo"/>
     </div>
     <nav>
       <a href="vip-dashboard.html" class="active"><i class="fas fa-chart-pie"></i> Dashboard</a>
@@ -164,7 +187,12 @@
   <div id="main">
     <!-- TOPBAR -->
     <div id="topbar">
-      <div class="greeting">Welcome back, <strong id="userName">Trader</strong>!</div>
+      <div class="left">
+        <div class="greeting">
+          Welcome back, <span class="user-name" id="userName">Trader</span>!
+        </div>
+        <div class="datetime" id="currentDatetime">Loading time…</div>
+      </div>
       <div class="actions">
         <button id="theme-toggle" aria-label="Toggle theme">🌞</button>
         <button id="notif-button" class="btn-icon" aria-label="Notifications">
@@ -212,10 +240,10 @@
           </div>
         </div>
         <div class="card">
-          <div class="card-header">Live Chart</div>
+          <div class="card-header">Live Market Visualization</div>
           <div class="card-body">
-            <p>Scroll down for full-screen XAU/USD chart.</p>
-            <a href="#gold-chart" class="btn">Go to Chart</a>
+            <p>Dive into an immersive, edge-to-edge gold market experience.</p>
+            <a href="#gold-chart" class="btn">Explore the Chart</a>
           </div>
         </div>
       </div>
@@ -227,33 +255,39 @@
       <div id="tradingview_chart"></div>
     </section>
 
-    <footer>© 2025 CBE Global FX • All rights reserved.</footer>
+    <footer>© 2025 CBE Global FX &bull; All rights reserved.</footer>
   </div>
 
-  <!-- Optional notification sound file -->
+  <!-- Notification sound -->
   <audio id="notif-sound" src="ding.mp3" preload="auto"></audio>
 
   <script>
-    // Show page & set user
+    // Show page & set user name
     document.body.style.visibility = 'visible';
     document.getElementById('userName').textContent = sessionStorage.getItem('cbeUserName') || 'Trader';
+
+    // Live date/time
+    function updateTime() {
+      document.getElementById('currentDatetime').textContent = new Date().toLocaleString();
+    }
+    updateTime(); setInterval(updateTime, 60000);
 
     // Theme toggle
     const html = document.documentElement,
           tbtn = document.getElementById('theme-toggle');
     let theme = localStorage.getItem('theme') || 'dark';
     html.setAttribute('data-theme', theme);
-    tbtn.textContent = theme === 'dark' ? '🌞' : '🌜';
+    tbtn.textContent = theme==='dark'?'🌞':'🌜';
     tbtn.onclick = () => {
-      theme = theme === 'dark' ? 'light' : 'dark';
+      theme = theme==='dark'?'light':'dark';
       html.setAttribute('data-theme', theme);
       localStorage.setItem('theme', theme);
-      tbtn.textContent = theme === 'dark' ? '🌞' : '🌜';
+      tbtn.textContent = theme==='dark'?'🌞':'🌜';
     };
 
     // Supabase init
-    const SUPA_URL = 'https://dapwpgvnfjcfqqhrpxla.supabase.co';
-    const SUPA_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImRhcHdwZ3ZuZmpjZnFxaHJweGxhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDcwNDA4ODgsImV4cCI6MjA2MjYxNjg4OH0.ICC0UsLlzJDNre7rFCeD3k6iVzo6jOJgn3PhABpEMsQ';
+    const SUPA_URL = 'https://dapwpgvnfjcfqqhrpxla.supabase.co',
+          SUPA_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImRhcHdwZ3ZuZmpjZnFxaHJweGxhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDcwNDA4ODgsImV4cCI6MjA2MjYxNjg4OH0.ICC0UsLlzJDNre7rFCeD3k6iVzo6jOJgn3PhABpEMsQ';
     const supabase = window.supabase.createClient(SUPA_URL, SUPA_KEY);
 
     // TradingView full-screen chart
@@ -267,12 +301,12 @@
     });
 
     // Notifications & Stats
-    const notifBtn    = document.getElementById('notif-button'),
-          notifBadge  = document.getElementById('notif-badge'),
-          notifList   = document.createElement('ul'),
-          notifSound  = document.getElementById('notif-sound'),
-          counts      = { signals:0, insights:0, history:0 },
-          notifs      = [];
+    const notifBtn   = document.getElementById('notif-button'),
+          notifBadge = document.getElementById('notif-badge'),
+          notifList  = document.createElement('ul'),
+          notifSound = document.getElementById('notif-sound'),
+          counts     = { signals:0, insights:0, history:0 },
+          notifs     = [];
 
     notifList.className = 'notif-dropdown';
     document.body.append(notifList);
@@ -284,28 +318,26 @@
     }
     function addNotif(type, text) {
       notifs.unshift(`${type}: ${text}`);
-      if (notifs.length > 10) notifs.pop();
+      if(notifs.length>10) notifs.pop();
       renderNotifs();
       notifBadge.textContent = counts.signals + counts.insights + counts.history;
       notifSound.play();
     }
-
     notifBtn.addEventListener('click', e => {
       e.stopPropagation();
       notifList.style.display = notifList.style.display==='block'?'none':'block';
     });
-    document.addEventListener('click', () => {
-      notifList.style.display = 'none';
-    });
+    document.addEventListener('click',()=>notifList.style.display='none');
 
     // Real-time listeners
-    ['signals','trade_insights','trade_history'].forEach(table => {
-      supabase.from(table).on('INSERT', ({ new: row }) => {
+    ['signals','trade_insights','trade_history'].forEach(table=>{
+      supabase.from(table).on('INSERT', ({ new: row })=>{
         const key = table==='signals'?'signals': table==='trade_insights'?'insights':'history';
         counts[key]++;
         document.getElementById(`count-${key}`).textContent = counts[key];
         addNotif(
-          table==='signals'?'Signal': table==='trade_insights'?'Insight':'History',
+          table==='signals'?'Signal':
+          table==='trade_insights'?'Insight':'History',
           table==='signals'
             ? new Date(row.created_at).toLocaleTimeString()
             : table==='trade_insights'
@@ -317,16 +349,16 @@
 
     // Initialize counts once
     (async()=>{
-      const [{ count: cs }, { count: ci }, { count: ch }] = await Promise.all([
+      const [{ count: cs },{ count: ci },{ count: ch }] = await Promise.all([
         supabase.from('signals').select('*',{ count:'exact' }),
         supabase.from('trade_insights').select('*',{ count:'exact' }),
         supabase.from('trade_history').select('*',{ count:'exact' })
       ]);
-      counts.signals = cs; counts.insights = ci; counts.history = ch;
-      document.getElementById('count-signals').textContent  = cs;
-      document.getElementById('count-insights').textContent = ci;
-      document.getElementById('count-history').textContent  = ch;
-      notifBadge.textContent = cs + ci + ch;
+      counts.signals=cs; counts.insights=ci; counts.history=ch;
+      document.getElementById('count-signals').textContent=cs;
+      document.getElementById('count-insights').textContent=ci;
+      document.getElementById('count-history').textContent=ch;
+      notifBadge.textContent = cs+ci+ch;
       renderNotifs();
     })();
   </script>
