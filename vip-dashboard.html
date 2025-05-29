@@ -2,52 +2,15 @@
 <html lang="en" data-theme="dark">
 <head>
   <meta charset="UTF-8"/>
-  <meta name="viewport" content="width=device-width,initial-scale=1"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>VIP Dashboard – CBE</title>
 
-  <!-- ─── LOCAL-STORAGE + SUPABASE GUARD ──────────────────────────────────────── -->
-  <script type="module">
-    import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm';
-
-    // 1) LocalStorage check
-    const userId = localStorage.getItem('userId');
-    if (!userId) {
+  <!-- ─── CLIENT-SIDE GUARD ──────────────────────────────────────────────────── -->
+  <script>
+    // Redirect back to login if not logged in
+    if (sessionStorage.getItem('cbeLoggedIn') !== 'true') {
       window.location.replace('login.html');
-      throw new Error('Redirecting to login—no userId in localStorage');
     }
-
-    // 2) Supabase client
-    const SUPA_URL = 'https://dapwpgvnfjcfqqhrpxla.supabase.co';
-    const SUPA_KEY = 'YOUR_SUPABASE_ANON_KEY';
-    const supabase = createClient(SUPA_URL, SUPA_KEY);
-
-    (async () => {
-      // 3) Fetch approval & name
-      const { data: profile, error } = await supabase
-        .from('users')
-        .select('approved, name')
-        .eq('id', userId)
-        .single();
-
-      if (error || !profile?.approved) {
-        // clear localStorage & redirect
-        localStorage.removeItem('userId');
-        localStorage.removeItem('userName');
-        window.location.replace('login.html');
-        return;
-      }
-
-      // 4) All good: store name (in case login page didn’t)
-      localStorage.setItem('userName', profile.name);
-
-      // 5) Unhide page now that checks passed
-      document.documentElement.dataset.theme; // forces head to finish
-      document.body.style.visibility = 'visible';
-
-      // 6) Personalize greeting
-      const greetEl = document.getElementById('greeting');
-      if (greetEl) greetEl.textContent = `Welcome back, ${profile.name}!`;
-    })();
   </script>
   <!-- ────────────────────────────────────────────────────────────────────────── -->
 
@@ -62,8 +25,9 @@
   <script src="https://kit.fontawesome.com/your-kit-code.js" crossorigin="anonymous"></script>
 
   <style>
-    /* make body hidden until guard un-hides it */
+    /* Hide until greeting script runs */
     body { visibility: hidden; }
+
     /* RESET & BASE */
     * { margin:0; padding:0; box-sizing:border-box; }
     html { scroll-behavior: smooth; }
@@ -277,7 +241,7 @@
   <footer>
     © 2025 Chukwuemeka Bullion Exchange. All rights reserved.
     <a href="privacy.html">Privacy Policy</a> |
-    <a href="terms.html">Terms &amp; Conditions</a>
+    <a href="terms.html">Terms & Conditions</a>
   </footer>
 
   <!-- TradingView Widget -->
@@ -297,8 +261,15 @@
     });
   </script>
 
-  <!-- Theme, Menu & Slide-ins -->
+  <!-- CLIENT-SIDE GREETING & UI SCRIPTS -->
   <script>
+    // 1) Unhide the page now that guard passed
+    document.body.style.visibility = 'visible';
+
+    // 2) Inject real name from sessionStorage
+    const name = sessionStorage.getItem('cbeUserName') || 'Trader';
+    document.getElementById('greeting').textContent = `Welcome back, ${name}!`;
+
     // Theme toggle
     const html = document.documentElement;
     const tbtn = document.getElementById('theme-toggle');
@@ -317,8 +288,7 @@
       this.classList.toggle('active');
       const menu = document.getElementById('menu-list');
       menu.classList.toggle('active');
-      const expanded = this.getAttribute('aria-expanded') === 'true';
-      this.setAttribute('aria-expanded', !expanded);
+      this.setAttribute('aria-expanded', this.classList.contains('active'));
     });
 
     // Slide-in animations
