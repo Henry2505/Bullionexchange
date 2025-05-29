@@ -2,171 +2,121 @@
 <html lang="en" data-theme="dark">
 <head>
   <meta charset="UTF-8"/>
-  <meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+  <meta name="viewport" content="width=device-width,initial-scale=1"/>
   <title>VIP Dashboard – CBE Global FX</title>
 
-  <!-- Redirect if not logged in -->
+  <!-- AUTH GUARD -->
   <script>
-    if (sessionStorage.getItem('cbeLoggedIn') !== 'true') {
+    if (sessionStorage.getItem('cbeLoggedIn')!=='true') {
       window.location.replace('login.html');
     }
   </script>
 
-  <!-- Fonts & Icons -->
+  <!-- FONTS & ICONS -->
   <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700&display=swap" rel="stylesheet"/>
   <script src="https://kit.fontawesome.com/your-kit-code.js" crossorigin="anonymous"></script>
 
-  <!-- Supabase, TradingView & Smartsupp -->
+  <!-- SUPABASE, TRADINGVIEW, SMARTSUPP -->
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js/dist/umd/supabase.min.js"></script>
   <script src="https://s3.tradingview.com/tv.js"></script>
-  <script type="text/javascript">
-    var _smartsupp = _smartsupp || {};
-    _smartsupp.key = '018a8bbd868518221e725341a7b2601231ec7ce8';
-    window.smartsupp||(function(d) {
-      var s,c,o=smartsupp=function(){ o._.push(arguments)};o._=[];
-      s=d.getElementsByTagName('script')[0];c=d.createElement('script');
-      c.type='text/javascript';c.charset='utf-8';c.async=true;
-      c.src='https://www.smartsuppchat.com/loader.js?';s.parentNode.insertBefore(c,s);
+  <script>
+    var _smartsupp=_smartsupp||{};_smartsupp.key='018a8bbd868518221e725341a7b2601231ec7ce8';
+    (function(d){var s,c,o=smartsupp=function(){o._.push(arguments)};o._=[];s=d.getElementsByTagName('script')[0];
+    c=d.createElement('script');c.type='text/javascript';c.charset='utf-8';c.async=true;
+    c.src='https://www.smartsuppchat.com/loader.js?';s.parentNode.insertBefore(c,s);
     })(document);
   </script>
 
   <style>
-    /* RESET & BASE */
+    /* RESET */
     *{margin:0;padding:0;box-sizing:border-box}
     html,body{width:100%;height:100%;font-family:'Poppins',sans-serif;overflow-x:hidden}
     a{text-decoration:none;color:inherit}
+    ul{list-style:none}
 
     /* COLORS */
-    :root{
-      --bg:#000;
-      --panel-bg:rgba(0,0,0,0.85);
-      --gold:#bfa057;
-      --muted:#555;
-      --text:#eee;
-      --card-bg:rgba(20,20,20,0.85);
-      --overlay:rgba(0,0,0,0.5);
+    :root {
+      --bg: #111;
+      --panel: rgba(20,20,20,0.9);
+      --gold: #ffd700;
+      --highlight: #e6c65d;
+      --text: #f0f0f0;
+      --muted: #888;
     }
-    [data-theme="light"]{
-      --bg:#f4f6fc;
-      --panel-bg:rgba(255,255,255,0.85);
-      --text:#222;
-      --muted:#888;
-      --card-bg:rgba(255,255,255,0.85);
-      --overlay:rgba(255,255,255,0.5);
+    [data-theme="light"] {
+      --bg: #fafafa;
+      --panel: rgba(255,255,255,0.9);
+      --text: #111;
+      --muted: #666;
     }
-
-    body{
-      display:flex;
-      background:var(--bg);
-      color:var(--text);
-      visibility:hidden;
-    }
-    body::before{
-      content:"";position:fixed;top:0;left:0;width:100%;height:100%;
+    body{background:var(--bg);color:var(--text);display:flex;visibility:hidden}
+    body::before{content:"";position:fixed;top:0;left:0;width:100%;height:100%;
       background:url('https://raw.githubusercontent.com/joshbuchea/atom/master/svgs/stars.svg') center/cover no-repeat;
-      opacity:0.1;pointer-events:none;z-index:-1;
-    }
+      opacity:0.05;pointer-events:none;z-index:-1}
 
     /* SIDEBAR */
-    #sidebar{
-      width:240px;background:var(--panel-bg);
-      display:flex;flex-direction:column;align-items:center;
-      padding:2rem 1rem;
-    }
+    #sidebar{width:220px;background:var(--panel);padding:2rem 1rem;display:flex;flex-direction:column;align-items:center;}
     #sidebar .logo{cursor:pointer;margin-bottom:2rem}
-    #sidebar .logo img{width:140px;display:block}
-    #sidebar nav{width:100%}
-    #sidebar nav a{
-      display:flex;align-items:center;padding:.75rem 1rem;margin:.3rem 0;
-      border-radius:6px;transition:background .2s;color:var(--text);
-    }
-    #sidebar nav a:hover,#sidebar nav a.active{background:var(--overlay)}
+    #sidebar .logo img{width:120px;}
+    #sidebar nav a{display:flex;align-items:center;padding:.6rem 1rem;border-radius:6px;margin:.3rem 0;color:var(--text);
+      transition:background .2s}
+    #sidebar nav a:hover,#sidebar nav a.active{background:var(--muted)}
     #sidebar nav a i{margin-right:.8rem;color:var(--gold)}
 
     /* MAIN */
     #main{flex:1;display:flex;flex-direction:column;overflow-y:auto}
 
-    /* TOPBAR */
-    #topbar{
-      display:flex;justify-content:space-between;align-items:center;
-      padding:1rem 2rem;background:var(--panel-bg);
-      box-shadow:0 2px 8px var(--overlay);position:sticky;top:0;z-index:10;
-    }
-    .left{display:flex;align-items:center;gap:1.5rem}
-    .greeting{font-size:1.25rem}
-    .user-name{font-weight:700;color:var(--gold)}
-    .datetime{font-size:.9rem;color:var(--text)}
-    #countdown{font-size:.9rem;color:var(--gold)}
-    .actions{display:flex;align-items:center}
-    .btn-icon,#theme-toggle,#chat-launch{
-      background:none;border:none;color:var(--text);
-      font-size:1.5rem;margin-left:1rem;position:relative;cursor:pointer;
-    }
-    #notif-badge{
-      position:absolute;top:4px;right:4px;
-      background:var(--gold);color:#000;
-      font-size:.65rem;font-weight:700;padding:2px 5px;border-radius:50%;
-    }
+    /* HEADER */
+    #header{background:var(--panel);padding:1rem 2rem;display:flex;justify-content:space-between;align-items:center;
+      position:sticky;top:0;z-index:10;box-shadow:0 2px 8px rgba(0,0,0,0.5)}
+    .hdr-left{display:flex;align-items:center;gap:2rem}
+    .hdr-left .greet{font-size:1.2rem}
+    .hdr-left .greet .user{font-weight:700;color:var(--gold)}
+    .hdr-left .time{font-size:.9rem;color:var(--muted)}
+    .hdr-actions button{background:none;border:none;color:var(--text);font-size:1.4rem;margin-left:1rem;position:relative;cursor:pointer}
+    #notif-badge{position:absolute;top:0;right:0;background:var(--gold);color:#000;font-size:.65rem;padding:2px 6px;border-radius:50%}
 
-    /* STATS */
-    #stats{
-      display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));
-      gap:1rem;padding:1.5rem 2rem;background:var(--bg);
-    }
-    .stat-card{
-      background:var(--card-bg);padding:1.2rem;border-radius:8px;
-      box-shadow:0 4px 20px var(--overlay);text-align:center;
-    }
-    .stat-card h3{color:var(--muted);margin-bottom:.4rem}
-    .stat-card p{font-size:1.8rem;font-weight:600;color:var(--gold)}
+    /* STATS GRID */
+    #stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:1rem;padding:1.5rem 2rem}
+    .stat{background:var(--panel);border-left:4px solid var(--gold);padding:1rem;border-radius:6px;box-shadow:0 4px 12px rgba(0,0,0,0.5)}
+    .stat h4{margin-bottom:.5rem;color:var(--highlight)}
+    .stat p{font-size:1.6rem;font-weight:600}
 
-    /* QUICK ACCESS */
+    /* ACCESS CARDS */
     section{padding:1.5rem 2rem}
-    section h2{color:var(--gold);margin-bottom:1rem;font-size:1.4rem}
-    .cards-grid{
-      display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:1rem;
-    }
-    .card{
-      background:var(--card-bg);border-radius:8px;
-      box-shadow:0 4px 20px var(--overlay);overflow:hidden;
-    }
-    .card-header{
-      background:var(--gold);color:#000;padding:1rem;font-weight:600;
-    }
-    .card-body{padding:1rem}
-    .card-body p{margin-bottom:1rem;color:var(--text)}
-    .card-body a.btn{
-      display:inline-block;padding:.5rem 1rem;background:var(--gold);
-      color:#000;border-radius:4px;font-weight:600;transition:opacity .2s;
-    }
-    .card-body a.btn:hover{opacity:.8}
+    section h3{margin-bottom:1rem;color:var(--gold)}
+    .cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:1rem}
+    .card{background:var(--panel);border-radius:8px;overflow:hidden;box-shadow:0 4px 12px rgba(0,0,0,0.5)}
+    .card .hdr{background:var(--gold);padding:.8rem;font-weight:600;color:#000}
+    .card .body{padding:1rem}
+    .card .body p{margin-bottom:.5rem;color:var(--text)}
+    .card .body a{display:inline-block;padding:.4rem .8rem;background:var(--gold);color:#000;border-radius:4px;font-weight:600;transition:opacity .2s}
+    .card .body a:hover{opacity:.8}
+
+    /* MARKET SENTIMENT GAUGE */
+    #sentiment{padding:1rem;display:flex;justify-content:center;align-items:center;background:var(--panel);border-radius:8px;margin:1.5rem 2rem;box-shadow:0 4px 12px rgba(0,0,0,0.5)}
+    #sentiment h4{margin-right:1rem;color:var(--highlight)}
+    #sentiment .gauge{width:120px;height:60px;background:linear-gradient(to right,var(--gold) 50%,var(--muted) 50%);border-radius:60px 60px 0 0;position:relative}
+    #sentiment .gauge::after{content:'';position:absolute;bottom:0;left:calc(var(--pct,50)*1%);width:4px;height:60px;background:#fff;transform:translateX(-50%)}
+
+    /* VOLUME HEATMAP */
+    #heatmap{padding:1rem;margin:0 2rem;background:var(--panel);border-radius:8px;box-shadow:0 4px 12px rgba(0,0,0,0.5)}
+    #heatmap h4{margin-bottom:.8rem;color:var(--highlight)}
+    #heatmap .row{display:flex}
+    #heatmap .cell{flex:1;height:20px;margin:.2rem;background:var(--muted);transition:background .3s}
 
     /* FULLSCREEN CHART */
-    #gold-chart{
-      position:relative;width:100%;height:100vh;margin-top:2rem;overflow:hidden;
-    }
-    #gold-chart h2{text-align:center;color:var(--gold);padding-top:1rem}
-    #tradingview_chart{position:absolute;top:0;left:0;width:100%;height:100%}
-
-    /* NOTIF DROPDOWN */
-    .notif-dropdown{
-      display:none;position:absolute;top:60px;right:30px;
-      background:var(--panel-bg);list-style:none;padding:10px;margin:0;
-      border:1px solid var(--gold);border-radius:4px;max-width:300px;z-index:20;
-    }
-    .notif-dropdown .notif-item{
-      padding:8px;color:var(--text);font-size:.9rem;
-      border-bottom:1px solid rgba(255,255,255,0.1);
-    }
-    .notif-dropdown .notif-item:last-child{border-bottom:none}
+    #chart-section{position:relative;margin-top:1rem}
+    #chart-section #gold-chart{position:sticky;top:0;width:100%;height:100vh;overflow:hidden}
+    #chart-section #tradingview_chart{position:absolute;top:0;left:0;width:100%;height:100%}
 
     /* FOOTER */
-    footer{text-align:center;padding:1rem;background:var(--panel-bg);color:var(--muted)}
+    footer{text-align:center;padding:1rem;background:var(--panel);color:var(--muted)}
 
     @media(max-width:768px){
       #sidebar{display:none}
       body{flex-direction:column}
-      #topbar,#stats,section{padding:1rem}
+      #header,#stats,section{padding:1rem}
     }
   </style>
 </head>
@@ -178,214 +128,157 @@
       <img src="CBE_logo.PNG" alt="CBE Logo"/>
     </div>
     <nav>
-      <a href="vip-dashboard.html" class="active"><i class="fas fa-chart-pie"></i> Dashboard</a>
+      <a href="vip-dashboard.html" class="active"><i class="fas fa-home"></i> Dashboard</a>
       <a href="signals.html"><i class="fas fa-bolt"></i> Signals</a>
-      <a href="CBE_trade_insights_vip.html"><i class="fas fa-lightbulb"></i> Insights</a>
+      <a href="CBE_trade_insights_vip.html"><i class="fas fa-chart-bar"></i> Insights</a>
       <a href="CBE_trade_history_vip.html"><i class="fas fa-history"></i> History</a>
       <a href="#" id="chat-launch"><i class="fas fa-headset"></i> Support</a>
     </nav>
   </aside>
 
-  <!-- MAIN CONTENT -->
+  <!-- MAIN -->
   <div id="main">
-    <!-- TOPBAR -->
-    <div id="topbar">
-      <div class="left">
-        <div class="greeting">
-          Welcome back, <span class="user-name" id="userName">Trader</span>!
-        </div>
-        <div class="datetime" id="currentDatetime">—</div>
-        <div id="countdown">Next Signal In: —</div>
+    <!-- HEADER -->
+    <div id="header">
+      <div class="hdr-left">
+        <div class="greet">Welcome back, <span class="user" id="userName">Trader</span>!</div>
+        <div class="time" id="currentTime">—</div>
+        <div class="time" id="nextSignal">Next session in: —</div>
       </div>
-      <div class="actions">
-        <button id="theme-toggle" aria-label="Toggle theme">🌞</button>
-        <button id="notif-button" class="btn-icon" aria-label="Notifications">
-          <i class="fas fa-bell"></i><span id="notif-badge">0</span>
-        </button>
+      <div class="hdr-actions">
+        <button id="theme-toggle" title="Toggle Theme">🌗</button>
+        <button id="notif-button" title="Notifications"><i class="fas fa-bell"></i><span id="notif-badge">0</span></button>
       </div>
     </div>
 
     <!-- STATS -->
     <div id="stats">
-      <div class="stat-card">
-        <h3>Today's Signals</h3><p id="count-signals">0</p>
-      </div>
-      <div class="stat-card">
-        <h3>Insights Posted</h3><p id="count-insights">0</p>
-      </div>
-      <div class="stat-card">
-        <h3>History Entries</h3><p id="count-history">0</p>
+      <div class="stat"><h4>Signals Today</h4><p id="count-signals">0</p></div>
+      <div class="stat"><h4>Insights</h4><p id="count-insights">0</p></div>
+      <div class="stat"><h4>History Logs</h4><p id="count-history">0</p></div>
+    </div>
+
+    <!-- SMART FEATURES -->
+    <div id="sentiment"><h4>Market Sentiment</h4><div class="gauge" id="sentGauge"></div></div>
+    <div id="heatmap"><h4>Session Volume Heatmap</h4>
+      <div class="row">
+        <div class="cell" id="tokyo"></div>
+        <div class="cell" id="london"></div>
+        <div class="cell" id="ny"></div>
       </div>
     </div>
 
     <!-- QUICK ACCESS -->
     <section>
-      <h2>Quick Access</h2>
-      <div class="cards-grid">
-        <div class="card">
-          <div class="card-header">View Signals</div>
-          <div class="card-body">
-            <p>Access today’s curated Forex signals.</p>
-            <a href="signals.html" class="btn">Go to Signals</a>
-          </div>
-        </div>
-        <div class="card">
-          <div class="card-header">Trade Insights</div>
-          <div class="card-body">
-            <p>Browse expert analysis & screenshots.</p>
-            <a href="CBE_trade_insights_vip.html" class="btn">View Insights</a>
-          </div>
-        </div>
-        <div class="card">
-          <div class="card-header">Trade History</div>
-          <div class="card-body">
-            <p>Review every logged trade this year.</p>
-            <a href="CBE_trade_history_vip.html" class="btn">View History</a>
-          </div>
-        </div>
-        <div class="card">
-          <div class="card-header">Live Market Visualization</div>
-          <div class="card-body">
-            <p>Dive into an immersive, edge-to-edge gold market experience.</p>
-            <a href="#gold-chart" class="btn">Explore the Chart</a>
-          </div>
-        </div>
+      <h3>Quick Access</h3>
+      <div class="cards">
+        <div class="card"><div class="hdr">Signals</div><div class="body">
+          <p>Instant VIP signals feed.</p><a href="signals.html" class="btn">Go</a>
+        </div></div>
+        <div class="card"><div class="hdr">Insights</div><div class="body">
+          <p>Expert trade rationales.</p><a href="CBE_trade_insights_vip.html" class="btn">Go</a>
+        </div></div>
+        <div class="card"><div class="hdr">History</div><div class="body">
+          <p>Performance logs review.</p><a href="CBE_trade_history_vip.html" class="btn">Go</a>
+        </div></div>
+        <div class="card"><div class="hdr">Live Chart</div><div class="body">
+          <p>Edge-to-edge XAU/USD view.</p><a href="#gold-chart" class="btn">View</a>
+        </div></div>
       </div>
     </section>
 
-    <!-- FULLSCREEN CHART -->
-    <section id="gold-chart">
-      <h2>Gold (XAU/USD) Real-Time Chart</h2>
-      <div id="tradingview_chart"></div>
-    </section>
+    <!-- CHART -->
+    <div id="chart-section">
+      <div id="gold-chart"><div id="tradingview_chart"></div></div>
+    </div>
 
     <footer>© 2025 CBE Global FX • All rights reserved.</footer>
   </div>
 
-  <!-- Notification sound -->
+  <!-- SOUND -->
   <audio id="notif-sound" src="ding.mp3" preload="auto"></audio>
 
   <script>
-    // Show page & set user
-    document.body.style.visibility = 'visible';
-    document.getElementById('userName').textContent = sessionStorage.getItem('cbeUserName') || 'Trader';
+    // Show & user
+    document.body.style.visibility='visible';
+    document.getElementById('userName').textContent = sessionStorage.getItem('cbeUserName')||'Trader';
 
-    // Detect timezone
-    const userTZ = Intl.DateTimeFormat().resolvedOptions().timeZone;
-
-    // Live date/time
-    function updateTime() {
-      document.getElementById('currentDatetime').textContent =
-        new Date().toLocaleString('en-GB', { timeZone: userTZ });
+    // Time & session countdown
+    const tz = Intl.DateTimeFormat().resolvedOptions().timeZone;
+    function updTime(){
+      document.getElementById('currentTime').textContent =
+        new Date().toLocaleString('en-GB',{timeZone:tz});
     }
-    updateTime(); setInterval(updateTime, 60000);
-
-    // Countdown to next signal
-    function updateCountdown() {
-      const now = new Date();
-      const next = new Date(now);
+    function updSession(){
+      const now=new Date(), next=new Date(now);
       next.setHours(now.getHours()+1,0,0,0);
-      const diff = next - now;
-      const m = String(Math.floor(diff/60000)).padStart(2,'0');
-      const s = String(Math.floor((diff%60000)/1000)).padStart(2,'0');
-      document.getElementById('countdown').textContent = `Next Signal In: ${m}:${s}`;
+      const d= next-now;
+      const m=String(Math.floor(d/60000)).padStart(2,'0'),
+            s=String(Math.floor((d%60000)/1000)).padStart(2,'0');
+      document.getElementById('nextSignal').textContent = `Next session in: ${m}:${s}`;
     }
-    updateCountdown(); setInterval(updateCountdown,1000);
+    updTime(); setInterval(updTime,60000);
+    updSession(); setInterval(updSession,1000);
 
-    // Theme toggle
-    const html = document.documentElement, tbtn = document.getElementById('theme-toggle');
-    let theme = localStorage.getItem('theme')||'dark';
-    html.setAttribute('data-theme',theme);
-    tbtn.textContent = theme==='dark'?'🌞':'🌜';
-    tbtn.onclick = ()=> {
-      theme = theme==='dark'?'light':'dark';
-      html.setAttribute('data-theme', theme);
-      localStorage.setItem('theme', theme);
-      tbtn.textContent = theme==='dark'?'🌞':'🌜';
-    };
+    // Theme
+    const html=document.documentElement, tb=document.getElementById('theme-toggle');
+    let th=localStorage.getItem('theme')||'dark';
+    html.setAttribute('data-theme',th);tb.textContent = th==='dark'?'🌞':'🌜';
+    tb.onclick=()=>{th=th==='dark'?'light':'dark';html.setAttribute('data-theme',th);localStorage.setItem('theme',th);tb.textContent=th==='dark'?'🌞':'🌜'};
 
-    // Chat launcher
-    document.getElementById('chat-launch').onclick = e => {
-      e.preventDefault();
-      smartsupp('chat:open');
-    };
+    // Chat
+    document.getElementById('chat-launch').onclick=e=>{e.preventDefault();smartsupp('chat:open')};
 
-    // Supabase init
-    const SUPA_URL = 'https://dapwpgvnfjcfqqhrpxla.supabase.co',
-          SUPA_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImRhcHdwZ3ZuZmpjZnFxaHJweGxhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDcwNDA4ODgsImV4cCI6MjA2MjYxNjg4OH0.ICC0UsLlzJDNre7rFCeD3k6iVzo6jOJgn3PhABpEMsQ';
-    const supabase = window.supabase.createClient(SUPA_URL, SUPA_KEY);
+    // Supabase
+    const URL='https://dapwpgvnfjcfqqhrpxla.supabase.co', KEY='eyJhbGci...EMsQ';
+    const sb=window.supabase.createClient(URL,KEY);
 
-    // TradingView chart
-    new TradingView.widget({
-      container_id:"tradingview_chart",
-      width:"100%", height:"100vh",
-      symbol:"OANDA:XAUUSD", interval:"60",
-      theme:"dark", style:"1", locale:"en",
-      toolbar_bg:"#000", hide_side_toolbar:false,
-      enable_publishing:false, allow_symbol_change:true
-    });
+    // TradingView
+    new TradingView.widget({container_id:"tradingview_chart",width:"100%",height:"100%",symbol:"OANDA:XAUUSD",
+      interval:"60",theme:"dark",style:"1",locale:"en",toolbar_bg:"#000",enable_publishing:false,hide_side_toolbar:false,allow_symbol_change:true});
 
-    // Notifications & Stats
-    const notifBtn   = document.getElementById('notif-button'),
-          notifBadge = document.getElementById('notif-badge'),
-          notifList  = document.createElement('ul'),
-          notifSound = document.getElementById('notif-sound'),
-          counts     = { signals:0, insights:0, history:0 },
-          notifs     = [];
+    // Notifications & stats
+    const nb=document.getElementById('notif-badge'),
+          nl=document.createElement('ul'), nsnd=document.getElementById('notif-sound'),
+          cnt={signals:0,insights:0,history:0}, nt=[];
+    nl.className='notif-dropdown';document.body.append(nl);
+    function rd(){nl.innerHTML=nt.length?nt.map(x=>`<li class="notif-item">${x}</li>`).join(''):`<li class="notif-item">No new notifications</li>`;}
+    function an(t,txt){nt.unshift(`${t}: ${txt}`); if(nt.length>10) nt.pop(); rd(); nb.textContent=cnt.signals+cnt.insights+cnt.history; nsnd.play();}
+    document.getElementById('notif-button').onclick=e=>{e.stopPropagation();nl.style.display=nl.style.display==='block'?'none':'block'};
+    document.addEventListener('click',()=>nl.style.display='none');
 
-    notifList.className = 'notif-dropdown';
-    document.body.append(notifList);
-
-    function renderNotifs() {
-      notifList.innerHTML = notifs.length
-        ? notifs.map(n=>`<li class="notif-item">${n}</li>`).join('')
-        : `<li class="notif-item">No new notifications</li>`;
-    }
-    function addNotif(type,text) {
-      notifs.unshift(`${type}: ${text}`);
-      if(notifs.length>10) notifs.pop();
-      renderNotifs();
-      notifBadge.textContent = counts.signals + counts.insights + counts.history;
-      notifSound.play();
-    }
-    notifBtn.addEventListener('click',e=>{
-      e.stopPropagation();
-      notifList.style.display = notifList.style.display==='block'?'none':'block';
-    });
-    document.addEventListener('click',()=>notifList.style.display='none');
-
-    // Real-time listeners
-    ['signals','trade_insights','trade_history'].forEach(table=>{
-      supabase.from(table).on('INSERT',({new: row})=>{
-        const key = table==='signals'?'signals': table==='trade_insights'?'insights':'history';
-        counts[key]++;
-        document.getElementById(`count-${key}`).textContent = counts[key];
-        addNotif(
-          table==='signals'?'Signal':
-          table==='trade_insights'?'Insight':'History',
-          table==='signals'
-            ? new Date(row.created_at).toLocaleTimeString('en-GB',{timeZone:userTZ})
-            : table==='trade_insights'
-              ? 'New insight posted'
-              : new Date(row.timestamp).toLocaleDateString('en-GB',{timeZone:userTZ})
-        );
+    ['signals','trade_insights','trade_history'].forEach(tbl=>{
+      sb.from(tbl).on('INSERT',({new:r})=>{
+        let k=tbl==='signals'?'signals':tbl==='trade_insights'?'insights':'history';
+        cnt[k]++;document.getElementById(`count-${k}`).textContent=cnt[k];
+        an(tbl==='signals'?'Signal':tbl==='trade_insights'?'Insight':'History',
+          tbl==='signals'?new Date(r.created_at).toLocaleTimeString('en-GB',{timeZone:tz})
+          :tbl==='trade_insights'?'New insight posted':new Date(r.timestamp).toLocaleDateString('en-GB',{timeZone:tz}));
       }).subscribe();
     });
-
-    // Initialize counts
     (async()=>{
       const [{count:cs},{count:ci},{count:ch}] = await Promise.all([
-        supabase.from('signals').select('*',{count:'exact'}),
-        supabase.from('trade_insights').select('*',{count:'exact'}),
-        supabase.from('trade_history').select('*',{count:'exact'})
+        sb.from('signals').select('*',{count:'exact'}),
+        sb.from('trade_insights').select('*',{count:'exact'}),
+        sb.from('trade_history').select('*',{count:'exact'})
       ]);
-      counts.signals=cs;counts.insights=ci;counts.history=ch;
-      document.getElementById('count-signals').textContent=cs;
-      document.getElementById('count-insights').textContent=ci;
-      document.getElementById('count-history').textContent=ch;
-      notifBadge.textContent = cs+ci+ch;
-      renderNotifs();
+      cnt.signals=cs;cnt.insights=ci;cnt.history=ch;
+      ['signals','insights','history'].forEach(k=>document.getElementById(`count-${k}`).textContent=cnt[k]);
+      nb.textContent=cs+ci+ch;rd();
     })();
+
+    // Market Sentiment (mock logic)
+    function updSent() {
+      const val = Math.random(); // replace with real data
+      document.documentElement.style.setProperty('--pct', Math.round(val*100));
+    }
+    updSent(); setInterval(updSent,15000);
+
+    // Session Volume Heatmap (mock logic)
+    ['tokyo','london','ny'].forEach(id=>{
+      const el=document.getElementById(id), v=Math.random();
+      el.style.background = `rgba(255,215,0,${v*0.8})`;
+    });
   </script>
 </body>
 </html>
