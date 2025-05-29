@@ -102,7 +102,7 @@
   <script>
     // ── Init Supabase ───────────────────────────────────────────────────────────
     const SUPA_URL      = 'https://dapwpgvnfjcfqqhrpxla.supabase.co';
-    const SUPA_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImRhcHdwZ3ZuZmpjZnFxaHJweGxhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDcwNDA4ODgsImV4cCI6MjA2MjYxNjg4OH0.ICC0UsLlzJDNre7rFCeD3k6iVzo6jOJgn3PhABpEMsQ';
+    const SUPA_ANON_KEY = 'YOUR_SUPABASE_ANON_KEY';
     const sb = supabase.createClient(SUPA_URL, SUPA_ANON_KEY);
 
     // ── UI Setup ────────────────────────────────────────────────────────────────
@@ -132,57 +132,33 @@
       const email    = rawEmail.toLowerCase();
       const password = document.getElementById('password').value;
 
-      if (!email || !password) {
-        alertDiv.style.color = 'crimson';
-        return alertDiv.textContent = 'Please enter both email and password.';
-      }
-
       try {
-        // 1) Fetch user row (and count)
+        // 1) Fetch user row
         const { data: userRow, error, count } = await sb
           .from('users')
-          .select('email,password,status', { count: 'exact' })
+          .select('id,email,password,status,name', { count: 'exact' })
           .ilike('email', email)
           .limit(1)
           .maybeSingle();
 
         if (error) throw error;
         if (count === 0) throw new Error('No account found for that email.');
-        if (count > 1) console.warn(`⚠️ ${count} users matched "${email}".`);
-
-        // 2) Password check
-        if (userRow.password !== password) {
-          throw new Error('Invalid login credentials.');
-        }
-
-        // 3) Account-approval check
+        if (userRow.password !== password) throw new Error('Invalid login credentials.');
         if (!userRow.status || userRow.status.toLowerCase() !== 'approved') {
           throw new Error('Your account is not yet approved by admin.');
         }
 
-        // 4) Payment-approval check
-        const { data: payments } = await sb
-          .from('payments')
-          .select('id')
-          .eq('email', email)
-          .eq('status', 'approved');
+        // 2) (Optional) Check payments here if you still need…
 
-        if (!payments || payments.length === 0) {
-          alertDiv.style.color = 'orange';
-          alertDiv.textContent = 'Your payment is still pending approval.';
-          // redirect after showing message
-          return setTimeout(() => {
-            window.location.href = 'vip-subscription.html';
-          }, 2000);
-        }
-
-        // 5) Success! store session and go to dashboard
+        // 3) SUCCESS! store session and go to dashboard
         sessionStorage.setItem('cbeLoggedIn', 'true');
+        sessionStorage.setItem('cbeUserId', userRow.id);
+        sessionStorage.setItem('cbeUserName', userRow.name);
         window.location.href = 'vip-dashboard.html';
 
       } catch (err) {
         console.error('Login error:', err);
-        alertDiv.style.color = err.message.includes('pending') ? 'orange' : 'crimson';
+        alertDiv.style.color = 'crimson';
         alertDiv.textContent = err.message;
       }
     });
@@ -191,7 +167,7 @@
   <!-- Smartsupp Live Chat script -->
   <script type="text/javascript">
     var _smartsupp = _smartsupp || {};
-    _smartsupp.key = '018a8bbd868518221e725341a7b2601231ec7ce8';
+    _smartsupp.key = 'YOUR_SMARTSUPP_KEY';
     window.smartsupp||(function(d) {
       var s,c,o=smartsupp=function(){ o._.push(arguments)};o._=[];
       s=d.getElementsByTagName('script')[0];c=d.createElement('script');
