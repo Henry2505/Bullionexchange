@@ -2,12 +2,12 @@
 <html lang="en" data-theme="dark">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
   <title>VIP Dashboard – CBE Global FX</title>
 
   <!-- AUTH GUARD -->
   <script>
-    if (sessionStorage.getItem('cbeLoggedIn')!=='true') {
+    if (sessionStorage.getItem('cbeLoggedIn') !== 'true') {
       window.location.replace('login.html');
     }
   </script>
@@ -17,15 +17,13 @@
   <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css" rel="stylesheet"/>
   <script src="https://kit.fontawesome.com/your-kit-code.js" crossorigin="anonymous"></script>
 
-  <!-- CHART.JS, SUPABASE, TRADINGVIEW, SMARTSUPP -->
-  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <!-- SUPABASE, TRADINGVIEW, SMARTSUPP -->
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js/dist/umd/supabase.min.js"></script>
   <script src="https://s3.tradingview.com/tv.js"></script>
   <script>
     var _smartsupp=_smartsupp||{};_smartsupp.key='018a8bbd868518221e725341a7b2601231ec7ce8';
-    (function(d){var s,c,o=smartsupp=function(){o._.push(arguments)};o._=[];
-    s=d.getElementsByTagName('script')[0];c=d.createElement('script');
-    c.type='text/javascript';c.charset='utf-8';c.async=true;
+    (function(d){var s,c,o=smartsupp=function(){o._.push(arguments)};o._=[];s=d.getElementsByTagName('script')[0];
+    c=d.createElement('script');c.type='text/javascript';c.charset='utf-8';c.async=true;
     c.src='https://www.smartsuppchat.com/loader.js?';s.parentNode.insertBefore(c,s);
     })(document);
   </script>
@@ -43,12 +41,12 @@
     h1,h2,h3,h4,h5 { color:var(--gold); }
     .btn-gold { background:var(--gold); border-color:var(--gold); color:#000; }
     .btn-gold:hover { background:#e6c65d; }
-    /* Fullscreen chart area */
-    #chart-container { position:relative; height:100vh; }
+    /* Full-screen chart container */
+    #chart-container { position:relative; width:100%; height:100vh; }
     #tv_chart { position:absolute; top:0; left:0; width:100%; height:100%; }
-    /* Star background */
+    /* Starry background */
     body::before {
-      content:""; position:fixed; inset:0;
+      content:"";position:fixed;inset:0;
       background:url('https://raw.githubusercontent.com/joshbuchea/atom/master/svgs/stars.svg') center/cover no-repeat;
       opacity:0.05; z-index:-1;
     }
@@ -56,6 +54,11 @@
       position:absolute; top:0; right:0; background:var(--gold); color:#000;
       border-radius:50%; padding:2px 6px; font-size:.7rem;
     }
+    /* Gauge styles */
+    #gauge { width:100%; height:20px; background:var(--muted); border-radius:10px; position:relative; }
+    #gauge-bar { height:100%; border-radius:10px; }
+    /* Heatmap cells */
+    .heat-cell { flex:1; height:12px; margin:0 2px; background:var(--muted); }
   </style>
 </head>
 <body>
@@ -64,10 +67,10 @@
     <!-- SIDEBAR -->
     <nav class="panel vh-100 p-3 d-none d-md-block" style="width:220px;">
       <div class="text-center mb-4">
-        <img src="CBE_logo.PNG" alt="CBE Logo" style="width:120px; cursor:pointer;" onclick="location.href='index.html'">
+        <img src="CBE_logo.PNG" alt="CBE Logo" style="width:120px;cursor:pointer" onclick="location.href='index.html'">
       </div>
       <ul class="nav nav-pills flex-column">
-        <li class="nav-item"><a class="nav-link active text-light" href="#"><i class="bi-speedometer2 me-2"></i>Dashboard</a></li>
+        <li class="nav-item"><a class="nav-link active text-light" href="#"><i class="bi-speedometer2 me-2"></i> Dashboard</a></li>
         <li class="nav-item"><a class="nav-link text-light" href="signals.html"><i class="bi-lightning"></i> Signals</a></li>
         <li class="nav-item"><a class="nav-link text-light" href="CBE_trade_insights_vip.html"><i class="bi-graph-up"></i> Insights</a></li>
         <li class="nav-item"><a class="nav-link text-light" href="CBE_trade_history_vip.html"><i class="bi-clock-history"></i> History</a></li>
@@ -93,82 +96,55 @@
         </div>
       </header>
 
-      <!-- STATS -->
+      <!-- STATS ROW -->
       <div class="row g-3 p-4">
-        <div class="col-md-4">
-          <div class="panel p-3 text-center">
-            <h4>Signals Today</h4>
-            <p id="stat-signals" class="fs-2 mb-0">0</p>
-          </div>
-        </div>
-        <div class="col-md-4">
-          <div class="panel p-3 text-center">
-            <h4>Insights</h4>
-            <p id="stat-insights" class="fs-2 mb-0">0</p>
-          </div>
-        </div>
-        <div class="col-md-4">
-          <div class="panel p-3 text-center">
-            <h4>History Logs</h4>
-            <p id="stat-history" class="fs-2 mb-0">0</p>
-          </div>
-        </div>
+        <div class="col-md-3"><div class="panel p-3 text-center"><h4>Signals Today</h4><p id="stat-signals" class="fs-2 mb-0">0</p></div></div>
+        <div class="col-md-3"><div class="panel p-3 text-center"><h4>Insights</h4><p id="stat-insights" class="fs-2 mb-0">0</p></div></div>
+        <div class="col-md-3"><div class="panel p-3 text-center"><h4>History Logs</h4><p id="stat-history" class="fs-2 mb-0">0</p></div></div>
+        <div class="col-md-3"><div class="panel p-3 text-center"><h4>Pips Today</h4><p id="stat-pips" class="fs-2 mb-0">0</p></div></div>
       </div>
 
-      <!-- SMART FEATURE: Sentiment Gauge -->
+      <!-- SMART: Market Sentiment Gauge -->
       <div class="panel mx-4 p-3 mb-4">
         <h5>Market Sentiment</h5>
-        <div id="sentiment" class="bg-dark rounded" style="height:60px; position:relative;">
-          <div id="sent-bar" style="height:100%;background:var(--gold);width:50%"></div>
-        </div>
+        <div id="gauge"><div id="gauge-bar"></div></div>
       </div>
 
-      <!-- SMART FEATURE: Session Heatmap -->
+      <!-- SMART: Session Volume Heatmap -->
       <div class="panel mx-4 p-3 mb-4">
         <h5>Session Volume Heatmap</h5>
         <div class="d-flex">
-          <div class="flex-fill bg-secondary p-2 me-1" id="tokyo" style="height:20px;"></div>
-          <div class="flex-fill bg-secondary p-2 me-1" id="london" style="height:20px;"></div>
-          <div class="flex-fill bg-secondary p-2" id="ny" style="height:20px;"></div>
+          <div class="heat-cell" id="tokyo"></div>
+          <div class="heat-cell" id="london"></div>
+          <div class="heat-cell" id="ny"></div>
+        </div>
+        <div class="d-flex justify-content-between mt-1 small text-muted">
+          <span>Tokyo</span><span>London</span><span>New York</span>
         </div>
       </div>
 
       <!-- QUICK ACCESS -->
       <div class="row g-3 mx-4 mb-4">
-        <div class="col-sm-6 col-lg-3">
-          <div class="panel p-3 text-center">
-            <i class="bi-lightning fs-1 text-gold"></i>
-            <h6 class="mt-2">Signals</h6>
-            <a href="signals.html" class="btn btn-gold btn-sm mt-2">Go</a>
-          </div>
-        </div>
-        <div class="col-sm-6 col-lg-3">
-          <div class="panel p-3 text-center">
-            <i class="bi-graph-up fs-1 text-gold"></i>
-            <h6 class="mt-2">Insights</h6>
-            <a href="CBE_trade_insights_vip.html" class="btn btn-gold btn-sm mt-2">Go</a>
-          </div>
-        </div>
-        <div class="col-sm-6 col-lg-3">
-          <div class="panel p-3 text-center">
-            <i class="bi-clock-history fs-1 text-gold"></i>
-            <h6 class="mt-2">History</h6>
-            <a href="CBE_trade_history_vip.html" class="btn btn-gold btn-sm mt-2">Go</a>
-          </div>
-        </div>
-        <div class="col-sm-6 col-lg-3">
-          <div class="panel p-3 text-center">
-            <i class="bi-bar-chart-line fs-1 text-gold"></i>
-            <h6 class="mt-2">Live Chart</h6>
-            <a href="#chart-container" class="btn btn-gold btn-sm mt-2">View</a>
-          </div>
-        </div>
+        <div class="col-sm-6 col-lg-3"><div class="panel p-3 text-center">
+          <i class="bi-lightning fs-1 text-gold"></i><h6 class="mt-2">Signals</h6>
+          <a href="signals.html" class="btn btn-gold btn-sm mt-2">Go</a>
+        </div></div>
+        <div class="col-sm-6 col-lg-3"><div class="panel p-3 text-center">
+          <i class="bi-graph-up fs-1 text-gold"></i><h6 class="mt-2">Insights</h6>
+          <a href="CBE_trade_insights_vip.html" class="btn btn-gold btn-sm mt-2">Go</a>
+        </div></div>
+        <div class="col-sm-6 col-lg-3"><div class="panel p-3 text-center">
+          <i class="bi-clock-history fs-1 text-gold"></i><h6 class="mt-2">History</h6>
+          <a href="CBE_trade_history_vip.html" class="btn btn-gold btn-sm mt-2">Go</a>
+        </div></div>
+        <div class="col-sm-6 col-lg-3"><div class="panel p-3 text-center">
+          <i class="bi-bar-chart-line fs-1 text-gold"></i><h6 class="mt-2">Live Chart</h6>
+          <a href="#chart-container" class="btn btn-gold btn-sm mt-2">View</a>
+        </div></div>
       </div>
 
       <!-- FULLSCREEN CHART -->
-      <div id="chart-container">
-        <div id="tv_chart"></div>
-      </div>
+      <div id="chart-container"><div id="tv_chart"></div></div>
 
       <footer class="text-center py-3 text-muted">© 2025 CBE Global FX</footer>
     </div>
@@ -176,109 +152,105 @@
 
   <!-- SOUND -->
   <audio id="notif-sound" src="ding.mp3" preload="auto"></audio>
-
-  <!-- SCRIPTS -->
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+
   <script>
-    // Show UI & set user
-    document.body.style.visibility = 'visible';
+    // Show & set user
+    document.body.style.visibility='visible';
     document.getElementById('userName').textContent = sessionStorage.getItem('cbeUserName')||'Trader';
 
-    // Clock
+    // Live clock
     const timeEl = document.getElementById('currentTime');
-    function refreshTime() {
-      timeEl.textContent = new Date().toLocaleString();
-    }
-    refreshTime(); setInterval(refreshTime,60000);
+    setInterval(()=> timeEl.textContent = new Date().toLocaleString(),60000);
+    timeEl.textContent = new Date().toLocaleString();
 
     // Theme toggle
-    const themeBtn = document.getElementById('theme-toggle');
-    let theme = localStorage.getItem('theme')||'dark';
+    const tb = document.getElementById('theme-toggle');
+    let theme=localStorage.getItem('theme')||'dark';
     document.documentElement.setAttribute('data-theme',theme);
-    themeBtn.innerText = theme==='dark'?'🌞':'🌜';
-    themeBtn.onclick = ()=>{
-      theme = theme==='dark'?'light':'dark';
+    tb.innerText=theme==='dark'?'🌞':'🌜';
+    tb.onclick=()=>{
+      theme=theme==='dark'?'light':'dark';
       document.documentElement.setAttribute('data-theme',theme);
       localStorage.setItem('theme',theme);
-      themeBtn.innerText = theme==='dark'?'🌞':'🌜';
+      tb.innerText=theme==='dark'?'🌞':'🌜';
     };
 
     // Chat launcher
-    document.getElementById('chat-launch').onclick = e=>{ e.preventDefault(); smartsupp('chat:open'); };
+    document.getElementById('chat-launch').onclick=e=>{e.preventDefault(); smartsupp('chat:open')};
 
     // Supabase init
-    const SUPA_URL = 'https://dapwpgvnfjcfqqhrpxla.supabase.co',
-          SUPA_KEY = 'eyJhbGci...EMsQ';
-    const supabase = window.supabase.createClient(SUPA_URL,SUPA_KEY);
+    const URL='https://dapwpgvnfjcfqqhrpxla.supabase.co',
+          KEY='eyJhbGciOiJIUzI1NiIsInR5...EMsQ';
+    const supabase = window.supabase.createClient(URL,KEY);
 
     // TradingView
     new TradingView.widget({
-      container_id:'tv_chart', width:'100%', height:'100vh',
-      symbol:'OANDA:XAUUSD', interval:'60', theme:'dark', style:'1',
-      locale:'en', toolbar_bg:'#000', hide_side_toolbar:false,
-      enable_publishing:false, allow_symbol_change:true
+      container_id:'tv_chart',width:'100%',height:'100vh',
+      symbol:'OANDA:XAUUSD',interval:'60',theme:'dark',style:'1',
+      locale:'en',toolbar_bg:'#000',hide_side_toolbar:false,
+      enable_publishing:false,allow_symbol_change:true
     });
 
-    // Notifications & stats
-    const notifBtn = document.getElementById('notif-btn'),
-          notifCnt = document.getElementById('notif-count'),
-          notifList = document.createElement('ul'),
-          notifSound = document.getElementById('notif-sound'),
-          counts = {signals:0,insights:0,history:0}, items=[];
-    notifList.className='notif-dropdown'; document.body.append(notifList);
-    function renderNotifs(){
-      notifList.innerHTML = items.length
-        ? items.map(i=>`<li class="notif-item">${i}</li>`).join('')
-        : `<li class="notif-item">No notifications</li>`;
-    }
-    function pushNotif(type,text){
-      items.unshift(`${type}: ${text}`);
-      if(items.length>10) items.pop();
-      renderNotifs();
-      notifCnt.textContent = counts.signals+counts.insights+counts.history;
-      notifSound.play();
-    }
-    notifBtn.onclick = e=>{ e.stopPropagation(); notifList.style.display = notifList.style.display==='block'?'none':'block'; };
-    document.addEventListener('click',()=>notifList.style.display='none');
+    // Notifications & Stats
+    const nb=document.getElementById('notif-count'),
+          nl=document.createElement('ul'),
+          ns=document.getElementById('notif-sound'),
+          cnt={signals:0,insights:0,history:0}, items=[];
+    nl.className='notif-dropdown'; document.body.append(nl);
+    function rd(){ nl.innerHTML = items.length ? items.map(i=>`<li class="notif-item">${i}</li>`).join('') : '<li class="notif-item">No notifications</li>'; }
+    function an(t,x){ items.unshift(`${t}: ${x}`); if(items.length>10) items.pop(); rd(); nb.textContent=cnt.signals+cnt.insights+cnt.history; ns.play(); }
+    document.getElementById('notif-btn').onclick=e=>{ e.stopPropagation(); nl.style.display=nl.style.display==='block'?'none':'block'; };
+    document.addEventListener('click',()=>nl.style.display='none');
 
-    // Real-time + auto-reconnect
-    function subscribeTable(tbl){
-      const channel = supabase.channel(tbl).on('postgres_changes',{event:'INSERT',schema:'public',table:tbl},payload=>{
-        const key = tbl==='signals'?'signals':tbl==='trade_insights'?'insights':'history';
-        counts[key]++; document.getElementById(`stat-${key}`).textContent = counts[key];
-        pushNotif(tbl==='signals'?'Signal':tbl==='trade_insights'?'Insight':'History',
-          new Date((payload.new.created_at||payload.new.timestamp)).toLocaleString());
-      }).subscribe();
-      channel.on('subscription_error',()=>{ channel.subscribe(); });
+    // Subscribe + auto-reconnect
+    function sub(table){
+      const ch = supabase.channel(table)
+        .on('postgres_changes',{event:'INSERT',schema:'public',table},p=>{
+          let k=table==='signals'?'signals':table==='trade_insights'?'insights':'history';
+          cnt[k]++; document.getElementById(`stat-${k}`).textContent=cnt[k];
+          an(k.charAt(0).toUpperCase()+k.slice(1), new Date(p.new.created_at||p.new.timestamp).toLocaleTimeString());
+        })
+        .subscribe();
+      ch.on('subscription_error',()=>ch.subscribe());
     }
-    ['signals','trade_insights','trade_history'].forEach(subscribeTable);
+    ['signals','trade_insights','trade_history'].forEach(sub);
 
-    // Initialize counts
+    // Init counts & Pips
     (async()=>{
       const [{count:cs},{count:ci},{count:ch}] = await Promise.all([
         supabase.from('signals').select('*',{count:'exact'}),
         supabase.from('trade_insights').select('*',{count:'exact'}),
         supabase.from('trade_history').select('*',{count:'exact'})
       ]);
-      counts.signals=cs;counts.insights=ci;counts.history=ch;
-      ['signals','insights','history'].forEach(k=>{
-        document.getElementById(`stat-${k}`).textContent = counts[k];
+      cnt.signals=cs;cnt.insights=ci;cnt.history=ch;
+      document.getElementById('stat-signals').textContent=cs;
+      document.getElementById('stat-insights').textContent=ci;
+      document.getElementById('stat-history').textContent=ch;
+      nb.textContent=cs+ci+ch;
+      rd();
+
+      // Pips Today (sum pips of today's insights)
+      let { data } = await supabase.from('trade_insights').select('pips,created_at');
+      const today = new Date().toISOString().slice(0,10);
+      const pips = data.filter(d=>d.created_at.slice(0,10)===today).reduce((a,b)=>a+b.pips,0);
+      document.getElementById('stat-pips').textContent = pips;
+
+      // Sentiment Gauge based on last 20 pips
+      const last20 = data.slice(-20).map(d=>d.pips);
+      const avg = last20.reduce((a,b)=>a+b,0)/last20.length;
+      const pct = Math.min(100,Math.max(0,(avg+50)/1)); // normalize
+      const bar = document.getElementById('gauge-bar');
+      bar.style.width = pct+'%';
+      bar.style.background = pct<40?'red':pct<60?'yellow':'lightgreen';
+
+      // Heatmap random (replace with real volume)
+      ['tokyo','london','ny'].forEach(id=>{
+        const v=Math.random();
+        document.getElementById(id).style.background = `rgba(255,215,0,${v})`;
       });
-      notifCnt.textContent = cs+ci+ch;
-      renderNotifs();
+
     })();
-
-    // Sentiment mock
-    setInterval(()=>{
-      const pct=Math.random()*100;
-      document.getElementById('sent-bar').style.width = pct+'%';
-    },15000);
-
-    // Heatmap mock
-    ['tokyo','london','ny'].forEach(id=>{
-      const el=document.getElementById(id);
-      el.style.background = `rgba(255,215,0,${Math.random()})`;
-    });
   </script>
 </body>
 </html>
