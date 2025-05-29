@@ -64,17 +64,15 @@
 
     /* Header & nav */
     header { z-index: 10; }
-    .blink-nav { 
-      display: flex; 
-      justify-content: center; 
-      gap: 1rem; 
-      margin: 1rem 0; 
-      animation: blink 1s infinite; 
+    .blink-nav {
+      display: flex; justify-content: center; gap: 1rem; margin: 1rem 0;
+      animation: blink 1s steps(2, start) infinite;
     }
-    @keyframes blink { 
-      0%, 100% { opacity: 1; } 
-      50% { opacity: 0.5; } 
+    @keyframes blink {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0; }
     }
+    .blink-nav a { pointer-events: auto; } /* Ensures clickability */
 
     /* Signal card */
     .signal-card {
@@ -90,87 +88,33 @@
       display: flex; justify-content: space-between;
       background: #111; padding: 1rem 1.5rem; border-bottom: 1px solid #333;
     }
-    .signal-header h2 { color: var(--gold); font-size: 1.5rem; margin:0; }
+    .signal-header h2 { color: var(--gold); font-size: 1.5rem; margin: 0; }
     .signal-header .time { color: #bbb; font-size: .9rem; }
     .signal-body {
-      display: grid; grid-template-columns: repeat(auto-fit, minmax(180px,1fr));
+      display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
       gap: 1rem; padding: 1.5rem;
     }
     .detail {
-      background: #1a1a1a; border:1px solid #333;
-      border-radius:8px; padding:1rem;
-      display:flex; justify-content: space-between; align-items: center;
+      background: #1a1a1a; border: 1px solid #333;
+      border-radius: 8px; padding: 1rem;
+      display: flex; justify-content: space-between; align-items: center;
     }
-    .detail span { font-weight:600; color: var(--gold); }
+    .detail span { font-weight: 600; color: var(--gold); }
     .copy-btn {
-      background: var(--gold); color:#111;
-      border:none; padding:.4rem .8rem;
-      border-radius:6px; cursor:pointer; font-weight:600;
+      background: var(--gold); color: #111;
+      border: none; padding: .4rem .8rem;
+      border-radius: 6px; cursor: pointer; font-weight: 600;
     }
     .copy-btn:hover { box-shadow: 0 0 8px var(--gold); }
 
     /* Chart full-screen */
-    #chart-container { position: relative; width:100%; height:100vh; }
-    #tv_chart { position:absolute; top:0; left:0; width:100%; height:100%; }
-
-    /* News card */
-    .news-card {
-      background: #000;
-      border-radius: 12px;
-      padding: 1.5rem;
-      margin: 1rem auto;
-      max-width: 900px;
-    }
-    .news-item {
-      margin-bottom: 1rem;
-      padding-bottom: 1rem;
-      border-bottom: 1px solid #333;
-    }
-    .news-item:last-child { border-bottom: none; }
-
-    /* Sentiment gauge */
-    .sentiment-gauge {
-      background: #111;
-      border-radius: 8px;
-      padding: 1rem;
-      margin: 1rem auto;
-      max-width: 900px;
-    }
-    .gauge-bar {
-      height: 20px;
-      background: linear-gradient(to right, var(--red), var(--green));
-      border-radius: 10px;
-      position: relative;
-    }
-    .gauge-indicator {
-      position: absolute;
-      top: -5px;
-      width: 2px;
-      height: 30px;
-      background: #fff;
-    }
-
-    /* Trade history */
-    .trade-history {
-      background: rgba(20,20,20,0.95);
-      border: 2px solid #333;
-      border-radius: 12px;
-      margin: 1rem auto;
-      max-width: 900px;
-      padding: 1.5rem;
-    }
-    .trade-item {
-      display: flex;
-      justify-content: space-between;
-      padding: 0.5rem 0;
-      border-bottom: 1px solid #333;
-    }
-    .trade-item:last-child { border-bottom: none; }
+    #chart-container { position: relative; width: 100%; height: 100vh; }
+    #tv_chart { position: absolute; top: 0; left: 0; width: 100%; height: 100%; }
 
     /* Misc */
     #refresh-signals { margin: 0.5rem auto; display: block; }
     #chat-bubble button { animation: pulse 2s infinite; }
-    @keyframes pulse { 0%,100% { transform: scale(1);} 50% { transform: scale(1.1);} }
+    @keyframes pulse { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.1); } }
   </style>
 </head>
 
@@ -225,7 +169,9 @@
           <div class="time" id="signal-time"></div>
         </div>
         <div class="signal-body" id="signal-body">
-          <p style="grid-column:1/-1; text-align:center; color:#999; padding:2rem;">Loading latest signal…</p>
+          <p style="grid-column:1/-1; text-align:center; color:#999; padding:2rem;">
+            Loading latest signal…
+          </p>
         </div>
       </div>
       <button id="refresh-signals" class="btn btn-gold">Refresh Signals Now</button>
@@ -233,7 +179,9 @@
       <!-- Fullscreen MT5-style Chart -->
       <div id="chart-container">
         <div id="tv_chart"></div>
-        <div id="chart-error" class="text-danger text-center" style="display:none">Chart failed to load.</div>
+        <div id="chart-error" class="text-danger text-center" style="display:none">
+          Chart failed to load.
+        </div>
       </div>
 
       <!-- Stats (Signals + Insights) -->
@@ -254,25 +202,37 @@
         </div>
       </div>
 
-      <!-- Latest Gold News -->
-      <div class="news-card">
+      <!-- Gold Latest News -->
+      <div class="container-fluid p-4">
         <h2 class="text-gold">Latest Gold News</h2>
-        <div id="news-feed"></div>
+        <div id="news-container" class="row g-3">
+          <p>Loading news…</p>
+        </div>
       </div>
 
-      <!-- Sentiment Gauge -->
-      <div class="sentiment-gauge">
+      <!-- Sentiment Bar -->
+      <div class="container-fluid p-4">
         <h2 class="text-gold">Market Sentiment</h2>
-        <div class="gauge-bar">
-          <div class="gauge-indicator" id="sentiment-indicator"></div>
+        <div class="progress" style="height:20px;">
+          <div class="progress-bar bg-success" role="progressbar" style="width:60%;" aria-valuenow="60" aria-valuemin="0" aria-valuemax="100">Bullish 60%</div>
+          <div class="progress-bar bg-danger" role="progressbar" style="width:40%;" aria-valuenow="40" aria-valuemin="0" aria-valuemax="100">Bearish 40%</div>
         </div>
-        <p id="sentiment-text" class="text-center mt-2 text-gold">Neutral</p>
       </div>
 
       <!-- Trade History -->
-      <div class="trade-history">
+      <div class="container-fluid p-4">
         <h2 class="text-gold">Trade History</h2>
-        <div id="trade-history-feed"></div>
+        <div id="trade-history" class="row g-3">
+          <p>Loading trade history…</p>
+        </div>
+      </div>
+
+      <!-- Good News -->
+      <div class="container-fluid p-4">
+        <h2 class="text-gold">Good News</h2>
+        <div id="good-news" class="row g-3">
+          <p>Loading good news…</p>
+        </div>
       </div>
 
       <footer class="text-center py-3 text-muted bg-panel">
@@ -307,12 +267,12 @@
     const themeBtn = document.getElementById('theme-toggle');
     let theme = localStorage.getItem('theme') || 'dark';
     document.documentElement.setAttribute('data-theme', theme);
-    themeBtn.innerHTML = theme==='dark'?'<i class="bi-sun-fill"></i>':'<i class="bi-moon-fill"></i>';
+    themeBtn.innerHTML = theme === 'dark' ? '<i class="bi-sun-fill"></i>' : '<i class="bi-moon-fill"></i>';
     themeBtn.onclick = () => {
-      theme = theme==='dark'?'light':'dark';
+      theme = theme === 'dark' ? 'light' : 'dark';
       document.documentElement.setAttribute('data-theme', theme);
       localStorage.setItem('theme', theme);
-      themeBtn.innerHTML = theme==='dark'?'<i class="bi-sun-fill"></i>':'<i class="bi-moon-fill"></i>';
+      themeBtn.innerHTML = theme === 'dark' ? '<i class="bi-sun-fill"></i>' : '<i class="bi-moon-fill"></i>';
     };
 
     // Chat launcher
@@ -320,7 +280,7 @@
       e.preventDefault(); smartsupp('chat:open');
     };
 
-    // Supabase init with your credentials
+    // Supabase init
     const SUPA_URL = 'https://dapwpgvnfjcfqqhrpxla.supabase.co';
     const SUPA_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImRhcHdwZ3ZuZmpjZnFxaHJweGxhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDcwNDA4ODgsImV4cCI6MjA2MjYxNjg4OH0.ICC0UsLlzJDNre7rFCeD3k6iVzo6jOJgn3PhABpEMsQ';
     const supabase = window.supabase.createClient(SUPA_URL, SUPA_KEY);
@@ -332,13 +292,12 @@
       const body = document.getElementById('signal-body');
       body.innerHTML = `<p style="grid-column:1/-1; text-align:center; color:#999; padding:2rem;">Loading latest signal…</p>`;
       try {
-        const { data: [sig], error } = await supabase
+        const { data: [sig] } = await supabase
           .from('signals')
           .select('id,action,asset,entry,sl,tp1,tp2,note,created_at')
           .order('created_at', { ascending: false })
           .limit(1);
 
-        if (error) throw error;
         if (!sig) {
           headerDate.textContent = 'No Signal';
           headerTime.textContent = '';
@@ -377,13 +336,93 @@
 
     document.getElementById('refresh-signals').addEventListener('click', loadLatestSignal);
 
-    // Auto-refresh and real-time subscription
+    // Load News
+    async function loadNews() {
+      const newsContainer = document.getElementById('news-container');
+      try {
+        const response = await fetch('https://newsapi.org/v2/everything?q=gold&apiKey=YOUR_NEWSAPI_KEY');
+        const data = await response.json();
+        newsContainer.innerHTML = '';
+        data.articles.slice(0, 3).forEach(article => {
+          newsContainer.innerHTML += `
+            <div class="col-md-4">
+              <div class="card bg-panel p-3">
+                <h5>${article.title}</h5>
+                <p>${article.description}</p>
+                <a href="${article.url}" target="_blank" class="btn btn-gold">Read More</a>
+              </div>
+            </div>
+          `;
+        });
+      } catch (err) {
+        newsContainer.innerHTML = '<p>Unable to load news.</p>';
+        console.error(err);
+      }
+    }
+
+    // Load Trade History
+    async function loadTradeHistory() {
+      const tradeHistory = document.getElementById('trade-history');
+      try {
+        const { data: trades } = await supabase
+          .from('trade_history')
+          .select('asset,action,entry,exit,profit_loss,created_at')
+          .order('created_at', { ascending: false })
+          .limit(5);
+        tradeHistory.innerHTML = '';
+        trades.forEach(trade => {
+          tradeHistory.innerHTML += `
+            <div class="col-md-4">
+              <div class="card bg-panel p-3">
+                <h5>${trade.asset}</h5>
+                <p>Action: ${trade.action}</p>
+                <p>Entry: ${trade.entry}</p>
+                <p>Exit: ${trade.exit}</p>
+                <p>Profit/Loss: ${trade.profit_loss}</p>
+              </div>
+            </div>
+          `;
+        });
+      } catch (err) {
+        tradeHistory.innerHTML = '<p>Unable to load trade history.</p>';
+        console.error(err);
+      }
+    }
+
+    // Load Good News
+    async function loadGoodNews() {
+      const goodNews = document.getElementById('good-news');
+      try {
+        const response = await fetch('https://newsapi.org/v2/everything?q=positive+gold&apiKey=YOUR_NEWSAPI_KEY');
+        const data = await response.json();
+        goodNews.innerHTML = '';
+        data.articles.slice(0, 3).forEach(article => {
+          goodNews.innerHTML += `
+            <div class="col-md-4">
+              <div class="card bg-panel p-3">
+                <h5>${article.title}</h5>
+                <p>${article.description}</p>
+                <a href="${article.url}" target="_blank" class="btn btn-gold">Read More</a>
+              </div>
+            </div>
+          `;
+        });
+      } catch (err) {
+        goodNews.innerHTML = '<p>Unable to load good news.</p>';
+        console.error(err);
+      }
+    }
+
+    // Auto-refresh
     window.addEventListener('DOMContentLoaded', () => {
       loadLatestSignal();
+      loadNews();
+      loadTradeHistory();
+      loadGoodNews();
       setInterval(loadLatestSignal, 15000);
       supabase
-        .channel('signals')
-        .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'signals' }, loadLatestSignal)
+        .from('signals')
+        .on('INSERT', loadLatestSignal)
         .subscribe();
     });
 
@@ -394,23 +433,15 @@
     }
 
     // Stats
-    async function loadStats() {
-      try {
-        const today = new Date().toISOString().split('T')[0];
-        const [{ count: sigs, error: sigErr }, { count: ins, error: insErr }] = await Promise.all([
-          supabase.from('signals').select('*', { count: 'exact' }).gte('created_at', today),
-          supabase.from('trade_insights').select('*', { count: 'exact' })
-        ]);
-        if (sigErr || insErr) throw new Error('Stats fetch failed');
-        document.getElementById('stat-signals').textContent = sigs || 0;
-        document.getElementById('stat-insights').textContent = ins || 0;
-      } catch (err) {
-        console.error(err);
-        document.getElementById('stat-signals').textContent = 'Err';
-        document.getElementById('stat-insights').textContent = 'Err';
-      }
-    }
-    loadStats();
+    (async () => {
+      const today = new Date().toISOString().split('T')[0];
+      const [{ count: sigs }, { count: ins }] = await Promise.all([
+        supabase.from('signals').select('*', { count: 'exact' }).gte('created_at', today),
+        supabase.from('trade_insights').select('*', { count: 'exact' })
+      ]);
+      document.getElementById('stat-signals').textContent = sigs;
+      document.getElementById('stat-insights').textContent = ins;
+    })();
 
     // TradingView MT5-style full-screen chart
     try {
@@ -431,81 +462,6 @@
       document.getElementById('chart-error').style.display = 'block';
       console.error(e);
     }
-
-    // Fetch and display latest gold news
-    async function fetchNews() {
-      const newsFeed = document.getElementById('news-feed');
-      newsFeed.innerHTML = '<p>Loading news...</p>';
-      try {
-        const response = await fetch('https://newsapi.org/v2/everything?q=gold&apiKey=YOUR_NEWSAPI_KEY');
-        const data = await response.json();
-        if (data.articles && data.articles.length > 0) {
-          newsFeed.innerHTML = data.articles.slice(0, 5).map(article => `
-            <div class="news-item">
-              <h5>${article.title}</h5>
-              <p>${article.description || 'No description available'}</p>
-              <a href="${article.url}" target="_blank">Read more</a>
-            </div>
-          `).join('');
-        } else {
-          newsFeed.innerHTML = '<p>No news available.</p>';
-        }
-      } catch (err) {
-        console.error(err);
-        newsFeed.innerHTML = '<p>Unable to load news.</p>';
-      }
-    }
-    fetchNews();
-
-    // Sentiment gauge simulation
-    function updateSentiment() {
-      const sentiment = Math.random() * 100;
-      const indicator = document.getElementById('sentiment-indicator');
-      const text = document.getElementById('sentiment-text');
-      indicator.style.left = `${sentiment}%`;
-      if (sentiment > 60) {
-        text.textContent = 'Bullish';
-        text.style.color = 'var(--green)';
-      } else if (sentiment < 40) {
-        text.textContent = 'Bearish';
-        text.style.color = 'var(--red)';
-      } else {
-        text.textContent = 'Neutral';
-        text.style.color = 'var(--gold)';
-      }
-    }
-    updateSentiment();
-    setInterval(updateSentiment, 15000);
-
-    // Load trade history
-    async function loadTradeHistory() {
-      const tradeFeed = document.getElementById('trade-history-feed');
-      tradeFeed.innerHTML = '<p>Loading trade history...</p>';
-      try {
-        const { data: trades, error } = await supabase
-          .from('trade_history')
-          .select('date, asset, action, pips')
-          .order('date', { ascending: false })
-          .limit(5);
-        if (error) throw error;
-        if (trades && trades.length > 0) {
-          tradeFeed.innerHTML = trades.map(trade => `
-            <div class="trade-item">
-              <span>${trade.date}</span>
-              <span>${trade.asset}</span>
-              <span>${trade.action}</span>
-              <span style="color:${trade.pips >= 0 ? 'var(--green)' : 'var(--red)'}">${trade.pips} pips</span>
-            </div>
-          `).join('');
-        } else {
-          tradeFeed.innerHTML = '<p>No trade history available.</p>';
-        }
-      } catch (err) {
-        console.error(err);
-        tradeFeed.innerHTML = '<p>Unable to load trade history.</p>';
-      }
-    }
-    loadTradeHistory();
   </script>
 </body>
 </html>
