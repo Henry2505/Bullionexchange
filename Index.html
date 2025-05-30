@@ -124,15 +124,6 @@
       color:var(--gold);
     }
 
-    /* STATS */
-    .stats {
-      display:flex; flex-wrap:wrap; gap:20px;
-      justify-content:center; text-align:center;
-    }
-    .stat { flex:1 1 200px; }
-    .number { font-size:3rem; font-weight:700; }
-    .label { margin-top:.3em; }
-
     /* PLANS */
     .plans {
       display:flex; flex-wrap:wrap;
@@ -366,28 +357,6 @@
     </ul>
   </section>
 
-  <!-- Our Track Record -->
-  <section id="stats" class="slide-in">
-    <h2>Our Track Record</h2>
-    <div class="stats">
-      <!-- Signals Published Today -->
-      <div class="stat">
-        <div class="number" id="signals-published" data-target="0">0</div>
-        <div class="label">Signals Published Today</div>
-      </div>
-      <!-- Win Rate (%) -->
-      <div class="stat">
-        <div class="number" id="win-rate" data-target="0">0</div>
-        <div class="label">Win Rate (%)</div>
-      </div>
-      <!-- Our Trades Today -->
-      <div class="stat">
-        <div class="number" id="trades-month" data-target="0">0</div>
-        <div class="label">Our Trades Today</div>
-      </div>
-    </div>
-  </section>
-
   <!-- Plans -->
   <section id="plans" class="slide-in">
     <h2>VIP Subscription Plans</h2>
@@ -490,95 +459,6 @@
       details: true,
       studies: ["MACD@tv-basicstudies","RSI@tv-basicstudies"]
     });
-  </script>
-
-  <!-- Supabase Stats Fetch & Animate -->
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
-  <script>
-    // Your Supabase credentials
-    const SUPA_URL      = 'https://dapwpgvnfjcfqqhrpxla.supabase.co';
-    const SUPA_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImRhcHdwZ3ZuZmpjZnFxaHJweGxhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDcwNDA4ODgsImV4cCI6MjA2MjYxNjg4OH0.ICC0UsLlzJDNre7rFCeD3k6iVzo6jOJgn3PhABpEMsQ';
-    const supabase      = window.supabase.createClient(SUPA_URL, SUPA_ANON_KEY);
-
-    document.addEventListener('DOMContentLoaded', () => {
-      // 1) Animate slide-in sections
-      document.querySelectorAll('.slide-in').forEach(el => {
-        const io = new IntersectionObserver((entries, obs) => {
-          entries.forEach(e => {
-            if (e.isIntersecting) {
-              e.target.classList.add('visible');
-              obs.unobserve(e.target);
-            }
-          });
-        }, { threshold: 0.3 });
-        io.observe(el);
-      });
-
-      // 2) Observe stats section to fetch & animate counters
-      const statsSection = document.getElementById('stats');
-      new IntersectionObserver((entries, obs) => {
-        entries.forEach(e => {
-          if (e.isIntersecting) {
-            fetchAndAnimate();
-            obs.unobserve(statsSection);
-          }
-        });
-      }, { threshold: 0.3 }).observe(statsSection);
-    });
-
-    async function fetchAndAnimate() {
-      try {
-        // Calculate start of day in local time and convert to ISO (UTC adjusted)
-        const now = new Date();
-        const startOfDay = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 0, 0, 0);
-        const startOfDayISO = startOfDay.toISOString();
-
-        // Signals published today
-        const signalsRes = await supabase
-          .from('signals')
-          .select('id', { head: true, count: 'exact' })
-          .gte('created_at', startOfDayISO);
-        const signalsCount = signalsRes.count ?? 0;
-
-        // Our trades today
-        const tradesRes = await supabase
-          .from('trade_history')
-          .select('id', { head: true, count: 'exact' })
-          .gte('created_at', startOfDayISO);
-        const tradesCount = tradesRes.count ?? 0;
-
-        // Win rate today
-        const insightsRes = await supabase
-          .from('trade_insights')
-          .select('pips')
-          .gte('created_at', startOfDayISO);
-        const insights = insightsRes.data || [];
-        const wins = insights.filter(i => i.pips > 0).length;
-        const rate = insights.length ? Math.round((wins / insights.length) * 100) : 0;
-
-        // Set data-targets
-        document.getElementById('signals-published').dataset.target = signalsCount;
-        document.getElementById('trades-month').dataset.target = tradesCount;
-        document.getElementById('win-rate').dataset.target = rate;
-
-        // Animate each counter
-        document.querySelectorAll('.number').forEach(el => {
-          const target = +el.dataset.target;
-          let count = 0;
-          const step = Math.max(1, Math.floor(target / 100));
-          (function animate() {
-            count = Math.min(target, count + step);
-            el.textContent = count;
-            if (count < target) {
-              requestAnimationFrame(animate);
-            }
-          })();
-        });
-
-      } catch (err) {
-        console.error('Stats fetch error:', err);
-      }
-    }
   </script>
 
   <!-- Smartsupp Live Chat -->
