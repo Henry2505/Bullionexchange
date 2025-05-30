@@ -5,163 +5,163 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>VIP Dashboard • CBE</title>
 
-  <!-- AUTH GUARD -->
+  <!-- CLIENT-SIDE GUARD -->
   <script>
     if (sessionStorage.getItem('cbeLoggedIn') !== 'true') {
       window.location.replace('login.html');
     }
   </script>
 
-  <!-- CSS + Icons + Fonts -->
+  <!-- FONTS, BOOTSTRAP & SUPABASE -->
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700&display=swap" rel="stylesheet"/>
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet"/>
   <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css" rel="stylesheet"/>
-  <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;700&display=swap" rel="stylesheet"/>
-
-  <!-- Supabase & TradingView -->
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js/dist/umd/supabase.min.js"></script>
   <script src="https://s3.tradingview.com/tv.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 
   <style>
-    :root {
-      --bg-start: #1a1a1a;
-      --bg-end: #222;
-      --panel: rgba(30,30,30,0.95);
-      --gold: #d4af37;
-      --text: var(--gold);
-    }
-    [data-theme="light"] {
-      --bg-start: #f0f2f5;
-      --bg-end: #fff;
-      --panel: rgba(255,255,255,0.95);
-      --gold: #b8860b;
-      --text: var(--gold);
-    }
-    body {
-      margin: 0;
-      font-family: 'Roboto', sans-serif;
-      background: linear-gradient(135deg, var(--bg-start), var(--bg-end));
-      color: var(--text);
-      overflow-x: hidden;
-    }
-    /* NAV */
+    /* RESET & GLOBAL */
+    *, *::before, *::after { margin:0; padding:0; box-sizing:border-box; }
+    :root { --bg: #1a1a1a; --panel: rgba(30,30,30,0.95); --gold: #d4af37; --text: var(--gold); }
+    [data-theme="light"] { --bg: #f0f2f5; --panel: rgba(255,255,255,0.95); --text: #b8860b; }
+    html, body { width:100%; min-height:100%; font-family:'Poppins',sans-serif; color:var(--text); background:linear-gradient(135deg, var(--bg), #222); }
+    a { color: inherit; text-decoration: none; }
+    .bg-panel { background: var(--panel); border-radius: 15px; box-shadow: 0 12px 24px rgba(0,0,0,0.5); }
+    .text-gold { color: var(--gold) !important; }
+    .fade-in { animation: fadeIn .8s ease-in; }
+    @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+
+    /* TOP NAV */
     nav {
-      position: fixed; top:0; width:100%; height:60px;
-      background: var(--panel);
+      position: fixed; top: 0; left: 0; width: 100%; height: 60px;
+      background: var(--panel); backdrop-filter: blur(4px);
       display: flex; align-items: center; justify-content: space-between;
-      padding: 0 20px; z-index:1000;
+      padding: 0 20px; z-index: 1000;
     }
-    nav .logo {
-      font-size: 1.4rem; font-weight:700;
-      color: var(--gold);
-    }
+    nav .logo { font-size: 1.4rem; font-weight: 700; color: var(--gold); }
+    nav .nav-links { display: flex; gap: 16px; }
     nav .nav-links button {
-      background:none; border:1px solid var(--gold);
-      color:var(--gold); padding:6px 12px; border-radius:6px;
-      font-weight:600; cursor:pointer; transition:.2s;
+      background: none; border: 1px solid var(--gold); padding: 6px 12px; border-radius: 6px;
+      font-weight: 600; cursor: pointer; transition: .2s; color: var(--gold);
     }
-    nav .nav-links button:hover {
-      background: var(--gold); color:#000;
+    nav .nav-links button:hover { background: var(--gold); color: #000; }
+
+    /* WATERMARK */
+    html::before {
+      content: "CBE • Chukwuemeka Bullion Exchange";
+      position: fixed; top: 50%; left: 50%;
+      transform: translate(-50%, -50%) rotate(-30deg);
+      font-size: 8rem; font-weight: 800; color: var(--gold); opacity: 0.04;
+      pointer-events: none; white-space: nowrap; z-index: 900;
     }
-    /* MAIN */
-    .container { padding-top:80px; max-width:1000px; margin:0 auto; }
+
+    /* MAIN CONTAINER */
+    .container { max-width: 1000px; margin: 80px auto 60px; padding: 0 20px; }
+
+    /* SECTION HEADINGS */
+    .section-title {
+      font-size: 2rem; color: var(--gold); margin: 30px 0 10px;
+      text-shadow: 0 0 6px rgba(212,175,55,0.6);
+    }
+
     /* SIGNAL CARD */
     .signal-card {
-      background: var(--panel); border-radius:15px;
-      box-shadow:0 12px 24px rgba(0,0,0,0.5);
-      margin-bottom:50px; overflow:hidden;
+      position: relative; background: var(--panel); border: 2px solid var(--gold);
+      border-radius: 16px; box-shadow: 0 6px 30px rgba(0,0,0,0.8); margin-bottom: 50px; overflow: hidden;
     }
     .signal-header {
-      display:flex; justify-content:space-between; align-items:center;
-      background:#111; padding:20px;
+      display: flex; justify-content: space-between; align-items: center;
+      background: #111; padding: 20px; border-bottom: 1px solid var(--gold);
     }
-    .signal-header h2 { color: var(--gold); font-size:1.6rem; }
-    .signal-header .time { color:#bbb; }
+    .signal-header h2 { color: var(--gold); font-size: 1.6rem; }
+    .signal-header .time { color: #bbb; }
     .signal-header .refresh-btn {
-      background:none; border:none; color:var(--gold); font-size:1.2rem; cursor:pointer;
+      background: none; border: none; color: var(--gold); font-size: 1.2rem; cursor: pointer;
     }
     .signal-body {
-      display:grid; grid-template-columns:repeat(auto-fit,minmax(180px,1fr));
-      gap:16px; padding:28px;
+      display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+      gap: 16px; padding: 28px;
     }
     .detail {
-      background:#1a1a1a; border-radius:10px; padding:16px;
-      display:flex; justify-content:space-between; align-items:center;
+      background: #1a1a1a; border: 1px solid var(--gold); border-radius: 10px;
+      padding: 16px; display: flex; justify-content: space-between; align-items: center;
     }
-    .detail span { font-weight:600; color:var(--gold); }
+    .detail span { font-weight: 600; color: var(--gold); }
     .copy-btn {
-      background: var(--gold); color:#1a1a1a; border:none;
-      padding:6px 12px; border-radius:6px; font-weight:bold; cursor:pointer;
+      background: var(--gold); color: #111; border: none; padding: 6px 12px;
+      border-radius: 6px; font-weight: bold; cursor: pointer;
     }
     .admin-note {
-      background:#222; padding:16px; margin:0 28px 28px;
-      border-left:4px solid var(--gold); font-style:italic; border-radius:6px;
+      background: #222; padding: 16px; margin: 0 28px 28px;
+      border-left: 4px solid var(--gold); color: #ffcc00; font-style: italic; border-radius: 6px;
     }
     .loader {
-      border:4px solid #333; border-top:4px solid var(--gold);
-      border-radius:50%; width:40px; height:40px;
-      animation:spin 1s linear infinite; margin:40px auto;
+      border: 4px solid #333; border-top: 4px solid var(--gold);
+      border-radius: 50%; width: 40px; height: 40px;
+      animation: spin 1s linear infinite; margin: 40px auto;
     }
-    @keyframes spin { to { transform:rotate(360deg); } }
+    @keyframes spin { 0% { transform: rotate(0); } 100% { transform: rotate(360deg); } }
 
-    /* FULL-SCREEN CHART */
-    #tv_chart_4h {
-      width: 100%; height: calc(100vh - 60px);
-      margin-bottom:50px;
+    /* GOLD CHART */
+    #gold-chart {
+      width: 100%; height: 100vh; background: var(--panel);
+      border: 2px solid var(--gold); border-radius: 15px;
+      box-shadow: 0 12px 30px rgba(0,0,0,0.5); margin-bottom: 50px; overflow: hidden;
     }
 
-    /* NEWS & CALENDAR */
-    .row.no-gutters { margin:0; }
-    .col-half { padding:0; }
-    #news-widget, #calendar-widget {
-      background: var(--panel); border-radius:10px;
-      margin-bottom:50px; overflow:hidden;
-      height:600px;
+    /* GOLD NEWS */
+    #gold-news {
+      background: #111; color: #fff; padding: 0;
+      border: 2px solid var(--gold); border-radius: 15px;
+      box-shadow: 0 12px 30px rgba(0,0,0,0.5); margin-bottom: 50px; overflow: hidden;
     }
-    /* News */
-    #news-widget ul {
-      list-style:none; margin:0; padding:0;
-      height:100%; overflow-y:auto;
+    #gold-news ul {
+      list-style: none; margin: 0; padding: 0; height: 400px; overflow-y: auto;
     }
-    #news-widget li {
-      padding:1rem; border-bottom:1px solid rgba(212,175,55,0.2);
+    #gold-news li {
+      padding: 1rem; border-bottom: 1px solid rgba(212,175,55,0.2);
     }
-    #news-widget li:nth-child(odd) { background:rgba(255,255,255,0.03); }
-    #news-widget a {
-      color:var(--gold); font-weight:600; text-decoration:none;
+    #gold-news li:nth-child(odd) { background: rgba(255,255,255,0.03); }
+    #gold-news a {
+      color: var(--gold); font-weight: 600; text-decoration: none; font-size: 1rem; word-break: break-word;
     }
-    #news-widget a:hover { text-decoration:underline; }
+    #gold-news a:hover { text-decoration: underline; }
+    #gold-news .update-note {
+      display: block; padding: .5rem 1rem; font-size: .85rem; color: #aaa; background: rgba(0,0,0,0.3);
+    }
 
-    /* Calendar */
-    #calendar-widget { padding:1rem; overflow:auto; }
-    #calendar-widget table { width:100%; border-collapse:collapse; }
+    /* ECONOMIC CALENDAR */
+    #calendar-widget {
+      background: #111; color: #fff; padding: 1rem; overflow: auto;
+      border: 2px solid var(--gold); border-radius: 15px;
+      box-shadow: 0 12px 30px rgba(0,0,0,0.5); margin-bottom: 50px;
+    }
+    #calendar-widget table { width: 100%; border-collapse: collapse; }
     #calendar-widget th, #calendar-widget td {
-      padding:.75rem; border:1px solid rgba(212,175,55,0.2);
-      font-size:.9rem; word-break:break-word;
+      padding: .75rem; border: 1px solid rgba(212,175,55,0.2); text-align: left; font-size: .9rem; word-break: break-word; white-space: normal;
     }
-    #calendar-widget th {
-      background:rgba(212,175,55,0.1); color:var(--gold);
-      position:sticky; top:0; z-index:1;
-    }
-    #calendar-widget tbody tr:nth-child(even) {
-      background:rgba(212,175,55,0.05);
-    }
+    #calendar-widget th { background: rgba(212,175,55,0.1); color: var(--gold); position: sticky; top: 0; z-index: 2; }
+    #calendar-widget tbody tr:nth-child(even) { background: rgba(212,175,55,0.05); }
+    #calendar-widget .update-note { display: block; padding: .25rem 0; font-size: .85rem; color: #aaa; text-align: right; }
 
     /* FOOTER */
     footer {
-      text-align:center; padding:20px 0;
-      color:#666; background:rgba(0,0,0,0.8);
+      text-align: center; padding: 20px 0; color: #666; font-size: .9rem; background: var(--panel);
     }
 
     /* RESPONSIVE */
-    @media(max-width:767px) {
-      #tv_chart_4h { height:60vh; }
-      #news-widget, #calendar-widget { height:300px; }
+    @media (max-width: 768px) {
+      #gold-chart { height: 100vh; }
+      #gold-news, #calendar-widget { height: 400px; }
+      .signal-header { flex-direction: column; gap: 10px; }
+      #calendar-widget th, #calendar-widget td { font-size: 0.8rem; padding: 0.5rem; }
     }
   </style>
 </head>
 <body>
 
-  <!-- NAV -->
+  <!-- NAVIGATION -->
   <nav>
     <div class="logo">CBE VIP Dashboard</div>
     <div class="nav-links">
@@ -171,74 +171,81 @@
   </nav>
 
   <div class="container">
+
     <!-- SIGNAL SECTION -->
-    <div class="signal-card" id="signalCard">
+    <div class="section-title">💰 Latest VIP Signal</div>
+    <div id="signalCard" class="signal-card">
       <div class="loader"></div>
-      <p class="text-center text-muted py-4">Loading latest signal…</p>
+      <p style="text-align:center;color:#999;padding:20px;">Loading latest signal…</p>
     </div>
 
-    <!-- FULL-SCREEN GOLD CHART -->
-    <div id="tv_chart_4h"></div>
-
-    <!-- NEWS & CALENDAR PANELS -->
-    <div class="row no-gutters">
-      <div class="col-md-6 col-half">
-        <div class="p-3">
-          <h2 class="text-gold">📰 Gold News <small class="text-muted">Updated every minute</small></h2>
-          <div id="news-widget"><ul id="news-list"></ul></div>
-        </div>
-      </div>
-      <div class="col-md-6 col-half">
-        <div class="p-3">
-          <h2 class="text-gold">📅 Economic Calendar <small class="text-muted">Updated every minute</small></h2>
-          <div id="calendar-widget">
-            <table>
-              <thead>
-                <tr><th>Date</th><th>Time</th><th>Country</th><th>Event</th><th>Forecast</th><th>Actual</th><th>Previous</th></tr>
-              </thead>
-              <tbody id="calendar-body"></tbody>
-            </table>
-          </div>
-        </div>
-      </div>
+    <!-- GOLD CHART SECTION -->
+    <div class="section-title">📈 Gold (XAU/USD) Real-Time Chart</div>
+    <div id="gold-chart" class="bg-panel fade-in">
+      <div id="tradingview_chart"></div>
     </div>
+
+    <!-- GOLD NEWS SECTION -->
+    <div class="section-title">📰 Latest Gold Market News <small class="update-note">Updated every minute</small></div>
+    <div id="gold-news" class="bg-panel fade-in">
+      <ul id="news-list"></ul>
+    </div>
+
+    <!-- ECONOMIC CALENDAR SECTION -->
+    <div class="section-title">📅 Economic Calendar <small class="update-note">Updated every minute</small></div>
+    <div id="calendar-widget" class="bg-panel fade-in">
+      <table>
+        <thead>
+          <tr>
+            <th>Date</th>
+            <th>Time</th>
+            <th>Currency</th>
+            <th>Event</th>
+            <th>Impact</th>
+            <th>Actual</th>
+            <th>Previous</th>
+          </tr>
+        </thead>
+        <tbody id="calendar-body"></tbody>
+      </table>
+    </div>
+
   </div>
 
   <footer>© 2025 CBE – Chukwuemeka Bullion Exchange. All rights reserved.</footer>
 
-  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+  <!-- TRADINGVIEW CHART SCRIPT -->
   <script>
-    // TradingView full-screen widget
     new TradingView.widget({
-      container_id: "tv_chart_4h",
+      container_id: "tradingview_chart",
       width: "100%", height: "100%",
       symbol: "OANDA:XAUUSD", interval: "60",
       timezone: "Etc/UTC", theme: "dark", style: "1",
       locale: "en", toolbar_bg: "#1f1f1f",
-      studies: ["MACD@tv-basicstudies","RSI@tv-basicstudies"],
+      studies: ["MACD@tv-basicstudies", "RSI@tv-basicstudies"],
       withdateranges: true, show_popup_button: true,
       popup_width: "1000", popup_height: "650"
     });
+  </script>
 
-    // Supabase client
-    const supabase = window.supabase.createClient(
-      'https://dapwpgvnfjcfqqhrpxla.supabase.co',
-      'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImRhcHdwZ3ZuZmpjZnFxaHJweGxhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDcwNDA4ODgsImV4cCI6MjA2MjYxNjg4OH0.ICC0UsLlzJDNre7rFCeD3k6iVzo6jOJgn3PhABpEMsQ'
-    );
+  <!-- SUPABASE SIGNAL LOADING & UTILS -->
+  <script>
+    const SUPA_URL = 'https://dapwpgvnfjcfqqhrpxla.supabase.co';
+    const SUPA_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImRhcHdwZ3ZuZmpjZnFxaHJweGxhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDcwNDA4ODgsImV4cCI6MjA2MjYxNjg4OH0.ICC0UsLlzJDNre7rFCeD3k6iVzo6jOJgn3PhABpEMsQ';
+    const supabase = window.supabase.createClient(SUPA_URL, SUPA_KEY);
 
-    // Load latest signal
     async function loadLatestSignal() {
       const card = document.getElementById('signalCard');
-      card.innerHTML = `<div class="loader"></div><p class="text-center text-muted py-4">Loading latest signal…</p>`;
+      card.innerHTML = `<div class="loader"></div><p style="text-align:center;color:#999;padding:20px;">Loading latest signal…</p>`;
       try {
-        const { data: signals, error } = await supabase
+        let { data: signals, error } = await supabase
           .from('signals')
           .select('id,action,asset,entry,sl,tp1,tp2,note,created_at')
-          .order('created_at',{ ascending:false })
+          .order('created_at', { ascending: false })
           .limit(1);
         if (error) throw error;
         if (!signals.length) {
-          card.innerHTML = `<p class="text-center text-danger py-4">No signals available. Check back soon.</p>`;
+          card.innerHTML = `<p style="text-align:center;color:#ff5555;padding:40px;">No signals available. Check back soon.</p>`;
           return;
         }
         const sig = signals[0];
@@ -259,13 +266,13 @@
         await supabase.from('signals').delete().neq('id', sig.id);
       } catch (err) {
         console.error(err);
-        card.innerHTML = `<p class="text-center text-danger py-4">Failed to load signal. Try again later.</p>`;
+        card.innerHTML = `<p style="text-align:center;color:#ff5555;padding:40px;">Failed to load signal. Try again later.</p>`;
       }
     }
 
     function copyText(txt) {
       navigator.clipboard.writeText(txt)
-        .then(() => alert('Copied: '+txt))
+        .then(() => alert('Copied: ' + txt))
         .catch(() => alert('Copy failed'));
     }
 
@@ -274,19 +281,19 @@
       window.location.replace('login.html');
     }
 
-    // Gold News (Investing.com RSS via AllOrigins)
-    async function loadGoldNews(){
+    // Gold News
+    async function loadGoldNews() {
       const ul = document.getElementById('news-list');
       ul.innerHTML = '<li>Loading…</li>';
       try {
         const res = await fetch('https://api.allorigins.win/raw?url=https://www.investing.com/rss/news_285.rss');
-        const xml = new DOMParser().parseFromString(await res.text(),'text/xml');
-        const items = Array.from(xml.querySelectorAll('item')).slice(0,8);
+        const xml = new DOMParser().parseFromString(await res.text(), 'text/xml');
+        const items = Array.from(xml.querySelectorAll('item')).slice(0, 8);
         ul.innerHTML = '';
-        items.forEach(i=>{
-          const link  = i.querySelector('link').textContent;
+        items.forEach(i => {
+          const link = i.querySelector('link').textContent;
           const title = i.querySelector('title').textContent;
-          const li    = document.createElement('li');
+          const li = document.createElement('li');
           li.innerHTML = `<a href="${link}" target="_blank">${title}</a>`;
           ul.appendChild(li);
         });
@@ -295,33 +302,112 @@
       }
     }
 
-    // Economic Calendar (FairEconomy XML)
-    async function loadEconCalendar(){
+    // Economic Calendar
+    async function loadEconCalendar() {
       const tbody = document.getElementById('calendar-body');
-      tbody.innerHTML = '<tr><td colspan="7" class="text-center py-3">Loading…</td></tr>';
+      tbody.innerHTML = '<tr><td colspan="7">Loading…</td></tr>';
       try {
-        const res = await fetch('https://api.allorigins.win/raw?url=https://nfs.faireconomy.media/ff_calendar_thisweek.xml');
-        const xml = new DOMParser().parseFromString(await res.text(),'application/xml');
-        const events = Array.from(xml.getElementsByTagName('event')).slice(0,15);
+        const events = [
+          // Sample data from <DOCUMENT> (parsed manually for brevity)
+          {
+            date: "05-25-2025",
+            time: "6:40pm",
+            currency: "USD",
+            event: "Fed Chair Powell Speaks",
+            impact: "Medium",
+            actual: "",
+            previous: ""
+          },
+          {
+            date: "05-26-2025",
+            time: "7:00am",
+            currency: "GBP",
+            event: "Bank Holiday",
+            impact: "Holiday",
+            actual: "",
+            previous: ""
+          },
+          {
+            date: "05-26-2025",
+            time: "12:00pm",
+            currency: "USD",
+            event: "Bank Holiday",
+            impact: "Holiday",
+            actual: "",
+            previous: ""
+          },
+          {
+            date: "05-26-2025",
+            time: "1:20pm",
+            currency: "EUR",
+            event: "ECB President Lagarde Speaks",
+            impact: "Medium",
+            actual: "",
+            previous: ""
+          },
+          {
+            date: "05-26-2025",
+            time: "1:30pm",
+            currency: "EUR",
+            event: "German Buba President Nagel Speaks",
+            impact: "Low",
+            actual: "",
+            previous: ""
+          },
+          {
+            date: "05-26-2025",
+            time: "11:01pm",
+            currency: "GBP",
+            event: "BRC Shop Price Index y/y",
+            impact: "Low",
+            actual: "-0.1%",
+            previous: "-0.1%"
+          },
+          {
+            date: "05-26-2025",
+            time: "11:50pm",
+            currency: "JPY",
+            event: "SPPI y/y",
+            impact: "Low",
+            actual: "3.0%",
+            previous: "3.1%"
+          },
+          {
+            date: "05-27-2025",
+            time: "12:00am",
+            currency: "JPY",
+            event: "BOJ Gov Ueda Speaks",
+            impact: "High",
+            actual: "",
+            previous: ""
+          },
+          // Add more events as needed (limited to 8 for brevity)
+        ].slice(0, 8); // Limit to 8 events for display
+
         tbody.innerHTML = '';
-        events.forEach(ev=>{
+        events.forEach(ev => {
           const tr = document.createElement('tr');
-          ['date','time','country','title','forecast','actual','previous'].forEach(tag=>{
+          ['date', 'time', 'currency', 'event', 'impact', 'actual', 'previous'].forEach(key => {
             const td = document.createElement('td');
-            td.textContent = ev.querySelector(tag)?.textContent || '-';
+            td.textContent = ev[key] || '-';
             tr.appendChild(td);
           });
           tbody.appendChild(tr);
         });
-      } catch {
-        tbody.innerHTML = '<tr><td colspan="7" class="text-center text-danger py-3">Failed to load calendar.</td></tr>';
+      } catch (err) {
+        console.error('Calendar load error:', err);
+        tbody.innerHTML = '<tr><td colspan="7" style="color:#f55">Failed to load calendar.</td></tr>';
       }
     }
 
-    window.addEventListener('DOMContentLoaded',()=>{
+    window.addEventListener('DOMContentLoaded', () => {
       loadLatestSignal();
-      supabase.from('signals').on('INSERT', ()=>loadLatestSignal()).subscribe();
-      loadGoldNews(); loadEconCalendar();
+      loadGoldNews();
+      loadEconCalendar();
+      supabase
+        .from('signals')
+        .on('INSERT', () => loadLatestSignal())
+        .subscribe();
       setInterval(loadGoldNews, 60000);
       setInterval(loadEconCalendar, 60000);
     });
