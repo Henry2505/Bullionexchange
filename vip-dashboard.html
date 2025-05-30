@@ -49,10 +49,6 @@
     #tv_chart_4h,#news-widget,#calendar-widget{width:100%;height:600px;border-radius:10px;overflow:hidden}
     @media(max-width:767px){#tv_chart_4h{height:100vh}#news-widget,#calendar-widget{height:400px}}
 
-    /* Navigation & Toggle Bold */
-    .nav-link { font-weight:700 !important; }
-    #theme-toggle { font-weight:700 !important; }
-
     /* Gold News */
     #news-widget{background:#111;color:#fff;padding:0}
     #news-widget ul{list-style:none;margin:0;padding:0;height:100%;overflow-y:auto}
@@ -93,7 +89,7 @@
       <header class="d-flex justify-content-between align-items-center bg-panel p-3 sticky-top fade-in">
         <button class="btn btn-link text-gold d-md-none" data-bs-toggle="offcanvas" data-bs-target="#sidebar"><i class="bi-list"></i></button>
         <div class="position-relative">
-          <button id="notif-btn" class="btn btn-link text-gold position-relative"><i class="bi-bell-fill"></i></button>
+          <button id="notif-btn" class="btn btn-link text-gold position-relative"><i class="bi-bell-fill"></i><span id="notif-count" class="badge bg-danger position-absolute top-0 start-100 translate-middle">0</span></button>
           <div id="notif-menu" class="dropdown-menu dropdown-menu-end bg-panel p-2"><h6 class="dropdown-header text-gold">Notifications</h6><div id="notif-list" class="text-gold">No new notifications</div></div>
         </div>
         <button id="theme-toggle" class="btn btn-link text-gold"><i class="bi-sun-fill"></i></button>
@@ -105,21 +101,22 @@
 
         <!-- Stats Row -->
         <div class="row g-4 mb-4 fade-in">
-          <!-- Signals Today (number removed) -->
+          <!-- Signals Today -->
           <div class="col-md-3">
             <div class="card bg-panel p-4 text-center">
               <h6 class="text-gold"><i class="bi-lightning me-2"></i>Signals Today</h6>
+              <p id="stat-signals" class="fs-3 mb-2 text-gold">0</p>
               <a href="signals.html" class="btn btn-gold">Access Latest Signals</a>
             </div>
           </div>
-          <!-- Insights -->
+          <!-- Insights (no number) -->
           <div class="col-md-3">
             <div class="card bg-panel p-4 text-center">
               <h6 class="text-gold"><i class="bi-graph-up me-2"></i>Insights</h6>
               <a href="CBE_trade_insights_vip.html" class="btn btn-gold">Click Here to View Trade Insights</a>
             </div>
           </div>
-          <!-- Recent Trades -->
+          <!-- Recent Trades (no number) -->
           <div class="col-md-3">
             <div class="card bg-panel p-4 text-center">
               <h6 class="text-gold"><i class="bi-clock-history me-2"></i>Recent Trades</h6>
@@ -192,10 +189,15 @@
 
     // Load stats & watchlist
     async function loadDashboard() {
-      // Signals count (still loaded but not displayed as number)
+      // Signals count
       const today = new Date().toISOString().split('T')[0];
       const [{ count: signalsToday }] = await supabase
         .from('signals').select('id',{count:'exact'}).gte('created_at', today);
+      document.getElementById('stat-signals').textContent = signalsToday || 0;
+
+      // 24h Gold change placeholder
+      document.getElementById('stat-gold-change').textContent = 'N/A';
+
       // Watchlist
       const list = JSON.parse(localStorage.getItem('watchlist')||'[]');
       const ul = document.getElementById('watch-list');
@@ -212,10 +214,64 @@
       });
     }
 
-    // Init chart & widgets...
-    function initWidgets() {/* unchanged */}
-    async function loadGoldNews() {/* unchanged */}
-    async function loadEconCalendar() {/* unchanged */}
+    // Init chart
+    function initWidgets() {
+      new TradingView.widget({
+        container_id:"tv_chart_4h", width:"100%", height:"600",
+        symbol:"XAUUSD", interval:"240", timezone:"Etc/UTC",
+        theme:"dark", style:"1", locale:"en", toolbar_bg:"#f1f3f6",
+        enable_publishing:false, allow_symbol_change:false, save_image:false,
+        studies:[
+          {study:"MASimple@tv-basicstudies",inputs:{length:50}},
+          {study:"MASimple@tv-basicstudies",inputs:{length:200}}
+        ],
+        show_popup_button:true, popup_width:"1000", popup_height:"650"
+      });
+    }
+
+    // Load Gold News (Investing.com RSS)
+    async function loadGoldNews() {
+      const ul = document.getElementById('news-list');
+      ul.innerHTML = '<li>Loading…</li>';
+      try {
+        const res = await fetch('https://api.allorigins.win/raw?url=https://www.investing.com/rss/news_285.rss');
+        const xml = new DOMParser().parseFromString(await res.text(),'text/xml');
+        const items = Array.from(xml.querySelectorAll('item')).slice(0,8);
+        ul.innerHTML = '';
+        items.forEach(i => {
+          const link = i.querySelector('link').textContent;
+          const title = i.querySelector('title').textContent;
+          const li = document.createElement('li');
+          li.innerHTML = `<a href="${link}" target="_blank">${title}</a>`;
+          ul.appendChild(li);
+        });
+      } catch {
+        ul.innerHTML = '<li style="color:#f55">Failed to load Gold News.</li>';
+      }
+    }
+
+    // Load Economic Calendar (ForexFactory XML)
+    async function loadEconCalendar() {
+      const tbody = document.getElementById('calendar-body');
+      tbody.innerHTML = '<tr><td colspan="7">Loading…</td></tr>';
+      try {
+        const res = await fetch('https://api.allorigins.win/raw?url=https://nfs.faireconomy.media/ff_calendar_thisweek.xml');
+        const xml = new DOMParser().parseFromString(await res.text(),'text/xml');
+        const evs = Array.from(xml.querySelectorAll('event')).slice(0,15);
+        tbody.innerHTML = '';
+        evs.forEach(ev => {
+          const tr = document.createElement('tr');
+          ['date','time','country','title','forecast','actual','previous'].forEach(tag => {
+            const td = document.createElement('td');
+            td.textContent = ev.querySelector(tag)?.textContent||'-';
+            tr.appendChild(td);
+          });
+          tbody.appendChild(tr);
+        });
+      } catch {
+        tbody.innerHTML = '<tr><td colspan="7" style="color:#f55">Failed to load calendar.</td></tr>';
+      }
+    }
 
     // Theme toggle & notifications
     (function(){
@@ -227,6 +283,7 @@
       document.getElementById('notif-btn').addEventListener('click',()=>new bootstrap.Dropdown(document.getElementById('notif-btn')).toggle());
     })();
 
+    // On load & auto-refresh
     document.addEventListener('DOMContentLoaded',()=>{
       document.getElementById('welcomeName').textContent=sessionStorage.getItem('cbeUserName')||'Trader';
       loadDashboard(); initWidgets(); loadGoldNews(); loadEconCalendar();
