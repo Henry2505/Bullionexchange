@@ -231,33 +231,42 @@
     }
 
     // Economic Calendar
-    async function loadEconCalendar(){
-      const tbody=document.getElementById('calendar-body');
-      tbody.innerHTML='<tr><td colspan="7">Loading…</td></tr>';
-      try{
-        const res=await fetch('https://api.allorigins.win/raw?url=https://nfs.faireconomy.media/ff_calendar_thisweek.xml');
-        const xml=new DOMParser().parseFromString(await res.text(),'text/xml');
-        let events=Array.from(xml.querySelectorAll('event')).slice(0,50);
-
-        // sort by combined date+time
-        events.sort((a,b)=>{
-          const da=a.querySelector('date').textContent, ta=a.querySelector('time').textContent;
-          const db=b.querySelector('date').textContent, tb=b.querySelector('time').textContent;
-          return new Date(`${da} ${ta}`) - new Date(`${db} ${tb}`);
-        });
-
-        tbody.innerHTML='';
-        events.forEach(ev=>{
-          const tr=document.createElement('tr');
-          ['date','time','country','title','forecast','actual','previous'].forEach(tag=>{
-            const td=document.createElement('td');
-            td.textContent=ev.querySelector(tag)?.textContent||'-';
+    async function loadEconCalendar() {
+      const tbody = document.getElementById('calendar-body');
+      tbody.innerHTML = '<tr><td colspan="7">Loading…</td></tr>';
+      try {
+        const res = await fetch(
+          'https://api.allorigins.win/raw?url=https://nfs.faireconomy.media/ff_calendar_thisweek.xml'
+        );
+        const xml = new DOMParser().parseFromString(await res.text(), 'application/xml');
+        const allEvents = Array.from(xml.getElementsByTagName('event'));
+        if (allEvents.length === 0) {
+          tbody.innerHTML = '<tr><td colspan="7">No upcoming events</td></tr>';
+          return;
+        }
+        const events = allEvents
+          .slice(0, 15)
+          .sort((a, b) => {
+            const da = a.querySelector('date')?.textContent || '';
+            const ta = a.querySelector('time')?.textContent || '';
+            const db = b.querySelector('date')?.textContent || '';
+            const tb = b.querySelector('time')?.textContent || '';
+            return new Date(`${da} ${ta}`) - new Date(`${db} ${tb}`);
+          });
+        tbody.innerHTML = '';
+        events.forEach(ev => {
+          const tr = document.createElement('tr');
+          ['date','time','country','title','forecast','actual','previous'].forEach(tag => {
+            const td = document.createElement('td');
+            td.textContent = ev.querySelector(tag)?.textContent || '-';
             tr.appendChild(td);
           });
           tbody.appendChild(tr);
         });
-      }catch{
-        tbody.innerHTML='<tr><td colspan="7" style="color:#f55">Failed to load calendar.</td></tr>';
+      } catch (err) {
+        console.error('Calendar load error:', err);
+        tbody.innerHTML =
+          '<tr><td colspan="7" style="color:#f55">Failed to load calendar.</td></tr>';
       }
     }
 
@@ -276,7 +285,7 @@
       document.getElementById('notif-btn').addEventListener('click',()=>new bootstrap.Dropdown(document.getElementById('notif-btn')).toggle());
     })();
 
-    // On load
+    // On load & auto-refresh
     document.addEventListener('DOMContentLoaded',()=>{
       document.getElementById('welcomeName').textContent=sessionStorage.getItem('cbeUserName')||'Trader';
       loadDashboard(); initWidgets(); loadGoldNews(); loadEconCalendar();
