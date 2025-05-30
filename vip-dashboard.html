@@ -97,10 +97,7 @@
       border-radius: 10px;
       overflow: hidden;
     }
-    @media (max-width: 767px) {
-      #tv_chart_4h { height: 100vh; }
-      #news-widget, #calendar-widget { height: 400px; }
-    }
+    @media (max-width: 767px) { #tv_chart_4h { height: 100vh; } }
 
     /* Gold News styling */
     #news-widget {
@@ -146,7 +143,7 @@
     }
     #calendar-widget th,
     #calendar-widget td {
-      padding: 0.75rem;
+      padding: 0.5rem;
       border: 1px solid rgba(212,175,55,0.2);
       text-align: left;
       font-size: 0.9rem;
@@ -250,16 +247,12 @@
         <div class="card bg-panel p-4 mb-4 fade-in">
           <h2 class="text-gold mb-3">Economic Calendar</h2>
           <div id="calendar-widget">
-            <div style="overflow-x: auto;">
-              <table>
-                <thead>
-                  <tr>
-                    <th>Date</th><th>Time</th><th>Country</th><th>Event</th><th>Forecast</th><th>Actual</th><th>Previous</th>
-                  </tr>
-                </thead>
-                <tbody id="calendar-body"></tbody>
-              </table>
-            </div>
+            <table>
+              <thead>
+                <tr><th>Date</th><th>Time</th><th>Country</th><th>Event</th><th>Forecast</th><th>Actual</th><th>Previous</th></tr>
+              </thead>
+              <tbody id="calendar-body"></tbody>
+            </table>
           </div>
         </div>
 
@@ -289,11 +282,11 @@
   <script>
     // Supabase init
     const SUPA_URL = 'https://dapwpgvnfjcfqqhrpxla.supabase.co';
-    const SUPA_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImRhcHdwZ3ZuZmpjZnFxaHJweGxhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDcwNDA4ODgsImV4cCI6MjA2MjYxNjg4OH0.ICC0UsLlzJDNre7rFCeD3k6iVzo6jOJgn3PhABpEMsQ';
+    const SUPA_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhbmFz|
     const supabase = window.supabase.createClient(SUPA_URL, SUPA_KEY);
 
     // Load stats & watchlist (unchanged)
-    async function loadDashboard() { /* …existing… */ }
+    async function loadDashboard() { /* …existing code… */ }
 
     // Init chart widget
     function initWidgets() {
@@ -310,15 +303,13 @@
       });
     }
 
-    // Load Gold News from Investing.com RSS
+    // — NEW: Load Gold News from Investing.com RSS —
     async function loadGoldNews() {
-      const ul = document.getElementById('news-list');
-      ul.innerHTML = '<li>Loading...</li>';
       try {
         const res = await fetch('https://api.allorigins.win/raw?url=https://www.investing.com/rss/news_285.rss');
         const xml = new DOMParser().parseFromString(await res.text(), 'text/xml');
         const items = Array.from(xml.querySelectorAll('item')).slice(0,8);
-        ul.innerHTML = '';
+        const ul = document.getElementById('news-list'); ul.innerHTML = '';
         items.forEach(i => {
           const link = i.querySelector('link').textContent;
           const title = i.querySelector('title').textContent;
@@ -327,22 +318,20 @@
           ul.appendChild(li);
         });
       } catch(e) {
-        ul.innerHTML = '<li style="color:#f55">Failed to load Gold News. Please try again later.</li>';
+        document.getElementById('news-list').innerHTML = '<li style="color:#f55">Unable to load Gold News.</li>';
       }
     }
 
-    // Load Economic Calendar from ForexFactory XML
+    // — NEW: Load Econ Calendar from ForexFactory XML —
     async function loadEconCalendar() {
-      const tbody = document.getElementById('calendar-body');
-      tbody.innerHTML = '<tr><td colspan="7">Loading...</td></tr>';
       try {
         const res = await fetch('https://api.allorigins.win/raw?url=https://nfs.faireconomy.media/ff_calendar_thisweek.xml');
         const xml = new DOMParser().parseFromString(await res.text(), 'text/xml');
         const evs = Array.from(xml.querySelectorAll('event')).slice(0,15);
-        tbody.innerHTML = '';
+        const tbody = document.getElementById('calendar-body'); tbody.innerHTML = '';
         evs.forEach(ev => {
           const tr = document.createElement('tr');
-          ['date','time','country','title','forecast','actual','previous'].forEach(tag => {
+          ['date','time','country','event','forecast','actual','previous'].forEach(tag => {
             const td = document.createElement('td');
             td.textContent = ev.querySelector(tag)?.textContent||'-';
             tr.appendChild(td);
@@ -350,20 +339,23 @@
           tbody.appendChild(tr);
         });
       } catch {
-        tbody.innerHTML = '<tr><td colspan="7" style="color:#f55">Failed to load calendar. Please try again later.</td></tr>';
+        document.getElementById('calendar-body').innerHTML = '<tr><td colspan="7" style="color:#f55">Unable to load calendar.</td></tr>';
       }
     }
 
-    // Theme & notifications (unchanged)
-    (function(){ /* …existing… */ })();
+    // Theme & notif (unchanged)
+    (function(){ /* …existing code… */ })();
 
-    // On load
+    // On load & auto-refresh
     document.addEventListener('DOMContentLoaded', ()=>{
-      document.getElementById('welcomeName').textContent = sessionStorage.getItem('cbeUserName')||'Trader';
+      document.getElementById('welcomeName').textContent = sessionStorage.getItem('cbeUserName') || 'Trader';
       loadDashboard();
       initWidgets();
       loadGoldNews();
       loadEconCalendar();
+      // Refresh every 5 minutes:
+      setInterval(loadGoldNews, 5 * 60 * 1000);
+      setInterval(loadEconCalendar, 5 * 60 * 1000);
     });
   </script>
 </body>
