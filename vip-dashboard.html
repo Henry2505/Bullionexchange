@@ -224,10 +224,8 @@
   <script>
     // Supabase init
     const SUPA_URL = 'https://dapwpgvnfjcfqqhrpxla.supabase.co';
-    const SUPA_KEY = 'YOUR_SUPA_KEY';  // replace with your actual anon key
+    const SUPA_KEY = 'YOUR_SUPA_KEY';
     const supabase = window.supabase.createClient(SUPA_URL, SUPA_KEY);
-
-    // Helper to format dates
     const fmtTime = ts => new Date(ts).toLocaleString();
 
     // Load stats & watchlist
@@ -235,22 +233,19 @@
       const today = new Date().toISOString().split('T')[0];
       const [{ count: signalsToday }] = await supabase
         .from('signals').select('id', { count:'exact' }).gte('created_at', today);
-      document.getElementById('stat-signals').textContent = signalsToday || 0;
+      document.getElementById('stat-signals').textContent = signalsToday||0;
 
       const [{ count: insCount }] = await supabase
-        .from('trade_insights').select('id', { count:'exact' });
-      document.getElementById('stat-insights').textContent = insCount || 0;
+        .from('trade_insights').select('id',{count:'exact'});
+      document.getElementById('stat-insights').textContent = insCount||0;
 
       const { data: trades } = await supabase
-        .from('trade_history')
-        .select('asset,pips,result')
-        .order('timestamp', { ascending:false })
-        .limit(5);
+        .from('trade_history').select('asset,pips,result').order('timestamp',{ascending:false}).limit(5);
       document.getElementById('stat-trades').textContent = trades ? trades.length : 0;
 
       document.getElementById('stat-gold-change').textContent = 'N/A';
 
-      const list = JSON.parse(localStorage.getItem('watchlist') || '[]');
+      const list = JSON.parse(localStorage.getItem('watchlist')||'[]');
       const ul = document.getElementById('watch-list');
       ul.innerHTML = '';
       list.forEach(sym => {
@@ -258,79 +253,73 @@
         li.className = 'list-group-item bg-panel d-flex justify-content-between align-items-center text-gold';
         li.innerHTML = `<span>${sym}</span><button class="btn btn-sm btn-danger">×</button>`;
         li.querySelector('button').onclick = () => {
-          localStorage.setItem('watchlist', JSON.stringify(list.filter(s => s !== sym)));
+          localStorage.setItem('watchlist', JSON.stringify(list.filter(s=>s!==sym)));
           loadDashboard();
         };
         ul.appendChild(li);
       });
     }
 
-    // TradingView widget init
+    // Widgets init
     function initWidgets() {
-      // 4H XAU/USD Chart
+      // XAU/USD 4H Chart
       new TradingView.widget({
-        container_id: "tv_chart_4h",
-        width: "100%",
-        height: "600",
-        symbol: "OANDA:XAUUSD",
-        interval: "240",
-        timezone: "Etc/UTC",
-        theme: "dark",
-        style: "1",
-        toolbar_bg: "#1a1a1a",
-        withdateranges: true,
-        hide_side_toolbar: false,
-        allow_symbol_change: true,
-        details: true,
-        hotlist: true,
-        calendar: false,
-        studies: ["MACD@tv-basicstudies", "RSI@tv-basicstudies"],
-        locale: "en"
-      });
-
-      // Gold News widget
-      new TradingView.widget({
-        container_id: "news-widget",
-        width: "100%",
-        height: "600",
-        colorTheme: "dark",
-        isTransparent: true,
-        showTopStories: true,
-        feedMode: "market",
-        symbolsGroups: [
-          {
-            name: "Gold",
-            symbols: [
-              { name: "OANDA:XAUUSD", displayName: "XAU/USD" }
-            ]
-          }
+        "container_id": "tv_chart_4h",
+        "width": "100%",
+        "height": "600",
+        "symbol": "XAUUSD",
+        "interval": "240", // 4-hour timeframe (240 minutes)
+        "timezone": "Etc/UTC",
+        "theme": "dark",
+        "style": "1", // Candlestick chart
+        "locale": "en",
+        "toolbar_bg": "#f1f3f6",
+        "enable_publishing": false,
+        "allow_symbol_change": false, // Locked to XAUUSD for gold focus
+        "save_image": false,
+        "studies": [
+          {"study": "MASimple@tv-basicstudies", "inputs": {"length": 50}}, // 50-period Simple Moving Average
+          {"study": "MASimple@tv-basicstudies", "inputs": {"length": 200}} // 200-period Simple Moving Average
         ],
-        locale: "en"
+        "show_popup_button": true,
+        "popup_width": "1000",
+        "popup_height": "650"
       });
 
-      // Economic Calendar widget
+      // Gold News
       new TradingView.widget({
-        container_id: "calendar-widget",
-        width: "100%",
-        height: "600",
-        colorTheme: "dark",
-        isTransparent: true,
-        locale: "en",
-        importanceFilter: "3,2,1"
+        "container_id": "news-widget",
+        "width": "100%",
+        "height": "600",
+        "symbol": "XAUUSD", // News specific to XAU/USD
+        "tabs": ["news"], // Show only the news tab
+        "activeTab": "news", // Default to news tab
+        "locale": "en",
+        "colorTheme": "dark"
+      });
+
+      // Economic Calendar
+      new TradingView.widget({
+        "container_id": "calendar-widget",
+        "width": "100%",
+        "height": "600",
+        "importance": "high", // High-impact events only
+        "colorTheme": "dark",
+        "locale": "en"
       });
     }
 
-    // Theme toggle & notifications
+    // Theme & dropdowns
     (function(){
       const btn = document.getElementById('theme-toggle');
-      let theme = localStorage.getItem('theme') || 'dark';
+      let theme = localStorage.getItem('theme')||'dark';
       document.documentElement.setAttribute('data-theme', theme);
-      btn.innerHTML = theme==='dark' ? '<i class="bi-sun-fill"></i>' : '<i class="bi-moon-fill"></i>';
+      btn.innerHTML = theme==='dark'?'<i class="bi-sun-fill"></i>':'<i class="bi-moon-fill"></i>';
       btn.onclick = () => {
-        theme = theme==='dark' ? 'light' : 'dark';
+        theme = theme==='dark'?'light':'dark';
         document.documentElement.setAttribute('data-theme', theme);
         localStorage.setItem('theme', theme);
-        btn.innerHTML = theme==='dark' ? '<i class="bi-sun-fill"></i>' : '<i class="bi-moon-fill"></i>';
+        btn.innerHTML = theme==='dark'?'<i class="bi-sun-fill"></i>':'<i class="bi-moon-fill"></i>';
       };
       document.getElementById('notif-btn').addEventListener('click', ()=>{
         new bootstrap.Dropdown(document.getElementById('notif-btn')).toggle();
