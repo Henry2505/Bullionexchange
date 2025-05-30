@@ -90,14 +90,16 @@
       padding: 2rem;
       margin-bottom: 1.5rem;
     }
-
     #tv_chart_4h, #news-widget, #calendar-widget {
       width: 100%;
       height: 600px;
       border-radius: 10px;
       overflow: hidden;
     }
-    @media (max-width: 767px) { #tv_chart_4h { height: 100vh; } }
+    @media (max-width: 767px) {
+      #tv_chart_4h { height: 100vh; }
+      #news-widget, #calendar-widget { height: 400px; }
+    }
 
     /* Gold News styling */
     #news-widget {
@@ -126,24 +128,35 @@
       text-decoration: none;
       font-size: 1rem;
     }
-    #news-widget a:hover {
-      text-decoration: underline;
+    #news-widget a:hover { text-decoration: underline; }
+    #news-widget .update-note {
+      display: block;
+      padding: 0.5rem 1rem;
+      font-size: 0.85rem;
+      color: #aaa;
+      background: rgba(0,0,0,0.3);
     }
 
-    /* Economic Calendar table styling */
+    /* Economic Calendar styling */
     #calendar-widget {
       background: #111;
       color: #fff;
       padding: 1rem;
       overflow-y: auto;
     }
+    #calendar-widget .update-note {
+      display: block;
+      padding: 0.25rem 0;
+      font-size: 0.85rem;
+      color: #aaa;
+      text-align: right;
+    }
     #calendar-widget table {
       width: 100%;
       border-collapse: collapse;
     }
-    #calendar-widget th,
-    #calendar-widget td {
-      padding: 0.5rem;
+    #calendar-widget th, #calendar-widget td {
+      padding: 0.75rem;
       border: 1px solid rgba(212,175,55,0.2);
       text-align: left;
       font-size: 0.9rem;
@@ -203,32 +216,16 @@
 
       <!-- Main Content -->
       <div class="container-fluid p-4">
-        <!-- Welcome Banner -->
         <div class="welcome-banner bg-panel text-gold fade-in">
           <span class="blinking">Welcome, <strong id="welcomeName"></strong>!</span>
         </div>
 
         <!-- Stats Row -->
         <div class="row g-4 mb-4 fade-in">
-          <div class="col-md-3"><div class="card bg-panel p-4 text-center">
-            <h6 class="text-gold"><i class="bi-lightning me-2"></i>Signals Today</h6>
-            <p id="stat-signals" class="fs-3 mb-2 text-gold">0</p>
-            <a href="signals.html" class="btn btn-gold">Access Latest Signals</a>
-          </div></div>
-          <div class="col-md-3"><div class="card bg-panel p-4 text-center">
-            <h6 class="text-gold"><i class="bi-graph-up me-2"></i>Insights</h6>
-            <p id="stat-insights" class="fs-3 mb-2 text-gold">0</p>
-            <a href="CBE_trade_insights_vip.html" class="btn btn-gold">View Trade Insights</a>
-          </div></div>
-          <div class="col-md-3"><div class="card bg-panel p-4 text-center">
-            <h6 class="text-gold"><i class="bi-clock-history me-2"></i>Recent Trades</h6>
-            <p id="stat-trades" class="fs-3 mb-2 text-gold">0</p>
-            <a href="CBE_trade_history_vip.html" class="btn btn-gold">View Trade History</a>
-          </div></div>
-          <div class="col-md-3"><div class="card bg-panel p-4 text-center">
-            <h6 class="text-gold"><i class="bi-currency-exchange me-2"></i>24h Gold Δ</h6>
-            <p id="stat-gold-change" class="fs-3 mb-0 text-gold">--%</p>
-          </div></div>
+          <div class="col-md-3"><div class="card bg-panel p-4 text-center">…</div></div>
+          <div class="col-md-3"><div class="card bg-panel p-4 text-center">…</div></div>
+          <div class="col-md-3"><div class="card bg-panel p-4 text-center">…</div></div>
+          <div class="col-md-3"><div class="card bg-panel p-4 text-center">…</div></div>
         </div>
 
         <!-- 4H XAU/USD Chart -->
@@ -239,13 +236,13 @@
 
         <!-- Gold News -->
         <div class="card bg-panel p-4 mb-4 fade-in">
-          <h2 class="text-gold mb-3">Gold News</h2>
+          <h2 class="text-gold mb-1">Gold News <small class="update-note">Updated every minute</small></h2>
           <div id="news-widget"><ul id="news-list"></ul></div>
         </div>
 
         <!-- Economic Calendar -->
         <div class="card bg-panel p-4 mb-4 fade-in">
-          <h2 class="text-gold mb-3">Economic Calendar</h2>
+          <h2 class="text-gold mb-1">Economic Calendar <small class="update-note">Updated every minute</small></h2>
           <div id="calendar-widget">
             <table>
               <thead>
@@ -282,34 +279,36 @@
   <script>
     // Supabase init
     const SUPA_URL = 'https://dapwpgvnfjcfqqhrpxla.supabase.co';
-    const SUPA_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhbmFz|
+    const SUPA_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...';
     const supabase = window.supabase.createClient(SUPA_URL, SUPA_KEY);
 
-    // Load stats & watchlist (unchanged)
+    // Load stats & watchlist
     async function loadDashboard() { /* …existing code… */ }
 
-    // Init chart widget
+    // Init chart
     function initWidgets() {
       new TradingView.widget({
-        container_id: "tv_chart_4h", width: "100%", height: "600",
-        symbol: "XAUUSD", interval: "240", timezone: "Etc/UTC", theme: "dark",
-        style: "1", locale: "en", toolbar_bg: "#f1f3f6",
-        enable_publishing: false, allow_symbol_change: false, save_image: false,
-        studies: [
-          { study: "MASimple@tv-basicstudies", inputs: { length: 50 } },
-          { study: "MASimple@tv-basicstudies", inputs: { length: 200 } }
+        container_id: "tv_chart_4h", width:"100%", height:"600",
+        symbol:"XAUUSD", interval:"240", timezone:"Etc/UTC", theme:"dark",
+        style:"1", locale:"en", toolbar_bg:"#f1f3f6",
+        enable_publishing:false, allow_symbol_change:false, save_image:false,
+        studies:[
+          {study:"MASimple@tv-basicstudies",inputs:{length:50}},
+          {study:"MASimple@tv-basicstudies",inputs:{length:200}}
         ],
-        show_popup_button: true, popup_width: "1000", popup_height: "650"
+        show_popup_button:true, popup_width:"1000", popup_height:"650"
       });
     }
 
-    // — NEW: Load Gold News from Investing.com RSS —
+    // Load Gold News (Investing.com RSS)
     async function loadGoldNews() {
+      const ul = document.getElementById('news-list');
+      ul.innerHTML = '<li>Loading…</li>';
       try {
         const res = await fetch('https://api.allorigins.win/raw?url=https://www.investing.com/rss/news_285.rss');
-        const xml = new DOMParser().parseFromString(await res.text(), 'text/xml');
+        const xml = new DOMParser().parseFromString(await res.text(),'text/xml');
         const items = Array.from(xml.querySelectorAll('item')).slice(0,8);
-        const ul = document.getElementById('news-list'); ul.innerHTML = '';
+        ul.innerHTML = '';
         items.forEach(i => {
           const link = i.querySelector('link').textContent;
           const title = i.querySelector('title').textContent;
@@ -317,45 +316,46 @@
           li.innerHTML = `<a href="${link}" target="_blank">${title}</a>`;
           ul.appendChild(li);
         });
-      } catch(e) {
-        document.getElementById('news-list').innerHTML = '<li style="color:#f55">Unable to load Gold News.</li>';
+      } catch {
+        ul.innerHTML = '<li style="color:#f55">Failed to load Gold News.</li>';
       }
     }
 
-    // — NEW: Load Econ Calendar from ForexFactory XML —
+    // Load Economic Calendar (ForexFactory XML)
     async function loadEconCalendar() {
+      const tbody = document.getElementById('calendar-body');
+      tbody.innerHTML = '<tr><td colspan="7">Loading…</td></tr>';
       try {
         const res = await fetch('https://api.allorigins.win/raw?url=https://nfs.faireconomy.media/ff_calendar_thisweek.xml');
-        const xml = new DOMParser().parseFromString(await res.text(), 'text/xml');
+        const xml = new DOMParser().parseFromString(await res.text(),'text/xml');
         const evs = Array.from(xml.querySelectorAll('event')).slice(0,15);
-        const tbody = document.getElementById('calendar-body'); tbody.innerHTML = '';
+        tbody.innerHTML = '';
         evs.forEach(ev => {
           const tr = document.createElement('tr');
-          ['date','time','country','event','forecast','actual','previous'].forEach(tag => {
+          ['date','time','country','title','forecast','actual','previous'].forEach(tag => {
             const td = document.createElement('td');
-            td.textContent = ev.querySelector(tag)?.textContent||'-';
+            td.textContent = ev.querySelector(tag)?.textContent || '-';
             tr.appendChild(td);
           });
           tbody.appendChild(tr);
         });
       } catch {
-        document.getElementById('calendar-body').innerHTML = '<tr><td colspan="7" style="color:#f55">Unable to load calendar.</td></tr>';
+        tbody.innerHTML = '<tr><td colspan="7" style="color:#f55">Failed to load calendar.</td></tr>';
       }
     }
 
-    // Theme & notif (unchanged)
+    // Theme & notifications
     (function(){ /* …existing code… */ })();
 
-    // On load & auto-refresh
-    document.addEventListener('DOMContentLoaded', ()=>{
+    // On load & auto-refresh every minute
+    document.addEventListener('DOMContentLoaded', () => {
       document.getElementById('welcomeName').textContent = sessionStorage.getItem('cbeUserName') || 'Trader';
       loadDashboard();
       initWidgets();
       loadGoldNews();
       loadEconCalendar();
-      // Refresh every 5 minutes:
-      setInterval(loadGoldNews, 5 * 60 * 1000);
-      setInterval(loadEconCalendar, 5 * 60 * 1000);
+      setInterval(loadGoldNews, 60_000);
+      setInterval(loadEconCalendar, 60_000);
     });
   </script>
 </body>
