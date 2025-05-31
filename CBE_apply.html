@@ -4,7 +4,7 @@
   <meta charset="UTF-8"/>
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Apply • Chukwuemeka Bullion Exchange</title>
-  <meta name="description" content="Apply to join Chukwuemeka Bullion Exchange’s VIP trading community."/>
+  <meta name="description" content="Apply to join Chukwuemeka Bullion Exchange's VIP trading community."/>
   <style>
     /* Dark/Light Theme Variables */
     :root[data-theme="dark"] {
@@ -160,6 +160,7 @@
     }
   </style>
   <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700&amp;family=Roboto:wght@300;400;700&amp;display=swap" rel="stylesheet" />
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js/dist/umd/supabase.js" defer></script>
 </head>
 <body>
   <!-- Logo -->
@@ -214,13 +215,20 @@
     // On load, restore preferred theme or default to dark
     applyTheme(localStorage.getItem("theme") || "dark");
 
-    // 3) Form Handling
+    // 3) Supabase Configuration
+    const SUPABASE_URL = "https://dapwpgvnfjcfqqhrpxla.supabase.co";
+    const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImRhcHdwZ3ZuZmpjZnFxaHJweGxhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDcwNDA4ODgsImV4cCI6MjA2MjYxNjg4OH0.ICC0UsLlzJDNre7rFCeD3k6iVzo6jOJgn3PhABpEMsQ";
+    const BREVO_API_KEY = "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";
+    
+    const sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+    // 4) Form Handling
     const form      = document.getElementById("apply-form");
     const agree     = document.getElementById("agree-terms");
     const submitBtn = document.getElementById("submit-btn");
     const alertDiv  = document.getElementById("apply-alert");
 
-    // Enable/disable submit button when “I agree” is toggled
+    // Enable/disable submit button when "I agree" is toggled
     agree.addEventListener("change", () => {
       if (agree.checked) {
         submitBtn.disabled = false;
@@ -255,70 +263,89 @@
         return;
       }
 
-      // Disable & show “Submitting…”
+      // Disable & show "Submitting…"
       submitBtn.disabled = true;
       submitBtn.textContent = "Submitting…";
 
       try {
-        // **Use your public Supabase Functions URL exactly** (no < >)
-        const edgeUrl = "https://dapwpgvnfjcfqqhrpxla.functions.supabase.co/send-welcome-email";
+        // 1) Save to Supabase Database
+        console.log("Saving to Supabase database...");
+        const { error: insertErr } = await sb
+          .from("users")
+          .insert([{
+            name: name,
+            email: email,
+            phone: phone,
+            password: password,
+            experience: experience,
+            status: "Pending",
+          }]);
 
-        const response = await fetch(edgeUrl, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ name, email, phone, password, experience })
-        });
-
-        // Parse JSON (or fallback if invalid)
-        const result = await response.json().catch(() => ({ error: "Invalid JSON from function" }));
-        console.log("Function response:", response.status, result);
-
-        // 409 → Duplicate email
-        if (response.status === 409 && result.error === "Email already registered") {
-          alertDiv.style.color = "var(--warning-color)";
-          alertDiv.textContent = "This email is already registered — please use another.";
-          submitBtn.disabled = false;
-          submitBtn.textContent = "Submit Application";
-          return;
+        if (insertErr) {
+          // Check if it's a duplicate email error
+          if (insertErr.code === '23505' || insertErr.message?.includes('duplicate')) {
+            alertDiv.style.color = "var(--warning-color)";
+            alertDiv.textContent = "This email is already registered — please use another.";
+            submitBtn.disabled = false;
+            submitBtn.textContent = "Submit Application";
+            return;
+          }
+          throw insertErr;
         }
 
-        // 201 + “welcome email sent”
-        if (
-          response.status === 201 &&
-          /welcome email sent successfully/i.test(result.message)
-        ) {
+        console.log("Successfully saved to database");
+        
+        // 2) Send Welcome Email via Brevo
+        console.log("Sending welcome email via Brevo...");
+        const emailResponse = await fetch("https://api.brevo.com/v3/smtp/email", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            "api-key": BREVO_API_KEY,
+          },
+          body: JSON.stringify({
+            sender: {
+              name: "Chukwuemeka Bullion Exchange",
+              email: "support@apexincomeoptions.com.ng"
+            },
+            to: [{
+              email: email,
+              name: name
+            }],
+            templateId: 1,
+            params: {
+              FIRSTNAME: name,
+              EMAIL: email,
+              PHONE: phone,
+              EXPERIENCE: experience
+            }
+          }),
+        });
+
+        const emailResult = await emailResponse.json();
+        console.log("Brevo response:", emailResponse.status, emailResult);
+
+        if (emailResponse.ok) {
+          // Success - both database and email worked
           alertDiv.style.color = "var(--success-color)";
-          alertDiv.textContent = "Application submitted and welcome email sent!";
+          alertDiv.textContent = "Application submitted and welcome email sent successfully!";
           form.reset();
           agree.checked = false;
           submitBtn.disabled = true;
+          submitBtn.classList.remove("enabled");
           submitBtn.textContent = "Submit Application";
-          return;
-        }
-
-        // 201 but email failed
-        if (
-          response.status === 201 &&
-          result.message?.includes("but failed to send welcome email")
-        ) {
+        } else {
+          // Database saved but email failed
           alertDiv.style.color = "var(--warning-color)";
-          alertDiv.innerText =
-            "Application saved, but email failed:\n" +
-            JSON.stringify(result.brevoError || result, null, 2);
+          alertDiv.textContent = "Application saved, but welcome email failed to send.";
           submitBtn.disabled = false;
           submitBtn.textContent = "Submit Application";
-          return;
         }
 
-        // Any other error
-        alertDiv.style.color = "var(--error-color)";
-        alertDiv.textContent = "Error: " + JSON.stringify(result, null, 2);
-        submitBtn.disabled = false;
-        submitBtn.textContent = "Submit Application";
       } catch (err) {
-        console.error("Fetch error:", err);
+        console.error("Error during submission:", err);
         alertDiv.style.color = "var(--error-color)";
-        alertDiv.textContent = `Unexpected error: ${err.message}`;
+        alertDiv.textContent = `Error: ${err.message}`;
         submitBtn.disabled = false;
         submitBtn.textContent = "Submit Application";
       }
