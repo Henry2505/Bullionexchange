@@ -220,7 +220,7 @@
   <script src="https://cdn.datatables.net/buttons/2.3.6/js/buttons.bootstrap5.min.js"></script>
   <script src="https://cdn.datatables.net/buttons/2.3.6/js/buttons.html5.min.js"></script>
   <script src="https://cdn.datatables.net/select/1.7.0/js/dataTables.select.min.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js/dist/umd/supabase.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>
 
   <script>
   (async () => {
@@ -263,63 +263,108 @@
 
     // CRUD actions
     window.approve = async (id) => {
-      const { error } = await sb.from('users').update({ status: 'Approved' }).eq('id', id);
-      if (error) console.error(error);
-      else loadUsers();
+      try {
+        const { error } = await sb.from('users').update({ status: 'Approved' }).eq('id', id);
+        if (error) throw error;
+        await loadUsers();
+        alert('User approved successfully!');
+      } catch (error) {
+        console.error('Approval error:', error);
+        alert('Failed to approve user: ' + error.message);
+      }
     };
     window.reject = async (id) => {
-      const { error } = await sb.from('users').update({ status: 'Rejected' }).eq('id', id);
-      if (error) console.error(error);
-      else loadUsers();
+      try {
+        const { error } = await sb.from('users').update({ status: 'Rejected' }).eq('id', id);
+        if (error) throw error;
+        await loadUsers();
+        alert('User rejected successfully!');
+      } catch (error) {
+        console.error('Rejection error:', error);
+        alert('Failed to reject user: ' + error.message);
+      }
     };
     window.remove = async (id) => {
-      if (!confirm('Delete this user?')) return;
-      const { error } = await sb.from('users').delete().eq('id', id);
-      if (error) console.error(error);
-      else loadUsers();
+      if (!confirm('Are you sure you want to delete this user?')) return;
+      try {
+        const { error } = await sb.from('users').delete().eq('id', id);
+        if (error) throw error;
+        await loadUsers();
+        alert('User deleted successfully!');
+      } catch (error) {
+        console.error('Deletion error:', error);
+        alert('Failed to delete user: ' + error.message);
+      }
     };
     window.edit = async (id) => {
-      const { data, error } = await sb.from('users').select('*').eq('id', id).single();
-      if (error) return console.error(error);
-      const name = prompt('Name:', data.name);
-      const email = prompt('Email:', data.email);
-      const phone = prompt('Phone:', data.phone);
-      const exp = prompt('Experience:', data.experience);
-      if (!name || !email) return;
-      const { error: updateError } = await sb.from('users')
-        .update({
-          name: name.trim(),
-          email: email.trim().toLowerCase(),
-          phone: phone.trim(),
-          experience: exp.trim()
-        })
-        .eq('id', id);
-      if (updateError) console.error(updateError);
-      else loadUsers();
+      try {
+        const { data, error } = await sb.from('users').select('*').eq('id', id).single();
+        if (error) throw error;
+        const name = prompt('Name:', data.name);
+        const email = prompt('Email:', data.email);
+        const phone = prompt('Phone:', data.phone);
+        const exp = prompt('Experience:', data.experience);
+        if (!name || !email) {
+          alert('Name and email are required!');
+          return;
+        }
+        const { error: updateError } = await sb.from('users')
+          .update({
+            name: name.trim(),
+            email: email.trim().toLowerCase(),
+            phone: phone ? phone.trim() : data.phone,
+            experience: exp ? exp.trim() : data.experience
+          })
+          .eq('id', id);
+        if (updateError) throw updateError;
+        await loadUsers();
+        alert('User updated successfully!');
+      } catch (error) {
+        console.error('Edit error:', error);
+        alert('Failed to update user: ' + error.message);
+      }
     };
 
     // Bulk actions
     document.getElementById('bulk-approve').addEventListener('click', async () => {
-      const selectedIds = table.rows({ selected: true }).data().toArray().map(row => row[2].match(/'(.*?)'/)[1]);
+      const selectedIds = table.rows({ selected: true }).data().toArray().map(row => row[9].match(/'(.*?)'/)[1]);
       if (selectedIds.length === 0) return alert('No users selected!');
-      const { error } = await sb.from('users').update({ status: 'Approved' }).in('id', selectedIds);
-      if (error) console.error(error);
-      else loadUsers();
+      try {
+        const { error } = await sb.from('users').update({ status: 'Approved' }).in('id', selectedIds);
+        if (error) throw error;
+        await loadUsers();
+        alert('Selected users approved successfully!');
+      } catch (error) {
+        console.error('Bulk approval error:', error);
+        alert('Failed to approve users: ' + error.message);
+      }
     });
     document.getElementById('bulk-reject').addEventListener('click', async () => {
-      const selectedIds = table.rows({ selected: true }).data().toArray().map(row => row[2].match(/'(.*?)'/)[1]);
+      const selectedIds = table.rows({ selected: true }).data().toArray().map(row => row[9].match(/'(.*?)'/)[1]);
       if (selectedIds.length === 0) return alert('No users selected!');
-      const { error } = await sb.from('users').update({ status: 'Rejected' }).in('id', selectedIds);
-      if (error) console.error(error);
-      else loadUsers();
+      try {
+        const { error } = await sb.from('users').update({ status: 'Rejected' }).in('id', selectedIds);
+        if (error) throw error;
+        await loadUsers();
+        alert('Selected users rejected successfully!');
+      } catch (error) {
+        console.error('Bulk rejection error:', error);
+        alert('Failed to reject users: ' + error.message);
+      }
     });
     document.getElementById('bulk-delete').addEventListener('click', async () => {
-      if (!confirm('Delete selected users?')) return;
-      const selectedIds = table.rows({ selected: true }).data().toArray().map(row => row[2].match(/'(.*?)'/)[1]);
+      if (!confirm('Are you sure you want to delete selected users?')) return;
+      const selectedIds = table.rows({ selected: true }).data().toArray().map(row => row[9].match(/'(.*?)'/)[1]);
       if (selectedIds.length === 0) return alert('No users selected!');
-      const { error } = await sb.from('users').delete().in('id', selectedIds);
-      if (error) console.error(error);
-      else loadUsers();
+      try {
+        const { error } = await sb.from('users').delete().in('id', selectedIds);
+        if (error) throw error;
+        await loadUsers();
+        alert('Selected users deleted successfully!');
+      } catch (error) {
+        console.error('Bulk deletion error:', error);
+        alert('Failed to delete users: ' + error.message);
+      }
     });
 
     // Select all checkbox
@@ -333,41 +378,46 @@
 
     // Load and render users
     async function loadUsers() {
-      const { data, error } = await sb
-        .from('users')
-        .select('id,email,name,password,phone,experience,created_at,status')
-        .order('created_at', { ascending: false });
-      if (error) return console.error(error);
+      try {
+        const { data, error } = await sb
+          .from('users')
+          .select('id,email,name,password,phone,experience,created_at,status')
+          .order('created_at', { ascending: false });
+        if (error) throw error;
 
-      table.clear();
-      data.forEach((u, i) => {
-        table.row.add([
-          `<input type="checkbox" class="row-select" data-id="${u.id}">`,
-          `<span>${i + 1}</span>`,
-          `<span>${u.email}</span>`,
-          `<span>${u.name}</span>`,
-          `<span>${u.password}</span>`,
-          `<span>${u.phone}</span>`,
-          `<span>${u.experience}</span>`,
-          `<span class="col-registered">${new Date(u.created_at).toLocaleDateString()}</span>`,
-          `<span class="col-status">${u.status}</span>`,
-          `<div class="col-actions">
-            ${u.status === 'Pending'
-              ? `<button class="btn btn-sm btn-gold" onclick="approve('${u.id}')">Approve</button>`
-              : ''}
-            <button class="btn btn-sm btn-gold" onclick="reject('${u.id}')">Reject</button>
-            <button class="btn btn-sm btn-gold" onclick="remove('${u.id}')">Delete</button>
-            <button class="btn btn-sm btn-gold" onclick="edit('${u.id}')">Edit</button>
-          </div>`
-        ]);
-      });
-      table.draw();
+        table.clear();
+        data.forEach((u, i) => {
+          table.row.add([
+            `<input type="checkbox" class="row-select" data-id="${u.id}">`,
+            `<span>${i + 1}</span>`,
+            `<span>${u.email}</span>`,
+            `<span>${u.name}</span>`,
+            `<span>${u.password}</span>`,
+            `<span>${u.phone}</span>`,
+            `<span>${u.experience}</span>`,
+            `<span class="col-registered">${new Date(u.created_at).toLocaleDateString()}</span>`,
+            `<span class="col-status">${u.status}</span>`,
+            `<div class="col-actions">
+              ${u.status === 'Pending'
+                ? `<button class="btn btn-sm btn-gold" onclick="window.approve('${u.id}')">Approve</button>`
+                : ''}
+              <button class="btn btn-sm btn-gold" onclick="window.reject('${u.id}')">Reject</button>
+              <button class="btn btn-sm btn-gold" onclick="window.remove('${u.id}')">Delete</button>
+              <button class="btn btn-sm btn-gold" onclick="window.edit('${u.id}')">Edit</button>
+            </div>`
+          ]);
+        });
+        table.draw();
 
-      // Attach checkbox events
-      $('.row-select').on('change', function () {
-        const row = table.row($(this).closest('tr'));
-        row.select(this.checked);
-      });
+        // Attach checkbox events
+        $('.row-select').off('change').on('change', function () {
+          const row = table.row($(this).closest('tr'));
+          row.select(this.checked);
+        });
+      } catch (error) {
+        console.error('Error loading users:', error);
+        alert('Failed to load users: ' + error.message);
+      }
     }
 
     // Initial load
