@@ -166,7 +166,7 @@
     href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700&amp;family=Roboto:wght@300;400;700&amp;display=swap"
     rel="stylesheet"
   />
-  <!-- Supabase UMD (defer ensures HTML/parsing happens first) -->
+  <!-- Supabase UMD (defer ensures HTML rendering happens first) -->
   <script
     src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js/dist/umd/supabase.js"
     defer
@@ -230,10 +230,10 @@
 
   <script>
     window.addEventListener("DOMContentLoaded", () => {
-      // 1) Slide-in animation
+      // 1) Show the card with slide-in effect
       document.getElementById("apply-card").classList.add("visible");
 
-      // 2) Theme toggle
+      // 2) Theme toggle (dark/light)
       const toggle = document.getElementById("theme-toggle");
       toggle.addEventListener("click", () => {
         const cur = document.documentElement.getAttribute("data-theme");
@@ -259,26 +259,27 @@
       const submitBtn = document.getElementById("submit-btn");
       const alertDiv = document.getElementById("apply-alert");
 
-      // 5) Enable/disable Submit button based on “I agree”
+      // 5) Enable/disable Submit button when “I agree” changes
       agreeCheckbox.addEventListener("change", () => {
         submitBtn.classList.toggle("enabled", agreeCheckbox.checked);
       });
 
-      // 6) Handle form submission
+      // 6) Form submission handler
       form.addEventListener("submit", async (e) => {
         e.preventDefault();
         alertDiv.textContent = "";
         alertDiv.style.color = "";
 
-        // Must agree to terms
+        // 6.a) Must agree
         if (!agreeCheckbox.checked) {
           alertDiv.style.color = "crimson";
           alertDiv.textContent =
             "You must agree to the Privacy Policy and Terms to continue.";
+          console.warn("Form submission blocked: user did not agree to terms.");
           return;
         }
 
-        // Read form values
+        // 6.b) Read form values
         const name = document.getElementById("apply-name").value.trim();
         const email = document
           .getElementById("apply-email")
@@ -290,24 +291,27 @@
           .getElementById("apply-message")
           .value.trim();
 
-        // Basic validation
+        // 6.c) Validation
         if (!name || !email || !password || !phone || !experience) {
           alertDiv.style.color = "crimson";
           alertDiv.textContent = "Please complete all fields.";
+          console.warn("Validation failed: missing fields.");
           return;
         }
         if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
           alertDiv.style.color = "crimson";
           alertDiv.textContent = "Please enter a valid email address.";
+          console.warn("Validation failed: invalid email pattern.");
           return;
         }
 
-        // Disable button and show “Submitting…”
+        // 6.d) Disable button + show “Submitting…”
         submitBtn.disabled = true;
         submitBtn.textContent = "Submitting…";
 
         try {
           // 7) Insert into Supabase “users” table
+          console.log("Inserting user into Supabase:", { name, email, phone, password, experience });
           const { error: insertErr } = await sb
             .from("users")
             .insert([
@@ -321,19 +325,22 @@
               },
             ]);
 
-          if (insertErr) throw insertErr;
+          if (insertErr) {
+            throw insertErr;
+          }
 
-          // 8) Show frontend success
+          // 8) Show success message
           alertDiv.style.color = "lightgreen";
           alertDiv.textContent = "Application submitted—thank you!";
+          console.log("Supabase insert succeeded for:", email);
           form.reset();
           submitBtn.classList.remove("enabled");
 
-          // 9) Build the payload for Brevo
+          // 9) Build payload for Brevo email
           const emailPayload = {
-            email: email,   // recipient email
-            name:  name,    // recipient name
-            templateId: 1,  // Your Brevo “Welcome” template ID
+            email: email,
+            name: name,
+            templateId: 1, // Your Brevo “Welcome” template ID
             params: {
               contact: {
                 FIRSTNAME: name,
@@ -342,37 +349,40 @@
               unsubscribe: "https://apexincomeoptions.com.ng/unsubscribe-link",
             },
           };
+          console.log("Email payload to send to Vercel:", emailPayload);
 
           // 10) Call your Vercel function
-          const vercelUrl =
-            "https://bullionexchange-lrz6.vercel.app/api/send-email";
+          const vercelUrl = "https://bullionexchange-lrz6.vercel.app/api/send-email";
+          console.log("Calling Vercel endpoint:", vercelUrl);
 
-          fetch(vercelUrl, {
+          const response = await fetch(vercelUrl, {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify(emailPayload),
-          })
-            .then((res) => res.json())
-            .then((data) => {
-              if (data.message === "Email sent successfully") {
-                console.log("✅ Welcome email sent to", email);
-              } else {
-                console.error("❌ Welcome email error:", data);
-                // Show an orange notice (but do not revert success)
-                alertDiv.style.color = "orange";
-                alertDiv.textContent +=
-                  "\n—but welcome email failed. Please try again later.";
-              }
-            })
-            .catch((err) =>
-              console.error("🔴 Fetch error sending welcome email:", err)
-            );
+          });
+
+          console.log("Fetch returned status:", response.status);
+
+          // 11) Always read the JSON (even if 400/500) so we can log it
+          const jsonResponse = await response.json().catch(() => {
+            return { error: "Invalid JSON from endpoint" };
+          });
+          console.log("Vercel function response JSON:", jsonResponse);
+
+          if (response.ok && jsonResponse.message === "Email sent successfully") {
+            console.log("✅ Welcome email sent to:", email);
+            // Optionally: you can display a second “Email sent!” message here
+          } else {
+            console.warn("❌ Brevo email call failed. Response:", jsonResponse);
+            alertDiv.style.color = "orange";
+            alertDiv.textContent += "\n—but welcome email failed. See console for details.";
+          }
         } catch (err) {
-          console.error("Supabase insert error →", err);
+          console.error("Error during submission/email process:", err);
           alertDiv.style.color = "crimson";
           alertDiv.textContent = `Error: ${err.message}`;
         } finally {
-          // 11) Re-enable the button text
+          // 12) Re-enable submit button
           submitBtn.disabled = false;
           submitBtn.textContent = "Submit Application";
         }
