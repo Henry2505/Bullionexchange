@@ -5,8 +5,8 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Apply • Chukwuemeka Bullion Exchange</title>
   <meta name="description" content="Apply to join Chukwuemeka Bullion Exchange’s VIP trading community."/>
-  <!-- Fallback CSS variables -->
   <style>
+    /* Your existing styles here */
     :root[data-theme="dark"] {
       --bg: #121212; --text: #f0f0f0; --gold: #d4af37; --gold-dark: #b3932b;
       --glass-bg: rgba(30,30,30,0.6); --text-light: #bbbbbb; --text-muted: #888888;
@@ -88,9 +88,6 @@
       text-align:center; padding:20px; color:var(--text-muted);
     }
   </style>
-  <link rel="stylesheet" href="theme.css"/>
-  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700&family=Roboto:wght@300;400;700&display=swap" rel="stylesheet"/>
-  <script src="https://kit.fontawesome.com/your-kit-code.js" crossorigin="anonymous"></script>
 </head>
 <body>
   <div class="logo">
@@ -121,12 +118,9 @@
 
   <footer>© 2025 Chukwuemeka Bullion Exchange. All rights reserved.</footer>
 
-  <!-- Load Supabase UMD -->
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js/dist/umd/supabase.js"></script>
-
-  <!-- Initialize client (`sb`) -->
   <script>
-    const SUPABASE_URL     = 'https://dapwpgvnfjcfqqhrpxla.supabase.co';
+    const SUPABASE_URL = 'https://dapwpgvnfjcfqqhrpxla.supabase.co';
     const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImRhcHdwZ3ZuZmpjZnFxaHJweGxhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDcwNDA4ODgsImV4cCI6MjA2MjYxNjg4OH0.ICC0UsLlzJDNre7rFCeD3k6iVzo6jOJgn3PhABpEMsQ';
     const sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
@@ -146,11 +140,10 @@
     });
     toggle.textContent = document.documentElement.getAttribute('data-theme') === 'dark' ? '🌞' : '🌜';
 
-    // Form submission
-    const form          = document.getElementById('apply-form');
+    const form = document.getElementById('apply-form');
     const agreeCheckbox = document.getElementById('agree-terms');
-    const submitBtn     = document.getElementById('submit-btn');
-    const alertDiv      = document.getElementById('apply-alert');
+    const submitBtn = document.getElementById('submit-btn');
+    const alertDiv = document.getElementById('apply-alert');
 
     agreeCheckbox.addEventListener('change', () => {
       submitBtn.classList.toggle('enabled', agreeCheckbox.checked);
@@ -159,80 +152,68 @@
     form.addEventListener('submit', async e => {
       e.preventDefault();
       alertDiv.textContent = '';
+      alertDiv.style.color = '';
 
       if (!agreeCheckbox.checked) {
         alertDiv.style.color = 'crimson';
-        return alertDiv.textContent = 'You must agree to the Privacy Policy and Terms to continue.';
+        alertDiv.textContent = 'You must agree to the Privacy Policy and Terms to continue.';
+        return;
       }
 
-      // read fields
-      const name        = form['apply-name'].value.trim();
-      const email       = form['apply-email'].value.trim().toLowerCase();
-      const password    = form['apply-password'].value;
-      const phone       = form['apply-phone'].value.trim();
-      const experience  = form['apply-message'].value.trim();
+      // Get form values
+      const name = form['apply-name'].value.trim();
+      const email = form['apply-email'].value.trim().toLowerCase();
+      const password = form['apply-password'].value;
+      const phone = form['apply-phone'].value.trim();
+      const experience = form['apply-message'].value.trim();
 
-      // validate
+      // Basic validation
       if (!name || !email || !password || !phone || !experience) {
         alertDiv.style.color = 'crimson';
-        return alertDiv.textContent = 'Please complete all fields.';
+        alertDiv.textContent = 'Please complete all fields.';
+        return;
       }
       if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
         alertDiv.style.color = 'crimson';
-        return alertDiv.textContent = 'Please enter a valid email address.';
+        alertDiv.textContent = 'Please enter a valid email address.';
+        return;
       }
 
-      // insert into "users" table, writing into "name" (not full_name)
-      try {
-        const { error } = await sb
-          .from('users')
-          .insert([{ name, email, phone, password, experience, status: 'Pending' }]);
+      submitBtn.disabled = true;
+      submitBtn.textContent = 'Submitting...';
 
+      try {
+        // Insert user into Supabase users table
+        const { error } = await sb.from('users').insert([{ name, email, phone, password, experience, status: 'Pending' }]);
         if (error) throw error;
 
-        // Send welcome email immediately after registration
-        const emailResponse = await fetch('/resend-email', {
+        // Call your Supabase Edge Function to send welcome email
+        const response = await fetch('https://dapwpgvnfjcfqqhrpxla.supabase.co/functions/v1/resend-email', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            to: email,
-            name: name,
-            // Add any other template variables your Brevo template needs here
-          }),
+          body: JSON.stringify({ to: email, name }),
         });
 
-        if (!emailResponse.ok) {
-          console.error('Failed to send welcome email:', await emailResponse.text());
+        if (!response.ok) {
+          const errorText = await response.text();
+          console.error('Email API error:', errorText);
           alertDiv.style.color = 'orange';
           alertDiv.textContent = 'Application submitted, but failed to send welcome email.';
+        } else {
+          alertDiv.style.color = 'lightgreen';
+          alertDiv.textContent = 'Application submitted and welcome email sent!';
           form.reset();
           submitBtn.classList.remove('enabled');
-          return;
         }
-
-        alertDiv.style.color = 'lightgreen';
-        alertDiv.textContent = 'Application submitted—thank you! A welcome email has been sent.';
-        form.reset();
-        submitBtn.classList.remove('enabled');
-
       } catch (err) {
         console.error(err);
         alertDiv.style.color = 'crimson';
         alertDiv.textContent = `Error: ${err.message}`;
+      } finally {
+        submitBtn.disabled = false;
+        submitBtn.textContent = 'Submit Application';
       }
     });
-  </script>
-
-  <!-- Smartsupp Live Chat script -->
-  <script type="text/javascript">
-    var _smartsupp = _smartsupp || {};
-    _smartsupp.key = '018a8bbd868518221e725341a7b2601231ec7ce8';
-    window.smartsupp||(function(d) {
-      var s,c,o=smartsupp=function(){ o._.push(arguments)};o._=[];
-      s=d.getElementsByTagName('script')[0];c=d.createElement('script');
-      c.type='text/javascript';c.charset='utf-8';c.async=true;
-      c.src='https://www.smartsuppchat.com/loader.js?';s.parentNode.insertBefore(c,s);
-    })(document);
   </script>
 </body>
 </html>
