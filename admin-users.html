@@ -5,12 +5,12 @@
   <meta name="viewport" content="width=device-width,initial-scale=1"/>
   <title>CBE Admin – User Management</title>
   
-<script>
-  // redirect to login if not set
-  if (localStorage.getItem('isLoggedIn') !== 'true') {
-    window.location.replace('admin-login.html?redirect=' + encodeURIComponent(window.location.pathname));
-  }
-</script>
+  <script>
+    // Redirect to login if not authenticated
+    if (localStorage.getItem('isLoggedIn') !== 'true') {
+      window.location.replace('admin-login.html?redirect=' + encodeURIComponent(window.location.pathname));
+    }
+  </script>
   
   <!-- Poppins & FontAwesome -->
   <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;500;700&display=swap" rel="stylesheet"/>
@@ -20,126 +20,153 @@
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet"/>
   <link href="https://cdn.datatables.net/1.13.4/css/dataTables.bootstrap5.min.css" rel="stylesheet"/>
   <link href="https://cdn.datatables.net/buttons/2.3.6/css/buttons.bootstrap5.min.css" rel="stylesheet"/>
+  <link href="https://cdn.datatables.net/select/1.7.0/css/select.bootstrap5.min.css" rel="stylesheet"/>
 
   <style>
-    /* THEME VARIABLES */
+    /* Theme Variables */
     :root[data-theme="dark"] {
-      --bg: #000;
-      --text: #fff;
+      --bg: #1a1a1a;
+      --text: #e0e0e0;
       --gold: #ffd700;
       --gold-dark: #cca300;
-      --glass: rgba(255,255,255,0.05);
+      --glass: rgba(255, 255, 255, 0.1);
+      --shadow: rgba(0, 0, 0, 0.3);
     }
     :root[data-theme="light"] {
-      --bg: #fafafa;
+      --bg: #f5f5f5;
       --text: #333;
       --gold: #cca300;
       --gold-dark: #b58900;
-      --glass: rgba(0,0,0,0.05);
+      --glass: rgba(0, 0, 0, 0.05);
+      --shadow: rgba(0, 0, 0, 0.1);
     }
 
-    /* RESET & BASE */
-    * { margin:0; padding:0; box-sizing:border-box; }
+    /* Reset & Base */
+    * { margin: 0; padding: 0; box-sizing: border-box; }
     body, html {
-      width:100%; height:100%;
-      font-family:'Poppins',sans-serif;
+      width: 100%;
+      height: 100%;
+      font-family: 'Poppins', sans-serif;
       background: var(--bg);
       color: var(--text);
-      overflow-x:hidden;
+      overflow-x: hidden;
     }
-    a { text-decoration:none; }
+    a { text-decoration: none; }
     .btn-gold {
       background: var(--gold);
       color: #000;
-      border: 2px solid var(--gold);
-      transition: background .3s;
+      border: none;
+      transition: all 0.3s ease;
     }
-    .btn-gold:hover { background: var(--gold-dark); }
+    .btn-gold:hover {
+      background: var(--gold-dark);
+      transform: translateY(-2px);
+    }
 
-    /* HEADER */
+    /* Header */
     header {
       display: flex;
       align-items: center;
       justify-content: space-between;
-      background: var(--bg);
-      padding: 0.5rem 1rem;
-      border-bottom: 1px solid rgba(255,255,255,0.1);
+      background: linear-gradient(135deg, var(--bg), rgba(255, 215, 0, 0.1));
+      padding: 1rem 2rem;
+      box-shadow: 0 2px 10px var(--shadow);
     }
     .header-left {
       display: flex;
       align-items: center;
-      gap: 1rem;
+      gap: 1.5rem;
     }
     .header-left img {
-      height: 40px;
-      cursor: pointer;
+      height: 50px;
+      transition: transform 0.3s;
     }
+    .header-left img:hover { transform: scale(1.1); }
     header h1 {
-      font-size: 1.25rem;
-      font-weight: 500;
+      font-size: 1.5rem;
+      font-weight: 700;
       color: var(--gold);
     }
     #theme-toggle {
       background: none;
       border: none;
-      font-size: 1.5rem;
+      font-size: 1.8rem;
       cursor: pointer;
       color: var(--text);
+      transition: transform 0.3s;
     }
+    #theme-toggle:hover { transform: rotate(180deg); }
 
-    /* MAIN PANEL */
+    /* Main Panel */
     main {
-      padding: 1.5rem;
+      padding: 2rem;
     }
     .glass {
       background: var(--glass);
-      backdrop-filter: blur(10px);
-      border-radius: 12px;
-      padding: 1.5rem;
+      backdrop-filter: blur(12px);
+      border-radius: 15px;
+      padding: 2rem;
+      box-shadow: 0 4px 20px var(--shadow);
     }
     .glass h3 {
       color: var(--gold);
-      margin-bottom: 1rem;
+      margin-bottom: 1.5rem;
       font-weight: 500;
+      text-transform: uppercase;
+      letter-spacing: 1px;
     }
 
-    /* DATATABLE */
+    /* DataTable */
     .dt-buttons .btn {
-      margin-right: 0.5rem;
-      background: none;
-      border: 1px solid var(--gold);
-      color: var(--gold);
+      margin-right: 0.75rem;
+      background: var(--gold);
+      border: none;
+      color: #000;
+      border-radius: 8px;
+      transition: all 0.3s;
     }
     .dt-buttons .btn:hover {
       background: var(--gold-dark);
-      color: #000;
+      transform: translateY(-2px);
     }
     table.dataTable {
       color: var(--text) !important;
-      width: 100% !important;
+      border-collapse: separate;
+      border-spacing: 0 10px;
     }
     table.dataTable thead th {
-      background: var(--gold-dark) !important;
-      color: #000 !important;
-      padding: 0.75rem;
+      background: linear-gradient(45deg, var(--gold-dark), var(--gold));
+      color: #000;
+      padding: 1rem;
       text-align: center;
+      border-radius: 8px 8px 0 0;
     }
     table.dataTable tbody td {
-      padding: 0.6rem;
-      vertical-align: middle;
+      padding: 1rem;
+      background: var(--glass);
+      border-bottom: 1px solid rgba(255, 255, 255, 0.05);
     }
     table.dataTable tbody tr {
-      transition: background .2s, box-shadow .2s;
+      transition: all 0.3s ease;
+      border-radius: 10px;
     }
     table.dataTable tbody tr:hover {
-      background: rgba(255,255,255,0.08);
-      box-shadow: inset 0 0 10px rgba(0,0,0,0.5);
+      background: rgba(255, 215, 0, 0.1);
+      box-shadow: 0 4px 15px var(--shadow);
+      transform: translateY(-2px);
     }
-    /* center numeric/text columns */
-    .col-index, .col-registered, .col-status, .col-actions {
-      text-align: center;
+    .col-index, .col-registered, .col-status, .col-actions { text-align: center; }
+    .btn-sm {
+      padding: 0.4rem 0.8rem;
+      font-size: 0.9rem;
+      border-radius: 5px;
+      margin: 0 0.3rem;
     }
-    .btn-sm { padding: .25rem .5rem; font-size: .8rem; }
+    .bulk-actions {
+      margin-bottom: 1rem;
+      display: flex;
+      gap: 1rem;
+    }
   </style>
 </head>
 
@@ -157,10 +184,16 @@
   <main class="container">
     <div class="glass">
       <h3>User Applications</h3>
+      <div class="bulk-actions">
+        <button class="btn btn-gold" id="bulk-approve">Approve Selected</button>
+        <button class="btn btn-gold" id="bulk-reject">Reject Selected</button>
+        <button class="btn btn-gold" id="bulk-delete">Delete Selected</button>
+      </div>
       <div class="table-responsive">
         <table id="users-table" class="table table-hover" style="width:100%">
           <thead>
             <tr>
+              <th><input type="checkbox" id="select-all"></th>
               <th class="col-index">#</th>
               <th>Email</th>
               <th>Name</th>
@@ -183,102 +216,134 @@
   <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
   <script src="https://cdn.datatables.net/1.13.4/js/jquery.dataTables.min.js"></script>
   <script src="https://cdn.datatables.net/1.13.4/js/dataTables.bootstrap5.min.js"></script>
-
-  <!-- Buttons -->
   <script src="https://cdn.datatables.net/buttons/2.3.6/js/dataTables.buttons.min.js"></script>
   <script src="https://cdn.datatables.net/buttons/2.3.6/js/buttons.bootstrap5.min.js"></script>
   <script src="https://cdn.datatables.net/buttons/2.3.6/js/buttons.html5.min.js"></script>
-  <script src="https://cdn.datatables.net/buttons/2.3.6/js/buttons.pdfmake.min.js"></script>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.2.7/pdfmake.min.js"></script>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.2.7/vfs_fonts.js"></script>
-
-  <!-- Supabase -->
+  <script src="https://cdn.datatables.net/select/1.7.0/js/dataTables.select.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js/dist/umd/supabase.js"></script>
 
   <script>
   (async () => {
     // Theme toggle logic
     const html = document.documentElement;
-    const btn  = document.getElementById('theme-toggle');
-    let theme  = localStorage.getItem('theme') || 'dark';
+    const btn = document.getElementById('theme-toggle');
+    let theme = localStorage.getItem('theme') || 'dark';
     html.setAttribute('data-theme', theme);
-    btn.textContent = theme==='dark'?'🌞':'🌜';
+    btn.textContent = theme === 'dark' ? '🌞' : '🌜';
     btn.onclick = () => {
-      theme = theme==='dark'?'light':'dark';
+      theme = theme === 'dark' ? 'light' : 'dark';
       html.setAttribute('data-theme', theme);
       localStorage.setItem('theme', theme);
-      btn.textContent = theme==='dark'?'🌞':'🌜';
+      btn.textContent = theme === 'dark' ? '🌞' : '🌜';
     };
 
     // Supabase client
-    const SUPABASE_URL     = 'https://dapwpgvnfjcfqqhrpxla.supabase.co';
+    const SUPABASE_URL = 'https://dapwpgvnfjcfqqhrpxla.supabase.co';
     const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImRhcHdwZ3ZuZmpjZnFxaHJweGxhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDcwNDA4ODgsImV4cCI6MjA2MjYxNjg4OH0.ICC0UsLlzJDNre7rFCeD3k6iVzo6jOJgn3PhABpEMsQ';
     const sb = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
-    // Initialize DataTable + Buttons
+    // Initialize DataTable with Select
     const table = $('#users-table').DataTable({
       dom: `<"d-flex justify-content-between mb-3"
               <"dt-buttons"B>
               <"col-auto"f>
-            >
-            rt
-            <"d-flex justify-content-between mt-3"
-              <"col-auto"l>
-              <"col-auto"p>
-            >`,
+            >rt<"d-flex justify-content-between mt-3"lip>`,
       buttons: [
-        { extend:'csvHtml5', text:'Export CSV' },
-        { extend:'pdfHtml5', text:'Export PDF' }
+        { extend: 'csvHtml5', text: 'Export CSV' },
+        { extend: 'pdfHtml5', text: 'Export PDF' }
       ],
       paging: true,
       searching: true,
-      columnDefs: [{ orderable:false, targets:8 }]
+      select: { style: 'multi', selector: 'td:first-child input' },
+      columnDefs: [
+        { orderable: false, targets: [0, 9] },
+        { searchable: false, targets: 0 }
+      ]
     });
 
     // CRUD actions
-    window.approve = async id => {
-      await sb.from('users').update({ status:'Approved' }).eq('id',id);
-      loadUsers();
+    window.approve = async (id) => {
+      const { error } = await sb.from('users').update({ status: 'Approved' }).eq('id', id);
+      if (error) console.error(error);
+      else loadUsers();
     };
-    window.reject = async id => {
-      await sb.from('users').update({ status:'Rejected' }).eq('id',id);
-      loadUsers();
+    window.reject = async (id) => {
+      const { error } = await sb.from('users').update({ status: 'Rejected' }).eq('id', id);
+      if (error) console.error(error);
+      else loadUsers();
     };
-    window.remove = async id => {
+    window.remove = async (id) => {
       if (!confirm('Delete this user?')) return;
-      await sb.from('users').delete().eq('id',id);
-      loadUsers();
+      const { error } = await sb.from('users').delete().eq('id', id);
+      if (error) console.error(error);
+      else loadUsers();
     };
-    window.edit = async id => {
-      const { data } = await sb.from('users').select('*').eq('id',id).single();
-      const name  = prompt('Name:', data.name);
+    window.edit = async (id) => {
+      const { data, error } = await sb.from('users').select('*').eq('id', id).single();
+      if (error) return console.error(error);
+      const name = prompt('Name:', data.name);
       const email = prompt('Email:', data.email);
       const phone = prompt('Phone:', data.phone);
-      const exp   = prompt('Experience:', data.experience);
-      if (!name||!email) return;
-      await sb.from('users')
+      const exp = prompt('Experience:', data.experience);
+      if (!name || !email) return;
+      const { error: updateError } = await sb.from('users')
         .update({
           name: name.trim(),
           email: email.trim().toLowerCase(),
           phone: phone.trim(),
           experience: exp.trim()
         })
-        .eq('id',id);
-      loadUsers();
+        .eq('id', id);
+      if (updateError) console.error(updateError);
+      else loadUsers();
     };
+
+    // Bulk actions
+    document.getElementById('bulk-approve').addEventListener('click', async () => {
+      const selectedIds = table.rows({ selected: true }).data().toArray().map(row => row[2].match(/'(.*?)'/)[1]);
+      if (selectedIds.length === 0) return alert('No users selected!');
+      const { error } = await sb.from('users').update({ status: 'Approved' }).in('id', selectedIds);
+      if (error) console.error(error);
+      else loadUsers();
+    });
+    document.getElementById('bulk-reject').addEventListener('click', async () => {
+      const selectedIds = table.rows({ selected: true }).data().toArray().map(row => row[2].match(/'(.*?)'/)[1]);
+      if (selectedIds.length === 0) return alert('No users selected!');
+      const { error } = await sb.from('users').update({ status: 'Rejected' }).in('id', selectedIds);
+      if (error) console.error(error);
+      else loadUsers();
+    });
+    document.getElementById('bulk-delete').addEventListener('click', async () => {
+      if (!confirm('Delete selected users?')) return;
+      const selectedIds = table.rows({ selected: true }).data().toArray().map(row => row[2].match(/'(.*?)'/)[1]);
+      if (selectedIds.length === 0) return alert('No users selected!');
+      const { error } = await sb.from('users').delete().in('id', selectedIds);
+      if (error) console.error(error);
+      else loadUsers();
+    });
+
+    // Select all checkbox
+    document.getElementById('select-all').addEventListener('change', (e) => {
+      const checked = e.target.checked;
+      table.rows().every(function () {
+        this.nodes().to$().find('input[type="checkbox"]').prop('checked', checked);
+        this.select(checked);
+      });
+    });
 
     // Load and render users
     async function loadUsers() {
       const { data, error } = await sb
         .from('users')
         .select('id,email,name,password,phone,experience,created_at,status')
-        .order('created_at',{ ascending:false });
+        .order('created_at', { ascending: false });
       if (error) return console.error(error);
 
       table.clear();
-      data.forEach((u,i) => {
+      data.forEach((u, i) => {
         table.row.add([
-          `<span>${i+1}</span>`,
+          `<input type="checkbox" class="row-select" data-id="${u.id}">`,
+          `<span>${i + 1}</span>`,
           `<span>${u.email}</span>`,
           `<span>${u.name}</span>`,
           `<span>${u.password}</span>`,
@@ -287,16 +352,22 @@
           `<span class="col-registered">${new Date(u.created_at).toLocaleDateString()}</span>`,
           `<span class="col-status">${u.status}</span>`,
           `<div class="col-actions">
-            ${u.status==='Pending'
-              ? `<button class="btn btn-sm btn-gold me-1" onclick="approve('${u.id}')">Approve</button>`
-              : ``}
-            <button class="btn btn-sm btn-gold me-1" onclick="reject('${u.id}')">Reject</button>
-            <button class="btn btn-sm btn-gold me-1" onclick="remove('${u.id}')">Delete</button>
+            ${u.status === 'Pending'
+              ? `<button class="btn btn-sm btn-gold" onclick="approve('${u.id}')">Approve</button>`
+              : ''}
+            <button class="btn btn-sm btn-gold" onclick="reject('${u.id}')">Reject</button>
+            <button class="btn btn-sm btn-gold" onclick="remove('${u.id}')">Delete</button>
             <button class="btn btn-sm btn-gold" onclick="edit('${u.id}')">Edit</button>
           </div>`
         ]);
       });
       table.draw();
+
+      // Attach checkbox events
+      $('.row-select').on('change', function () {
+        const row = table.row($(this).closest('tr'));
+        row.select(this.checked);
+      });
     }
 
     // Initial load
