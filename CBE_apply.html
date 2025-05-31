@@ -6,7 +6,7 @@
   <title>Apply • Chukwuemeka Bullion Exchange</title>
   <meta
     name="description"
-    content="Apply to join Chukwuemeka Bullion Exchange's VIP trading community."
+    content="Apply to join Chukwuemeka Bullion Exchange’s VIP trading community."
   />
 
   <!-- Fallback CSS variables for dark/light themes -->
@@ -163,7 +163,7 @@
 
   <link rel="stylesheet" href="theme.css" />
   <link
-    href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700&amp;family=Roboto:wght@300;400;700&amp;display=swap"
+    href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700&family=Roboto:wght@300;400;700&display=swap"
     rel="stylesheet"
   />
   <!-- Supabase UMD (defer ensures HTML rendering happens first) -->
@@ -216,8 +216,8 @@
         <div class="terms-container">
           <input type="checkbox" id="agree-terms" />
           <label for="agree-terms">I agree to</label>
-          <a href="privacy.html" target="_blank">Privacy Policy</a> &amp;
-          <a href="terms.html" target="_blank">Terms &amp; Conditions</a>
+          <a href="privacy.html" target="_blank">Privacy Policy</a> &
+          <a href="terms.html" target="_blank">Terms & Conditions</a>
         </div>
 
         <button type="submit" id="submit-btn">Submit Application</button>
@@ -230,9 +230,6 @@
 
   <script>
     window.addEventListener("DOMContentLoaded", () => {
-      // Configuration - Update this URL after deployment
-      const EMAIL_API_URL = "YOUR_DEPLOYED_EMAIL_API_URL/api/send-welcome-email";
-      
       // 1) Show the card with slide-in effect
       document.getElementById("apply-card").classList.add("visible");
 
@@ -329,60 +326,52 @@
             ]);
 
           if (insertErr) {
-            throw insertErr;
+            throw new Error(`Supabase insert failed: ${insertErr.message}`);
           }
 
-          // 8) Show success message
+          // 8) Show success message for form submission
           alertDiv.style.color = "lightgreen";
           alertDiv.textContent = "Application submitted—thank you!";
           console.log("Supabase insert succeeded for:", email);
           form.reset();
           submitBtn.classList.remove("enabled");
 
-          // 9) Send welcome email using secure backend endpoint
-          console.log("Sending welcome email via secure backend...");
-          
-          try {
-            const emailResponse = await fetch(EMAIL_API_URL, {
-              method: "POST",
-              headers: {
-                "Content-Type": "application/json",
-              },
-              body: JSON.stringify({
-                email: email,
-                name: name,
-                templateId: 1, // Your Brevo template ID
-                params: {
-                  FIRSTNAME: name,
-                  EMAIL: email,
-                  PHONE: phone,
-                  EXPERIENCE: experience
-                }
-              }),
-            });
+          // 9) Send welcome email using Supabase Edge Function
+          console.log("Sending welcome email via Supabase Edge Function...");
+          const edgeFunctionUrl = "https://dapwpgvnfjcfqqhrpxla.supabase.co/functions/v1/smart-task";
+          console.log("Edge function payload:", { name, email, phone, experience });
 
-            const emailResult = await emailResponse.json();
-            console.log("Backend email response:", emailResult);
+          const emailResponse = await fetch(edgeFunctionUrl, {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify({
+              name: name,
+              email: email,
+              phone: phone,
+              experience: experience,
+            }),
+          });
 
-            if (emailResponse.ok) {
-              console.log("✅ Welcome email sent successfully to:", email);
-              alertDiv.style.color = "lightgreen";
-              alertDiv.textContent += "\nWelcome email sent successfully!";
-            } else {
-              console.warn("❌ Welcome email failed:", emailResult);
-              alertDiv.style.color = "orange";
-              alertDiv.textContent += "\nApplication saved but welcome email failed.";
-            }
-          } catch (emailError) {
-            console.warn("Welcome email request failed:", emailError);
+          const emailResult = await emailResponse.json().catch(() => ({
+            error: "Invalid response from edge function",
+          }));
+          console.log("Edge function response:", emailResult);
+
+          if (emailResponse.ok && emailResult.message === "Email sent successfully") {
+            console.log("✅ Welcome email sent successfully to:", email);
+            alertDiv.style.color = "lightgreen";
+            alertDiv.textContent += "\nWelcome email sent successfully!";
+          } else {
+            console.warn("❌ Welcome email failed:", emailResult);
             alertDiv.style.color = "orange";
-            alertDiv.textContent += "\nApplication saved but welcome email service unavailable.";
+            alertDiv.textContent += "\nApplication saved but welcome email failed.";
           }
-
         } catch (err) {
-          console.error("Error during submission process:", err);
+          console.error("Error during submission/email process:", err);
           alertDiv.style.color = "crimson";
-          alertDiv.textContent = `Error: ${err.message}`;
+          alertDiv.textContent = `Error: ${err.message}. Please try again or contact support.`;
         } finally {
           // 10) Re-enable submit button
           submitBtn.disabled = false;
