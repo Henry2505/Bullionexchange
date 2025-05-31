@@ -429,10 +429,22 @@
           body: JSON.stringify(brevoPayload)
         });
 
+        // Grab the JSON Brevo sends back (in case there’s hidden error info)
+        let brevoResult = null;
+        try {
+          brevoResult = await brevoResponse.json();
+        } catch (jsonErr) {
+          console.warn("Could not parse Brevo response JSON:", jsonErr);
+        }
+
         if (!brevoResponse.ok) {
-          const errorText = await brevoResponse.text();
-          console.error("Brevo response error:", brevoResponse.status, errorText);
-          throw new Error("Failed to send confirmation email.");
+          // If Brevo returned 4xx/5xx, pull out any message or code they gave us
+          console.error("Brevo responded with error:", brevoResponse.status, brevoResult);
+          const brevoMessage = brevoResult?.message || brevoResult?.error || "Unknown Brevo error";
+          throw new Error("Brevo error: " + brevoMessage);
+        } else {
+          // Log the “success” payload for your reference
+          console.log("Brevo response (OK):", brevoResult);
         }
 
         // ─── ONCE EVERYTHING SUCCEEDS ──────────────────────────────────────────────────────────
@@ -442,7 +454,7 @@
         agree.checked = false;
         submitBtn.classList.remove("enabled");
       } catch (err) {
-        console.error("Submission error:", err);
+        console.error("Submission or Brevo error:", err);
         alertDiv.style.color = "var(--error-color)";
         alertDiv.textContent = err.message || "An unexpected error occurred.";
       } finally {
