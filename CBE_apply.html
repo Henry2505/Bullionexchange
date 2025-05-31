@@ -55,6 +55,7 @@
     }
     .logo img {
       width: 140px;
+      height: auto;
     }
     #theme-toggle {
       position: fixed;
@@ -149,7 +150,7 @@
     }
     #apply-alert {
       margin-top: 12px;
-      white-space: pre-wrap; /* show errors on multiple lines if JSON */
+      white-space: pre-wrap; /* allow multi-line error messages */
       text-align: center;
       font-weight: 600;
     }
@@ -165,8 +166,7 @@
     href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700&amp;family=Roboto:wght@300;400;700&amp;display=swap"
     rel="stylesheet"
   />
-  <script src="https://kit.fontawesome.com/your-kit-code.js" crossorigin="anonymous"></script>
-  <!-- Load Supabase UMD (defer so HTML parses first) -->
+  <!-- Supabase UMD (defer ensures HTML/parsing happens first) -->
   <script
     src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js/dist/umd/supabase.js"
     defer
@@ -230,10 +230,10 @@
 
   <script>
     window.addEventListener("DOMContentLoaded", () => {
-      // Slide in the card
+      // 1) Slide-in animation
       document.getElementById("apply-card").classList.add("visible");
 
-      // Theme toggle
+      // 2) Theme toggle
       const toggle = document.getElementById("theme-toggle");
       toggle.addEventListener("click", () => {
         const cur = document.documentElement.getAttribute("data-theme");
@@ -242,35 +242,35 @@
         localStorage.setItem("theme", next);
         toggle.textContent = next === "dark" ? "🌞" : "🌜";
       });
-      // Set initial
       toggle.textContent =
         document.documentElement.getAttribute("data-theme") === "dark"
           ? "🌞"
           : "🌜";
 
-      // Initialize Supabase
+      // 3) Initialize Supabase
       const SUPABASE_URL = "https://dapwpgvnfjcfqqhrpxla.supabase.co";
       const SUPABASE_ANON_KEY =
         "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImRhcHdwZ3ZuZmpjZnFxaHJweGxhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDcwNDA4ODgsImV4cCI6MjA2MjYxNjg4OH0.ICC0UsLlzJDNre7rFCeD3k6iVzo6jOJgn3PhABpEMsQ";
       const sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
-      // Elements
+      // 4) Grab form elements
       const form = document.getElementById("apply-form");
       const agreeCheckbox = document.getElementById("agree-terms");
       const submitBtn = document.getElementById("submit-btn");
       const alertDiv = document.getElementById("apply-alert");
 
-      // Enable/disable submit button
+      // 5) Enable/disable Submit button based on “I agree”
       agreeCheckbox.addEventListener("change", () => {
         submitBtn.classList.toggle("enabled", agreeCheckbox.checked);
       });
 
+      // 6) Handle form submission
       form.addEventListener("submit", async (e) => {
         e.preventDefault();
         alertDiv.textContent = "";
         alertDiv.style.color = "";
 
-        // 1) Must agree
+        // Must agree to terms
         if (!agreeCheckbox.checked) {
           alertDiv.style.color = "crimson";
           alertDiv.textContent =
@@ -278,7 +278,7 @@
           return;
         }
 
-        // 2) Read fields
+        // Read form values
         const name = document.getElementById("apply-name").value.trim();
         const email = document
           .getElementById("apply-email")
@@ -290,7 +290,7 @@
           .getElementById("apply-message")
           .value.trim();
 
-        // 3) Validation
+        // Basic validation
         if (!name || !email || !password || !phone || !experience) {
           alertDiv.style.color = "crimson";
           alertDiv.textContent = "Please complete all fields.";
@@ -302,12 +302,12 @@
           return;
         }
 
-        // 4) Disable button, show “Submitting…”
+        // Disable button and show “Submitting…”
         submitBtn.disabled = true;
         submitBtn.textContent = "Submitting…";
 
         try {
-          // 5) Insert into Supabase “users” table
+          // 7) Insert into Supabase “users” table
           const { error: insertErr } = await sb
             .from("users")
             .insert([
@@ -323,17 +323,17 @@
 
           if (insertErr) throw insertErr;
 
-          // 6) Show success to user
+          // 8) Show frontend success
           alertDiv.style.color = "lightgreen";
           alertDiv.textContent = "Application submitted—thank you!";
           form.reset();
           submitBtn.classList.remove("enabled");
 
-          // 7) Build the payload for Brevo
+          // 9) Build the payload for Brevo
           const emailPayload = {
-            email: email,
-            name:  name,
-            templateId: 1, // your Brevo “Welcome” template ID
+            email: email,   // recipient email
+            name:  name,    // recipient name
+            templateId: 1,  // Your Brevo “Welcome” template ID
             params: {
               contact: {
                 FIRSTNAME: name,
@@ -343,7 +343,7 @@
             },
           };
 
-          // 8) Call your Vercel function
+          // 10) Call your Vercel function
           const vercelUrl =
             "https://bullionexchange-lrz6.vercel.app/api/send-email";
 
@@ -358,7 +358,7 @@
                 console.log("✅ Welcome email sent to", email);
               } else {
                 console.error("❌ Welcome email error:", data);
-                // Notify user in orange, but don’t block form success
+                // Show an orange notice (but do not revert success)
                 alertDiv.style.color = "orange";
                 alertDiv.textContent +=
                   "\n—but welcome email failed. Please try again later.";
@@ -367,13 +367,12 @@
             .catch((err) =>
               console.error("🔴 Fetch error sending welcome email:", err)
             );
-
         } catch (err) {
           console.error("Supabase insert error →", err);
           alertDiv.style.color = "crimson";
           alertDiv.textContent = `Error: ${err.message}`;
         } finally {
-          // 9) Re-enable the button text
+          // 11) Re-enable the button text
           submitBtn.disabled = false;
           submitBtn.textContent = "Submit Application";
         }
