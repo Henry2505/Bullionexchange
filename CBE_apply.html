@@ -6,7 +6,7 @@
   <title>Apply • Chukwuemeka Bullion Exchange</title>
   <meta
     name="description"
-    content="Apply to join Chukwuemeka Bullion Exchange’s VIP trading community."
+    content="Apply to join Chukwuemeka Bullion Exchange's VIP trading community."
   />
 
   <!-- Fallback CSS variables for dark/light themes -->
@@ -163,7 +163,7 @@
 
   <link rel="stylesheet" href="theme.css" />
   <link
-    href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700&family=Roboto:wght@300;400;700&display=swap"
+    href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700&amp;family=Roboto:wght@300;400;700&amp;display=swap"
     rel="stylesheet"
   />
   <!-- Supabase UMD (defer ensures HTML rendering happens first) -->
@@ -216,8 +216,8 @@
         <div class="terms-container">
           <input type="checkbox" id="agree-terms" />
           <label for="agree-terms">I agree to</label>
-          <a href="privacy.html" target="_blank">Privacy Policy</a> &
-          <a href="terms.html" target="_blank">Terms & Conditions</a>
+          <a href="privacy.html" target="_blank">Privacy Policy</a> &amp;
+          <a href="terms.html" target="_blank">Terms &amp; Conditions</a>
         </div>
 
         <button type="submit" id="submit-btn">Submit Application</button>
@@ -230,10 +230,10 @@
 
   <script>
     window.addEventListener("DOMContentLoaded", () => {
-      // 1) Show the card with slide-in effect
+      // 1) Slide-in effect
       document.getElementById("apply-card").classList.add("visible");
 
-      // 2) Theme toggle (dark/light)
+      // 2) Theme toggle
       const toggle = document.getElementById("theme-toggle");
       toggle.addEventListener("click", () => {
         const cur = document.documentElement.getAttribute("data-theme");
@@ -259,23 +259,23 @@
       const submitBtn = document.getElementById("submit-btn");
       const alertDiv = document.getElementById("apply-alert");
 
-      // 5) Enable/disable Submit button when "I agree" changes
+      // 5) Enable/disable Submit button when “I agree” changes
       agreeCheckbox.addEventListener("change", () => {
         submitBtn.classList.toggle("enabled", agreeCheckbox.checked);
       });
 
-      // 6) Form submission handler
+      // 6) Handle form submission
       form.addEventListener("submit", async (e) => {
         e.preventDefault();
         alertDiv.textContent = "";
         alertDiv.style.color = "";
 
-        // 6.a) Must agree
+        // 6.a) Must agree to terms
         if (!agreeCheckbox.checked) {
           alertDiv.style.color = "crimson";
           alertDiv.textContent =
             "You must agree to the Privacy Policy and Terms to continue.";
-          console.warn("Form submission blocked: user did not agree to terms.");
+          console.warn("Form blocked: user did not agree.");
           return;
         }
 
@@ -291,7 +291,7 @@
           .getElementById("apply-message")
           .value.trim();
 
-        // 6.c) Validation
+        // 6.c) Basic validation
         if (!name || !email || !password || !phone || !experience) {
           alertDiv.style.color = "crimson";
           alertDiv.textContent = "Please complete all fields.";
@@ -301,16 +301,16 @@
         if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
           alertDiv.style.color = "crimson";
           alertDiv.textContent = "Please enter a valid email address.";
-          console.warn("Validation failed: invalid email pattern.");
+          console.warn("Validation failed: invalid email.");
           return;
         }
 
-        // 6.d) Disable button + show "Submitting…"
+        // 6.d) Disable button + show “Submitting…”
         submitBtn.disabled = true;
         submitBtn.textContent = "Submitting…";
 
         try {
-          // 7) Insert into Supabase "users" table
+          // 7) Insert into Supabase “users” table
           console.log("Inserting user into Supabase:", { name, email, phone, password, experience });
           const { error: insertErr } = await sb
             .from("users")
@@ -326,39 +326,51 @@
             ]);
 
           if (insertErr) {
-            throw new Error(`Supabase insert failed: ${insertErr.message}`);
+            throw insertErr;
           }
 
-          // 8) Show success message for form submission
+          // 8) Show local success
           alertDiv.style.color = "lightgreen";
           alertDiv.textContent = "Application submitted—thank you!";
           console.log("Supabase insert succeeded for:", email);
           form.reset();
           submitBtn.classList.remove("enabled");
 
-          // 9) Send welcome email using Supabase Edge Function
-          console.log("Sending welcome email via Supabase Edge Function...");
-          const edgeFunctionUrl = "https://dapwpgvnfjcfqqhrpxla.supabase.co/functions/v1/smart-task";
-          console.log("Edge function payload:", { name, email, phone, experience });
-
-          const emailResponse = await fetch(edgeFunctionUrl, {
+          // 9) Send welcome email via Brevo (hard-coded API key)
+          console.log("Sending welcome email via Brevo...");
+          const emailResponse = await fetch("https://api.brevo.com/v3/smtp/email", {
             method: "POST",
             headers: {
               "Content-Type": "application/json",
-              "Authorization": `Bearer ${SUPABASE_ANON_KEY}`,
+              // *** Replace with your actual Brevo SMTP API key below ***
+              "api-key": "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"
             },
             body: JSON.stringify({
-              name: name,
-              email: email,
-              phone: phone,
-              experience: experience,
+              sender: {
+                name: "Chukwuemeka Bullion Exchange",
+                email: "support@apexincomeoptions.com.ng"
+              },
+              to: [
+                {
+                  email: email,
+                  name: name
+                }
+              ],
+              templateId: 4, // Your Brevo template ID
+              params: {
+                FIRSTNAME: name,
+                EMAIL: email,
+                PHONE: phone,
+                EXPERIENCE: experience
+              }
             }),
           });
 
-          const emailResult = await emailResponse.json().catch((err) => ({
-            error: `Failed to parse response: ${err.message}`,
-          }));
-          console.log("Edge function response:", emailResult);
+          // 10) Inspect Brevo’s response
+          const emailResult = await emailResponse.json().catch(() => {
+            return { error: "Invalid JSON from Brevo" };
+          });
+          console.log("Brevo email response:", emailResult, "Status:", emailResponse.status);
 
           if (emailResponse.ok && emailResult.message === "Email sent successfully") {
             console.log("✅ Welcome email sent successfully to:", email);
@@ -367,14 +379,14 @@
           } else {
             console.warn("❌ Welcome email failed:", emailResult);
             alertDiv.style.color = "orange";
-            alertDiv.textContent += `\nApplication saved but welcome email failed: ${emailResult.error || "Unknown error"}`;
+            alertDiv.textContent += "\nApplication saved but welcome email failed.";
           }
         } catch (err) {
           console.error("Error during submission/email process:", err);
           alertDiv.style.color = "crimson";
-          alertDiv.textContent = `Error: ${err.message}. Please try again or contact support.`;
+          alertDiv.textContent = `Error: ${err.message}`;
         } finally {
-          // 10) Re-enable submit button
+          // 11) Re-enable submit button
           submitBtn.disabled = false;
           submitBtn.textContent = "Submit Application";
         }
