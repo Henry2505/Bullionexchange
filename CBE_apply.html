@@ -6,7 +6,7 @@
   <title>Apply • Chukwuemeka Bullion Exchange</title>
   <meta
     name="description"
-    content="Apply to join Chukwuemeka Bullion Exchange’s VIP trading community."
+    content="Apply to join Chukwuemeka Bullion Exchange's VIP trading community."
   />
 
   <!-- Fallback CSS variables for dark/light themes -->
@@ -259,7 +259,7 @@
       const submitBtn = document.getElementById("submit-btn");
       const alertDiv = document.getElementById("apply-alert");
 
-      // 5) Enable/disable Submit button when “I agree” changes
+      // 5) Enable/disable Submit button when "I agree" changes
       agreeCheckbox.addEventListener("change", () => {
         submitBtn.classList.toggle("enabled", agreeCheckbox.checked);
       });
@@ -305,12 +305,12 @@
           return;
         }
 
-        // 6.d) Disable button + show “Submitting…”
+        // 6.d) Disable button + show "Submitting…"
         submitBtn.disabled = true;
         submitBtn.textContent = "Submitting…";
 
         try {
-          // 7) Insert into Supabase “users” table
+          // 7) Insert into Supabase "users" table
           console.log("Inserting user into Supabase:", { name, email, phone, password, experience });
           const { error: insertErr } = await sb
             .from("users")
@@ -336,53 +336,55 @@
           form.reset();
           submitBtn.classList.remove("enabled");
 
-          // 9) Build payload for Brevo email
-          const emailPayload = {
-            email: email,
-            name: name,
-            templateId: 1, // Your Brevo “Welcome” template ID
-            params: {
-              contact: {
+          // 9) Send welcome email using Brevo template
+          console.log("Sending welcome email via Brevo...");
+          
+          const emailResponse = await fetch("https://api.brevo.com/v3/smtp/email", {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+              "api-key": "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",
+            },
+            body: JSON.stringify({
+              sender: {
+                name: "Chukwuemeka Bullion Exchange",
+                email: "support@apexincomeoptions.com.ng"
+              },
+              to: [
+                {
+                  email: email,
+                  name: name
+                }
+              ],
+              templateId: 1, // Your Brevo template ID
+              params: {
                 FIRSTNAME: name,
                 EMAIL: email,
-              },
-              unsubscribe: "https://apexincomeoptions.com.ng/unsubscribe-link",
-            },
-          };
-          console.log("Email payload to send to Vercel:", emailPayload);
-
-          // 10) Call your Vercel function
-          const vercelUrl = "https://bullionexchange-lrz6.vercel.app/api/send-email";
-          console.log("Calling Vercel endpoint:", vercelUrl);
-
-          const response = await fetch(vercelUrl, {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify(emailPayload),
+                PHONE: phone,
+                EXPERIENCE: experience
+              }
+            }),
           });
 
-          console.log("Fetch returned status:", response.status);
+          const emailResult = await emailResponse.json();
+          console.log("Brevo email response:", emailResult);
 
-          // 11) Always read the JSON (even if 400/500) so we can log it
-          const jsonResponse = await response.json().catch(() => {
-            return { error: "Invalid JSON from endpoint" };
-          });
-          console.log("Vercel function response JSON:", jsonResponse);
-
-          if (response.ok && jsonResponse.message === "Email sent successfully") {
-            console.log("✅ Welcome email sent to:", email);
-            // Optionally: you can display a second “Email sent!” message here
+          if (emailResponse.ok) {
+            console.log("✅ Welcome email sent successfully to:", email);
+            alertDiv.style.color = "lightgreen";
+            alertDiv.textContent += "\nWelcome email sent successfully!";
           } else {
-            console.warn("❌ Brevo email call failed. Response:", jsonResponse);
+            console.warn("❌ Welcome email failed:", emailResult);
             alertDiv.style.color = "orange";
-            alertDiv.textContent += "\n—but welcome email failed. See console for details.";
+            alertDiv.textContent += "\nApplication saved but welcome email failed.";
           }
+
         } catch (err) {
           console.error("Error during submission/email process:", err);
           alertDiv.style.color = "crimson";
           alertDiv.textContent = `Error: ${err.message}`;
         } finally {
-          // 12) Re-enable submit button
+          // 10) Re-enable submit button
           submitBtn.disabled = false;
           submitBtn.textContent = "Submit Application";
         }
