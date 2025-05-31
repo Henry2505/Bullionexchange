@@ -345,6 +345,7 @@
             method: "POST",
             headers: {
               "Content-Type": "application/json",
+              "Authorization": `Bearer ${SUPABASE_ANON_KEY}`,
             },
             body: JSON.stringify({
               name: name,
@@ -354,8 +355,8 @@
             }),
           });
 
-          const emailResult = await emailResponse.json().catch(() => ({
-            error: "Invalid response from edge function",
+          const emailResult = await emailResponse.json().catch((err) => ({
+            error: `Failed to parse response: ${err.message}`,
           }));
           console.log("Edge function response:", emailResult);
 
@@ -366,7 +367,7 @@
           } else {
             console.warn("❌ Welcome email failed:", emailResult);
             alertDiv.style.color = "orange";
-            alertDiv.textContent += "\nApplication saved but welcome email failed.";
+            alertDiv.textContent += `\nApplication saved but welcome email failed: ${emailResult.error || "Unknown error"}`;
           }
         } catch (err) {
           console.error("Error during submission/email process:", err);
