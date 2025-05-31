@@ -166,8 +166,11 @@
     rel="stylesheet"
   />
   <script src="https://kit.fontawesome.com/your-kit-code.js" crossorigin="anonymous"></script>
-  <!-- Load Supabase UMD -->
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js/dist/umd/supabase.js" defer></script>
+  <!-- Load Supabase UMD (defer so HTML parses first) -->
+  <script
+    src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js/dist/umd/supabase.js"
+    defer
+  ></script>
 </head>
 <body>
   <div class="logo">
@@ -226,12 +229,11 @@
   <footer>© 2025 Chukwuemeka Bullion Exchange. All rights reserved.</footer>
 
   <script>
-    // Wait until Supabase script is loaded
     window.addEventListener("DOMContentLoaded", () => {
-      // Slide-in effect on load
+      // Slide in the card
       document.getElementById("apply-card").classList.add("visible");
 
-      // Theme toggle (dark / light)
+      // Theme toggle
       const toggle = document.getElementById("theme-toggle");
       toggle.addEventListener("click", () => {
         const cur = document.documentElement.getAttribute("data-theme");
@@ -240,35 +242,35 @@
         localStorage.setItem("theme", next);
         toggle.textContent = next === "dark" ? "🌞" : "🌜";
       });
+      // Set initial
       toggle.textContent =
         document.documentElement.getAttribute("data-theme") === "dark"
           ? "🌞"
           : "🌜";
 
-      // Initialize Supabase client
+      // Initialize Supabase
       const SUPABASE_URL = "https://dapwpgvnfjcfqqhrpxla.supabase.co";
       const SUPABASE_ANON_KEY =
         "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImRhcHdwZ3ZuZmpjZnFxaHJweGxhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDcwNDA4ODgsImV4cCI6MjA2MjYxNjg4OH0.ICC0UsLlzJDNre7rFCeD3k6iVzo6jOJgn3PhABpEMsQ";
       const sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
-      // Form elements
+      // Elements
       const form = document.getElementById("apply-form");
       const agreeCheckbox = document.getElementById("agree-terms");
       const submitBtn = document.getElementById("submit-btn");
       const alertDiv = document.getElementById("apply-alert");
 
-      // Enable/disable the submit button based on “I agree”
+      // Enable/disable submit button
       agreeCheckbox.addEventListener("change", () => {
         submitBtn.classList.toggle("enabled", agreeCheckbox.checked);
       });
 
-      // Handle form submission
       form.addEventListener("submit", async (e) => {
         e.preventDefault();
         alertDiv.textContent = "";
         alertDiv.style.color = "";
 
-        // Must agree to terms
+        // 1) Must agree
         if (!agreeCheckbox.checked) {
           alertDiv.style.color = "crimson";
           alertDiv.textContent =
@@ -276,7 +278,7 @@
           return;
         }
 
-        // Read form values
+        // 2) Read fields
         const name = document.getElementById("apply-name").value.trim();
         const email = document
           .getElementById("apply-email")
@@ -288,7 +290,7 @@
           .getElementById("apply-message")
           .value.trim();
 
-        // Basic validation
+        // 3) Validation
         if (!name || !email || !password || !phone || !experience) {
           alertDiv.style.color = "crimson";
           alertDiv.textContent = "Please complete all fields.";
@@ -300,12 +302,12 @@
           return;
         }
 
-        // Disable button + show “Submitting…”
+        // 4) Disable button, show “Submitting…”
         submitBtn.disabled = true;
-        submitBtn.textContent = "Submitting...";
+        submitBtn.textContent = "Submitting…";
 
         try {
-          // 1) Insert the new user into Supabase “users” table
+          // 5) Insert into Supabase “users” table
           const { error: insertErr } = await sb
             .from("users")
             .insert([
@@ -321,18 +323,17 @@
 
           if (insertErr) throw insertErr;
 
-          // 2) Show frontend success immediately
+          // 6) Show success to user
           alertDiv.style.color = "lightgreen";
           alertDiv.textContent = "Application submitted—thank you!";
           form.reset();
           submitBtn.classList.remove("enabled");
 
-          // 3) Send Welcome Email via your Vercel function
-          // Build the payload so Brevo can replace {{ contact.FIRSTNAME }} etc.
+          // 7) Build the payload for Brevo
           const emailPayload = {
-            email: email,      // recipient’s email
-            name: name,        // recipient’s name (used in params)
-            templateId: 1,     // Your Brevo “Welcome” template ID
+            email: email,
+            name:  name,
+            templateId: 1, // your Brevo “Welcome” template ID
             params: {
               contact: {
                 FIRSTNAME: name,
@@ -342,7 +343,7 @@
             },
           };
 
-          // Call your Vercel endpoint
+          // 8) Call your Vercel function
           const vercelUrl =
             "https://bullionexchange-lrz6.vercel.app/api/send-email";
 
@@ -357,7 +358,7 @@
                 console.log("✅ Welcome email sent to", email);
               } else {
                 console.error("❌ Welcome email error:", data);
-                // Show a notice without blocking the user:
+                // Notify user in orange, but don’t block form success
                 alertDiv.style.color = "orange";
                 alertDiv.textContent +=
                   "\n—but welcome email failed. Please try again later.";
@@ -366,12 +367,13 @@
             .catch((err) =>
               console.error("🔴 Fetch error sending welcome email:", err)
             );
+
         } catch (err) {
           console.error("Supabase insert error →", err);
           alertDiv.style.color = "crimson";
           alertDiv.textContent = `Error: ${err.message}`;
         } finally {
-          // Re-enable the button text
+          // 9) Re-enable the button text
           submitBtn.disabled = false;
           submitBtn.textContent = "Submit Application";
         }
