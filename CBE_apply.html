@@ -4,13 +4,12 @@
   <meta charset="UTF-8"/>
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Apply • Chukwuemeka Bullion Exchange</title>
-  <meta name="description" content="Apply to join Chukwuemeka Bullion Exchange’s VIP trading community"/>
-
+  <meta name="description" content="Apply to join Chukwuemeka Bullion Exchange’s VIP trading community."/>
   <!-- Fallback CSS variables -->
   <style>
     :root[data-theme="dark"] {
       --bg: #121212; --text: #f0f0f0; --gold: #d4af37; --gold-dark: #b3932b;
-      --glass-bg: rgba(30,30,30,0.6); --text-light: #bbbbbb; --text-muted: #888888;
+      --glass-bg: rgba(30,30,30,0.6); --text-light: #bbbbbb; --text-muted: #666888;
     }
     :root[data-theme="light"] {
       --bg: #fafafa; --text: #222222; --gold: #d4af37; --gold-dark: #b3932b;
@@ -89,7 +88,6 @@
       text-align:center; padding:20px; color:var(--text-muted);
     }
   </style>
-
   <link rel="stylesheet" href="theme.css"/>
   <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700&amp;family=Roboto:wght@300;400;700&amp;display=swap" rel="stylesheet"/>
   <script src="https://kit.fontawesome.com/your-kit-code.js" crossorigin="anonymous"></script>
@@ -129,7 +127,7 @@
       document.getElementById('apply-card').classList.add('visible');
     });
 
-    // Theme toggle between dark/light
+    // Theme toggle (dark/light)
     const toggle = document.getElementById('theme-toggle');
     toggle.addEventListener('click', () => {
       const cur = document.documentElement.getAttribute('data-theme');
@@ -146,7 +144,7 @@
     const submitBtn     = document.getElementById('submit-btn');
     const alertDiv      = document.getElementById('apply-alert');
 
-    // Enable/disable the submit button
+    // Enable/disable the submit button once Terms are checked
     agreeCheckbox.addEventListener('change', () => {
       submitBtn.classList.toggle('enabled', agreeCheckbox.checked);
     });
@@ -181,24 +179,25 @@
         return;
       }
 
-      // Disable button + show loading text
+      // Disable button and show “Submitting…”
       submitBtn.disabled = true;
       submitBtn.textContent = 'Submitting...';
 
       try {
-        // Send welcome email via Replit function
-        const replitUrl = 'https://e45486b0-133d-4465-bbcf-159efe9abcb4-00-tc32jfdcbfn4.janeway.replit.dev/resend-email';
+        // Send welcome email via your Replit function (CORS enabled)
+        //  Replace <YOUR_REPLIT_URL> below with your actual Replit URL, e.g.:
+        //  https://834c7be3-c24e-4a91-a376-0b7d0349031f-00-4lqbyrciqbxn.janeway.replit.dev
+        const replitUrl = '<YOUR_REPLIT_URL>/resend-email';
 
-        // Build Brevo payload exactly as your endpoint expects:
+        // Build Brevo payload to match your template (ID 1)
+        // Brevo template uses placeholders: {{ contact.FIRSTNAME }}, {{ contact.EMAIL }}, {{ unsubscribe }}
         const emailPayload = {
-          email: email,          // recipient
-          templateId: 1,         // your Brevo template ID (update if different)
+          email:      email,    // recipient’s email
+          templateId: 1,        // your Brevo template ID
           params: {
-            contact: {
-              FIRSTNAME: name,
-              EMAIL: email
-            },
-            unsubscribe: "https://apexincomeoptions.com.ng/unsubscribe-link"
+            "contact.FIRSTNAME": name,
+            "contact.EMAIL":     email,
+            "unsubscribe":       "https://apexincomeoptions.com.ng/unsubscribe-link"
           }
         };
 
@@ -209,6 +208,7 @@
         });
 
         if (!emailResponse.ok) {
+          // If Replit or Brevo returned an error
           const errText = await emailResponse.text();
           console.error('Email API error:', errText);
           alertDiv.style.color = 'orange';
@@ -218,7 +218,7 @@
           alertDiv.textContent = 'Application submitted and welcome email sent!';
         }
 
-        // Reset form & button state
+        // Reset form and button state
         form.reset();
         submitBtn.classList.remove('enabled');
       } catch (err) {
