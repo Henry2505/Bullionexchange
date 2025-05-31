@@ -19,6 +19,9 @@
       --glass-bg: rgba(30, 30, 30, 0.6);
       --text-light: #bbbbbb;
       --text-muted: #888888;
+      --error-color: #e74c3c;
+      --success-color: #2ecc71;
+      --warning-color: #f39c12;
     }
     :root[data-theme="light"] {
       --bg: #fafafa;
@@ -28,6 +31,9 @@
       --glass-bg: rgba(255, 255, 255, 0.6);
       --text-light: #555555;
       --text-muted: #666666;
+      --error-color: #e74c3c;
+      --success-color: #2ecc71;
+      --warning-color: #f39c12;
     }
     * {
       margin: 0;
@@ -150,7 +156,7 @@
     }
     #apply-alert {
       margin-top: 12px;
-      white-space: pre-wrap; /* allow multi-line error messages */
+      white-space: pre-wrap; /* allow multi-line messages */
       text-align: center;
       font-weight: 600;
     }
@@ -166,6 +172,7 @@
     href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700&amp;family=Roboto:wght@300;400;700&amp;display=swap"
     rel="stylesheet"
   />
+
   <!-- Supabase UMD (defer ensures HTML rendering happens first) -->
   <script
     src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js/dist/umd/supabase.js"
@@ -272,7 +279,7 @@
 
         // 6.a) Must agree to terms
         if (!agreeCheckbox.checked) {
-          alertDiv.style.color = "crimson";
+          alertDiv.style.color = "var(--error-color)";
           alertDiv.textContent =
             "You must agree to the Privacy Policy and Terms to continue.";
           console.warn("Form blocked: user did not agree.");
@@ -293,13 +300,13 @@
 
         // 6.c) Basic validation
         if (!name || !email || !password || !phone || !experience) {
-          alertDiv.style.color = "crimson";
+          alertDiv.style.color = "var(--error-color)";
           alertDiv.textContent = "Please complete all fields.";
           console.warn("Validation failed: missing fields.");
           return;
         }
         if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
-          alertDiv.style.color = "crimson";
+          alertDiv.style.color = "var(--error-color)";
           alertDiv.textContent = "Please enter a valid email address.";
           console.warn("Validation failed: invalid email.");
           return;
@@ -310,7 +317,28 @@
         submitBtn.textContent = "Submitting…";
 
         try {
-          // 7) Insert into Supabase “users” table
+          // 7) Check if email already exists in Supabase
+          console.log("Checking for existing email in Supabase:", email);
+          const { data: existing, error: selectErr } = await sb
+            .from("users")
+            .select("id")
+            .eq("email", email)
+            .single();
+
+          if (selectErr && selectErr.code !== "PGRST116") {
+            // PGRST116 means “no row returned”—ignore that
+            throw selectErr;
+          }
+          if (existing) {
+            // Email already in the table
+            console.warn("Duplicate email detected:", email);
+            alertDiv.style.color = "var(--warning-color)";
+            alertDiv.textContent =
+              "This email is already registered. Please use another.";
+            return;
+          }
+
+          // 8) Insert into Supabase “users” table
           console.log("Inserting user into Supabase:", { name, email, phone, password, experience });
           const { error: insertErr } = await sb
             .from("users")
@@ -329,14 +357,14 @@
             throw insertErr;
           }
 
-          // 8) Show local success
-          alertDiv.style.color = "lightgreen";
+          // 9) Show local success
+          alertDiv.style.color = "var(--success-color)";
           alertDiv.textContent = "Application submitted—thank you!";
           console.log("Supabase insert succeeded for:", email);
           form.reset();
           submitBtn.classList.remove("enabled");
 
-          // 9) Send welcome email via Brevo (hard-coded API key)
+          // 10) Send welcome email via Brevo (hard-coded API key)
           console.log("Sending welcome email via Brevo...");
           const emailResponse = await fetch("https://api.brevo.com/v3/smtp/email", {
             method: "POST",
@@ -348,7 +376,7 @@
             body: JSON.stringify({
               sender: {
                 name: "Chukwuemeka Bullion Exchange",
-                email: "support@apexincomeoptions.com.ng"
+                email: "noreply@apexincomeoptions.com.ng"
               },
               to: [
                 {
@@ -366,7 +394,7 @@
             }),
           });
 
-          // 10) Inspect Brevo’s response
+          // 11) Inspect Brevo’s response
           const emailResult = await emailResponse.json().catch(() => {
             return { error: "Invalid JSON from Brevo" };
           });
@@ -374,19 +402,19 @@
 
           if (emailResponse.ok && emailResult.message === "Email sent successfully") {
             console.log("✅ Welcome email sent successfully to:", email);
-            alertDiv.style.color = "lightgreen";
+            alertDiv.style.color = "var(--success-color)";
             alertDiv.textContent += "\nWelcome email sent successfully!";
           } else {
             console.warn("❌ Welcome email failed:", emailResult);
-            alertDiv.style.color = "orange";
+            alertDiv.style.color = "var(--warning-color)";
             alertDiv.textContent += "\nApplication saved but welcome email failed.";
           }
         } catch (err) {
           console.error("Error during submission/email process:", err);
-          alertDiv.style.color = "crimson";
+          alertDiv.style.color = "var(--error-color)";
           alertDiv.textContent = `Error: ${err.message}`;
         } finally {
-          // 11) Re-enable submit button
+          // 12) Re-enable submit button
           submitBtn.disabled = false;
           submitBtn.textContent = "Submit Application";
         }
