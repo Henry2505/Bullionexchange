@@ -9,7 +9,7 @@
   <style>
     :root[data-theme="dark"] {
       --bg: #121212; --text: #f0f0f0; --gold: #d4af37; --gold-dark: #b3932b;
-      --glass-bg: rgba(30,30,30,0.6); --text-light: #bbbbbb; --text-muted: #666888;
+      --glass-bg: rgba(30,30,30,0.6); --text-light: #bbbbbb; --text-muted: #888888;
     }
     :root[data-theme="light"] {
       --bg: #fafafa; --text: #222222; --gold: #d4af37; --gold-dark: #b3932b;
@@ -102,10 +102,10 @@
     <div class="apply-card" id="apply-card">
       <h1>Apply to Join CBE</h1>
       <form id="apply-form">
-        <input type="text"     id="apply-name"     placeholder="Full Name"                            required/>
-        <input type="email"    id="apply-email"    placeholder="Email Address"                        required/>
-        <input type="password" id="apply-password" placeholder="Password"                             required/>
-        <input type="tel"      id="apply-phone"    placeholder="Phone Number"                         required/>
+        <input type="text"     id="apply-name"     placeholder="Full Name" required/>
+        <input type="email"    id="apply-email"    placeholder="Email Address" required/>
+        <input type="password" id="apply-password" placeholder="Password" required/>
+        <input type="tel"      id="apply-phone"    placeholder="Phone Number" required/>
         <textarea             id="apply-message"  placeholder="Tell us about your trading experience" rows="4" required></textarea>
         <div class="terms-container">
           <input type="checkbox" id="agree-terms"/>
@@ -179,21 +179,21 @@
         return;
       }
 
-      // Disable button and show “Submitting…”
+      // Disable button and show loading
       submitBtn.disabled = true;
       submitBtn.textContent = 'Submitting...';
 
       try {
         // Send welcome email via your Replit function (CORS enabled)
-        //  Replace <YOUR_REPLIT_URL> below with your actual Replit URL, e.g.:
-        //  https://834c7be3-c24e-4a91-a376-0b7d0349031f-00-4lqbyrciqbxn.janeway.replit.dev
-        const replitUrl = '<YOUR_REPLIT_URL>/resend-email';
+        // Replace <YOUR_REPLIT_URL> with your actual Replit App URL:
+        //   e.g. "https://834c7be3-c24e-4a91-a376-0b7d0349031f-00-4lqbyrciqbxn.janeway.replit.dev"
+        const replitUrl = 'https://834c7be3-c24e-4a91-a376-0b7d0349031f-00-4lqbyrciqbxn.janeway.replit.dev/resend-email';
 
-        // Build Brevo payload to match your template (ID 1)
-        // Brevo template uses placeholders: {{ contact.FIRSTNAME }}, {{ contact.EMAIL }}, {{ unsubscribe }}
+        // Build Brevo payload to match your template ID 1 placeholders:
+        // Your template uses: {{ contact.FIRSTNAME }}, {{ contact.EMAIL }}, {{ unsubscribe }}
         const emailPayload = {
           email:      email,    // recipient’s email
-          templateId: 1,        // your Brevo template ID
+          templateId: 1,        // your Brevo welcome-email template ID
           params: {
             "contact.FIRSTNAME": name,
             "contact.EMAIL":     email,
@@ -208,21 +208,26 @@
         });
 
         if (!emailResponse.ok) {
-          // If Replit or Brevo returned an error
-          const errText = await emailResponse.text();
-          console.error('Email API error:', errText);
+          // If Replit or Brevo returned an error, show the full JSON in the alert
+          const errorJson = await emailResponse.json().catch(() => ({ error: "Invalid JSON" }));
+          console.error("Email API returned error:", errorJson);
           alertDiv.style.color = 'orange';
-          alertDiv.textContent = 'Application submitted, but failed to send welcome email.';
+          alertDiv.textContent = 
+            `Application submitted, but failed to send welcome email:\n` +
+            JSON.stringify(errorJson, null, 2);
         } else {
+          // Success
+          const successJson = await emailResponse.json().catch(() => ({}));
+          console.log("Email API success:", successJson);
           alertDiv.style.color = 'lightgreen';
           alertDiv.textContent = 'Application submitted and welcome email sent!';
         }
 
-        // Reset form and button state
+        // Reset form & button
         form.reset();
         submitBtn.classList.remove('enabled');
       } catch (err) {
-        console.error(err);
+        console.error("Fetch error:", err);
         alertDiv.style.color = 'crimson';
         alertDiv.textContent = `Error: ${err.message}`;
       } finally {
