@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="en" data-theme="dark">
 <head>
-  <meta charset="UTF-8" />
+  <meta charset="UTF-8"/>
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Apply • Chukwuemeka Bullion Exchange</title>
   <meta name="description" content="Apply to join Chukwuemeka Bullion Exchange’s VIP trading community."/>
@@ -30,9 +30,7 @@
 
     /* Base Styles */
     * {
-      margin: 0;
-      padding: 0;
-      box-sizing: border-box;
+      margin: 0; padding: 0; box-sizing: border-box;
     }
     body {
       font-family: "Roboto", sans-serif;
@@ -126,7 +124,7 @@
     }
     #apply-alert {
       margin-top: 12px;
-      white-space: pre-wrap; /* allow multi-line messages */
+      white-space: pre-wrap;
       text-align: center;
       font-weight: 600;
     }
@@ -139,7 +137,7 @@
       margin-top: 60px;
     }
 
-    /* Theme Toggle Button */
+    /* Theme Toggle & Logo */
     #theme-toggle {
       position: fixed;
       top: 20px;
@@ -172,7 +170,7 @@
   <!-- Theme Toggle -->
   <button id="theme-toggle" aria-label="Toggle theme">🌞</button>
 
-  <!-- Main Form Card -->
+  <!-- Main Card -->
   <div class="apply-card" id="apply-card">
     <h1>Apply to Join CBE</h1>
     <form id="apply-form">
@@ -196,12 +194,12 @@
   <footer>© 2025 Chukwuemeka Bullion Exchange. All rights reserved.</footer>
 
   <script>
-    // 1. Slide-In Animation
+    // 1) Slide-In Animation
     window.addEventListener("DOMContentLoaded", () => {
       document.getElementById("apply-card").classList.add("visible");
     });
 
-    // 2. Theme Toggle
+    // 2) Theme Toggle
     const toggleBtn = document.getElementById("theme-toggle");
     function applyTheme(t) {
       document.documentElement.setAttribute("data-theme", t);
@@ -213,16 +211,16 @@
       const next = current === "dark" ? "light" : "dark";
       applyTheme(next);
     });
-    // On load, restore theme or default to dark
+    // On load, restore preferred theme or default to dark
     applyTheme(localStorage.getItem("theme") || "dark");
 
-    // 3. Form Handling
+    // 3) Form Handling
     const form      = document.getElementById("apply-form");
     const agree     = document.getElementById("agree-terms");
     const submitBtn = document.getElementById("submit-btn");
     const alertDiv  = document.getElementById("apply-alert");
 
-    // Enable/disable submit button based on "I agree"
+    // Enable/disable submit button when “I agree” is toggled
     agree.addEventListener("change", () => {
       if (agree.checked) {
         submitBtn.disabled = false;
@@ -238,14 +236,14 @@
       alertDiv.textContent = "";
       alertDiv.style.color = "";
 
-      // 3.a) Read form fields
+      // Read all fields
       const name       = document.getElementById("apply-name").value.trim();
       const email      = document.getElementById("apply-email").value.trim().toLowerCase();
       const password   = document.getElementById("apply-password").value;
       const phone      = document.getElementById("apply-phone").value.trim();
       const experience = document.getElementById("apply-message").value.trim();
 
-      // 3.b) Basic validation
+      // Basic validation
       if (!name || !email || !password || !phone || !experience) {
         alertDiv.style.color = "var(--error-color)";
         alertDiv.textContent = "Please complete all fields.";
@@ -257,36 +255,34 @@
         return;
       }
 
-      // 3.c) Disable button & show "Submitting…"
+      // Disable & show “Submitting…”
       submitBtn.disabled = true;
       submitBtn.textContent = "Submitting…";
 
       try {
-        // 3.d) Call the Supabase Edge Function (public URL)
+        // **Use your public Supabase Functions URL exactly** (no < >)
         const edgeUrl = "https://dapwpgvnfjcfqqhrpxla.functions.supabase.co/send-welcome-email";
 
         const response = await fetch(edgeUrl, {
           method: "POST",
-          headers: {
-            "Content-Type": "application/json"
-          },
+          headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ name, email, phone, password, experience })
         });
 
-        // 3.e) Parse JSON (or fallback if invalid)
+        // Parse JSON (or fallback if invalid)
         const result = await response.json().catch(() => ({ error: "Invalid JSON from function" }));
-        console.log("Edge Function response:", response.status, result);
+        console.log("Function response:", response.status, result);
 
-        // 3.f) Handle duplicate‐email (409)
+        // 409 → Duplicate email
         if (response.status === 409 && result.error === "Email already registered") {
           alertDiv.style.color = "var(--warning-color)";
-          alertDiv.textContent = "This email is already registered – please use another.";
+          alertDiv.textContent = "This email is already registered — please use another.";
           submitBtn.disabled = false;
           submitBtn.textContent = "Submit Application";
           return;
         }
 
-        // 3.g) Success (201 + welcome email sent)
+        // 201 + “welcome email sent”
         if (
           response.status === 201 &&
           /welcome email sent successfully/i.test(result.message)
@@ -300,7 +296,7 @@
           return;
         }
 
-        // 3.h) Created (201) but email failed
+        // 201 but email failed
         if (
           response.status === 201 &&
           result.message?.includes("but failed to send welcome email")
@@ -314,7 +310,7 @@
           return;
         }
 
-        // 3.i) Any other error
+        // Any other error
         alertDiv.style.color = "var(--error-color)";
         alertDiv.textContent = "Error: " + JSON.stringify(result, null, 2);
         submitBtn.disabled = false;
