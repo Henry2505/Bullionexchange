@@ -5,16 +5,18 @@
   <meta name="viewport" content="width=device-width,initial-scale=1" />
   <title>CBE Admin – Testimonials</title>
   <script>
-    // redirect to login if not set
+    // Redirect to login if not authenticated
     if (localStorage.getItem('isLoggedIn') !== 'true') {
       window.location.replace('admin-login.html?redirect=' + encodeURIComponent(window.location.pathname));
     }
   </script>
+
   <!-- Fonts, Bootstrap, Icons, DataTables CSS -->
-  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700&display=swap" rel="stylesheet">
-  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-  <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css" rel="stylesheet">
-  <link href="https://cdn.datatables.net/1.13.4/css/dataTables.bootstrap5.min.css" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700&display=swap" rel="stylesheet" />
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet" />
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css" rel="stylesheet" />
+  <link href="https://cdn.datatables.net/1.13.4/css/dataTables.bootstrap5.min.css" rel="stylesheet" />
+
   <style>
     :root {
       --bg: #000; --text: #fff; --gold: #ffd700;
@@ -77,12 +79,13 @@
     }
   </style>
 </head>
+
 <body>
   <div class="overlay"></div>
 
   <!-- Top Header -->
   <header class="admin-header glass">
-    <div class="logo" id="logo"><img src="CBE_logo.PNG" alt="CBE Logo"></div>
+    <div class="logo" id="logo"><img src="CBE_logo.PNG" alt="CBE Logo" /></div>
     <button id="theme-toggle" aria-label="Toggle theme">🌞</button>
   </header>
 
@@ -90,7 +93,7 @@
   <main class="container">
     <h2 id="section-title">Testimonials</h2>
     <div class="glass table-panel">
-      <input id="testimonial-search" class="form-control mb-3" placeholder="Search testimonials…">
+      <input id="testimonial-search" class="form-control mb-3" placeholder="Search testimonials…" />
       <table id="testimonials-table" class="table table-hover table-borderless text-white w-100">
         <thead>
           <tr>
@@ -118,7 +121,7 @@
           <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
         </div>
         <div class="modal-body">
-          <input type="hidden" id="resp-testimonial-id">
+          <input type="hidden" id="resp-testimonial-id" />
           <div class="mb-3">
             <label class="form-label">Response</label>
             <textarea id="resp-body" class="form-control" rows="4" required></textarea>
@@ -137,6 +140,7 @@
   <script src="https://cdn.datatables.net/1.13.4/js/jquery.dataTables.min.js"></script>
   <script src="https://cdn.datatables.net/1.13.4/js/dataTables.bootstrap5.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
   <script>
     document.addEventListener('DOMContentLoaded', () => {
       // Logo → Dashboard
@@ -222,7 +226,10 @@
         ]
       });
 
-      // Load testimonials
+      // Helper to open screenshot in new tab
+      window.viewScreenshot = url => window.open(url, '_blank');
+
+      // Load all testimonials into the DataTable
       async function loadTestimonials() {
         try {
           const { data, error } = await supabase
@@ -237,19 +244,81 @@
         }
       }
 
-      // Update status (approve/reject)
+      // Update status (approve → triggers emails, or reject)
       window.updateStatus = async (id, newStatus) => {
         try {
-          const { error } = await supabase
+          // 1) Update status in Supabase
+          const { error: statusErr } = await supabase
             .from('testimonials')
             .update({ status: newStatus })
             .eq('id', id);
-          if (error) throw error;
-          showToast(`Testimonial ${newStatus}`);
+          if (statusErr) throw statusErr;
+
+          showToast(`Testimonial marked as "${newStatus}"`);
+
+          // 2) If approved, fetch testimonial details & notify all users
+          if (newStatus === 'approved') {
+            // a) Fetch the newly approved testimonial’s author and text
+            const { data: tData, error: tErr } = await supabase
+              .from('testimonials')
+              .select('name,testimonial_text')
+              .eq('id', id)
+              .single();
+            if (tErr) throw tErr;
+
+            const testimonialAuthor = tData.name;
+            const testimonialText   = tData.testimonial_text;
+
+            // b) Fetch all users (name + email)
+            const { data: users, error: usersErr } = await supabase
+              .from('users')
+              .select('name,email')
+              .neq('email', null);
+            if (usersErr) throw usersErr;
+
+            // c) Build and fire off an email to each user via your Replit endpoint
+            const replitUrl = '<YOUR_REPLIT_URL>/resend-email';
+
+            const emailPromises = users.map(u => {
+              const emailPayload = {
+                email: u.email,
+                templateId: 2,       // Brevo Template ID for "New Testimonial Approved"
+                params: {
+                  contact: {
+                    FIRSTNAME: u.name,
+                    EMAIL:     u.email
+                  },
+                  testimonial_author: testimonialAuthor,
+                  testimonial_text:   testimonialText,
+                  unsubscribe:        "https://apexincomeoptions.com.ng/unsubscribe-link"
+                }
+              };
+              return fetch(replitUrl, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(emailPayload)
+              })
+              .then(res => res.json().catch(() => ({ error: "Invalid JSON" })));
+            });
+
+            // d) Wait for all email requests to complete
+            const emailResults = await Promise.all(emailPromises);
+
+            // e) Check if any failed
+            const failed = emailResults.filter(r => r.success === false || r.error);
+            if (failed.length) {
+              console.error('Email send failures:', failed);
+              showToast('Approved, but some notification emails failed', false);
+            } else {
+              showToast('All users notified of new testimonial');
+            }
+          }
+
+          // 3) Reload the testimonial list in the table
           loadTestimonials();
         } catch (err) {
           console.error(err);
-          showToast(`Error setting ${newStatus}`, false);
+          showToast(`Error updating status: ${err.message}`, false);
         }
       };
 
@@ -276,6 +345,7 @@
         document.getElementById('resp-body').value = existing || '';
         new bootstrap.Modal(document.getElementById('responseModal')).show();
       };
+
       document.getElementById('response-form').addEventListener('submit', async e => {
         e.preventDefault();
         const id = document.getElementById('resp-testimonial-id').value;
@@ -294,9 +364,6 @@
           showToast('Error saving response', false);
         }
       });
-
-      // View screenshot helper
-      window.viewScreenshot = url => window.open(url, '_blank');
 
       // Initial load
       loadTestimonials();
