@@ -301,12 +301,19 @@
   </div>
 
   <script>
+    // ────── SUPABASE CONFIG ───────────────────────────────────────────────────────────────────────────
     const SUPA_URL = "https://dapwpgvnfjcfqqhrpxla.supabase.co";
     const SUPA_ANON_KEY =
       "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImRhcHdwZ3ZuZmpjZnFxaHJweGxhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDcwNDA4ODgsImV4cCI6MjA2MjYxNjg4OH0.ICC0UsLlzJDNre7rFCeD3k6iVzo6jOJgn3PhABpEMsQ";
     const sb = supabase.createClient(SUPA_URL, SUPA_ANON_KEY);
 
-    // Initialize theme and card animation
+    // ────── BREVO CONFIG ───────────────────────────────────────────────────────────────────────────────
+    const BREVO_API_KEY = "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";
+    const BREVO_SENDER_NAME = "Chukwuemeka Bullion Exchange";
+    const BREVO_SENDER_EMAIL = "noreply@apexincomeoptions.com.ng";
+    const BREVO_TEMPLATE_ID = 4;
+
+    // ────── THEME INITIALIZATION & CARD ANIMATION ──────────────────────────────────────────────────────
     document.addEventListener("DOMContentLoaded", () => {
       const savedTheme = localStorage.getItem("theme") || "dark";
       document.documentElement.setAttribute("data-theme", savedTheme);
@@ -314,7 +321,7 @@
       document.getElementById("apply-card").classList.add("visible");
     });
 
-    // Theme toggle
+    // ────── THEME TOGGLE HANDLER ─────────────────────────────────────────────────────────────────────────
     const toggleBtn = document.getElementById("theme-toggle");
     toggleBtn.addEventListener("click", () => {
       const current = document.documentElement.getAttribute("data-theme");
@@ -324,7 +331,7 @@
       toggleBtn.textContent = next === "dark" ? "🌞" : "🌜";
     });
 
-    // Form handling
+    // ────── FORM HANDLING ─────────────────────────────────────────────────────────────────────────────────
     const form = document.getElementById("apply-form");
     const agree = document.getElementById("agree-terms");
     const submitBtn = document.getElementById("submit-btn");
@@ -346,7 +353,7 @@
       const phone = document.getElementById("apply-phone").value.trim();
       const experience = document.getElementById("apply-message").value.trim();
 
-      // Client-side validation
+      // ─── CLIENT-SIDE VALIDATION ───────────────────────────────────────────────────────────────────
       if (!name || !email || !password || !phone || !experience) {
         alertDiv.style.color = "var(--error-color)";
         alertDiv.textContent = "Please complete all fields.";
@@ -367,7 +374,7 @@
       submitBtn.textContent = "Submitting…";
 
       try {
-        // Check for existing user
+        // ─── CHECK FOR EXISTING USER IN SUPABASE ─────────────────────────────────────────────────
         const { data: existingUser, error: checkError } = await sb
           .from("users")
           .select("id")
@@ -384,7 +391,7 @@
           return;
         }
 
-        // Submit application
+        // ─── INSERT NEW USER INTO SUPABASE ─────────────────────────────────────────────────────
         const { error: insertError } = await sb.from("users").insert([
           { name, email, password, phone, experience, status: "pending" },
         ]);
@@ -394,6 +401,41 @@
           throw new Error("Failed to submit application.");
         }
 
+        // ─── SEND TRANSACTIONAL EMAIL VIA BREVO ────────────────────────────────────────────────
+        const brevoPayload = {
+          sender: {
+            name: BREVO_SENDER_NAME,
+            email: BREVO_SENDER_EMAIL
+          },
+          to: [
+            {
+              email: email,
+              name: name
+            }
+          ],
+          templateId: BREVO_TEMPLATE_ID,
+          params: {
+            NAME: name,
+            EMAIL: email
+          }
+        };
+
+        const brevoResponse = await fetch("https://api.brevo.com/v3/smtp/email", {
+          method: "POST",
+          headers: {
+            "api-key": BREVO_API_KEY,
+            "Content-Type": "application/json"
+          },
+          body: JSON.stringify(brevoPayload)
+        });
+
+        if (!brevoResponse.ok) {
+          const errorText = await brevoResponse.text();
+          console.error("Brevo response error:", brevoResponse.status, errorText);
+          throw new Error("Failed to send confirmation email.");
+        }
+
+        // ─── ONCE EVERYTHING SUCCEEDS ──────────────────────────────────────────────────────────
         alertDiv.style.color = "var(--success-color)";
         alertDiv.textContent = "Application submitted successfully! Check your email.";
         form.reset();
