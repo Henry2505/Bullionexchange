@@ -1,352 +1,180 @@
-<!DOCTYPE html>
-<html lang="en" data-theme="dark">
-<head>
-  <meta charset="UTF-8"/>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Apply • Chukwuemeka Bullion Exchange</title>
-  <meta name="description" content="Apply to join Chukwuemeka Bullion Exchange's VIP trading community."/>
-  <style>
-    /* Dark/Light Theme Variables */
-    :root[data-theme="dark"] {
-      --bg: #121212;
-      --text: #f0f0f0;
-      --gold: #d4af37;
-      --gold-dark: #b3932b;
-      --glass-bg: rgba(30,30,30,0.6);
-      --error-color: #e74c3c;
-      --success-color: #2ecc71;
-      --warning-color: #f39c12;
-    }
-    :root[data-theme="light"] {
-      --bg: #fafafa;
-      --text: #222222;
-      --gold: #d4af37;
-      --gold-dark: #b3932b;
-      --glass-bg: rgba(255,255,255,0.6);
-      --error-color: #e74c3c;
-      --success-color: #2ecc71;
-      --warning-color: #f39c12;
-    }
+<script>
+// Initialize Supabase client
+const supabaseClient = supabase.createClient(
+  'https://dapwpgvnfjcfqqhrpxla.supabase.co',
+  'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImRhcHdwZ3ZuZmpjZnFxaHJweGxhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDcwNDA4ODgsImV4cCI6MjA2MjYxNjg4OH0.ICC0UsLlzJDNre7rFCeD3k6iVzo6jOJgn3PhABpEMsQ'
+);
 
-    /* Base Styles */
-    * {
-      margin: 0; padding: 0; box-sizing: border-box;
-    }
-    body {
-      font-family: "Roboto", sans-serif;
-      background: var(--bg);
-      color: var(--text);
-      line-height: 1.6;
-      min-height: 100vh;
-    }
-    a {
-      color: var(--gold);
-      text-decoration: none;
-    }
-    a:hover {
-      text-decoration: underline;
-    }
+// ─── 1) SLIDE-IN ANIMATION ───
+window.addEventListener("DOMContentLoaded", () => {
+  document.getElementById("apply-card").classList.add("visible");
+});
 
-    /* Container */
-    .apply-card {
-      width: 100%;
-      max-width: 480px;
-      margin: 80px auto;
-      background: var(--glass-bg);
-      backdrop-filter: blur(8px);
-      padding: 40px 30px;
-      border-radius: 12px;
-      box-shadow: 0 4px 30px rgba(0,0,0,0.5);
-      opacity: 0;
-      transform: translateY(30px);
-      transition: opacity 0.7s ease-out, transform 0.7s ease-out;
-    }
-    .apply-card.visible {
-      opacity: 1;
-      transform: translateY(0);
-    }
-    .apply-card h1 {
-      font-family: "Playfair Display", serif;
-      font-size: 2rem;
-      color: var(--gold);
-      text-align: center;
-      margin-bottom: 25px;
-    }
+// ─── 2) THEME TOGGLE (DARK / LIGHT) ───
+const toggleBtn = document.getElementById("theme-toggle");
+function applyTheme(theme) {
+  document.documentElement.setAttribute("data-theme", theme);
+  localStorage.setItem("theme", theme);
+  toggleBtn.textContent = theme === "dark" ? "🌞" : "🌜";
+}
+toggleBtn.addEventListener("click", () => {
+  const current = document.documentElement.getAttribute("data-theme");
+  const next = current === "dark" ? "light" : "dark";
+  applyTheme(next);
+});
+// Restore saved theme or default to dark
+applyTheme(localStorage.getItem("theme") || "dark");
 
-    /* Form */
-    form {
-      display: flex;
-      flex-direction: column;
-      gap: 15px;
-    }
-    input, textarea {
-      padding: 12px;
-      border: none;
-      border-radius: 8px;
-      background: #1c1c1c;
-      color: var(--text);
-      font-size: 1rem;
-    }
-    input:focus, textarea:focus {
-      outline: none;
-      box-shadow: 0 0 6px var(--gold);
-    }
-    .terms-container {
-      display: flex;
-      align-items: center;
-      gap: 8px;
-      font-size: 0.9rem;
-      color: var(--text);
-    }
-    .terms-container input {
-      width: 18px;
-      height: 18px;
-    }
-    button {
-      padding: 14px;
-      border: none;
-      border-radius: 6px;
-      background: var(--gold);
-      color: #000;
-      font-weight: 700;
-      cursor: pointer;
-      transition: background 0.3s, box-shadow 0.3s, opacity 0.3s;
-    }
-    button:disabled {
-      opacity: 0.6;
-      cursor: not-allowed;
-      background: #666;
-    }
-    button:not(:disabled) {
-      opacity: 1;
-    }
-    button:not(:disabled):hover {
-      background: var(--gold-dark);
-      box-shadow: 0 0 12px var(--gold);
-    }
-    #apply-alert {
-      margin-top: 12px;
-      white-space: pre-wrap;
-      text-align: center;
-      font-weight: 600;
-    }
+// ─── 3) CLIENT‐SIDE “DATABASE” (localStorage) ───
+function getRegisteredEmails() {
+  try {
+    const raw = localStorage.getItem("registeredEmails");
+    return raw ? JSON.parse(raw) : [];
+  } catch {
+    return [];
+  }
+}
+function saveRegisteredEmails(arr) {
+  localStorage.setItem("registeredEmails", JSON.stringify(arr));
+}
 
-    /* Footer */
-    footer {
-      text-align: center;
-      padding: 20px;
-      color: var(--text);
-      margin-top: 60px;
-    }
+// ─── 4) FORM HANDLING ───
+const form      = document.getElementById("apply-form");
+const agree     = document.getElementById("agree-terms");
+const submitBtn = document.getElementById("submit-btn");
+const alertDiv  = document.getElementById("apply-alert");
 
-    /* Theme Toggle & Logo */
-    #theme-toggle {
-      position: fixed;
-      top: 20px;
-      right: 20px;
-      z-index: 10;
-      background: none;
-      border: none;
-      font-size: 1.5rem;
-      color: var(--text);
-      cursor: pointer;
-    }
-    .logo {
-      position: fixed;
-      top: 20px;
-      left: 20px;
-      z-index: 10;
-    }
-    .logo img {
-      width: 140px;
-    }
-  </style>
-  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700&amp;family=Roboto:wght@300;400;700&amp;display=swap" rel="stylesheet" />
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js/dist/umd/supabase.js" defer></script>
-</head>
-<body>
-  <!-- Logo -->
-  <div class="logo">
-    <a href="index.html"><img src="CBE_logo.PNG" alt="CBE Logo" /></a>
-  </div>
+// Enable/disable submit button based on “I agree”
+agree.addEventListener("change", () => {
+  if (agree.checked) {
+    submitBtn.disabled = false;
+    submitBtn.classList.add("enabled");
+  } else {
+    submitBtn.disabled = true;
+    submitBtn.classList.remove("enabled");
+  }
+});
 
-  <!-- Theme Toggle -->
-  <button id="theme-toggle" aria-label="Toggle theme">🌞</button>
+form.addEventListener("submit", async (evt) => {
+  evt.preventDefault();
+  alertDiv.textContent = "";
+  alertDiv.style.color = "";
 
-  <!-- Main Card -->
-  <div class="apply-card" id="apply-card">
-    <h1>Apply to Join CBE</h1>
-    <form id="apply-form">
-      <input type="text"     id="apply-name"     placeholder="Full Name" required />
-      <input type="email"    id="apply-email"    placeholder="Email Address" required />
-      <input type="password" id="apply-password" placeholder="Password" required />
-      <input type="tel"      id="apply-phone"    placeholder="Phone Number" required />
-      <textarea id="apply-message" placeholder="Tell us about your trading experience" rows="4" required></textarea>
+  // 4.a) Read form fields
+  const name       = document.getElementById("apply-name").value.trim();
+  const email      = document.getElementById("apply-email").value.trim().toLowerCase();
+  const password   = document.getElementById("apply-password").value;
+  const phone      = document.getElementById("apply-phone").value.trim();
+  const experience = document.getElementById("apply-message").value.trim();
 
-      <div class="terms-container">
-        <input type="checkbox" id="agree-terms" />
-        <label for="agree-terms">I agree to</label>
-        <a href="https://apexincomeoptions.com.ng/privacy" target="_blank">Privacy Policy</a> &amp;
-        <a href="https://apexincomeoptions.com.ng/terms" target="_blank">Terms &amp; Conditions</a>
-      </div>
+  // 4.b) Basic validation
+  if (!name || !email || !password || !phone || !experience) {
+    alertDiv.style.color = "var(--error-color)";
+    alertDiv.textContent = "Please complete all fields.";
+    return;
+  }
+  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+    alertDiv.style.color = "var(--error-color)";
+    alertDiv.textContent = "Please enter a valid email address.";
+    return;
+  }
 
-      <button type="submit" id="submit-btn" disabled>Submit Application</button>
-    </form>
-    <div id="apply-alert"></div>
-  </div>
+  // 4.c) Duplicate prevention (per‐browser)
+  const existing = getRegisteredEmails();
+  if (existing.includes(email)) {
+    alertDiv.style.color = "var(--warning-color)";
+    alertDiv.textContent = "This email has already been used in this browser.";
+    return;
+  }
 
-  <!-- Footer -->
-  <footer>© 2025 Chukwuemeka Bullion Exchange. All rights reserved.</footer>
+  // 4.d) Disable button & show “Submitting…”
+  submitBtn.disabled = true;
+  submitBtn.textContent = "Submitting…";
 
-  <script>
-    // 1) Slide-In Animation
-    window.addEventListener("DOMContentLoaded", () => {
-      document.getElementById("apply-card").classList.add("visible");
-    });
+  // 4.e) Prepare data for Supabase
+  const data = { name, email, password, phone, experience };
 
-    // 2) Theme Toggle
-    const toggleBtn = document.getElementById("theme-toggle");
-    function applyTheme(t) {
-      document.documentElement.setAttribute("data-theme", t);
-      localStorage.setItem("theme", t);
-      toggleBtn.textContent = t === "dark" ? "🌞" : "🌜";
-    }
-    toggleBtn.addEventListener("click", () => {
-      const current = document.documentElement.getAttribute("data-theme");
-      const next = current === "dark" ? "light" : "dark";
-      applyTheme(next);
-    });
-    // On load, restore preferred theme or default to dark
-    applyTheme(localStorage.getItem("theme") || "dark");
+  // 4.f) Insert into Supabase
+  const { data: insertedData, error: supabaseError } = await supabaseClient
+    .from('applications')
+    .insert([data]);
 
-    // 3) Supabase Configuration
-    const SUPABASE_URL = "https://dapwpgvnfjcfqqhrpxla.supabase.co";
-    const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImRhcHdwZ3ZuZmpjZnFxaHJweGxhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDcwNDA4ODgsImV4cCI6MjA2MjYxNjg4OH0.ICC0UsLlzJDNre7rFCeD3k6iVzo6jOJgn3PhABpEMsQ";
-    const BREVO_API_KEY = "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";
-    
-    const sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+  if (supabaseError) {
+    console.error('Supabase error:', supabaseError);
+    alertDiv.style.color = "var(--error-color)";
+    alertDiv.textContent = `Failed to submit application: ${supabaseError.message}`;
+    submitBtn.disabled = false;
+    submitBtn.textContent = "Submit Application";
+    return;
+  }
 
-    // 4) Form Handling
-    const form      = document.getElementById("apply-form");
-    const agree     = document.getElementById("agree-terms");
-    const submitBtn = document.getElementById("submit-btn");
-    const alertDiv  = document.getElementById("apply-alert");
+  // 4.g) Mark email as used in localStorage
+  existing.push(email);
+  saveRegisteredEmails(existing);
 
-    // Enable/disable submit button when "I agree" is toggled
-    agree.addEventListener("change", () => {
-      submitBtn.disabled = !agree.checked;
-    });
-
-    form.addEventListener("submit", async (evt) => {
-      evt.preventDefault();
-      alertDiv.textContent = "";
-      alertDiv.style.color = "";
-
-      // Read all fields
-      const name       = document.getElementById("apply-name").value.trim();
-      const email      = document.getElementById("apply-email").value.trim().toLowerCase();
-      const password   = document.getElementById("apply-password").value;
-      const phone      = document.getElementById("apply-phone").value.trim();
-      const experience = document.getElementById("apply-message").value.trim();
-
-      // Basic validation
-      if (!name || !email || !password || !phone || !experience) {
-        alertDiv.style.color = "var(--error-color)";
-        alertDiv.textContent = "Please complete all fields.";
-        return;
+  // 4.h) Build Brevo payload (hard-coded API key!)
+  const BREVO_API_KEY    = "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";
+  const BREVO_TEMPLATE_ID = 1; // your template ID
+  const brevoPayload = {
+    sender: {
+      name: "Chukwuemeka Bullion Exchange",
+      email: "noreply@apexincomeoptions.com.ng"
+    },
+    to: [
+      {
+        email: email,
+        name: name
       }
-      if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
-        alertDiv.style.color = "var(--error-color)";
-        alertDiv.textContent = "Please enter a valid email address.";
-        return;
-      }
+    ],
+    templateId: BREVO_TEMPLATE_ID,
+    params: {
+      contact: {
+        FIRSTNAME: name,
+        EMAIL: email
+      },
+      PHONE: phone,
+      EXPERIENCE: experience
+    }
+  };
 
-      // Disable & show "Submitting…"
-      submitBtn.disabled = true;
-      submitBtn.textContent = "Submitting…";
-
-      try {
-        // 1) Save to Supabase Database
-        console.log("Saving to Supabase database...");
-        const { error: insertErr } = await sb
-          .from("users")
-          .insert([{
-            name: name,
-            email: email,
-            phone: phone,
-            password: password,
-            experience: experience,
-            status: "Pending",
-          }]);
-
-        if (insertErr) {
-          // Check if it's a duplicate email error
-          if (insertErr.code === '23505' || insertErr.message?.includes('duplicate')) {
-            alertDiv.style.color = "var(--warning-color)";
-            alertDiv.textContent = "This email is already registered — please use another.";
-            submitBtn.disabled = false;
-            submitBtn.textContent = "Submit Application";
-            return;
-          }
-          throw insertErr;
-        }
-
-        console.log("Successfully saved to database");
-        
-        // 2) Send Welcome Email via Brevo
-        console.log("Sending welcome email via Brevo...");
-        const emailResponse = await fetch("https://api.brevo.com/v3/smtp/email", {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            "api-key": BREVO_API_KEY,
-          },
-          body: JSON.stringify({
-            sender: {
-              name: "Chukwuemeka Bullion Exchange",
-              email: "support@apexincomeoptions.com.ng"
-            },
-            to: [{
-              email: email,
-              name: name
-            }],
-            templateId: 1,
-            params: {
-              FIRSTNAME: name,
-              EMAIL: email,
-              PHONE: phone,
-              EXPERIENCE: experience
-            }
-          }),
-        });
-
-        const emailResult = await emailResponse.json();
-        console.log("Brevo response:", emailResponse.status, emailResult);
-
-        if (emailResponse.ok) {
-          // Success - both database and email worked
-          alertDiv.style.color = "var(--success-color)";
-          alertDiv.textContent = "Application submitted and welcome email sent successfully!";
-          form.reset();
-          agree.checked = false;
-          submitBtn.disabled = true;
-          submitBtn.textContent = "Submit Application";
-        } else {
-          // Database saved but email failed
-          alertDiv.style.color = "var(--warning-color)";
-          alertDiv.textContent = "Application saved, but welcome email failed to send.";
-          submitBtn.disabled = false;
-          submitBtn.textContent = "Submit Application";
-        }
-
-      } catch (err) {
-        console.error("Error during submission:", err);
-        alertDiv.style.color = "var(--error-color)";
-        alertDiv.textContent = `Error: ${err.message}`;
-        submitBtn.disabled = false;
-        submitBtn.textContent = "Submit Application";
-      }
+  // 4.i) Call Brevo’s SMTP Email API via fetch()
+  try {
+    const brevoRes = await fetch("https://api.brevo.com/v3/smtp/email", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "api-key": BREVO_API_KEY
+      },
+      body: JSON.stringify(brevoPayload)
     });
-  </script>
-</body>
-</html>
+
+    const brevoJson = await brevoRes.json().catch(() => ({
+      error: "Invalid JSON from Brevo"
+    }));
+    console.log("Brevo response:", brevoRes.status, brevoJson);
+
+    if (!brevoRes.ok) {
+      // 502: Brevo returned an error
+      alertDiv.style.color = "var(--warning-color)";
+      alertDiv.textContent =
+        "Application submitted to database, but Brevo API returned an error:\n" +
+        JSON.stringify(brevoJson, null, 2);
+    } else {
+      // 200: Success
+      alertDiv.style.color = "var(--success-color)";
+      alertDiv.textContent = 
+        "Application submitted and welcome email sent!";
+    }
+  } catch (err) {
+    console.error("Fetch error to Brevo:", err);
+    alertDiv.style.color = "var(--warning-color)";
+    alertDiv.textContent = `Application submitted to database, but failed to send welcome email: ${err.message}`;
+  }
+
+  // 4.j) Reset form & button
+  form.reset();
+  agree.checked = false;
+  submitBtn.disabled = true;
+  submitBtn.textContent = "Submit Application";
+});
+</script>
