@@ -187,40 +187,46 @@
       const password = document.getElementById('password').value;
 
       try {
-        // 3.a) Fetch user by email
+        // 3.a) Fetch user by email (case-insensitive)
         const { data: user, error, count } = await sb
           .from('users')
-          .select('id, name, email, password', { count: 'exact' })
+          .select('id, name, email, password, status', { count: 'exact' })
           .ilike('email', email)
           .limit(1)
           .maybeSingle();
 
         if (error) throw error;
-        if (count === 0) throw new Error('No account found for that email.');
-        if (user.password !== password) throw new Error('Invalid login credentials.');
+        if (count === 0) 
+          throw new Error('No account found for that email.');
 
-        // 3.b) At this point, login is “successful” – now check device fingerprint
-        // We’ll use navigator.userAgent as our “device ID” in localStorage:
+        // 3.b) Password check
+        if (user.password !== password) 
+          throw new Error('Invalid login credentials.');
+
+        // 3.c) “Approved by Admin” check
+        // We expect user.status = 'approved' (case-insensitive)
+        if (String(user.status).toLowerCase() !== 'approved') {
+          throw new Error('Your account is not yet approved by admin.');
+        }
+
+        // 3.d) Device Fingerprint Check
         const deviceKey = `cbeDevice_${email}`;
         const savedDevice = localStorage.getItem(deviceKey);
         const currentDevice = navigator.userAgent;
 
-        // If this is the first login (no savedDevice), just store it, do NOT send email.
+        // If first login from this browser/device → just store, no email:
         if (!savedDevice) {
           localStorage.setItem(deviceKey, currentDevice);
-          // No email on first-ever login
         }
-        // If savedDevice exists but is DIFFERENT from current, send the Suspicious Login Alert:
+        // If savedDevice exists but differs → suspicious login alert:
         else if (savedDevice !== currentDevice) {
-          // Update localStorage immediately so we don’t spam next time
+          // Immediately overwrite so we don’t spam next time:
           localStorage.setItem(deviceKey, currentDevice);
 
           // Send Brevo Template #3 (Suspicious Login Alert)
-          // *** HARD-CODED Brevo API Key & Template ID ***
           const BREVO_API_KEY     = "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";
           const TEMPLATE_ID_LOGIN = 3;
 
-          // Build payload (we can include device and timestamp if the template expects them)
           const brevoPayload = {
             sender: {
               name: "Chukwuemeka Bullion Exchange",
@@ -243,7 +249,7 @@
             }
           };
 
-          // Fire Brevo API call
+          // Fire off the Brevo call
           fetch("https://api.brevo.com/v3/smtp/email", {
             method: "POST",
             headers: {
@@ -255,18 +261,16 @@
           .then(res => res.json().then(json => ({ status: res.status, json })) )
           .then(({ status, json }) => {
             console.log("Brevo login-alert response:", status, json);
-            // We do not block login if Brevo fails; it’s just informational
           })
           .catch(err => {
             console.error("Error sending Brevo login alert:", err);
           });
         }
 
-        // 3.c) Login success – store session data & redirect
+        // 3.e) LOGIN SUCCESS → store session + redirect
         sessionStorage.setItem('cbeLoggedIn', 'true');
         sessionStorage.setItem('cbeUserId',   user.id);
         sessionStorage.setItem('cbeUserName', user.name);
-        // Redirect to your VIP dashboard
         window.location.href = 'vip-dashboard.html';
       }
       catch (err) {
