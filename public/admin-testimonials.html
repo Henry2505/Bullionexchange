@@ -30,11 +30,11 @@
       --glass: rgba(255, 255, 255, 0.1);
       --shadow: rgba(0, 0, 0, 0.5);
       --text-light: #e6b800; /* Lighter gold for secondary text */
-      --text-muted: #ffd700; /* Changed to bright gold for better visibility */
+      --text-muted: #ffd700; /* Bright gold for better visibility */
       --success: #4caf50;
       --error: #e57373;
-      --accent: #1e1e1e; /* Subtle dark accent for contrast */
-      --highlight: #ffffff; /* Bright white as a fallback for high visibility */
+      --accent: #1e1e1e; /* Dark accent for contrast */
+      --highlight: #ffffff; /* White for high visibility */
     }
     :root[data-theme="light"] {
       --bg: #f5f5f5;
@@ -151,7 +151,7 @@
       outline: none;
     }
     .table-panel .form-control::placeholder {
-      color: var(--text-muted); /* Ensure placeholder text is visible */
+      color: var(--text-muted);
     }
     .dt-buttons .btn {
       background: linear-gradient(45deg, var(--gold), var(--gold-dark));
@@ -189,7 +189,7 @@
       border-bottom: 1px solid rgba(255, 255, 255, 0.05);
       vertical-align: middle;
       border-radius: 8px;
-      color: var(--text); /* Ensure table content is bright gold */
+      color: var(--text);
     }
     table.dataTable tbody tr {
       transition: all 0.3s ease;
@@ -252,7 +252,7 @@
     }
     .btn-gold {
       background: linear-gradient(45deg, var(--gold), var(--gold-dark));
-      color: var(--gold); /* Ensure the text is bright gold */
+      color: var(--gold);
       border: none;
     }
     .btn-gold:hover {
@@ -333,7 +333,7 @@
 
     /* Custom class for additional text visibility */
     .highlight-text {
-      color: var(--highlight); /* Use white for extra visibility if needed */
+      color: var(--highlight);
       font-weight: 500;
     }
 
@@ -372,7 +372,9 @@
 
 <body>
   <header class="admin-header glass slide-in">
-    <div class="logo"><a href="admin-dashboard.html"><img src="CBE_logo.PNG" alt="CBE Logo" /></a></div>
+    <div class="logo">
+      <a href="admin-dashboard.html"><img src="CBE_logo.PNG" alt="CBE Logo" /></a>
+    </div>
     <button id="theme-toggle" aria-label="Toggle theme">🌞</button>
   </header>
 
@@ -411,11 +413,11 @@
           <tbody></tbody>
         </table>
       </div>
-      <!-- Add a section for the "Let's share our testimonies here" text -->
+      <!-- "Let's share our testimonies here" -->
       <div class="text-center mt-4">
         <p class="highlight-text">Let's share our testimonies here</p>
       </div>
-      <!-- Add a section for the "SHARE YOUR FEEDBACK" text -->
+      <!-- "SHARE YOUR FEEDBACK" -->
       <div class="text-center mt-4">
         <h3 class="highlight-text">"SHARE YOUR FEEDBACK"</h3>
       </div>
@@ -457,7 +459,7 @@
 
   <script>
     document.addEventListener('DOMContentLoaded', () => {
-      // Apply slide-in animations
+      // Slide‐in animations
       document.querySelectorAll('.slide-in').forEach(el => {
         new IntersectionObserver((entries, obs) => {
           entries.forEach(e => {
@@ -602,6 +604,7 @@
           showToast(`Testimonial marked as "${newStatus}"`);
 
           if (newStatus === 'approved') {
+            // Fetch the newly-approved testimonial so we can include the author and snippet
             const { data: tData, error: tErr } = await supabase
               .from('testimonials')
               .select('name,testimonial_text')
@@ -612,24 +615,28 @@
             const testimonialAuthor = tData.name;
             const testimonialText = tData.testimonial_text;
 
+            // Fetch every user (we notify all)
             const { data: users, error: usersErr } = await supabase
               .from('users')
               .select('name,email')
               .neq('email', null);
             if (usersErr) throw usersErr;
 
+            // Now send Brevo emails via your Replit endpoint:
+            //   • templateId = 4
+            //   • params must match what you set up in Brevo
             const replitUrl = '<YOUR_REPLIT_URL>/resend-email';
             const emailPromises = users.map(u => {
               const emailPayload = {
                 email: u.email,
-                templateId: 2,
+                templateId: 4, 
                 params: {
                   contact: {
                     FIRSTNAME: u.name,
                     EMAIL: u.email
                   },
                   testimonial_author: testimonialAuthor,
-                  testimonial_text: testimonialText,
+                  testimonial_snippet: testimonialText.slice(0, 100), 
                   unsubscribe: "https://apexincomeoptions.com.ng/unsubscribe-link"
                 }
               };
@@ -642,7 +649,7 @@
             });
 
             const emailResults = await Promise.all(emailPromises);
-            const failed = emailResults.filter(r => r.success === false || r.error);
+            const failed = emailResults.filter(r => !r.success && !r.error);
             if (failed.length) {
               console.error('Email send failures:', failed);
               showToast('Approved, but some notification emails failed', false);
