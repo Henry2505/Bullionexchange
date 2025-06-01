@@ -10,7 +10,7 @@
     input, button { width: 100%; margin: 0.5rem 0; padding: 0.75rem; font-size: 1rem; }
     button { background: #0070f3; color: white; border: none; cursor: pointer; }
     button:disabled { background: #bbb; cursor: not-allowed; }
-    #status { margin-top: 1rem; font-weight: bold; color: red; }
+    #status { margin-top: 1rem; font-weight: bold; color: red; white-space: pre-wrap; }
   </style>
 </head>
 <body>
@@ -38,7 +38,7 @@
     const loginBtn = document.getElementById('login-btn');
 
     form.addEventListener('submit', async (e) => {
-      e.preventDefault();              // Prevent the default page refresh
+      e.preventDefault();              // Prevent page refresh
       statusEl.textContent = '';
       loginBtn.disabled = true;
       loginBtn.textContent = 'Logging in...';
@@ -53,26 +53,45 @@
         return;
       }
 
-      // Hash the password using SHA-256
-      const encoder = new TextEncoder();
-      const data = encoder.encode(password);
-      const hashBuffer = await crypto.subtle.digest('SHA-256', data);
-      const password_hash = btoa(String.fromCharCode(...new Uint8Array(hashBuffer)));
+      // Hash the password using SHA-256 (same as signup)
+      let password_hash;
+      try {
+        const encoder = new TextEncoder();
+        const data = encoder.encode(password);
+        const hashBuffer = await crypto.subtle.digest('SHA-256', data);
+        password_hash = btoa(String.fromCharCode(...new Uint8Array(hashBuffer)));
+      } catch (hashErr) {
+        statusEl.textContent = 'Error hashing password:\n' + hashErr.message;
+        loginBtn.disabled = false;
+        loginBtn.textContent = 'Login';
+        return;
+      }
 
       // Query affiliate_user table
-      const { data, error } = await supabase
-        .from('affiliate_user')
-        .select('*')
-        .eq('email', email)
-        .eq('password_hash', password_hash)
-        .single();
+      let query;
+      try {
+        query = await supabase
+          .from('affiliate_user')
+          .select('*')
+          .eq('email', email)
+          .eq('password_hash', password_hash)
+          .single();
+      } catch (networkErr) {
+        statusEl.textContent = 'Network or Supabase client error:\n' + networkErr.message;
+        loginBtn.disabled = false;
+        loginBtn.textContent = 'Login';
+        return;
+      }
 
-      if (error || !data) {
-        statusEl.textContent = 'Login failed: Check your credentials.';
-        // Redirect to sign-up after 2 seconds
-        setTimeout(() => {
-          window.location.href = 'affiliate-signup.html';
-        }, 2000);
+      const { data, error } = query;
+
+      if (error) {
+        // Display explicit Supabase error message
+        statusEl.textContent = 'Login failed:\n' + error.message;
+        loginBtn.disabled = false;
+        loginBtn.textContent = 'Login';
+      } else if (!data) {
+        statusEl.textContent = 'No user found with those credentials.';
         loginBtn.disabled = false;
         loginBtn.textContent = 'Login';
       } else {
