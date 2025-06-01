@@ -3,18 +3,21 @@
 /**
  * Netlify Function: send-apply
  *
- * Expects (in Netlify Dashboard → Environment Variables):
- *   SUPABASE_URL       (e.g. "https://your-project.supabase.co")
- *   SUPABASE_ANON_KEY  (your Supabase anon/public API key)
- *   BREVO_API_KEY      (xkeysib-... your Brevo transactional API key)
+ * Inserts a new user into Supabase “users” table and then sends a Brevo email
+ * using template ID 1 (with any required template parameters).
+ *
+ * Environment Variables (set these in Netlify site settings → Build & deploy → Environment variables):
+ *   SUPABASE_URL       → e.g. "https://dapwpgvnfjcfqqhrpxla.supabase.co"
+ *   SUPABASE_ANON_KEY  → your Supabase anon key
+ *   BREVO_API_KEY      → your Brevo transactional API key (xkeysib-...)
  */
 
 const { createClient } = require("@supabase/supabase-js");
 
-// Netlify Functions run on Node 18+, so "fetch" is available globally.
+// Node 18+ on Netlify includes global fetch(), so no extra import is needed.
 
 exports.handler = async (event) => {
-  // Only accept POST:
+  // Only accept POST requests
   if (event.httpMethod !== "POST") {
     return {
       statusCode: 405,
@@ -23,7 +26,7 @@ exports.handler = async (event) => {
     };
   }
 
-  // 1) Parse the JSON body
+  // 1) Parse the incoming JSON body
   let data;
   try {
     data = JSON.parse(event.body);
@@ -45,10 +48,10 @@ exports.handler = async (event) => {
   }
 
   // 3) Initialize Supabase client
-  const SUPABASE_URL       = process.env.SUPABASE_URL;
-  const SUPABASE_ANON_KEY  = process.env.SUPABASE_ANON_KEY;
+  const SUPABASE_URL      = process.env.SUPABASE_URL;
+  const SUPABASE_ANON_KEY = process.env.SUPABASE_ANON_KEY;
   if (!SUPABASE_URL || !SUPABASE_ANON_KEY) {
-    console.error("Missing Supabase environment variables.");
+    console.error("Supabase environment variables missing");
     return {
       statusCode: 500,
       body: JSON.stringify({ error: "Supabase not configured." }),
@@ -57,7 +60,7 @@ exports.handler = async (event) => {
   const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
   try {
-    // 4) Check if user email already exists
+    // 4) Check if this email already exists in "users"
     const { data: existingUser, error: checkError } = await supabase
       .from("users")
       .select("id")
@@ -78,7 +81,7 @@ exports.handler = async (event) => {
       };
     }
 
-    // 5) Insert new user row
+    // 5) Insert the new user row
     const { error: insertError } = await supabase
       .from("users")
       .insert([
@@ -93,20 +96,23 @@ exports.handler = async (event) => {
       };
     }
 
-    // 6) Build Brevo email payload
+    // 6) Build the Brevo email payload using templateId: 1
     const BREVO_API_KEY = process.env.BREVO_API_KEY;
     if (!BREVO_API_KEY) {
-      console.error("Missing BREVO_API_KEY environment variable.");
+      console.error("Missing BREVO_API_KEY environment variable");
       return {
         statusCode: 500,
         body: JSON.stringify({ error: "Brevo not configured." }),
       };
     }
 
+    // Make sure this sender is verified in your Brevo dashboard
     const BREVO_SENDER_NAME  = "Chukwuemeka Bullion Exchange";
     const BREVO_SENDER_EMAIL = "noreply@apexincomeoptions.com.ng";
-    const BREVO_TEMPLATE_ID  = 4; // Confirm this matches your Brevo template ID
+    const BREVO_TEMPLATE_ID  = 1; // ← changed to template ID 1
 
+    // If your Brevo template uses variables like {{ params.NAME }} or {{ params.EMAIL }},
+    // supply them here in the params object exactly as your template expects.
     const brevoPayload = {
       sender: {
         name: BREVO_SENDER_NAME,
@@ -119,13 +125,17 @@ exports.handler = async (event) => {
         },
       ],
       templateId: BREVO_TEMPLATE_ID,
+      // No "subject" or "htmlContent" here—letting Brevo use your template’s subject/body
       params: {
         NAME: name,
         EMAIL: email,
+        PHONE: phone,
+        EXPERIENCE: experience
+        // Add any additional params your template references, e.g. LINK, etc.
       },
     };
 
-    // 7) Call Brevo’s REST API to send the email
+    // 7) Call Brevo’s SMTP endpoint to send the templated email
     const brevoResponse = await fetch("https://api.brevo.com/v3/smtp/email", {
       method: "POST",
       headers: {
@@ -135,7 +145,7 @@ exports.handler = async (event) => {
       body: JSON.stringify(brevoPayload),
     });
 
-    // Attempt to parse any JSON Brevo returns
+    // 8) Attempt to parse the JSON response (in case of error details)
     let brevoResult = null;
     try {
       brevoResult = await brevoResponse.json();
@@ -152,11 +162,11 @@ exports.handler = async (event) => {
       };
     }
 
-    // 8) Everything succeeded
+    // 9) Return success to the client
     return {
       statusCode: 200,
       body: JSON.stringify({
-        message: "Application submitted successfully. Email queued.",
+        message: `Application submitted successfully. Email queued using template ID ${BREVO_TEMPLATE_ID}.`
       }),
     };
   } catch (err) {
