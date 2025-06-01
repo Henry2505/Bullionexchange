@@ -101,7 +101,7 @@
   <script type="module">
     import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm';
 
-    // Your Supabase credentials (unchanged):
+    // Your Supabase credentials:
     const SUPABASE_URL = 'https://dapwpgvnfjcfqqhrpxla.supabase.co';
     const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImRhcHdwZ3ZuZmpjZnFxaHJweGxhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDcwNDA4ODgsImV4cCI6MjA2MjYxNjg4OH0.ICC0UsLlzJDNre7rFCeD3k6iVzo6jOJgn3PhABpEMsQ';
 
@@ -141,7 +141,7 @@
       document.getElementById('user-email').textContent = af.email;
       document.getElementById('referral-code').textContent = af.referral_code;
 
-      // Load referrals
+      // Load referrals from your “users” table (where Apply writes)
       await loadReferrals(af.referral_code);
 
       // Load earnings
@@ -157,7 +157,7 @@
       document.getElementById('phone-number').value = af.phone_number || '';
     }
 
-    // 2) Fetch and render referrals list
+    // 2) Fetch and render referrals list (from “users” instead of “affiliate_user”)
     async function loadReferrals(referralCode) {
       if (!referralCode) {
         document.getElementById('referral-count').textContent = '0';
@@ -166,8 +166,9 @@
         return;
       }
 
+      // ← UPDATED: Query “users” table (where Apply submissions land)
       const { data: referrals, error } = await supabase
-        .from('affiliate_user')
+        .from('users')
         .select('name,email,created_at')
         .eq('referred_by', referralCode)
         .order('created_at', { ascending: false });
@@ -233,7 +234,6 @@
         bank_account: document.getElementById('bank-account').value.trim(),
         bank_account_name: document.getElementById('bank-account-name').value.trim(),
         phone_number: document.getElementById('phone-number').value.trim()
-        // removed updated_at, since the table doesn’t have that column
       };
 
       const { error } = await supabase
@@ -247,10 +247,7 @@
       } else {
         settingsMsg.classList.add('success');
         settingsMsg.textContent = 'Details saved successfully.';
-      }
-
-      // Refresh localStorage data to keep dashboard in sync
-      if (!error) {
+        // Refresh local data
         const { data: afFresh } = await supabase
           .from('affiliate_user')
           .select('*')
@@ -262,7 +259,6 @@
         }
       }
 
-      // Clear the message after 3 seconds
       setTimeout(() => { settingsMsg.textContent = ''; settingsMsg.className = ''; }, 3000);
     });
 
