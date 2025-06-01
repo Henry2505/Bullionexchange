@@ -247,14 +247,15 @@
   </style>
 </head>
 <body>
+  <!-- ─── Load affiliate.js first so captureReferralCode() runs ─────────────────── -->
+  <script type="module" src="/js/affiliate.js"></script>
+
   <div class="container">
     <header class="header">
       <div class="logo">
-        <a href="index.html"
-          ><img
-            src="CBE_logo.PNG"
-            alt="Chukwuemeka Bullion Exchange Logo"
-        /></a>
+        <a href="index.html">
+          <img src="CBE_logo.PNG" alt="Chukwuemeka Bullion Exchange Logo" />
+        </a>
       </div>
       <button id="theme-toggle" aria-label="Toggle theme">🌞</button>
     </header>
@@ -347,17 +348,8 @@
     <footer>© 2025 Chukwuemeka Bullion Exchange. All rights reserved.</footer>
   </div>
 
-  <!-- ─── ORIGINAL FORM-SCRIPT, CONVERTED TO MODULE TO IMPORT recordSignup ─────────── -->
-  <script type="module">
-    import { recordSignup } from '/js/affiliate.js'; 
-    // ─── SUPABASE CONFIG (client-side, only used for optional email-availability check) ───────
-    const SUPA_URL =
-      'https://dapwpgvnfjcfqqhrpxla.supabase.co';
-    const SUPA_ANON_KEY =
-      'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzYnN1cGFiYXNlIiwicm9sZSI6InVua25vd24iLCJpYXQiOjE3NDcwNDA4ODgsImV4cCI6MTg1NTg2MDAwMH0.WrongKeyExample';
-    const sb = supabase.createClient(SUPA_URL, SUPA_ANON_KEY);
-
-    // ─── THEME INITIALIZATION & CARD ANIMATION ──────────────────────────────────────────
+  <!-- ─── THEME & CARD ANIMATION (always run, regardless of affiliate.js) ──────────── -->
+  <script>
     document.addEventListener('DOMContentLoaded', () => {
       const savedTheme = localStorage.getItem('theme') || 'dark';
       document.documentElement.setAttribute('data-theme', savedTheme);
@@ -366,19 +358,35 @@
       document.getElementById('apply-card').classList.add('visible');
     });
 
-    // ─── THEME TOGGLE HANDLER ──────────────────────────────────────────────────────────
     const toggleBtn = document.getElementById('theme-toggle');
     toggleBtn.addEventListener('click', () => {
-      const current = document.documentElement.getAttribute(
-        'data-theme'
-      );
+      const current = document.documentElement.getAttribute('data-theme');
       const next = current === 'dark' ? 'light' : 'dark';
       document.documentElement.setAttribute('data-theme', next);
       localStorage.setItem('theme', next);
       toggleBtn.textContent = next === 'dark' ? '🌞' : '🌜';
     });
+  </script>
 
-    // ─── FORM HANDLING ─────────────────────────────────────────────────────────────────
+  <!-- ─── FORM HANDLING (module, but wrapped in try/catch around the affiliate import) ─── -->
+  <script type="module">
+    import { supabase } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js/dist/umd/supabase.min.js';
+    let recordSignup = null;
+
+    // Try to import recordSignup; if it fails, log but don’t stop the page.
+    try {
+      const mod = await import('/js/affiliate.js');
+      recordSignup = mod.recordSignup;
+    } catch (err) {
+      console.warn('Could not load affiliate.js:', err);
+    }
+
+    // ─── SUPABASE CONFIG (client-side, only used for optional email-availability check) ───
+    const SUPA_URL = 'https://dapwpgvnfjcfqqhrpxla.supabase.co';
+    const SUPA_ANON_KEY =
+      'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzYnN1cGFiYXNlIiwicm9sZSI6InVua25vd24iLCJpYXQiOjE3NDcwNDA4ODgsImV4cCI6MTg1NTg2MDAwMH0.WrongKeyExample';
+    const sb = supabase.createClient(SUPA_URL, SUPA_ANON_KEY);
+
     const form = document.getElementById('apply-form');
     const agree = document.getElementById('agree-terms');
     const submitBtn = document.getElementById('submit-btn');
@@ -394,19 +402,13 @@
       alertDiv.textContent = '';
       alertDiv.style.color = '';
 
-      const name = document
-        .getElementById('apply-name')
-        .value.trim();
+      const name = document.getElementById('apply-name').value.trim();
       const email = document
         .getElementById('apply-email')
         .value.trim()
         .toLowerCase();
-      const password = document.getElementById(
-        'apply-password'
-      ).value;
-      const phone = document
-        .getElementById('apply-phone')
-        .value.trim();
+      const password = document.getElementById('apply-password').value;
+      const phone = document.getElementById('apply-phone').value.trim();
       const experience = document
         .getElementById('apply-message')
         .value.trim();
@@ -419,8 +421,7 @@
       }
       if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
         alertDiv.style.color = 'var(--error-color)';
-        alertDiv.textContent =
-          'Please enter a valid email address.';
+        alertDiv.textContent = 'Please enter a valid email address.';
         return;
       }
       if (password.length < 8) {
@@ -434,8 +435,7 @@
       submitBtn.textContent = 'Submitting…';
 
       try {
-        // ─── (Optional) CLIENT-SIDE EMAIL CHECK ─────────────────────────────────────────
-        // Uncomment if you want to pre-check email existence in Supabase:
+        // ─── (Optional) CLIENT-SIDE EMAIL CHECK ─────────────────────────────────────
         /*
         const { data: existingUser, error: checkError } = await sb
           .from('users')
@@ -452,38 +452,26 @@
         }
         */
 
-        // ─── CALL NETLIFY FUNCTION ────────────────────────────────────────────────────
+        // ─── CALL NETLIFY FUNCTION ──────────────────────────────────────────────────
         const payload = { name, email, password, phone, experience };
-        const fnResponse = await fetch(
-          '/.netlify/functions/send-apply',
-          {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json',
-            },
-            body: JSON.stringify(payload),
-          }
-        );
+        const fnResponse = await fetch('/.netlify/functions/send-apply', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify(payload),
+        });
 
         let fnResult = null;
         try {
           fnResult = await fnResponse.json();
         } catch (parseErr) {
-          console.error(
-            'Could not parse JSON from function:',
-            parseErr
-          );
+          console.error('Could not parse JSON from function:', parseErr);
         }
 
         if (!fnResponse.ok) {
-          console.error(
-            'Function error:',
-            fnResponse.status,
-            fnResult
-          );
-          throw new Error(
-            fnResult?.error || 'Server encountered an error.'
-          );
+          console.error('Function error:', fnResponse.status, fnResult);
+          throw new Error(fnResult?.error || 'Server encountered an error.');
         }
 
         // ─── SUCCESSFUL APPLICATION: Show function’s message ──────────────────────
@@ -494,15 +482,15 @@
         submitBtn.classList.remove('enabled');
 
         // ─── AFFILIATE SIGNUP TRACKING ────────────────────────────────────────────
-        const refCode = localStorage.getItem('apex_referral');
-        if (refCode) {
-          try {
-            await recordSignup(refCode);
-            console.log(
-              `Recorded signup for affiliate code: ${refCode}`
-            );
-          } catch (err) {
-            console.error('Error recording affiliate signup:', err);
+        if (recordSignup) {
+          const refCode = localStorage.getItem('apex_referral');
+          if (refCode) {
+            try {
+              await recordSignup(refCode);
+              console.log(`Recorded signup for affiliate: ${refCode}`);
+            } catch (err) {
+              console.error('Error recording affiliate signup:', err);
+            }
           }
         }
       } catch (err) {
@@ -516,8 +504,5 @@
       }
     });
   </script>
-
-  <!-- ─── IMPORT affiliate.js SO captureReferralCode() RUNS AUTOMATICALLY ───────────── -->
-  <script type="module" src="/js/affiliate.js"></script>
 </body>
 </html>
