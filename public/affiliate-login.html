@@ -2,72 +2,90 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Affiliate Login – Apex Income Options</title>
   <style>
-    body { font-family: Arial, sans-serif; background: #f1f1f1; padding: 2rem; }
-    .login-box { max-width: 400px; margin: auto; background: #fff; padding: 2rem; border-radius: 8px; box-shadow: 0 0 10px rgba(0,0,0,0.1); }
-    h2 { text-align: center; color: #0070f3; }
-    input, button {
-      width: 100%; padding: 10px; margin-top: 1rem;
-      border-radius: 4px; border: 1px solid #ccc;
-      font-size: 16px;
-    }
-    button {
-      background: #0070f3; color: white; border: none; cursor: pointer;
-    }
-    button:hover { background: #005bbb; }
+    body { font-family: Arial, sans-serif; background: #f9f9f9; padding: 2rem; }
+    .container { max-width: 400px; margin: auto; background: #fff; padding: 2rem; border-radius: 8px; box-shadow: 0 0 12px rgba(0,0,0,0.1); }
+    h2 { text-align: center; margin-bottom: 1rem; }
+    input { width: 100%; padding: 0.75rem; margin: 0.5rem 0; border: 1px solid #ccc; border-radius: 4px; }
+    button { width: 100%; padding: 0.75rem; background: #0070f3; color: #fff; border: none; border-radius: 4px; font-size: 1rem; cursor: pointer; }
+    button:disabled { background: #aaa; cursor: not-allowed; }
+    #message { margin-top: 1rem; font-weight: bold; color: red; }
   </style>
 </head>
 <body>
-  <div class="login-box">
+  <div class="container">
     <h2>Affiliate Login</h2>
-    <input type="email" id="email" placeholder="Enter your registered email" required />
-    <input type="password" id="password" placeholder="Enter password" required />
-    <button id="login-btn">Login</button>
+    <p>Enter your registered email to login and view your referral dashboard.</p>
+
+    <form id="affiliate-login-form">
+      <input type="email" id="email" placeholder="Email Address" required />
+      <button type="submit" id="login-btn">Login</button>
+      <p id="message"></p>
+    </form>
   </div>
 
   <script type="module">
     import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm';
 
-    const supabase = createClient(
-      'https://dapwpgvnfjcfqqhrpxla.supabase.co',
-      'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImRhcHdwZ3ZuZmpjZnFxaHJweGxhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDcwNDA4ODgsImV4cCI6MjA2MjYxNjg4OH0.ICC0UsLlzJDNre7rFCeD3k6iVzo6jOJgn3PhABpEMsQ'
-    );
+    const supabaseUrl = 'https://dapwpgvnfjcfqqhrpxla.supabase.co';
+    const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImRhcHdwZ3ZuZmpjZnFxaHJweGxhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDcwNDA4ODgsImV4cCI6MjA2MjYxNjg4OH0.ICC0UsLlzJDNre7rFCeD3k6iVzo6jOJgn3PhABpEMsQ';
 
-    document.getElementById('login-btn').addEventListener('click', async () => {
+    const supabase = createClient(supabaseUrl, supabaseKey);
+
+    const form = document.getElementById('affiliate-login-form');
+    const message = document.getElementById('message');
+    const loginBtn = document.getElementById('login-btn');
+
+    form.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      message.textContent = '';
+      loginBtn.disabled = true;
+      loginBtn.textContent = 'Checking...';
+
       const email = document.getElementById('email').value.trim();
-      const password = document.getElementById('password').value;
 
-      if (!email || !password) {
-        alert('Please enter both email and password.');
+      if (!email) {
+        message.textContent = 'Please enter your email.';
+        loginBtn.disabled = false;
+        loginBtn.textContent = 'Login';
         return;
       }
 
-      // Step 1: Try to sign in
-      const { data: authData, error: signInError } = await supabase.auth.signInWithPassword({ email, password });
+      try {
+        const { data, error } = await supabase
+          .from('affiliates')
+          .select('id, name, email, referral_code')
+          .eq('email', email)
+          .single();
 
-      if (signInError || !authData.session) {
-        alert('Login failed. Email not found or incorrect password. Redirecting to register...');
-        setTimeout(() => window.location.href = '/affiliate-register.html', 2000);
-        return;
+        if (error) {
+          if (error.code === 'PGRST116') {
+            // No rows found
+            message.textContent = 'Email not found. Redirecting to register...';
+            setTimeout(() => {
+              window.location.href = 'affiliate-register.html';
+            }, 2500);
+          } else {
+            message.textContent = 'Login failed. Check your credentials.';
+            setTimeout(() => {
+              window.location.href = 'affiliate-register.html';
+            }, 3000);
+          }
+          loginBtn.disabled = false;
+          loginBtn.textContent = 'Login';
+          return;
+        }
+
+        // User exists - redirect to dashboard (dashboard will handle showing referral code etc)
+        window.location.href = 'affiliate-dashboard.html';
+
+      } catch (err) {
+        message.textContent = 'Login failed. Please try again.';
+        loginBtn.disabled = false;
+        loginBtn.textContent = 'Login';
       }
-
-      // Step 2: Check if user exists in affiliates
-      const { data: affData, error: affError } = await supabase
-        .from('affiliates')
-        .select('id')
-        .eq('user_email', email)
-        .single();
-
-      if (affError || !affData) {
-        alert('This email is not yet registered as an affiliate. Redirecting...');
-        setTimeout(() => window.location.href = '/affiliate-register.html', 2000);
-        return;
-      }
-
-      // Success: Redirect to dashboard
-      window.location.href = '/affiliate-dashboard.html';
     });
   </script>
 </body>
