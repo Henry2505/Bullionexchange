@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Affiliate Registration – Apex Income Options</title>
+  <style>
+    /* Minimal styling: you can adapt to your theme */
+    body { font-family: Arial, sans-serif; background: #f4f4f4; margin: 0; padding: 0; display: flex; align-items: center; justify-content: center; height: 100vh; }
+    .container { background: #fff; padding: 2rem; border-radius: 8px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); width: 380px; }
+    input, button { width: 100%; margin: 0.5rem 0; padding: 0.75rem; border: 1px solid #ccc; border-radius: 4px; }
+    button { background: #0070f3; color: #fff; border: none; cursor: pointer; }
+    button:disabled { background: #888; cursor: not-allowed; }
+    .message { margin-top: 1rem; font-size: 0.9rem; }
+  </style>
+</head>
+<body>
+
+  <div class="container">
+    <h2>Join Our Affiliate Program</h2>
+    <form id="affiliate-form">
+      <label for="name">Full Name</label>
+      <input type="text" id="name" required />
+
+      <label for="email">Email Address</label>
+      <input type="email" id="email" required />
+
+      <label for="ref-code">Preferred Referral Code (Optional)</label>
+      <input type="text" id="ref-code" placeholder="e.g. mycode123" />
+
+      <label for="wallet">Wallet Address (₦ Payouts)</label>
+      <input type="text" id="wallet" required placeholder="e.g. Bank ℅ (account #) or e-wallet" />
+
+      <label for="password">Password</label>
+      <input type="password" id="password" required />
+
+      <button type="submit" id="submit-btn">Register</button>
+    </form>
+    <div class="message" id="message"></div>
+  </div>
+
+  <!-- Import our shared affiliate.js -->
+  <script type="module" src="/js/affiliate.js"></script>
+  <script type="module">
+    import { registerAffiliate, generateReferralCode } from '/js/affiliate.js';
+
+    const form = document.getElementById('affiliate-form');
+    const messageDiv = document.getElementById('message');
+    const submitBtn = document.getElementById('submit-btn');
+
+    form.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      submitBtn.disabled = true;
+      messageDiv.textContent = 'Registering...';
+
+      try {
+        const name = document.getElementById('name').value.trim();
+        const email = document.getElementById('email').value.trim();
+        let referral_code = document.getElementById('ref-code').value.trim();
+        if (!referral_code) {
+          referral_code = generateReferralCode(8);
+        }
+        const wallet_address = document.getElementById('wallet').value.trim();
+        const password = document.getElementById('password').value;
+
+        await registerAffiliate({ name, email, referral_code, wallet_address, password });
+        messageDiv.style.color = 'green';
+        messageDiv.textContent = `Registered! Your referral code is "${referral_code}". Pending admin approval.`;
+        form.reset();
+
+      } catch (err) {
+        console.error(err);
+        messageDiv.style.color = 'red';
+        messageDiv.textContent = `Error: ${err.message}`;
+      } finally {
+        submitBtn.disabled = false;
+      }
+    });
+  </script>
+</body>
+</html>
