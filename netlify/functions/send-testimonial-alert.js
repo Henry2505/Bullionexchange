@@ -1,22 +1,18 @@
 // netlify/functions/send-testimonial-alert.js
 
 /**
- * This Netlify Function is called when a testimonial’s status flips to "approved".
- * It receives { id: <testimonial_id> } in the POST body. It then:
- *   1) Looks up the testimonial in Supabase (e.g. to get the submitter’s name),
- *      if you want to include that as a template parameter.
- *   2) Fetches all users’ emails & names from the "users" table.
- *   3) Loops through them and sends a Brevo transactional email (templateId: 4)
- *      to each user, using only template variables (no raw subject/body).
+ * This Netlify Function sends a “new testimonial” email (Brevo template ID 4)
+ * to all users whenever an approved testimonial’s ID is POSTed here.
  *
- * Required Netlify environment variable:
- *   BREVO_API_KEY = xkeysib-<YOUR_ACTUAL_KEY>   (your Brevo transactional key)
- *   SUPABASE_URL  = https://dapwpgvnfjcfqqhrpxla.supabase.co
- *   SUPABASE_ANON_KEY = <your anon key>
+ * Environment variables you must set in Netlify:
+ *   SUPABASE_URL       = https://dapwpgvnfjcfqqhrpxla.supabase.co
+ *   SUPABASE_ANON_KEY  = <your Supabase anon key>
+ *   BREVO_API_KEY      = xkeysib-<your actual Brevo key>
  */
 
 const { createClient } = require("@supabase/supabase-js");
 
+// Handler entrypoint
 exports.handler = async (event) => {
   // Only allow POST
   if (event.httpMethod !== "POST") {
@@ -27,11 +23,10 @@ exports.handler = async (event) => {
     };
   }
 
-  // 1) Parse the incoming JSON body
   let body;
   try {
     body = JSON.parse(event.body);
-  } catch (err) {
+  } catch {
     return {
       statusCode: 400,
       body: JSON.stringify({ error: "Invalid JSON body." }),
@@ -46,116 +41,113 @@ exports.handler = async (event) => {
     };
   }
 
-  // 2) Initialize Supabase
-  const SUPABASE_URL      = process.env.SUPABASE_URL;
+  // Read environment variables
+  const SUPABASE_URL = process.env.SUPABASE_URL;
   const SUPABASE_ANON_KEY = process.env.SUPABASE_ANON_KEY;
+  const BREVO_API_KEY = process.env.BREVO_API_KEY;
+
   if (!SUPABASE_URL || !SUPABASE_ANON_KEY) {
-    console.error("Missing Supabase environment variables");
+    console.error("Supabase environment variables are not set.");
     return {
       statusCode: 500,
       body: JSON.stringify({ error: "Supabase not configured." }),
     };
   }
+  if (!BREVO_API_KEY) {
+    console.error("BREVO_API_KEY is not set.");
+    return {
+      statusCode: 500,
+      body: JSON.stringify({ error: "Brevo not configured." }),
+    };
+  }
+
+  // Initialize Supabase client
   const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
   try {
-    // 3) (Optional) Fetch the newly-approved testimonial itself
-    //    in case you want to include the submitter’s name in the template.
-    const { data: testimonialData, error: testimonialErr } = await supabase
+    // 1) Fetch the newly-approved testimonial’s author and text
+    const { data: tData, error: tErr } = await supabase
       .from("testimonials")
       .select("name,testimonial_text")
       .eq("id", testimonialId)
       .single();
-    if (testimonialErr || !testimonialData) {
+    if (tErr || !tData) {
       console.warn(
-        "Could not fetch testimonial #" + testimonialId + " →",
-        testimonialErr
+        `Could not fetch testimonial #${testimonialId}:`,
+        tErr?.message || "Not found"
       );
-      // We’ll continue anyway, sending a generic “new testimonial” alert.
+      // We can still proceed with a generic message, but we’ll log this.
     }
 
-    // 4) Fetch all users from "users" table
+    const testimonialAuthor = tData?.name || "A member";
+    const testimonialText = tData?.testimonial_text || "";
+
+    // 2) Fetch all users (we'll notify everyone)
     const { data: users, error: usersErr } = await supabase
       .from("users")
-      .select("email,name")
-      // Optionally, only notify "approved" users:
-      // .eq("status", "approved")
-      .order("created_at", { ascending: true });
+      .select("name,email")
+      .neq("email", null);
     if (usersErr || !users || users.length === 0) {
-      console.error("No users found or error fetching users →", usersErr);
+      console.error("No users found or error fetching users:", usersErr);
       return {
         statusCode: 500,
         body: JSON.stringify({ error: "Failed to load users." }),
       };
     }
 
-    // 5) Read Brevo API key from env
-    const BREVO_API_KEY = process.env.BREVO_API_KEY;
-    if (!BREVO_API_KEY) {
-      console.error("Missing BREVO_API_KEY environment variable");
-      return {
-        statusCode: 500,
-        body: JSON.stringify({ error: "Brevo not configured." }),
-      };
-    }
+    // 3) Build & send a Brevo email to each user with templateId=4
+    const BREVO_SENDER = {
+      name: "Chukwuemeka Bullion Exchange",
+      email: "noreply@apexincomeoptions.com.ng",
+    };
+    const TEMPLATE_ID = 4;
 
-    // 6) For each user, send a Brevo email using templateId=4
-    //    (You could also batch them in one request if you prefer.)
-    const BREVO_SENDER_NAME  = "Chukwuemeka Bullion Exchange";
-    const BREVO_SENDER_EMAIL = "noreply@apexincomeoptions.com.ng";
-    const BREVO_TEMPLATE_ID  = 4;
-
-    // If your template expects e.g. {{ params.FIRSTNAME }} or {{ params.TESTIMONIALER }},
-    // we can pass both. Here's how:
-    const promises = users.map(async (u) => {
-      const brevoPayload = {
-        sender: {
-          name: BREVO_SENDER_NAME,
-          email: BREVO_SENDER_EMAIL,
-        },
+    // Loop through users and send one request per user
+    const sendPromises = users.map(async (u) => {
+      const payload = {
+        sender: BREVO_SENDER,
         to: [
           {
             email: u.email,
             name: u.name,
           },
         ],
-        templateId: BREVO_TEMPLATE_ID,
+        templateId: TEMPLATE_ID,
         params: {
-          // The template variables must exactly match what you set up in Brevo.
-          FIRSTNAME: u.name,
-          TESTIMONIALER: testimonialData?.name || "A fellow trader",
+          contact: {
+            FIRSTNAME: u.name,
+            EMAIL: u.email,
+          },
+          testimonial_author: testimonialAuthor,
+          testimonial_snippet: testimonialText.slice(0, 100), // first 100 chars
+          unsubscribe: "https://apexincomeoptions.com.ng/unsubscribe-link",
         },
       };
 
-      const res = await fetch("https://api.brevo.com/v3/smtp/email", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          "api-key": BREVO_API_KEY,
-        },
-        body: JSON.stringify(brevoPayload),
-      });
-
-      let json = null;
       try {
-        json = await res.json();
-      } catch (_) {
-        // no JSON
-      }
-      if (!res.ok) {
-        console.error(
-          `Brevo error sending to ${u.email}:`,
-          res.status,
-          json
-        );
-        // We do NOT throw here; we log and continue to next user.
+        const res = await fetch("https://api.brevo.com/v3/smtp/email", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            "api-key": BREVO_API_KEY,
+          },
+          body: JSON.stringify(payload),
+        });
+        const json = await res.json().catch(() => null);
+        if (!res.ok) {
+          console.error(
+            `Brevo error for ${u.email}:`,
+            res.status,
+            json || "(no JSON response)"
+          );
+        }
+      } catch (err) {
+        console.error(`Fetch error sending to ${u.email}:`, err);
       }
     });
 
-    // 7) Wait for all emails to be enqueued
-    await Promise.all(promises);
+    await Promise.all(sendPromises);
 
-    // 8) Return success
     return {
       statusCode: 200,
       body: JSON.stringify({ message: "All users notified of new testimonial." }),
