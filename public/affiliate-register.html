@@ -2,98 +2,74 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Join Affiliate Program – Apex Income Options</title>
+  <title>Affiliate Sign Up – Apex Income Options</title>
   <style>
-    body { font-family: Arial, sans-serif; background: #f1f1f1; padding: 2rem; }
-    .register-box {
-      max-width: 450px; margin: auto; background: #fff; padding: 2rem;
-      border-radius: 8px; box-shadow: 0 0 10px rgba(0,0,0,0.1);
-    }
-    h2 { text-align: center; color: #0070f3; }
-    p { text-align: center; font-size: 15px; color: #444; margin-bottom: 1.5rem; }
-    input, button {
-      width: 100%; padding: 10px; margin-top: 1rem;
-      border-radius: 4px; border: 1px solid #ccc; font-size: 16px;
-    }
-    button {
-      background: #0070f3; color: white; border: none; cursor: pointer;
-    }
-    button:hover { background: #005bbb; }
+    body { font-family: Arial; background: #f4f4f4; padding: 20px; }
+    .container { max-width: 400px; margin: auto; background: #fff; padding: 2rem; border-radius: 8px; box-shadow: 0 0 10px rgba(0,0,0,0.1); }
+    input, button { width: 100%; padding: 10px; margin: 10px 0; }
+    button { background: #0070f3; color: white; border: none; cursor: pointer; }
+    .error { color: red; margin-top: 10px; }
   </style>
 </head>
 <body>
-  <div class="register-box">
-    <h2>Affiliate Signup</h2>
-    <p>Sign up and start earning commissions for every user you refer to Apex Income Options. 🚀</p>
-    <input type="text" id="name" placeholder="Your full name" required />
-    <input type="email" id="email" placeholder="Your email" required />
-    <input type="password" id="password" placeholder="Create a password" required />
-    <button id="register-btn">Create Account</button>
+  <div class="container">
+    <h2>Affiliate Registration</h2>
+    <p>Sign up and earn referral commissions for every active user you bring in!</p>
+    <input type="text" id="name" placeholder="Full Name" required />
+    <input type="email" id="email" placeholder="Email Address" required />
+    <button onclick="signup()">Sign Up</button>
+    <div id="message" class="error"></div>
   </div>
 
   <script type="module">
-    import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm';
+    import { createClient } from 'https://esm.sh/@supabase/supabase-js';
 
     const supabase = createClient(
       'https://dapwpgvnfjcfqqhrpxla.supabase.co',
       'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImRhcHdwZ3ZuZmpjZnFxaHJweGxhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDcwNDA4ODgsImV4cCI6MjA2MjYxNjg4OH0.ICC0UsLlzJDNre7rFCeD3k6iVzo6jOJgn3PhABpEMsQ'
     );
 
-    function generateReferralCode(name) {
-      const clean = name.replace(/\s+/g, '').substring(0, 4).toUpperCase();
-      const rand = Math.floor(1000 + Math.random() * 9000);
-      return clean + rand;
+    async function signup() {
+      const name = document.getElementById('name').value.trim();
+      const email = document.getElementById('email').value.trim();
+      const messageDiv = document.getElementById('message');
+      messageDiv.textContent = '';
+
+      if (!name || !email) {
+        messageDiv.textContent = 'Please enter all fields.';
+        return;
+      }
+
+      const referral_code = generateReferralCode(name);
+
+      const { data, error } = await supabase
+        .from('affiliates')
+        .insert([
+          {
+            name,
+            email,
+            referral_code,
+            total_clicks: 0,
+            signups_made: 0,
+            conversions: 0,
+            total_earned: 0,
+            status: 'pending',
+          }
+        ]);
+
+      if (error) {
+        messageDiv.textContent = `Signup failed: ${error.message}`;
+      } else {
+        alert('Affiliate registered successfully! You can now login.');
+        window.location.href = 'affiliate-login.html';
+      }
     }
 
-    document.getElementById('register-btn').addEventListener('click', async () => {
-      const name = document.getElementById('name').value.trim();
-      const email = document.getElementById('email').value.trim().toLowerCase();
-      const password = document.getElementById('password').value;
-
-      if (!name || !email || !password) {
-        alert('Please fill in all fields.');
-        return;
-      }
-
-      const { data: authData, error: signUpError } = await supabase.auth.signUp({ email, password });
-
-      if (signUpError) {
-        alert('Signup failed: ' + signUpError.message);
-        return;
-      }
-
-      const user = authData.user;
-      if (!user) {
-        alert('Unexpected error: No user returned.');
-        return;
-      }
-
-      const referralCode = generateReferralCode(name);
-
-      const { error: insertError } = await supabase
-        .from('affiliates')
-        .insert([{
-          user_id: user.id,
-          user_email: email,
-          name: name,
-          referral_code: referralCode,
-          total_clicks: 0,
-          signups_made: 0,
-          conversions: 0,
-          total_earned: 0,
-          status: 'active'
-        }]);
-
-      if (insertError) {
-        alert('Failed to store affiliate profile.');
-        console.error(insertError);
-        return;
-      }
-
-      alert('Registration successful! Redirecting to your dashboard...');
-      window.location.href = '/affiliate-dashboard.html';
-    });
+    function generateReferralCode(name) {
+      const prefix = name.toLowerCase().replace(/[^a-z]/g, '').slice(0, 3);
+      const random = Math.floor(1000 + Math.random() * 9000);
+      return `${prefix}${random}`;
+    }
   </script>
 </body>
 </html>
