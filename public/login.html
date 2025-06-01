@@ -124,8 +124,7 @@
     }
   </style>
 
-  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700&amp;family=Roboto:wght@300;400;700&amp;display=swap" rel="stylesheet"/>
-
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700&family=Roboto:wght@300;400;700&display=swap" rel="stylesheet"/>
 </head>
 <body>
 
@@ -154,6 +153,7 @@
 
   <!-- Supabase UMD -->
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js/dist/umd/supabase.min.js"></script>
+
   <script>
     // ─── 1) SETUP & THEME TOGGLE ────────────────────────────────────────────────
     const loginCard = document.getElementById('login-card');
@@ -187,7 +187,7 @@
       const password = document.getElementById('password').value;
 
       try {
-        // 3.a) Fetch user by email (case-insensitive)
+        // 3.a) Fetch user by email
         const { data: user, error, count } = await sb
           .from('users')
           .select('id, name, email, password, status', { count: 'exact' })
@@ -196,14 +196,12 @@
           .maybeSingle();
 
         if (error) throw error;
-        if (count === 0) 
-          throw new Error('No account found for that email.');
+        if (count === 0) throw new Error('No account found for that email.');
 
         // 3.b) Password check
-        if (user.password !== password) 
-          throw new Error('Invalid login credentials.');
+        if (user.password !== password) throw new Error('Invalid login credentials.');
 
-        // 3.c) “Approved by Admin” check
+        // 3.c) Approval check
         if (String(user.status).toLowerCase() !== 'approved') {
           throw new Error('Your account is not yet approved—please check back soon.');
         }
@@ -213,59 +211,57 @@
         const savedDevice = localStorage.getItem(deviceKey);
         const currentDevice = navigator.userAgent;
 
+        // If first login from this browser/device → just store, no email:
         if (!savedDevice) {
           localStorage.setItem(deviceKey, currentDevice);
-        } else if (savedDevice !== currentDevice) {
+        }
+        // If savedDevice exists but differs → suspicious login alert:
+        else if (savedDevice !== currentDevice) {
+          // Overwrite so we don’t spam next time:
           localStorage.setItem(deviceKey, currentDevice);
 
-          // Send Brevo Template #3 (Suspicious Login Alert)
-          const BREVO_API_KEY     = "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";
-          const TEMPLATE_ID_LOGIN = 3;
+          // SEND TO NETLIFY FUNCTION instead of direct Brevo call
+          const payload = {
+            email: user.email,
+            name: user.name,
+            device: currentDevice,
+            time: new Date().toLocaleString("en-US", { timeZone: "Africa/Lagos" })
+          };
 
-          const brevoPayload = {
-                          sender: { name: "CBE Login Alert", email: "alerts@cbexchange.com" },
-              to: [{ email: user.email }],
-              subject: "New Login Alert - CBE",
-              templateId: TEMPLATE_ID_LOGIN,
-              params: {
-                user_name: user.name || 'Trader',
-                login_device: navigator.userAgent,
-                login_time: new Date().toLocaleString(),
-              }
-            };
-
-            await fetch("https://api.brevo.com/v3/smtp/email", {
-              method: "POST",
-              headers: {
-                "Content-Type": "application/json",
-                "api-key": BREVO_API_KEY
-              },
-              body: JSON.stringify(brevoPayload)
-            });
+          // Call our serverless function
+          await fetch("/.netlify/functions/send-login-alert", {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json"
+            },
+            body: JSON.stringify(payload)
+          });
         }
 
-        // 3.e) Save session and redirect
-        localStorage.setItem("cbe_user", JSON.stringify({
-          id: user.id,
-          name: user.name,
-          email: user.email
-        }));
-
-        alertDiv.style.color = "var(--success-color)";
-        alertDiv.textContent = "Login successful! Redirecting...";
-        setTimeout(() => {
-          window.location.href = "vip-dashboard.html";
-        }, 1500);
-
-      } catch (err) {
+        // 3.e) LOGIN SUCCESS → store session + redirect
+        sessionStorage.setItem('cbeLoggedIn', 'true');
+        sessionStorage.setItem('cbeUserId',   user.id);
+        sessionStorage.setItem('cbeUserName', user.name);
+        window.location.href = 'vip-dashboard.html';
+      }
+      catch (err) {
+        console.error("Login error:", err);
         alertDiv.style.color = "var(--error-color)";
-        alertDiv.textContent = err.message || "Login failed.";
-        console.error("Login Error:", err);
+        alertDiv.textContent = err.message;
       }
     });
   </script>
 
-  <!-- Tidio Live Chat -->
-  <script src="//code.tidio.co/y1tahygkugcsupdfsyk9qjv6qgcjxrsx.js" async></script>
+  <!-- Smartsupp Live Chat (optional) -->
+  <script type="text/javascript">
+    var _smartsupp = _smartsupp || {};
+    _smartsupp.key = '018a8bbd868518221e725341a7b2601231ec7ce8';
+    window.smartsupp||(function(d) {
+      var s,c,o=smartsupp=function(){ o._.push(arguments)};o._=[];
+      s=d.getElementsByTagName('script')[0];c=d.createElement('script');
+      c.type='text/javascript';c.charset='utf-8';c.async=true;
+      c.src='https://www.smartsuppchat.com/loader.js?';s.parentNode.insertBefore(c,s);
+    })(document);
+  </script>
 </body>
 </html>
