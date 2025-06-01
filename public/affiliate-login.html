@@ -1,92 +1,18 @@
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Affiliate Login – Apex Income Options</title>
-  <style>
-    body { font-family: Arial, sans-serif; background: #f9f9f9; padding: 2rem; }
-    .container { max-width: 400px; margin: auto; background: #fff; padding: 2rem; border-radius: 8px; box-shadow: 0 0 12px rgba(0,0,0,0.1); }
-    h2 { text-align: center; margin-bottom: 1rem; }
-    input { width: 100%; padding: 0.75rem; margin: 0.5rem 0; border: 1px solid #ccc; border-radius: 4px; }
-    button { width: 100%; padding: 0.75rem; background: #0070f3; color: #fff; border: none; border-radius: 4px; font-size: 1rem; cursor: pointer; }
-    button:disabled { background: #aaa; cursor: not-allowed; }
-    #message { margin-top: 1rem; font-weight: bold; color: red; }
-  </style>
+  <title>Affiliate Login</title>
+  <script type="module" src="./login.js"></script>
 </head>
 <body>
-  <div class="container">
-    <h2>Affiliate Login</h2>
-    <p>Enter your registered email to login and view your referral dashboard.</p>
-
-    <form id="affiliate-login-form">
-      <input type="email" id="email" placeholder="Email Address" required />
-      <button type="submit" id="login-btn">Login</button>
-      <p id="message"></p>
-    </form>
-  </div>
-
-  <script type="module">
-    import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm';
-
-    const supabaseUrl = 'https://dapwpgvnfjcfqqhrpxla.supabase.co';
-    const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImRhcHdwZ3ZuZmpjZnFxaHJweGxhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDcwNDA4ODgsImV4cCI6MjA2MjYxNjg4OH0.ICC0UsLlzJDNre7rFCeD3k6iVzo6jOJgn3PhABpEMsQ';
-
-    const supabase = createClient(supabaseUrl, supabaseKey);
-
-    const form = document.getElementById('affiliate-login-form');
-    const message = document.getElementById('message');
-    const loginBtn = document.getElementById('login-btn');
-
-    form.addEventListener('submit', async (e) => {
-      e.preventDefault();
-      message.textContent = '';
-      loginBtn.disabled = true;
-      loginBtn.textContent = 'Checking...';
-
-      const email = document.getElementById('email').value.trim();
-
-      if (!email) {
-        message.textContent = 'Please enter your email.';
-        loginBtn.disabled = false;
-        loginBtn.textContent = 'Login';
-        return;
-      }
-
-      try {
-        const { data, error } = await supabase
-          .from('affiliates')
-          .select('id, name, email, referral_code')
-          .eq('email', email)
-          .single();
-
-        if (error) {
-          if (error.code === 'PGRST116') {
-            // No rows found
-            message.textContent = 'Email not found. Redirecting to register...';
-            setTimeout(() => {
-              window.location.href = 'affiliate-register.html';
-            }, 2500);
-          } else {
-            message.textContent = 'Login failed. Check your credentials.';
-            setTimeout(() => {
-              window.location.href = 'affiliate-register.html';
-            }, 3000);
-          }
-          loginBtn.disabled = false;
-          loginBtn.textContent = 'Login';
-          return;
-        }
-
-        // User exists - redirect to dashboard (dashboard will handle showing referral code etc)
-        window.location.href = 'affiliate-dashboard.html';
-
-      } catch (err) {
-        message.textContent = 'Login failed. Please try again.';
-        loginBtn.disabled = false;
-        loginBtn.textContent = 'Login';
-      }
-    });
-  </script>
+  <h2>Affiliate Login</h2>
+  <form id="login-form">
+    <input type="email" id="email" placeholder="Email" required><br>
+    <input type="password" id="password" placeholder="Password" required><br>
+    <button type="submit">Login</button>
+  </form>
+  <p id="status"></p>
 </body>
 </html>
