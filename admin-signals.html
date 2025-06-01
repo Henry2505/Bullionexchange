@@ -141,7 +141,9 @@
       text-transform: uppercase;
       letter-spacing: 1px;
     }
-    form.glass {
+
+    /* Form */
+    .signal-form {
       background: var(--accent);
       border: 1px solid rgba(255, 215, 0, 0.2);
       border-radius: 12px;
@@ -188,6 +190,32 @@
       cursor: not-allowed;
     }
 
+    /* Filter Bar */
+    .filter-bar {
+      display: flex;
+      justify-content: center;
+      gap: 15px;
+      margin-bottom: 25px;
+    }
+    .filter-btn {
+      padding: 10px 25px;
+      background: var(--glass);
+      color: var(--text);
+      border: 1px solid rgba(255, 215, 0, 0.2);
+      border-radius: 25px;
+      font-size: 0.9rem;
+      font-weight: 500;
+      cursor: pointer;
+      transition: all 0.3s ease;
+    }
+    .filter-btn:hover,
+    .filter-btn.active {
+      background: linear-gradient(45deg, var(--gold), var(--gold-dark));
+      color: #000;
+      transform: translateY(-2px);
+      box-shadow: 0 4px 15px rgba(255, 215, 0, 0.3);
+    }
+
     /* Signals List */
     #signals-list .list-group-item {
       background: var(--accent);
@@ -197,6 +225,9 @@
       border-radius: 12px;
       padding: 1.5rem;
       transition: all 0.3s ease;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
     }
     #signals-list .list-group-item:hover {
       background: rgba(255, 215, 0, 0.15);
@@ -210,6 +241,45 @@
     #signals-list .list-group-item small {
       color: var(--text-light);
       font-size: 0.9rem;
+    }
+    .delete-btn {
+      background: var(--error);
+      border: none;
+      border-radius: 6px;
+      padding: 5px 10px;
+      font-size: 0.9rem;
+      color: #fff;
+      transition: all 0.3s ease;
+    }
+    .delete-btn:hover {
+      background: #d32f2f;
+      transform: translateY(-1px);
+      box-shadow: 0 2px 10px rgba(229, 115, 115, 0.3);
+    }
+
+    /* Search Bar */
+    .search-bar {
+      margin-bottom: 20px;
+      display: flex;
+      justify-content: center;
+    }
+    #signal-search {
+      max-width: 400px;
+      width: 100%;
+      background: var(--glass);
+      border: 1px solid rgba(255, 215, 0, 0.2);
+      color: var(--text);
+      border-radius: 8px;
+      padding: 10px 15px;
+      transition: border-color 0.3s ease, box-shadow 0.3s ease;
+    }
+    #signal-search:focus {
+      border-color: var(--gold);
+      box-shadow: 0 0 10px rgba(255, 215, 0, 0.3);
+      outline: none;
+    }
+    #signal-search::placeholder {
+      color: var(--text-muted);
     }
 
     /* Toast */
@@ -238,7 +308,7 @@
       .panel {
         padding: 1.5rem;
       }
-      .form-control, .form-select {
+      .form-control, .form-select, #signal-search {
         padding: 8px 12px;
         font-size: 0.9rem;
       }
@@ -246,9 +316,18 @@
         padding: 8px 20px;
         font-size: 0.9rem;
       }
+      .filter-bar {
+        flex-wrap: wrap;
+        gap: 10px;
+      }
       #signals-list .list-group-item {
         padding: 1rem;
         font-size: 0.9rem;
+        flex-direction: column;
+        align-items: flex-start;
+      }
+      #signals-list .list-group-item .delete-btn {
+        margin-top: 0.5rem;
       }
     }
   </style>
@@ -267,7 +346,7 @@
 
     <div class="panel slide-in" style="transition-delay: 0.3s;">
       <h4>Publish Signal</h4>
-      <form id="signals-form" class="glass">
+      <form id="signals-form" class="signal-form">
         <div class="row g-3">
           <div class="col-md-3">
             <label class="form-label">Asset / Pair</label>
@@ -310,6 +389,19 @@
           <button id="publish-btn" class="btn">Publish</button>
         </div>
       </form>
+
+      <!-- Search Bar -->
+      <div class="search-bar">
+        <input type="text" id="signal-search" class="form-control" placeholder="Search signals..." />
+      </div>
+
+      <!-- Filter Bar -->
+      <div class="filter-bar">
+        <button class="filter-btn active" data-filter="all">All</button>
+        <button class="filter-btn" data-filter="buy">Buy</button>
+        <button class="filter-btn" data-filter="sell">Sell</button>
+      </div>
+
       <ul class="list-group mt-5" id="signals-list"></ul>
     </div>
   </main>
@@ -402,13 +494,40 @@
         }
       });
 
-      // Load and display all signals
-      async function loadSignals() {
+      // Delete signal
+      window.deleteSignal = async (id) => {
+        if (confirm('Delete this signal permanently?')) {
+          try {
+            const { error } = await supabase
+              .from('signals')
+              .delete()
+              .eq('id', id);
+            if (error) throw error;
+            showToast('✅ Signal deleted');
+            await loadSignals();
+          } catch (err) {
+            console.error('Delete error:', err);
+            showToast(`Delete failed: ${err.message}`, false);
+          }
+        }
+      };
+
+      // Load and display all signals with search and filter
+      async function loadSignals(filter = 'all', search = '') {
         try {
-          const { data, error } = await supabase
+          let query = supabase
             .from('signals')
             .select('*')
             .order('created_at', { ascending: false });
+
+          if (filter !== 'all') {
+            query = query.eq('action', filter.toUpperCase());
+          }
+          if (search) {
+            query = query.ilike('asset', `%${search}%`).or(`entry.ilike.%${search}%,note.ilike.%${search}%`);
+          }
+
+          const { data, error } = await query;
           if (error) throw error;
 
           const list = document.getElementById('signals-list');
@@ -416,9 +535,12 @@
           data.forEach(sig => {
             list.insertAdjacentHTML('beforeend', `
               <li class="list-group-item">
-                <strong>${sig.asset}</strong> – ${sig.action} @ ${sig.entry}, SL: ${sig.sl.toFixed(4)}, TP1: ${sig.tp1.toFixed(4)}, TP2: ${sig.tp2 ? sig.tp2.toFixed(4) : 'N/A'}<br>
-                <small>${sig.note || ''}</small><br>
-                <small>Published ${new Date(sig.created_at).toLocaleString()}</small>
+                <div>
+                  <strong>${sig.asset}</strong> – ${sig.action} @ ${sig.entry}, SL: ${sig.sl.toFixed(4)}, TP1: ${sig.tp1.toFixed(4)}, TP2: ${sig.tp2 ? sig.tp2.toFixed(4) : 'N/A'}<br>
+                  <small>${sig.note || ''}</small><br>
+                  <small>Published ${new Date(sig.created_at).toLocaleString()}</small>
+                </div>
+                <button class="delete-btn" onclick="deleteSignal(${sig.id})">Delete</button>
               </li>`);
           });
         } catch (err) {
@@ -427,6 +549,20 @@
         }
       }
 
+      // Search functionality
+      document.getElementById('signal-search').addEventListener('input', (e) => {
+        const searchTerm = e.target.value.trim();
+        loadSignals($('.filter-btn.active').data('filter'), searchTerm);
+      });
+
+      // Filter functionality
+      $('.filter-btn').on('click', function () {
+        $('.filter-btn').removeClass('active');
+        $(this).addClass('active');
+        loadSignals($(this).data('filter'), $('#signal-search').val().trim());
+      });
+
+      // Initial load
       loadSignals();
     });
   </script>
