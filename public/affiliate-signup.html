@@ -1,31 +1,358 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" data-theme="dark">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Affiliate Sign Up</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Affiliate Sign Up • Chukwuemeka Bullion Exchange</title>
   <style>
-    body { font-family: Arial, sans-serif; background: #f9f9f9; padding: 2rem; }
-    .container { max-width: 400px; margin: auto; background: white; padding: 2rem; border-radius: 8px; box-shadow: 0 0 12px rgba(0,0,0,0.1); }
-    input, button { width: 100%; margin: 0.5rem 0; padding: 0.75rem; font-size: 1rem; }
-    button { background: #0070f3; color: white; border: none; cursor: pointer; }
-    button:disabled { background: #bbb; cursor: not-allowed; }
-    #status { margin-top: 1rem; font-weight: bold; color: red; }
+    :root[data-theme="dark"] {
+      --bg: #121212;
+      --text: #f0f0f0;
+      --gold: #d4af37;
+      --gold-dark: #b3932b;
+      --glass-bg: rgba(30, 30, 30, 0.6);
+      --text-light: #bbbbbb;
+      --text-muted: #888888;
+      --error-color: #e74c3c;
+      --success-color: #2ecc71;
+      --border-color: #333333;
+    }
+    :root[data-theme="light"] {
+      --bg: #fafafa;
+      --text: #222222;
+      --gold: #d4af37;
+      --gold-dark: #b3932b;
+      --glass-bg: rgba(255, 255, 255, 0.6);
+      --text-light: #555555;
+      --text-muted: #666666;
+      --error-color: #e74c3c;
+      --success-color: #2ecc71;
+      --border-color: #dddddd;
+    }
+
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: "Roboto", sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: flex-start;
+      padding: 20px;
+    }
+
+    /* Header */
+    .header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      width: 100%;
+      max-width: 1200px;
+      padding: 20px 0;
+    }
+    .logo img {
+      width: 120px;
+      height: auto;
+    }
+    #theme-toggle {
+      background: none;
+      border: none;
+      font-size: 1.5rem;
+      color: var(--text);
+      cursor: pointer;
+      transition: transform 0.3s ease;
+    }
+    #theme-toggle:hover {
+      transform: scale(1.2);
+    }
+
+    /* Glass card container */
+    .signup-card {
+      width: 100%;
+      max-width: 450px;
+      background: var(--glass-bg);
+      backdrop-filter: blur(10px);
+      border-radius: 12px;
+      padding: 30px;
+      box-shadow: 0 8px 32px rgba(0,0,0,0.3);
+      margin-top: 100px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+    .signup-card h1 {
+      font-family: "Playfair Display", serif;
+      font-size: 2rem;
+      color: var(--gold);
+      margin-bottom: 20px;
+      text-align: center;
+    }
+
+    form {
+      width: 100%;
+      display: flex;
+      flex-direction: column;
+      gap: 20px;
+    }
+    .form-group {
+      display: flex;
+      flex-direction: column;
+    }
+    label {
+      font-size: 0.95rem;
+      color: var(--text-light);
+      margin-bottom: 8px;
+      font-weight: 500;
+    }
+    input {
+      padding: 12px;
+      border: 1px solid var(--gold);
+      border-radius: 8px;
+      background: rgba(28, 28, 28, 0.8);
+      color: var(--text);
+      font-size: 1rem;
+      transition: box-shadow 0.3s ease;
+    }
+    input:focus {
+      outline: none;
+      box-shadow: 0 0 8px var(--gold);
+    }
+
+    .form-group.optional {
+      margin-top: 10px;
+    }
+
+    button {
+      padding: 14px;
+      border: none;
+      border-radius: 8px;
+      background: var(--gold);
+      color: #000;
+      font-size: 1rem;
+      font-weight: 700;
+      cursor: pointer;
+      opacity: 0.6;
+      pointer-events: none;
+      transition: background 0.3s ease, opacity 0.3s ease, box-shadow 0.3s ease;
+    }
+    button.enabled {
+      opacity: 1;
+      pointer-events: auto;
+      box-shadow: 0 0 10px var(--gold);
+    }
+    button.enabled:hover {
+      background: var(--gold-dark);
+    }
+
+    #status {
+      margin-top: 15px;
+      text-align: center;
+      font-size: 0.9rem;
+      font-weight: 600;
+      min-height: 24px;
+    }
+
+    /* Footer */
+    .footer {
+      margin-top: auto;
+      padding: 20px 0;
+      color: var(--text-muted);
+      font-size: 0.85rem;
+      text-align: center;
+      width: 100%;
+      max-width: 1200px;
+    }
+
+    @media (max-width: 600px) {
+      .signup-card {
+        margin-top: 120px;
+        padding: 20px;
+      }
+      .header {
+        padding: 15px 0;
+      }
+      .logo img {
+        width: 100px;
+      }
+      .signup-card h1 {
+        font-size: 1.6rem;
+      }
+    }
   </style>
 </head>
 <body>
-  <div class="container">
-    <h2>Affiliate Sign Up</h2>
+  <div class="header">
+    <div class="logo">
+      <a href="index.html"><img src="CBE_logo.PNG" alt="CBE Logo" /></a>
+    </div>
+    <button id="theme-toggle" aria-label="Toggle theme">🌞</button>
+  </div>
+
+  <div class="signup-card">
+    <h1>Affiliate Sign Up</h1>
     <form id="signup-form">
-      <input type="text" id="name" placeholder="Full Name" required />
-      <input type="email" id="email" placeholder="Email Address" required />
-      <input type="password" id="password" placeholder="Password" required />
-      <input type="text" id="referred_by" placeholder="Referral Code (optional)" />
+      <div class="form-group">
+        <label for="name">Full Name</label>
+        <input type="text" id="name" placeholder="Your full name" required />
+      </div>
+      <div class="form-group">
+        <label for="email">Email Address</label>
+        <input type="email" id="email" placeholder="Your email" required />
+      </div>
+      <div class="form-group">
+        <label for="password">Password</label>
+        <input type="password" id="password" placeholder="Choose a password" required />
+      </div>
+      <div class="form-group optional">
+        <label for="referred_by">Referral Code (optional)</label>
+        <input type="text" id="referred_by" placeholder="Enter code if you have one" />
+      </div>
       <button type="submit" id="signup-btn">Sign Up</button>
     </form>
     <p id="status"></p>
   </div>
 
-  <script type="module" src="./signup.js"></script>
+  <div class="footer">© 2025 Chukwuemeka Bullion Exchange. All rights reserved.</div>
+
+  <script type="module">
+    import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm';
+
+    // Your Supabase credentials
+    const SUPABASE_URL = 'https://dapwpgvnfjcfqqhrpxla.supabase.co';
+    const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImRhcHdwZ3ZuZmpjZnFxaHJweGxhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDcwNDA4ODgsImV4cCI6MjA2MjYxNjg4OH0.ICC0UsLlzJDNre7rFCeD3k6iVzo6jOJgn3PhABpEMsQ';
+
+    const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+    // Read “ref” from URL if present
+    function getReferralFromURL() {
+      const params = new URLSearchParams(window.location.search);
+      return params.get('ref') || '';
+    }
+
+    const form = document.getElementById('signup-form');
+    const signupBtn = document.getElementById('signup-btn');
+    const statusEl = document.getElementById('status');
+
+    // Enable button only when all required fields have some value
+    form.addEventListener('input', () => {
+      const name = document.getElementById('name').value.trim();
+      const email = document.getElementById('email').value.trim();
+      const password = document.getElementById('password').value;
+      signupBtn.disabled = !(name && email && password);
+      signupBtn.classList.toggle('enabled', name && email && password);
+    });
+
+    form.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      statusEl.textContent = '';
+      signupBtn.disabled = true;
+      signupBtn.textContent = 'Signing up...';
+
+      const name = document.getElementById('name').value.trim();
+      const email = document.getElementById('email').value.trim();
+      const password = document.getElementById('password').value;
+      const manualRef = document.getElementById('referred_by').value.trim();
+      const urlRef = getReferralFromURL();
+      const referralCode = manualRef || urlRef || null;
+
+      // Basic validation
+      if (!name || !email || !password) {
+        statusEl.style.color = 'var(--error-color)';
+        statusEl.textContent = 'Please fill in all required fields.';
+        signupBtn.disabled = false;
+        signupBtn.textContent = 'Sign Up';
+        return;
+      }
+      if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+        statusEl.style.color = 'var(--error-color)';
+        statusEl.textContent = 'Please enter a valid email address.';
+        signupBtn.disabled = false;
+        signupBtn.textContent = 'Sign Up';
+        return;
+      }
+      if (password.length < 8) {
+        statusEl.style.color = 'var(--error-color)';
+        statusEl.textContent = 'Password must be at least 8 characters.';
+        signupBtn.disabled = false;
+        signupBtn.textContent = 'Sign Up';
+        return;
+      }
+
+      // If user provided a referral code, check it in Supabase
+      if (referralCode) {
+        const { data: existing, error: errCheck } = await supabase
+          .from('affiliate_user')
+          .select('id')
+          .eq('referral_code', referralCode)
+          .single();
+
+        if (errCheck || !existing) {
+          statusEl.style.color = 'var(--error-color)';
+          statusEl.textContent = 'Invalid referral code.';
+          signupBtn.disabled = false;
+          signupBtn.textContent = 'Sign Up';
+          return;
+        }
+      }
+
+      // Hash password with SHA-256
+      let password_hash;
+      try {
+        const encoder = new TextEncoder();
+        const hashBuffer = await crypto.subtle.digest('SHA-256', encoder.encode(password));
+        password_hash = btoa(String.fromCharCode(...new Uint8Array(hashBuffer)));
+      } catch (hashErr) {
+        statusEl.style.color = 'var(--error-color)';
+        statusEl.textContent = 'Error hashing password.';
+        signupBtn.disabled = false;
+        signupBtn.textContent = 'Sign Up';
+        return;
+      }
+
+      // Insert new affiliate into Supabase
+      const { data, error } = await supabase
+        .from('affiliate_user')
+        .insert([{ name, email, password_hash, referred_by: referralCode }]);
+
+      if (error) {
+        statusEl.style.color = 'var(--error-color)';
+        statusEl.textContent = 'Signup failed: ' + error.message;
+        signupBtn.disabled = false;
+        signupBtn.textContent = 'Sign Up';
+      } else {
+        statusEl.style.color = 'var(--success-color)';
+        statusEl.textContent = 'Signup successful! Redirecting to login…';
+        setTimeout(() => {
+          window.location.href = 'affiliate-login.html';
+        }, 1500);
+      }
+    });
+
+    // Theme toggle logic
+    document.getElementById('theme-toggle').addEventListener('click', () => {
+      const current = document.documentElement.getAttribute('data-theme');
+      const next = current === 'dark' ? 'light' : 'dark';
+      document.documentElement.setAttribute('data-theme', next);
+      localStorage.setItem('theme', next);
+      document.getElementById('theme-toggle').textContent = next === 'dark' ? '🌞' : '🌜';
+    });
+
+    // On page load: set saved theme and make card visible
+    document.addEventListener('DOMContentLoaded', () => {
+      const savedTheme = localStorage.getItem('theme') || 'dark';
+      document.documentElement.setAttribute('data-theme', savedTheme);
+      document.getElementById('theme-toggle').textContent = savedTheme === 'dark' ? '🌞' : '🌜';
+      // Reveal the card (opacity/transform animation can be added if desired)
+      document.querySelector('.signup-card').style.opacity = '1';
+      document.querySelector('.signup-card').style.transform = 'translateY(0)';
+    });
+  </script>
 </body>
 </html>
