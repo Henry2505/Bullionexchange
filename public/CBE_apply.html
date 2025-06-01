@@ -13,6 +13,7 @@
     href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700&family=Roboto:wght@300;400;700&display=swap"
     rel="stylesheet"
   />
+  <!-- Supabase JS (global `supabase` object) -->
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js/dist/umd/supabase.min.js"></script>
 
   <style>
@@ -109,7 +110,7 @@
     }
 
     .apply-card {
-      max-width: 450px;
+      max-width: 500px;
       width: 100%;
       background: var(--glass-bg);
       backdrop-filter: blur(10px);
@@ -246,8 +247,9 @@
     }
   </style>
 </head>
+
 <body>
-  <!-- ─── Load affiliate.js first so captureReferralCode() runs ─────────────────── -->
+  <!-- 1. Load affiliate.js first, so captureReferralCode() runs immediately. -->
   <script type="module" src="/js/affiliate.js"></script>
 
   <div class="container">
@@ -264,6 +266,17 @@
       <section class="apply-card" id="apply-card">
         <h1>Apply to Join CBE</h1>
         <form id="apply-form" novalidate>
+          <!-- ─── NEW: Referral Code Field ─────────────────────────────────────────────── -->
+          <div class="form-group">
+            <label for="apply-referral">Referral Code (Optional)</label>
+            <input
+              type="text"
+              id="apply-referral"
+              placeholder="Enter referral code"
+            />
+          </div>
+
+          <!-- ─── Existing Fields ──────────────────────────────────────────────────────── -->
           <div class="form-group">
             <label for="apply-name">Full Name</label>
             <input
@@ -348,7 +361,7 @@
     <footer>© 2025 Chukwuemeka Bullion Exchange. All rights reserved.</footer>
   </div>
 
-  <!-- ─── THEME & CARD ANIMATION (always run, regardless of affiliate.js) ──────────── -->
+  <!-- 2. Theme Toggle & Card Animation (always run) -->
   <script>
     document.addEventListener('DOMContentLoaded', () => {
       const savedTheme = localStorage.getItem('theme') || 'dark';
@@ -368,12 +381,10 @@
     });
   </script>
 
-  <!-- ─── FORM HANDLING (module, but wrapped in try/catch around the affiliate import) ─── -->
+  <!-- 3. Form Handling with Referral‐Code Validation -->
   <script type="module">
-    import { supabase } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js/dist/umd/supabase.min.js';
+    // ─── Attempt to import recordSignup from affiliate.js, but don’t break if it fails ──
     let recordSignup = null;
-
-    // Try to import recordSignup; if it fails, log but don’t stop the page.
     try {
       const mod = await import('/js/affiliate.js');
       recordSignup = mod.recordSignup;
@@ -381,7 +392,7 @@
       console.warn('Could not load affiliate.js:', err);
     }
 
-    // ─── SUPABASE CONFIG (client-side, only used for optional email-availability check) ───
+    // ─── Supabase client (global `supabase` is from the CDN script) ────────────────────
     const SUPA_URL = 'https://dapwpgvnfjcfqqhrpxla.supabase.co';
     const SUPA_ANON_KEY =
       'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzYnN1cGFiYXNlIiwicm9sZSI6InVua25vd24iLCJpYXQiOjE3NDcwNDA4ODgsImV4cCI6MTg1NTg2MDAwMH0.WrongKeyExample';
@@ -392,6 +403,7 @@
     const submitBtn = document.getElementById('submit-btn');
     const alertDiv = document.getElementById('apply-alert');
 
+    // Enable submit only when they agree
     agree.addEventListener('change', () => {
       submitBtn.disabled = !agree.checked;
       submitBtn.classList.toggle('enabled', agree.checked);
@@ -402,6 +414,11 @@
       alertDiv.textContent = '';
       alertDiv.style.color = '';
 
+      // ─── Gather form values ───────────────────────────────────────────────────
+      const rawReferral = document
+        .getElementById('apply-referral')
+        .value.trim()
+        .toUpperCase();
       const name = document.getElementById('apply-name').value.trim();
       const email = document
         .getElementById('apply-email')
@@ -413,10 +430,10 @@
         .getElementById('apply-message')
         .value.trim();
 
-      // ─── CLIENT-SIDE VALIDATION ─────────────────────────────────────────────────────
+      // ─── Basic Validation ────────────────────────────────────────────────────────
       if (!name || !email || !password || !phone || !experience) {
         alertDiv.style.color = 'var(--error-color)';
-        alertDiv.textContent = 'Please complete all fields.';
+        alertDiv.textContent = 'Please complete all required fields.';
         return;
       }
       if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
@@ -434,8 +451,34 @@
       submitBtn.disabled = true;
       submitBtn.textContent = 'Submitting…';
 
+      // ─── If they provided a referral code, validate it in Supabase ─────────────
+      let validReferral = null;
+      if (rawReferral) {
+        try {
+          const { data: aff, error: fetchErr } = await sb
+            .from('affiliates')
+            .select('id, status')
+            .eq('referral_code', rawReferral)
+            .single();
+
+          if (fetchErr || !aff) {
+            throw new Error('Invalid referral code.');
+          }
+          if (aff.status !== 'active') {
+            throw new Error('This referral code is not active.');
+          }
+          validReferral = rawReferral;
+        } catch (refErr) {
+          alertDiv.style.color = 'var(--error-color)';
+          alertDiv.textContent = refErr.message;
+          submitBtn.disabled = false;
+          submitBtn.textContent = 'Submit Application';
+          return;
+        }
+      }
+
       try {
-        // ─── (Optional) CLIENT-SIDE EMAIL CHECK ─────────────────────────────────────
+        // ─── (Optional) Email‐availability check ──────────────────────────────────
         /*
         const { data: existingUser, error: checkError } = await sb
           .from('users')
@@ -452,15 +495,18 @@
         }
         */
 
-        // ─── CALL NETLIFY FUNCTION ──────────────────────────────────────────────────
+        // ─── Call your Netlify Function to send email & store applicant ────────────
         const payload = { name, email, password, phone, experience };
-        const fnResponse = await fetch('/.netlify/functions/send-apply', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify(payload),
-        });
+        const fnResponse = await fetch(
+          '/.netlify/functions/send-apply',
+          {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify(payload),
+          }
+        );
 
         let fnResult = null;
         try {
@@ -474,23 +520,22 @@
           throw new Error(fnResult?.error || 'Server encountered an error.');
         }
 
-        // ─── SUCCESSFUL APPLICATION: Show function’s message ──────────────────────
+        // ─── Show success message from your Function ──────────────────────────────
         alertDiv.style.color = 'var(--success-color)';
         alertDiv.textContent = fnResult.message;
         form.reset();
         agree.checked = false;
         submitBtn.classList.remove('enabled');
 
-        // ─── AFFILIATE SIGNUP TRACKING ────────────────────────────────────────────
-        if (recordSignup) {
-          const refCode = localStorage.getItem('apex_referral');
-          if (refCode) {
-            try {
-              await recordSignup(refCode);
-              console.log(`Recorded signup for affiliate: ${refCode}`);
-            } catch (err) {
-              console.error('Error recording affiliate signup:', err);
-            }
+        // ─── If referral was valid, record a “signup” in referral_activity ─────────
+        if (validReferral && recordSignup) {
+          try {
+            await recordSignup(validReferral);
+            console.log(
+              `Recorded signup for affiliate code: ${validReferral}`
+            );
+          } catch (err) {
+            console.error('Error recording affiliate signup:', err);
           }
         }
       } catch (err) {
