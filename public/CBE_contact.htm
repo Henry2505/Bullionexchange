@@ -1,0 +1,231 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+  <meta charset="UTF-8">
+  <title>Contact Us | CBE</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+  <!-- Central theme stylesheet -->
+  <link rel="stylesheet" href="theme.css">
+
+  <script>
+    // Initialize theme from localStorage or default to dark
+    const saved = localStorage.getItem('theme');
+    document.documentElement.setAttribute('data-theme', saved || 'dark');
+  </script>
+
+  <!-- Supabase UMD build -->
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    html, body {
+      height: 100%;
+      font-family: 'Poppins', sans-serif;
+      overflow: hidden;
+      background: var(--bg);
+      color: var(--text);
+    }
+    video.bg-video {
+      position: fixed; top: 0; left: 0;
+      width: 100vw; height: 100vh;
+      object-fit: cover; z-index: -1;
+    }
+    #theme-toggle {
+      position: fixed; top: 20px; right: 20px;
+      background: none; border: none;
+      font-size: 1.5rem; color: var(--text);
+      cursor: pointer; z-index: 2;
+    }
+    .contact-container {
+      position: absolute; top: 50%; left: 50%;
+      transform: translate(-50%, -50%);
+      background: var(--glass-bg);
+      padding: 30px; border-radius: 15px;
+      width: 90%; max-width: 500px;
+      animation: fadeIn 1.5s ease, slideUp 1s ease;
+    }
+    @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+    @keyframes slideUp { from { transform: translate(-50%, 30%); } to { transform: translate(-50%, -50%); } }
+    .contact-container h2 {
+      text-align: center; margin-bottom: 20px;
+      color: var(--gold);
+    }
+    .contact-container input,
+    .contact-container textarea {
+      width: 100%; padding: 12px; margin-bottom: 15px;
+      border: none; border-radius: 8px;
+      background: rgba(0,0,0,0.2);
+      color: var(--text); font-size: 16px;
+    }
+    .contact-container button {
+      width: 100%;
+      background: var(--gold); border: 2px solid var(--gold);
+      color: #000; padding: 12px; font-size: 16px;
+      border-radius: 8px; cursor: pointer;
+      transition: background 0.3s, color 0.3s;
+    }
+    .contact-container button:hover {
+      background: var(--gold-dark); color: #000;
+    }
+    .branding {
+      position: fixed; top: 20px; left: 20px; z-index: 1;
+    }
+    .branding img {
+      height: 60px; cursor: pointer;
+      transition: transform 0.3s ease;
+    }
+    .branding img:hover { transform: scale(1.1); }
+    .message-box {
+      margin-top: 10px; padding: 10px;
+      border-radius: 5px; font-weight: bold;
+      text-align: center;
+    }
+    .success { background-color: #10b981; color: white; }
+    .error   { background-color: #ef4444; color: white; }
+    .spinner {
+      text-align: center; margin-top: 10px;
+    }
+    .spinner div {
+      width: 20px; height: 20px;
+      border: 3px solid var(--gold);
+      border-top: 3px solid transparent;
+      border-radius: 50%;
+      animation: spin 1s linear infinite;
+      display: inline-block;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+    .social-links {
+      text-align: center; margin-top: 20px; color: var(--text);
+    }
+    .social-links a {
+      color: var(--gold); text-decoration: none;
+      margin: 0 10px; font-weight: 500;
+    }
+    .social-links a:hover { text-decoration: underline; }
+    @media (max-width: 600px) {
+      .contact-container { padding: 20px; }
+      .branding img  { height: 45px; }
+      #theme-toggle  { font-size: 1.2rem; }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Background Video -->
+  <video class="bg-video" autoplay muted loop playsinline>
+    <source src="star-video.mp4" type="video/mp4">
+  </video>
+
+  <!-- Theme toggle -->
+  <button id="theme-toggle" aria-label="Toggle light/dark">🌞</button>
+
+  <!-- Logo -->
+  <div class="branding">
+    <a href="Index.html"><img src="CBE_logo.PNG" alt="CBE Logo"></a>
+  </div>
+
+  <!-- Contact Form -->
+  <div class="contact-container">
+    <h2>Contact Us</h2>
+    <form id="contact-form">
+      <input type="text" id="contact-name" placeholder="Your Name" required>
+      <input type="email" id="contact-email" placeholder="Your Email" required>
+      <textarea id="contact-message" placeholder="Your Message" required></textarea>
+      <button type="submit">Send Message</button>
+    </form>
+
+    <div class="spinner" id="spinner" style="display:none;"><div></div></div>
+    <div id="form-alert" class="message-box"></div>
+
+    <div class="social-links">
+      <p>Or reach us directly:</p>
+      <a href="https://wa.me/2349133957084" target="_blank">WhatsApp</a> |
+      <a href="https://t.me/apexincomeoptions" target="_blank">Telegram</a>
+    </div>
+  </div>
+
+  <script>
+    // 1️⃣ Initialize Supabase
+    const supabase = window.supabase.createClient(
+      'https://dapwpgvnfjcfqqhrpxla.supabase.co',
+      'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImRhcHdwZ3ZuZmpjZnFxaHJweGxhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDcwNDA4ODgsImV4cCI6MjA2MjYxNjg4OH0.ICC0UsLlzJDNre7rFCeD3k6iVzo6jOJgn3PhABpEMsQ'
+    );
+
+    // 2️⃣ Grab elements
+    const form           = document.getElementById('contact-form');
+    const alertBox       = document.getElementById('form-alert');
+    const spinner        = document.getElementById('spinner');
+    const contactName    = document.getElementById('contact-name');
+    const contactEmail   = document.getElementById('contact-email');
+    const contactMessage = document.getElementById('contact-message');
+
+    // 3️⃣ Form submit with debug logging
+    form.addEventListener('submit', async e => {
+      e.preventDefault();
+      alertBox.innerHTML = '';
+      spinner.style.display = 'block';
+
+      const from_name = contactName.value.trim();
+      const email     = contactEmail.value.trim();
+      const text      = contactMessage.value.trim();
+
+      if (!from_name || !email || !text) {
+        spinner.style.display = 'none';
+        return alertBox.innerHTML = `<div class="error">Please fill in all fields.</div>`;
+      }
+
+      const { data, error } = await supabase
+        .from('messages')
+        .insert([{ from_name, email, text }]);
+
+      console.group('Supabase Insert Debug');
+      console.log('Payload:', { from_name, email, text });
+      console.log('Data:', data);
+      console.log('Error:', error);
+      console.groupEnd();
+
+      spinner.style.display = 'none';
+
+      if (error) {
+        alertBox.innerHTML = `
+          <div class="error">
+            Failed to send message.<br>
+            <pre style="text-align:left;color:#fff;background:rgba(0,0,0,0.5);padding:8px;border-radius:4px;">
+${JSON.stringify(error, null, 2)}
+            </pre>
+          </div>`;
+      } else {
+        alertBox.innerHTML = `<div class="success">Message sent successfully!</div>`;
+        form.reset();
+      }
+    });
+
+    // 4️⃣ Theme toggle logic
+    const toggle = document.getElementById('theme-toggle');
+    toggle.addEventListener('click', () => {
+      const cur = document.documentElement.getAttribute('data-theme');
+      const next = cur === 'dark' ? 'light' : 'dark';
+      document.documentElement.setAttribute('data-theme', next);
+      localStorage.setItem('theme', next);
+      toggle.textContent = next === 'dark' ? '🌞' : '🌜';
+    });
+    (() => {
+      const theme = document.documentElement.getAttribute('data-theme');
+      toggle.textContent = theme === 'dark' ? '🌞' : '🌜';
+    })();
+  </script>
+
+  <!-- Smartsupp Live Chat script -->
+  <script type="text/javascript">
+    var _smartsupp = _smartsupp || {};
+    _smartsupp.key = '018a8bbd868518221e725341a7b2601231ec7ce8';
+    window.smartsupp||(function(d) {
+      var s,c,o=smartsupp=function(){ o._.push(arguments)};o._=[];
+      s=d.getElementsByTagName('script')[0];c=d.createElement('script');
+      c.type='text/javascript';c.charset='utf-8';c.async=true;
+      c.src='https://www.smartsuppchat.com/loader.js?';s.parentNode.insertBefore(c,s);
+    })(document);
+  </script>
+</body>
+</html>
