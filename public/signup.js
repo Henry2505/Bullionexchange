@@ -28,7 +28,7 @@ form.addEventListener('submit', async (e) => {
     return;
   }
 
-  // Hash the password using SHA-256
+  // Hash password with SHA-256
   const encoder = new TextEncoder();
   const data = encoder.encode(password);
   const hashBuffer = await crypto.subtle.digest('SHA-256', data);
