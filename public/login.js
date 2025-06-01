@@ -26,7 +26,7 @@ form.addEventListener('submit', async (e) => {
     return;
   }
 
-  // Hash the password using SHA-256
+  // Hash password with SHA-256
   const encoder = new TextEncoder();
   const data = encoder.encode(password);
   const hashBuffer = await crypto.subtle.digest('SHA-256', data);
@@ -41,14 +41,16 @@ form.addEventListener('submit', async (e) => {
 
   if (error || !data) {
     statusEl.textContent = 'Login failed: Check your credentials.';
+    // Redirect to signup after 2 seconds
     setTimeout(() => {
       window.location.href = 'affiliate-signup.html';
     }, 2000);
     loginBtn.disabled = false;
     loginBtn.textContent = 'Login';
   } else {
-    // Save to localStorage for dashboard use
+    // Save affiliate data in localStorage for dashboard
     localStorage.setItem('affiliate_user', JSON.stringify(data));
+    // Immediately redirect to dashboard
     window.location.href = 'affiliate-dashboard.html';
   }
 });
