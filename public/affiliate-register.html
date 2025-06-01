@@ -2,74 +2,111 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <title>Affiliate Sign Up – Apex Income Options</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Affiliate Signup – Apex Income Options</title>
   <style>
-    body { font-family: Arial; background: #f4f4f4; padding: 20px; }
-    .container { max-width: 400px; margin: auto; background: #fff; padding: 2rem; border-radius: 8px; box-shadow: 0 0 10px rgba(0,0,0,0.1); }
-    input, button { width: 100%; padding: 10px; margin: 10px 0; }
-    button { background: #0070f3; color: white; border: none; cursor: pointer; }
-    .error { color: red; margin-top: 10px; }
+    body { font-family: Arial, sans-serif; background: #f9f9f9; padding: 2rem; }
+    .container { max-width: 400px; margin: auto; background: #fff; padding: 2rem; border-radius: 8px; box-shadow: 0 0 12px rgba(0,0,0,0.1); }
+    h2 { text-align: center; margin-bottom: 1rem; }
+    input { width: 100%; padding: 0.75rem; margin: 0.5rem 0; border: 1px solid #ccc; border-radius: 4px; }
+    button { width: 100%; padding: 0.75rem; background: #0070f3; color: #fff; border: none; border-radius: 4px; font-size: 1rem; cursor: pointer; }
+    button:disabled { background: #aaa; cursor: not-allowed; }
+    #message { margin-top: 1rem; font-weight: bold; }
   </style>
 </head>
 <body>
   <div class="container">
-    <h2>Affiliate Registration</h2>
-    <p>Sign up and earn referral commissions for every active user you bring in!</p>
-    <input type="text" id="name" placeholder="Full Name" required />
-    <input type="email" id="email" placeholder="Email Address" required />
-    <button onclick="signup()">Sign Up</button>
-    <div id="message" class="error"></div>
+    <h2>Sign up and earn referral commissions!</h2>
+    <p>Create your affiliate account now. Use your unique referral code to start earning when others sign up through you.</p>
+
+    <form id="affiliate-signup-form">
+      <input type="text" id="name" placeholder="Full Name" required />
+      <input type="email" id="email" placeholder="Email Address" required />
+      <button type="submit" id="signup-btn">Sign Up</button>
+      <p id="message"></p>
+    </form>
   </div>
 
   <script type="module">
-    import { createClient } from 'https://esm.sh/@supabase/supabase-js';
+    import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm';
 
-    const supabase = createClient(
-      'https://dapwpgvnfjcfqqhrpxla.supabase.co',
-      'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImRhcHdwZ3ZuZmpjZnFxaHJweGxhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDcwNDA4ODgsImV4cCI6MjA2MjYxNjg4OH0.ICC0UsLlzJDNre7rFCeD3k6iVzo6jOJgn3PhABpEMsQ'
-    );
+    const supabaseUrl = 'https://dapwpgvnfjcfqqhrpxla.supabase.co';
+    const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImRhcHdwZ3ZuZmpjZnFxaHJweGxhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDcwNDA4ODgsImV4cCI6MjA2MjYxNjg4OH0.ICC0UsLlzJDNre7rFCeD3k6iVzo6jOJgn3PhABpEMsQ';
 
-    async function signup() {
+    const supabase = createClient(supabaseUrl, supabaseKey);
+
+    const form = document.getElementById('affiliate-signup-form');
+    const message = document.getElementById('message');
+    const signupBtn = document.getElementById('signup-btn');
+
+    function generateReferralCode(length = 8) {
+      return Math.random().toString(36).substring(2, 2 + length).toUpperCase();
+    }
+
+    form.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      message.textContent = '';
+      message.style.color = 'black';
+      signupBtn.disabled = true;
+      signupBtn.textContent = 'Signing up...';
+
       const name = document.getElementById('name').value.trim();
       const email = document.getElementById('email').value.trim();
-      const messageDiv = document.getElementById('message');
-      messageDiv.textContent = '';
 
       if (!name || !email) {
-        messageDiv.textContent = 'Please enter all fields.';
+        message.style.color = 'red';
+        message.textContent = 'Please fill in both name and email.';
+        signupBtn.disabled = false;
+        signupBtn.textContent = 'Sign Up';
         return;
       }
 
-      const referral_code = generateReferralCode(name);
-
-      const { data, error } = await supabase
+      // Check if email already exists in affiliates
+      const { data: existingAffiliate, error: checkError } = await supabase
         .from('affiliates')
-        .insert([
-          {
-            name,
-            email,
-            referral_code,
-            total_clicks: 0,
-            signups_made: 0,
-            conversions: 0,
-            total_earned: 0,
-            status: 'pending',
-          }
-        ]);
+        .select('id')
+        .eq('email', email)
+        .single();
 
-      if (error) {
-        messageDiv.textContent = `Signup failed: ${error.message}`;
-      } else {
-        alert('Affiliate registered successfully! You can now login.');
-        window.location.href = 'affiliate-login.html';
+      if (checkError && checkError.code !== 'PGRST116') {
+        // PGRST116 means no rows found, which is good here
+        message.style.color = 'red';
+        message.textContent = 'Error checking existing email: ' + checkError.message;
+        signupBtn.disabled = false;
+        signupBtn.textContent = 'Sign Up';
+        return;
       }
-    }
 
-    function generateReferralCode(name) {
-      const prefix = name.toLowerCase().replace(/[^a-z]/g, '').slice(0, 3);
-      const random = Math.floor(1000 + Math.random() * 9000);
-      return `${prefix}${random}`;
-    }
+      if (existingAffiliate) {
+        message.style.color = 'red';
+        message.textContent = 'Email already registered. Please login.';
+        signupBtn.disabled = false;
+        signupBtn.textContent = 'Sign Up';
+        return;
+      }
+
+      // Insert new affiliate
+      const referral_code = generateReferralCode();
+
+      try {
+        const { data, error } = await supabase
+          .from('affiliates')
+          .insert([{ name, email, referral_code }]);
+
+        if (error) throw error;
+
+        message.style.color = 'green';
+        message.textContent = `Signup successful! Your referral code: ${referral_code}`;
+
+        form.reset();
+      } catch (error) {
+        message.style.color = 'red';
+        message.textContent = 'Signup failed: ' + error.message;
+      } finally {
+        signupBtn.disabled = false;
+        signupBtn.textContent = 'Sign Up';
+      }
+    });
   </script>
 </body>
 </html>
