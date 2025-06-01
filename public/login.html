@@ -92,7 +92,7 @@
       font-weight: 700; 
       cursor: pointer;
       transition: background .3s, box-shadow .3s;
-    }
+   }
     button:hover {
       background: var(--gold-dark);
       box-shadow: 0 0 12px var(--gold);
@@ -163,6 +163,14 @@
       const savedTheme = localStorage.getItem('theme') || 'dark';
       document.documentElement.setAttribute('data-theme', savedTheme);
       toggleBtn.textContent = savedTheme === 'dark' ? '🌞' : '🌜';
+
+      // Check for logout message from another session
+      const urlParams = new URLSearchParams(window.location.search);
+      if (urlParams.get('message') === 'logged_out_elsewhere') {
+        const alertDiv = document.getElementById('login-alert');
+        alertDiv.textContent = 'You were logged out because your account was accessed from another device.';
+        alertDiv.style.color = 'var(--warning-color)';
+      }
     });
     toggleBtn.addEventListener('click', () => {
       const cur = document.documentElement.getAttribute('data-theme');
@@ -176,6 +184,14 @@
     const SUPA_URL      = 'https://dapwpgvnfjcfqqhrpxla.supabase.co';
     const SUPA_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImRhcHdwZ3ZuZmpjZnFxaHJweGxhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDcwNDA4ODgsImV4cCI6MjA2MjYxNjg4OH0.ICC0UsLlzJDNre7rFCeD3k6iVzo6jOJgn3PhABpEMsQ';
     const sb = supabase.createClient(SUPA_URL, SUPA_ANON_KEY);
+
+    // Function to generate a unique session token (UUID v4)
+    function uuidv4() {
+      return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
+        var r = Math.random() * 16 | 0, v = c == 'x' ? r : (r & 0x3 | 0x8);
+        return v.toString(16);
+      });
+    }
 
     // ─── 3) LOGIN FORM HANDLING ─────────────────────────────────────────────────
     document.getElementById('login-form').addEventListener('submit', async (e) => {
@@ -238,7 +254,16 @@
           });
         }
 
-        // 3.e) LOGIN SUCCESS → store session + redirect
+        // 3.e) Generate and save session token
+        const sessionToken = uuidv4();
+        const { error: tokenError } = await sb
+          .from('users')
+          .update({ current_session_token: sessionToken })
+          .eq('id', user.id);
+        if (tokenError) throw tokenError;
+        localStorage.setItem('sessionToken', sessionToken);
+
+        // 3.f) LOGIN SUCCESS → store session + redirect
         sessionStorage.setItem('cbeLoggedIn', 'true');
         sessionStorage.setItem('cbeUserId',   user.id);
         sessionStorage.setItem('cbeUserName', user.name);
