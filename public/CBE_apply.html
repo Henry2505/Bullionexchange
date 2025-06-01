@@ -301,7 +301,7 @@
   </div>
 
   <script>
-    // ─── SUPABASE CONFIG (client-side, only for optional email-availability check) ───────
+    // ─── SUPABASE CONFIG (client-side, only used for optional email-availability check) ───────
     const SUPA_URL = "https://dapwpgvnfjcfqqhrpxla.supabase.co";
     const SUPA_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImRhcHdwZ3ZuZmpjZnFxaHJweGxhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDcwNDA4ODgsImV4cCI6MjA2MjYxNjg4OH0.ICC0UsLlzJDNre7rFCeD3k6iVzo6jOJgn3PhABpEMsQ";
     const sb = supabase.createClient(SUPA_URL, SUPA_ANON_KEY);
@@ -368,7 +368,7 @@
 
       try {
         // ─── (Optional) CLIENT-SIDE EMAIL CHECK ─────────────────────────────────────────
-        // Uncomment if you want to pre-check email existence in Supabase before calling the function:
+        // Uncomment if you want to pre-check email existence in Supabase:
         /*
         const { data: existingUser, error: checkError } = await sb
           .from("users")
@@ -387,7 +387,6 @@
 
         // ─── CALL NETLIFY FUNCTION ────────────────────────────────────────────────────
         const payload = { name, email, password, phone, experience };
-
         const fnResponse = await fetch("/.netlify/functions/send-apply", {
           method: "POST",
           headers: {
@@ -404,11 +403,11 @@
         }
 
         if (!fnResponse.ok) {
-          console.error("Function returned error:", fnResponse.status, fnResult);
+          console.error("Function error:", fnResponse.status, fnResult);
           throw new Error(fnResult?.error || "Server encountered an error.");
         }
 
-        // Success
+        // Success: show whatever message the function returned
         alertDiv.style.color = "var(--success-color)";
         alertDiv.textContent = fnResult.message;
         form.reset();
