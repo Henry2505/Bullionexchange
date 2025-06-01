@@ -170,6 +170,13 @@
       min-height: 100px;
     }
 
+    .optional-note {
+      font-size: 0.85rem;
+      color: var(--text-light);
+      margin-top: -12px;
+      margin-bottom: 12px;
+    }
+
     .terms-container {
       display: flex;
       align-items: center;
@@ -219,13 +226,6 @@
       color: var(--success-color);
     }
 
-    .referral-note {
-      margin-bottom: 15px;
-      font-size: 0.9rem;
-      color: var(--text-light);
-      text-align: center;
-    }
-
     footer {
       margin-top: 30px;
       color: var(--text-muted);
@@ -263,25 +263,31 @@
     <main>
       <section class="apply-card" id="apply-card">
         <h1>Apply to Join CBE</h1>
-        <!-- This <p> will show “Referred by: CODE” if ref parameter is present -->
+
+        <!-- Optional “Referred by” notice (from URL) -->
         <p class="referral-note" id="referral-note"></p>
+
         <form id="apply-form" novalidate>
           <div class="form-group">
             <label for="apply-name">Full Name</label>
             <input type="text" id="apply-name" placeholder="Full Name" required aria-required="true" />
           </div>
+
           <div class="form-group">
             <label for="apply-email">Email Address</label>
             <input type="email" id="apply-email" placeholder="Email Address" required aria-required="true" />
           </div>
+
           <div class="form-group">
             <label for="apply-password">Password</label>
             <input type="password" id="apply-password" placeholder="Password" required aria-required="true" />
           </div>
+
           <div class="form-group">
             <label for="apply-phone">Contact Number</label>
             <input type="tel" id="apply-phone" placeholder="Contact Number" required aria-required="true" />
           </div>
+
           <div class="form-group">
             <label for="apply-message">Trading Experience</label>
             <textarea
@@ -292,6 +298,14 @@
               aria-required="true"
             ></textarea>
           </div>
+
+          <!-- NEW: Optional “Referral Code” input -->
+          <div class="form-group">
+            <label for="apply-referral">Referral Code (optional)</label>
+            <input type="text" id="apply-referral" placeholder="Enter code if you have one" />
+            <p class="optional-note">If you were given a code by an existing member, enter it here. Otherwise leave blank.</p>
+          </div>
+
           <div class="terms-container">
             <input type="checkbox" id="agree-terms" aria-label="Agree to Privacy Policy and Terms & Conditions" />
             <label for="agree-terms">
@@ -301,6 +315,7 @@
               <a href="https://apexincomeoptions.com.ng/terms" target="_blank" rel="noopener">Terms & Conditions</a>
             </label>
           </div>
+
           <button type="submit" id="submit-btn" disabled>Submit Application</button>
           <div id="apply-alert" role="alert"></div>
         </form>
@@ -311,32 +326,32 @@
   </div>
 
   <script>
-    // ─── SUPABASE CONFIG (client-side, only used for optional email-availability check) ───────
+    // ─── SUPABASE CONFIG (optional email-check) ─────────────────────────────────────────
     const SUPA_URL = "https://dapwpgvnfjcfqqhrpxla.supabase.co";
     const SUPA_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImRhcHdwZ3ZuZmpjZnFxaHJweGxhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDcwNDA4ODgsImV4cCI6MjA2MjYxNjg4OH0.ICC0UsLlzJDNre7rFCeD3k6iVzo6jOJgn3PhABpEMsQ";
     const sb = supabase.createClient(SUPA_URL, SUPA_ANON_KEY);
 
-    // ─── HELPER: Parse “ref” from URL ──────────────────────────────────────────────────────────
+    // ─── HELPER: Parse “ref” from URL ────────────────────────────────────────────────────
     function getReferralFromURL() {
       const params = new URLSearchParams(window.location.search);
       return params.get('ref') || null;
     }
 
-    // ─── THEME INITIALIZATION & CARD ANIMATION ──────────────────────────────────────────
+    // ─── THEME & CARD ANIMATION ──────────────────────────────────────────────────────────
     document.addEventListener("DOMContentLoaded", () => {
       const savedTheme = localStorage.getItem("theme") || "dark";
       document.documentElement.setAttribute("data-theme", savedTheme);
       document.getElementById("theme-toggle").textContent = savedTheme === "dark" ? "🌞" : "🌜";
       document.getElementById("apply-card").classList.add("visible");
 
-      // If URL has “ref=CODE”, show notice and store in a variable
-      const refCode = getReferralFromURL();
-      if (refCode) {
-        document.getElementById("referral-note").textContent = "You were referred by: " + refCode;
+      // If URL has “ref=CODE”, show a notice in the “referred by” line
+      const refCodeURL = getReferralFromURL();
+      if (refCodeURL) {
+        document.getElementById("referral-note").textContent = "You were referred by: " + refCodeURL;
       }
     });
 
-    // ─── THEME TOGGLE HANDLER ──────────────────────────────────────────────────────────
+    // ─── THEME TOGGLE HANDLER ───────────────────────────────────────────────────────────
     const toggleBtn = document.getElementById("theme-toggle");
     toggleBtn.addEventListener("click", () => {
       const current = document.documentElement.getAttribute("data-theme");
@@ -346,7 +361,7 @@
       toggleBtn.textContent = next === "dark" ? "🌞" : "🌜";
     });
 
-    // ─── FORM HANDLING ─────────────────────────────────────────────────────────────────
+    // ─── FORM HANDLING ───────────────────────────────────────────────────────────────────
     const form = document.getElementById("apply-form");
     const agree = document.getElementById("agree-terms");
     const submitBtn = document.getElementById("submit-btn");
@@ -367,6 +382,7 @@
       const password = document.getElementById("apply-password").value;
       const phone = document.getElementById("apply-phone").value.trim();
       const experience = document.getElementById("apply-message").value.trim();
+      const manualRef = document.getElementById("apply-referral").value.trim();
 
       // ─── CLIENT-SIDE VALIDATION ─────────────────────────────────────────────────────
       if (!name || !email || !password || !phone || !experience) {
@@ -389,29 +405,20 @@
       submitBtn.textContent = "Submitting…";
 
       try {
-        // Read referral code (if any) from URL
-        const refCode = getReferralFromURL();
+        // Determine which referral code to send: manual entry (if any) or the URL ref
+        const refCodeURL = getReferralFromURL();
+        const referralCodeToUse = manualRef || refCodeURL || null;
 
-        // ─── (Optional) CLIENT-SIDE EMAIL CHECK ─────────────────────────────────────────
-        // Uncomment if you want to pre-check email existence in Supabase:
-        /*
-        const { data: existingUser, error: checkError } = await sb
-          .from("users")
-          .select("id")
-          .eq("email", email)
-          .maybeSingle();
-        if (checkError) throw new Error("Failed to verify email availability.");
-        if (existingUser) {
-          alertDiv.style.color = "var(--warning-color)";
-          alertDiv.textContent = "This email is already registered.";
-          submitBtn.disabled = false;
-          submitBtn.textContent = "Submit Application";
-          return;
-        }
-        */
+        // ─── CALL NETLIFY FUNCTION ─────────────────────────────────────────────────────
+        const payload = {
+          name,
+          email,
+          password,
+          phone,
+          experience,
+          referral_code: referralCodeToUse
+        };
 
-        // ─── CALL NETLIFY FUNCTION ────────────────────────────────────────────────────
-        const payload = { name, email, password, phone, experience, referral_code: refCode };
         const fnResponse = await fetch("/.netlify/functions/send-apply", {
           method: "POST",
           headers: {
