@@ -109,7 +109,7 @@
 
     let currentAffiliate = null;
 
-    // 1) Load current affiliate data from localStorage & refresh from Supabase
+    // 1) Load current affiliate data and refresh from Supabase
     async function loadAffiliateData() {
       const stored = localStorage.getItem('affiliate_user');
       if (!stored) {
@@ -120,7 +120,6 @@
       const parsed = JSON.parse(stored);
       currentAffiliate = parsed;
 
-      // Fetch up-to-date affiliate_user record by ID
       const { data: af, error } = await supabase
         .from('affiliate_user')
         .select('*')
@@ -141,13 +140,13 @@
       document.getElementById('user-email').textContent = af.email;
       document.getElementById('referral-code').textContent = af.referral_code;
 
-      // Load referrals from your “users” table (where Apply writes)
+      // 2) Load referrals (from users table, matching `referral_code`)
       await loadReferrals(af.referral_code);
 
-      // Load earnings
+      // 3) Load earnings
       await loadEarnings(af.id);
 
-      // Fill payment fields
+      // 4) Fill payment fields
       document.getElementById('wallet-btc').value = af.wallet_btc || '';
       document.getElementById('wallet-usdt').value = af.wallet_usdt || '';
       document.getElementById('wallet-eth').value = af.wallet_eth || '';
@@ -157,7 +156,7 @@
       document.getElementById('phone-number').value = af.phone_number || '';
     }
 
-    // 2) Fetch and render referrals list (from “users” instead of “affiliate_user”)
+    // 2) Fetch and render referrals list (from `users.referral_code`)
     async function loadReferrals(referralCode) {
       if (!referralCode) {
         document.getElementById('referral-count').textContent = '0';
@@ -166,11 +165,11 @@
         return;
       }
 
-      // ← UPDATED: Query “users” table (where Apply submissions land)
+      // ← UPDATED: Query “users” table on column `referral_code`
       const { data: referrals, error } = await supabase
         .from('users')
         .select('name,email,created_at')
-        .eq('referred_by', referralCode)
+        .eq('referral_code', referralCode)
         .order('created_at', { ascending: false });
 
       if (error) {
