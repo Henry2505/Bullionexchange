@@ -1,393 +1,220 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Affiliate Dashboard - Apex Income Options</title>
-  <style>
-    /* Reset & base */
-    body, html {
-      margin: 0; padding: 0; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-      background: #f5f7fa;
-      color: #222;
-    }
-    .container {
-      max-width: 1100px;
-      margin: 2rem auto;
-      background: white;
-      border-radius: 8px;
-      padding: 2rem;
-      box-shadow: 0 0 20px rgba(0,0,0,0.1);
-    }
-    h1 {
-      text-align: center;
-      margin-bottom: 1rem;
-      color: #0070f3;
-    }
-    .section {
-      margin-bottom: 2rem;
-      border-bottom: 1px solid #ddd;
-      padding-bottom: 1.5rem;
-    }
-    .section:last-child {
-      border-bottom: none;
-      margin-bottom: 0;
-      padding-bottom: 0;
-    }
-    label {
-      display: block;
-      margin: 0.5rem 0 0.25rem;
-      font-weight: 600;
-    }
-    input, select, textarea {
-      width: 100%;
-      padding: 0.5rem;
-      border-radius: 5px;
-      border: 1px solid #ccc;
-      font-size: 1rem;
-    }
-    button {
-      margin-top: 1rem;
-      background: #0070f3;
-      border: none;
-      color: white;
-      padding: 0.7rem 1.2rem;
-      font-size: 1rem;
-      border-radius: 5px;
-      cursor: pointer;
-      transition: background 0.3s ease;
-    }
-    button:hover {
-      background: #005bb5;
-    }
-    .info-row {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      margin-bottom: 0.75rem;
-    }
-    .copy-btn {
-      background: #00b894;
-      border: none;
-      color: white;
-      padding: 0.3rem 0.7rem;
-      border-radius: 5px;
-      cursor: pointer;
-      font-size: 0.9rem;
-    }
-    .copy-btn:hover {
-      background: #019870;
-    }
-    table {
-      width: 100%;
-      border-collapse: collapse;
-      margin-top: 1rem;
-    }
-    th, td {
-      padding: 0.7rem;
-      border: 1px solid #ddd;
-      text-align: left;
-    }
-    th {
-      background: #0070f3;
-      color: white;
-    }
-    #message {
-      margin-top: 0.5rem;
-      font-weight: bold;
-      color: green;
-    }
-    .flex-row {
-      display: flex;
-      gap: 1rem;
-      flex-wrap: wrap;
-    }
-    .flex-grow {
-      flex: 1;
-    }
-    /* Dark mode toggle */
-    #dark-mode-toggle {
-      cursor: pointer;
-      font-weight: 600;
-      padding: 0.3rem 0.7rem;
-      border-radius: 5px;
-      background: #0070f3;
-      color: white;
-      border: none;
-      float: right;
-    }
-    /* Responsive */
-    @media (max-width: 600px) {
-      .info-row {
-        flex-direction: column;
-        align-items: flex-start;
-      }
-    }
-  </style>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Referral Dashboard</title>
+<style>
+  body { font-family: Arial, sans-serif; max-width: 900px; margin: auto; padding: 1rem; }
+  h2 { margin-top: 2rem; }
+  table { width: 100%; border-collapse: collapse; margin-top: 1rem; }
+  th, td { border: 1px solid #ccc; padding: 0.5rem; text-align: left; }
+  button { padding: 0.5rem 1rem; margin-top: 1rem; }
+  #settings-form input { display: block; margin-bottom: 0.5rem; padding: 0.4rem; width: 300px; }
+</style>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 </head>
 <body>
-  <div class="container">
-    <button id="dark-mode-toggle">Dark Mode</button>
-    <h1>Welcome to Your Affiliate Dashboard</h1>
-
-    <!-- User Info -->
-    <div class="section" id="user-info">
-      <h2>Your Profile</h2>
-      <div class="info-row">
-        <div><strong>Name:</strong> <span id="user-name">Loading...</span></div>
-        <div><strong>Email:</strong> <span id="user-email">Loading...</span></div>
-      </div>
-      <div class="info-row">
-        <div><strong>Referral Code:</strong> <span id="referral-code">Loading...</span></div>
-        <button class="copy-btn" id="copy-code-btn">Copy Code</button>
-      </div>
-      <div class="info-row">
-        <div><strong>People Referred:</strong> <span id="referral-count">Loading...</span></div>
-      </div>
-    </div>
-
-    <!-- Referral List -->
-    <div class="section" id="referrals-list">
-      <h2>Your Referrals</h2>
-      <table>
-        <thead>
-          <tr>
-            <th>Name</th><th>Email</th><th>Joined On</th>
-          </tr>
-        </thead>
-        <tbody id="referral-table-body">
-          <tr><td colspan="3">Loading referrals...</td></tr>
-        </tbody>
-      </table>
-    </div>
-
-    <!-- Profile Settings -->
-    <div class="section" id="profile-settings">
-      <h2>Profile Settings</h2>
-      <form id="settings-form">
-        <label for="wallet-btc">BTC Wallet Address</label>
-        <input type="text" id="wallet-btc" placeholder="Bitcoin wallet address" />
-
-        <label for="wallet-usdt">USDT TRC20 Wallet Address</label>
-        <input type="text" id="wallet-usdt" placeholder="USDT TRC20 wallet address" />
-
-        <label for="wallet-eth">Ethereum Wallet Address</label>
-        <input type="text" id="wallet-eth" placeholder="Ethereum wallet address" />
-
-        <label for="bank-name">Bank Name</label>
-        <input type="text" id="bank-name" placeholder="Your bank name" />
-
-        <label for="bank-account">Bank Account Number</label>
-        <input type="text" id="bank-account" placeholder="Your account number" />
-
-        <label for="bank-account-name">Account Holder Name</label>
-        <input type="text" id="bank-account-name" placeholder="Account holder's full name" />
-
-        <label for="phone-number">Phone Number</label>
-        <input type="tel" id="phone-number" placeholder="Optional phone number" />
-
-        <button type="submit">Save Settings</button>
-        <p id="settings-message"></p>
-      </form>
-    </div>
-
-    <!-- Referral Earnings -->
-    <div class="section" id="earnings-summary">
-      <h2>Your Earnings Summary</h2>
-      <div class="info-row">
-        <div><strong>Total Commissions Earned:</strong> <span id="total-commissions">₦0.00</span></div>
-        <div><strong>Pending Payouts:</strong> <span id="pending-payouts">₦0.00</span></div>
-      </div>
-      <div>
-        <p><em>Payment history and details coming soon.</em></p>
-      </div>
-    </div>
-
-    <!-- Currency Converter -->
-    <div class="section" id="currency-converter">
-      <h2>Currency Converter</h2>
-      <div class="flex-row">
-        <div class="flex-grow">
-          <label for="convert-from">From Currency</label>
-          <select id="convert-from"></select>
-        </div>
-        <div class="flex-grow">
-          <label for="convert-to">To Currency</label>
-          <select id="convert-to"></select>
-        </div>
-      </div>
-      <label for="amount-to-convert">Amount</label>
-      <input type="number" id="amount-to-convert" value="1" min="0" />
-      <button id="convert-btn">Convert</button>
-      <p id="conversion-result"></p>
-    </div>
-
-    <button id="logout-btn" style="background:#e74c3c; margin-top:2rem; width:100%;">Logout</button>
+  <h1>Welcome to Your Referral Dashboard</h1>
+  <div id="user-info">
+    <p><strong>Name:</strong> <span id="user-name"></span></p>
+    <p><strong>Email:</strong> <span id="user-email"></span></p>
+    <p><strong>Your Referral Code:</strong> <span id="referral-code"></span> <button id="copy-code-btn">Copy Code</button></p>
   </div>
 
-  <script>
-    // Dark mode toggle
-    const darkModeToggle = document.getElementById('dark-mode-toggle');
-    darkModeToggle.onclick = () => {
-      document.body.classList.toggle('dark-mode');
-      if(document.body.classList.contains('dark-mode')) {
-        document.body.style.background = '#121212';
-        document.body.style.color = '#eee';
-      } else {
-        document.body.style.background = '#f5f7fa';
-        document.body.style.color = '#222';
-      }
-    };
+  <h2>Your Referrals (<span id="referral-count">0</span>)</h2>
+  <table>
+    <thead>
+      <tr><th>Name</th><th>Email</th><th>Joined On</th></tr>
+    </thead>
+    <tbody id="referral-table-body">
+      <tr><td colspan="3">Loading referrals...</td></tr>
+    </tbody>
+  </table>
 
-    // Dummy user data - replace with your Supabase calls
-    const user = {
-      id: 'user123',
-      name: 'Onah Chukwuemeka Henry',
-      email: 'henrychukwuemeka215@icloud.com',
-      referralCode: 'APEX12345',
-      referredUsers: [
-        {name: 'John Doe', email: 'john@example.com', joinedOn: '2024-04-15'},
-        {name: 'Jane Smith', email: 'jane@example.com', joinedOn: '2024-05-01'},
-      ],
-      commissions: 15000,
-      pendingPayouts: 5000,
-      walletBTC: '',
-      walletUSDT: '',
-      walletETH: '',
-      bankName: '',
-      bankAccount: '',
-      bankAccountName: '',
-      phoneNumber: ''
-    };
+  <h2>Earnings Summary</h2>
+  <p>Total Commissions Earned: ₦<span id="total-commissions">0</span></p>
+  <p>Pending Payouts: ₦<span id="pending-payouts">0</span></p>
 
-    // Fill user info
-    const userNameEl = document.getElementById('user-name');
-    const userEmailEl = document.getElementById('user-email');
-    const referralCodeEl = document.getElementById('referral-code');
-    const referralCountEl = document.getElementById('referral-count');
-    const referralTableBody = document.getElementById('referral-table-body');
-    const totalCommissionsEl = document.getElementById('total-commissions');
-    const pendingPayoutsEl = document.getElementById('pending-payouts');
+  <h2>Update Your Payment Details</h2>
+  <form id="settings-form">
+    <input type="text" id="wallet-btc" placeholder="BTC Wallet Address" />
+    <input type="text" id="wallet-usdt" placeholder="USDT Wallet Address" />
+    <input type="text" id="wallet-eth" placeholder="ETH Wallet Address" />
+    <input type="text" id="bank-name" placeholder="Bank Name" />
+    <input type="text" id="bank-account" placeholder="Bank Account Number" />
+    <input type="text" id="bank-account-name" placeholder="Bank Account Name" />
+    <input type="text" id="phone-number" placeholder="Phone Number" />
+    <button type="submit">Save Details</button>
+    <p id="settings-message" style="color:green;"></p>
+  </form>
 
-    function loadUserData() {
-      userNameEl.textContent = user.name;
-      userEmailEl.textContent = user.email;
-      referralCodeEl.textContent = user.referralCode;
-      referralCountEl.textContent = user.referredUsers.length;
+  <button id="logout-btn" style="background:#e74c3c; color:#fff;">Logout</button>
 
-      // Render referrals list
-      if(user.referredUsers.length === 0) {
-        referralTableBody.innerHTML = `<tr><td colspan="3">No referrals yet.</td></tr>`;
-      } else {
-        referralTableBody.innerHTML = '';
-        user.referredUsers.forEach(ref => {
-          const tr = document.createElement('tr');
-          tr.innerHTML = `<td>${ref.name}</td><td>${ref.email}</td><td>${new Date(ref.joinedOn).toLocaleDateString()}</td>`;
-          referralTableBody.appendChild(tr);
-        });
-      }
+<script>
+  // Initialize Supabase - replace with your own project URL and anon key
+  const supabaseUrl = 'https://YOUR_SUPABASE_PROJECT_URL.supabase.co';
+  const supabaseAnonKey = 'YOUR_SUPABASE_ANON_KEY';
+  const supabase = supabase.createClient(supabaseUrl, supabaseAnonKey);
 
-      // Earnings
-      totalCommissionsEl.textContent = `₦${user.commissions.toLocaleString()}`;
-      pendingPayoutsEl.textContent = `₦${user.pendingPayouts.toLocaleString()}`;
+  let currentUser = null;
 
-      // Fill profile settings inputs
-      document.getElementById('wallet-btc').value = user.walletBTC;
-      document.getElementById('wallet-usdt').value = user.walletUSDT;
-      document.getElementById('wallet-eth').value = user.walletETH;
-      document.getElementById('bank-name').value = user.bankName;
-      document.getElementById('bank-account').value = user.bankAccount;
-      document.getElementById('bank-account-name').value = user.bankAccountName;
-      document.getElementById('phone-number').value = user.phoneNumber;
-    }
-
-    // Copy referral code to clipboard
-    document.getElementById('copy-code-btn').addEventListener('click', () => {
-      navigator.clipboard.writeText(user.referralCode)
-        .then(() => alert('Referral code copied to clipboard!'))
-        .catch(() => alert('Failed to copy referral code.'));
-    });
-
-    // Save profile settings (simulate API save)
-    document.getElementById('settings-form').addEventListener('submit', e => {
-      e.preventDefault();
-      user.walletBTC = document.getElementById('wallet-btc').value.trim();
-      user.walletUSDT = document.getElementById('wallet-usdt').value.trim();
-      user.walletETH = document.getElementById('wallet-eth').value.trim();
-      user.bankName = document.getElementById('bank-name').value.trim();
-      user.bankAccount = document.getElementById('bank-account').value.trim();
-      user.bankAccountName = document.getElementById('bank-account-name').value.trim();
-      user.phoneNumber = document.getElementById('phone-number').value.trim();
-
-      // TODO: Call API or Supabase update here...
-
-      const msg = document.getElementById('settings-message');
-      msg.textContent = 'Settings saved successfully!';
-      setTimeout(() => msg.textContent = '', 3000);
-    });
-
-    // Currency converter setup
-    const currencyApi = 'https://open.er-api.com/v6/latest/USD'; // Free API example
-    let rates = {};
-    const fromSelect = document.getElementById('convert-from');
-    const toSelect = document.getElementById('convert-to');
-    const amountInput = document.getElementById('amount-to-convert');
-    const resultEl = document.getElementById('conversion-result');
-
-    async function loadRates() {
-      try {
-        const res = await fetch(currencyApi);
-        const data = await res.json();
-        rates = data.rates;
-        populateCurrencySelects();
-      } catch (e) {
-        resultEl.textContent = 'Failed to load currency rates.';
-      }
-    }
-    function populateCurrencySelects() {
-      const currencies = Object.keys(rates).sort();
-      currencies.forEach(cur => {
-        const option1 = document.createElement('option');
-        option1.value = cur;
-        option1.textContent = cur;
-        fromSelect.appendChild(option1);
-        const option2 = document.createElement('option');
-        option2.value = cur;
-        option2.textContent = cur;
-        toSelect.appendChild(option2);
-      });
-      fromSelect.value = 'NGN';
-      toSelect.value = 'USD';
-    }
-    document.getElementById('convert-btn').addEventListener('click', () => {
-      const from = fromSelect.value;
-      const to = toSelect.value;
-      const amount = parseFloat(amountInput.value);
-      if(isNaN(amount) || amount <= 0) {
-        resultEl.textContent = 'Please enter a valid amount.';
-        return;
-      }
-      if(!rates[from] || !rates[to]) {
-        resultEl.textContent = 'Currency rates not available.';
-        return;
-      }
-      // Convert amount from 'from' to USD, then to 'to'
-      const amountInUSD = amount / rates[from];
-      const converted = amountInUSD * rates[to];
-      resultEl.textContent = `${amount} ${from} = ${converted.toFixed(2)} ${to}`;
-    });
-
-    // Logout button
-    document.getElementById('logout-btn').addEventListener('click', () => {
-      // TODO: Implement logout logic (e.g., Supabase signOut)
-      alert('You have been logged out.');
-      // Redirect to login page:
+  async function loadUserData() {
+    const { data: { user }, error } = await supabase.auth.getUser();
+    if(error || !user) {
+      alert('You must be logged in to view this page.');
       window.location.href = '/login.html';
-    });
+      return;
+    }
+    currentUser = user;
 
-    // Initial load
+    // Fetch full user profile from 'users' table by user id (auth id)
+    const { data: profile, error: profileError } = await supabase
+      .from('users')
+      .select('*')
+      .eq('id', user.id)
+      .single();
+
+    if(profileError || !profile) {
+      alert('Failed to load user profile.');
+      return;
+    }
+
+    document.getElementById('user-name').textContent = profile.full_name || 'No name set';
+    document.getElementById('user-email').textContent = profile.email;
+    document.getElementById('referral-code').textContent = profile.referral_code || 'No code';
+
+    // Load referral list
+    await loadReferrals(profile.referral_code);
+
+    // Load earnings
+    await loadEarnings(profile.id);
+
+    // Fill payment details fields
+    document.getElementById('wallet-btc').value = profile.wallet_btc || '';
+    document.getElementById('wallet-usdt').value = profile.wallet_usdt || '';
+    document.getElementById('wallet-eth').value = profile.wallet_eth || '';
+    document.getElementById('bank-name').value = profile.bank_name || '';
+    document.getElementById('bank-account').value = profile.bank_account || '';
+    document.getElementById('bank-account-name').value = profile.bank_account_name || '';
+    document.getElementById('phone-number').value = profile.phone_number || '';
+  }
+
+  async function loadReferrals(referralCode) {
+    if(!referralCode) {
+      document.getElementById('referral-table-body').innerHTML = '<tr><td colspan="3">You have no referral code assigned yet.</td></tr>';
+      return;
+    }
+    // Fetch users where referred_by = referralCode
+    const { data: referrals, error } = await supabase
+      .from('users')
+      .select('full_name,email,created_at')
+      .eq('referred_by', referralCode)
+      .order('created_at', { ascending: false });
+
+    if(error) {
+      document.getElementById('referral-table-body').innerHTML = `<tr><td colspan="3">Failed to load referrals.</td></tr>`;
+      return;
+    }
+
+    document.getElementById('referral-count').textContent = referrals.length;
+
+    if(referrals.length === 0) {
+      document.getElementById('referral-table-body').innerHTML = `<tr><td colspan="3">No referrals yet.</td></tr>`;
+      return;
+    }
+
+    const tbody = document.getElementById('referral-table-body');
+    tbody.innerHTML = '';
+    referrals.forEach(r => {
+      const tr = document.createElement('tr');
+      tr.innerHTML = `
+        <td>${r.full_name || '-'}</td>
+        <td>${r.email}</td>
+        <td>${new Date(r.created_at).toLocaleDateString()}</td>
+      `;
+      tbody.appendChild(tr);
+    });
+  }
+
+  async function loadEarnings(userId) {
+    // Fetch sum of earnings for this user where status = 'paid'
+    const { data: paidEarnings, error: paidError } = await supabase
+      .from('earnings')
+      .select('amount')
+      .eq('user_id', userId)
+      .eq('status', 'paid');
+
+    // Fetch sum of earnings pending payout
+    const { data: pendingEarnings, error: pendingError } = await supabase
+      .from('earnings')
+      .select('amount')
+      .eq('user_id', userId)
+      .eq('status', 'pending');
+
+    if(paidError || pendingError) {
+      document.getElementById('total-commissions').textContent = 'Error';
+      document.getElementById('pending-payouts').textContent = 'Error';
+      return;
+    }
+
+    const totalPaid = paidEarnings.reduce((acc, curr) => acc + Number(curr.amount), 0);
+    const totalPending = pendingEarnings.reduce((acc, curr) => acc + Number(curr.amount), 0);
+
+    document.getElementById('total-commissions').textContent = totalPaid.toLocaleString();
+    document.getElementById('pending-payouts').textContent = totalPending.toLocaleString();
+  }
+
+  // Save payment details handler
+  document.getElementById('settings-form').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const updates = {
+      wallet_btc: document.getElementById('wallet-btc').value.trim(),
+      wallet_usdt: document.getElementById('wallet-usdt').value.trim(),
+      wallet_eth: document.getElementById('wallet-eth').value.trim(),
+      bank_name: document.getElementById('bank-name').value.trim(),
+      bank_account: document.getElementById('bank-account').value.trim(),
+      bank_account_name: document.getElementById('bank-account-name').value.trim(),
+      phone_number: document.getElementById('phone-number').value.trim(),
+      updated_at: new Date().toISOString(),
+    };
+
+    const { error } = await supabase
+      .from('users')
+      .update(updates)
+      .eq('id', currentUser.id);
+
+    const msgEl = document.getElementById('settings-message');
+    if(error) {
+      msgEl.style.color = 'red';
+      msgEl.textContent = 'Failed to save details.';
+    } else {
+      msgEl.style.color = 'green';
+      msgEl.textContent = 'Details saved successfully.';
+    }
+    setTimeout(() => { msgEl.textContent = ''; }, 3000);
+  });
+
+  // Copy referral code button
+  document.getElementById('copy-code-btn').addEventListener('click', () => {
+    const code = document.getElementById('referral-code').textContent;
+    navigator.clipboard.writeText(code).then(() => {
+      alert('Referral code copied to clipboard!');
+    }).catch(() => {
+      alert('Failed to copy referral code.');
+    });
+  });
+
+  // Logout
+  document.getElementById('logout-btn').addEventListener('click', async () => {
+    await supabase.auth.signOut();
+    window.location.href = '/login.html';
+  });
+
+  // On page load
+  window.onload = () => {
     loadUserData();
-    loadRates();
-  </script>
+  };
+</script>
 </body>
 </html>
