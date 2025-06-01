@@ -1,6 +1,6 @@
 import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm';
 
-// Replace with your actual Supabase URL & anon key
+// Your exact Supabase credentials:
 const SUPABASE_URL = 'https://dapwpgvnfjcfqqhrpxla.supabase.co';
 const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImRhcHdwZ3ZuZmpjZnFxaHJweGxhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDcwNDA4ODgsImV4cCI6MjA2MjYxNjg4OH0.ICC0UsLlzJDNre7rFCeD3k6iVzo6jOJgn3PhABpEMsQ';
 
@@ -28,13 +28,13 @@ form.addEventListener('submit', async (e) => {
     return;
   }
 
-  // Hash password with SHA-256
+  // Hash the password using SHA-256
   const encoder = new TextEncoder();
   const data = encoder.encode(password);
   const hashBuffer = await crypto.subtle.digest('SHA-256', data);
   const password_hash = btoa(String.fromCharCode(...new Uint8Array(hashBuffer)));
 
-  // Insert into affiliate_user
+  // Insert new affiliate
   const { error } = await supabase
     .from('affiliate_user')
     .insert([{ name, email, password_hash, referred_by }]);
