@@ -128,7 +128,7 @@
       width: 100%;
       background: linear-gradient(135deg, var(--glass), rgba(255, 215, 0, 0.08));
       backdrop-filter: blur(12px);
-      padding: 1rem 2vw;
+      padding: 0.8rem 2vw;
       box-shadow: 0 4px 20px var(--shadow);
       z-index: 1000;
       display: flex;
@@ -170,6 +170,30 @@
       color: #000;
       transform: translateY(-2px);
       box-shadow: 0 4px 15px rgba(255, 215, 0, 0.3);
+    }
+    nav .nav-links .bell-btn {
+      background: var(--glass);
+      border: 1px solid rgba(255, 215, 0, 0.2);
+      padding: 8px 16px;
+      border-radius: 8px;
+      font-size: 1.5rem;
+      color: var(--gold);
+      cursor: pointer;
+      transition: all 0.3s ease;
+    }
+    nav .nav-links .bell-btn:hover {
+      background: linear-gradient(45deg, var(--gold), var(--gold-dark));
+      color: #000;
+      transform: translateY(-2px);
+      box-shadow: 0 4px 15px rgba(255, 215, 0, 0.3);
+    }
+    nav .nav-links .bell-btn.active {
+      animation: ring 0.5s ease-in-out 2;
+    }
+    @keyframes ring {
+      0%, 100% { transform: rotate(0); }
+      25% { transform: rotate(15deg); }
+      75% { transform: rotate(-15deg); }
     }
     nav .theme-toggle {
       background: none;
@@ -446,7 +470,7 @@
       #calendar-widget th, #calendar-widget td { font-size: 0.8rem; padding: 0.8rem; }
       html::before, html::after { font-size: 1.5rem; }
       .container::before, .container::after { font-size: 1.2rem; }
-      nav { padding: 1rem 4vw; }
+      nav { padding: 0.8rem 4vw; }
     }
     @media (max-width: 576px) {
       nav .logo { font-size: 1.2rem; padding: 6px 10px; }
@@ -479,6 +503,7 @@
       color: #000 !important;
     }
   </style>
+  <audio id="notificationSound" src="alert.mp3" preload="auto"></audio>
 </head>
 <body>
 
@@ -488,6 +513,7 @@
     <div class="nav-links">
       <button onclick="loadLatestSignal()">Refresh Signal</button>
       <button onclick="logout()">Logout</button>
+      <button id="notificationBell" class="nav-links bell-btn" title="New Signal Notification">🔔</button>
       <button class="theme-toggle" onclick="toggleTheme()" title="Toggle Theme">🌞</button>
     </div>
   </nav>
@@ -728,15 +754,28 @@
       loadGoldNews();
       loadEconCalendar();
 
-      // Watch for new rows in "signals". On INSERT → reload & call our function.
+      // Watch for new rows in "signals". On INSERT → reload, play sound, animate bell & call our function.
       supabase
         .from('signals')
         .on('INSERT', async payload => {
           // 1) Show the newest signal on the page
           loadLatestSignal();
 
+          // 2) Play notification sound
+          const notificationSound = document.getElementById('notificationSound');
+          if (notificationSound) {
+            notificationSound.play().catch(err => console.error('Audio playback failed:', err));
+          }
+
+          // 3) Animate the bell
+          const bell = document.getElementById('notificationBell');
+          if (bell) {
+            bell.classList.add('active');
+            setTimeout(() => bell.classList.remove('active'), 1000); // Remove animation after 1s
+          }
+
           try {
-            // 2) Lookup current user’s email & name
+            // 4) Lookup current user’s email & name
             const currentUserId = sessionStorage.getItem('cbeUserId');
             if (!currentUserId) return;
 
@@ -748,7 +787,7 @@
 
             if (userErr || !userData) return;
 
-            // 3) Call our Netlify Function to notify user to log in
+            // 5) Call our Netlify Function to notify user to log in
             const payloadBody = {
               email: userData.email,
               name: userData.name
