@@ -2,79 +2,72 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Affiliate Registration – Apex Income Options</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Affiliate Login – Apex Income Options</title>
   <style>
-    /* Minimal styling: you can adapt to your theme */
-    body { font-family: Arial, sans-serif; background: #f4f4f4; margin: 0; padding: 0; display: flex; align-items: center; justify-content: center; height: 100vh; }
-    .container { background: #fff; padding: 2rem; border-radius: 8px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); width: 380px; }
-    input, button { width: 100%; margin: 0.5rem 0; padding: 0.75rem; border: 1px solid #ccc; border-radius: 4px; }
-    button { background: #0070f3; color: #fff; border: none; cursor: pointer; }
-    button:disabled { background: #888; cursor: not-allowed; }
-    .message { margin-top: 1rem; font-size: 0.9rem; }
+    body { font-family: Arial, sans-serif; background: #f1f1f1; padding: 2rem; }
+    .login-box { max-width: 400px; margin: auto; background: #fff; padding: 2rem; border-radius: 8px; box-shadow: 0 0 10px rgba(0,0,0,0.1); }
+    h2 { text-align: center; color: #0070f3; }
+    input, button {
+      width: 100%; padding: 10px; margin-top: 1rem;
+      border-radius: 4px; border: 1px solid #ccc;
+      font-size: 16px;
+    }
+    button {
+      background: #0070f3; color: white; border: none; cursor: pointer;
+    }
+    button:hover { background: #005bbb; }
   </style>
 </head>
 <body>
-
-  <div class="container">
-    <h2>Join Our Affiliate Program</h2>
-    <form id="affiliate-form">
-      <label for="name">Full Name</label>
-      <input type="text" id="name" required />
-
-      <label for="email">Email Address</label>
-      <input type="email" id="email" required />
-
-      <label for="ref-code">Preferred Referral Code (Optional)</label>
-      <input type="text" id="ref-code" placeholder="e.g. mycode123" />
-
-      <label for="wallet">Wallet Address (₦ Payouts)</label>
-      <input type="text" id="wallet" required placeholder="e.g. Bank ℅ (account #) or e-wallet" />
-
-      <label for="password">Password</label>
-      <input type="password" id="password" required />
-
-      <button type="submit" id="submit-btn">Register</button>
-    </form>
-    <div class="message" id="message"></div>
+  <div class="login-box">
+    <h2>Affiliate Login</h2>
+    <input type="email" id="email" placeholder="Enter your registered email" required />
+    <input type="password" id="password" placeholder="Enter password" required />
+    <button id="login-btn">Login</button>
   </div>
 
-  <!-- Import our shared affiliate.js -->
-  <script type="module" src="/js/affiliate.js"></script>
   <script type="module">
-    import { registerAffiliate, generateReferralCode } from '/js/affiliate.js';
+    import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm';
 
-    const form = document.getElementById('affiliate-form');
-    const messageDiv = document.getElementById('message');
-    const submitBtn = document.getElementById('submit-btn');
+    const supabase = createClient(
+      'https://dapwpgvnfjcfqqhrpxla.supabase.co',
+      'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImRhcHdwZ3ZuZmpjZnFxaHJweGxhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDcwNDA4ODgsImV4cCI6MjA2MjYxNjg4OH0.ICC0UsLlzJDNre7rFCeD3k6iVzo6jOJgn3PhABpEMsQ'
+    );
 
-    form.addEventListener('submit', async (e) => {
-      e.preventDefault();
-      submitBtn.disabled = true;
-      messageDiv.textContent = 'Registering...';
+    document.getElementById('login-btn').addEventListener('click', async () => {
+      const email = document.getElementById('email').value.trim();
+      const password = document.getElementById('password').value;
 
-      try {
-        const name = document.getElementById('name').value.trim();
-        const email = document.getElementById('email').value.trim();
-        let referral_code = document.getElementById('ref-code').value.trim();
-        if (!referral_code) {
-          referral_code = generateReferralCode(8);
-        }
-        const wallet_address = document.getElementById('wallet').value.trim();
-        const password = document.getElementById('password').value;
-
-        await registerAffiliate({ name, email, referral_code, wallet_address, password });
-        messageDiv.style.color = 'green';
-        messageDiv.textContent = `Registered! Your referral code is "${referral_code}". Pending admin approval.`;
-        form.reset();
-
-      } catch (err) {
-        console.error(err);
-        messageDiv.style.color = 'red';
-        messageDiv.textContent = `Error: ${err.message}`;
-      } finally {
-        submitBtn.disabled = false;
+      if (!email || !password) {
+        alert('Please enter both email and password.');
+        return;
       }
+
+      // Step 1: Try to sign in
+      const { data: authData, error: signInError } = await supabase.auth.signInWithPassword({ email, password });
+
+      if (signInError || !authData.session) {
+        alert('Login failed. Email not found or incorrect password. Redirecting to register...');
+        setTimeout(() => window.location.href = '/affiliate-register.html', 2000);
+        return;
+      }
+
+      // Step 2: Check if user exists in affiliates
+      const { data: affData, error: affError } = await supabase
+        .from('affiliates')
+        .select('id')
+        .eq('user_email', email)
+        .single();
+
+      if (affError || !affData) {
+        alert('This email is not yet registered as an affiliate. Redirecting...');
+        setTimeout(() => window.location.href = '/affiliate-register.html', 2000);
+        return;
+      }
+
+      // Success: Redirect to dashboard
+      window.location.href = '/affiliate-dashboard.html';
     });
   </script>
 </body>
