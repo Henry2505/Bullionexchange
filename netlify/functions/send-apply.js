@@ -1,23 +1,8 @@
 // netlify/functions/send-apply.js
 
-/**
- * Netlify Function: send-apply
- *
- * Inserts a new user into Supabase “users” table and then sends a Brevo email
- * using template ID 1 (with any required template parameters).
- *
- * Environment Variables (set these in Netlify site settings → Build & deploy → Environment variables):
- *   SUPABASE_URL       → e.g. "https://dapwpgvnfjcfqqhrpxla.supabase.co"
- *   SUPABASE_ANON_KEY  → your Supabase anon key
- *   BREVO_API_KEY      → your Brevo transactional API key (xkeysib-...)
- */
-
 const { createClient } = require("@supabase/supabase-js");
 
-// Node 18+ on Netlify includes global fetch(), so no extra import is needed.
-
 exports.handler = async (event) => {
-  // Only accept POST requests
   if (event.httpMethod !== "POST") {
     return {
       statusCode: 405,
@@ -26,7 +11,6 @@ exports.handler = async (event) => {
     };
   }
 
-  // 1) Parse the incoming JSON body
   let data;
   try {
     data = JSON.parse(event.body);
@@ -38,8 +22,6 @@ exports.handler = async (event) => {
   }
 
   const { name, email, password, phone, experience } = data;
-
-  // 2) Basic validation
   if (!name || !email || !password || !phone || !experience) {
     return {
       statusCode: 400,
@@ -47,7 +29,6 @@ exports.handler = async (event) => {
     };
   }
 
-  // 3) Initialize Supabase client
   const SUPABASE_URL      = process.env.SUPABASE_URL;
   const SUPABASE_ANON_KEY = process.env.SUPABASE_ANON_KEY;
   if (!SUPABASE_URL || !SUPABASE_ANON_KEY) {
@@ -60,7 +41,6 @@ exports.handler = async (event) => {
   const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
   try {
-    // 4) Check if this email already exists in "users"
     const { data: existingUser, error: checkError } = await supabase
       .from("users")
       .select("id")
@@ -81,7 +61,6 @@ exports.handler = async (event) => {
       };
     }
 
-    // 5) Insert the new user row
     const { error: insertError } = await supabase
       .from("users")
       .insert([
@@ -96,7 +75,6 @@ exports.handler = async (event) => {
       };
     }
 
-    // 6) Build the Brevo email payload using templateId: 1
     const BREVO_API_KEY = process.env.BREVO_API_KEY;
     if (!BREVO_API_KEY) {
       console.error("Missing BREVO_API_KEY environment variable");
@@ -106,13 +84,10 @@ exports.handler = async (event) => {
       };
     }
 
-    // Make sure this sender is verified in your Brevo dashboard
     const BREVO_SENDER_NAME  = "Chukwuemeka Bullion Exchange";
     const BREVO_SENDER_EMAIL = "noreply@apexincomeoptions.com.ng";
-    const BREVO_TEMPLATE_ID  = 1; // ← changed to template ID 1
+    const BREVO_TEMPLATE_ID  = 1;
 
-    // If your Brevo template uses variables like {{ params.NAME }} or {{ params.EMAIL }},
-    // supply them here in the params object exactly as your template expects.
     const brevoPayload = {
       sender: {
         name: BREVO_SENDER_NAME,
@@ -125,17 +100,14 @@ exports.handler = async (event) => {
         },
       ],
       templateId: BREVO_TEMPLATE_ID,
-      // No "subject" or "htmlContent" here—letting Brevo use your template’s subject/body
       params: {
         NAME: name,
         EMAIL: email,
         PHONE: phone,
         EXPERIENCE: experience
-        // Add any additional params your template references, e.g. LINK, etc.
       },
     };
 
-    // 7) Call Brevo’s SMTP endpoint to send the templated email
     const brevoResponse = await fetch("https://api.brevo.com/v3/smtp/email", {
       method: "POST",
       headers: {
@@ -145,7 +117,6 @@ exports.handler = async (event) => {
       body: JSON.stringify(brevoPayload),
     });
 
-    // 8) Attempt to parse the JSON response (in case of error details)
     let brevoResult = null;
     try {
       brevoResult = await brevoResponse.json();
@@ -162,11 +133,11 @@ exports.handler = async (event) => {
       };
     }
 
-    // 9) Return success to the client
+    // ←  Only this part changed:
     return {
       statusCode: 200,
       body: JSON.stringify({
-        message: `Application submitted successfully. Email queued using template ID ${BREVO_TEMPLATE_ID}.`
+        message: "Registration successful! Your application is pending approval."
       }),
     };
   } catch (err) {
