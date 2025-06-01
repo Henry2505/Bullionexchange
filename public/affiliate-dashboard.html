@@ -19,7 +19,9 @@
     th, td { padding: 0.5rem; border: 1px solid #ddd; text-align: left; }
     th { background: #0070f3; color: white; }
     #logout-btn { background: #e74c3c; color: white; width: 100%; margin-top: 1rem; }
-    #settings-message { margin-top: 0.5rem; font-weight: bold; color: green; }
+    #settings-message { margin-top: 0.5rem; font-weight: bold; }
+    #settings-message.error { color: red; }
+    #settings-message.success { color: green; }
   </style>
 </head>
 <body>
@@ -99,7 +101,7 @@
   <script type="module">
     import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm';
 
-    // Your exact Supabase credentials:
+    // Your Supabase credentials (unchanged):
     const SUPABASE_URL = 'https://dapwpgvnfjcfqqhrpxla.supabase.co';
     const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImRhcHdwZ3ZuZmpjZnFxaHJweGxhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDcwNDA4ODgsImV4cCI6MjA2MjYxNjg4OH0.ICC0UsLlzJDNre7rFCeD3k6iVzo6jOJgn3PhABpEMsQ';
 
@@ -219,6 +221,10 @@
     // 4) Save profile (wallet/bank/phone) changes
     document.getElementById('settings-form').addEventListener('submit', async (e) => {
       e.preventDefault();
+      const settingsMsg = document.getElementById('settings-message');
+      settingsMsg.textContent = '';
+      settingsMsg.className = '';
+
       const updates = {
         wallet_btc: document.getElementById('wallet-btc').value.trim(),
         wallet_usdt: document.getElementById('wallet-usdt').value.trim(),
@@ -226,8 +232,8 @@
         bank_name: document.getElementById('bank-name').value.trim(),
         bank_account: document.getElementById('bank-account').value.trim(),
         bank_account_name: document.getElementById('bank-account-name').value.trim(),
-        phone_number: document.getElementById('phone-number').value.trim(),
-        updated_at: new Date().toISOString(),
+        phone_number: document.getElementById('phone-number').value.trim()
+        // removed updated_at, since the table doesn’t have that column
       };
 
       const { error } = await supabase
@@ -235,15 +241,29 @@
         .update(updates)
         .eq('id', currentAffiliate.id);
 
-      const msgEl = document.getElementById('settings-message');
       if (error) {
-        msgEl.style.color = 'red';
-        msgEl.textContent = 'Failed to save details.';
+        settingsMsg.classList.add('error');
+        settingsMsg.textContent = 'Failed to save details: ' + error.message;
       } else {
-        msgEl.style.color = 'green';
-        msgEl.textContent = 'Details saved successfully.';
+        settingsMsg.classList.add('success');
+        settingsMsg.textContent = 'Details saved successfully.';
       }
-      setTimeout(() => { msgEl.textContent = ''; }, 3000);
+
+      // Refresh localStorage data to keep dashboard in sync
+      if (!error) {
+        const { data: afFresh } = await supabase
+          .from('affiliate_user')
+          .select('*')
+          .eq('id', currentAffiliate.id)
+          .single();
+        if (afFresh) {
+          currentAffiliate = afFresh;
+          localStorage.setItem('affiliate_user', JSON.stringify(afFresh));
+        }
+      }
+
+      // Clear the message after 3 seconds
+      setTimeout(() => { settingsMsg.textContent = ''; settingsMsg.className = ''; }, 3000);
     });
 
     // 5) Copy referral code
