@@ -1,0 +1,374 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Payment Options – CBE</title>
+  <meta name="description" content="Choose and pay for your CBE VIP plan via card, bank, or crypto.">
+  <meta name="keywords" content="CBE, payment, forex signals, vip subscription">
+
+  <!-- Theme CSS -->
+  <link rel="stylesheet" href="theme.css"/>
+
+  <!-- Google Fonts -->
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700&family=Roboto:wght@300;400;700&display=swap" rel="stylesheet"/>
+
+  <!-- FontAwesome -->
+  <script src="https://kit.fontawesome.com/your-kit-code.js" crossorigin="anonymous"></script>
+
+  <style>
+    /* RESET & BASE */
+    * { margin:0; padding:0; box-sizing:border-box; }
+    html { scroll-behavior:smooth; }
+    body {
+      font-family:'Roboto', sans-serif;
+      color: var(--text);
+      background: var(--bg);
+      overflow-x:hidden;
+      line-height:1.6;
+    }
+    a { color: var(--gold); text-decoration:none; }
+    a:hover { text-decoration:underline; }
+
+    /* LOGO & THEME TOGGLE */
+    .logo { position: fixed; top:20px; left:20px; z-index:10; }
+    .logo img { width:160px; cursor:pointer; transition:transform .3s; }
+    .logo img:hover { transform:scale(1.05); }
+
+    #theme-toggle {
+      position: fixed; top:20px; right:20px; z-index:10;
+      background:none; border:none; font-size:1.5rem;
+      color: var(--text); cursor:pointer; transition:transform .3s;
+    }
+    #theme-toggle:hover { transform:scale(1.2); }
+
+    /* SLIDE-IN ANIMATION */
+    .slide-in {
+      opacity:0; transform:translateY(30px);
+      transition:opacity .7s ease-out, transform .7s ease-out;
+    }
+    .slide-in.visible {
+      opacity:1; transform:translateY(0);
+    }
+
+    /* MAIN CONTAINER */
+    .container { max-width:700px; margin:0 auto; padding:140px 20px 60px; }
+    @media(max-width:768px){
+      .container {padding:120px 15px 40px;}
+    }
+    h1 {
+      font-family:'Playfair Display', serif;
+      font-size:2.8rem; text-align:center;
+      color: var(--gold); margin-bottom:10px;
+    }
+    .divider {
+      width:80px; height:3px; background:var(--gold);
+      margin:0 auto 30px; box-shadow:0 0 10px var(--gold-dark);
+    }
+
+    /* DETAILS PANEL */
+    .details-panel {
+      background: var(--glass-bg); backdrop-filter: blur(8px);
+      padding:20px; border-radius:12px;
+      box-shadow:0 4px 30px rgba(0,0,0,0.5);
+      margin-bottom:30px;
+    }
+    .details-panel ul { list-style:none; padding:0; margin:0; }
+    .details-panel li {
+      display:flex; justify-content:space-between;
+      padding:8px 0; border-bottom:1px solid rgba(255,255,255,0.1);
+    }
+    .details-panel li:last-child { border: none; }
+
+    /* BUTTONS */
+    .btn-pay, .btn-crypto {
+      display:block; width:100%; padding:14px; margin:15px 0;
+      border:none; border-radius:30px;
+      font-family:'Playfair Display', serif;
+      font-size:1.1rem; cursor:pointer;
+      transition:background .3s, box-shadow .3s;
+    }
+    .btn-pay {
+      background: var(--gold); color:#000;
+      box-shadow:0 0 10px var(--gold);
+    }
+    .btn-pay:hover { background:#e6bd00; }
+    .btn-crypto {
+      background: var(--glass-bg); color:var(--text);
+      border:2px solid var(--gold);
+      box-shadow:0 0 8px var(--gold);
+    }
+    .btn-crypto:hover { box-shadow:0 0 15px var(--gold); }
+
+    /* CRYPTO SECTION */
+    .crypto-section { display:none; margin-top:20px; }
+    .crypto-grid {
+      display:grid;
+      grid-template-columns:repeat(auto-fit,minmax(240px,1fr));
+      gap:15px;
+    }
+    .crypto-card {
+      background: var(--glass-bg); backdrop-filter: blur(6px);
+      padding:15px; border-radius:10px;
+      box-shadow:0 4px 20px rgba(0,0,0,0.5);
+      display:flex; flex-direction:column; justify-content:space-between;
+    }
+    .crypto-card .label {
+      font-weight:500; color: var(--text-muted); margin-bottom:8px;
+    }
+    .crypto-card .address {
+      font-family:monospace; word-break:break-all;
+      color: var(--text); margin-bottom:12px;
+    }
+    .copy-btn {
+      align-self:flex-end; padding:6px 12px;
+      background: var(--gold); color:#000;
+      border:none; border-radius:20px;
+      font-size:.9rem; cursor:pointer;
+      box-shadow:0 0 8px var(--gold);
+      transition:transform .3s;
+    }
+    .copy-btn:hover { transform:scale(1.05); }
+
+    /* EMAIL + PROOF FORM */
+    .form-wrapper {
+      background: var(--glass-bg); backdrop-filter: blur(8px);
+      padding:20px; border-radius:12px;
+      box-shadow:0 4px 30px rgba(0,0,0,0.5);
+      margin-top:30px; display:none;
+    }
+    .form-wrapper label {
+      display:block; margin-bottom:6px; color: var(--text-muted);
+    }
+    .form-wrapper input[type="file"],
+    .form-wrapper input[type="email"] {
+      width:100%; padding:10px; border:none; border-radius:8px;
+      background:rgba(255,255,255,0.1); color:var(--text);
+      margin-bottom:12px;
+    }
+    .form-wrapper button {
+      width:100%; padding:12px;
+      border:none; border-radius:30px;
+      background: var(--gold); color:#000;
+      font-weight:600; font-size:1rem;
+      box-shadow:0 0 10px var(--gold);
+      cursor:pointer; transition:background .3s, transform .3s;
+    }
+    .form-wrapper button:hover {
+      background:#e6bd00; transform:scale(1.02);
+    }
+    #successMessage {
+      display:none; text-align:center; margin-top:1rem;
+      color:var(--gold); font-weight:600;
+    }
+
+    /* BACK LINK & FOOTER */
+    .back-link {
+      display:block; text-align:center; margin-top:25px;
+      color: var(--text-muted);
+    }
+    .back-link:hover { color: var(--gold); }
+
+    footer {
+      text-align:center; padding:20px;
+      margin-top:40px;
+      color: var(--text-muted);
+    }
+  </style>
+</head>
+<body>
+
+  <div class="logo slide-in">
+    <a href="index.html"><img src="CBE_logo.PNG" alt="CBE Logo"></a>
+  </div>
+  <button id="theme-toggle" class="slide-in" aria-label="Toggle light/dark">🌞</button>
+
+  <div class="container">
+    <h1 class="slide-in">Your Plan</h1>
+    <div class="divider slide-in"></div>
+
+    <div class="details-panel slide-in">
+      <ul>
+        <li><span>Plan:</span><span id="plan-name">—</span></li>
+        <li><span>Price:</span><span id="plan-price">—</span></li>
+        <li><span>You Save:</span><span id="plan-save">—</span></li>
+      </ul>
+    </div>
+
+    <button id="paystackBtn" class="btn-pay slide-in">Loading…</button>
+    <button id="cryptoBtn" class="btn-crypto slide-in">I’ll Transfer Crypto</button>
+
+    <div class="crypto-section slide-in" id="cryptoSection">
+      <div class="crypto-grid" id="cryptoGrid"></div>
+    </div>
+
+    <div class="form-wrapper slide-in" id="emailSection">
+      <form id="paymentForm">
+        <!-- Proof of Payment Upload -->
+        <label for="proofFile">Proof of Payment (Screenshot)</label>
+        <input type="file" id="proofFile" accept="image/*" required/>
+
+        <!-- Email Input -->
+        <label for="emailInput">Your Email (must match registration)</label>
+        <input type="email" id="emailInput" placeholder="you@example.com" required/>
+
+        <button type="submit">I’ve Paid</button>
+      </form>
+      <div id="successMessage">Your payment is pending verification!</div>
+    </div>
+
+    <a href="vip-subscription.html" class="back-link slide-in">← Change Plan</a>
+  </div>
+
+  <footer class="slide-in">© 2025 Chukwuemeka Bullion Exchange. All rights reserved.</footer>
+
+  <!-- Supabase UMD -->
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js/dist/umd/supabase.min.js"></script>
+  <script>
+    document.addEventListener('DOMContentLoaded', () => {
+      // Slide-in animation
+      document.querySelectorAll('.slide-in').forEach((el, i) =>
+        setTimeout(() => el.classList.add('visible'), (i+1)*150)
+      );
+
+      // Theme toggle
+      const toggle = document.getElementById('theme-toggle');
+      const applyTheme = () => {
+        const curr = document.documentElement.getAttribute('data-theme');
+        const next = curr === 'dark' ? 'light' : 'dark';
+        document.documentElement.setAttribute('data-theme', next);
+        localStorage.setItem('theme', next);
+        toggle.textContent = next==='dark'?'🌞':'🌜';
+      };
+      toggle.addEventListener('click', applyTheme);
+      const saved = localStorage.getItem('theme') || 'dark';
+      document.documentElement.setAttribute('data-theme', saved);
+      toggle.textContent = saved==='dark'?'🌞':'🌜';
+
+      // Plan configuration
+      const params = new URLSearchParams(location.search);
+      const key = params.get('plan') || 'weekly';
+      const cfg = {
+        weekly:  {n:'Weekly Plan',  p:50,   s:0},
+        monthly: {n:'Monthly Plan', p:150,  s:50},
+        yearly:  {n:'Yearly Plan',  p:1500, s:300}
+      };
+      const ch = cfg[key];
+      document.getElementById('plan-name').textContent  = ch.n;
+      document.getElementById('plan-price').textContent = `$${ch.p}`;
+      document.getElementById('plan-save').textContent  = `$${ch.s}`;
+
+      // Supabase init
+      const SUPABASE_URL = 'https://dapwpgvnfjcfqqhrpxla.supabase.co';
+      const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImRhcHdwZ3ZuZmpjZnFxaHJweGxhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDcwNDA4ODgsImV4cCI6MjA2MjYxNjg4OH0.ICC0UsLlzJDNre7rFCeD3k6iVzo6jOJgn3PhABpEMsQ';
+      const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+      let selectedMethodId = null;
+
+      // Load payment methods
+      supabase
+        .from('payment_methods')
+        .select('*')
+        .order('id', { ascending: true })
+        .then(({ data, error }) => {
+          if (error) {
+            console.error(error);
+            document.getElementById('paystackBtn').textContent = 'Error';
+            return;
+          }
+
+          // Card method
+          const card = data.find(m => m.type === 'card');
+          const payBtn = document.getElementById('paystackBtn');
+          if (card) {
+            payBtn.textContent = card.name;
+            payBtn.onclick = () => {
+              selectedMethodId = card.id;
+              window.location.href = card.details.link;
+            };
+          } else {
+            payBtn.textContent = 'No Card Available';
+            payBtn.disabled = true;
+          }
+
+          // Crypto toggle
+          document.getElementById('cryptoBtn').onclick = () => {
+            const sec = document.getElementById('cryptoSection');
+            const frm = document.getElementById('emailSection');
+            const show = sec.style.display !== 'block';
+            sec.style.display = show ? 'block' : 'none';
+            frm.style.display = show ? 'block' : 'none';
+          };
+
+          // Crypto cards
+          const grid = document.getElementById('cryptoGrid');
+          data.filter(m => m.type === 'crypto').forEach(c => {
+            const div = document.createElement('div');
+            div.className = 'crypto-card';
+            div.innerHTML = `
+              <div class="label">${c.name}</div>
+              <div class="address">${c.details.address}</div>
+              <button class="copy-btn">Copy</button>`;
+            grid.append(div);
+            div.querySelector('.copy-btn').onclick = () => {
+              navigator.clipboard.writeText(c.details.address).then(() => {
+                const btn = div.querySelector('.copy-btn');
+                btn.textContent = 'Copied!';
+                setTimeout(() => btn.textContent = 'Copy', 1500);
+              });
+              selectedMethodId = c.id;
+            };
+          });
+        });
+
+      // Handle form submission with proof upload
+      document.getElementById('paymentForm').onsubmit = async e => {
+        e.preventDefault();
+        const email = document.getElementById('emailInput').value.trim();
+        if (!email) return alert('Enter your registered email.');
+        if (!selectedMethodId) return alert('Select a payment method first.');
+
+        // Upload proof file
+        const file = document.getElementById('proofFile').files[0];
+        if (!file) return alert('Please upload proof of payment.');
+        const path = `proof_${Date.now()}_${file.name}`;
+        const { error: upErr } = await supabase
+          .storage
+          .from('payment-proofs')
+          .upload(path, file);
+        if (upErr) return alert('Proof upload failed: ' + upErr.message);
+        const { data: { publicUrl: proofUrl } } = supabase
+          .storage
+          .from('payment-proofs')
+          .getPublicUrl(path);
+
+        // Insert payment record
+        const { error: insErr } = await supabase
+          .from('payments')
+          .insert([{
+            email,
+            plan: ch.n,
+            method_id: selectedMethodId,
+            proof_url: proofUrl
+          }]);
+        if (insErr) return alert('Submission failed: ' + insErr.message);
+
+        document.getElementById('successMessage').style.display = 'block';
+        setTimeout(() => window.location.href = 'index.html', 3000);
+      };
+    });
+  </script>
+
+  <!-- Smartsupp Live Chat script -->
+  <script type="text/javascript">
+    var _smartsupp = _smartsupp || {};
+    _smartsupp.key = '018a8bbd868518221e725341a7b2601231ec7ce8';
+    window.smartsupp||(function(d) {
+      var s,c,o=smartsupp=function(){ o._.push(arguments)};o._=[];
+      s=d.getElementsByTagName('script')[0];c=d.createElement('script');
+      c.type='text/javascript';c.charset='utf-8';c.async=true;
+      c.src='https://www.smartsuppchat.com/loader.js?';s.parentNode.insertBefore(c,s);
+    })(document);
+  </script>
+</body>
+</html>
