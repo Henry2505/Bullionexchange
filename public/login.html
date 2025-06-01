@@ -1,64 +1,97 @@
-<!-- member-login.html -->
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" data-theme="dark">
 <head>
-  <meta charset="UTF-8" />
+  <meta charset="UTF-8"/>
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>CBE Member Login</title>
+  <title>Login • Chukwuemeka Bullion Exchange</title>
+  <meta name="description" content="Login to Chukwuemeka Bullion Exchange’s VIP trading community."/>
+
   <style>
-    :root {
-      --bg: #0e0e0e;
-      --text: #f0f0f0;
-      --gold: #FFD700;
-      --gold-dark: #c9a400;
-      --text-muted: #999;
+    /* Dark/Light Theme Variables */
+    :root[data-theme="dark"] {
+      --bg: #121212; 
+      --text: #f0f0f0; 
+      --gold: #d4af37; 
+      --gold-dark: #b3932b;
+      --glass-bg: rgba(30,30,30,0.6); 
+      --text-light: #bbbbbb; 
+      --text-muted: #888888;
       --error-color: #e74c3c;
+      --success-color: #2ecc71;
+      --warning-color: #f39c12;
     }
-    [data-theme='light'] {
-      --bg: #f0f0f0;
-      --text: #111;
+    :root[data-theme="light"] {
+      --bg: #fafafa; 
+      --text: #222222; 
+      --gold: #d4af37; 
+      --gold-dark: #b3932b;
+      --glass-bg: rgba(255,255,255,0.6); 
+      --text-light: #555555; 
+      --text-muted: #666666;
+      --error-color: #e74c3c;
+      --success-color: #2ecc71;
+      --warning-color: #f39c12;
     }
+
+    /* RESET / BASE */
+    * { margin: 0; padding: 0; box-sizing: border-box; }
     body {
-      margin: 0;
       font-family: 'Roboto', sans-serif;
       background: var(--bg);
       color: var(--text);
-      display: flex;
+      display: flex; 
+      align-items: center; 
       justify-content: center;
-      align-items: center;
-      height: 100vh;
-      overflow: hidden;
+      min-height: 100vh;
     }
+
+    /* LOGIN CARD */
     .login-card {
-      background: rgba(0, 0, 0, 0.8);
-      padding: 2rem;
-      border-radius: 10px;
-      width: 90%;
+      width: 100%; 
       max-width: 400px;
-      box-shadow: 0 0 20px var(--gold);
-      opacity: 0;
-      transform: scale(0.95);
-      transition: all 0.4s ease-in-out;
+      background: var(--glass-bg);
+      backdrop-filter: blur(8px);
+      padding: 30px 25px;
+      border-radius: 10px;
+      box-shadow: 0 4px 30px rgba(0,0,0,0.5);
+      opacity: 0; 
+      transform: translateY(20px);
+      transition: opacity .6s ease-out, transform .6s ease-out;
     }
     .login-card.visible {
-      opacity: 1;
-      transform: scale(1);
+      opacity: 1; 
+      transform: translateY(0);
     }
+    .login-card h1 {
+      font-family: 'Playfair Display', serif;
+      font-size: 1.8rem; 
+      color: var(--gold);
+      text-align: center; 
+      margin-bottom: 20px;
+    }
+    form { display: flex; flex-direction: column; gap: 15px; }
+    label { font-size: .95rem; color: var(--text-light); }
     input {
-      width: 100%;
-      padding: 10px;
-      margin: 8px 0 16px;
-      border: none;
-      border-radius: 4px;
+      padding: 10px; 
+      border: none; 
+      border-radius: 6px;
+      background: #1c1c1c; 
+      color: var(--text);
+      font-size: 1rem;
+    }
+    input:focus {
+      outline: none; 
+      box-shadow: 0 0 6px var(--gold);
     }
     button {
-      width: 100%;
-      padding: 12px;
-      background: var(--gold);
-      border: none;
-      font-weight: bold;
+      padding: 12px; 
+      border: none; 
+      border-radius: 6px;
+      background: var(--gold); 
+      color: #000;
+      font-weight: 700; 
       cursor: pointer;
-      border-radius: 4px;
+      transition: background .3s, box-shadow .3s;
     }
     button:hover {
       background: var(--gold-dark);
@@ -90,16 +123,21 @@
       font-size: .85rem;
     }
   </style>
-  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700&family=Roboto:wght@300;400;700&display=swap" rel="stylesheet"/>
+
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700&amp;family=Roboto:wght@300;400;700&amp;display=swap" rel="stylesheet"/>
+
 </head>
 <body>
 
+  <!-- LOGO -->
   <div class="logo">
     <a href="index.html"><img src="CBE_logo.PNG" alt="CBE Logo"/></a>
   </div>
 
+  <!-- THEME TOGGLE -->
   <button id="theme-toggle" aria-label="Toggle theme">🌞</button>
 
+  <!-- LOGIN CARD -->
   <div class="login-card" id="login-card">
     <h1>Member Login</h1>
     <form id="login-form">
@@ -116,18 +154,16 @@
 
   <!-- Supabase UMD -->
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js/dist/umd/supabase.min.js"></script>
-
   <script>
+    // ─── 1) SETUP & THEME TOGGLE ────────────────────────────────────────────────
     const loginCard = document.getElementById('login-card');
     const toggleBtn = document.getElementById('theme-toggle');
-
     window.addEventListener('DOMContentLoaded', () => {
       loginCard.classList.add('visible');
       const savedTheme = localStorage.getItem('theme') || 'dark';
       document.documentElement.setAttribute('data-theme', savedTheme);
       toggleBtn.textContent = savedTheme === 'dark' ? '🌞' : '🌜';
     });
-
     toggleBtn.addEventListener('click', () => {
       const cur = document.documentElement.getAttribute('data-theme');
       const next = cur === 'dark' ? 'light' : 'dark';
@@ -136,19 +172,22 @@
       toggleBtn.textContent = next === 'dark' ? '🌞' : '🌜';
     });
 
-    const SUPA_URL = 'https://dapwpgvnfjcfqqhrpxla.supabase.co';
+    // ─── 2) INITIALIZE SUPABASE ─────────────────────────────────────────────────
+    const SUPA_URL      = 'https://dapwpgvnfjcfqqhrpxla.supabase.co';
     const SUPA_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImRhcHdwZ3ZuZmpjZnFxaHJweGxhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDcwNDA4ODgsImV4cCI6MjA2MjYxNjg4OH0.ICC0UsLlzJDNre7rFCeD3k6iVzo6jOJgn3PhABpEMsQ';
     const sb = supabase.createClient(SUPA_URL, SUPA_ANON_KEY);
 
+    // ─── 3) LOGIN FORM HANDLING ─────────────────────────────────────────────────
     document.getElementById('login-form').addEventListener('submit', async (e) => {
       e.preventDefault();
       const alertDiv = document.getElementById('login-alert');
       alertDiv.textContent = '';
 
-      const email = document.getElementById('email').value.trim().toLowerCase();
+      const email    = document.getElementById('email').value.trim().toLowerCase();
       const password = document.getElementById('password').value;
 
       try {
+        // 3.a) Fetch user by email (case-insensitive)
         const { data: user, error, count } = await sb
           .from('users')
           .select('id, name, email, password, status', { count: 'exact' })
@@ -157,35 +196,80 @@
           .maybeSingle();
 
         if (error) throw error;
-        if (count === 0) throw new Error('No account found for that email.');
-        if (user.password !== password) throw new Error('Invalid login credentials.');
+        if (count === 0) 
+          throw new Error('No account found for that email.');
+
+        // 3.b) Password check
+        if (user.password !== password) 
+          throw new Error('Invalid login credentials.');
+
+        // 3.c) “Approved by Admin” check
+        // Now uses a more friendly message:
         if (String(user.status).toLowerCase() !== 'approved') {
           throw new Error('Your account is not yet approved—please check back soon.');
         }
 
+        // 3.d) Device Fingerprint Check
         const deviceKey = `cbeDevice_${email}`;
         const savedDevice = localStorage.getItem(deviceKey);
         const currentDevice = navigator.userAgent;
 
+        // If first login from this browser/device → just store, no email:
         if (!savedDevice) {
           localStorage.setItem(deviceKey, currentDevice);
-        } else if (savedDevice !== currentDevice) {
+        }
+        // If savedDevice exists but differs → suspicious login alert:
+        else if (savedDevice !== currentDevice) {
+          // Immediately overwrite so we don’t spam next time:
           localStorage.setItem(deviceKey, currentDevice);
-          const payload = {
-            email: user.email,
-            name: user.name,
-            device: currentDevice,
-            time: new Date().toLocaleString("en-US", { timeZone: "Africa/Lagos" })
+
+          // Send Brevo Template #3 (Suspicious Login Alert)
+          const BREVO_API_KEY     = "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";
+          const TEMPLATE_ID_LOGIN = 3;
+
+          const brevoPayload = {
+            sender: {
+              name: "Chukwuemeka Bullion Exchange",
+              email: "noreply@apexincomeoptions.com.ng"
+            },
+            to: [
+              {
+                email: user.email,
+                name: user.name
+              }
+            ],
+            templateId: TEMPLATE_ID_LOGIN,
+            params: {
+              contact: {
+                FIRSTNAME: user.name,
+                EMAIL: user.email
+              },
+              DEVICE: currentDevice,
+              TIME: new Date().toLocaleString("en-US", { timeZone: "Africa/Lagos" })
+            }
           };
-          await fetch("/.netlify/functions/send-login-alert", {
+
+          // Fire off the Brevo call
+          fetch("https://api.brevo.com/v3/smtp/email", {
             method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify(payload)
+            headers: {
+              "Content-Type": "application/json",
+              "api-key": BREVO_API_KEY
+            },
+            body: JSON.stringify(brevoPayload)
+          })
+          .then(res => res.json().then(json => ({ status: res.status, json })) )
+          .then(({ status, json }) => {
+            console.log("Brevo login-alert response:", status, json);
+          })
+          .catch(err => {
+            console.error("Error sending Brevo login alert:", err);
           });
         }
 
+        // 3.e) LOGIN SUCCESS → store session + redirect
         sessionStorage.setItem('cbeLoggedIn', 'true');
-        sessionStorage.setItem('cbeUserId', user.id);
+        sessionStorage.setItem('cbeUserId',   user.id);
         sessionStorage.setItem('cbeUserName', user.name);
         window.location.href = 'vip-dashboard.html';
       }
@@ -197,5 +281,16 @@
     });
   </script>
 
+  <!-- Smartsupp Live Chat (optional) -->
+  <script type="text/javascript">
+    var _smartsupp = _smartsupp || {};
+    _smartsupp.key = '018a8bbd868518221e725341a7b2601231ec7ce8';
+    window.smartsupp||(function(d) {
+      var s,c,o=smartsupp=function(){ o._.push(arguments)};o._=[];
+      s=d.getElementsByTagName('script')[0];c=d.createElement('script');
+      c.type='text/javascript';c.charset='utf-8';c.async=true;
+      c.src='https://www.smartsuppchat.com/loader.js?';s.parentNode.insertBefore(c,s);
+    })(document);
+  </script>
 </body>
 </html>
