@@ -1,15 +1,21 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Affiliate Login – Apex Income Options</title>
   <style>
     body { font-family: Arial, sans-serif; background: #f1f1f1; padding: 2rem; }
     .login-box { max-width: 400px; margin: auto; background: #fff; padding: 2rem; border-radius: 8px; box-shadow: 0 0 10px rgba(0,0,0,0.1); }
     h2 { text-align: center; color: #0070f3; }
-    input { width: 100%; padding: 10px; margin-top: 1rem; border: 1px solid #ccc; border-radius: 4px; }
-    button { width: 100%; padding: 10px; margin-top: 1rem; background: #0070f3; color: #fff; border: none; border-radius: 4px; cursor: pointer; }
+    input, button {
+      width: 100%; padding: 10px; margin-top: 1rem;
+      border-radius: 4px; border: 1px solid #ccc;
+      font-size: 16px;
+    }
+    button {
+      background: #0070f3; color: white; border: none; cursor: pointer;
+    }
     button:hover { background: #005bbb; }
   </style>
 </head>
@@ -33,28 +39,35 @@
       const email = document.getElementById('email').value.trim();
       const password = document.getElementById('password').value;
 
-      if (!email || !password) return alert('Please enter both email and password.');
-
-      const { error: signInError } = await supabase.auth.signInWithPassword({ email, password });
-
-      if (signInError) {
-        alert('Login failed. Check your credentials.');
+      if (!email || !password) {
+        alert('Please enter both email and password.');
         return;
       }
 
-      // Check if email exists in affiliates
-      const { data, error } = await supabase
+      // Step 1: Try to sign in
+      const { data: authData, error: signInError } = await supabase.auth.signInWithPassword({ email, password });
+
+      if (signInError || !authData.session) {
+        alert('Login failed. Email not found or incorrect password. Redirecting to register...');
+        setTimeout(() => window.location.href = '/affiliate-register.html', 2000);
+        return;
+      }
+
+      // Step 2: Check if user exists in affiliates
+      const { data: affData, error: affError } = await supabase
         .from('affiliates')
         .select('id')
         .eq('user_email', email)
         .single();
 
-      if (error || !data) {
-        alert('Email not registered as affiliate. Redirecting to register page...');
-        setTimeout(() => window.location.href = '/affiliate-register.html', 1500);
-      } else {
-        window.location.href = '/affiliate-dashboard.html';
+      if (affError || !affData) {
+        alert('This email is not yet registered as an affiliate. Redirecting...');
+        setTimeout(() => window.location.href = '/affiliate-register.html', 2000);
+        return;
       }
+
+      // Success: Redirect to dashboard
+      window.location.href = '/affiliate-dashboard.html';
     });
   </script>
 </body>
