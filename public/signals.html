@@ -433,7 +433,7 @@
       .container::before, .container::after { font-size: 0.9rem; }
     }
 
-    /* Smartsupp chat theming to match CBE VIP Dashboard */
+    /* Smartsupp chat theming */
     :root {
       --smartsupp-base-color: var(--gold);
       --smartsupp-btn-color: var(--accent);
@@ -601,8 +601,6 @@
           </div>
           <div class="admin-note">Note: ${sig.note || 'Trade at your own risk.'}</div>
         `;
-        // (Optional) Delete older signals if that was your logic, but keep as before:
-        // await supabase.from('signals').delete().neq('id', sig.id);
       } catch (err) {
         console.error(err);
         document.getElementById('signalCard').innerHTML = `
@@ -630,7 +628,6 @@
       const ul = document.getElementById('news-list');
       ul.innerHTML = '<li>Loading…</li>';
       try {
-        // Using AllOrigins proxy for CORS
         const res = await fetch('https://api.allorigins.win/raw?url=https://www.investing.com/rss/news_285.rss');
         const xml = new DOMParser().parseFromString(await res.text(), 'text/xml');
         const items = Array.from(xml.querySelectorAll('item')).slice(0, 8);
@@ -652,7 +649,6 @@
       const tbody = document.getElementById('calendar-body');
       tbody.innerHTML = '<tr><td colspan="7">Loading…</td></tr>';
       try {
-        // (Since you used static events in demo, keep same)
         const events = [
           { date: "05-25-2025", time: "6:40pm", currency: "USD", event: "Fed Chair Powell Speaks", impact: "Medium", actual: "", previous: "" },
           { date: "05-26-2025", time: "7:00am", currency: "GBP", event: "Bank Holiday", impact: "Holiday", actual: "", previous: "" },
@@ -687,74 +683,48 @@
       }
     }
 
-    // ─── 9) INIT EVERYTHING ON DOMCONTENTLOADED ───────────────────────────────
+    // ─── 9) INIT: Load everything & subscribe to new signals ─────────────────
     window.addEventListener('DOMContentLoaded', () => {
       initTradingViewChart();
       loadLatestSignal();
       loadGoldNews();
       loadEconCalendar();
 
-      // Watch for new rows in "signals". On INSERT → reload & send email.
+      // Watch for new rows in "signals". On INSERT → reload & call our function.
       supabase
         .from('signals')
         .on('INSERT', async payload => {
-          // 1) Show newest signal on the page
+          // 1) Show the newest signal on the page
           loadLatestSignal();
 
           try {
-            // 2) Find currently logged‐in user’s email & name
+            // 2) Lookup current user’s email & name
             const currentUserId = sessionStorage.getItem('cbeUserId');
             if (!currentUserId) return;
+
             const { data: userData, error: userErr } = await supabase
               .from('users')
               .select('email,name')
               .eq('id', currentUserId)
               .single();
+
             if (userErr || !userData) return;
 
-            // 3) Build Brevo payload (Template ID 2)
-            const brevoPayload = {
-              sender: {
-                name: "CBE VIP Dashboard",
-                email: "noreply@apexincomeoptions.com.ng"
-              },
-              to: [
-                {
-                  email: userData.email,
-                  name: userData.name
-                }
-              ],
-              templateId: 2, // “New Signal Alert” template
-              params: {
-                contact: {
-                  FIRSTNAME: userData.name,
-                  EMAIL: userData.email
-                },
-                SIGNAL_ASSET: payload.new.asset,
-                SIGNAL_ACTION: payload.new.action,
-                SIGNAL_ENTRY: payload.new.entry,
-                SIGNAL_TIME: new Date(payload.new.created_at).toLocaleString("en-US", { timeZone: "Africa/Lagos" })
-              }
+            // 3) Call our Netlify Function to notify user to log in
+            const payloadBody = {
+              email: userData.email,
+              name:  userData.name
             };
 
-            // 4) Send via Brevo
-            await fetch("https://api.brevo.com/v3/smtp/email", {
+            await fetch("/.netlify/functions/send-signal-alert", {
               method: "POST",
               headers: {
-                "Content-Type": "application/json",
-                "api-key": "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"
+                "Content-Type": "application/json"
               },
-              body: JSON.stringify(brevoPayload)
-            })
-            .then(res => res.json().then(json => ({ status: res.status, json })) )
-            .then(({ status, json }) => {
-              console.log("Brevo signal-email response:", status, json);
-            })
-            .catch(err => {
-              console.error("Error sending Brevo signal email:", err);
+              body: JSON.stringify(payloadBody)
             });
           } catch (e) {
-            console.error("Exception in new‐signal callback:", e);
+            console.error("Error in new-signal subscription:", e);
           }
         })
         .subscribe();
