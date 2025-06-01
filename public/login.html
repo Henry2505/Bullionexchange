@@ -204,7 +204,6 @@
           throw new Error('Invalid login credentials.');
 
         // 3.c) “Approved by Admin” check
-        // Now uses a more friendly message:
         if (String(user.status).toLowerCase() !== 'approved') {
           throw new Error('Your account is not yet approved—please check back soon.');
         }
@@ -214,13 +213,9 @@
         const savedDevice = localStorage.getItem(deviceKey);
         const currentDevice = navigator.userAgent;
 
-        // If first login from this browser/device → just store, no email:
         if (!savedDevice) {
           localStorage.setItem(deviceKey, currentDevice);
-        }
-        // If savedDevice exists but differs → suspicious login alert:
-        else if (savedDevice !== currentDevice) {
-          // Immediately overwrite so we don’t spam next time:
+        } else if (savedDevice !== currentDevice) {
           localStorage.setItem(deviceKey, currentDevice);
 
           // Send Brevo Template #3 (Suspicious Login Alert)
@@ -228,69 +223,49 @@
           const TEMPLATE_ID_LOGIN = 3;
 
           const brevoPayload = {
-            sender: {
-              name: "Chukwuemeka Bullion Exchange",
-              email: "noreply@apexincomeoptions.com.ng"
-            },
-            to: [
-              {
-                email: user.email,
-                name: user.name
+                          sender: { name: "CBE Login Alert", email: "alerts@cbexchange.com" },
+              to: [{ email: user.email }],
+              subject: "New Login Alert - CBE",
+              templateId: TEMPLATE_ID_LOGIN,
+              params: {
+                user_name: user.name || 'Trader',
+                login_device: navigator.userAgent,
+                login_time: new Date().toLocaleString(),
               }
-            ],
-            templateId: TEMPLATE_ID_LOGIN,
-            params: {
-              contact: {
-                FIRSTNAME: user.name,
-                EMAIL: user.email
-              },
-              DEVICE: currentDevice,
-              TIME: new Date().toLocaleString("en-US", { timeZone: "Africa/Lagos" })
-            }
-          };
+            };
 
-          // Fire off the Brevo call
-          fetch("https://api.brevo.com/v3/smtp/email", {
-            method: "POST",
-            headers: {
-              "Content-Type": "application/json",
-              "api-key": BREVO_API_KEY
-            },
-            body: JSON.stringify(brevoPayload)
-          })
-          .then(res => res.json().then(json => ({ status: res.status, json })) )
-          .then(({ status, json }) => {
-            console.log("Brevo login-alert response:", status, json);
-          })
-          .catch(err => {
-            console.error("Error sending Brevo login alert:", err);
-          });
+            await fetch("https://api.brevo.com/v3/smtp/email", {
+              method: "POST",
+              headers: {
+                "Content-Type": "application/json",
+                "api-key": BREVO_API_KEY
+              },
+              body: JSON.stringify(brevoPayload)
+            });
         }
 
-        // 3.e) LOGIN SUCCESS → store session + redirect
-        sessionStorage.setItem('cbeLoggedIn', 'true');
-        sessionStorage.setItem('cbeUserId',   user.id);
-        sessionStorage.setItem('cbeUserName', user.name);
-        window.location.href = 'vip-dashboard.html';
-      }
-      catch (err) {
-        console.error("Login error:", err);
+        // 3.e) Save session and redirect
+        localStorage.setItem("cbe_user", JSON.stringify({
+          id: user.id,
+          name: user.name,
+          email: user.email
+        }));
+
+        alertDiv.style.color = "var(--success-color)";
+        alertDiv.textContent = "Login successful! Redirecting...";
+        setTimeout(() => {
+          window.location.href = "vip-dashboard.html";
+        }, 1500);
+
+      } catch (err) {
         alertDiv.style.color = "var(--error-color)";
-        alertDiv.textContent = err.message;
+        alertDiv.textContent = err.message || "Login failed.";
+        console.error("Login Error:", err);
       }
     });
   </script>
 
-  <!-- Smartsupp Live Chat (optional) -->
-  <script type="text/javascript">
-    var _smartsupp = _smartsupp || {};
-    _smartsupp.key = '018a8bbd868518221e725341a7b2601231ec7ce8';
-    window.smartsupp||(function(d) {
-      var s,c,o=smartsupp=function(){ o._.push(arguments)};o._=[];
-      s=d.getElementsByTagName('script')[0];c=d.createElement('script');
-      c.type='text/javascript';c.charset='utf-8';c.async=true;
-      c.src='https://www.smartsuppchat.com/loader.js?';s.parentNode.insertBefore(c,s);
-    })(document);
-  </script>
+  <!-- Tidio Live Chat -->
+  <script src="//code.tidio.co/y1tahygkugcsupdfsyk9qjv6qgcjxrsx.js" async></script>
 </body>
 </html>
