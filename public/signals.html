@@ -573,6 +573,9 @@
 
   <!-- MAIN SCRIPT -->
   <script>
+    // ─── Global to track last fetched signal ID ─────────────────────────────────
+    let lastSignalId = null;
+
     // ─── 1) TRADINGVIEW CHART INITIALIZATION ────────────────────────────────────
     function initTradingViewChart() {
       new TradingView.widget({
@@ -648,6 +651,13 @@
         }
 
         const sig = signals[0];
+        // If this is not the first fetch and ID changed, ring the bell
+        if (lastSignalId !== null && sig.id !== lastSignalId) {
+          ringBell();
+        }
+        // Update lastSignalId
+        lastSignalId = sig.id;
+
         const dt = new Date(sig.created_at);
         const actionClass = sig.action.toLowerCase() === 'buy' ? 'signal-buy' : 'signal-sell';
 
@@ -774,17 +784,15 @@
       loadGoldNews();
       loadEconCalendar();
 
-      // Watch for new rows in "signals". On INSERT → reload, ring bell & call our function.
+      // Watch for new rows in "signals". On INSERT → reload & ring bell
       supabase
         .from('signals')
         .on('INSERT', async payload => {
-          // 1) Ring the bell immediately
-          ringBell();
-          // 2) Show the newest signal on the page
+          // Immediately load latest (which will ring if ID changed)
           loadLatestSignal();
 
           try {
-            // 3) Lookup current user’s email & name
+            // Lookup current user’s email & name
             const currentUserId = sessionStorage.getItem('cbeUserId');
             if (!currentUserId) return;
 
@@ -796,7 +804,7 @@
 
             if (userErr || !userData) return;
 
-            // 4) Call our Netlify Function to notify user to log in
+            // Call our Netlify Function to notify user to log in
             const payloadBody = {
               email: userData.email,
               name: userData.name
