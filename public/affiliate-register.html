@@ -11,7 +11,7 @@
     input { width: 100%; padding: 0.75rem; margin: 0.5rem 0; border: 1px solid #ccc; border-radius: 4px; }
     button { width: 100%; padding: 0.75rem; background: #0070f3; color: #fff; border: none; border-radius: 4px; font-size: 1rem; cursor: pointer; }
     button:disabled { background: #aaa; cursor: not-allowed; }
-    #message { margin-top: 1rem; font-weight: bold; }
+    #message { margin-top: 1rem; font-weight: bold; color: red; }
   </style>
 </head>
 <body>
@@ -46,7 +46,6 @@
     form.addEventListener('submit', async (e) => {
       e.preventDefault();
       message.textContent = '';
-      message.style.color = 'black';
       signupBtn.disabled = true;
       signupBtn.textContent = 'Signing up...';
 
@@ -54,7 +53,6 @@
       const email = document.getElementById('email').value.trim();
 
       if (!name || !email) {
-        message.style.color = 'red';
         message.textContent = 'Please fill in both name and email.';
         signupBtn.disabled = false;
         signupBtn.textContent = 'Sign Up';
@@ -69,8 +67,6 @@
         .single();
 
       if (checkError && checkError.code !== 'PGRST116') {
-        // PGRST116 means no rows found, which is good here
-        message.style.color = 'red';
         message.textContent = 'Error checking existing email: ' + checkError.message;
         signupBtn.disabled = false;
         signupBtn.textContent = 'Sign Up';
@@ -78,7 +74,6 @@
       }
 
       if (existingAffiliate) {
-        message.style.color = 'red';
         message.textContent = 'Email already registered. Please login.';
         signupBtn.disabled = false;
         signupBtn.textContent = 'Sign Up';
@@ -89,20 +84,16 @@
       const referral_code = generateReferralCode();
 
       try {
-        const { data, error } = await supabase
+        const { error } = await supabase
           .from('affiliates')
           .insert([{ name, email, referral_code }]);
 
         if (error) throw error;
 
-        message.style.color = 'green';
-        message.textContent = `Signup successful! Your referral code: ${referral_code}`;
-
-        form.reset();
+        // Redirect to login page after success
+        window.location.href = 'affiliate-login.html';
       } catch (error) {
-        message.style.color = 'red';
         message.textContent = 'Signup failed: ' + error.message;
-      } finally {
         signupBtn.disabled = false;
         signupBtn.textContent = 'Sign Up';
       }
