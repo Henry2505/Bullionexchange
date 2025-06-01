@@ -140,11 +140,11 @@
       z-index: 1000;
     }
     nav .logo {
-      font-size: 1.35rem;
+      font-size: 1.25rem; /* Reduced from 1.35rem to fit bell */
       font-weight: 700;
       color: var(--gold);
       letter-spacing: 1px;
-      padding: 6px 12px;
+      padding: 5px 10px; /* Reduced padding */
       background: linear-gradient(45deg, var(--gold), var(--gold-dark));
       border-radius: 8px;
       box-shadow: 0 3px 10px rgba(255, 215, 0, 0.3);
@@ -513,10 +513,14 @@
 </head>
 <body>
 
+  <!-- Audio element for new-signal alert -->
+  <audio id="alertSound" src="alert.mp3"></audio>
+
   <!-- UPDATED NAVIGATION -->
   <nav class="slide-in">
     <a href="vip-dashboard.html" class="logo">CBE VIP Dashboard</a>
     <div class="nav-links">
+      <button id="notifBell" onclick="ringBell()" title="New Signal">🔔</button>
       <button onclick="loadLatestSignal()">🔄 Refresh</button>
       <button onclick="logout()">🚪 Logout</button>
       <button class="theme-toggle" onclick="toggleTheme()" title="Toggle Theme">🌞</button>
@@ -611,6 +615,17 @@
     const SUPA_URL = 'https://dapwpgvnfjcfqqhrpxla.supabase.co';
     const SUPA_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImRhcHdwZ3ZuZmpjZnFxaHJweGxhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDcwNDA4ODgsImV4cCI6MjA2MjYxNjg4OH0.ICC0UsLlzJDNre7rFCeD3k6iVzo6jOJgn3PhABpEMsQ';
     const supabase = window.supabase.createClient(SUPA_URL, SUPA_KEY);
+
+    // ─── Function to ring the bell ─────────────────────────────────────────────
+    function ringBell() {
+      const audio = document.getElementById('alertSound');
+      if (audio) {
+        audio.currentTime = 0;
+        audio.play().catch(() => {
+          console.warn('Unable to play alert sound automatically.');
+        });
+      }
+    }
 
     // ─── 4) LOAD LATEST SIGNAL ──────────────────────────────────────────────────
     async function loadLatestSignal() {
@@ -759,15 +774,17 @@
       loadGoldNews();
       loadEconCalendar();
 
-      // Watch for new rows in "signals". On INSERT → reload & call our function.
+      // Watch for new rows in "signals". On INSERT → reload, ring bell & call our function.
       supabase
         .from('signals')
         .on('INSERT', async payload => {
-          // 1) Show the newest signal on the page
+          // 1) Ring the bell immediately
+          ringBell();
+          // 2) Show the newest signal on the page
           loadLatestSignal();
 
           try {
-            // 2) Lookup current user’s email & name
+            // 3) Lookup current user’s email & name
             const currentUserId = sessionStorage.getItem('cbeUserId');
             if (!currentUserId) return;
 
@@ -779,7 +796,7 @@
 
             if (userErr || !userData) return;
 
-            // 3) Call our Netlify Function to notify user to log in
+            // 4) Call our Netlify Function to notify user to log in
             const payloadBody = {
               email: userData.email,
               name: userData.name
