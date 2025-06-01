@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Affiliate Registration – Apex Income Options</title>
+  <title>Join Affiliate Program – Apex Income Options</title>
   <style>
     body { font-family: Arial, sans-serif; background: #f1f1f1; padding: 2rem; }
     .register-box {
@@ -11,6 +11,7 @@
       border-radius: 8px; box-shadow: 0 0 10px rgba(0,0,0,0.1);
     }
     h2 { text-align: center; color: #0070f3; }
+    p { text-align: center; font-size: 15px; color: #444; margin-bottom: 1.5rem; }
     input, button {
       width: 100%; padding: 10px; margin-top: 1rem;
       border-radius: 4px; border: 1px solid #ccc; font-size: 16px;
@@ -23,12 +24,12 @@
 </head>
 <body>
   <div class="register-box">
-    <h2>Affiliate Registration</h2>
+    <h2>Affiliate Signup</h2>
+    <p>Sign up and start earning commissions for every user you refer to Apex Income Options. 🚀</p>
     <input type="text" id="name" placeholder="Your full name" required />
     <input type="email" id="email" placeholder="Your email" required />
-    <input type="password" id="password" placeholder="Create password" required />
-    <input type="text" id="wallet" placeholder="Your Wallet Address (USDT, BTC, etc.)" />
-    <button id="register-btn">Register</button>
+    <input type="password" id="password" placeholder="Create a password" required />
+    <button id="register-btn">Create Account</button>
   </div>
 
   <script type="module">
@@ -40,27 +41,22 @@
     );
 
     function generateReferralCode(name) {
-      const part = name.replace(/\s+/g, '').substring(0, 4).toUpperCase();
+      const clean = name.replace(/\s+/g, '').substring(0, 4).toUpperCase();
       const rand = Math.floor(1000 + Math.random() * 9000);
-      return part + rand;
+      return clean + rand;
     }
 
     document.getElementById('register-btn').addEventListener('click', async () => {
       const name = document.getElementById('name').value.trim();
       const email = document.getElementById('email').value.trim().toLowerCase();
       const password = document.getElementById('password').value;
-      const wallet = document.getElementById('wallet').value.trim();
 
       if (!name || !email || !password) {
-        alert('Please fill all required fields.');
+        alert('Please fill in all fields.');
         return;
       }
 
-      // Step 1: Sign up with Supabase Auth
-      const { data: authData, error: signUpError } = await supabase.auth.signUp({
-        email,
-        password
-      });
+      const { data: authData, error: signUpError } = await supabase.auth.signUp({ email, password });
 
       if (signUpError) {
         alert('Signup failed: ' + signUpError.message);
@@ -69,11 +65,10 @@
 
       const user = authData.user;
       if (!user) {
-        alert('Signup failed unexpectedly.');
+        alert('Unexpected error: No user returned.');
         return;
       }
 
-      // Step 2: Insert into affiliates table
       const referralCode = generateReferralCode(name);
 
       const { error: insertError } = await supabase
@@ -83,7 +78,6 @@
           user_email: email,
           name: name,
           referral_code: referralCode,
-          wallet_address: wallet,
           total_clicks: 0,
           signups_made: 0,
           conversions: 0,
@@ -92,12 +86,12 @@
         }]);
 
       if (insertError) {
-        alert('Registration failed at affiliate step.');
+        alert('Failed to store affiliate profile.');
         console.error(insertError);
         return;
       }
 
-      alert('Registration successful! Redirecting to dashboard...');
+      alert('Registration successful! Redirecting to your dashboard...');
       window.location.href = '/affiliate-dashboard.html';
     });
   </script>
