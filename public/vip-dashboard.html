@@ -634,14 +634,14 @@
 
     <!-- Recent Activity -->
     <div class="card p-4 mb-4 slide-in" id="activity-widget">
-      <h2 class="mb-1">Recent Activity <small class="update-note">Recording logins &amp; logouts</small></h2>
+      <h2 class="mb-1">Recent Activity <small class="update-note">Recording logins & logouts</small></h2>
       <div class="d-flex justify-content-end mb-3">
         <button id="export-logs" class="btn btn-gold"><i class="bi-download me-2"></i>Export Logs</button>
       </div>
       <table>
         <thead>
           <tr>
-            <th>Timestamp</th>
+           <th>Timestamp</th>
             <th>Action</th>
             <th>IP Address</th>
             <th>Location</th>
@@ -802,9 +802,37 @@
       }
     }
 
+    // Session Validation: Periodically checks if the session token matches the one in Supabase.
+    // If not, logs the user out to ensure only one active session per user.
+    async function checkSession() {
+      const localToken = localStorage.getItem('sessionToken');
+      if (!localToken) {
+        logout();
+        return;
+      }
+      const userId = sessionStorage.getItem('cbeUserId');
+      const { data, error } = await supabase
+        .from('users')
+        .select('current_session_token')
+        .eq('id', userId)
+        .single();
+      if (error || !data) {
+        console.error('Error fetching session token:', error);
+        return;
+      }
+      if (data.current_session_token !== localToken) {
+        localStorage.removeItem('sessionToken');
+        sessionStorage.removeItem('cbeLoggedIn');
+        sessionStorage.removeItem('cbeUserId');
+        sessionStorage.removeItem('cbeUserName');
+        window.location.href = 'login.html?message=logged_out_elsewhere';
+      }
+    }
+
     // Logout
     async function logout() {
       await logActivity('logout');
+      localStorage.removeItem('sessionToken');
       sessionStorage.removeItem('cbeLoggedIn');
       sessionStorage.removeItem('cbeUserId');
       sessionStorage.removeItem('cbeUserName');
@@ -1030,6 +1058,9 @@
       setInterval(loadEconCalendar, 60000);
       setInterval(loadRecentActivity, 60000);
       setInterval(loadDashboard, 300000);
+
+      // Start periodic session check
+      setInterval(checkSession, 15000); // Every 15 seconds
     });
   </script>
 </body>
