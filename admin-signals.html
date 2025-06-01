@@ -2,7 +2,7 @@
 <html lang="en" data-theme="dark">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>CBE Admin – Signals</title>
 
   <!-- AUTH GUARD: redirect if not logged in -->
@@ -15,124 +15,302 @@
   </script>
 
   <!-- Fonts, Bootstrap & Icons -->
-  <link
-    href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700&display=swap"
-    rel="stylesheet"
-  >
-  <link
-    href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css"
-    rel="stylesheet"
-  >
-  <link
-    href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css"
-    rel="stylesheet"
-  >
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;500;700&display=swap" rel="stylesheet" />
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet" />
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css" rel="stylesheet" />
 
   <style>
-    :root {
-      --bg: #000; --text: #fff; --gold: #ffd700;
-      --glass-bg: rgba(255,255,255,0.05);
-      --overlay: rgba(0,0,0,0.6);
+    /* Theme Variables */
+    :root[data-theme="dark"] {
+      --bg: #000000; /* Pure black background */
+      --text: #ffd700; /* Gold text for visibility */
+      --gold: #ffd700;
+      --gold-dark: #cca300;
+      --glass: rgba(255, 255, 255, 0.1);
+      --shadow: rgba(0, 0, 0, 0.5);
+      --text-light: #e6b800; /* Lighter gold for secondary text */
+      --text-muted: #b8860b; /* Muted gold for subtle text */
+      --success: #4caf50;
+      --error: #e57373;
+      --accent: #1e1e1e; /* Subtle dark accent for contrast */
     }
-    [data-theme="light"] {
-      --bg: #f5f5f5; --text: #333; --gold: #cca300;
-      --glass-bg: rgba(0,0,0,0.05);
-      --overlay: rgba(255,255,255,0.15);
+    :root[data-theme="light"] {
+      --bg: #f5f5f5;
+      --text: #333; /* Dark text for light theme */
+      --gold: #cca300;
+      --gold-dark: #b58900;
+      --glass: rgba(0, 0, 0, 0.08);
+      --shadow: rgba(0, 0, 0, 0.15);
+      --text-light: #555;
+      --text-muted: #666;
+      --success: #388e3c;
+      --error: #d32f2f;
+      --accent: #e0e0e0; /* Light accent for contrast */
     }
-    * { margin:0; padding:0; box-sizing:border-box; }
-    body { font-family:'Poppins',sans-serif; background:var(--bg); color:var(--text); overflow-x:hidden; }
-    .overlay { position:fixed; top:0; left:0; width:100%; height:100%; background:var(--overlay); z-index:-1; }
-    .glass { background:var(--glass-bg); backdrop-filter:blur(10px); border:1px solid rgba(255,215,0,0.2); }
-    a { color:var(--gold); text-decoration:none; }
 
+    /* Reset & Base */
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    html { scroll-behavior: smooth; }
+    body {
+      font-family: 'Poppins', sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      overflow-x: hidden;
+      line-height: 1.6;
+    }
+    a { color: var(--gold); text-decoration: none; }
+    a:hover { color: var(--gold-dark); }
+
+    /* Animations */
+    .slide-in {
+      opacity: 0;
+      transform: translateY(30px);
+      transition: opacity 0.7s ease-out, transform 0.7s ease-out;
+    }
+    .slide-in.visible {
+      opacity: 1;
+      transform: translateY(0);
+    }
+
+    /* Header */
     header.admin-header {
-      display:flex; align-items:center; justify-content:space-between;
-      padding:1rem 2rem; background:rgba(0,0,0,0.6);
-      border-bottom:1px solid var(--gold);
-      position:sticky; top:0; z-index:10;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      background: linear-gradient(135deg, var(--glass), rgba(255, 215, 0, 0.08));
+      backdrop-filter: blur(12px);
+      padding: 1rem 2rem;
+      box-shadow: 0 4px 20px var(--shadow);
+      position: fixed;
+      top: 0;
+      width: 100%;
+      z-index: 1000;
     }
-    .logo { cursor:pointer; display:flex; align-items:center; }
-    .logo img { height:40px; }
-    #theme-toggle { background:none; border:none; font-size:1.25rem; cursor:pointer; color:var(--text); }
+    .logo img {
+      height: 50px;
+      transition: transform 0.3s ease, filter 0.3s ease;
+    }
+    .logo img:hover {
+      transform: scale(1.1);
+      filter: brightness(1.2);
+    }
+    #theme-toggle {
+      background: none;
+      border: none;
+      font-size: 1.8rem;
+      color: var(--text);
+      cursor: pointer;
+      transition: transform 0.3s ease;
+    }
+    #theme-toggle:hover {
+      transform: rotate(180deg);
+    }
 
-    #section-title { color:var(--gold); text-align:center; margin:2rem 0 1rem; }
-    .panel { margin-bottom:2rem; }
-    form.glass { border-radius:8px; padding:1.5rem; }
+    /* Main Content */
+    main {
+      max-width: 1400px;
+      margin: 100px auto 60px;
+      padding: 0 20px;
+    }
+    #section-title {
+      font-family: 'Poppins', sans-serif;
+      font-size: 2.8rem;
+      font-weight: 700;
+      color: var(--gold);
+      text-align: center;
+      margin: 2rem 0 1.5rem;
+      text-transform: uppercase;
+      letter-spacing: 2px;
+      text-shadow: 0 2px 10px rgba(255, 215, 0, 0.3);
+    }
+
+    /* Panel */
+    .panel {
+      background: var(--glass);
+      backdrop-filter: blur(15px);
+      padding: 2.5rem;
+      border-radius: 20px;
+      box-shadow: 0 8px 30px var(--shadow);
+      border: 1px solid rgba(255, 215, 0, 0.15);
+      margin-bottom: 2rem;
+    }
+    .panel h4 {
+      color: var(--gold);
+      font-weight: 500;
+      margin-bottom: 1.5rem;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+    }
+    form.glass {
+      background: var(--accent);
+      border: 1px solid rgba(255, 215, 0, 0.2);
+      border-radius: 12px;
+      padding: 1.5rem;
+    }
+    .form-label {
+      color: var(--text-light);
+      font-weight: 500;
+    }
+    .form-control, .form-select {
+      background: var(--accent);
+      border: 1px solid rgba(255, 215, 0, 0.2);
+      color: var(--text);
+      border-radius: 8px;
+      padding: 10px 15px;
+      transition: border-color 0.3s ease, box-shadow 0.3s ease;
+    }
+    .form-control:focus, .form-select:focus {
+      border-color: var(--gold);
+      box-shadow: 0 0 10px rgba(255, 215, 0, 0.3);
+      outline: none;
+    }
+    .form-control::placeholder {
+      color: var(--text-muted);
+    }
+    #publish-btn {
+      background: linear-gradient(45deg, var(--gold), var(--gold-dark));
+      color: #000;
+      border: none;
+      border-radius: 8px;
+      padding: 10px 25px;
+      font-weight: 500;
+      transition: all 0.3s ease;
+    }
+    #publish-btn:hover {
+      background: linear-gradient(45deg, var(--gold-dark), var(--gold));
+      transform: translateY(-2px);
+      box-shadow: 0 4px 15px rgba(255, 215, 0, 0.3);
+    }
+    #publish-btn:disabled {
+      opacity: 0.6;
+      transform: none;
+      box-shadow: none;
+      cursor: not-allowed;
+    }
+
+    /* Signals List */
     #signals-list .list-group-item {
-      background:var(--glass-bg);
-      border:1px solid rgba(255,215,0,0.2);
-      color:var(--text);
-      margin-bottom:.5rem;
-      border-radius:4px;
+      background: var(--accent);
+      border: 1px solid rgba(255, 215, 0, 0.2);
+      color: var(--text);
+      margin-bottom: 0.75rem;
+      border-radius: 12px;
+      padding: 1.5rem;
+      transition: all 0.3s ease;
+    }
+    #signals-list .list-group-item:hover {
+      background: rgba(255, 215, 0, 0.15);
+      box-shadow: 0 6px 20px var(--shadow);
+      transform: translateY(-3px);
+    }
+    #signals-list .list-group-item strong {
+      color: var(--gold);
+      font-weight: 600;
+    }
+    #signals-list .list-group-item small {
+      color: var(--text-light);
+      font-size: 0.9rem;
     }
 
-    /* Toast overlay fix */
-    .toast { z-index:99999 !important; }
+    /* Toast */
+    .toast {
+      background: var(--glass) !important;
+      backdrop-filter: blur(10px);
+      border: 1px solid rgba(255, 215, 0, 0.2);
+      color: var(--text);
+      border-radius: 10px;
+      box-shadow: 0 6px 20px var(--shadow);
+      z-index: 99999 !important;
+    }
+    .toast.bg-success { background: rgba(76, 175, 80, 0.8) !important; }
+    .toast.bg-danger { background: rgba(229, 115, 115, 0.8) !important; }
+    .toast-body { font-weight: 500; }
+
+    /* Responsive */
+    @media (max-width: 768px) {
+      main {
+        margin: 80px auto 40px;
+        padding: 0 15px;
+      }
+      #section-title {
+        font-size: 2rem;
+      }
+      .panel {
+        padding: 1.5rem;
+      }
+      .form-control, .form-select {
+        padding: 8px 12px;
+        font-size: 0.9rem;
+      }
+      #publish-btn {
+        padding: 8px 20px;
+        font-size: 0.9rem;
+      }
+      #signals-list .list-group-item {
+        padding: 1rem;
+        font-size: 0.9rem;
+      }
+    }
   </style>
 </head>
 <body>
-  <div class="overlay"></div>
-
   <!-- Header -->
-  <header class="admin-header glass">
+  <header class="admin-header glass slide-in">
     <div class="logo" id="logo">
-      <img src="CBE_logo.PNG" alt="CBE Logo"/>
+      <img src="CBE_logo.PNG" alt="CBE Logo" />
     </div>
     <button id="theme-toggle" aria-label="Toggle theme">🌞</button>
   </header>
 
-  <main class="container py-4">
-    <h2 id="section-title">Signals</h2>
+  <main class="container">
+    <h2 id="section-title" class="slide-in">Signals Management</h2>
 
-    <div class="panel">
-      <div class="glass mb-4">
-        <h4 class="px-3 pt-3">Publish Signal</h4>
-        <form id="signals-form" class="border-top p-3 glass">
-          <div class="row g-3">
-            <div class="col-md-3">
-              <label class="form-label">Asset / Pair</label>
-              <input list="asset-list" id="signal-asset" class="form-control" required>
-              <datalist id="asset-list">
-                <option value="EUR/USD"/>
-                <option value="GOLD"/>
-                <option value="BTC/USD"/>
-              </datalist>
-            </div>
-            <div class="col-md-2">
-              <label class="form-label">Action</label>
-              <select id="signal-action" class="form-select">
-                <option>BUY</option>
-                <option>SELL</option>
-              </select>
-            </div>
-            <div class="col-md-2">
-              <label class="form-label">Entry</label>
-              <!-- Changed to text so you can enter values like 2337-38363 -->
-              <input type="text" id="signal-entry" class="form-control" required>
-            </div>
-            <div class="col-md-2">
-              <label class="form-label">SL</label>
-              <input type="number" step="0.0001" id="signal-sl" class="form-control" required>
-            </div>
-            <div class="col-md-2">
-              <label class="form-label">TP1</label>
-              <input type="number" step="0.0001" id="signal-tp1" class="form-control" required>
-            </div>
-            <div class="col-md-2">
-              <label class="form-label">TP2</label>
-              <input type="number" step="0.0001" id="signal-tp2" class="form-control">
-            </div>
-            <div class="col-12">
-              <label class="form-label">Note</label>
-              <textarea id="signal-note" class="form-control"></textarea>
-            </div>
+    <div class="panel slide-in" style="transition-delay: 0.3s;">
+      <h4>Publish Signal</h4>
+      <form id="signals-form" class="glass">
+        <div class="row g-3">
+          <div class="col-md-3">
+            <label class="form-label">Asset / Pair</label>
+            <input list="asset-list" id="signal-asset" class="form-control" required>
+            <datalist id="asset-list">
+              <option value="EUR/USD"/>
+              <option value="GOLD"/>
+              <option value="BTC/USD"/>
+            </datalist>
           </div>
-          <div class="mt-3">
-            <button id="publish-btn" class="btn btn-primary">Publish</button>
+          <div class="col-md-2">
+            <label class="form-label">Action</label>
+            <select id="signal-action" class="form-select">
+              <option>BUY</option>
+              <option>SELL</option>
+            </select>
           </div>
-        </form>
-      </div>
-      <ul class="list-group" id="signals-list"></ul>
+          <div class="col-md-2">
+            <label class="form-label">Entry</label>
+            <input type="text" id="signal-entry" class="form-control" required>
+          </div>
+          <div class="col-md-2">
+            <label class="form-label">SL</label>
+            <input type="number" step="0.0001" id="signal-sl" class="form-control" required>
+          </div>
+          <div class="col-md-2">
+            <label class="form-label">TP1</label>
+            <input type="number" step="0.0001" id="signal-tp1" class="form-control" required>
+          </div>
+          <div class="col-md-2">
+            <label class="form-label">TP2</label>
+            <input type="number" step="0.0001" id="signal-tp2" class="form-control">
+          </div>
+          <div class="col-12">
+            <label class="form-label">Note</label>
+            <textarea id="signal-note" class="form-control"></textarea>
+          </div>
+        </div>
+        <div class="mt-4 text-center">
+          <button id="publish-btn" class="btn">Publish</button>
+        </div>
+      </form>
+      <ul class="list-group mt-5" id="signals-list"></ul>
     </div>
   </main>
 
@@ -140,10 +318,22 @@
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 
   <!-- Supabase UMD build -->
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js/dist/umd/supabase.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>
 
   <script>
     document.addEventListener('DOMContentLoaded', () => {
+      // Apply slide-in animations
+      document.querySelectorAll('.slide-in').forEach(el => {
+        new IntersectionObserver((entries, obs) => {
+          entries.forEach(e => {
+            if (e.isIntersecting) {
+              e.target.classList.add('visible');
+              obs.unobserve(e.target);
+            }
+          });
+        }, { threshold: 0.2 }).observe(el);
+      });
+
       // Header logo click → dashboard
       document.getElementById('logo').onclick = () => {
         location.href = 'admin-dashboard.html';
@@ -169,10 +359,8 @@
 
       // Toast helper
       function showToast(msg, success = true) {
-        alert(msg);
         const t = document.createElement('div');
-        t.className = `toast align-items-center text-white ${success?'bg-success':'bg-danger'} border-0 position-fixed top-0 end-0 m-3`;
-        t.style.zIndex = 99999;
+        t.className = `toast align-items-center text-white ${success ? 'bg-success' : 'bg-danger'} border-0 position-fixed top-0 end-0 m-3`;
         t.innerHTML = `
           <div class="d-flex">
             <div class="toast-body">${msg}</div>
@@ -182,20 +370,20 @@
         new bootstrap.Toast(t, { delay: 3000 }).show();
       }
 
-      // Publish a new signal (now treats entry as text)
-      const btn  = document.getElementById('publish-btn');
+      // Publish a new signal
+      const btn = document.getElementById('publish-btn');
       document.getElementById('signals-form').addEventListener('submit', async e => {
         e.preventDefault();
         btn.disabled = true;
 
         const payload = {
-          asset:  document.getElementById('signal-asset').value,
+          asset: document.getElementById('signal-asset').value,
           action: document.getElementById('signal-action').value,
-          entry:  document.getElementById('signal-entry').value,     // string now
-          sl:     parseFloat(document.getElementById('signal-sl').value),
-          tp1:    parseFloat(document.getElementById('signal-tp1').value),
-          tp2:    (val => val? parseFloat(val): null)(document.getElementById('signal-tp2').value),
-          note:   document.getElementById('signal-note').value.trim()
+          entry: document.getElementById('signal-entry').value,
+          sl: parseFloat(document.getElementById('signal-sl').value),
+          tp1: parseFloat(document.getElementById('signal-tp1').value),
+          tp2: (val => val ? parseFloat(val) : null)(document.getElementById('signal-tp2').value),
+          note: document.getElementById('signal-note').value.trim()
         };
 
         try {
@@ -228,8 +416,8 @@
           data.forEach(sig => {
             list.insertAdjacentHTML('beforeend', `
               <li class="list-group-item">
-                <strong>${sig.asset}</strong> – ${sig.action} @ ${sig.entry}, SL: ${sig.sl.toFixed(4)}, TP1: ${sig.tp1.toFixed(4)}, TP2: ${sig.tp2?sig.tp2.toFixed(4):'N/A'}<br>
-                <small>${sig.note||''}</small><br>
+                <strong>${sig.asset}</strong> – ${sig.action} @ ${sig.entry}, SL: ${sig.sl.toFixed(4)}, TP1: ${sig.tp1.toFixed(4)}, TP2: ${sig.tp2 ? sig.tp2.toFixed(4) : 'N/A'}<br>
+                <small>${sig.note || ''}</small><br>
                 <small>Published ${new Date(sig.created_at).toLocaleString()}</small>
               </li>`);
           });
