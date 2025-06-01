@@ -1,0 +1,194 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Trade Insights – CBE</title>
+  <meta name="description" content="Exclusive trade insights and signals from Chukwuemeka Bullion Exchange. VIP access required."/>
+  <meta name="keywords" content="CBE, trade insights, forex signals, VIP"/>
+
+  <!-- Theme CSS -->
+  <link rel="stylesheet" href="theme.css"/>
+  <!-- Playfair & Roboto -->
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700&family=Roboto:wght@300;400;700&display=swap" rel="stylesheet"/>
+
+  <style>
+    /* RESET & BASE */
+    * { margin:0; padding:0; box-sizing:border-box; }
+    html { scroll-behavior:smooth; }
+    body {
+      font-family:'Roboto', sans-serif;
+      color: var(--text);
+      background: var(--bg);
+      overflow-x:hidden;
+      line-height:1.6;
+    }
+    a { color: var(--gold); text-decoration:none; }
+    a:hover { text-decoration:underline; }
+
+    /* LOGO & THEME TOGGLE */
+    .logo {
+      position: fixed; top:20px; left:20px; z-index:10;
+    }
+    .logo img {
+      width:160px; cursor:pointer; transition:transform .3s;
+    }
+    .logo img:hover { transform:scale(1.05); }
+
+    #theme-toggle {
+      position: fixed; top:20px; right:20px; z-index:10;
+      background:none; border:none; font-size:1.5rem;
+      color: var(--text); cursor:pointer; transition:transform .3s;
+    }
+    #theme-toggle:hover { transform:scale(1.2); }
+
+    /* SLIDE-IN */
+    .slide-in {
+      opacity:0; transform:translateY(30px);
+      transition:opacity .7s ease-out, transform .7s ease-out;
+    }
+    .slide-in.visible {
+      opacity:1; transform:translateY(0);
+    }
+
+    /* MAIN WRAPPER */
+    main {
+      max-width:800px; margin:0 auto;
+      padding:140px 20px 60px; /* space for header */
+    }
+
+    /* HEADER CARD */
+    .header-card {
+      background: var(--glass-bg); backdrop-filter:blur(8px);
+      padding:60px 20px; text-align:center;
+      border-radius:12px; box-shadow:0 4px 30px rgba(0,0,0,0.5);
+      margin-bottom:40px;
+    }
+    .header-card h1 {
+      font-family:'Playfair Display', serif;
+      font-size:3rem; color: var(--gold);
+      margin-bottom:10px;
+    }
+    .header-card p {
+      font-size:1.1rem; color: var(--text-light);
+    }
+
+    /* INSIGHTS CARD */
+    .insights-card {
+      background: var(--glass-bg); backdrop-filter:blur(8px);
+      padding:40px 20px; border-radius:12px;
+      box-shadow:0 4px 30px rgba(0,0,0,0.5);
+      margin-bottom:40px; text-align:center;
+    }
+    .insights-card p {
+      color: var(--text-light); font-size:1rem;
+      margin-bottom:20px;
+    }
+
+    .btn-vip {
+      display:inline-block; padding:12px 30px;
+      background: var(--gold); color:#000;
+      font-family:'Playfair Display', serif;
+      font-size:1.1rem; border-radius:30px;
+      transition:transform .3s, box-shadow .3s;
+    }
+    .btn-vip:hover {
+      transform:scale(1.05); box-shadow:0 8px 30px rgba(0,0,0,0.6);
+    }
+
+    /* FOOTER */
+    footer {
+      text-align:center; padding:20px 0;
+      color: var(--text-muted);
+      margin-top:40px;
+    }
+
+    /* RESPONSIVE */
+    @media(max-width:768px){
+      main{padding:120px 15px 40px;}
+      .logo img{width:120px;}
+      .header-card h1{font-size:2.4rem;}
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Logo -->
+  <div class="logo">
+    <a href="index.html"><img src="CBE_logo.PNG" alt="CBE Logo"/></a>
+  </div>
+
+  <!-- Theme Toggle -->
+  <button id="theme-toggle" aria-label="Toggle light/dark">🌞</button>
+
+  <main>
+    <!-- Header -->
+    <div class="header-card slide-in">
+      <h1>Trade Insights</h1>
+      <p>All trading signals and in-depth market analysis are exclusive to our VIP members.</p>
+    </div>
+
+    <!-- Insights Content -->
+    <div class="insights-card slide-in" style="transition-delay:.3s;">
+      <p id="insightsContent">Loading latest trade insights…</p>
+      <a href="vip-subscription.html" class="btn-vip">Join VIP Now</a>
+    </div>
+  </main>
+
+  <footer class="slide-in" style="transition-delay:.6s;">
+    © 2025 Chukwuemeka Bullion Exchange. All rights reserved.
+  </footer>
+
+  <script>
+    // Slide-in on scroll
+    document.addEventListener('DOMContentLoaded', () => {
+      document.querySelectorAll('.slide-in').forEach(el => {
+        const obs = new IntersectionObserver((entries, o) => {
+          entries.forEach(entry => {
+            if (entry.isIntersecting) {
+              entry.target.classList.add('visible');
+              o.unobserve(entry.target);
+            }
+          });
+        }, { threshold: 0.3, rootMargin: '0px 0px -50px 0px' });
+        obs.observe(el);
+      });
+    });
+
+    // Theme toggle
+    const toggle = document.getElementById('theme-toggle');
+    toggle.addEventListener('click', () => {
+      const curr = document.documentElement.getAttribute('data-theme');
+      const next = curr === 'dark' ? 'light' : 'dark';
+      document.documentElement.setAttribute('data-theme', next);
+      localStorage.setItem('theme', next);
+      toggle.textContent = next === 'dark' ? '🌞' : '🌜';
+    });
+    // init toggle icon
+    (() => {
+      const theme = document.documentElement.getAttribute('data-theme');
+      toggle.textContent = theme === 'dark' ? '🌞' : '🌜';
+    })();
+
+    // Load insights from localStorage
+    document.addEventListener('DOMContentLoaded', () => {
+      const data = JSON.parse(localStorage.getItem('siteData')||'{}');
+      const content = data.content?.CBE_trade_insights_public
+        || 'All trading signals and insights are exclusive to VIP subscribers. Join now for premium access!';
+      document.getElementById('insightsContent').textContent = content;
+    });
+  </script>
+
+  <!-- Smartsupp Live Chat script -->
+  <script type="text/javascript">
+    var _smartsupp = _smartsupp || {};
+    _smartsupp.key = '018a8bbd868518221e725341a7b2601231ec7ce8';
+    window.smartsupp||(function(d) {
+      var s,c,o=smartsupp=function(){ o._.push(arguments)};o._=[];
+      s=d.getElementsByTagName('script')[0];c=d.createElement('script');
+      c.type='text/javascript';c.charset='utf-8';c.async=true;
+      c.src='https://www.smartsuppchat.com/loader.js?';s.parentNode.insertBefore(c,s);
+    })(document);
+  </script>
+</body>
+</html>
