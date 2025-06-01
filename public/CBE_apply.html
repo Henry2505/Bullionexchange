@@ -3,7 +3,16 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Affiliate Sign Up • Chukwuemeka Bullion Exchange</title>
+  <meta name="description" content="Join the Chukwuemeka Bullion Exchange VIP trading community." />
+  <title>Apply • Chukwuemeka Bullion Exchange</title>
+
+  <link
+    href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700&family=Roboto:wght@300;400;700&display=swap"
+    rel="stylesheet"
+  />
+  <!-- Supabase UMD (exposes a global `supabase` object) -->
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js/dist/umd/supabase.min.js"></script>
+
   <style>
     :root[data-theme="dark"] {
       --bg: #121212;
@@ -15,6 +24,7 @@
       --text-muted: #888888;
       --error-color: #e74c3c;
       --success-color: #2ecc71;
+      --warning-color: #f39c12;
       --border-color: #333333;
     }
     :root[data-theme="light"] {
@@ -27,6 +37,7 @@
       --text-muted: #666666;
       --error-color: #e74c3c;
       --success-color: #2ecc71;
+      --warning-color: #f39c12;
       --border-color: #dddddd;
     }
 
@@ -74,7 +85,7 @@
     }
 
     /* Glass card container */
-    .signup-card {
+    .apply-card {
       width: 100%;
       max-width: 450px;
       background: var(--glass-bg);
@@ -82,12 +93,16 @@
       border-radius: 12px;
       padding: 30px;
       box-shadow: 0 8px 32px rgba(0,0,0,0.3);
-      margin-top: 100px;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
+      margin-top: 80px;
+      opacity: 0;
+      transform: translateY(20px);
+      transition: opacity 0.6s ease-out, transform 0.6s ease-out;
     }
-    .signup-card h1 {
+    .apply-card.visible {
+      opacity: 1;
+      transform: translateY(0);
+    }
+    .apply-card h1 {
       font-family: "Playfair Display", serif;
       font-size: 2rem;
       color: var(--gold);
@@ -111,7 +126,8 @@
       margin-bottom: 8px;
       font-weight: 500;
     }
-    input {
+    input,
+    textarea {
       padding: 12px;
       border: 1px solid var(--gold);
       border-radius: 8px;
@@ -120,13 +136,35 @@
       font-size: 1rem;
       transition: box-shadow 0.3s ease;
     }
-    input:focus {
+    input:focus,
+    textarea:focus {
       outline: none;
       box-shadow: 0 0 8px var(--gold);
+    }
+    textarea {
+      resize: vertical;
+      min-height: 100px;
     }
 
     .form-group.optional {
       margin-top: 10px;
+    }
+
+    .terms-container {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      font-size: 0.9rem;
+      color: var(--text-light);
+      padding: 12px;
+      background: rgba(255, 255, 255, 0.05);
+      border: 1px solid var(--gold);
+      border-radius: 8px;
+    }
+    .terms-container input {
+      width: 20px;
+      height: 20px;
+      accent-color: var(--gold);
     }
 
     button {
@@ -151,16 +189,17 @@
       background: var(--gold-dark);
     }
 
-    #status {
+    #apply-alert {
       margin-top: 15px;
       text-align: center;
       font-size: 0.9rem;
       font-weight: 600;
       min-height: 24px;
+      color: var(--success-color);
     }
 
     /* Footer */
-    .footer {
+    footer {
       margin-top: auto;
       padding: 20px 0;
       color: var(--text-muted);
@@ -171,17 +210,14 @@
     }
 
     @media (max-width: 600px) {
-      .signup-card {
-        margin-top: 120px;
+      .apply-card {
+        margin-top: 100px;
         padding: 20px;
-      }
-      .header {
-        padding: 15px 0;
       }
       .logo img {
         width: 100px;
       }
-      .signup-card h1 {
+      .apply-card h1 {
         font-size: 1.6rem;
       }
     }
@@ -195,163 +231,217 @@
     <button id="theme-toggle" aria-label="Toggle theme">🌞</button>
   </div>
 
-  <div class="signup-card">
-    <h1>Affiliate Sign Up</h1>
-    <form id="signup-form">
+  <div class="apply-card" id="apply-card">
+    <h1>Apply to Join CBE</h1>
+
+    <!-- Show “You were referred by:” if ?ref=CODE is in URL -->
+    <p class="referral-note" id="referral-note"></p>
+
+    <form id="apply-form" novalidate>
       <div class="form-group">
-        <label for="name">Full Name</label>
-        <input type="text" id="name" placeholder="Your full name" required />
+        <label for="apply-name">Full Name</label>
+        <input type="text" id="apply-name" placeholder="Full Name" required aria-required="true" />
       </div>
+
       <div class="form-group">
-        <label for="email">Email Address</label>
-        <input type="email" id="email" placeholder="Your email" required />
+        <label for="apply-email">Email Address</label>
+        <input type="email" id="apply-email" placeholder="Email Address" required aria-required="true" />
       </div>
+
       <div class="form-group">
-        <label for="password">Password</label>
-        <input type="password" id="password" placeholder="Choose a password" required />
+        <label for="apply-password">Password</label>
+        <input type="password" id="apply-password" placeholder="Password" required aria-required="true" />
       </div>
+
+      <div class="form-group">
+        <label for="apply-phone">Contact Number</label>
+        <input type="tel" id="apply-phone" placeholder="Contact Number" required aria-required="true" />
+      </div>
+
+      <div class="form-group">
+        <label for="apply-message">Trading Experience</label>
+        <textarea
+          id="apply-message"
+          placeholder="Tell us about your trading experience"
+          rows="4"
+          required
+          aria-required="true"
+        ></textarea>
+      </div>
+
+      <!-- Optional “Referral Code” input -->
       <div class="form-group optional">
-        <label for="referred_by">Referral Code (optional)</label>
-        <input type="text" id="referred_by" placeholder="Enter code if you have one" />
+        <label for="apply-referral">Referral Code (optional)</label>
+        <input type="text" id="apply-referral" placeholder="Enter code if you have one" />
       </div>
-      <button type="submit" id="signup-btn">Sign Up</button>
+
+      <div class="terms-container">
+        <input type="checkbox" id="agree-terms" aria-label="Agree to Privacy Policy and Terms & Conditions" />
+        <label for="agree-terms">
+          I agree to the
+          <a href="https://apexincomeoptions.com.ng/privacy" target="_blank" rel="noopener">Privacy Policy</a>
+          and
+          <a href="https://apexincomeoptions.com.ng/terms" target="_blank" rel="noopener">Terms & Conditions</a>
+        </label>
+      </div>
+
+      <button type="submit" id="submit-btn" disabled>Submit Application</button>
+      <div id="apply-alert" role="alert"></div>
     </form>
-    <p id="status"></p>
   </div>
 
-  <div class="footer">© 2025 Chukwuemeka Bullion Exchange. All rights reserved.</div>
+  <footer>© 2025 Chukwuemeka Bullion Exchange. All rights reserved.</footer>
 
-  <script type="module">
-    import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm';
+  <script>
+    // ─── Supabase client for referral validation ──────────────────────────────────────
+    const SUPA_URL = "https://dapwpgvnfjcfqqhrpxla.supabase.co";
+    const SUPA_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImRhcHdwZ3ZuZmpjZnFxaHJweGxhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDcwNDA4ODgsImV4cCI6MjA2MjYxNjg4OH0.ICC0UsLlzJDNre7rFCeD3k6iVzo6jOJgn3PhABpEMsQ";
+    const supabaseClient = supabase.createClient(SUPA_URL, SUPA_ANON_KEY);
 
-    // Your Supabase credentials
-    const SUPABASE_URL = 'https://dapwpgvnfjcfqqhrpxla.supabase.co';
-    const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImRhcHdwZ3ZuZmpjZnFxaHJweGxhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDcwNDA4ODgsImV4cCI6MjA2MjYxNjg4OH0.ICC0UsLlzJDNre7rFCeD3k6iVzo6jOJgn3PhABpEMsQ';
-
-    const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
-
-    // Read “ref” from URL if present
+    // ─── Helper: read “ref” param from URL ─────────────────────────────────────────────
     function getReferralFromURL() {
       const params = new URLSearchParams(window.location.search);
-      return params.get('ref') || '';
+      return params.get("ref") || null;
     }
 
-    const form = document.getElementById('signup-form');
-    const signupBtn = document.getElementById('signup-btn');
-    const statusEl = document.getElementById('status');
+    // ─── Theme & card animation ──────────────────────────────────────────────────────
+    document.addEventListener("DOMContentLoaded", () => {
+      // 1) Set saved theme (dark or light)
+      const savedTheme = localStorage.getItem("theme") || "dark";
+      document.documentElement.setAttribute("data-theme", savedTheme);
+      document.getElementById("theme-toggle").textContent = savedTheme === "dark" ? "🌞" : "🌜";
 
-    // Enable button only when all required fields have some value
-    form.addEventListener('input', () => {
-      const name = document.getElementById('name').value.trim();
-      const email = document.getElementById('email').value.trim();
-      const password = document.getElementById('password').value;
-      signupBtn.disabled = !(name && email && password);
-      signupBtn.classList.toggle('enabled', name && email && password);
+      // 2) Make the card visible (fade/translate animation)
+      const card = document.getElementById("apply-card");
+      card.classList.add("visible");
+
+      // 3) If URL includes “?ref=CODE”, show a note
+      const refCodeURL = getReferralFromURL();
+      if (refCodeURL) {
+        document.getElementById("referral-note").textContent = "You were referred by: " + refCodeURL;
+      }
     });
 
-    form.addEventListener('submit', async (e) => {
-      e.preventDefault();
-      statusEl.textContent = '';
-      signupBtn.disabled = true;
-      signupBtn.textContent = 'Signing up...';
+    // ─── Theme toggle button ──────────────────────────────────────────────────────────
+    const toggleBtn = document.getElementById("theme-toggle");
+    toggleBtn.addEventListener("click", () => {
+      const current = document.documentElement.getAttribute("data-theme");
+      const next = current === "dark" ? "light" : "dark";
+      document.documentElement.setAttribute("data-theme", next);
+      localStorage.setItem("theme", next);
+      toggleBtn.textContent = next === "dark" ? "🌞" : "🌜";
+    });
 
-      const name = document.getElementById('name').value.trim();
-      const email = document.getElementById('email').value.trim();
-      const password = document.getElementById('password').value;
-      const manualRef = document.getElementById('referred_by').value.trim();
-      const urlRef = getReferralFromURL();
-      const referralCode = manualRef || urlRef || null;
+    // ─── Form handling ─────────────────────────────────────────────────────────────────
+    const form = document.getElementById("apply-form");
+    const agree = document.getElementById("agree-terms");
+    const submitBtn = document.getElementById("submit-btn");
+    const alertDiv = document.getElementById("apply-alert");
 
-      // Basic validation
-      if (!name || !email || !password) {
-        statusEl.style.color = 'var(--error-color)';
-        statusEl.textContent = 'Please fill in all required fields.';
-        signupBtn.disabled = false;
-        signupBtn.textContent = 'Sign Up';
+    // Enable “Submit” only when terms are checked
+    agree.addEventListener("change", () => {
+      submitBtn.disabled = !agree.checked;
+      submitBtn.classList.toggle("enabled", agree.checked);
+    });
+
+    form.addEventListener("submit", async (evt) => {
+      evt.preventDefault();
+      alertDiv.textContent = "";
+      alertDiv.style.color = "";
+
+      const name = document.getElementById("apply-name").value.trim();
+      const email = document.getElementById("apply-email").value.trim().toLowerCase();
+      const password = document.getElementById("apply-password").value;
+      const phone = document.getElementById("apply-phone").value.trim();
+      const experience = document.getElementById("apply-message").value.trim();
+      const manualRef = document.getElementById("apply-referral").value.trim();
+
+      // ─── Basic validation ────────────────────────────────────────────────────────────
+      if (!name || !email || !password || !phone || !experience) {
+        alertDiv.style.color = "var(--error-color)";
+        alertDiv.textContent = "Please complete all fields.";
         return;
       }
       if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
-        statusEl.style.color = 'var(--error-color)';
-        statusEl.textContent = 'Please enter a valid email address.';
-        signupBtn.disabled = false;
-        signupBtn.textContent = 'Sign Up';
+        alertDiv.style.color = "var(--error-color)";
+        alertDiv.textContent = "Please enter a valid email address.";
         return;
       }
       if (password.length < 8) {
-        statusEl.style.color = 'var(--error-color)';
-        statusEl.textContent = 'Password must be at least 8 characters.';
-        signupBtn.disabled = false;
-        signupBtn.textContent = 'Sign Up';
+        alertDiv.style.color = "var(--error-color)";
+        alertDiv.textContent = "Password must be at least 8 characters long.";
         return;
       }
 
-      // If user provided a referral code, check it in Supabase
-      if (referralCode) {
-        const { data: existing, error: errCheck } = await supabase
-          .from('affiliate_user')
-          .select('id')
-          .eq('referral_code', referralCode)
-          .single();
+      submitBtn.disabled = true;
+      submitBtn.textContent = "Submitting…";
 
-        if (errCheck || !existing) {
-          statusEl.style.color = 'var(--error-color)';
-          statusEl.textContent = 'Invalid referral code.';
-          signupBtn.disabled = false;
-          signupBtn.textContent = 'Sign Up';
-          return;
-        }
-      }
-
-      // Hash password with SHA-256
-      let password_hash;
       try {
-        const encoder = new TextEncoder();
-        const hashBuffer = await crypto.subtle.digest('SHA-256', encoder.encode(password));
-        password_hash = btoa(String.fromCharCode(...new Uint8Array(hashBuffer)));
-      } catch (hashErr) {
-        statusEl.style.color = 'var(--error-color)';
-        statusEl.textContent = 'Error hashing password.';
-        signupBtn.disabled = false;
-        signupBtn.textContent = 'Sign Up';
-        return;
+        // 1) Determine referral code: manual takes priority, else URL param, else null
+        const urlRef = getReferralFromURL();
+        const referralCodeToUse = manualRef || urlRef || null;
+
+        // 2) If a code exists, validate it against Supabase
+        if (referralCodeToUse) {
+          const { data: affiliateUser, error: checkErr } = await supabaseClient
+            .from("affiliate_user")
+            .select("id")
+            .eq("referral_code", referralCodeToUse)
+            .single();
+
+          if (checkErr || !affiliateUser) {
+            alertDiv.style.color = "var(--error-color)";
+            alertDiv.textContent = "Invalid referral code. Please double-check.";
+            submitBtn.disabled = false;
+            submitBtn.textContent = "Submit Application";
+            return;
+          }
+          // Valid code at this point
+        }
+
+        // 3) Prepare payload for Netlify function
+        const payload = {
+          name,
+          email,
+          password,
+          phone,
+          experience,
+          referral_code: referralCodeToUse, // either valid code or null
+        };
+
+        // 4) Call the Netlify function
+        const fnResponse = await fetch("/.netlify/functions/send-apply", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(payload),
+        });
+
+        let fnResult = null;
+        try {
+          fnResult = await fnResponse.json();
+        } catch (parseErr) {
+          console.error("Could not parse JSON:", parseErr);
+        }
+
+        if (!fnResponse.ok) {
+          console.error("Function error:", fnResponse.status, fnResult);
+          throw new Error(fnResult?.error || "Server encountered an error.");
+        }
+
+        // 5) Success: show confirmation
+        alertDiv.style.color = "var(--success-color)";
+        alertDiv.textContent = fnResult.message;
+        form.reset();
+        agree.checked = false;
+        submitBtn.classList.remove("enabled");
+      } catch (err) {
+        console.error("Submission error:", err);
+        alertDiv.style.color = "var(--error-color)";
+        alertDiv.textContent = err.message || "An unexpected error occurred.";
+      } finally {
+        submitBtn.disabled = true;
+        submitBtn.textContent = "Submit Application";
       }
-
-      // Insert new affiliate into Supabase
-      const { data, error } = await supabase
-        .from('affiliate_user')
-        .insert([{ name, email, password_hash, referred_by: referralCode }]);
-
-      if (error) {
-        statusEl.style.color = 'var(--error-color)';
-        statusEl.textContent = 'Signup failed: ' + error.message;
-        signupBtn.disabled = false;
-        signupBtn.textContent = 'Sign Up';
-      } else {
-        statusEl.style.color = 'var(--success-color)';
-        statusEl.textContent = 'Signup successful! Redirecting to login…';
-        setTimeout(() => {
-          window.location.href = 'affiliate-login.html';
-        }, 1500);
-      }
-    });
-
-    // Theme toggle logic
-    document.getElementById('theme-toggle').addEventListener('click', () => {
-      const current = document.documentElement.getAttribute('data-theme');
-      const next = current === 'dark' ? 'light' : 'dark';
-      document.documentElement.setAttribute('data-theme', next);
-      localStorage.setItem('theme', next);
-      document.getElementById('theme-toggle').textContent = next === 'dark' ? '🌞' : '🌜';
-    });
-
-    // On page load: set saved theme and make card visible
-    document.addEventListener('DOMContentLoaded', () => {
-      const savedTheme = localStorage.getItem('theme') || 'dark';
-      document.documentElement.setAttribute('data-theme', savedTheme);
-      document.getElementById('theme-toggle').textContent = savedTheme === 'dark' ? '🌞' : '🌜';
-      // Reveal the card (opacity/transform animation can be added if desired)
-      document.querySelector('.signup-card').style.opacity = '1';
-      document.querySelector('.signup-card').style.transform = 'translateY(0)';
     });
   </script>
 </body>
