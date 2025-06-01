@@ -1,220 +1,271 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1" />
-<title>Referral Dashboard</title>
-<style>
-  body { font-family: Arial, sans-serif; max-width: 900px; margin: auto; padding: 1rem; }
-  h2 { margin-top: 2rem; }
-  table { width: 100%; border-collapse: collapse; margin-top: 1rem; }
-  th, td { border: 1px solid #ccc; padding: 0.5rem; text-align: left; }
-  button { padding: 0.5rem 1rem; margin-top: 1rem; }
-  #settings-form input { display: block; margin-bottom: 0.5rem; padding: 0.4rem; width: 300px; }
-</style>
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Affiliate Dashboard</title>
+  <style>
+    body { font-family: Arial, sans-serif; max-width: 900px; margin: auto; padding: 1rem; background: #f5f7fa; }
+    h1 { text-align: center; color: #0070f3; }
+    section { background: white; padding: 1rem; margin-bottom: 2rem; border-radius: 8px; box-shadow: 0 0 10px rgba(0,0,0,0.1); }
+    label { display: block; margin-top: 0.5rem; font-weight: 600; }
+    input, select, button { width: 100%; padding: 0.5rem; margin-top: 0.25rem; border-radius: 4px; border: 1px solid #ccc; }
+    button { background: #0070f3; color: white; border: none; cursor: pointer; margin-top: 1rem; }
+    button:hover { background: #005bb5; }
+    .info-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.5rem; }
+    .copy-btn { background: #00b894; color: white; border: none; padding: 0.3rem 0.7rem; border-radius: 4px; cursor: pointer; }
+    .copy-btn:hover { background: #019870; }
+    table { width: 100%; border-collapse: collapse; margin-top: 1rem; }
+    th, td { padding: 0.5rem; border: 1px solid #ddd; text-align: left; }
+    th { background: #0070f3; color: white; }
+    #logout-btn { background: #e74c3c; color: white; width: 100%; }
+    #settings-message { margin-top: 0.5rem; font-weight: bold; color: green; }
+  </style>
 </head>
 <body>
-  <h1>Welcome to Your Referral Dashboard</h1>
-  <div id="user-info">
-    <p><strong>Name:</strong> <span id="user-name"></span></p>
-    <p><strong>Email:</strong> <span id="user-email"></span></p>
-    <p><strong>Your Referral Code:</strong> <span id="referral-code"></span> <button id="copy-code-btn">Copy Code</button></p>
-  </div>
+  <h1>Your Affiliate Dashboard</h1>
 
-  <h2>Your Referrals (<span id="referral-count">0</span>)</h2>
-  <table>
-    <thead>
-      <tr><th>Name</th><th>Email</th><th>Joined On</th></tr>
-    </thead>
-    <tbody id="referral-table-body">
-      <tr><td colspan="3">Loading referrals...</td></tr>
-    </tbody>
-  </table>
+  <!-- 1) User Info & Referral Code -->
+  <section id="user-info">
+    <div class="info-row">
+      <div><strong>Name:</strong> <span id="user-name">Loading...</span></div>
+      <div><strong>Email:</strong> <span id="user-email">Loading...</span></div>
+    </div>
+    <div class="info-row">
+      <div><strong>Referral Code:</strong> <span id="referral-code">Loading...</span></div>
+      <button class="copy-btn" id="copy-code-btn">Copy</button>
+    </div>
+    <div class="info-row">
+      <div><strong>Referrals:</strong> <span id="referral-count">0</span></div>
+    </div>
+  </section>
 
-  <h2>Earnings Summary</h2>
-  <p>Total Commissions Earned: ₦<span id="total-commissions">0</span></p>
-  <p>Pending Payouts: ₦<span id="pending-payouts">0</span></p>
+  <!-- 2) Referral List -->
+  <section id="referrals-list">
+    <h2>Your Referrals</h2>
+    <table>
+      <thead>
+        <tr><th>Name</th><th>Email</th><th>Joined On</th></tr>
+      </thead>
+      <tbody id="referral-table-body">
+        <tr><td colspan="3">Loading referrals...</td></tr>
+      </tbody>
+    </table>
+  </section>
 
-  <h2>Update Your Payment Details</h2>
-  <form id="settings-form">
-    <input type="text" id="wallet-btc" placeholder="BTC Wallet Address" />
-    <input type="text" id="wallet-usdt" placeholder="USDT Wallet Address" />
-    <input type="text" id="wallet-eth" placeholder="ETH Wallet Address" />
-    <input type="text" id="bank-name" placeholder="Bank Name" />
-    <input type="text" id="bank-account" placeholder="Bank Account Number" />
-    <input type="text" id="bank-account-name" placeholder="Bank Account Name" />
-    <input type="text" id="phone-number" placeholder="Phone Number" />
-    <button type="submit">Save Details</button>
-    <p id="settings-message" style="color:green;"></p>
-  </form>
+  <!-- 3) Earnings Summary -->
+  <section id="earnings-summary">
+    <h2>Earnings Summary</h2>
+    <div class="info-row">
+      <div><strong>Total Earned:</strong> ₦<span id="total-earnings">0.00</span></div>
+      <div><strong>Last Updated:</strong> <span id="earnings-updated">–</span></div>
+    </div>
+    <p><em>Each referral adds ₦1000 to your total automatically.</em></p>
+  </section>
 
-  <button id="logout-btn" style="background:#e74c3c; color:#fff;">Logout</button>
+  <!-- 4) Profile Settings (Wallet/Bank/Phone) -->
+  <section id="profile-settings">
+    <h2>Update Payment Details</h2>
+    <form id="settings-form">
+      <label for="wallet-btc">BTC Wallet Address</label>
+      <input type="text" id="wallet-btc" placeholder="e.g. 1A1zP1..."/>
 
-<script>
-  // Initialize Supabase - replace with your own project URL and anon key
-  const supabaseUrl = 'https://YOUR_SUPABASE_PROJECT_URL.supabase.co';
-  const supabaseAnonKey = 'YOUR_SUPABASE_ANON_KEY';
-  const supabase = supabase.createClient(supabaseUrl, supabaseAnonKey);
+      <label for="wallet-usdt">USDT (TRC20) Wallet Address</label>
+      <input type="text" id="wallet-usdt" placeholder="e.g. TX1234..."/>
 
-  let currentUser = null;
+      <label for="wallet-eth">Ethereum Wallet Address</label>
+      <input type="text" id="wallet-eth" placeholder="e.g. 0xAbc..."/>
 
-  async function loadUserData() {
-    const { data: { user }, error } = await supabase.auth.getUser();
-    if(error || !user) {
-      alert('You must be logged in to view this page.');
-      window.location.href = '/login.html';
-      return;
+      <label for="bank-name">Bank Name</label>
+      <input type="text" id="bank-name" placeholder="e.g. Access Bank"/>
+
+      <label for="bank-account">Bank Account Number</label>
+      <input type="text" id="bank-account" placeholder="e.g. 1234567890"/>
+
+      <label for="bank-account-name">Account Holder Name</label>
+      <input type="text" id="bank-account-name" placeholder="e.g. John Doe"/>
+
+      <label for="phone-number">Phone Number</label>
+      <input type="tel" id="phone-number" placeholder="e.g. +2348012345678"/>
+
+      <button type="submit">Save Details</button>
+      <p id="settings-message"></p>
+    </form>
+  </section>
+
+  <!-- 5) Logout -->
+  <button id="logout-btn">Logout</button>
+
+
+  <script type="module">
+    import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm';
+
+    // Replace with your Supabase credentials
+    const SUPABASE_URL = 'https://dapwpgvnfjcfqqhrpxla.supabase.co';
+    const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImRhcHdwZ3ZuZmpjZnFxaHJweGxhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDcwNDA4ODgsImV4cCI6MjA2MjYxNjg4OH0.ICC0UsLlzJDNre7rFCeD3k6iVzo6jOJgn3PhABpEMsQ';
+
+    const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+    let currentAffiliate = null;
+
+    // 1) Load current affiliate data from localStorage & refresh from Supabase
+    async function loadAffiliateData() {
+      const stored = localStorage.getItem('affiliate_user');
+      if (!stored) {
+        window.location.href = 'affiliate-login.html';
+        return;
+      }
+
+      const parsed = JSON.parse(stored);
+      currentAffiliate = parsed;
+
+      // Fetch up-to-date affiliate_user record by ID
+      const { data: af, error } = await supabase
+        .from('affiliate_user')
+        .select('*')
+        .eq('id', currentAffiliate.id)
+        .single();
+
+      if (error || !af) {
+        alert('Failed to load affiliate data. Please log in again.');
+        localStorage.removeItem('affiliate_user');
+        window.location.href = 'affiliate-login.html';
+        return;
+      }
+
+      currentAffiliate = af;
+      localStorage.setItem('affiliate_user', JSON.stringify(af));
+
+      document.getElementById('user-name').textContent = af.name;
+      document.getElementById('user-email').textContent = af.email;
+      document.getElementById('referral-code').textContent = af.referral_code;
+
+      // Load referrals
+      await loadReferrals(af.referral_code);
+
+      // Load earnings
+      await loadEarnings(af.id);
+
+      // Fill payment fields
+      document.getElementById('wallet-btc').value = af.wallet_btc || '';
+      document.getElementById('wallet-usdt').value = af.wallet_usdt || '';
+      document.getElementById('wallet-eth').value = af.wallet_eth || '';
+      document.getElementById('bank-name').value = af.bank_name || '';
+      document.getElementById('bank-account').value = af.bank_account || '';
+      document.getElementById('bank-account-name').value = af.bank_account_name || '';
+      document.getElementById('phone-number').value = af.phone_number || '';
     }
-    currentUser = user;
 
-    // Fetch full user profile from 'users' table by user id (auth id)
-    const { data: profile, error: profileError } = await supabase
-      .from('users')
-      .select('*')
-      .eq('id', user.id)
-      .single();
+    // 2) Fetch and render referrals list
+    async function loadReferrals(referralCode) {
+      if (!referralCode) {
+        document.getElementById('referral-count').textContent = '0';
+        document.getElementById('referral-table-body').innerHTML =
+          '<tr><td colspan="3">No referral code assigned.</td></tr>';
+        return;
+      }
 
-    if(profileError || !profile) {
-      alert('Failed to load user profile.');
-      return;
+      const { data: referrals, error } = await supabase
+        .from('affiliate_user')
+        .select('name,email,created_at')
+        .eq('referred_by', referralCode)
+        .order('created_at', { ascending: false });
+
+      if (error) {
+        document.getElementById('referral-count').textContent = '0';
+        document.getElementById('referral-table-body').innerHTML =
+          '<tr><td colspan="3">Error loading referrals.</td></tr>';
+        return;
+      }
+
+      document.getElementById('referral-count').textContent = referrals.length;
+
+      if (referrals.length === 0) {
+        document.getElementById('referral-table-body').innerHTML =
+          '<tr><td colspan="3">No referrals yet.</td></tr>';
+        return;
+      }
+
+      const tbody = document.getElementById('referral-table-body');
+      tbody.innerHTML = '';
+      referrals.forEach(r => {
+        const tr = document.createElement('tr');
+        tr.innerHTML = `
+          <td>${r.name}</td>
+          <td>${r.email}</td>
+          <td>${new Date(r.created_at).toLocaleDateString()}</td>
+        `;
+        tbody.appendChild(tr);
+      });
     }
 
-    document.getElementById('user-name').textContent = profile.full_name || 'No name set';
-    document.getElementById('user-email').textContent = profile.email;
-    document.getElementById('referral-code').textContent = profile.referral_code || 'No code';
+    // 3) Fetch and render earnings summary
+    async function loadEarnings(affiliateId) {
+      const { data: e, error } = await supabase
+        .from('earnings')
+        .select('total_earnings, last_updated')
+        .eq('affiliate_id', affiliateId)
+        .single();
 
-    // Load referral list
-    await loadReferrals(profile.referral_code);
+      if (error || !e) {
+        document.getElementById('total-earnings').textContent = '0.00';
+        document.getElementById('earnings-updated').textContent = '–';
+        return;
+      }
 
-    // Load earnings
-    await loadEarnings(profile.id);
-
-    // Fill payment details fields
-    document.getElementById('wallet-btc').value = profile.wallet_btc || '';
-    document.getElementById('wallet-usdt').value = profile.wallet_usdt || '';
-    document.getElementById('wallet-eth').value = profile.wallet_eth || '';
-    document.getElementById('bank-name').value = profile.bank_name || '';
-    document.getElementById('bank-account').value = profile.bank_account || '';
-    document.getElementById('bank-account-name').value = profile.bank_account_name || '';
-    document.getElementById('phone-number').value = profile.phone_number || '';
-  }
-
-  async function loadReferrals(referralCode) {
-    if(!referralCode) {
-      document.getElementById('referral-table-body').innerHTML = '<tr><td colspan="3">You have no referral code assigned yet.</td></tr>';
-      return;
-    }
-    // Fetch users where referred_by = referralCode
-    const { data: referrals, error } = await supabase
-      .from('users')
-      .select('full_name,email,created_at')
-      .eq('referred_by', referralCode)
-      .order('created_at', { ascending: false });
-
-    if(error) {
-      document.getElementById('referral-table-body').innerHTML = `<tr><td colspan="3">Failed to load referrals.</td></tr>`;
-      return;
+      document.getElementById('total-earnings').textContent = Number(e.total_earnings).toLocaleString();
+      document.getElementById('earnings-updated').textContent = new Date(e.last_updated).toLocaleString();
     }
 
-    document.getElementById('referral-count').textContent = referrals.length;
+    // 4) Save profile (wallet/bank/phone) changes
+    document.getElementById('settings-form').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const updates = {
+        wallet_btc: document.getElementById('wallet-btc').value.trim(),
+        wallet_usdt: document.getElementById('wallet-usdt').value.trim(),
+        wallet_eth: document.getElementById('wallet-eth').value.trim(),
+        bank_name: document.getElementById('bank-name').value.trim(),
+        bank_account: document.getElementById('bank-account').value.trim(),
+        bank_account_name: document.getElementById('bank-account-name').value.trim(),
+        phone_number: document.getElementById('phone-number').value.trim(),
+        updated_at: new Date().toISOString(),
+      };
 
-    if(referrals.length === 0) {
-      document.getElementById('referral-table-body').innerHTML = `<tr><td colspan="3">No referrals yet.</td></tr>`;
-      return;
-    }
+      const { error } = await supabase
+        .from('affiliate_user')
+        .update(updates)
+        .eq('id', currentAffiliate.id);
 
-    const tbody = document.getElementById('referral-table-body');
-    tbody.innerHTML = '';
-    referrals.forEach(r => {
-      const tr = document.createElement('tr');
-      tr.innerHTML = `
-        <td>${r.full_name || '-'}</td>
-        <td>${r.email}</td>
-        <td>${new Date(r.created_at).toLocaleDateString()}</td>
-      `;
-      tbody.appendChild(tr);
+      const msgEl = document.getElementById('settings-message');
+      if (error) {
+        msgEl.style.color = 'red';
+        msgEl.textContent = 'Failed to save details.';
+      } else {
+        msgEl.style.color = 'green';
+        msgEl.textContent = 'Details saved successfully.';
+      }
+      setTimeout(() => { msgEl.textContent = ''; }, 3000);
     });
-  }
 
-  async function loadEarnings(userId) {
-    // Fetch sum of earnings for this user where status = 'paid'
-    const { data: paidEarnings, error: paidError } = await supabase
-      .from('earnings')
-      .select('amount')
-      .eq('user_id', userId)
-      .eq('status', 'paid');
+    // 5) Copy referral code
+    document.getElementById('copy-code-btn').addEventListener('click', () => {
+      const code = document.getElementById('referral-code').textContent;
+      navigator.clipboard.writeText(code)
+        .then(() => alert('Referral code copied to clipboard!'))
+        .catch(() => alert('Failed to copy code.'));
+    });
 
-    // Fetch sum of earnings pending payout
-    const { data: pendingEarnings, error: pendingError } = await supabase
-      .from('earnings')
-      .select('amount')
-      .eq('user_id', userId)
-      .eq('status', 'pending');
+    // 6) Logout
+    document.getElementById('logout-btn').addEventListener('click', async () => {
+      // Optionally, you could call supabase.auth.signOut() if you integrate Supabase Auth
+      localStorage.removeItem('affiliate_user');
+      window.location.href = 'affiliate-login.html';
+    });
 
-    if(paidError || pendingError) {
-      document.getElementById('total-commissions').textContent = 'Error';
-      document.getElementById('pending-payouts').textContent = 'Error';
-      return;
-    }
-
-    const totalPaid = paidEarnings.reduce((acc, curr) => acc + Number(curr.amount), 0);
-    const totalPending = pendingEarnings.reduce((acc, curr) => acc + Number(curr.amount), 0);
-
-    document.getElementById('total-commissions').textContent = totalPaid.toLocaleString();
-    document.getElementById('pending-payouts').textContent = totalPending.toLocaleString();
-  }
-
-  // Save payment details handler
-  document.getElementById('settings-form').addEventListener('submit', async (e) => {
-    e.preventDefault();
-    const updates = {
-      wallet_btc: document.getElementById('wallet-btc').value.trim(),
-      wallet_usdt: document.getElementById('wallet-usdt').value.trim(),
-      wallet_eth: document.getElementById('wallet-eth').value.trim(),
-      bank_name: document.getElementById('bank-name').value.trim(),
-      bank_account: document.getElementById('bank-account').value.trim(),
-      bank_account_name: document.getElementById('bank-account-name').value.trim(),
-      phone_number: document.getElementById('phone-number').value.trim(),
-      updated_at: new Date().toISOString(),
+    // Initialize on page load
+    window.onload = () => {
+      loadAffiliateData();
     };
-
-    const { error } = await supabase
-      .from('users')
-      .update(updates)
-      .eq('id', currentUser.id);
-
-    const msgEl = document.getElementById('settings-message');
-    if(error) {
-      msgEl.style.color = 'red';
-      msgEl.textContent = 'Failed to save details.';
-    } else {
-      msgEl.style.color = 'green';
-      msgEl.textContent = 'Details saved successfully.';
-    }
-    setTimeout(() => { msgEl.textContent = ''; }, 3000);
-  });
-
-  // Copy referral code button
-  document.getElementById('copy-code-btn').addEventListener('click', () => {
-    const code = document.getElementById('referral-code').textContent;
-    navigator.clipboard.writeText(code).then(() => {
-      alert('Referral code copied to clipboard!');
-    }).catch(() => {
-      alert('Failed to copy referral code.');
-    });
-  });
-
-  // Logout
-  document.getElementById('logout-btn').addEventListener('click', async () => {
-    await supabase.auth.signOut();
-    window.location.href = '/login.html';
-  });
-
-  // On page load
-  window.onload = () => {
-    loadUserData();
-  };
-</script>
+  </script>
 </body>
 </html>
