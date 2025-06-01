@@ -1,0 +1,138 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Admin – Manage Affiliates</title>
+  <style>
+    body { font-family: Arial, sans-serif; background: #f4f4f4; margin: 0; padding: 0; }
+    .navbar { background: #333; color: #fff; padding: 1rem; text-align: center; }
+    .container { max-width: 1000px; margin: 2rem auto; background: #fff; padding: 2rem; border-radius: 8px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
+    table { width: 100%; border-collapse: collapse; margin-top: 1rem; }
+    th, td { border: 1px solid #ddd; padding: 0.75rem; text-align: left; }
+    th { background: #0070f3; color: #fff; }
+    select, button { padding: 0.5rem; }
+    button { background: #0070f3; color: #fff; border: none; cursor: pointer; border-radius: 4px; }
+    button:disabled { background: #999; cursor: not-allowed; }
+    .btn-action { margin-right: 0.5rem; }
+  </style>
+</head>
+<body>
+  <div class="navbar">
+    <h2>Admin Panel – Affiliate Management</h2>
+  </div>
+
+  <div class="container">
+    <button id="refresh-btn">Refresh List</button>
+    <table id="affiliates-table">
+      <thead>
+        <tr>
+          <th>Name</th>
+          <th>Email</th>
+          <th>Referral Code</th>
+          <th>Status</th>
+          <th>Clicks</th>
+          <th>Signups</th>
+          <th>Conversions</th>
+          <th>Total Earned (₦)</th>
+          <th>Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+        <!-- Rows inserted via JS -->
+      </tbody>
+    </table>
+  </div>
+
+  <script type="module" src="/js/affiliate.js"></script>
+  <script type="module">
+    import { supabase } from '/js/affiliate.js';
+
+    const tableBody = document.querySelector('#affiliates-table tbody');
+    const refreshBtn = document.getElementById('refresh-btn');
+
+    // 1. Fetch all affiliates and populate table
+    async function loadAffiliates() {
+      tableBody.innerHTML = '<tr><td colspan="9">Loading…</td></tr>';
+      const { data, error } = await supabase
+        .from('affiliates')
+        .select('*')
+        .order('created_at', { ascending: false });
+
+      if (error) {
+        console.error(error);
+        tableBody.innerHTML = `<tr><td colspan="9">Error loading data.</td></tr>`;
+        return;
+      }
+
+      if (data.length === 0) {
+        tableBody.innerHTML = `<tr><td colspan="9">No affiliates yet.</td></tr>`;
+        return;
+      }
+
+      // Clear then populate
+      tableBody.innerHTML = '';
+      data.forEach((aff) => {
+        const tr = document.createElement('tr');
+
+        tr.innerHTML = `
+          <td>${aff.name}</td>
+          <td>${aff.email}</td>
+          <td>${aff.referral_code}</td>
+          <td>
+            <select data-id="${aff.id}" class="status-select">
+              <option value="pending" ${aff.status === 'pending' ? 'selected' : ''}>Pending</option>
+              <option value="active" ${aff.status === 'active' ? 'selected' : ''}>Active</option>
+              <option value="banned" ${aff.status === 'banned' ? 'selected' : ''}>Banned</option>
+            </select>
+          </td>
+          <td>${aff.total_clicks}</td>
+          <td>${aff.signups_made}</td>
+          <td>${aff.conversions}</td>
+          <td>₦${aff.total_earned.toLocaleString()}</td>
+          <td>
+            <button class="btn-action payout-btn" data-id="${aff.id}" ${aff.total_earned <= 0 ? 'disabled' : ''}>Payout ₦${aff.total_earned.toLocaleString()}</button>
+          </td>
+        `;
+        tableBody.appendChild(tr);
+      });
+
+      // Add event listeners to status selects & payout buttons
+      document.querySelectorAll('.status-select').forEach((select) => {
+        select.addEventListener('change', async (e) => {
+          const id = e.target.getAttribute('data-id');
+          const newStatus = e.target.value;
+          await supabase.from('affiliates').update({ status: newStatus }).eq('id', id);
+          // Optionally show a toast or refresh after delay
+        });
+      });
+
+      document.querySelectorAll('.payout-btn').forEach((btn) => {
+        btn.addEventListener('click', async (e) => {
+          const id = e.target.getAttribute('data-id');
+          // For simplicity: We’ll set total_earned = 0 after payout
+          const { data: affRecord, error: fetchErr } = await supabase
+            .from('affiliates')
+            .select('total_earned')
+            .eq('id', id)
+            .single();
+          if (fetchErr) { console.error(fetchErr); return; }
+          const earnedAmount = Number(affRecord.total_earned);
+
+          // TODO: Here, you’d actually send ₦ to their wallet_address via your payment processor.
+          // Once done, reset total_earned to 0 in DB:
+          await supabase.from('affiliates').update({ total_earned: 0 }).eq('id', id);
+          // Optionally, record a note in a "payouts" table you create.
+          alert(`Paid out ₦${earnedAmount.toLocaleString()} to affiliate ID ${id}`);
+          loadAffiliates(); // Refresh table
+        });
+      });
+    }
+
+    refreshBtn.addEventListener('click', loadAffiliates);
+
+    // Load on page load
+    loadAffiliates();
+  </script>
+</body>
+</html>
