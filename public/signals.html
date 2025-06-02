@@ -6,9 +6,9 @@
   <title>VIP Signal • CBE</title>
 
   <!-- ─────────────────────────────────────────────────────────────────────
-       0) SIMPLE AUTH GUARD (matches login/dashboard exactly)
-         • If localStorage.isLoggedIn !== 'true'  OR  sessionStorage.cbeUserId is missing,
-           redirect to login.html  (no tokens, no RLS, no “section_tokens” checks)
+       0) SIMPLE AUTH GUARD:
+          • If localStorage.isLoggedIn !== 'true' OR sessionStorage.cbeUserId is missing,
+            redirect back to login.html immediately.
   -->
   <script>
     if (
@@ -20,7 +20,7 @@
   </script>
 
   <!-- ─────────────────────────────────────────────────────────────────────
-       1) DEPENDENCIES (Fonts, Bootstrap, Supabase, TradingView, etc.)
+       1) DEPENDENCIES: Fonts, Bootstrap, Supabase, TradingView, etc.
   -->
   <link
     href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;500;700&display=swap"
@@ -40,15 +40,15 @@
 
   <style>
     /* ---------------------------------
-       THEME VARIABLES (unchanged)
+       THEME VARIABLES
        --------------------------------- */
     :root[data-theme="dark"] {
       --bg: #000000;
       --text: #ffd700;
       --gold: #ffd700;
       --gold-dark: #cca300;
-      --glass: rgba(255,255,255,0.1);
-      --shadow: rgba(0,0,0,0.5);
+      --glass: rgba(255, 255, 255, 0.1);
+      --shadow: rgba(0, 0, 0, 0.5);
       --text-light: #e6b800;
       --text-muted: #ffd700;
       --success: #4caf50;
@@ -62,8 +62,8 @@
       --text: #333;
       --gold: #cca300;
       --gold-dark: #b58900;
-      --glass: rgba(0,0,0,0.08);
-      --shadow: rgba(0,0,0,0.15);
+      --glass: rgba(0, 0, 0, 0.08);
+      --shadow: rgba(0, 0, 0, 0.15);
       --text-light: #555;
       --text-muted: #666;
       --success: #388e3c;
@@ -74,7 +74,7 @@
     }
 
     /* ---------------------------------
-       RESET & BASE (unchanged)
+       RESET & BASE
        --------------------------------- */
     * { margin: 0; padding: 0; box-sizing: border-box; }
     html { scroll-behavior: smooth; }
@@ -90,7 +90,7 @@
     a:hover { color: var(--gold-dark); }
 
     /* ---------------------------------
-       ANIMATIONS (unchanged)
+       ANIMATIONS
        --------------------------------- */
     .slide-in {
       opacity: 0;
@@ -103,7 +103,7 @@
     }
 
     /* ---------------------------------
-       WATERMARK (unchanged)
+       WATERMARK
        --------------------------------- */
     html::before, html::after {
       content: "Reselling of this signal is prohibited and punishable by law";
@@ -148,7 +148,7 @@
     }
 
     /* ===========================
-       NAVIGATION (unchanged)
+       NAVIGATION
        =========================== */
     nav {
       position: fixed;
@@ -469,7 +469,7 @@
     }
 
     /* ---------------------------------
-       FOOTER (unchanged)
+       FOOTER
        --------------------------------- */
     footer {
       text-align: center;
@@ -482,7 +482,7 @@
     }
 
     /* ---------------------------------
-       RESPONSIVE (unchanged)
+       RESPONSIVE
        --------------------------------- */
     @media (max-width: 768px) {
       nav {
@@ -536,7 +536,7 @@
     }
 
     /* ---------------------------------
-       SMARTSUPP CHAT THEME (unchanged)
+       SMARTSUPP CHAT THEMING
        --------------------------------- */
     :root {
       --smartsupp-base-color: var(--gold);
@@ -558,7 +558,7 @@
 </head>
 <body>
 
-  <!-- Audio element for new-signal alert -->
+  <!-- Audio element for new‐signal alert -->
   <audio id="alertSound" src="alert.mp3"></audio>
 
   <!-- UPDATED NAVIGATION -->
@@ -584,7 +584,7 @@
     </div>
 
     <!-- GOLD CHART SECTION -->
-    <div class="section-title slide-in">📈 Gold (XAU/USD) Real-Time Chart</div>
+    <div class="section-title slide-in">📈 Gold (XAU/USD) Real‐Time Chart</div>
     <div id="gold-chart" class="slide-in" style="transition-delay: 0.6s;">
       <div id="tradingview_chart"></div>
     </div>
@@ -623,12 +623,13 @@
   <footer class="slide-in">© 2025 CBE – Chukwuemeka Bullion Exchange. All rights reserved.</footer>
 
   <!-- ─────────────────────────────────────────────────────────────────────
-       2) MAIN SCRIPT (load signals, chart, news, calendar, etc.)
+       2) MAIN SCRIPT: initialize Supabase, load & render latest signal,
+          subscribe for new signals, plus news & calendar refresh
   -->
   <script>
-    // ─── Supabase init (matches your VIP Dashboard’s public key) ──────────────
+    // ─── Supabase init: same URL & anon key used in login/dashboard ─────────
     const SUPA_URL = 'https://dapwpgvnfjcfqqhrpxla.supabase.co';
-    const SUPA_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJzI...'; // ← your anon/public key
+    const SUPA_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJzI...'; // ← full PUBLIC anon key
     const supabase = window.supabase.createClient(SUPA_URL, SUPA_KEY);
 
     // ─── 1) TRADINGVIEW CHART INITIALIZATION ─────────────────────────────────
@@ -639,7 +640,7 @@
         height: "100%",
         symbol: "OANDA:XAUUSD",
         interval: "60",
-        timezone: "Etc/UTC",
+        timezone: "Africa/Lagos",
         theme: "dark",
         style: "1",
         locale: "en",
@@ -669,7 +670,7 @@
       document.querySelector('.theme-toggle').innerHTML = newTheme === 'dark' ? '🌞' : '🌜';
     }
 
-    // ─── 3) RING THE BELL ──────────────────────────────────────────────────────
+    // ─── 3) RING THE BELL ON NEW SIGNAL ───────────────────────────────────────
     function ringBell() {
       const audio = document.getElementById('alertSound');
       if (audio) {
@@ -680,17 +681,19 @@
       }
     }
 
-    // ─── 4) LOAD LATEST SIGNAL ──────────────────────────────────────────────────
+    // ─── 4) LOAD LATEST SIGNAL (only 1 record, old ones disappear) ────────────
     let lastSignalId = null;
 
     async function loadLatestSignal() {
       const card = document.getElementById('signalCard');
+      // Show loader
       card.innerHTML = `
         <div class="loader"></div>
         <p style="text-align:center;color: var(--text-light);padding:20px;">
           Loading latest signal…
         </p>`;
       try {
+        // Fetch only the newest signal (order by created_at descending, limit 1)
         const { data: signals, error } = await supabase
           .from('signals')
           .select('id, action, asset, entry, sl, tp1, tp2, note, created_at')
@@ -699,6 +702,7 @@
 
         if (error) throw error;
         if (!signals.length) {
+          // No signals found
           card.innerHTML = `
             <p style="text-align:center;color: var(--error);padding:40px;">
               No signals available. Check back soon.
@@ -707,40 +711,47 @@
         }
 
         const sig = signals[0];
-        // If previously fetched a different ID, ring the bell
+        // If a previous signal existed and its ID differs from the new one, ring the bell
         if (lastSignalId !== null && sig.id !== lastSignalId) {
           ringBell();
         }
-        lastSignalId = sig.id;
+        lastSignalId = sig.id; // Update lastSignalId
 
         const dt = new Date(sig.created_at);
         const actionClass = sig.action.toLowerCase() === 'buy' ? 'signal-buy' : 'signal-sell';
 
+        // Render the single latest signal
         card.innerHTML = `
           <div class="signal-header">
-            <h2 class="${actionClass}">${sig.action.toUpperCase()} ${sig.asset} – ${dt.toLocaleDateString('en-GB')}</h2>
+            <h2 class="${actionClass}">
+              ${sig.action.toUpperCase()} ${sig.asset} – ${dt.toLocaleDateString('en-GB')}
+            </h2>
             <div class="time">${dt.toLocaleTimeString('en-GB')}</div>
             <button class="refresh-btn" onclick="loadLatestSignal()">🔄</button>
           </div>
           <div class="signal-body">
-            <div class="detail entry">Entry: <span>${sig.entry}</span>
+            <div class="detail entry">
+              Entry: <span>${sig.entry}</span>
               <button class="copy-btn" onclick="copyText('${sig.entry}')">Copy</button>
             </div>
-            <div class="detail sl">SL: <span>${sig.sl}</span>
-              <button class="copy-btn" onclick="copyText('${sig.sl}')">Copy</button>
+            <div class="detail sl">
+              SL: <span>${sig.sl.toFixed(4)}</span>
+              <button class="copy-btn" onclick="copyText('${sig.sl.toFixed(4)}')">Copy</button>
             </div>
-            <div class="detail tp1">TP1: <span>${sig.tp1}</span>
-              <button class="copy-btn" onclick="copyText('${sig.tp1}')">Copy</button>
+            <div class="detail tp1">
+              TP1: <span>${sig.tp1.toFixed(4)}</span>
+              <button class="copy-btn" onclick="copyText('${sig.tp1.toFixed(4)}')">Copy</button>
             </div>
-            <div class="detail tp2">TP2: <span>${sig.tp2}</span>
-              <button class="copy-btn" onclick="copyText('${sig.tp2}')">Copy</button>
+            <div class="detail tp2">
+              TP2: <span>${sig.tp2 !== null ? sig.tp2.toFixed(4) : 'N/A'}</span>
+              <button class="copy-btn" onclick="copyText('${sig.tp2 !== null ? sig.tp2.toFixed(4) : ''}')">Copy</button>
             </div>
           </div>
           <div class="admin-note">Note: ${sig.note || 'Trade at your own risk.'}</div>
         `;
       } catch (err) {
-        console.error(err);
-        document.getElementById('signalCard').innerHTML = `
+        console.error('Signal load error:', err);
+        card.innerHTML = `
           <p style="text-align:center;color: var(--error);padding:40px;">
             Failed to load signal. Try again later.
           </p>`;
@@ -749,6 +760,7 @@
 
     // ─── 5) COPY TO CLIPBOARD ───────────────────────────────────────────────────
     function copyText(txt) {
+      if (!txt) return;
       navigator.clipboard.writeText(txt)
         .then(() => alert('Copied: ' + txt))
         .catch(() => alert('Copy failed'));
@@ -767,7 +779,7 @@
       const ul = document.getElementById('news-list');
       ul.innerHTML = '<li>Loading…</li>';
       try {
-        // Use a CORS-friendly proxy to fetch Investing.com RSS
+        // Use a CORS‐friendly proxy to fetch Investing.com RSS feed
         const res = await fetch('https://api.allorigins.win/raw?url=https://www.investing.com/rss/news_285.rss');
         const xml = new DOMParser().parseFromString(await res.text(), 'text/xml');
         const items = Array.from(xml.querySelectorAll('item')).slice(0, 8);
@@ -789,7 +801,7 @@
       const tbody = document.getElementById('calendar-body');
       tbody.innerHTML = '<tr><td colspan="7">Loading…</td></tr>';
       try {
-        // Mock events (you can replace with a real API later)
+        // Mock events—replace with real API if needed
         const events = [
           { date: "05-25-2025", time: "6:40pm", currency: "USD", event: "Fed Chair Powell Speaks", impact: "Medium", actual: "", previous: "" },
           { date: "05-26-2025", time: "7:00am", currency: "GBP", event: "Bank Holiday", impact: "Holiday", actual: "", previous: "" },
@@ -824,9 +836,9 @@
       }
     }
 
-    // ─── 9) INIT: Load everything & subscribe to new signals ─────────────────
+    // ─── 9) INIT: On DOMContentLoaded, run initial loads & subscribe to new signals
     window.addEventListener('DOMContentLoaded', () => {
-      // Apply slide-in animations
+      // Fade‐in slide-in elements
       document.querySelectorAll('.slide-in').forEach(el => {
         new IntersectionObserver((entries, obs) => {
           entries.forEach(e => {
@@ -843,38 +855,12 @@
       loadGoldNews();
       loadEconCalendar();
 
-      // Subscribe to new signals (INSERT)
+      // Subscribe to new inserts in "signals" table:
+      //   On INSERT → reloadLatestSignal (which will ring if ID changed)
       supabase
         .from('signals')
         .on('INSERT', payload => {
-          loadLatestSignal();  // this will ring if ID changed
-
-          // (Optional) Send an email/push alert via your Netlify Function
-          (async () => {
-            try {
-              const cbeUserId = sessionStorage.getItem('cbeUserId');
-              if (!cbeUserId) return;
-
-              const { data: userData, error: userErr } = await supabase
-                .from('users')
-                .select('email, name')
-                .eq('id', cbeUserId)
-                .single();
-
-              if (userErr || !userData) return;
-
-              await fetch("/.netlify/functions/send-signal-alert", {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({
-                  email: userData.email,
-                  name: userData.name
-                })
-              });
-            } catch (e) {
-              console.error("Error in new-signal subscription:", e);
-            }
-          })();
+          loadLatestSignal();
         })
         .subscribe();
 
@@ -884,7 +870,7 @@
     });
   </script>
 
-  <!-- Smartsupp Live Chat script (unchanged) -->
+  <!-- Smartsupp Live Chat (unchanged) -->
   <script type="text/javascript">
     var _smartsupp = _smartsupp || {};
     _smartsupp.key = '018a8bbd868518221e725341a7b2601231ec7ce8';
