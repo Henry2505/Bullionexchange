@@ -137,16 +137,22 @@
   </div>
   <footer>© 2025 Chukwuemeka Bullion Exchange. All rights reserved.</footer>
 
+  <!-- ─── SUPABASE JS ─────────────────────────────────────────────────────────── -->
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>
   <script>
     // ─── 1) SETUP & THEME TOGGLE ────────────────────────────────────────────────
     const loginCard = document.getElementById('login-card');
-    const toggleBtn = document.getElementById('theme-toggle');
+    const toggleBtn  = document.getElementById('theme-toggle');
     window.addEventListener('DOMContentLoaded', () => {
+      // Fade-in the card
       loginCard.classList.add('visible');
+
+      // Restore saved theme (dark/light)
       const savedTheme = localStorage.getItem('theme') || 'dark';
       document.documentElement.setAttribute('data-theme', savedTheme);
       toggleBtn.textContent = savedTheme === 'dark' ? '🌞' : '🌜';
+
+      // If redirected with message=logged_out_elsewhere, show warning
       const urlParams = new URLSearchParams(window.location.search);
       if (urlParams.get('message') === 'logged_out_elsewhere') {
         const alertDiv = document.getElementById('login-alert');
@@ -155,7 +161,7 @@
       }
     });
     toggleBtn.addEventListener('click', () => {
-      const cur = document.documentElement.getAttribute('data-theme');
+      const cur  = document.documentElement.getAttribute('data-theme');
       const next = cur === 'dark' ? 'light' : 'dark';
       document.documentElement.setAttribute('data-theme', next);
       localStorage.setItem('theme', next);
@@ -163,11 +169,11 @@
     });
 
     // ─── 2) INITIALIZE SUPABASE ─────────────────────────────────────────────────
-    const SUPA_URL = 'https://dapwpgvnfjcfqqhrpxla.supabase.co';
+    const SUPA_URL      = 'https://dapwpgvnfjcfqqhrpxla.supabase.co';
     const SUPA_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImRhcHdwZ3ZuZmpjZnFxaHJweGxhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDcwNDA4ODgsImV4cCI6MjA2MjYxNjg4OH0.ICC0UsLlzJDNre7rFCeD3k6iVzo6jOJgn3PhABpEMsQ';
     const sb = supabase.createClient(SUPA_URL, SUPA_ANON_KEY);
 
-    // ─── 3) SESSION TOKEN GENERATOR ─────────────────────────────────────────────
+    // ─── 3) UUID GENERATOR FOR SESSION TOKENS ──────────────────────────────────
     function uuidv4() {
       return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
         const r = Math.random() * 16 | 0, v = c === 'x' ? r : (r & 0x3 | 0x8);
@@ -180,41 +186,50 @@
       e.preventDefault();
       const alertDiv = document.getElementById('login-alert');
       alertDiv.textContent = '';
-      const email = document.getElementById('email').value.trim().toLowerCase();
+
+      const email    = document.getElementById('email').value.trim().toLowerCase();
       const password = document.getElementById('password').value;
 
       try {
-        // Fetch user by email
-        const { data: user, error } = await sb
+        // 1) Fetch user by email
+        const { data: user, error: fetchError } = await sb
           .from('users')
           .select('id, name, email, password, status')
           .eq('email', email)
           .single();
-        if (error) throw error;
+
+        if (fetchError) throw fetchError;
         if (!user) throw new Error('No account found for that email.');
 
-        // Password check
-        if (user.password !== password) throw new Error('Invalid login credentials.');
+        // 2) Password check (in a real setup, hash+salt comparison should be used; this assumes you store plaintext)
+        if (user.password !== password) {
+          throw new Error('Invalid login credentials.');
+        }
 
-        // Approval check
+        // 3) Approval check
         if (String(user.status).toLowerCase() !== 'approved') {
           throw new Error('Your account is not yet approved—please check back soon.');
         }
 
-        // Device Fingerprint Check
-        const deviceKey = `cbeDevice_${email}`;
-        const savedDevice = localStorage.getItem(deviceKey);
+        // 4) Device Fingerprint Check
+        //    If this is the first known device for this email, store it.
+        //    If it changes, send a Netlify Function alert.
+        const deviceKey    = `cbeDevice_${email}`;
+        const savedDevice  = localStorage.getItem(deviceKey);
         const currentDevice = navigator.userAgent;
+
         if (!savedDevice) {
           localStorage.setItem(deviceKey, currentDevice);
         } else if (savedDevice !== currentDevice) {
+          // Device changed: overwrite stored device and fire off an alert
           localStorage.setItem(deviceKey, currentDevice);
           const payload = {
             email: user.email,
-            name: user.name,
+            name:  user.name,
             device: currentDevice,
             time: new Date().toLocaleString("en-US", { timeZone: "Africa/Lagos" })
           };
+          // Make sure you have a Netlify Function at /.netlify/functions/send-login-alert
           await fetch("/.netlify/functions/send-login-alert", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
@@ -222,21 +237,23 @@
           });
         }
 
-        // Generate and save session token
+        // 5) Generate and store a new session token
         const sessionToken = uuidv4();
+
+        //    Upsert into your existing section_tokens table:
+        //    (Replace 'section_tokens' with exactly the name of your Supabase table.)
         const { error: tokenError } = await sb
-          .from('users')
-          .update({ current_session_token: sessionToken })
-          .eq('id', user.id);
+          .from('section_tokens')
+          .upsert({ user_id: user.id, token: sessionToken }, { onConflict: 'user_id' });
         if (tokenError) throw new Error('Failed to update session token: ' + tokenError.message);
 
-        // Store session data
+        // 6) Store session data in localStorage/sessionStorage using the keys the dashboard expects:
         localStorage.setItem('isLoggedIn', 'true');
-        sessionStorage.setItem('cbeUserId', user.id);
         localStorage.setItem('sessionToken', sessionToken);
+        sessionStorage.setItem('userId', user.id);      // must match dashboard’s checkSession()
         sessionStorage.setItem('userName', user.name);
 
-        // Redirect to VIP dashboard
+        // 7) Redirect to the VIP dashboard
         window.location.assign('vip-dashboard.html');
       } catch (err) {
         console.error("Login error:", err);
@@ -246,6 +263,7 @@
     });
   </script>
 
+  <!-- ─── SMARTSUPP LIVE CHAT (unchanged) ─────────────────────────────────────── -->
   <script>
     var _smartsupp = _smartsupp || {};
     _smartsupp.key = '018a8bbd868518221e725341a7b2601231ec7ce8';
