@@ -9,14 +9,14 @@
        0) SUPABASE CLIENT & SESSION CHECK (to enforce single‐session)
        ─────────────────────────────────────────────────────────────────────
        We initialize Supabase first, then immediately verify:
-       - That localStorage.isLoggedIn === 'true'
-       - That sessionStorage.userId and localStorage.sessionToken both exist
-       - That the token in localStorage matches the one stored in Supabase’s section_tokens table
-       If anything fails, we clear sessionStorage/localStorage and redirect to login.html?message=logged_out_elsewhere.
+       1. localStorage.isLoggedIn === 'true'
+       2. sessionStorage.userId and localStorage.sessionToken both exist
+       3. The token in localStorage matches the one stored in Supabase's section_tokens
+       If any check fails, clear storage and redirect to login.html?message=logged_out_elsewhere.
   -->
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>
   <script>
-    // 0a) Supabase init (match your existing SUPA_URL and SUPA_KEY)
+    // 0a) Supabase init (use your own URL + anon key exactly)
     const SUPA_URL = 'https://dapwpgvnfjcfqqhrpxla.supabase.co';
     const SUPA_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJzI...'; // your anon/public key
     const supabase = window.supabase.createClient(SUPA_URL, SUPA_KEY);
@@ -33,7 +33,7 @@
       const localToken = localStorage.getItem('sessionToken');
 
       if (!userId || !localToken) {
-        // Missing pieces → not valid session
+        // Missing pieces → invalid session
         localStorage.removeItem('isLoggedIn');
         localStorage.removeItem('sessionToken');
         sessionStorage.removeItem('userId');
@@ -43,7 +43,7 @@
       }
 
       try {
-        // 0d) Query Supabase for the “current token” from section_tokens
+        // 0d) Query Supabase's section_tokens to verify token
         const { data, error } = await supabase
           .from('section_tokens')
           .select('token')
@@ -54,7 +54,7 @@
           throw new Error(error?.message || 'Session lookup failed');
         }
 
-        // 0e) If the DB’s token no longer matches the browser’s localStorage token → force logout
+        // 0e) If the DB’s token doesn’t match localStorage, force logout
         if (data.token !== localToken) {
           localStorage.removeItem('isLoggedIn');
           localStorage.removeItem('sessionToken');
@@ -63,7 +63,7 @@
           window.location.replace('login.html?message=logged_out_elsewhere');
           return;
         }
-        // Otherwise, session is valid—allow the page to render normally.
+        // Otherwise, valid session → allow page to render
       } catch (err) {
         console.error('Session validation error:', err);
         localStorage.removeItem('isLoggedIn');
@@ -98,18 +98,18 @@
     /* Theme Variables */
     :root[data-theme="dark"] {
       --bg: #000000; /* Pure black background */
-      --text: #ffd700; /* Gold text for visibility */
+      --text: #ffd700; /* Gold text */
       --gold: #ffd700;
       --gold-dark: #cca300;
       --glass: rgba(255, 255, 255, 0.1);
       --shadow: rgba(0, 0, 0, 0.5);
-      --text-light: #e6b800; /* Lighter gold for secondary text */
-      --text-muted: #ffd700; /* Bright gold for better visibility */
+      --text-light: #e6b800; /* Lighter gold */
+      --text-muted: #ffd700;
       --success: #4caf50;
       --error: #e57373;
-      --accent: #1e1e1e; /* Subtle dark accent for contrast */
-      --buy: #4caf50; /* Green for buy signals */
-      --sell: #e57373; /* Red for sell signals */
+      --accent: #1e1e1e; 
+      --buy: #4caf50; 
+      --sell: #e57373; 
     }
     :root[data-theme="light"] {
       --bg: #f5f5f5;
@@ -214,11 +214,11 @@
       z-index: 1000;
     }
     nav .logo {
-      font-size: 1.25rem; /* Reduced from 1.35rem to fit bell */
+      font-size: 1.25rem;
       font-weight: 700;
       color: var(--gold);
       letter-spacing: 1px;
-      padding: 5px 10px; /* Reduced padding */
+      padding: 5px 10px;
       background: linear-gradient(45deg, var(--gold), var(--gold-dark));
       border-radius: 8px;
       box-shadow: 0 3px 10px rgba(255, 215, 0, 0.3);
@@ -909,7 +909,7 @@
     });
   </script>
 
-  <!-- Smartsupp Live Chat script -->
+  <!-- Smartsupp Live Chat script (unchanged) -->
   <script type="text/javascript">
     var _smartsupp = _smartsupp || {};
     _smartsupp.key = '018a8bbd868518221e725341a7b2601231ec7ce8';
