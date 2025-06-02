@@ -17,7 +17,7 @@
   <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css" rel="stylesheet">
   <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;700&family=Orbitron:wght@400;700&display=swap" rel="stylesheet">
 
-  <!-- Supabase + TradingView + Chart.js (kept in case other features rely on it) + Smartsupp + Particles.js -->
+  <!-- Supabase + TradingView + Chart.js + Smartsupp + Particles.js -->
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>
   <script src="https://s3.tradingview.com/tv.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
@@ -37,7 +37,7 @@
     /* Theme Variables */
     :root[data-theme="dark"] {
       --bg: #0a0a0a;
-      --text: #ffd700; /* Gold text for all elements */
+      --text: #ffd700;
       --gold: #ffd700;
       --gold-dark: #cca300;
       --glass: rgba(255, 255, 255, 0.05);
@@ -50,7 +50,7 @@
     }
     :root[data-theme="light"] {
       --bg: #e8ecef;
-      --text: #ffd700; /* Gold text for light theme */
+      --text: #ffd700;
       --gold: #cca300;
       --gold-dark: #b58900;
       --glass: rgba(0, 0, 0, 0.05);
@@ -68,14 +68,14 @@
     body {
       font-family: 'Poppins', sans-serif;
       background: var(--bg);
-      color: var(--text); /* All text gold */
+      color: var(--text);
       overflow-x: hidden;
       line-height: 1.6;
       width: 100vw;
       position: relative;
     }
     a, button, h1, h2, h3, h4, h5, h6, p, span, td, th, li, input, select, label {
-      color: var(--text) !important; /* Force gold text everywhere */
+      color: var(--text) !important;
     }
     a:hover { color: var(--gold-dark) !important; }
 
@@ -86,8 +86,8 @@
       left: 0;
       width: 100%;
       height: 100%;
-      z-index: -10; /* Ensure it’s behind content */
-      opacity: 0.15; /* Lower opacity to avoid obscuring content */
+      z-index: -10;
+      opacity: 0.15;
     }
 
     /* Animations */
@@ -105,7 +105,6 @@
     header {
       position: sticky;
       top: 0;
-      width: 100%;
       background: linear-gradient(135deg, var(--glass), rgba(255, 215, 0, 0.1));
       backdrop-filter: blur(15px);
       padding: 1rem 3vw;
@@ -211,7 +210,7 @@
       padding: 0 3vw;
       margin: 0;
       position: relative;
-      z-index: 1; /* Ensure content is above particles */
+      z-index: 1;
     }
 
     /* Welcome Banner */
@@ -563,6 +562,8 @@
           <h6><i class="bi-currency-exchange me-2"></i>24h Gold Δ</h6>
           <p id="stat-gold-change" class="fs-4 mb-0">--%</p>
         </div>
+äät
+
       </div>
     </div>
 
@@ -641,7 +642,7 @@
       <table>
         <thead>
           <tr>
-           <th>Timestamp</th>
+            <th>Timestamp</th>
             <th>Action</th>
             <th>IP Address</th>
             <th>Location</th>
@@ -670,18 +671,18 @@
   <audio id="notif-sound" src="ding.mp3" preload="auto"></audio>
   <audio id="critical-notif-sound" src="alert.mp3" preload="auto"></audio>
   <script>
-    // Supabase Init
+    // ─── 1) SUPABASE INIT ──────────────────────────────────────────────────────
     const SUPA_URL = 'https://dapwpgvnfjcfqqhrpxla.supabase.co';
     const SUPA_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImRhcHdwZ3ZuZmpjZnFxaHJweGxhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDcwNDA4ODgsImV4cCI6MjA2MjYxNjg4OH0.ICC0UsLlzJDNre7rFCeD3k6iVzo6jOJgn3PhABpEMsQ';
     const supabase = window.supabase.createClient(SUPA_URL, SUPA_KEY);
 
-    // ExchangeRate-API Key
+    // ─── 2) EXCHANGE RATE API KEY ───────────────────────────────────────────────
     const EXCHANGE_RATE_API_KEY = '4e4307b2bf8daac15365a410';
 
-    // Cache for API responses
+    // ─── 3) API CACHE ───────────────────────────────────────────────────────────
     const apiCache = new Map();
 
-    // Fetch IP and Geolocation
+    // ─── 4) FETCH USER INFO (IP & GEOLOCATION) ──────────────────────────────────
     async function getUserInfo() {
       try {
         const res = await fetch('https://ipapi.co/json/');
@@ -697,7 +698,8 @@
       }
     }
 
-    // Log Activity to Supabase (records login/logout automatically)
+    // ─── 5) LOG ACTIVITY TO SUPABASE ────────────────────────────────────────────
+    // Records user login/logout with IP, location, and device info
     async function logActivity(action) {
       const userInfo = await getUserInfo();
       const userId = sessionStorage.getItem('cbeUserId') || 'anonymous';
@@ -717,7 +719,8 @@
       }
     }
 
-    // Load Recent Activity (fetches last 10 logins/logouts)
+    // ─── 6) LOAD RECENT ACTIVITY ────────────────────────────────────────────────
+    // Fetches and displays last 10 login/logout activities
     async function loadRecentActivity() {
       const tbody = document.getElementById('activity-body');
       tbody.innerHTML = '<tr><td colspan="5"><div class="spinner"></div></td></tr>';
@@ -748,7 +751,7 @@
       }
     }
 
-    // Export Activity Logs as CSV
+    // ─── 7) EXPORT ACTIVITY LOGS AS CSV ─────────────────────────────────────────
     function downloadActivityLog() {
       supabase
         .from('user_activity')
@@ -774,7 +777,7 @@
         });
     }
 
-    // Currency Converter
+    // ─── 8) CURRENCY CONVERTER ──────────────────────────────────────────────────
     async function convertCurrency() {
       const from = document.getElementById('converter-from').value;
       const to = document.getElementById('converter-to').value;
@@ -802,8 +805,9 @@
       }
     }
 
-    // Session Validation: Periodically checks if the session token matches the one in Supabase.
-    // If not, logs the user out to ensure only one active session per user.
+    // ─── 9) SESSION VALIDATION ──────────────────────────────────────────────────
+    // Checks if the local session token matches the one in Supabase
+    // If not, logs out the user to enforce single-session policy
     async function checkSession() {
       const localToken = localStorage.getItem('sessionToken');
       if (!localToken) {
@@ -818,28 +822,26 @@
         .single();
       if (error || !data) {
         console.error('Error fetching session token:', error);
+        addNotification('Session validation failed', 'critical');
         return;
       }
       if (data.current_session_token !== localToken) {
-        localStorage.removeItem('sessionToken');
-        sessionStorage.removeItem('cbeLoggedIn');
-        sessionStorage.removeItem('cbeUserId');
-        sessionStorage.removeItem('cbeUserName');
-        window.location.href = 'login.html?message=logged_out_elsewhere';
+        logout();
       }
     }
 
-    // Logout
+    // ─── 10) LOGOUT ─────────────────────────────────────────────────────────────
+    // Clears session data and redirects to login page
     async function logout() {
       await logActivity('logout');
       localStorage.removeItem('sessionToken');
       sessionStorage.removeItem('cbeLoggedIn');
       sessionStorage.removeItem('cbeUserId');
       sessionStorage.removeItem('cbeUserName');
-      window.location.replace('login.html');
+      window.location.replace('login.html?message=logged_out_elsewhere');
     }
 
-    // Load Dashboard (stats + watchlist)
+    // ─── 11) LOAD DASHBOARD ─────────────────────────────────────────────────────
     async function loadDashboard() {
       const today = new Date().toISOString().split('T')[0];
       const { count } = await supabase.from('signals').select('id', { count: 'exact' }).gte('created_at', today);
@@ -881,7 +883,7 @@
       };
     }
 
-    // TradingView Widget
+    // ─── 12) TRADINGVIEW WIDGET ─────────────────────────────────────────────────
     function initChart(interval = '240') {
       document.getElementById('tv_chart_4h').innerHTML = '';
       new TradingView.widget({
@@ -908,7 +910,7 @@
       });
     }
 
-    // Gold News
+    // ─── 13) GOLD NEWS ──────────────────────────────────────────────────────────
     async function loadGoldNews() {
       const ul = document.getElementById('news-list');
       ul.innerHTML = '<li><div class="spinner"></div></li>';
@@ -929,7 +931,7 @@
       }
     }
 
-    // Economic Calendar
+    // ─── 14) ECONOMIC CALENDAR ──────────────────────────────────────────────────
     async function loadEconCalendar() {
       const tbody = document.getElementById('calendar-body');
       tbody.innerHTML = '<tr><td colspan="7"><div class="spinner"></div></td></tr>';
@@ -956,13 +958,13 @@
       }
     }
 
-    // Theme Toggle
+    // ─── 15) THEME TOGGLE ───────────────────────────────────────────────────────
     function toggleTheme(theme) {
       document.documentElement.setAttribute('data-theme', theme);
       document.getElementById('theme-select').value = theme;
     }
 
-    // Notifications
+    // ─── 16) NOTIFICATIONS ──────────────────────────────────────────────────────
     function addNotification(message, type = 'info') {
       const list = document.getElementById('notif-list');
       const count = document.getElementById('notif-count');
@@ -975,8 +977,8 @@
       if (sound) sound.play().catch(() => console.log('Audio playback failed'));
     }
 
-    // On Load
-    document.addEventListener('DOMContentLoaded', () => {
+    // ─── 17) ON LOAD ────────────────────────────────────────────────────────────
+    document.addEventListener('DOMContentLoaded', async () => {
       // Initialize Particles.js
       particlesJS('particles-js', {
         particles: {
@@ -1007,9 +1009,31 @@
         }, { threshold: 0.2 }).observe(el);
       });
 
-      // Initialize
+      // Initial session check to catch any immediate mismatches
+      await checkSession();
+
+      // Real-time session subscription to detect token changes
+      const userId = sessionStorage.getItem('cbeUserId');
+      supabase
+        .from(`users:id=eq.${userId}`)
+        .on('UPDATE', payload => {
+          const localToken = localStorage.getItem('sessionToken');
+          if (payload.new.current_session_token !== localToken) {
+            logout();
+          }
+        })
+        .subscribe((status) => {
+          if (status === 'SUBSCRIBED') {
+            console.log('Real-time session subscription active');
+          }
+        });
+
+      // Periodic session check as a fallback
+      setInterval(checkSession, 15000);
+
+      // Initialize Dashboard
       document.getElementById('welcomeName').textContent = sessionStorage.getItem('cbeUserName') || 'Trader';
-      logActivity('login');
+      await logActivity('login');
       loadDashboard();
       initChart();
       loadGoldNews();
@@ -1048,19 +1072,10 @@
         loadDashboard();
       }).subscribe();
 
-      // Activity Subscription (updates Recent Activity on new entries)
+      // Activity Subscription
       supabase.from('user_activity').on('INSERT', () => {
         loadRecentActivity();
       }).subscribe();
-
-      // Auto-refresh
-      setInterval(loadGoldNews, 60000);
-      setInterval(loadEconCalendar, 60000);
-      setInterval(loadRecentActivity, 60000);
-      setInterval(loadDashboard, 300000);
-
-      // Start periodic session check
-      setInterval(checkSession, 15000); // Every 15 seconds
     });
   </script>
 </body>
