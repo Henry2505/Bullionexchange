@@ -5,12 +5,66 @@
   <meta name="viewport" content="width=device-width,initial-scale=1.0"/>
   <title>Trade Insights • CBE VIP</title>
 
-  <!-- 1️⃣ Enforce login first -->
-  <script src="auth-guard.js"></script>
+  <!-- Supabase Client & Session Enforcement -->
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>
+  <script>
+    // Supabase initialization
+    const SUPA_URL = 'https://dapwpgvnfjcfqqhrpxla.supabase.co';
+    const SUPA_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImRhcHdwZ3ZuZmpjZnFxaHJweGxhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDcwNDA4ODgsImV4cCI6MjA2MjYxNjg4OH0.ICC0UsLlzJDNre7rFCeD3k6iVzo6jOJgn3PhABpEMsQ';
+    const supabase = window.supabase.createClient(SUPA_URL, SUPA_KEY);
+
+    (async function enforceSingleSession() {
+      // Check if user is logged in via localStorage (old dashboard compatibility)
+      const isLoggedIn = localStorage.getItem('isLoggedIn') === 'true';
+      if (!isLoggedIn) {
+        window.location.replace('login.html');
+        return;
+      }
+
+      // Grab stored values from sessionStorage and localStorage
+      const userId = sessionStorage.getItem('cbeUserId');
+      const localToken = localStorage.getItem('sessionToken');
+      if (!userId || !localToken) {
+        localStorage.removeItem('isLoggedIn');
+        sessionStorage.removeItem('cbeUserId');
+        localStorage.removeItem('sessionToken');
+        window.location.replace('login.html');
+        return;
+      }
+
+      try {
+        // Verify session token with Supabase
+        const { data: userData, error: userErr } = await supabase
+          .from('users')
+          .select('current_session_token')
+          .eq('id', userId)
+          .single();
+
+        if (userErr || !userData) {
+          throw new Error('User lookup failed');
+        }
+
+        if (userData.current_session_token !== localToken) {
+          localStorage.removeItem('isLoggedIn');
+          sessionStorage.removeItem('cbeUserId');
+          localStorage.removeItem('sessionToken');
+          window.location.replace('login.html');
+          return;
+        }
+      } catch (err) {
+        console.error('Session validation error:', err);
+        localStorage.removeItem('isLoggedIn');
+        sessionStorage.removeItem('cbeUserId');
+        localStorage.removeItem('sessionToken');
+        window.location.replace('login.html');
+      }
+    })();
+  </script>
+
+  <!-- Client-side Guard -->
   <script>
     if (localStorage.getItem('isLoggedIn') !== 'true') {
-      const redirectTo = encodeURIComponent(window.location.pathname + window.location.search);
-      window.location.replace(`login.html?redirect=${redirectTo}`);
+      window.location.replace('login.html');
     }
   </script>
 
@@ -91,16 +145,16 @@
     © 2025 CBE – Chukwuemeka Bullion Exchange. All rights reserved.
   </footer>
 
-  <!-- 2️⃣ Supabase UMD build (minified) -->
+  <!-- Supabase UMD Client (minified) -->
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js/dist/umd/supabase.min.js"></script>
   <script>
     document.addEventListener('DOMContentLoaded', async () => {
-      // 3️⃣ Initialize Supabase client
+      // Initialize Supabase client
       const SUPABASE_URL     = 'https://dapwpgvnfjcfqqhrpxla.supabase.co';
       const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImRhcHdwZ3ZuZmpjZnFxaHJweGxhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDcwNDA4ODgsImV4cCI6MjA2MjYxNjg4OH0.ICC0UsLlzJDNre7rFCeD3k6iVzo6jOJgn3PhABpEMsQ';
       const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
-      // 4️⃣ Fetch & render insights
+      // Fetch & render insights
       const container = document.getElementById('insightsContainer');
       const { data, error } = await supabase
         .from('trade_insights')
