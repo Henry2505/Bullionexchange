@@ -92,7 +92,7 @@
       font-weight: 700; 
       cursor: pointer;
       transition: background .3s, box-shadow .3s;
-   }
+    }
     button:hover {
       background: var(--gold-dark);
       box-shadow: 0 0 12px var(--gold);
@@ -127,7 +127,6 @@
   <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700&family=Roboto:wght@300;400;700&display=swap" rel="stylesheet"/>
 </head>
 <body>
-
   <!-- LOGO -->
   <div class="logo">
     <a href="index.html"><img src="CBE_logo.PNG" alt="CBE Logo"/></a>
@@ -152,7 +151,7 @@
   <footer>© 2025 Chukwuemeka Bullion Exchange. All rights reserved.</footer>
 
   <!-- Supabase UMD -->
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js/dist/umd/supabase.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>
 
   <script>
     // ─── 1) SETUP & THEME TOGGLE ────────────────────────────────────────────────
@@ -164,7 +163,7 @@
       document.documentElement.setAttribute('data-theme', savedTheme);
       toggleBtn.textContent = savedTheme === 'dark' ? '🌞' : '🌜';
 
-      // Check for logout message from another session
+      // Display message if logged out due to another session
       const urlParams = new URLSearchParams(window.location.search);
       if (urlParams.get('message') === 'logged_out_elsewhere') {
         const alertDiv = document.getElementById('login-alert');
@@ -185,15 +184,16 @@
     const SUPA_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImRhcHdwZ3ZuZmpjZnFxaHJweGxhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDcwNDA4ODgsImV4cCI6MjA2MjYxNjg4OH0.ICC0UsLlzJDNre7rFCeD3k6iVzo6jOJgn3PhABpEMsQ';
     const sb = supabase.createClient(SUPA_URL, SUPA_ANON_KEY);
 
-    // Function to generate a unique session token (UUID v4)
+    // ─── 3) SESSION TOKEN GENERATOR ─────────────────────────────────────────────
+    // Generates a unique session token (UUID v4) for each login
     function uuidv4() {
       return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
-        var r = Math.random() * 16 | 0, v = c == 'x' ? r : (r & 0x3 | 0x8);
+        const r = Math.random() * 16 | 0, v = c === 'x' ? r : (r & 0x3 | 0x8);
         return v.toString(16);
       });
     }
 
-    // ─── 3) LOGIN FORM HANDLING ─────────────────────────────────────────────────
+    // ─── 4) LOGIN FORM HANDLING ─────────────────────────────────────────────────
     document.getElementById('login-form').addEventListener('submit', async (e) => {
       e.preventDefault();
       const alertDiv = document.getElementById('login-alert');
@@ -203,7 +203,7 @@
       const password = document.getElementById('password').value;
 
       try {
-        // 3.a) Fetch user by email
+        // 4.a) Fetch user by email
         const { data: user, error, count } = await sb
           .from('users')
           .select('id, name, email, password, status', { count: 'exact' })
@@ -214,60 +214,57 @@
         if (error) throw error;
         if (count === 0) throw new Error('No account found for that email.');
 
-        // 3.b) Password check
+        // 4.b) Password check
         if (user.password !== password) throw new Error('Invalid login credentials.');
 
-        // 3.c) Approval check
+        // 4.c) Approval check
         if (String(user.status).toLowerCase() !== 'approved') {
           throw new Error('Your account is not yet approved—please check back soon.');
         }
 
-        // 3.d) Device Fingerprint Check
+        // 4.d) Device Fingerprint Check
         const deviceKey = `cbeDevice_${email}`;
         const savedDevice = localStorage.getItem(deviceKey);
         const currentDevice = navigator.userAgent;
 
-        // If first login from this browser/device → just store, no email:
+        // If first login from this browser/device → just store, no email
         if (!savedDevice) {
           localStorage.setItem(deviceKey, currentDevice);
         }
-        // If savedDevice exists but differs → suspicious login alert:
+        // If savedDevice exists but differs → suspicious login alert
         else if (savedDevice !== currentDevice) {
-          // Overwrite so we don’t spam next time:
-          localStorage.setItem(deviceKey, currentDevice);
-
-          // SEND TO NETLIFY FUNCTION instead of direct Brevo call
+          localStorage.setItem(deviceKey, currentDevice); // Overwrite to avoid spamming
           const payload = {
             email: user.email,
             name: user.name,
             device: currentDevice,
             time: new Date().toLocaleString("en-US", { timeZone: "Africa/Lagos" })
           };
-
-          // Call our serverless function
           await fetch("/.netlify/functions/send-login-alert", {
             method: "POST",
-            headers: {
-              "Content-Type": "application/json"
-            },
+            headers: { "Content-Type": "application/json" },
             body: JSON.stringify(payload)
           });
         }
 
-        // 3.e) Generate and save session token
+        // 4.e) Generate and save session token securely using RPC
+        // Note: RLS is disabled on the users table, so the RPC function can update freely
         const sessionToken = uuidv4();
-        const { error: tokenError } = await sb
-          .from('users')
-          .update({ current_session_token: sessionToken })
-          .eq('id', user.id);
-        if (tokenError) throw tokenError;
+        const { error: tokenError } = await sb.rpc('update_session_token', {
+          p_email: email,
+          p_password: password,
+          p_token: sessionToken
+        });
+        if (tokenError) throw new Error('Failed to update session token.');
+
+        // 4.f) Store session token locally
         localStorage.setItem('sessionToken', sessionToken);
 
-        // 3.f) LOGIN SUCCESS → store session + redirect
-        sessionStorage.setItem('cbeLoggedIn', 'true');
-        sessionStorage.setItem('cbeUserId',   user.id);
-        sessionStorage.setItem('cbeUserName', user.name);
-        window.location.href = 'vip-dashboard.html';
+        // 4.g) LOGIN SUCCESS → store session token and redirects to dashboard
+        sessionStorage.setItem('loggedIn', 'true');
+        sessionStorage.setItem('userId', user.id);
+        sessionStorage.setItem('userName', user.name);
+        window.location.assign('dashboard.html');
       }
       catch (err) {
         console.error("Login error:", err);
@@ -278,7 +275,7 @@
   </script>
 
   <!-- Smartsupp Live Chat (optional) -->
-  <script type="text/javascript">
+  <script type="https://cdnjs.cloudflare.com/ajax/libs/three.js/r134/three.min.js">
     var _smartsupp = _smartsupp || {};
     _smartsupp.key = '018a8bbd868518221e725341a7b2601231ec7ce8';
     window.smartsupp||(function(d) {
