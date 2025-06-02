@@ -2,28 +2,25 @@
 <html lang="en" data-theme="dark">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <meta name="description" content="CBE Global Trading Dashboard - Gold Market Insights, Signals, and Analytics">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Dashboard • CBE Global</title>
-  <link rel="icon" href="https://i.imgur.com/your-favicon.ico" type="image/x-icon">
 
-  <!-- Existing client‐side redirect for sessionStorage 'loggedIn' flag -->
+  <!-- Auth Guard (disabled) -->
+  <!--
   <script>
-    if (!sessionStorage.getItem('loggedIn')) {
+    if (sessionStorage.getItem('loggedIn') !== 'true') {
       window.location.replace('login.html');
     }
   </script>
+  -->
 
-  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet"
-        integrity="sha384-QWTKZyjpPEjISv5WaRU9OFeRpok6YctnYmDr5pNlyT2bRjXh0JMhjY6hW+ALEwIH" crossorigin="anonymous">
+  <!-- Dependencies -->
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-QWTKZyjpPEjISv5WaRU9OFeRpok6YctnYmDr5pNlyT2bRjXh0JMhjY6hW+ALEwIH" crossorigin="anonymous">
   <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" rel="stylesheet">
-  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;700&family=Orbitron:wght@400;700&display=swap"
-        rel="stylesheet">
-
-  <!-- Load Supabase JS library -->
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js" async></script>
-  <script src="https://s3.tradingview.com/tv.js" async></script>
-  <script src="https://cdn.jsdelivr.net/npm/particles.js@2.0.0/particles.min.js" async></script>
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;700&family=Orbitron:wght@400;700&display=swap" rel="stylesheet">
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>
+  <script src="https://s3.tradingview.com/tv.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/particles.js@2.0.0/particles.min.js"></script>
   <script>
     var _smartsupp = _smartsupp || {};
     _smartsupp.key = '018a8bbd868518221e725341a7b2601231ec7ce8';
@@ -34,174 +31,395 @@
       c.src='https://www.smartsuppchat.com/loader.js?';s.parentNode.insertBefore(c,s);
     })(document);
   </script>
+
   <style>
     :root[data-theme="dark"] {
       --bg: #121212;
       --text: #e0e0e0;
       --gold: #ffd700;
       --gold-dark: #cca300;
-      --glass: rgba(30, 30, 30, 0.6);
+      --glass: rgba(30, 30, 30, 0.7);
       --shadow: rgba(0, 0, 0, 0.5);
       --text-light: #b0b0b0;
-      --text-muted: #888;
+      --text-muted: #888888;
       --success: #00ff88;
       --error: #ff4d4d;
       --accent: #1e1e1e;
     }
     :root[data-theme="light"] {
       --bg: #f5f5f5;
-      --text: #333;
+      --text: #333333;
       --gold: #cca300;
       --gold-dark: #b58900;
-      --glass: rgba(255, 255, 255, 0.6);
+      --glass: rgba(255, 255, 255, 0.7);
       --shadow: rgba(0, 0, 0, 0.2);
-      --text-light: #666;
-      --text-muted: #888;
+      --text-light: #666666;
+      --text-muted: #888888;
       --success: #28a745;
       --error: #dc3545;
-      --accent: #fff;
+      --accent: #ffffff;
     }
-    *{margin:0;padding:0;box-sizing:border-box;}
-    html{scroll-behavior:smooth;}
-    body{font-family:'Poppins',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;overflow-x:hidden;line-height:1.6;-webkit-font-smoothing:antialiased;}
-    a,button,h1,h2,h3,h4,h5,h6,p,span,td,th,li,input,select,label{color:var(--text)!important;}
-    a:hover{color:var(--gold-dark)!important;}
-    #particles-js{position:fixed;top:0;left:0;width:100%;height:100%;z-index:-10;opacity:.2;}
-    .slide-in{opacity:0;transform:translateY(20px);transition:opacity .8s ease-out,transform .8s ease-out;}
-    .slide-in.visible{opacity:1;transform:translateY(0);}
-    header{position:sticky;top:0;background:var(--glass);backdrop-filter:blur(10px);padding:1rem 2rem;box-shadow:0 2px 8px var(--shadow);z-index:1000;display:flex;align-items:center;justify-content:space-between;}
-    header .logo{font-family:'Orbitron',sans-serif;font-size:1.5rem;font-weight:700;padding:.5rem 1rem;background:linear-gradient(45deg,var(--gold),var(--gold-dark));border-radius:8px;box-shadow:0 2px 6px var(--shadow);transition:transform .3s ease;}
-    header .logo:hover{transform:scale(1.05);}
-    header .nav-links{display:flex;align-items:center;gap:1rem;}
-    header .nav-links button,header .nav-links select{background:var(--glass);border:1px solid var(--gold-dark);padding:.5rem 1rem;border-radius:6px;font-size:.9rem;cursor:pointer;transition:background .3s ease,transform .2s;}
-    header .nav-links button:hover,header .nav-links select:hover{background:var(--gold-dark);color:#000!important;transform:scale(1.02);}
-    #theme-select{background:var(--glass);border:1px solid var(--gold-dark);padding:.5rem;border-radius:6px;}
-    #notif-btn{position:relative;}
-    #notif-count{font-size:.7rem;padding:.2rem .5rem;}
-    #sidebar-toggle{font-size:1.5rem;padding:.5rem;}
-    .offcanvas{background:var(--glass);backdrop-filter:blur(10px);border-right:1px solid var(--gold-dark);}
-    .offcanvas .nav-link{font-size:1.1rem;padding:.8rem;border-radius:6px;transition:background .3s ease;}
-    .offcanvas .nav-link:hover,.offcanvas .nav-link.active{background:var(--gold-dark);color:#000!important;}
-    .container-fluid{padding:0 2rem;}
-    .welcome-banner{font-family:'Orbitron',sans-serif;font-size:2rem;text-align:center;padding:1.5rem;background:var(--glass);backdrop-filter:blur(10px);border-radius:10px;box-shadow:0 2px 8px var(--shadow);margin:1.5rem 0;font-weight:700;}
-    .card{background:var(--glass);backdrop-filter:blur(10px);border:1px solid var(--gold-dark);border-radius:10px;box-shadow:0 2px 8px var(--shadow);padding:1.5rem;transition:transform .3s ease,box-shadow .3s;}
-    .card:hover{transform:translateY(-4px);box-shadow:0 4px 12px var(--shadow);}
-    .btn-gold{background:linear-gradient(45deg,var(--gold),var(--gold-dark));color:#000!important;border:none;padding:.7rem 1.2rem;border-radius:6px;font-weight:500;transition:transform .3s ease;}
-    .btn-gold:hover{transform:scale(1.03);}
-    #tv_chart_4h{width:100%;height:450px;border-radius:8px;overflow:hidden;box-shadow:0 2px 8px var(--shadow);}
-    .chart-toggle{display:flex;gap:.5rem;margin-bottom:1rem;}
-    .chart-toggle button{background:var(--glass);border:1px solid var(--gold-dark);padding:.5rem 1rem;border-radius:6px;transition:background .3s ease,transform .2s;}
-    .chart-toggle button.active,.chart-toggle button:hover{background:var(--gold-dark);color:#000!important;transform:scale(1.02);}
-    #news-widget{background:var(--glass);border:1px solid var(--gold-dark);border-radius:10px;box-shadow:0 2px 8px var(--shadow);padding:0;height:350px;overflow:hidden;}
-    #news-widget ul{list-style:none;margin:0;padding:0;height:100%;overflow-y:auto;}
-    #news-widget li{padding:1rem;border-bottom:1px solid var(--gold-dark);transition:background .3s ease;}
-    #news-widget li:hover{background:rgba(255,215,0,.1);}
-    #calendar-widget,#activity-widget{background:var(--glass);border:1px solid var(--gold-dark);border-radius:10px;box-shadow:0 2px 8px var(--shadow);padding:1rem;height:350px;overflow:auto;}
-    #calendar-widget table,#activity-widget table{width:100%;border-collapse:separate;border-spacing:0 8px;}
-    #calendar-widget th,#activity-widget th{background:linear-gradient(45deg,var(--gold-dark),var(--gold));color:#000!important;padding:.8rem;text-align:center;border-radius:6px;position:sticky;top:0;z-index:2;}
-    #calendar-widget td,#activity-widget td{padding:.8rem;background:var(--accent);border-radius:6px;}
-    #calendar-widget tbody tr.high-impact{background:rgba(255,215,0,.2);}
-    #converter-widget select,#converter-widget input{background:var(--accent);border:1px solid var(--gold-dark);border-radius:6px;padding:.5rem;}
-    #watch-list .list-group-item{background:var(--glass);border:1px solid var(--gold-dark);border-radius:6px;margin-bottom:.5rem;box-shadow:0 2px 6px var(--shadow);transition:transform .2s;}
-    #watch-list .list-group-item:hover{transform:scale(1.01);}
-    .price-change.positive{color:var(--success)!important;}
-    .price-change.negative{color:var(--error)!important;}
-    #notif-menu{background:var(--glass);backdrop-filter:blur(10px);border:1px solid var(--gold-dark);width:250px;box-shadow:0 2px 8px var(--shadow);animation:fadeIn .3s ease;}
-    #notif-list li{padding:.5rem 1rem;border-bottom:1px solid var(--gold-dark);transition:opacity .3s;}
-    #notif-list .critical{background:rgba(255,0,0,.2);}
-    #notif-list .info{background:rgba(0,255,136,.2);}
-    footer{text-align:center;padding:1rem 0;color:var(--text-light);font-size:.9rem;background:var(--glass);border-top:1px solid var(--gold-dark);width:100%;}
-    .spinner{border:3px solid var(--glass);border-top:3px solid var(--gold);border-radius:50%;width:24px;height:24px;animation:spin 1s linear infinite;margin:1rem auto;}
-    @keyframes spin{0%{transform:rotate(0deg);}100%{transform:rotate(360deg);}}
-    @keyframes fadeIn{from{opacity:0;}to{opacity:1;}}
-    @media (max-width:768px){
-      .container-fluid{padding:0 1rem;}
-      .welcome-banner{font-size:1.5rem;padding:1rem;}
-      .card{padding:1rem;}
-      #tv_chart_4h,#news-widget,#calendar-widget,#activity-widget{height:300px;}
-      header{padding:.8rem 1rem;}
-      header .logo{font-size:1.2rem;}
-      header .nav-links{gap:.5rem;}
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    html { scroll-behavior: smooth; }
+    body {
+      font-family: 'Poppins', sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+      overflow-x: hidden;
+      line-height: 1.6;
     }
-    @media (max-width:576px){
-      .welcome-banner{font-size:1.2rem;}
-      .btn-gold{padding:.5rem 1rem;font-size:.9rem;}
+    a, button, h1, h2, h3, h4, h5, h6, p, span, td, th, li, input, select, label {
+      color: var(--text) !important;
     }
-    :root{--smartsupp-base-color:var(--gold);--smartsupp-btn-color:var(--gold-dark);--smartsupp-text-color:var(--text);--smartsupp-bg:var(--glass);}
-    #smartsupp .ss-widget-container{background:var(--glass)!important;backdrop-filter:blur(10px)!important;}
-    #smartsupp .ss-widget-button{background:linear-gradient(45deg,var(--gold),var(--gold-dark))!important;border-color:var(--gold-dark)!important;color:#000!important;}
+    a:hover { color: var(--gold-dark) !important; }
+    #particles-js {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      z-index: -10;
+      opacity: 0.2;
+    }
+    .slide-in {
+      opacity: 0;
+      transform: translateY(20px);
+      transition: opacity 0.8s ease-out, transform 0.8s ease-out;
+    }
+    .slide-in.visible {
+      opacity: 1;
+      transform: translateY(0);
+    }
+    header {
+      position: sticky;
+      top: 0;
+      background: var(--glass);
+      backdrop-filter: blur(10px);
+      padding: 1rem 2rem;
+      box-shadow: 0 2px 8px var(--shadow);
+      z-index: 1000;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+    header .logo {
+      font-family: 'Orbitron', sans-serif;
+      font-size: 1.5rem;
+      font-weight: 700;
+      padding: 0.5rem 1rem;
+      background: linear-gradient(45deg, var(--gold), var(--gold-dark));
+      border-radius: 8px;
+      box-shadow: 0 2px 6px var(--shadow);
+      transition: transform 0.3s ease;
+    }
+    header .logo:hover {
+      transform: scale(1.05);
+    }
+    header .nav-links {
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+    }
+    header .nav-links button, header .nav-links select {
+      background: var(--glass);
+      border: 1px solid var(--gold-dark);
+      padding: 0.5rem 1rem;
+      border-radius: 6px;
+      font-size: 0.9rem;
+      cursor: pointer;
+      transition: background 0.3s ease;
+    }
+    header .nav-links button:hover, header .nav-links select:hover {
+      background: var(--gold-dark);
+      color: #000 !important;
+    }
+    #theme-select {
+      background: var(--glass);
+      border: 1px solid var(--gold-dark);
+      padding: 0.5rem;
+      border-radius: 6px;
+    }
+    #notif-btn { position: relative; }
+    #notif-count { font-size: 0.7rem; padding: 0.2rem 0.5rem; }
+    #sidebar-toggle { font-size: 1.5rem; padding: 0.5rem; }
+    .offcanvas {
+      background: var(--glass);
+      backdrop-filter: blur(10px);
+      border-right: 1px solid var(--gold-dark);
+    }
+    .offcanvas .nav-link {
+      font-size: 1.1rem;
+      padding: 0.8rem;
+      border-radius: 6px;
+      transition: background 0.3s ease;
+    }
+    .offcanvas .nav-link:hover, .offcanvas .nav-link.active {
+      background: var(--gold-dark);
+      color: #000 !important;
+    }
+    .container-fluid { padding: 0 2rem; }
+    .welcome-banner {
+      font-family: 'Orbitron', sans-serif;
+      font-size: 2rem;
+      text-align: center;
+      padding: 1.5rem;
+      background: var(--glass);
+      backdrop-filter: blur(10px);
+      border-radius: 10px;
+      box-shadow: 0 2px 8px var(--shadow);
+      margin: 1.5rem 0;
+    }
+    .card {
+      background: var(--glass);
+      backdrop-filter: blur(10px);
+      border: 1px solid var(--gold-dark);
+      border-radius: 10px;
+      box-shadow: 0 2px 8px var(--shadow);
+      padding: 1.5rem;
+      transition: transform 0.3s ease;
+    }
+    .card:hover {
+      transform: translateY(-4px);
+    }
+    .btn-gold {
+      background: linear-gradient(45deg, var(--gold), var(--gold-dark));
+      color: #000 !important;
+      border: none;
+      padding: 0.7rem 1.2rem;
+      border-radius: 6px;
+      font-weight: 500;
+      transition: transform 0.3s ease;
+    }
+    .btn-gold:hover {
+      transform: scale(1.03);
+    }
+    #tv_chart_4h {
+      width: 100%;
+      height: 450px;
+      border-radius: 8px;
+      overflow: hidden;
+      box-shadow: 0 2px 8px var(--shadow);
+    }
+    .chart-toggle {
+      display: flex;
+      gap: 0.5rem;
+      margin-bottom: 1rem;
+    }
+    .chart-toggle button {
+      background: var(--glass);
+      border: 1px solid var(--gold-dark);
+      padding: 0.5rem 1rem;
+      border-radius: 6px;
+      transition: background 0.3s ease;
+    }
+    .chart-toggle button.active, .chart-toggle button:hover {
+      background: var(--gold-dark);
+      color: #000 !important;
+    }
+    #news-widget {
+      background: var(--glass);
+      border: 1px solid var(--gold-dark);
+      border-radius: 10px;
+      box-shadow: 0 2px 8px var(--shadow);
+      padding: 0;
+      height: 350px;
+      overflow: hidden;
+    }
+    #news-widget ul {
+      list-style: none;
+      margin: 0;
+      padding: 0;
+      height: 100%;
+      overflow-y: auto;
+    }
+    #news-widget li {
+      padding: 1rem;
+      border-bottom: 1px solid var(--gold-dark);
+      transition: background 0.3s ease;
+    }
+    #news-widget li:hover {
+      background: rgba(255, 215, 0, 0.1);
+    }
+    #calendar-widget, #activity-widget {
+      background: var(--glass);
+      border: 1px solid var(--gold-dark);
+      border-radius: 10px;
+      box-shadow: 0 2px 8px var(--shadow);
+      padding: 1rem;
+      height: 350px;
+      overflow: auto;
+    }
+    #calendar-widget table, #activity-widget table {
+      width: 100%;
+      border-collapse: separate;
+      border-spacing: 0 8px;
+    }
+    #calendar-widget th, #activity-widget th {
+      background: linear-gradient(45deg, var(--gold-dark), var(--gold));
+      color: #000 !important;
+      padding: 0.8rem;
+      text-align: center;
+      border-radius: 6px;
+      position: sticky;
+      top: 0;
+      z-index: 2;
+    }
+    #calendar-widget td, #activity-widget td {
+      padding: 0.8rem;
+      background: var(--accent);
+      border-radius: 6px;
+    }
+    #calendar-widget tbody tr.high-impact { background: rgba(255, 215, 0, 0.2); }
+    #converter-widget select, #converter-widget input {
+      background: var(--accent);
+      border: 1px solid var(--gold-dark);
+      border-radius: 6px;
+      padding: 0.5rem;
+    }
+    #watch-list .list-group-item {
+      background: var(--glass);
+      border: 1px solid var(--gold-dark);
+      border-radius: 6px;
+      margin-bottom: 0.5rem;
+      box-shadow: 0 2px 6px var(--shadow);
+    }
+    .price-change.positive { color: var(--success) !important; }
+    .price-change.negative { color: var(--error) !important; }
+    #notif-menu {
+      background: var(--glass);
+      backdrop-filter: blur(10px);
+      border: 1px solid var(--gold-dark);
+      width: 250px;
+      box-shadow: 0 2px 8px var(--shadow);
+    }
+    #notif-list li {
+      padding: 0.5rem 1rem;
+      border-bottom: 1px solid var(--gold-dark);
+    }
+    #notif-list .critical { background: rgba(255, 0, 0, 0.2); }
+    #notif-list .info { background: rgba(0, 255, 136, 0.2); }
+    footer {
+      text-align: center;
+      padding: 1rem 0;
+      color: var(--text-light);
+      font-size: 0.9rem;
+      background: var(--glass);
+      border-top: 1px solid var(--gold-dark);
+      width: 100%;
+    }
+    .spinner {
+      border: 3px solid var(--glass);
+      border-top: 3px solid var(--gold);
+      border-radius: 50%;
+      width: 24px;
+      height: 24px;
+      animation: spin 1s linear infinite;
+      margin: 1rem auto;
+    }
+    @keyframes spin {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
+    }
+    @media (max-width: 768px) {
+      .container-fluid { padding: 0 1rem; }
+      .welcome-banner { font-size: 1.5rem; padding: 1rem; }
+      .card { padding: 1rem; }
+      #tv_chart_4h, #news-widget, #calendar-widget, #activity-widget { height: 300px; }
+      header { padding: 0.8rem 1rem; }
+      header .logo { font-size: 1.2rem; }
+      header .nav-links { gap: 0.5rem; }
+    }
+    @media (max-width: 576px) {
+      .welcome-banner { font-size: 1.2rem; }
+      .btn-gold { padding: 0.5rem 1rem; font-size: 0.9rem; }
+    }
+    :root {
+      --smartsupp-base-color: var(--gold);
+      --smartsupp-btn-color: var(--gold-dark);
+      --smartsupp-text-color: var(--text);
+      --smartsupp-bg: var(--glass);
+    }
+    #smartsupp .ss-widget-container {
+      background: var(--glass) !important;
+      backdrop-filter: blur(10px) !important;
+    }
+    #smartsupp .ss-widget-button {
+      background: linear-gradient(45deg, var(--gold), var(--gold-dark)) !important;
+      border-color: var(--gold-dark) !important;
+      color: #000 !important;
+    }
   </style>
 </head>
 <body>
   <div id="particles-js"></div>
-
   <div class="offcanvas offcanvas-start" id="sidebar">
     <div class="offcanvas-body">
       <div class="text-center mb-4">
         <div class="logo">CBE Global</div>
       </div>
       <ul class="nav nav-pills flex-column">
-        <li class="nav-item"><a class="nav-link active" href="#" onclick="loadDashboard()" data-bs-dismiss="offcanvas"><i class="bi bi-speedometer2 me-2"></i>Dashboard</a></li>
-        <li class="nav-item"><a href="signals.html" class="bi bi-lightning me-2"></i>Sign Up</a></li>
-        <li class="nav-item"><a href="CBE_trade_history_vip.html" class="bi bi-clock-history me-2"></i>History</a></li>
-        <li class="nav-item"><a href="CBE_trade_insights_vip.html" class="bi bi-graph-up me-2"></i>Insights</a></li>
-        <li class="nav-item"><a href="#" onclick="downloadActivityLog()" class="bi bi-download me-2"><i></i>Download Logs</a></li>
+        <li class="nav-item">
+          <a class="nav-link active" href="#" onclick="loadDashboard()" data-bs-dismiss="offcanvas">
+            <i class="bi-speedometer2 me-2"></i>Dashboard
+          </a>
+        </li>
+        <li class="nav-item"><a class="nav-link" href="signals.html"><i class="bi-lightning me-2"></i>Signals</a></li>
+        <li class="nav-item"><a class="nav-link" href="CBE_trade_history_vip.html"><i class="bi-clock-history me-2"></i>History</a></li>
+        <li class="nav-item"><a class="nav-link" href="CBE_trade_insights_vip.html"><i class="bi-graph-up me-2"></i>Insights</a></li>
+        <li class="nav-item"><a class="nav-link" href="#" onclick="downloadActivityLog()"><i class="bi-download me-2"></i>Download Logs</a></li>
       </ul>
     </div>
   </div>
-
   <header class="slide-in">
     <div class="d-flex align-items-center">
-      <button id="sidebar-toggle" class="btn btn-link d-md-none me-2"><i class="bi bi-list"></i></button>
+      <button id="sidebar-toggle" class="btn btn-link d-md-none me-2"><i class="bi-list"></i></button>
       <a href="index.html" class="logo">CBE Dashboard</a>
     </div>
     <div class="nav-links">
       <button id="notif-btn" class="btn btn-link position-relative">
-        <i class="bi bi-bell-fill"></i>
+        <i class="bi-bell-fill"></i>
         <span id="notif-count" class="badge bg-danger position-absolute top-0 start-100 translate-middle">0</span>
       </button>
       <div id="notif-menu" class="dropdown-menu dropdown-menu-end p-2">
         <h6 class="dropdown-header">Notifications</h6>
-        <div id="notif-list">No recent notifications</div>
+        <div id="notif-list">No new notifications</div>
       </div>
       <select id="theme-select" title="Select Theme">
         <option value="dark">Dark</option>
         <option value="light">Light</option>
       </select>
-      <button id="logout-btn" class="btn-gold">Logout</button>
+      <button onclick="logout()">Logout</button>
     </div>
   </header>
-
   <div class="container-fluid">
     <div class="welcome-banner slide-in">Welcome, <strong id="welcomeName">Trader</strong>!</div>
-
     <div class="row g-4 mb-4 slide-in">
       <div class="col-md-3">
         <div class="card p-3 text-center">
-          <h6><i class="bi bi-lightning me-2"></i>Signals Today</h6>
-          <a href="signals.html" class="btn btn-gold">View Signals</a>
+          <h6><i class="bi-lightning me-2"></i>Signals Today</h6>
+          <a href="signals.html" class="btn btn-gold">Access Signals</a>
         </div>
       </div>
       <div class="col-md-3">
         <div class="card p-3 text-center">
-          <h6><i class="bi bi-clock-history me-2"></i>Trade History</h6>
+          <h6><i class="bi-clock-history me-2"></i>Trade History</h6>
           <a href="CBE_trade_history_vip.html" class="btn btn-gold">View History</a>
         </div>
       </div>
       <div class="col-md-3">
         <div class="card p-3 text-center">
-          <h6><i class="bi bi-graph-up me-2"></i>Trade Insights</h6>
+          <h6><i class="bi-graph-up me-2"></i>Trade Insights</h6>
           <a href="CBE_trade_insights_vip.html" class="btn btn-gold">View Insights</a>
         </div>
       </div>
       <div class="col-md-3">
         <div class="card p-3 text-center">
-          <h6><i class="bi bi-currency-exchange me-2"></i>24h Gold Δ</h6>
+          <h6><i class="bi-currency-exchange me-2"></i>24h Gold Δ</h6>
           <p id="stat-gold-change" class="fs-5 mb-0">--%</p>
         </div>
       </div>
     </div>
-
     <div class="card p-3 mb-4 slide-in" id="converter-widget">
       <h3 class="mb-3">Currency Converter</h3>
       <div class="row g-3">
@@ -228,7 +446,6 @@
         </div>
       </div>
     </div>
-
     <div class="card p-3 mb-4 slide-in">
       <h3 class="mb-3">XAU/USD Chart</h3>
       <div class="chart-toggle">
@@ -236,16 +453,14 @@
         <button data-interval="D">1D</button>
         <button data-interval="W">1W</button>
       </div>
-      <div id="tv_chart"></div>
+      <div id="tv_chart_4h"></div>
     </div>
-
     <div class="card p-3 mb-4 slide-in">
-      <h3 class="mb-2">Gold News <small class="text-muted">Updated every minute</small></h3>
+      <h3 class="mb-1">Gold News <small class="text-muted">Updated every minute</small></h3>
       <div id="news-widget"><ul id="news-list"></ul></div>
     </div>
-
     <div class="card p-3 mb-4 slide-in">
-      <h3 class="mb-2">Economic Calendar <small class="text-muted">Updated daily</small></h3>
+      <h3 class="mb-1">Economic Calendar <small class="text-muted">Updated daily</small></h3>
       <div id="calendar-widget">
         <table>
           <thead>
@@ -263,11 +478,10 @@
         </table>
       </div>
     </div>
-
     <div class="card p-3 mb-4 slide-in" id="activity-widget">
-      <h3 class="mb-2">Recent Activity <small class="text-muted">Login/Logout Logs</small></h3>
+      <h3 class="mb-1">Recent Activity <small class="text-muted">Login/Logout Logs</small></h3>
       <div class="d-flex justify-content-end mb-2">
-        <button id="export-logs" class="btn btn-gold"><i class="bi bi-download me-2"></i>Export Logs</button>
+        <button id="export-logs" class="btn btn-gold"><i class="bi-download me-2"></i>Export Logs</button>
       </div>
       <table>
         <thead>
@@ -282,49 +496,32 @@
         <tbody id="activity-body"></tbody>
       </table>
     </div>
-
     <div class="card p-3 mb-4 slide-in">
       <h3 class="mb-3">My Watchlist</h3>
       <div class="d-flex mb-2">
         <input id="watch-input" class="form-control me-2" placeholder="Add symbol (e.g., EURUSD)">
-        <button id="add-watch" class="btn btn-gold"><i class="bi bi-plus"></i>Add</button>
+        <button id="add-watch" class="btn btn-gold"><i class="bi-plus"></i>Add</button>
       </div>
       <ul id="watch-list" class="list-group"></ul>
     </div>
   </div>
-
   <footer class="slide-in">© 2025 CBE Global. All rights reserved.</footer>
 
-  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"
-          integrity="sha384-YvpcrYf0tY3lHB60NNkmXc5s9fDVZLESaAA55NDzOxhy9GkcIdslK1eN7N6jIeHz" crossorigin="anonymous" async></script>
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js" integrity="sha384-YvpcrYf0tY3lHB60NNkmXc5s9fDVZLESaAA55NDzOxhy9GkcIdslK1eN7N6jIeHz" crossorigin="anonymous"></script>
   <audio id="notif-sound" src="ding.mp3" preload="auto"></audio>
   <audio id="critical-notif-sound" src="alert.mp3" preload="auto"></audio>
-
   <script>
-    /*–– Added for session check and Supabase setup ––*/
+    // ─── SUPABASE INIT ──────────────────────────────────────────────────────
     const SUPA_URL = 'https://dapwpgvnfjcfqqhrpxla.supabase.co';
-    const SUPA_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ5YSI6IkpX';
+    const SUPA_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImRhcHdwZ3ZuZmpjZnFxaHJweGxhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDcwNDA4ODgsImV4cCI6MjA2MjYxNjg4OH0.ICC0UsLlzJDNre7rFCeD3k6iVzo6jOJgn3PhABpEMsQ';
     const supabase = window.supabase.createClient(SUPA_URL, SUPA_KEY);
 
-    const EXCHANGE_RATE_API_KEY = '4e4307b2bf8daac15365a410'; 
-    const GNEWS_API_KEY = '03a6fdcc98666513a11a078b2e21b3d7';
-    // ── Add your Finnhub key here:
-    const FINNHUB_API_KEY = 'YOUR_FINNHUB_API_KEY_HERE';
+    // ─── API KEYS ────────────────────────────────────────────────────────────
+    const EXCHANGE_RATE_API_KEY = '4e4307b2bf8daac15365a410';
+    const NEWS_API_KEY = '6de81d54e02e45f8a5546a827c70ab28';
     const apiCache = new Map();
 
-    async function retryFetch(url, options, retries = 1, delay = 2000) {
-      for (let i = 0; i <= retries; i++) {
-        try {
-          const res = await fetch(url, options);
-          if (!res.ok) throw new Error(`HTTP ${res.status}`);
-          return res;
-        } catch (err) {
-          if (i === retries) throw err;
-          await new Promise(r => setTimeout(r, delay));
-        }
-      }
-    }
-
+    // ─── UTILITIES ───────────────────────────────────────────────────────────
     async function getUserInfo() {
       try {
         const res = await fetch('https://api.ipify.org?format=json');
@@ -335,6 +532,7 @@
       }
     }
 
+    // ─── LOG ACTIVITY ────────────────────────────────────────────────────────
     async function logActivity(action) {
       const userInfo = await getUserInfo();
       const userId = sessionStorage.getItem('userId') || 'anonymous';
@@ -350,24 +548,23 @@
         if (error) throw error;
         addNotification(`User ${action} from ${userInfo.city}`, 'info');
       } catch (err) {
-        console.error('Log activity error:', err.message);
+        console.error('Activity log error:', err);
         addNotification('Failed to log activity', 'critical');
       }
     }
 
+    // ─── LOAD RECENT ACTIVITY ────────────────────────────────────────────────
     async function loadRecentActivity() {
       const tbody = document.getElementById('activity-body');
       tbody.innerHTML = '<tr><td colspan="5"><div class="spinner"></div></td></tr>';
       try {
-        const { data: tables, error: schemaError } = await supabase.from('user_activity').select('*').limit(0);
-        if (schemaError) throw new Error('Table check failed');
-        const { data, error } = await supabase.from('user_activity').select('*').order('timestamp', { ascending: false }).limit(10);
+        const { data, error } = await supabase
+          .from('user_activity')
+          .select('*')
+          .order('timestamp', { ascending: false })
+          .limit(10);
         if (error) throw error;
         tbody.innerHTML = '';
-        if (data.length === 0) {
-          tbody.innerHTML = '<tr><td colspan="5">No activity data available</td></tr>';
-          return;
-        }
         data.forEach(activity => {
           const tr = document.createElement('tr');
           ['timestamp', 'action', 'ip_address', 'city', 'device'].forEach(key => {
@@ -378,17 +575,23 @@
           tbody.appendChild(tr);
         });
       } catch (err) {
-        console.error('Load activity error:', err.message);
-        tbody.innerHTML = '<tr><td colspan="5" style="color:var(--error)">Failed to load activity. Check Supabase setup.</td></tr>';
+        console.error('Activity error:', err);
+        tbody.innerHTML = '<tr><td colspan="5" style="color: var(--error);">Failed to load activity</td></tr>';
       }
     }
 
+    // ─── EXPORT LOGS ─────────────────────────────────────────────────────────
     async function downloadActivityLog() {
       try {
-        const { data, error } = await supabase.from('user_activity').select('*').order('timestamp', { ascending: false });
+        const { data, error } = await supabase
+          .from('user_activity')
+          .select('*')
+          .order('timestamp', { ascending: false });
         if (error) throw error;
-        const csv = ['Timestamp,Action,IP Address,City,Country,Device', ...data.map(row => 
-          `${new Date(row.timestamp).toLocaleString()},${row.action},${row.ip_address},${row.city},${row.country},"${row.device}"`)].join('\n');
+        const csv = [
+          'Timestamp,Action,IP Address,City,Country,Device',
+          ...data.map(row => `${new Date(row.timestamp).toLocaleString()},${row.action},${row.ip_address},${row.city},${row.country},"${row.device}"`)
+        ].join('\n');
         const blob = new Blob([csv], { type: 'text/csv' });
         const url = URL.createObjectURL(blob);
         const a = document.createElement('a');
@@ -398,39 +601,43 @@
         URL.revokeObjectURL(url);
         addNotification('Logs exported successfully', 'info');
       } catch (err) {
-        console.error('Export logs error:', err.message);
+        console.error('Export error:', err);
         addNotification('Failed to export logs', 'critical');
       }
     }
 
+    // ─── CURRENCY CONVERTER ──────────────────────────────────────────────────
     async function convertCurrency() {
       const from = document.getElementById('converter-from').value;
       const to = document.getElementById('converter-to').value;
       const amount = parseFloat(document.getElementById('converter-amount').value) || 1;
       const resultEl = document.getElementById('converter-result');
       resultEl.innerHTML = '<div class="spinner"></div>';
+
       const cacheKey = `${from}_${to}`;
       if (apiCache.has(cacheKey)) {
         const rate = apiCache.get(cacheKey);
         resultEl.textContent = `${amount} ${from} = ${(amount * rate).toFixed(2)} ${to}`;
         return;
       }
+
       try {
-        const res = await retryFetch(`https://v6.exchangerate-api.com/v6/${EXCHANGE_RATE_API_KEY}/latest/${from}`);
+        const res = await fetch(`https://v6.exchangerate-api.com/v6/${EXCHANGE_RATE_API_KEY}/latest/${from}`);
         const data = await res.json();
         if (data.result !== 'success') throw new Error('API error');
         const rate = data.conversion_rates[to];
         apiCache.set(cacheKey, rate);
-        setTimeout(() => apiCache.delete(cacheKey), 5 * 60 * 1000);
         resultEl.textContent = `${amount} ${from} = ${(amount * rate).toFixed(2)} ${to}`;
       } catch (err) {
-        console.error('Convert currency error:', err.message);
-        resultEl.innerHTML = '<span style="color:var(--error)">Failed to convert currency</span>';
+        console.error('Conversion error:', err);
+        resultEl.innerHTML = '<span style="color: var(--error)">Failed to convert currency</span>';
         addNotification('Currency conversion failed', 'critical');
       }
     }
 
-    /*–– Added for Supabase session validation ––*/
+    // ─── SESSION VALIDATION ──────────────────────────────────────────────────
+    // (Disabled to keep page visible without redirect)
+    /*
     async function checkSession() {
       const localToken = localStorage.getItem('sessionToken');
       if (!localToken) {
@@ -439,37 +646,50 @@
       }
       const userId = sessionStorage.getItem('userId');
       try {
-        const { data, error } = await supabase.from('users').select('current_session_token').eq('id', userId).single();
+        const { data, error } = await supabase
+          .from('users')
+          .select('current_session_token')
+          .eq('id', userId)
+          .single();
         if (error) throw error;
         if (data.current_session_token !== localToken) {
           logout();
         }
       } catch (err) {
-        console.error('Check session error:', err.message);
+        console.error('Session error:', err);
         addNotification('Session validation failed', 'critical');
       }
     }
+    */
 
+    // ─── LOGOUT ──────────────────────────────────────────────────────────────
     async function logout() {
       try {
         await logActivity('logout');
         localStorage.removeItem('sessionToken');
-        sessionStorage.clear();
-        window.location.href = 'login.html?message=logged_out';
+        sessionStorage.removeItem('loggedIn');
+        sessionStorage.removeItem('userId');
+        sessionStorage.removeItem('userName');
+        window.location.href = 'login.html?message=logged_out_elsewhere';
       } catch (err) {
-        console.error('Logout error:', err.message);
+        console.error('Logout error:', err);
       }
     }
 
+    // ─── LOAD DASHBOARD ──────────────────────────────────────────────────────
     async function loadDashboard() {
       try {
         const today = new Date().toISOString().split('T')[0];
         const { count, error: signalError } = await supabase
           .from('signals')
           .select('id', { count: 'exact' })
-          .gte('timestamp', today);
+          .gte('created_at', today);
         if (signalError) throw signalError;
+
+        // Mock gold price change
         document.getElementById('stat-gold-change').textContent = 'N/A';
+
+        // Watchlist
         const list = JSON.parse(localStorage.getItem('watchlist') || '[]');
         const ul = document.getElementById('watch-list');
         ul.innerHTML = '';
@@ -479,13 +699,13 @@
           let priceChange = 'N/A';
           let priceClass = '';
           try {
-            const res = await fetch(`https://v6.exchangerate-api.com/v6/${EXCHANGE_RATE_API_KEY}/latest/${sym.slice(0, 3)}`);
+            const res = await fetch(`https://v6.exchangerate-api.com/v6/${EXCHANGE_RATE_API_KEY}/latest/${sym.slice(0,3)}`);
             const data = await res.json();
             const rate = data.conversion_rates[sym.slice(3)] || 1;
             priceChange = `+${(Math.random() * 2 - 1).toFixed(2)}%`;
             priceClass = priceChange.startsWith('+') ? 'positive' : 'negative';
           } catch (err) {
-            console.error('Watchlist error:', err.message);
+            console.error('Watchlist error:', err);
           }
           li.innerHTML = `
             <span>${sym}</span>
@@ -509,16 +729,17 @@
           }
         };
       } catch (err) {
-        console.error('Load dashboard error:', err.message);
+        console.error('Dashboard error:', err);
         addNotification('Failed to load dashboard', 'critical');
       }
     }
 
+    // ─── TRADINGVIEW CHART ───────────────────────────────────────────────────
     function initChart(interval = '240') {
       try {
-        document.getElementById('tv_chart').innerHTML = '';
+        document.getElementById('tv_chart_4h').innerHTML = '';
         new window.TradingView.widget({
-          container_id: "tv_chart",
+          container_id: "tv_chart_4h",
           width: "100%",
           height: "450",
           symbol: "OANDA:XAUUSD",
@@ -537,151 +758,129 @@
           save_image: false
         });
       } catch (err) {
-        console.error('Init chart error:', err.message);
-        document.getElementById('tv_chart').innerHTML = '<p style="color:var(--error)">Failed to load chart</p>';
+        console.error('Chart error:', err);
+        document.getElementById('tv_chart_4h').innerHTML = '<p style="color: var(--error)">Failed to load chart</p>';
       }
     }
 
+    // ─── GOLD NEWS ───────────────────────────────────────────────────────────
     async function loadGoldNews() {
       const ul = document.getElementById('news-list');
       ul.innerHTML = '<li><div class="spinner"></div></li>';
       try {
-        const res = await retryFetch(`https://gnews.io/api/v4/search?q=gold+market&lang=en&max=8&apikey=${GNEWS_API_KEY}`);
+        const res = await fetch(`https://newsapi.org/v2/everything?q=gold+market&apiKey=${NEWS_API_KEY}&pageSize=8`);
         const data = await res.json();
-        if (data.errors) throw new Error(data.errors.join(', '));
+        if (data.status !== 'ok') throw new Error('News API error');
         ul.innerHTML = '';
-        if (!data.articles || data.articles.length === 0) {
-          throw new Error('No articles found');
-        }
         data.articles.forEach(article => {
           const li = document.createElement('li');
           li.innerHTML = `<a href="${article.url}" target="_blank">${article.title}</a>`;
           ul.appendChild(li);
         });
       } catch (err) {
-        console.error('Load news error:', err.message);
-        ul.innerHTML = '';
-        const mockNews = [
-          { title: 'Gold Prices Surge in Q2 2025', url: '#' },
-          { title: 'Central Banks Boost Gold Reserves', url: '#' },
-          { title: 'Gold ETF Demand Rises Amid Volatility', url: '#' }
-        ];
-        mockNews.forEach(article => {
-          const li = document.createElement('li');
-          li.innerHTML = `<a href="${article.url}" target="_blank">${article.title}</a>`;
-          ul.appendChild(li);
-        });
-        ul.innerHTML += '<li style="color:var(--error)">Failed to load news. Check GNews API key or quota.</li>';
+        console.error('News error:', err);
+        ul.innerHTML = '<li style="color: var(--error)">Failed to load news. Please check API key.</li>';
       }
     }
 
-    /** 
-     * ── REVISED: loadEconCalendar() now fetches from Finnhub.io ──
-     * (replace FINNHUB_API_KEY with your actual key to make it functional)
-     **/
+    // ─── ECONOMIC CALENDAR ───────────────────────────────────────────────────
     async function loadEconCalendar() {
       const tbody = document.getElementById('calendar-body');
       tbody.innerHTML = '<tr><td colspan="7"><div class="spinner"></div></td></tr>';
       try {
-        // Calculate date range: today and next 7 days
-        const today = new Date();
-        const toDate = new Date();
-        toDate.setDate(toDate.getDate() + 7);
-        const yyyy = today.getFullYear();
-        const mm = String(today.getMonth() + 1).padStart(2, '0');
-        const dd = String(today.getDate()).padStart(2, '0');
-        const fromStr = `${yyyy}-${mm}-${dd}`;
-
-        const yyyy2 = toDate.getFullYear();
-        const mm2 = String(toDate.getMonth() + 1).padStart(2, '0');
-        const dd2 = String(toDate.getDate()).padStart(2, '0');
-        const toStr = `${yyyy2}-${mm2}-${dd2}`;
-
-        const url = `https://finnhub.io/api/v1/calendar/economic?from=${fromStr}&to=${toStr}&token=${FINNHUB_API_KEY}`;
-        const res = await retryFetch(url);
-        const data = await res.json();
-        // data.data is an object keyed by date, where each key is an array of events
-        // e.g., data.data['2025-06-02'] = [{category:"employment", country:"US", event:"Non Farm Payrolls", ...}, ...]
-        if (!data || !data.data) throw new Error('No calendar data returned');
-
+        // Mock data (replace with Financial Modeling Prep API)
+        const events = [
+          { date: "06-02-2025", time: "08:30", currency: "USD", event: "Non-Farm Payrolls", impact: "High", actual: "", previous: "254K" },
+          { date: "06-02-2025", time: "10:00", currency: "EUR", event: "CPI Flash Estimate", impact: "Medium", actual: "", previous: "2.0%" },
+          { date: "06-03-2025", time: "04:30", currency: "GBP", event: "Services PMI", impact: "Low", actual: "", previous: "52.2" }
+        ];
         tbody.innerHTML = '';
-        // Flatten all dates into a single array
-        const allDates = Object.keys(data.data).sort();
-        for (const dateKey of allDates) {
-          const eventsOnDate = data.data[dateKey];
-          eventsOnDate.forEach(evt => {
-            const tr = document.createElement('tr');
-            // Highlight high‐impact (importance === 3)
-            if (evt.importance === 3) tr.classList.add('high-impact');
-            // Finnhub fields: date (YYYY-MM-DD), time (HH:MM), country, event, importance, actual, previous
-            const cols = [
-              dateKey,
-              evt.time || '-',
-              evt.country || '-',
-              evt.event || '-',
-              evt.importance === 3 ? 'High' : evt.importance === 2 ? 'Medium' : 'Low',
-              evt.actual !== null ? evt.actual : '-',
-              evt.previous !== null ? evt.previous : '-'
-            ];
-            cols.forEach(text => {
-              const td = document.createElement('td');
-              td.textContent = text;
-              tr.appendChild(td);
-            });
-            tbody.appendChild(tr);
+        events.forEach(ev => {
+          const tr = document.createElement('tr');
+          if (ev.impact === 'High') tr.classList.add('high-impact');
+          ['date', 'time', 'currency', 'event', 'impact', 'actual', 'previous'].forEach(key => {
+            const td = document.createElement('td');
+            td.textContent = ev[key] || '-';
+            tr.appendChild(td);
           });
-        }
-
-        if (tbody.children.length === 0) {
-          tbody.innerHTML = '<tr><td colspan="7">No upcoming events found in the next 7 days</td></tr>';
-        }
+          tbody.appendChild(tr);
+        });
       } catch (err) {
-        console.error('Load calendar error:', err.message);
-        tbody.innerHTML = '<tr><td colspan="7" style="color:var(--error)">Failed to load calendar</td></tr>';
+        console.error('Calendar error:', err);
+        tbody.innerHTML = '<tr><td colspan="7" style="color: var(--error)">Failed to load calendar</td></tr>';
       }
     }
 
+    // ─── THEME TOGGLE ────────────────────────────────────────────────────────
     function toggleTheme(theme) {
       document.documentElement.setAttribute('data-theme', theme);
       document.getElementById('theme-select').value = theme;
     }
 
+    // ─── NOTIFICATIONS ───────────────────────────────────────────────────────
     function addNotification(message, type = 'info') {
       const list = document.getElementById('notif-list');
       const count = document.getElementById('notif-count');
       const li = document.createElement('li');
       li.textContent = message;
       li.classList.add(type);
-      li.style.cursor = 'pointer';
-      li.onclick = () => {
-        li.style.opacity = '0';
-        setTimeout(() => li.remove(), 300);
-      };
       list.insertBefore(li, list.firstChild);
       count.textContent = parseInt(count.textContent) + 1;
       const sound = document.querySelector(type === 'critical' ? '#critical-notif-sound' : '#notif-sound');
-      if (sound) sound.play().catch(err => console.error('Audio error:', err.message));
+      if (sound) sound.play().catch(() => console.error('Audio error'));
     }
 
+    // ─── ON LOAD ─────────────────────────────────────────────────────────────
     document.addEventListener('DOMContentLoaded', async () => {
-      /*–– Revalidate session every two minutes and on load ––*/
-      await checkSession();
+      // Auto-refresh every 2 minutes
+      setInterval(() => location.reload(), 120000);
 
-      /*–– Subscribe to real-time session-token changes for current user ––*/
-      const userId = sessionStorage.getItem('userId');
-      supabase.channel(`users:id=eq.${userId}`)
-        .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'users', filter: `id=eq.${userId}` }, payload => {
-          const localToken = localStorage.getItem('sessionToken');
-          if (payload.new.current_session_token !== localToken) {
-            logout();
-          }
-        })
-        .subscribe(status => {
-          if (status === 'SUBSCRIBED') console.log('Realtime user subscription active');
-        });
+      // Particles.js
+      particlesJS('particles-js', {
+        particles: {
+          number: { value: 30, density: { enable: true, value_area: 800 } },
+          color: { value: '#ffd700' },
+          shape: { type: 'circle' },
+          opacity: { value: 0.3, random: true },
+          size: { value: 2, random: true },
+          line_linked: { enable: false },
+          move: { enable: true, speed: 1, direction: 'none', random: true }
+        },
+        interactivity: {
+          detect_on: 'canvas',
+          events: { onhover: { enable: true, mode: 'repulse' }, onclick: { enable: true, mode: 'push' } },
+          modes: { repulse: { distance: 100 }, push: { particles_nb: 2 } }
+        }
+      });
 
-      setInterval(checkSession, 15000); // re-check every 15s
+      // Slide-in animations
+      document.querySelectorAll('.slide-in').forEach(el => {
+        new IntersectionObserver((entries, observer) => {
+          entries.forEach(entry => {
+            if (entry.isIntersecting) {
+              entry.target.classList.add('visible');
+              observer.unobserve(entry.target);
+            }
+          });
+        }, { threshold: 0.1 }).observe(el);
+      });
 
+      // Session check (disabled in order to prevent redirect)
+      // await checkSession();
+      // const userId = sessionStorage.getItem('userId');
+      // supabase
+      //   .channel(`users:id=eq.${userId}`)
+      //   .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'users', filter: `id=eq.${userId}` }, payload => {
+      //     const localToken = localStorage.getItem('sessionToken');
+      //     if (payload.new.current_session_token !== localToken) {
+      //       logout();
+      //     }
+      //   })
+      //   .subscribe(status => {
+      //     if (status === 'SUBSCRIBED') console.log('Realtime subscription active');
+      //   });
+
+      // setInterval(checkSession, 15000);
       document.getElementById('welcomeName').textContent = sessionStorage.getItem('userName') || 'Trader';
       await logActivity('login');
       loadDashboard();
@@ -690,6 +889,7 @@
       loadEconCalendar();
       loadRecentActivity();
 
+      // Event listeners
       document.querySelectorAll('.chart-toggle button').forEach(btn => {
         btn.addEventListener('click', () => {
           document.querySelector('.chart-toggle button.active').classList.remove('active');
@@ -697,7 +897,6 @@
           initChart(btn.dataset.interval);
         });
       });
-
       document.getElementById('theme-select').addEventListener('change', e => toggleTheme(e.target.value));
       document.getElementById('notif-btn').addEventListener('click', () => {
         new bootstrap.Dropdown(document.getElementById('notif-btn')).toggle();
@@ -707,16 +906,17 @@
       });
       document.getElementById('convert-btn').addEventListener('click', convertCurrency);
       document.getElementById('export-logs').addEventListener('click', downloadActivityLog);
-      document.getElementById('logout-btn').addEventListener('click', logout);
 
-      supabase.channel('signals')
+      // Realtime subscriptions (only for new signals & activity logs)
+      supabase
+        .channel('signals')
         .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'signals' }, payload => {
-          addNotification(`New ${payload.new.action} signal for ${payload.new.signal_asset || 'asset'}!`, 'info');
+          addNotification(`New ${payload.new.action} signal for ${payload.new.chartasset}!`, 'info');
           loadDashboard();
         })
         .subscribe();
-
-      supabase.channel('user_activity')
+      supabase
+        .channel('user_activity')
         .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'user_activity' }, () => {
           loadRecentActivity();
         })
