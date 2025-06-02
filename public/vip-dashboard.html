@@ -39,6 +39,7 @@
       --success: #00ff88;
       --error: #ff4d4d;
       --accent: #2a2a2a;
+      --loading-bg: #2a2a2a;
     }
     :root[data-theme="light"] {
       --bg: #f0f0f0;
@@ -52,10 +53,11 @@
       --success: #28a745;
       --error: #dc3545;
       --accent: #fff;
+      --loading-bg: #f5f5f5;
     }
     *{margin:0;padding:0;box-sizing:border-box;}
     html{scroll-behavior:smooth;}
-    body{font-family:'Poppins',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;overflow-x:hidden;line-height:1.6;-webkit-font-smoothing:antialiased;visibility:visible;transition:opacity 0.3s;}
+    body{font-family:'Poppins',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;overflow-x:hidden;line-height:1.6;-webkit-font-smoothing:antialiased;visibility:visible;opacity:1 !important;transition:opacity 0.2s;}
     a,button,h1,h2,h3,h4,h5,h6,p,span,td,th,li,input,select,label{color:var(--text)!important;}
     a:hover{color:var(--gold-dark)!important;}
     .slide-in{visibility:visible;opacity:1;transform:translateY(0);}
@@ -104,6 +106,8 @@
     #notif-list .info{background:rgba(0,255,136,.2);}
     footer{text-align:center;padding:1rem 0;color:var(--text-light);font-size:.9rem;background:var(--glass);border-top:1px solid var(--gold-dark);width:100%;visibility:visible;}
     .spinner{border:3px solid var(--glass);border-top:3px solid var(--gold);border-radius:50%;width:24px;height:24px;animation:spin 1s linear infinite;margin:1rem auto;}
+    #loading{position:fixed;top:0;left:0;width:100%;height:100%;background:var(--loading-bg);display:flex;align-items:center;justify-content:center;color:var(--text);font-size:1.5rem;z-index:2000;opacity:1;transition:opacity .5s;}
+    #loading.hidden{opacity:0;pointer-events:none;}
     @keyframes spin{0%{transform:rotate(0deg);}100%{transform:rotate(360deg);}}
     @keyframes fadeIn{from{opacity:0;}to{opacity:1;}}
     @media (max-width:768px){
@@ -125,8 +129,7 @@
   </style>
 </head>
 <body>
-  <!-- Removed the <div id="loading">Loading Dashboard...</div> here -->
-
+  <div id="loading">Loading Dashboard...</div>
   <div class="offcanvas offcanvas-start" id="sidebar">
     <div class="offcanvas-body">
       <div class="text-center mb-4">
@@ -280,321 +283,328 @@
   <audio id="notif-sound" src="ding.mp3" preload="auto"></audio>
   <audio id="critical-notif-sound" src="alert.mp3" preload="auto"></audio>
   <script>
-    const SUPA_URL='https://dapwpgvnfjcfqqhrpxla.supabase.co';
-    const SUPA_KEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzYSIsInJlZiI6ImRhcHdwZ3ZuZmpjZnFxaHJweGxhIiwicm9sIjoibyIsImlhdCI6MTc0NzA0MDg4OCwiZXhwIjoxNjA2MzA4ODhicmnr0';
-    const supabase=window.supabase.createClient(SUPA_URL,SUPA_KEY);
-    const EXCHANGE_RATE_API_KEY='4e4307b2bf8daac15365a410';
-    const GNEWS_API_KEY='03a6fdcc98666513a11a078b2e21b3d7';
-    const apiCache=new Map();
-    async function retryFetch(url,retries=3,delay=1000){
-      for(let i=0;i<=retries;i++){
-        try{
-          const res=await fetch(url);
-          if(!res.ok)throw new Error(`HTTP ${res.status}`);
+    setTimeout(() => {
+      const loading = document.getElementById('loading');
+      if (loading) loading.classList.add('hidden');
+      console.log('Hiding loading screen');
+    }, 100);
+    setTimeout(() => {
+      const loading = document.getElementById('loading');
+      if (loading) loading.style.display = 'none';
+      console.log('Loading screen failsafe triggered');
+    }, 5000);
+    const SUPA_URL = 'https://dapwpgvnfjcfqqhrpxla.supabase.co';
+    const SUPA_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImRhcHdwZ3ZuZmpjZnFxaHJweGxhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDcwNDA4ODgsImV4cCI6MjA2MjYxNjg4OH0.ICC0UsLlzJDNre7rFCeD3k6iVzo6jOJgn3PhABpEMsQ';
+    const supabase = window.supabase.createClient(SUPA_URL, SUPA_KEY);
+    const EXCHANGE_RATE_API_KEY = '4e4307b2bf8daac15365a410';
+    const GNEWS_API_KEY = '03a6fdcc98666513a11a078b2e21b3d7';
+    const apiCache = new Map();
+    async function retryFetch(url, retries = 3, delay = 1000) {
+      for (let i = 0; i <= retries; i++) {
+        try {
+          const res = await fetch(url);
+          if (!res.ok) throw new Error(`HTTP ${res.status}`);
           return res;
-        }catch(err){
-          if(i===retries)throw err;
+        } catch (err) {
+          if (i === retries) throw err;
           console.log(`Retry ${i+1} for ${url}`);
-          await new Promise(r=>setTimeout(r,delay));
+          await new Promise(r => setTimeout(r, delay));
         }
       }
     }
-    async function getUserInfo(){
-      try{
-        const res=await retryFetch('https://api.ipify.org?format=json');
-        const {ip}=await res.json();
-        return {ip, city:'Unknown', country:'Unknown', device: navigator.userAgent};
-      }catch{
-        return {ip:'Unknown', city:'Unknown', country:'Unknown', device: navigator.userAgent};
+    async function getUserInfo() {
+      console.log('Getting user info');
+      try {
+        const res = await retryFetch('https://api.ipify.org?format=json');
+        const { ip } = await res.json();
+        return { ip, city: 'Unknown', country: 'Unknown', device: navigator.userAgent };
+      } catch {
+        return { ip: 'Unknown', city: 'Unknown', country: 'Unknown', device: navigator.userAgent };
       }
     }
-    async function logActivity(action){
-      console.log('Logging activity:',action);
-      const userInfo=await getUserInfo();
-      const userId=sessionStorage.getItem('userId')||'anonymous';
-      try{
-        const {error}=await supabase.from('user_activity').insert({
-          user_id: userId,
-          action,
-          ip_address: userInfo.ip,
-          city: userInfo.city,
-          country: userInfo.country,
-          device: userInfo.device
+    async function logActivity(action) {
+      console.log('Logging activity:', action);
+      const userInfo = await getUserInfo();
+      const userId = sessionStorage.getItem('userId') || 'anonymous';
+      try {
+        const { error } = await supabase.from('user_activity').insert({
+          user_id: userId, action, ip_address: userInfo.ip, city: userInfo.city, country: userInfo.country, device: userInfo.device
         });
-        if(error) throw error;
+        if (error) throw error;
         addNotification(`User ${action} from ${userInfo.city}`, 'info');
-      }catch(err){
+      } catch (err) {
         console.error('Log activity error:', err.message);
         addNotification('Failed to log activity', 'critical');
       }
     }
-    async function loadRecentActivity(){
+    async function loadRecentActivity() {
       console.log('Loading recent activity');
-      const tbody=document.getElementById('activity-body');
-      tbody.innerHTML='<tr><td colspan="5"><div class="spinner"></div></td></tr>';
-      try{
-        const {data:tables, error:schemaError}=await supabase.from('user_activity').select('*').limit(0);
-        if(schemaError) throw new Error('Table check failed: ' + schemaError.message);
-        const {data,error}=await supabase.from('user_activity').select('*').order('timestamp',{ascending:false}).limit(10);
-        if(error) throw error;
-        tbody.innerHTML='';
-        if(data.length===0){
-          tbody.innerHTML='<tr><td colspan="5">No activity data available</td></tr>';
+      const tbody = document.getElementById('activity-body');
+      tbody.innerHTML = '<tr><td colspan="5"><div class="spinner"></div></td></tr>';
+      try {
+        const { data: tables, error: schemaError } = await supabase.from('user_activity').select('*').limit(0);
+        if (schemaError) throw new Error('Table check failed: ' + schemaError.message);
+        const { data, error } = await supabase.from('user_activity').select('*').order('timestamp', { ascending: false }).limit(10);
+        if (error) throw error;
+        tbody.innerHTML = '';
+        if (data.length === 0) {
+          tbody.innerHTML = '<tr><td colspan="5">No activity data available</td></tr>';
           return;
         }
-        data.forEach(activity=>{
-          const tr=document.createElement('tr');
-          ['timestamp','action','ip_address','city','device'].forEach(key=>{
-            const td=document.createElement('td');
-            td.textContent= key==='timestamp'
-              ? new Date(activity[key]).toLocaleString()
-              : (activity[key] || '-');
+        data.forEach(activity => {
+          const tr = document.createElement('tr');
+          ['timestamp', 'action', 'ip_address', 'city', 'device'].forEach(key => {
+            const td = document.createElement('td');
+            td.textContent = key === 'timestamp' ? new Date(activity[key]).toLocaleString() : activity[key] || '-';
             tr.appendChild(td);
           });
           tbody.appendChild(tr);
         });
-      }catch(err){
+        console.log('Activity loaded:', data.length);
+      } catch (err) {
         console.error('Load activity error:', err.message);
-        tbody.innerHTML='<tr><td colspan="5" style="color:var(--error)">Failed to load activity. Check Supabase setup.</td></tr>';
+        tbody.innerHTML = '<tr><td colspan="5" style="color:var(--error)">Failed to load activity. Check Supabase setup.</td></tr>';
       }
     }
-    async function downloadActivityLog(){
+    async function downloadActivityLog() {
       console.log('Downloading activity log');
-      try{
-        const {data,error} = await supabase.from('user_activity').select('*').order('timestamp',{ascending:false});
-        if(error) throw error;
-        const csv = [
-          'Timestamp,Action,IP Address,City,Country,Device',
-          ...data.map(row =>
-            `${new Date(row.timestamp).toLocaleString()},${row.action},${row.ip_address},${row.city},${row.country},"${row.device}"`
-          )
-        ].join('\n');
-        const blob=new Blob([csv],{type:'text/csv'});
-        const url=URL.createObjectURL(blob);
-        const a=document.createElement('a');
-        a.href=url;
-        a.download='activity_logs.csv';
+      try {
+        const { data, error } = await supabase.from('user_activity').select('*').order('timestamp', { ascending: false });
+        if (error) throw error;
+        const csv = ['Timestamp,Action,IP Address,City,Country,Device', ...data.map(row => `${new Date(row.timestamp).toLocaleString()},${row.action},${row.ip_address},${row.city},${row.country},"${row.device}"`)].join('\n');
+        const blob = new Blob([csv], { type: 'text/csv' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = 'activity_logs.csv';
         a.click();
         URL.revokeObjectURL(url);
-        addNotification('Logs exported successfully','info');
-      }catch(err){
+        addNotification('Logs exported successfully', 'info');
+      } catch (err) {
         console.error('Export logs error:', err.message);
-        addNotification('Failed to export logs','critical');
+        addNotification('Failed to export logs', 'critical');
       }
     }
-    async function convertCurrency(){
+    async function convertCurrency() {
       console.log('Converting currency');
-      const from=document.getElementById('converter-from').value;
-      const to=document.getElementById('converter-to').value;
-      const amount=parseFloat(document.getElementById('converter-amount').value)||1;
-      const cacheKey=`${from}_${to}`;
-      const resultEl=document.getElementById('converter-result');
-      resultEl.innerHTML='<div class="spinner"></div>';
-      if(apiCache.has(cacheKey)){
-        const rate=apiCache.get(cacheKey);
-        resultEl.textContent=`${amount} ${from} = ${(amount * rate).toFixed(2)} ${to}`;
+      const from = document.getElementById('converter-from').value;
+      const to = document.getElementById('converter-to').value;
+      const amount = parseFloat(document.getElementById('converter-amount').value) || 1;
+      const resultEl = document.getElementById('converter-result');
+      resultEl.innerHTML = '<div class="spinner"></div>';
+      const cacheKey = `${from}_${to}`;
+      if (apiCache.has(cacheKey)) {
+        const rate = apiCache.get(cacheKey);
+        resultEl.textContent = `${amount} ${from} = ${(amount * rate).toFixed(2)} ${to}`;
         return;
       }
-      try{
-        const res=await retryFetch(`https://v6.exchangerate-api.com/v6/${EXCHANGE_RATE_API_KEY}/latest/${from}`);
-        const data=await res.json();
-        if(data.result!=='success') throw new Error('API error');
-        const rate=data.conversion_rates[to];
-        apiCache.set(cacheKey,rate);
-        setTimeout(()=>(apiCache.delete(cacheKey)),10*60*1000);
-        resultEl.textContent=`${amount} ${from} = ${(amount * rate).toFixed(2)} ${to}`;
-        console.log('Currency conversion success:',rate);
-      }catch(err){
+      try {
+        const res = await retryFetch(`https://v6.exchangerate-api.com/v6/${EXCHANGE_RATE_API_KEY}/latest/${from}`);
+        const data = await res.json();
+        if (data.result !== 'success') throw new Error('API error');
+        const rate = data.conversion_rates[to];
+        apiCache.set(cacheKey, rate);
+        setTimeout(() => apiCache.delete(cacheKey), 10 * 60 * 1000);
+        resultEl.textContent = `${amount} ${from} = ${(amount * rate).toFixed(2)} ${to}`;
+        console.log('Currency conversion success:', rate);
+      } catch (err) {
         console.error('Convert currency error:', err.message);
-        resultEl.innerHTML='<span style="color:var(--error)">Failed to convert currency</span>';
-        addNotification('Currency conversion failed','critical');
+        resultEl.innerHTML = '<span style="color:var(--error)">Failed to convert currency</span>';
+        addNotification('Currency conversion failed', 'critical');
       }
     }
-    async function checkSession(){
+    async function checkSession() {
       console.log('Checking session');
-      const localToken=localStorage.getItem('sessionToken');
-      if(!localToken){
+      const localToken = localStorage.getItem('sessionToken');
+      if (!localToken) {
+        console.log('No session token, logging out');
         logout();
         return;
       }
-      const userId=sessionStorage.getItem('userId');
-      try{
-        const {data,error}=await supabase.from('users').select('current_session_token').eq('id',userId).single();
-        if(error) throw error;
-        if(data.current_session_token !== localToken){
+      const userId = sessionStorage.getItem('userId');
+      if (!userId) {
+        console.log('No userId, skipping session check');
+        return;
+      }
+      try {
+        const { data, error } = await supabase.from('users').select('current_session_token').eq('id', userId).single();
+        if (error) throw error;
+        if (data.current_session_token !== localToken) {
+          console.log('Session token mismatch, logging out');
           logout();
         }
         console.log('Session check success');
-      }catch(err){
+      } catch (err) {
         console.error('Check session error:', err.message);
-        addNotification('Session validation failed','critical');
+        addNotification('Session validation failed', 'critical');
       }
     }
-    async function logout(){
+    async function logout() {
       console.log('Logging out');
-      try{
+      try {
         await logActivity('logout');
         localStorage.removeItem('sessionToken');
         sessionStorage.clear();
-        window.location='login.html?message=logged_out';
-      }catch(err){
+        window.location = 'login.html?message=logged_out';
+      } catch (err) {
         console.error('Logout error:', err.message);
       }
     }
-    async function loadDashboard(){
+    async function loadDashboard() {
       console.log('Loading dashboard');
-      try{
-        const today=new Date().toISOString().split('T')[0];
-        const {count,error}=await supabase.from('signals').select('id',{count:'exact'}).gte('timestamp',today);
-        if(error) throw error;
-        document.getElementById('stat-gold-change').textContent='N/A';
-        const list=JSON.parse(localStorage.getItem('watchlist')||'[]');
-        const ul=document.getElementById('watch-list');
-        ul.innerHTML='';
-        for(const sym of list){
-          const li=document.createElement('li');
-          li.className='list-group-item d-flex justify-content-between align-items-center';
-          let priceChange='N/A';
-          let priceClass='';
-          try{
-            const res=await fetch(`https://v6.exchangerate-api.com/v6/${EXCHANGE_RATE_API_KEY}/latest/${sym.slice(0,3)}`);
-            const data=await res.json();
-            const rate=data.conversion_rates[sym.slice(3)]||1;
-            priceChange=`+${(Math.random()*2-1).toFixed(2)}%`;
-            priceClass=priceChange.startsWith('+')?'positive':'negative';
-          }catch(err){
+      try {
+        const today = new Date().toISOString().split('T')[0];
+        const { count, error } = await supabase.from('signals').select('id', { count: 'exact' }).gte('timestamp', today);
+        if (error) throw error;
+        document.getElementById('stat-gold-change').textContent = 'N/A';
+        const list = JSON.parse(localStorage.getItem('watchlist') || '[]');
+        const ul = document.getElementById('watch-list');
+        ul.innerHTML = '';
+        for (const sym of list) {
+          const li = document.createElement('li');
+          li.className = 'list-group-item d-flex justify-content-between align-items-center';
+          let priceChange = 'N/A';
+          let priceClass = '';
+          try {
+            const res = await fetch(`https://v6.exchangerate-api.com/v6/${EXCHANGE_RATE_API_KEY}/latest/${sym.slice(0,3)}`);
+            const data = await res.json();
+            const rate = data.conversion_rates[sym.slice(3)] || 1;
+            priceChange = `+${(Math.random() * 2 - 1).toFixed(2)}%`;
+            priceClass = priceChange.startsWith('+') ? 'positive' : 'negative';
+          } catch (err) {
             console.error('Watchlist error:', err.message);
           }
-          li.innerHTML=`<span>${sym}</span><span class="price-change ${priceClass}">${priceChange}</span><button class="btn btn-sm btn-outline-danger">Remove</button>`;
-          li.querySelector('button').onclick=()=>{
-            localStorage.setItem('watchlist',JSON.stringify(list.filter(s=>s!==sym)));
+          li.innerHTML = `<span>${sym}</span><span class="price-change ${priceClass}">${priceChange}</span><button class="btn btn-sm btn-outline-danger">Remove</button>`;
+          li.querySelector('button').onclick = () => {
+            localStorage.setItem('watchlist', JSON.stringify(list.filter(s => s !== sym)));
             loadDashboard();
           };
           ul.appendChild(li);
         }
-        document.getElementById('add-watch').onclick=()=>{
-          const input=document.getElementById('watch-input');
-          const sym=input.value.trim().toUpperCase();
-          if(sym && !list.includes(sym)){
+        document.getElementById('add-watch').onclick = () => {
+          const input = document.getElementById('watch-input');
+          const sym = input.value.trim().toUpperCase();
+          if (sym && !list.includes(sym)) {
             list.push(sym);
-            localStorage.setItem('watchlist',JSON.stringify(list));
+            localStorage.setItem('watchlist', JSON.stringify(list));
             loadDashboard();
-            input.value='';
+            input.value = '';
           }
         };
-      }catch(err){
+        console.log('Dashboard loaded');
+      } catch (err) {
         console.error('Load dashboard error:', err.message);
-        addNotification('Failed to load dashboard','critical');
+        addNotification('Failed to load dashboard', 'critical');
       }
     }
-    function initChart(interval='240'){
+    function initChart(interval = '240') {
       console.log('Initializing chart:', interval);
-      try{
-        document.getElementById('tv_chart').innerHTML='';
+      try {
+        document.getElementById('tv_chart').innerHTML = '';
         new window.TradingView.widget({
-          container_id:"tv_chart",
-          width:"100%",
-          height:"450",
-          symbol:"OANDA:XAUUSD",
-          interval:interval,
-          timezone:"Africa/Lagos",
-          theme:"dark",
-          style:"1",
-          locale:"en",
-          toolbar_bg:"#1a1a1a",
+          container_id: 'tv_chart',
+          width: '100%',
+          height: '450',
+          symbol: 'OANDA:XAUUSD',
+          interval: interval,
+          timezone: 'Africa/Lagos',
+          theme: 'dark',
+          style: '1',
+          locale: 'en',
+          toolbar_bg: '#1a1a1a',
           studies: [
-            {id:"MASimple@tv-basicstudies",inputs:{length:50}},
-            {id:"MASimple@tv-basicstudies",inputs:{length:200}}
+            { id: 'MASimple@tv-basicstudies', inputs: { length: 50 } },
+            { id: 'MASimple@tv-basicstudies', inputs: { length: 200 } }
           ],
-          enable_publishing:false,
-          allow_symbol_change:false,
-          save_image:false
+          enable_publishing: false,
+          allow_symbol_change: false,
+          save_image: false
         });
         console.log('Chart initialized');
-      }catch(err){
+      } catch (err) {
         console.error('Chart error:', err.message);
-        document.getElementById('tv_chart').innerHTML='<p style="color:var(--error)">Failed to load chart</p>';
+        document.getElementById('tv_chart').innerHTML = '<p style="color:var(--error)">Failed to load chart</p>';
       }
     }
-    async function loadGoldNews(){
+    async function loadGoldNews() {
       console.log('Loading gold news');
-      const ul=document.getElementById('news-list');
-      ul.innerHTML='<li><div class="spinner"></div></li>';
-      try{
-        const res=await retryFetch(`https://gnews.io/api/v4/search?q=gold+market&lang=en&max=8&apikey=${GNEWS_API_KEY}`);
-        const data=await res.json();
-        if(data.errors) throw new Error(data.errors.join(', '));
-        ul.innerHTML='';
-        if(!data.articles || data.articles.length===0){
+      const ul = document.getElementById('news-list');
+      ul.innerHTML = '<li><div class="spinner"></div></li>';
+      try {
+        const res = await retryFetch(`https://gnews.io/api/v4/search?q=gold+market&lang=en&max=8&apikey=${GNEWS_API_KEY}`);
+        const data = await res.json();
+        if (data.errors) throw new Error(data.errors.join(', '));
+        ul.innerHTML = '';
+        if (!data.articles || data.articles.length === 0) {
           throw new Error('No articles found');
         }
-        data.articles.forEach(article=>{
-          const li=document.createElement('li');
-          li.innerHTML=`<a href="${article.url}" target="_blank">${article.title}</a>`;
+        data.articles.forEach(article => {
+          const li = document.createElement('li');
+          li.innerHTML = `<a href="${article.url}" target="_blank">${article.title}</a>`;
           ul.appendChild(li);
         });
         console.log('News loaded:', data.articles.length);
-      }catch(err){
+      } catch (err) {
         console.error('Load news error:', err.message);
-        ul.innerHTML='';
-        const mockNews=[
-          {title:'Gold Hits Record High in 2025',url:'#'},
-          {title:'Central Banks Boost Gold Reserves',url:'#'},
-          {title:'Gold ETF Demand Stable',url:'#'}
+        ul.innerHTML = '';
+        const mockNews = [
+          { title: 'Gold Surges in 2025', url: '#' },
+          { title: 'Central Banks Boost Reserves', url: '#' },
+          { title: 'Gold ETF Demand Stable', url: '#' }
         ];
-        mockNews.forEach(article=>{
-          const li=document.createElement('li');
-          li.innerHTML=`<a href="${article.url}" target="_blank">${article.title}</a>`;
+        mockNews.forEach(article => {
+          const li = document.createElement('li');
+          li.innerHTML = `<a href="${article.url}" target="_blank">${article.title}</a>`;
           ul.appendChild(li);
         });
-        ul.innerHTML+='<li style="color:var(--error)">Failed to load news. Check GNews API.</li>';
+        ul.innerHTML += '<li style="color:var(--error)">Failed to load news. Check GNews API.</li>';
       }
     }
-    async function loadEconCalendar(){
+    async function loadEconCalendar() {
       console.log('Loading economic calendar');
-      const tbody=document.getElementById('calendar-body');
-      tbody.innerHTML='<tr><td colspan="7"><div class="spinner"></div></td></tr>';
-      try{
-        const events=[
-          {date:"06-02-2025",time:"08:30",currency:"USD",event:"Non-Farm Payrolls",impact:"High",actual:"",previous:"254K"},
-          {date:"06-03-2025",time:"10:00",currency:"EUR",event:"CPI Flash",impact:"Medium",actual:"",previous:"2.0%"},
-          {date:"06-04-2025",time:"04:30",currency:"GBP",event:"Services PMI",impact:"Low",actual:"",previous:"52.2"}
+      const tbody = document.getElementById('calendar-body');
+      tbody.innerHTML = '<tr><td colspan="7"><div class="spinner"></div></td></tr>';
+      try {
+        const events = [
+          { date: '06-02-2025', time: '08:30', currency: 'USD', event: 'Non-Farm Payrolls', impact: 'High', actual: '', previous: '254K' },
+          { date: '06-03-2025', time: '10:00', currency: 'EUR', event: 'CPI Flash', impact: 'Medium', actual: '', previous: '2.0%' },
+          { date: '06-04-2025', time: '04:30', currency: 'GBP', event: 'Services PMI', impact: 'Low', actual: '', previous: '52.2' }
         ];
         tbody.innerHTML = '';
-        events.forEach(event=>{
-          const tr=document.createElement('tr');
-          if(event.impact==='High') tr.classList.add('high-impact');
-          ['date','time','currency','event','impact','actual','previous'].forEach(key=>{
-            const td=document.createElement('td');
-            td.textContent=event[key] || '-';
+        events.forEach(event => {
+          const tr = document.createElement('tr');
+          if (event.impact === 'High') tr.classList.add('high-impact');
+          ['date', 'time', 'currency', 'event', 'impact', 'actual', 'previous'].forEach(key => {
+            const td = document.createElement('td');
+            td.textContent = event[key] || '-';
             tr.appendChild(td);
           });
           tbody.appendChild(tr);
         });
         console.log('Calendar loaded');
-      }catch(err){
+      } catch (err) {
         console.error('Calendar error:', err.message);
-        tbody.innerHTML='<tr><td colspan="7" style="color:var(--error)">Failed to load calendar</td></tr>';
+        tbody.innerHTML = '<tr><td colspan="7" style="color:var(--error)">Failed to load calendar</td></tr>';
       }
     }
-    function toggleTheme(theme){
+    function toggleTheme(theme) {
       console.log('Toggling theme:', theme);
       document.documentElement.setAttribute('data-theme', theme);
-      document.getElementById('theme-select').value=theme;
+      document.getElementById('theme-select').value = theme;
     }
-    function addNotification(message,type='info'){
+    function addNotification(message, type = 'info') {
       console.log('Adding notification:', message, type);
-      const list=document.getElementById('notif-list');
-      const count=document.getElementById('notif-count');
-      const li=document.createElement('li');
-      li.textContent=message;
+      const list = document.getElementById('notif-list');
+      const count = document.getElementById('notif-count');
+      const li = document.createElement('li');
+      li.textContent = message;
       li.classList.add(type);
-      li.style.cursor='pointer';
-      li.onclick=() => { li.style.opacity='0'; setTimeout(() => li.remove(), 300); };
+      li.style.cursor = 'pointer';
+      li.onclick = () => { li.style.opacity = '0'; setTimeout(() => li.remove(), 300); };
       list.insertBefore(li, list.firstChild);
-      count.textContent=parseInt(count.textContent) + 1;
-      const sound=document.getElementById(type ==='critical' ? 'critical-notif-sound' : 'notif-sound');
-      if(sound) sound.play().catch(err => console.error('Audio error:', err.message));
+      count.textContent = parseInt(count.textContent) + 1;
+      const sound = document.getElementById(type === 'critical' ? 'critical-notif-sound' : 'notif-sound');
+      if (sound) sound.play().catch(err => console.error('Audio error:', err.message));
     }
     document.addEventListener('DOMContentLoaded', async () => {
       console.log('DOM loaded');
@@ -602,58 +612,61 @@
       document.querySelectorAll('.slide-in').forEach(el => {
         el.classList.add('visible');
       });
-      // Removed setTimeout for hiding #loading since the overlay is gone
-
-      await checkSession();
-      const userId = sessionStorage.getItem('userId');
-      supabase
-        .channel('users')
-        .on('postgres_changes', {event:'UPDATE',schema:'public',table:'users',filter:`id=eq.${userId}`}, async payload => {
-          console.log('User update event');
-          const localToken = localStorage.getItem('sessionToken');
-          if (payload.new.current_session_token !== localToken) {
-            await logout();
-          }
-        })
-        .subscribe(status => console.log('User subscription:', status));
-      setInterval(checkSession, 15000);
-      document.getElementById('welcomeName').textContent = sessionStorage.getItem('userName') || 'Trader';
-      await logActivity('login');
-      loadDashboard();
-      initChart();
-      loadGoldNews();
-      loadEconCalendar();
-      loadRecentActivity();
-      document.querySelectorAll('.chart-toggle button').forEach(btn => {
-        btn.addEventListener('click', () => {
-          document.querySelector('.chart-toggle button.active').classList.remove('active');
-          btn.classList.add('active');
-          initChart(btn.dataset.interval);
+      try {
+        await checkSession();
+        const userId = sessionStorage.getItem('userId');
+        supabase
+          .channel('users')
+          .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'users', filter: `id=eq.${userId}` }, async payload => {
+            console.log('User update event');
+            const localToken = localStorage.getItem('sessionToken');
+            if (payload.new.current_session_token !== localToken) {
+              await logout();
+            }
+          })
+          .subscribe(status => console.log('User subscription:', status));
+        setInterval(checkSession, 15000);
+        document.getElementById('welcomeName').textContent = sessionStorage.getItem('userName') || 'Trader';
+        await logActivity('login');
+        loadDashboard();
+        initChart();
+        loadGoldNews();
+        loadEconCalendar();
+        loadRecentActivity();
+        document.querySelectorAll('.chart-toggle button').forEach(btn => {
+          btn.addEventListener('click', () => {
+            document.querySelector('.chart-toggle button.active').classList.remove('active');
+            btn.classList.add('active');
+            initChart(btn.dataset.interval);
+          });
         });
-      });
-      document.getElementById('theme-select').addEventListener('change', e => toggleTheme(e.target.value));
-      document.getElementById('notif-btn').addEventListener('click', () => {
-        new bootstrap.Dropdown(document.getElementById('notif-btn')).toggle();
-      });
-      document.getElementById('sidebar-toggle').addEventListener('click', () => {
-        new bootstrap.Offcanvas(document.getElementById('sidebar')).toggle();
-      });
-      document.getElementById('convert-btn').addEventListener('click', convertCurrency);
-      document.getElementById('export-logs').addEventListener('click', downloadActivityLog);
-      document.getElementById('logout-btn').addEventListener('click', logout);
-      supabase
-        .channel('signals')
-        .on('postgres_changes', {event:'INSERT',schema:'public',table:'signals'}, payload => {
-          addNotification(`New ${payload.new.action || 'signal'} for ${payload.new.signal_asset || 'asset'}!`, 'info');
-          loadDashboard();
-        })
-        .subscribe(status => console.log('Signals subscription:', status));
-      supabase
-        .channel('user_activity')
-        .on('postgres_changes', {event:'INSERT',schema:'public',table:'user_activity'}, () => {
-          loadRecentActivity();
-        })
-        .subscribe(status => console.log('Activity subscription:', status));
+        document.getElementById('theme-select').addEventListener('change', e => toggleTheme(e.target.value));
+        document.getElementById('notif-btn').addEventListener('click', () => {
+          new bootstrap.Dropdown(document.getElementById('notif-btn')).toggle();
+        });
+        document.getElementById('sidebar-toggle').addEventListener('click', () => {
+          new bootstrap.Offcanvas(document.getElementById('sidebar')).toggle();
+        });
+        document.getElementById('convert-btn').addEventListener('click', convertCurrency);
+        document.getElementById('export-logs').addEventListener('click', downloadActivityLog);
+        document.getElementById('logout-btn').addEventListener('click', logout);
+        supabase
+          .channel('signals')
+          .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'signals' }, payload => {
+            addNotification(`New ${payload.new.action || 'signal'} for ${payload.new.signal_asset || 'asset'}!`, 'info');
+            loadDashboard();
+          })
+          .subscribe(status => console.log('Signals subscription:', status));
+        supabase
+          .channel('user_activity')
+          .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'user_activity' }, () => {
+            loadRecentActivity();
+          })
+          .subscribe(status => console.log('Activity subscription:', status));
+      } catch (err) {
+        console.error('DOM load error:', err.message);
+        addNotification('Failed to initialize dashboard', 'critical');
+      }
     });
   </script>
 </body>
