@@ -654,9 +654,17 @@
 
     // ─── LOAD RECENT ACTIVITY (UPDATED) ─────────────────────────────────────
     async function loadRecentActivity() {
+      console.log('▶ loadRecentActivity() called');
+
       const tbody = document.getElementById('activity-body');
+      if (!tbody) {
+        console.error('✖ loadRecentActivity: <tbody id="activity-body"> not found');
+        return;
+      }
+
       // Show spinner while fetching
       tbody.innerHTML = '<tr><td colspan="5"><div class="spinner"></div></td></tr>';
+
       try {
         const { data, error } = await supabase
           .from('user_activity')
@@ -664,41 +672,58 @@
           .order('timestamp', { ascending: false })
           .limit(10);
 
-        if (error) throw error;
+        if (error) {
+          console.error('✖ Supabase error in loadRecentActivity():', error);
+          throw error;
+        }
 
-        // Clear spinner
+        console.log('✔ Supabase returned:', data);
+
+        // Clear out the spinner
         tbody.innerHTML = '';
 
+        // If no rows, show a “No recent activity” message
+        if (!data || data.length === 0) {
+          tbody.innerHTML = `
+            <tr>
+              <td colspan="5" style="text-align:center; color: var(--text-muted);">
+                No recent activity
+              </td>
+            </tr>`;
+          return;
+        }
+
+        // Otherwise, build rows normally
         data.forEach(activity => {
           const tr = document.createElement('tr');
 
-          // Timestamp cell
+          // 1) Timestamp cell
           const tdTimestamp = document.createElement('td');
           tdTimestamp.textContent = activity.timestamp
             ? new Date(activity.timestamp).toLocaleString()
             : '-';
           tr.appendChild(tdTimestamp);
 
-          // Action cell
+          // 2) Action cell
           const tdAction = document.createElement('td');
           tdAction.textContent = activity.action || '-';
           tr.appendChild(tdAction);
 
-          // IP Address cell
+          // 3) IP Address cell
           const tdIP = document.createElement('td');
           tdIP.textContent = activity.ip_address || '-';
           tr.appendChild(tdIP);
 
-          // Location cell (combine city + country)
+          // 4) Location cell (combine city + country)
           const tdLocation = document.createElement('td');
           const city = activity.city || '';
           const country = activity.country || '';
-          tdLocation.textContent = city || country
+          tdLocation.textContent = (city || country)
             ? `${city}${city && country ? ', ' : ''}${country}`
             : '-';
           tr.appendChild(tdLocation);
 
-          // Device cell
+          // 5) Device cell
           const tdDevice = document.createElement('td');
           tdDevice.textContent = activity.device || '-';
           tr.appendChild(tdDevice);
@@ -706,8 +731,13 @@
           tbody.appendChild(tr);
         });
       } catch (err) {
-        console.error('Activity error:', err);
-        tbody.innerHTML = '<tr><td colspan="5" style="color: var(--error);">Failed to load activity</td></tr>';
+        console.error('✖ loadRecentActivity caught error:', err);
+        tbody.innerHTML = `
+          <tr>
+            <td colspan="5" style="color: var(--error); text-align:center;">
+              Failed to load activity
+            </td>
+          </tr>`;
       }
     }
 
