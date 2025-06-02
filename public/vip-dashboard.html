@@ -301,14 +301,15 @@
   <audio id="critical-notif-sound" src="alert.mp3" preload="auto"></audio>
 
   <script>
-    /*–– Supabase & API Setup ––*/
+    /*–– Added for session check and Supabase setup ––*/
     const SUPA_URL = 'https://dapwpgvnfjcfqqhrpxla.supabase.co';
-    const SUPA_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzYWMiLCJyZWYiOiIkQGRhcHdwZ3ZuZmpjZnFxaHJweGxhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDcwNDA4ODgsImV4cCI6MjA2MjYxNjg4OH0.ICC0UsLlzJDNre7rFCeD3k6iVzo6jOJgn3PhABpEMsQ';
+    const SUPA_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ5YSI6IkpX';
     const supabase = window.supabase.createClient(SUPA_URL, SUPA_KEY);
 
-    const EXCHANGE_RATE_API_KEY = '4e4307b2bf8daac15365a410';
+    const EXCHANGE_RATE_API_KEY = '4e4307b2bf8daac15365a410'; 
     const GNEWS_API_KEY = '03a6fdcc98666513a11a078b2e21b3d7';
-    const FINNHUB_API_KEY = 'd0um351r01qn5fk68hc0d0um351r01qn5fk68hcg'; // Your Finnhub key
+    // ── Add your Finnhub key here:
+    const FINNHUB_API_KEY = 'YOUR_FINNHUB_API_KEY_HERE';
     const apiCache = new Map();
 
     async function retryFetch(url, options, retries = 1, delay = 2000) {
@@ -386,7 +387,7 @@
       try {
         const { data, error } = await supabase.from('user_activity').select('*').order('timestamp', { ascending: false });
         if (error) throw error;
-        const csv = ['Timestamp,Action,IP Address,City,Country,Device', ...data.map(row =>
+        const csv = ['Timestamp,Action,IP Address,City,Country,Device', ...data.map(row => 
           `${new Date(row.timestamp).toLocaleString()},${row.action},${row.ip_address},${row.city},${row.country},"${row.device}"`)].join('\n');
         const blob = new Blob([csv], { type: 'text/csv' });
         const url = URL.createObjectURL(blob);
@@ -429,7 +430,7 @@
       }
     }
 
-    /*–– Supabase session validation ––*/
+    /*–– Added for Supabase session validation ––*/
     async function checkSession() {
       const localToken = localStorage.getItem('sessionToken');
       if (!localToken) {
@@ -576,6 +577,7 @@
 
     /** 
      * ── REVISED: loadEconCalendar() now fetches from Finnhub.io ──
+     * (replace FINNHUB_API_KEY with your actual key to make it functional)
      **/
     async function loadEconCalendar() {
       const tbody = document.getElementById('calendar-body');
@@ -598,15 +600,20 @@
         const url = `https://finnhub.io/api/v1/calendar/economic?from=${fromStr}&to=${toStr}&token=${FINNHUB_API_KEY}`;
         const res = await retryFetch(url);
         const data = await res.json();
+        // data.data is an object keyed by date, where each key is an array of events
+        // e.g., data.data['2025-06-02'] = [{category:"employment", country:"US", event:"Non Farm Payrolls", ...}, ...]
         if (!data || !data.data) throw new Error('No calendar data returned');
 
         tbody.innerHTML = '';
+        // Flatten all dates into a single array
         const allDates = Object.keys(data.data).sort();
         for (const dateKey of allDates) {
           const eventsOnDate = data.data[dateKey];
           eventsOnDate.forEach(evt => {
             const tr = document.createElement('tr');
+            // Highlight high‐impact (importance === 3)
             if (evt.importance === 3) tr.classList.add('high-impact');
+            // Finnhub fields: date (YYYY-MM-DD), time (HH:MM), country, event, importance, actual, previous
             const cols = [
               dateKey,
               evt.time || '-',
