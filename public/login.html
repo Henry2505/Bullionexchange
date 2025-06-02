@@ -184,24 +184,22 @@
       const password = document.getElementById('password').value;
 
       try {
-        console.log('1. Fetching user data for email:', email);
+        // Fetch user by email
         const { data: user, error } = await sb
           .from('users')
           .select('id, name, email, password, status')
-          .eq('email', email) // Changed to .eq for exact match
+          .eq('email', email)
           .single();
         if (error) throw error;
         if (!user) throw new Error('No account found for that email.');
 
-        console.log('2. User found:', user);
-
+        // Password check
         if (user.password !== password) throw new Error('Invalid login credentials.');
-        console.log('3. Password matched.');
 
+        // Approval check
         if (String(user.status).toLowerCase() !== 'approved') {
           throw new Error('Your account is not yet approved—please check back soon.');
         }
-        console.log('4. Account is approved.');
 
         // Device Fingerprint Check
         const deviceKey = `cbeDevice_${email}`;
@@ -223,36 +221,40 @@
             body: JSON.stringify(payload)
           });
         }
-        console.log('5. Device fingerprint checked.');
 
-        // Generate session token
+        // Generate and save session token
         const sessionToken = uuidv4();
-        console.log('6. Generated session token:', sessionToken);
-
-        // Update session token directly in the database
         const { error: tokenError } = await sb
           .from('users')
           .update({ current_session_token: sessionToken })
           .eq('id', user.id);
         if (tokenError) throw new Error('Failed to update session token: ' + tokenError.message);
-        console.log('7. Session token updated in database.');
 
         // Store session data
+        localStorage.setItem('isLoggedIn', 'true');
+        sessionStorage.setItem('cbeUserId', user.id);
         localStorage.setItem('sessionToken', sessionToken);
-        sessionStorage.setItem('loggedIn', 'true');
-        sessionStorage.setItem('userId', user.id);
         sessionStorage.setItem('userName', user.name);
-        console.log('8. Session data stored in localStorage and sessionStorage.');
 
         // Redirect to VIP dashboard
-        console.log('9. Redirecting to vip-dashboard.html');
         window.location.assign('vip-dashboard.html');
       } catch (err) {
-        console.error('Login error:', err);
-        alertDiv.style.color = 'var(--error-color)';
+        console.error("Login error:", err);
+        alertDiv.style.color = "var(--error-color)";
         alertDiv.textContent = err.message;
       }
     });
+  </script>
+
+  <script>
+    var _smartsupp = _smartsupp || {};
+    _smartsupp.key = '018a8bbd868518221e725341a7b2601231ec7ce8';
+    window.smartsupp||(function(d) {
+      var s,c,o=smartsupp=function(){ o._.push(arguments)};o._=[];
+      s=d.getElementsByTagName('script')[0];c=d.createElement('script');
+      c.type='text/javascript';c.charset='utf-8';c.async=true;
+      c.src='https://www.smartsuppchat.com/loader.js?';s.parentNode.insertBefore(c,s);
+    })(document);
   </script>
 </body>
 </html>
