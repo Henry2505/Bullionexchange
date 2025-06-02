@@ -6,69 +6,69 @@
   <title>VIP Signal • CBE</title>
 
   <!-- ─────────────────────────────────────────────────────────────────────
-       0) SUPABASE CLIENT & SESSION CHECK (to enforce single‐session)
+       0) SUPABASE CLIENT & SESSION CHECK (to enforce single-session)
        ─────────────────────────────────────────────────────────────────────
-       We initialize Supabase first, then immediately verify:
-       1. localStorage.isLoggedIn === 'true'
-       2. sessionStorage.userId and localStorage.sessionToken both exist
-       3. The token in localStorage matches the one stored in Supabase's section_tokens
-       If any check fails, clear storage and redirect to login.html?message=logged_out_elsewhere.
+       Steps:
+       1. Verify localStorage.isLoggedIn === 'true'
+       2. Verify sessionStorage.cbeUserId and localStorage.sessionToken exist
+       3. Query Supabase’s section_tokens table for user_id = cbeUserId
+       4. If the stored token in Supabase doesn’t match localStorage.sessionToken, clear storage & redirect.
   -->
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>
   <script>
     // 0a) Supabase init (use your own URL + anon key exactly)
     const SUPA_URL = 'https://dapwpgvnfjcfqqhrpxla.supabase.co';
-    const SUPA_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJzI...'; // your anon/public key
+    const SUPA_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJzI...';  // ← your anon/public key
     const supabase = window.supabase.createClient(SUPA_URL, SUPA_KEY);
 
     (async function enforceSingleSession() {
-      // 0b) Check isLoggedIn flag
+      // 0b) 1) Check isLoggedIn flag
       if (localStorage.getItem('isLoggedIn') !== 'true') {
         window.location.replace('login.html');
         return;
       }
 
-      // 0c) Grab stored values
-      const userId     = sessionStorage.getItem('userId');
-      const localToken = localStorage.getItem('sessionToken');
+      // 0c) 2) Grab stored values
+      const cbeUserId   = sessionStorage.getItem('cbeUserId');
+      const localToken  = localStorage.getItem('sessionToken');
 
-      if (!userId || !localToken) {
+      if (!cbeUserId || !localToken) {
         // Missing pieces → invalid session
         localStorage.removeItem('isLoggedIn');
         localStorage.removeItem('sessionToken');
-        sessionStorage.removeItem('userId');
+        sessionStorage.removeItem('cbeUserId');
         sessionStorage.removeItem('userName');
         window.location.replace('login.html?message=logged_out_elsewhere');
         return;
       }
 
       try {
-        // 0d) Query Supabase's section_tokens to verify token
+        // 0d) 3) Query Supabase for the “current token” in section_tokens
         const { data, error } = await supabase
           .from('section_tokens')
           .select('token')
-          .eq('user_id', userId)
+          .eq('user_id', cbeUserId)
           .single();
 
         if (error || !data) {
           throw new Error(error?.message || 'Session lookup failed');
         }
 
-        // 0e) If the DB’s token doesn’t match localStorage, force logout
+        // 0e) 4) If the DB’s token doesn’t match localStorage, force logout
         if (data.token !== localToken) {
           localStorage.removeItem('isLoggedIn');
           localStorage.removeItem('sessionToken');
-          sessionStorage.removeItem('userId');
+          sessionStorage.removeItem('cbeUserId');
           sessionStorage.removeItem('userName');
           window.location.replace('login.html?message=logged_out_elsewhere');
           return;
         }
-        // Otherwise, valid session → allow page to render
+        // Otherwise, session is valid → allow page to render
       } catch (err) {
         console.error('Session validation error:', err);
         localStorage.removeItem('isLoggedIn');
         localStorage.removeItem('sessionToken');
-        sessionStorage.removeItem('userId');
+        sessionStorage.removeItem('cbeUserId');
         sessionStorage.removeItem('userName');
         window.location.replace('login.html?message=logged_out_elsewhere');
       }
@@ -76,8 +76,8 @@
   </script>
 
   <!-- ─────────────────────────────────────────────────────────────────────
-       1) CLIENT‐SIDE GUARD:
-       If localStorage.isLoggedIn is ever missing or invalid, send back to login.
+       1) CLIENT-SIDE GUARD:
+       If localStorage.isLoggedIn ever becomes missing/invalid, redirect to login
   -->
   <script>
     if (localStorage.getItem('isLoggedIn') !== 'true') {
@@ -86,7 +86,7 @@
   </script>
 
   <!-- ─────────────────────────────────────────────────────────────────────
-       2) FONTS, BOOTSTRAP & OTHER DEPENDENCIES
+       2) FONTS, BOOTSTRAP & OTHER DEPENDENCIES (unchanged)
   -->
   <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;500;700&display=swap" rel="stylesheet"/>
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet"/>
@@ -95,29 +95,31 @@
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 
   <style>
-    /* Theme Variables */
+    /* -------------------------------
+       THEME VARIABLES
+       ------------------------------- */
     :root[data-theme="dark"] {
-      --bg: #000000; /* Pure black background */
-      --text: #ffd700; /* Gold text */
+      --bg: #000000;
+      --text: #ffd700;
       --gold: #ffd700;
       --gold-dark: #cca300;
-      --glass: rgba(255, 255, 255, 0.1);
-      --shadow: rgba(0, 0, 0, 0.5);
-      --text-light: #e6b800; /* Lighter gold */
+      --glass: rgba(255,255,255,0.1);
+      --shadow: rgba(0,0,0,0.5);
+      --text-light: #e6b800;
       --text-muted: #ffd700;
       --success: #4caf50;
       --error: #e57373;
-      --accent: #1e1e1e; 
-      --buy: #4caf50; 
-      --sell: #e57373; 
+      --accent: #1e1e1e;
+      --buy: #4caf50;
+      --sell: #e57373;
     }
     :root[data-theme="light"] {
       --bg: #f5f5f5;
       --text: #333;
       --gold: #cca300;
       --gold-dark: #b58900;
-      --glass: rgba(0, 0, 0, 0.08);
-      --shadow: rgba(0, 0, 0, 0.15);
+      --glass: rgba(0,0,0,0.08);
+      --shadow: rgba(0,0,0,0.15);
       --text-light: #555;
       --text-muted: #666;
       --success: #388e3c;
@@ -127,7 +129,9 @@
       --sell: #d32f2f;
     }
 
-    /* Reset & Base */
+    /* -------------------------------
+       RESET & BASE
+       ------------------------------- */
     * { margin: 0; padding: 0; box-sizing: border-box; }
     html { scroll-behavior: smooth; }
     body {
@@ -141,7 +145,9 @@
     a { color: var(--gold); text-decoration: none; }
     a:hover { color: var(--gold-dark); }
 
-    /* Animations */
+    /* -------------------------------
+       ANIMATIONS
+       ------------------------------- */
     .slide-in {
       opacity: 0;
       transform: translateY(30px);
@@ -152,7 +158,9 @@
       transform: translateY(0);
     }
 
-    /* Watermark */
+    /* -------------------------------
+       WATERMARK
+       ------------------------------- */
     html::before, html::after {
       content: "Reselling of this signal is prohibited and punishable by law";
       position: fixed;
@@ -196,7 +204,7 @@
     }
 
     /* ===========================
-       UPDATED NAVIGATION STYLES
+       NAVIGATION
        =========================== */
     nav {
       position: fixed;
@@ -261,7 +269,9 @@
       transform: rotate(180deg);
     }
 
-    /* Adjust container top spacing to avoid overlap */
+    /* -------------------------------
+       CONTAINER SPACING
+       ------------------------------- */
     .container {
       margin-top: 70px;
       width: 100%;
@@ -270,7 +280,9 @@
       position: relative;
     }
 
-    /* Section Headings */
+    /* -------------------------------
+       SECTION TITLES
+       ------------------------------- */
     .section-title {
       font-family: 'Poppins', sans-serif;
       font-size: 2.8rem;
@@ -290,7 +302,9 @@
       margin-top: 0.5rem;
     }
 
-    /* Signal Card */
+    /* -------------------------------
+       SIGNAL CARD
+       ------------------------------- */
     .signal-card {
       background: var(--glass);
       backdrop-filter: blur(15px);
@@ -324,6 +338,7 @@
       transition: transform 0.3s ease;
     }
     .signal-header .refresh-btn:hover { transform: scale(1.1); }
+
     .signal-body {
       display: grid;
       grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
@@ -384,7 +399,9 @@
     }
     @keyframes spin { 0% { transform: rotate(0); } 100% { transform: rotate(360deg); } }
 
-    /* Gold Chart */
+    /* -------------------------------
+       GOLD CHART
+       ------------------------------- */
     #gold-chart {
       background: var(--glass);
       backdrop-filter: blur(15px);
@@ -408,7 +425,9 @@
       left: 0;
     }
 
-    /* Gold News */
+    /* -------------------------------
+       GOLD NEWS
+       ------------------------------- */
     #gold-news {
       background: var(--glass);
       backdrop-filter: blur(15px);
@@ -450,7 +469,9 @@
       background: var(--accent);
     }
 
-    /* Economic Calendar */
+    /* -------------------------------
+       ECONOMIC CALENDAR
+       ------------------------------- */
     #calendar-widget {
       background: var(--glass);
       backdrop-filter: blur(15px);
@@ -503,7 +524,9 @@
       text-align: right;
     }
 
-    /* Footer */
+    /* -------------------------------
+       FOOTER
+       ------------------------------- */
     footer {
       text-align: center;
       padding: 20px 0;
@@ -514,7 +537,9 @@
       width: 100%;
     }
 
-    /* Responsive */
+    /* -------------------------------
+       RESPONSIVE
+       ------------------------------- */
     @media (max-width: 768px) {
       nav {
         padding: 0 4vw;
@@ -566,7 +591,9 @@
       .section-title { font-size: 1.5rem; }
     }
 
-    /* Smartsupp chat theming */
+    /* -------------------------------
+       SMARTSUPP CHAT THEMING (unchanged)
+       ------------------------------- */
     :root {
       --smartsupp-base-color: var(--gold);
       --smartsupp-btn-color: var(--gold-dark);
@@ -587,10 +614,10 @@
 </head>
 <body>
 
-  <!-- Audio element for new‐signal alert -->
+  <!-- Audio element for new-signal alert -->
   <audio id="alertSound" src="alert.mp3"></audio>
 
-  <!-- UPDATED NAVIGATION -->
+  <!-- UPDATED NAVIGATION (unchanged) -->
   <nav class="slide-in">
     <a href="vip-dashboard.html" class="logo">CBE VIP Dashboard</a>
     <div class="nav-links">
@@ -781,7 +808,7 @@
     function logout() {
       localStorage.removeItem('isLoggedIn');
       localStorage.removeItem('sessionToken');
-      sessionStorage.removeItem('userId');
+      sessionStorage.removeItem('cbeUserId');
       sessionStorage.removeItem('userName');
       window.location.replace('login.html?message=logged_out');
     }
@@ -791,7 +818,7 @@
       const ul = document.getElementById('news-list');
       ul.innerHTML = '<li>Loading…</li>';
       try {
-        // Using a CORS‐friendly proxy (allorigins.win) to fetch Investing.com RSS
+        // Using a CORS-friendly proxy (allorigins.win) to fetch Investing.com RSS
         const res = await fetch('https://api.allorigins.win/raw?url=https://www.investing.com/rss/news_285.rss');
         const xml = new DOMParser().parseFromString(await res.text(), 'text/xml');
         const items = Array.from(xml.querySelectorAll('item')).slice(0, 8);
@@ -813,7 +840,7 @@
       const tbody = document.getElementById('calendar-body');
       tbody.innerHTML = '<tr><td colspan="7">Loading…</td></tr>';
       try {
-        // Mock events (you can replace with a live API if desired)
+        // Mock events (replace with a live API if desired)
         const events = [
           { date: "05-25-2025", time: "6:40pm", currency: "USD", event: "Fed Chair Powell Speaks", impact: "Medium", actual: "", previous: "" },
           { date: "05-26-2025", time: "7:00am", currency: "GBP", event: "Bank Holiday", impact: "Holiday", actual: "", previous: "" },
@@ -872,16 +899,17 @@
         .channel('signals_changes')
         .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'signals' }, payload => {
           loadLatestSignal();  // this will ring if ID changed
+
           // Optionally notify via Netlify Function:
           (async () => {
             try {
-              const currentUserId = sessionStorage.getItem('userId');
-              if (!currentUserId) return;
+              const cbeUserId = sessionStorage.getItem('cbeUserId');
+              if (!cbeUserId) return;
 
               const { data: userData, error: userErr } = await supabase
                 .from('users')
                 .select('email, name')
-                .eq('id', currentUserId)
+                .eq('id', cbeUserId)
                 .single();
 
               if (userErr || !userData) return;
