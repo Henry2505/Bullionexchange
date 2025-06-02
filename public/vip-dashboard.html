@@ -573,15 +573,15 @@
           tbody.appendChild(tr);
         });
       } catch (err) {
-        console.error('Activity load error:', err);
-        tbody.innerHTML = '<tr><td colspan="5" style="text-danger">Failed to load activity</td></tr>';
+        console.error('Activity error:', err);
+        tbody.innerHTML = '<tr><td colspan="5" style="color: var(--error);">Failed to load activity</td></tr>';
       }
     }
 
     // ─── EXPORT LOGS ─────────────────────────────────────────────────────────
     async function downloadActivityLog() {
       try {
-        data, error = await supabase
+        const { data, error } = await supabase
           .from('user_activity')
           .select('*')
           .order('timestamp', { ascending: false });
@@ -597,10 +597,10 @@
         a.download = 'activity_logs.csv';
         a.click();
         URL.revokeObjectURL(url);
-        addNotification('Logs exported successfully', 'success');
+        addNotification('Logs exported successfully', 'info');
       } catch (err) {
         console.error('Export error:', err);
-        addNotification('Failed to export logs', 'error');
+        addNotification('Failed to export logs', 'critical');
       }
     }
 
@@ -608,14 +608,14 @@
     async function convertCurrency() {
       const from = document.getElementById('converter-from').value;
       const to = document.getElementById('converter-to').value;
-      const amount = parseFloat(getElementById('converter-amount').value) || 1;
+      const amount = parseFloat(document.getElementById('converter-amount').value) || 1;
       const resultEl = document.getElementById('converter-result');
       resultEl.innerHTML = '<div class="spinner"></div>';
 
       const cacheKey = `${from}_${to}`;
       if (apiCache.has(cacheKey)) {
-        const rate = apiCache.get('cacheKey');
-        resultEl.textContent = `${amount} ${from} = ${(amount * to rate).toFixed(2)} ${to}`;
+        const rate = apiCache.get(cacheKey);
+        resultEl.textContent = `${amount} ${from} = ${(amount * rate).toFixed(2)} ${to}`;
         return;
       }
 
@@ -624,16 +624,16 @@
         const data = await res.json();
         if (data.result !== 'success') throw new Error('API error');
         const rate = data.conversion_rates[to];
-        apiCache.set('cacheKey', rate);
+        apiCache.set(cacheKey, rate);
         resultEl.textContent = `${amount} ${from} = ${(amount * rate).toFixed(2)} ${to}`;
       } catch (err) {
         console.error('Conversion error:', err);
-        resultEl.innerHTML = '<span style="text-danger">Failed to convert currency</span>';
-        addNotification('Currency conversion failed', 'error');
+        resultEl.innerHTML = '<span style="color: var(--error)">Failed to convert currency</span>';
+        addNotification('Currency conversion failed', 'critical');
       }
     }
 
-    // ─── SESSION VALIDATION ──────────────────────────────────────────────
+    // ─── SESSION VALIDATION ──────────────────────────────────────────────────
     async function checkSession() {
       const localToken = localStorage.getItem('sessionToken');
       if (!localToken) {
@@ -642,283 +642,281 @@
       }
       const userId = sessionStorage.getItem('userId');
       try {
-        data, error = await supabase
+        const { data, error } = await supabase
           .from('users')
           .select('current_session_token')
           .eq('id', userId)
           .single();
         if (error) throw error;
-        if (data!.current_session_token !== localToken) {
+        if (data.current_session_token !== localToken) {
           logout();
         }
       } catch (err) {
         console.error('Session error:', err);
-        addNotification('Session validation failed', 'error');
+        addNotification('Session validation failed', 'critical');
       }
     }
 
-    // ─── LOGOUT ───────────────────────────────────────────────────────────────────
+    // ─── LOGOUT ──────────────────────────────────────────────────────────────
     async function logout() {
       try {
         await logActivity('logout');
         localStorage.removeItem('sessionToken');
         sessionStorage.removeItem('loggedIn');
         sessionStorage.removeItem('userId');
-        sessionStorage.setItem('userName');
+        sessionStorage.removeItem('userName');
         window.location.href = 'login.html?message=logged_out_elsewhere';
-        } catch (err) {
-          console.error('Logout error:', err);
-        }
+      } catch (err) {
+        console.error('Logout error:', err);
       }
+    }
 
-      // ─── LOAD DASHBOARD ────────────────────────────────────────────────────
-      async function loadDashboard() {
-        try {
-          const today = new Date().toISOString().split('T')[0];
-          const { count, error: signalError } = await supabase
-            .from('signals')
-            .select('id', { count: 'exact' })
-            .gte('created_at', today);
-          } if (signalError) throw signalError;
+    // ─── LOAD DASHBOARD ──────────────────────────────────────────────────────
+    async function loadDashboard() {
+      try {
+        const today = new Date().toISOString().split('T')[0];
+        const { count, error: signalError } = await supabase
+          .from('signals')
+          .select('id', { count: 'exact' })
+          .gte('created_at', today);
+        if (signalError) throw signalError;
 
-          // Mock gold price change
+        // Mock gold price change
+        document.getElementById('stat-gold-change').textContent = 'N/A';
+
+        // Watchlist
+        const list = JSON.parse(localStorage.getItem('watchlist') || '[]');
+        const ul = document.getElementById('watch-list');
+        ul.innerHTML = '';
+        for (const sym of list) {
+          const li = document.createElement('li');
+          li.className = 'list-group-item d-flex justify-content-between align-items-center';
+          let priceChange = 'N/A';
+          let priceClass = '';
           try {
-            document.getElementById('stat-gold-change').innerText = 'N/A';
-          } catch {
-            document.getElementById('stat-gold-change').textContent = 'Error';
+            const res = await fetch(`https://v6.exchangerate-api.com/v6/${EXCHANGE_RATE_API_KEY}/latest/${sym.slice(0,3)}`);
+            const data = await res.json();
+            const rate = data.conversion_rates[sym.slice(3)] || 1;
+            priceChange = `+${(Math.random() * 2 - 1).toFixed(2)}%`;
+            priceClass = priceChange.startsWith('+') ? 'positive' : 'negative';
+          } catch (err) {
+            console.error('Watchlist error:', err);
           }
-
-          // Watchlist
-          const list = JSON.parse(localStorage.getItem('watchlist') || [];
-          const ul = document.getElementById('watch-list');
-          ul.innerHTML = '';
-          for (const sym of list) {
-            const li = document.createElement('li');
-            li.className = 'list-group-item d-flex justify-content-between align-items-center';
-            let priceChange = 'N/A';
-            let priceClass = '';
-            try {
-              const res = await fetch(`https://v6.exchangerate-api.com/v6/${EXCHANGE_RATE_API_KEY}/latest/${sym.slice(0,3)}`);
-              const data = await res.json();
-              const rate = data.conversion_rates[sym.slice(3)] || 1;
-              priceChange = `+${(Math.random() * 2 - 1).toFixed(2)}%`;
-              priceClass = priceChange.startsWith('+') ? 'positive' : 'negative';
-            } catch (err) {
-              console.error('Watchlist error:', err);
-            }
-            li.innerHTML = `
-              <span>${sym}</span>
-              <span class="price-change ${priceClass}">${priceChange}</span>
-              <button class="btn btn-sm btn-outline-danger">Remove</button>
-            `;
-            li.querySelector('button').onclick = () => {
-              localStorage.setItem('watchlist', JSON.stringify(list.filter(s => s !== sym)));
-              loadDashboard();
-            };
-            ul.appendChild(li);
-          }
-
-          document.getElementById('add-watch').onclick = () => {
-            const input = document.getElementById('watch-input');
-            const sym = input.value.trim().toUpperCase();
-            if (sym && !list.includes(sym)) {
-              list.push(sym);
-              localStorage.setItem('watchlist', JSON.stringify(list));
-              loadDashboard();
-              input.value = '';
-            }
-          };
-        } catch (err) {
-          console.error('Dashboard error:', err);
-          addNotification('Failed to load dashboard', 'error');
-        }
-      }
-
-      // ─── TRADINGVIEW CHART ───────────────────────────────────────────────────
-      function initChart(interval = '240') {
-        try {
-          document.getElementById('tv_chart_4h').innerHTML = '';
-          new window.TradingView.widget({
-            container_id: "tv_chart_4h",
-            width: "100%",
-            height: "450",
-            symbol: "OANDA:XAUUSD",
-            interval: interval,
-            timezone: "Africa/Lagos",
-            theme: "dark",
-            style: "1",
-            locale: "en",
-            toolbar_bg: "#1f1f1f",
-            studies: [
-              { id: "MASimple@tv-basicstudies", inputs: { length: 50 } },
-              { id: "MASimple@tv-basicstudies", inputs: { length: 200 } }
-            ],
-            enable_publishing: false,
-            allow_symbol_change: false,
-            save_image: false
-          });
-        } catch (err) {
-          console.error('Chart error:', err);
-          document.getElementById('tv_chart_4h').innerHTML = '<p class="text-danger">Failed to load chart</p>';
-        }
-      }
-
-      // ─── GOLD NEWS ───────────────────────────────────────────────────────────
-      async function loadGoldNews() {
-        const ul = document.getElementById('news-list');
-        ul.innerHTML = '<li><div class="spinner"></div></li>';
-        try {
-          const res = await fetch(`https://newsapi.org/v2/everything?q=gold+market&apiKey=${NEWS_API_KEY}&pageSize=8`);
-          const data = await res.json();
-          if (data.status !== 'ok') throw new Error('News API error');
-          ul.innerHTML = '';
-          data.articles.forEach(article => {
-            const li = document.createElement('li');
-            li.innerHTML = `<a href="${article.url}" target="_blank">${article.title}</a>`;
-            ul.appendChild(li);
-          });
-        } catch (err) {
-          console.error('News error:', err);
-          ul.innerHTML = '<li class="text-danger">Failed to load news. Please check API key.</li>';
-        }
-      }
-
-      // ─── ECONOMIC CALENDAR ───────────────────────────────────────────────────
-      async function loadEconCalendar() {
-        const tbody = document.getElementById('calendar-body');
-        tbody.innerHTML = '<tr><td colspan="7"><div class="spinner"></div></td></tr>';
-        try {
-          // Mock data (replace with Financial Modeling Prep API)
-          const events = [
-            { date: "06-02-2025", time: "08:30", currency: "USD", event: "Non-Farm Payrolls", impact: "High", actual: "", previous: "254K" },
-            { date: "06-02-2025", time: "10:00", currency: "EUR", event: "CPI Flash Estimate", impact: "Medium", actual: "", previous: "2.0%" },
-            { date: "06-03-2025", time: "04:30", currency: "GBP", event: "Services PMI", impact: "Low", actual: "", previous: "52.2" }
-          ];
-          tbody.innerHTML = '';
-          events.forEach(ev => {
-            const tr = document.createElement('tr');
-            if (ev.impact === 'High') tr.classList.add('high-impact');
-            ['date', 'time', 'currency', 'event', 'impact', 'actual', 'previous'].forEach(key => {
-              const td = document.createElement('td');
-              td.textContent = ev[key] || '-';
-              tr.appendChild(td);
-            });
-            tbody.appendChild(tr);
-          });
-        } catch (err) {
-          console.error('Calendar error:', err);
-          tbody.innerHTML = '<tr><td colspan="7" class="text-danger">Failed to load calendar</td></tr>';
-        }
-      }
-
-      // ─── THEME TOGGLE ────────────────────────────────────────────────────────
-      function toggleTheme(theme) {
-        document.documentElement.setAttribute('data-theme', theme);
-        document.getElementById('theme-select').value = theme;
-      }
-
-      // ─── NOTIFICATIONS ───────────────────────────────────────────────────────
-      function addNotification(message, type = 'info') {
-        const list = document.getElementById('notif-list');
-        const count = document.getElementById('notif-count');
-        const li = document.createElement('li');
-        li.textContent = message;
-        li.classList.add(type);
-        list.insertBefore(li, list.firstChild);
-        count.textContent = parseInt(count.textContent) + 1;
-        const sound = document.querySelector(type === 'critical' ? '#critical-notif-error' : '#notif-sound');
-        if (sound) sound.play().catch(() => console.error('Audio error'));
-      }
-
-      // ─── ON LOAD ────────────────────────────────────────────────────────────
-      document.addEventListener('DOMContentLoaded', async () => {
-        // Particles.js
-        particlesJS('particles-js', {
-          particles: {
-            number: { value: 30, density: { enable: true, value_area: true, value_area: 800 } },
-            color: { value: '#ffd700' },
-            shape: { type: 'circle' },
-            opacity: { value: 0.3, random: true },
-            size: { value: 2, random: true },
-            line_linked: { enable: false },
-            move: { enable: true, speed: 1, direction: 'none', random: true } }
-          },
-          interactivity: {
-            detect_on: 'canvas',
-            events: { onhover: { enable: true, mode: 'repulse' }, onclick: { enable: true, mode: 'push' } },
-            modes: { repulse: { distance: 100 }, push: { particles_nb: 2 } }
-          }
-        });
-
-        // Slide-in animations
-        document.querySelectorAll('.slide-in').forEach(el => {
-          new IntersectionObserver((entries, observer) => {
-            entries.forEach(entry => {
-              if (entry.isIntersecting) {
-                entry.target.classList.add('visible');
-                observer.unobserve(entry.target);
-              }
-            }));
-        })(), ({ threshold: 0.1 }).observe(el);
-        });
-
-        // Session check
-        await checkSession();
-        const userId = sessionStorage.getItem('userId');
-        supabase
-          .channel(`users:id=eq.${userId}`)
-          .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'users', filter: `id=eq.${userId}` }, payload => {
-            const localToken = localStorage.getItem('sessionToken');
-            if (payload.new.current_session_token !== localToken) {
-              logout();
-            }
-          })
-          .subscribe(status => {
-            if (status === 'SUBSCRIBED') console.log('Realtime subscription active');
-          });
-
-        setInterval(checkSession, 15000);
-        document.getElementById('welcomeName').textContent = sessionStorage.getItem('userName') || 'Trader';
-        await logActivity('login');
-        loadDashboard();
-        initChart();
-        loadGoldNews();
-        loadEconCalendar();
-        loadRecentActivity();
-
-        // Event listeners
-        document.querySelectorAll('.chart-toggle button').forEach(btn => {
-          btn.addEventListener('click', () => {
-            document.querySelector('.chart-toggle button.active').classList.remove('active');
-            btn.classList.add('active');
-            initChart(btn.dataset.interval);
-          });
-        });
-        document.getElementById('theme-select').addEventListener('change', e => toggleTheme(e.target.value));
-        document.getElementById('notif-btn').addEventListener('click', () => {
-          new bootstrap.Dropdown(document.getElementById('notif-btn')).toggle();
-        });
-        document.getElementById('sidebar-toggle').addEventListener('click', () => {
-          new bootstrap.Offcanvas(document.getElementById('sidebar')).toggle();
-        });
-        document.getElementById('convert-btn').addEventListener('click', convertCurrency);
-        document.getElementById('export-logs').addEventListener('click', downloadActivityLog');
-
-        // Realtime subscriptions
-        supabase
-          .channel('signals')
-          .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'signals' }, payload => {
-            addNotification(`New ${payload.new.action} signal for ${payload.new.asset}!`, 'info');
+          li.innerHTML = `
+            <span>${sym}</span>
+            <span class="price-change ${priceClass}">${priceChange}</span>
+            <button class="btn btn-sm btn-outline-danger">Remove</button>
+          `;
+          li.querySelector('button').onclick = () => {
+            localStorage.setItem('watchlist', JSON.stringify(list.filter(s => s !== sym)));
             loadDashboard();
-          })
-          .subscribe();
-        supabase
-          .channel('user_activity')
-          .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'user_activity' }, () => {
-            loadRecentActivity();
-          })
-          .subscribe();
+          };
+          ul.appendChild(li);
+        }
+        document.getElementById('add-watch').onclick = () => {
+          const input = document.getElementById('watch-input');
+          const sym = input.value.trim().toUpperCase();
+          if (sym && !list.includes(sym)) {
+            list.push(sym);
+            localStorage.setItem('watchlist', JSON.stringify(list));
+            loadDashboard();
+            input.value = '';
+          }
+        };
+      } catch (err) {
+        console.error('Dashboard error:', err);
+        addNotification('Failed to load dashboard', 'critical');
+      }
+    }
+
+    // ─── TRADINGVIEW CHART ───────────────────────────────────────────────────
+    function initChart(interval = '240') {
+      try {
+        document.getElementById('tv_chart_4h').innerHTML = '';
+        new window.TradingView.widget({
+          container_id: "tv_chart_4h",
+          width: "100%",
+          height: "450",
+          symbol: "OANDA:XAUUSD",
+          interval: interval,
+          timezone: "Africa/Lagos",
+          theme: "dark",
+          style: "1",
+          locale: "en",
+          toolbar_bg: "#1f1f1f",
+          studies: [
+            { id: "MASimple@tv-basicstudies", inputs: { length: 50 } },
+            { id: "MASimple@tv-basicstudies", inputs: { length: 200 } }
+          ],
+          enable_publishing: false,
+          allow_symbol_change: false,
+          save_image: false
+        });
+      } catch (err) {
+        console.error('Chart error:', err);
+        document.getElementById('tv_chart_4h').innerHTML = '<p style="color: var(--error)">Failed to load chart</p>';
+      }
+    }
+
+    // ─── GOLD NEWS ───────────────────────────────────────────────────────────
+    async function loadGoldNews() {
+      const ul = document.getElementById('news-list');
+      ul.innerHTML = '<li><div class="spinner"></div></li>';
+      try {
+        const res = await fetch(`https://newsapi.org/v2/everything?q=gold+market&apiKey=${NEWS_API_KEY}&pageSize=8`);
+        const data = await res.json();
+        if (data.status !== 'ok') throw new Error('News API error');
+        ul.innerHTML = '';
+        data.articles.forEach(article => {
+          const li = document.createElement('li');
+          li.innerHTML = `<a href="${article.url}" target="_blank">${article.title}</a>`;
+          ul.appendChild(li);
+        });
+      } catch (err) {
+        console.error('News error:', err);
+        ul.innerHTML = '<li style="color: var(--error)">Failed to load news. Please check API key.</li>';
+      }
+    }
+
+    // ─── ECONOMIC CALENDAR ───────────────────────────────────────────────────
+    async function loadEconCalendar() {
+      const tbody = document.getElementById('calendar-body');
+      tbody.innerHTML = '<tr><td colspan="7"><div class="spinner"></div></td></tr>';
+      try {
+        // Mock data (replace with Financial Modeling Prep API)
+        const events = [
+          { date: "06-02-2025", time: "08:30", currency: "USD", event: "Non-Farm Payrolls", impact: "High", actual: "", previous: "254K" },
+          { date: "06-02-2025", time: "10:00", currency: "EUR", event: "CPI Flash Estimate", impact: "Medium", actual: "", previous: "2.0%" },
+          { date: "06-03-2025", time: "04:30", currency: "GBP", event: "Services PMI", impact: "Low", actual: "", previous: "52.2" }
+        ];
+        tbody.innerHTML = '';
+        events.forEach(ev => {
+          const tr = document.createElement('tr');
+          if (ev.impact === 'High') tr.classList.add('high-impact');
+          ['date', 'time', 'currency', 'event', 'impact', 'actual', 'previous'].forEach(key => {
+            const td = document.createElement('td');
+            td.textContent = ev[key] || '-';
+            tr.appendChild(td);
+          });
+          tbody.appendChild(tr);
+        });
+      } catch (err) {
+        console.error('Calendar error:', err);
+        tbody.innerHTML = '<tr><td colspan="7" style="color: var(--error)">Failed to load calendar</td></tr>';
+      }
+    }
+
+    // ─── THEME TOGGLE ────────────────────────────────────────────────────────
+    function toggleTheme(theme) {
+      document.documentElement.setAttribute('data-theme', theme);
+      document.getElementById('theme-select').value = theme;
+    }
+
+    // ─── NOTIFICATIONS ───────────────────────────────────────────────────────
+    function addNotification(message, type = 'info') {
+      const list = document.getElementById('notif-list');
+      const count = document.getElementById('notif-count');
+      const li = document.createElement('li');
+      li.textContent = message;
+      li.classList.add(type);
+      list.insertBefore(li, list.firstChild);
+      count.textContent = parseInt(count.textContent) + 1;
+      const sound = document.querySelector(type === 'critical' ? '#critical-notif-sound' : '#notif-sound');
+      if (sound) sound.play().catch(() => console.error('Audio error'));
+    }
+
+    // ─── ON LOAD ─────────────────────────────────────────────────────────────
+    document.addEventListener('DOMContentLoaded', async () => {
+      // Auto-refresh every 2 seconds
+      setInterval(() => location.reload(), 2000);
+
+      // Particles.js
+      particlesJS('particles-js', {
+        particles: {
+          number: { value: 30, density: { enable: true, value_area: 800 } },
+          color: { value: '#ffd700' },
+          shape: { type: 'circle' },
+          opacity: { value: 0.3, random: true },
+          size: { value: 2, random: true },
+          line_linked: { enable: false },
+          move: { enable: true, speed: 1, direction: 'none', random: true }
+        },
+        interactivity: {
+          detect_on: 'canvas',
+          events: { onhover: { enable: true, mode: 'repulse' }, onclick: { enable: true, mode: 'push' } },
+          modes: { repulse: { distance: 100 }, push: { particles_nb: 2 } }
+        }
       });
-    </script>
-  </body>
+
+      // Slide-in animations
+      document.querySelectorAll('.slide-in').forEach(el => {
+        new IntersectionObserver((entries, observer) => {
+          entries.forEach(entry => {
+            if (entry.isIntersecting) {
+              entry.target.classList.add('visible');
+              observer.unobserve(entry.target);
+            }
+          });
+        }, { threshold: 0.1 }).observe(el);
+      });
+
+      // Session check
+      await checkSession();
+      const userId = sessionStorage.getItem('userId');
+      supabase
+        .channel(`users:id=eq.${userId}`)
+        .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'users', filter: `id=eq.${userId}` }, payload => {
+          const localToken = localStorage.getItem('sessionToken');
+          if (payload.new.current_session_token !== localToken) {
+            logout();
+          }
+        })
+        .subscribe(status => {
+          if (status === 'SUBSCRIBED') console.log('Realtime subscription active');
+        });
+
+      setInterval(checkSession, 15000);
+      document.getElementById('welcomeName').textContent = sessionStorage.getItem('userName') || 'Trader';
+      await logActivity('login');
+      loadDashboard();
+      initChart();
+      loadGoldNews();
+      loadEconCalendar();
+      loadRecentActivity();
+
+      // Event listeners
+      document.querySelectorAll('.chart-toggle button').forEach(btn => {
+        btn.addEventListener('click', () => {
+          document.querySelector('.chart-toggle button.active').classList.remove('active');
+          btn.classList.add('active');
+          initChart(btn.dataset.interval);
+        });
+      });
+      document.getElementById('theme-select').addEventListener('change', e => toggleTheme(e.target.value));
+      document.getElementById('notif-btn').addEventListener('click', () => {
+        new bootstrap.Dropdown(document.getElementById('notif-btn')).toggle();
+      });
+      document.getElementById('sidebar-toggle').addEventListener('click', () => {
+        new bootstrap.Offcanvas(document.getElementById('sidebar')).toggle();
+      });
+      document.getElementById('convert-btn').addEventListener('click', convertCurrency);
+      document.getElementById('export-logs').addEventListener('click', downloadActivityLog);
+
+      // Realtime subscriptions
+      supabase
+        .channel('signals')
+        .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'signals' }, payload => {
+          addNotification(`New ${payload.new.action} signal for ${payload.new.asset}!`, 'info');
+          loadDashboard();
+        })
+        .subscribe();
+      supabase
+        .channel('user_activity')
+        .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'user_activity' }, () => {
+          loadRecentActivity();
+        })
+        .subscribe();
+    });
+  </script>
+</body>
 </html>
