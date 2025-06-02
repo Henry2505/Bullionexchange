@@ -5,10 +5,23 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>VIP Dashboard • CBE</title>
 
-  <!-- CLIENT-SIDE GUARD -->
+  <!-- CLIENT-SIDE GUARD (allows access if either sessionStorage or persisted localStorage tokens exist) -->
   <script>
-    if (sessionStorage.getItem('cbeLoggedIn') !== 'true') {
-      window.location.replace('login.html');
+    // If there's no “loggedIn” flag in sessionStorage, but there is a stored sessionToken & userId in localStorage,
+    // restore sessionStorage so that navigating from the VIP Dashboard still works.
+    const sessionLoggedIn = sessionStorage.getItem('cbeLoggedIn') === 'true';
+    const storedToken    = localStorage.getItem('cbeSessionToken');
+    const storedUserId   = localStorage.getItem('cbeUserId');
+
+    if (!sessionLoggedIn) {
+      if (storedToken && storedUserId) {
+        // Restore the session flags in sessionStorage
+        sessionStorage.setItem('cbeLoggedIn', 'true');
+        sessionStorage.setItem('cbeUserId', storedUserId);
+      } else {
+        // No valid session anywhere → force redirect to login
+        window.location.replace('login.html');
+      }
     }
   </script>
 
@@ -621,9 +634,9 @@
 
     // ─── 4) AUTH: ENSURE SINGLE BROWSER SESSION ─────────────────────────────────
     async function checkSession() {
-      const userId = sessionStorage.getItem('cbeUserId');
-      const storedToken = localStorage.getItem('cbeSessionToken');
-      if (!userId || !storedToken) {
+      const userId   = sessionStorage.getItem('cbeUserId');
+      const localToken = localStorage.getItem('cbeSessionToken');
+      if (!userId || !localToken) {
         logout();
         return;
       }
@@ -640,7 +653,7 @@
           return;
         }
 
-        if (data.current_session_token !== storedToken) {
+        if (data.current_session_token !== localToken) {
           // Session token mismatch → logged in elsewhere
           logout();
         }
@@ -651,9 +664,9 @@
     }
 
     function subscribeToSessionChanges() {
-      const userId = sessionStorage.getItem('cbeUserId');
-      const storedToken = localStorage.getItem('cbeSessionToken');
-      if (!userId || !storedToken) return;
+      const userId   = sessionStorage.getItem('cbeUserId');
+      const localToken = localStorage.getItem('cbeSessionToken');
+      if (!userId || !localToken) return;
 
       supabase
         .channel(`users:id=eq.${userId}`)
@@ -662,8 +675,8 @@
           { event: 'UPDATE', schema: 'public', table: 'users', filter: `id=eq.${userId}` },
           payload => {
             const newToken = payload.new.current_session_token;
-            const localToken = localStorage.getItem('cbeSessionToken');
-            if (newToken !== localToken) {
+            const stored  = localStorage.getItem('cbeSessionToken');
+            if (newToken !== stored) {
               // Another browser has logged in → force logout here
               logout();
             }
@@ -761,6 +774,7 @@
       sessionStorage.removeItem('cbeLoggedIn');
       sessionStorage.removeItem('cbeUserId');
       localStorage.removeItem('cbeSessionToken');
+      localStorage.removeItem('cbeUserId');
       window.location.replace('login.html');
     }
 
