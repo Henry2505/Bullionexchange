@@ -619,7 +619,64 @@
     const SUPA_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImRhcHdwZ3ZuZmpjZnFxaHJweGxhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDcwNDA4ODgsImV4cCI6MjA2MjYxNjg4OH0.ICC0UsLlzJDNre7rFCeD3k6iVzo6jOJgn3PhABpEMsQ';
     const supabase = window.supabase.createClient(SUPA_URL, SUPA_KEY);
 
-    // ─── Function to ring the bell ─────────────────────────────────────────────
+    // ─── 4) AUTH: ENSURE SINGLE BROWSER SESSION ─────────────────────────────────
+    async function checkSession() {
+      const userId = sessionStorage.getItem('cbeUserId');
+      const storedToken = localStorage.getItem('cbeSessionToken');
+      if (!userId || !storedToken) {
+        logout();
+        return;
+      }
+
+      try {
+        const { data, error } = await supabase
+          .from('users')
+          .select('current_session_token')
+          .eq('id', userId)
+          .single();
+
+        if (error || !data) {
+          logout();
+          return;
+        }
+
+        if (data.current_session_token !== storedToken) {
+          // Session token mismatch → logged in elsewhere
+          logout();
+        }
+      } catch (err) {
+        console.error('Session validation error:', err);
+        logout();
+      }
+    }
+
+    function subscribeToSessionChanges() {
+      const userId = sessionStorage.getItem('cbeUserId');
+      const storedToken = localStorage.getItem('cbeSessionToken');
+      if (!userId || !storedToken) return;
+
+      supabase
+        .channel(`users:id=eq.${userId}`)
+        .on(
+          'postgres_changes',
+          { event: 'UPDATE', schema: 'public', table: 'users', filter: `id=eq.${userId}` },
+          payload => {
+            const newToken = payload.new.current_session_token;
+            const localToken = localStorage.getItem('cbeSessionToken');
+            if (newToken !== localToken) {
+              // Another browser has logged in → force logout here
+              logout();
+            }
+          }
+        )
+        .subscribe(status => {
+          if (status === 'SUBSCRIBED') {
+            console.log('Subscribed to session changes for user:', userId);
+          }
+        });
+    }
+
+    // ─── 5) Function to ring the bell ─────────────────────────────────────────────
     function ringBell() {
       const audio = document.getElementById('alertSound');
       if (audio) {
@@ -630,7 +687,7 @@
       }
     }
 
-    // ─── 4) LOAD LATEST SIGNAL ──────────────────────────────────────────────────
+    // ─── 6) LOAD LATEST SIGNAL ──────────────────────────────────────────────────
     async function loadLatestSignal() {
       const card = document.getElementById('signalCard');
       card.innerHTML = `<div class="loader"></div>
@@ -692,20 +749,22 @@
       }
     }
 
-    // ─── 5) UTILITY: COPY TO CLIPBOARD ──────────────────────────────────────────
+    // ─── 7) UTILITY: COPY TO CLIPBOARD ──────────────────────────────────────────
     function copyText(txt) {
       navigator.clipboard.writeText(txt)
         .then(() => alert('Copied: ' + txt))
         .catch(() => alert('Copy failed'));
     }
 
-    // ─── 6) LOGOUT ─────────────────────────────────────────────────────────────
+    // ─── 8) LOGOUT ─────────────────────────────────────────────────────────────
     function logout() {
       sessionStorage.removeItem('cbeLoggedIn');
+      sessionStorage.removeItem('cbeUserId');
+      localStorage.removeItem('cbeSessionToken');
       window.location.replace('login.html');
     }
 
-    // ─── 7) GOLD NEWS ──────────────────────────────────────────────────────────
+    // ─── 9) GOLD NEWS ──────────────────────────────────────────────────────────
     async function loadGoldNews() {
       const ul = document.getElementById('news-list');
       ul.innerHTML = '<li>Loading…</li>';
@@ -726,7 +785,7 @@
       }
     }
 
-    // ─── 8) ECONOMIC CALENDAR ──────────────────────────────────────────────────
+    // ─── 10) ECONOMIC CALENDAR ─────────────────────────────────────────────────
     async function loadEconCalendar() {
       const tbody = document.getElementById('calendar-body');
       tbody.innerHTML = '<tr><td colspan="7">Loading…</td></tr>';
@@ -765,8 +824,13 @@
       }
     }
 
-    // ─── 9) INIT: Load everything & subscribe to new signals ─────────────────
+    // ─── 11) INIT: Load everything & enforce single session ──────────────────
     window.addEventListener('DOMContentLoaded', () => {
+      // 1) Check session on first load
+      checkSession();
+      // 2) Subscribe to session changes to force logout if needed
+      subscribeToSessionChanges();
+
       // Apply slide-in animations
       document.querySelectorAll('.slide-in').forEach(el => {
         new IntersectionObserver((entries, obs) => {
@@ -792,7 +856,7 @@
           loadLatestSignal();
 
           try {
-            // Lookup current user’s email & name
+            // Lookup current user’s email & name to notify them via Netlify function
             const currentUserId = sessionStorage.getItem('cbeUserId');
             if (!currentUserId) return;
 
@@ -804,7 +868,6 @@
 
             if (userErr || !userData) return;
 
-            // Call our Netlify Function to notify user to log in
             const payloadBody = {
               email: userData.email,
               name: userData.name
