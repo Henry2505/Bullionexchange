@@ -6,7 +6,7 @@
   <title>Login • Chukwuemeka Bullion Exchange</title>
   <meta name="description" content="Login to Chukwuemeka Bullion Exchange’s VIP trading community."/>
   <style>
-    /* (all of your existing CSS is unchanged) */
+    /* (your existing CSS stays exactly the same) */
     :root[data-theme="dark"] {
       --bg: #121212; 
       --text: #f0f0f0; 
@@ -138,22 +138,17 @@
   </div>
   <footer>© 2025 Chukwuemeka Bullion Exchange. All rights reserved.</footer>
 
-  <!-- ─── SUPABASE JS ─────────────────────────────────────────────────────────── -->
+  <!-- Supabase JS (only used to fetch the user record) -->
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>
   <script>
-    // ─── 1) SETUP & THEME TOGGLE ────────────────────────────────────────────────
+    // 1) Fade-in & theme toggle
     const loginCard = document.getElementById('login-card');
     const toggleBtn  = document.getElementById('theme-toggle');
     window.addEventListener('DOMContentLoaded', () => {
-      // Fade-in animation for the login card
       loginCard.classList.add('visible');
-
-      // Restore saved theme (dark/light)
       const savedTheme = localStorage.getItem('theme') || 'dark';
       document.documentElement.setAttribute('data-theme', savedTheme);
       toggleBtn.textContent = savedTheme === 'dark' ? '🌞' : '🌜';
-
-      // If redirected with message=logged_out_elsewhere, show a warning
       const urlParams = new URLSearchParams(window.location.search);
       if (urlParams.get('message') === 'logged_out_elsewhere') {
         const alertDiv = document.getElementById('login-alert');
@@ -169,20 +164,12 @@
       toggleBtn.textContent = next === 'dark' ? '🌞' : '🌜';
     });
 
-    // ─── 2) INITIALIZE SUPABASE ─────────────────────────────────────────────────
+    // 2) Initialize Supabase (only to check email/password from 'users' table)
     const SUPA_URL      = 'https://dapwpgvnfjcfqqhrpxla.supabase.co';
     const SUPA_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImRhcHdwZ3ZuZmpjZnFxaHJweGxhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDcwNDA4ODgsImV4cCI6MjA2MjYxNjg4OH0.ICC0UsLlzJDNre7rFCeD3k6iVzo6jOJgn3PhABpEMsQ';
     const sb = supabase.createClient(SUPA_URL, SUPA_ANON_KEY);
 
-    // ─── 3) UUID GENERATOR FOR SESSION TOKENS ──────────────────────────────────
-    function uuidv4() {
-      return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
-        const r = Math.random() * 16 | 0, v = c === 'x' ? r : (r & 0x3 | 0x8);
-        return v.toString(16);
-      });
-    }
-
-    // ─── 4) LOGIN FORM HANDLING ─────────────────────────────────────────────────
+    // 3) LOGIN FORM HANDLING (no session_token, no RLS checks)
     document.getElementById('login-form').addEventListener('submit', async (e) => {
       e.preventDefault();
       const alertDiv = document.getElementById('login-alert');
@@ -192,7 +179,7 @@
       const password = document.getElementById('password').value;
 
       try {
-        // ─── 4.1) Fetch user by email ───────────────────────────────────────────────
+        // 3.1) Fetch user by email
         const { data: user, error: fetchError } = await sb
           .from('users')
           .select('id, name, email, password, status')
@@ -202,26 +189,23 @@
         if (fetchError) throw fetchError;
         if (!user) throw new Error('No account found for that email.');
 
-        // ─── 4.2) Password check ────────────────────────────────────────────────────
-        // (If you store hashed passwords, replace this with your hashing logic.)
+        // 3.2) Password check
         if (user.password !== password) {
           throw new Error('Invalid login credentials.');
         }
 
-        // ─── 4.3) Approval check ────────────────────────────────────────────────────
+        // 3.3) Approval check
         if (String(user.status).toLowerCase() !== 'approved') {
           throw new Error('Your account is not yet approved—please check back soon.');
         }
 
-        // ─── 4.4) Device Fingerprint Check ─────────────────────────────────────────
+        // 3.4) Device fingerprint (optional—kept intact)
         const deviceKey     = `cbeDevice_${email}`;
         const savedDevice   = localStorage.getItem(deviceKey);
         const currentDevice = navigator.userAgent;
-
         if (!savedDevice) {
           localStorage.setItem(deviceKey, currentDevice);
         } else if (savedDevice !== currentDevice) {
-          // Device changed: overwrite stored device and fire off an alert
           localStorage.setItem(deviceKey, currentDevice);
           const payload = {
             email:  user.email,
@@ -229,7 +213,6 @@
             device: currentDevice,
             time:   new Date().toLocaleString("en-US", { timeZone: "Africa/Lagos" })
           };
-          // Ensure you have a Netlify Function at /.netlify/functions/send-login-alert
           await fetch("/.netlify/functions/send-login-alert", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
@@ -237,53 +220,13 @@
           });
         }
 
-        // ─── 4.5) Generate a new session token ──────────────────────────────────────
-        const sessionToken = uuidv4();
-
-        // ─── 4.6) Insert or Update into section_tokens ─────────────────────────────
-        // First, check if a row already exists for this user_id
-        const { data: existingRow, error: selectErr } = await sb
-          .from('section_tokens')
-          .select('user_id')
-          .eq('user_id', user.id)
-          .single();
-
-        if (selectErr && selectErr.code !== 'PGRST116') {
-          // PGRST116 means “No rows found” in this context; any other error is fatal
-          throw selectErr;
-        }
-
-        if (existingRow) {
-          // If a row already exists, do an UPDATE
-          const { error: updateError } = await sb
-            .from('section_tokens')
-            .update({ token: sessionToken })
-            .eq('user_id', user.id);
-
-          if (updateError) {
-            console.error("Supabase UPDATE error:", updateError);
-            throw new Error('Failed to update session token: ' + updateError.message);
-          }
-        } else {
-          // If no row exists yet, do an INSERT
-          const { error: insertError } = await sb
-            .from('section_tokens')
-            .insert({ user_id: user.id, token: sessionToken });
-
-          if (insertError) {
-            console.error("Supabase INSERT error:", insertError);
-            throw new Error('Failed to insert session token: ' + insertError.message);
-          }
-        }
-
-        // ─── 4.7) Store session data in localStorage/sessionStorage ───────────────
+        // 3.5) *** NO TOKEN AT ALL ***  
+        //   We simply mark “logged in” locally, and store userId for later.
         localStorage.setItem('isLoggedIn', 'true');
-        localStorage.setItem('sessionToken', sessionToken);
-        // ← CHANGED here: use "cbeUserId" so it matches the VIP‐page guard
         sessionStorage.setItem('cbeUserId', user.id);
         sessionStorage.setItem('userName', user.name);
 
-        // ─── 4.8) Redirect to the VIP dashboard ───────────────────────────────────
+        // 3.6) Redirect to VIP dashboard
         window.location.assign('vip-dashboard.html');
       } catch (err) {
         console.error("Login error:", err);
@@ -293,7 +236,7 @@
     });
   </script>
 
-  <!-- ─── SMARTSUPP LIVE CHAT (unchanged) ─────────────────────────────────────── -->
+  <!-- ─── Smartsupp Live Chat (unchanged) ────────────────────────────────────── -->
   <script>
     var _smartsupp = _smartsupp || {};
     _smartsupp.key = '018a8bbd868518221e725341a7b2601231ec7ce8';
