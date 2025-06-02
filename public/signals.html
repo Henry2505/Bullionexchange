@@ -3,80 +3,84 @@
 <head>
   <meta charset="UTF-8"/>
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>VIP Dashboard • CBE</title>
+  <title>VIP Signal • CBE</title>
 
   <!-- ─────────────────────────────────────────────────────────────────────
-       0) SUPABASE CLIENT & SESSION CHECK (to enforce single‐session)  
+       0) SUPABASE CLIENT & SESSION CHECK (to enforce single‐session)
        ─────────────────────────────────────────────────────────────────────
        We initialize Supabase first, then immediately verify:
-       - That sessionStorage.cbeLoggedIn === 'true'
-       - That localStorage.sessionToken exists
-       - That the token in localStorage matches the one stored in Supabase 
-         (users.current_session_token).
-       If anything fails, we clear sessionStorage and redirect to login.html.
-       This ensures only one browser/tab can stay logged in at a time.
+       - That localStorage.isLoggedIn === 'true'
+       - That sessionStorage.userId and localStorage.sessionToken both exist
+       - That the token in localStorage matches the one stored in Supabase’s section_tokens table
+       If anything fails, we clear sessionStorage/localStorage and redirect to login.html?message=logged_out_elsewhere.
   -->
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>
   <script>
-    // 0a) Supabase init (must match your existing SUPA_URL and SUPA_KEY)
+    // 0a) Supabase init (match your existing SUPA_URL and SUPA_KEY)
     const SUPA_URL = 'https://dapwpgvnfjcfqqhrpxla.supabase.co';
-    const SUPA_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJzI...'; // your key
+    const SUPA_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJzI...'; // your anon/public key
     const supabase = window.supabase.createClient(SUPA_URL, SUPA_KEY);
 
     (async function enforceSingleSession() {
-      // 0b) Check if user is marked “logged‐in” in sessionStorage
-      const isLoggedIn = sessionStorage.getItem('cbeLoggedIn') === 'true';
-      if (!isLoggedIn) {
-        // Not coming from VIP dashboard → force redirect
+      // 0b) Check isLoggedIn flag
+      if (localStorage.getItem('isLoggedIn') !== 'true') {
         window.location.replace('login.html');
         return;
       }
 
       // 0c) Grab stored values
-      const userId = sessionStorage.getItem('cbeUserId');
+      const userId     = sessionStorage.getItem('userId');
       const localToken = localStorage.getItem('sessionToken');
+
       if (!userId || !localToken) {
-        // Missing pieces → not valid
-        sessionStorage.removeItem('cbeLoggedIn');
-        window.location.replace('login.html');
+        // Missing pieces → not valid session
+        localStorage.removeItem('isLoggedIn');
+        localStorage.removeItem('sessionToken');
+        sessionStorage.removeItem('userId');
+        sessionStorage.removeItem('userName');
+        window.location.replace('login.html?message=logged_out_elsewhere');
         return;
       }
 
       try {
-        // 0d) Query Supabase for the “current_session_token” we saved when they logged into VIP
-        const { data: userData, error: userErr } = await supabase
-          .from('users')
-          .select('current_session_token')
-          .eq('id', userId)
+        // 0d) Query Supabase for the “current token” from section_tokens
+        const { data, error } = await supabase
+          .from('section_tokens')
+          .select('token')
+          .eq('user_id', userId)
           .single();
 
-        if (userErr || !userData) {
-          throw new Error('User lookup failed');
+        if (error || !data) {
+          throw new Error(error?.message || 'Session lookup failed');
         }
 
-        // 0e) If the DB’s session token no longer matches the browser’s localStorage token, force logout
-        if (userData.current_session_token !== localToken) {
-          sessionStorage.removeItem('cbeLoggedIn');
+        // 0e) If the DB’s token no longer matches the browser’s localStorage token → force logout
+        if (data.token !== localToken) {
+          localStorage.removeItem('isLoggedIn');
           localStorage.removeItem('sessionToken');
-          window.location.replace('login.html');
+          sessionStorage.removeItem('userId');
+          sessionStorage.removeItem('userName');
+          window.location.replace('login.html?message=logged_out_elsewhere');
           return;
         }
-        // If everything matches, we allow the page to render normally
+        // Otherwise, session is valid—allow the page to render normally.
       } catch (err) {
         console.error('Session validation error:', err);
-        sessionStorage.removeItem('cbeLoggedIn');
+        localStorage.removeItem('isLoggedIn');
         localStorage.removeItem('sessionToken');
-        window.location.replace('login.html');
+        sessionStorage.removeItem('userId');
+        sessionStorage.removeItem('userName');
+        window.location.replace('login.html?message=logged_out_elsewhere');
       }
     })();
   </script>
 
   <!-- ─────────────────────────────────────────────────────────────────────
        1) CLIENT‐SIDE GUARD:
-       If sessionStorage.cbeLoggedIn is ever missing or invalid, send back to login.
+       If localStorage.isLoggedIn is ever missing or invalid, send back to login.
   -->
   <script>
-    if (sessionStorage.getItem('cbeLoggedIn') !== 'true') {
+    if (localStorage.getItem('isLoggedIn') !== 'true') {
       window.location.replace('login.html');
     }
   </script>
@@ -603,7 +607,9 @@
     <div class="section-title slide-in">💰 Latest VIP Signal</div>
     <div id="signalCard" class="signal-card slide-in" style="transition-delay: 0.3s;">
       <div class="loader"></div>
-      <p style="text-align:center;color: var(--text-light);padding:20px;">Loading latest signal…</p>
+      <p style="text-align:center;color: var(--text-light);padding:20px;">
+        Loading latest signal…
+      </p>
     </div>
 
     <!-- GOLD CHART SECTION -->
@@ -613,13 +619,17 @@
     </div>
 
     <!-- GOLD NEWS SECTION -->
-    <div class="section-title slide-in">📰 Latest Gold Market News <span class="update-note">Updated every minute</span></div>
+    <div class="section-title slide-in">
+      📰 Latest Gold Market News <span class="update-note">Updated every minute</span>
+    </div>
     <div id="gold-news" class="slide-in" style="transition-delay: 0.9s;">
       <ul id="news-list"></ul>
     </div>
 
     <!-- ECONOMIC CALENDAR SECTION -->
-    <div class="section-title slide-in">📅 Economic Calendar <span class="update-note">Updated every minute</span></div>
+    <div class="section-title slide-in">
+      📅 Economic Calendar <span class="update-note">Updated every minute</span>
+    </div>
     <div id="calendar-widget" class="slide-in" style="transition-delay: 1.2s;">
       <table>
         <thead>
@@ -698,29 +708,32 @@
     // ─── 4) LOAD LATEST SIGNAL ──────────────────────────────────────────────────
     async function loadLatestSignal() {
       const card = document.getElementById('signalCard');
-      card.innerHTML = `<div class="loader"></div>
-                        <p style="text-align:center;color: var(--text-light);padding:20px;">Loading latest signal…</p>`;
+      card.innerHTML = `
+        <div class="loader"></div>
+        <p style="text-align:center;color: var(--text-light);padding:20px;">
+          Loading latest signal…
+        </p>`;
       try {
         let { data: signals, error } = await supabase
           .from('signals')
-          .select('id,action,asset,entry,sl,tp1,tp2,note,created_at')
+          .select('id, action, asset, entry, sl, tp1, tp2, note, created_at')
           .order('created_at', { ascending: false })
           .limit(1);
 
         if (error) throw error;
         if (!signals.length) {
-          card.innerHTML = `<p style="text-align:center;color: var(--error);padding:40px;">
-                              No signals available. Check back soon.
-                            </p>`;
+          card.innerHTML = `
+            <p style="text-align:center;color: var(--error);padding:40px;">
+              No signals available. Check back soon.
+            </p>`;
           return;
         }
 
         const sig = signals[0];
-        // If this is not the first fetch and ID changed, ring the bell
+        // If we previously fetched a different ID, ring the bell
         if (lastSignalId !== null && sig.id !== lastSignalId) {
           ringBell();
         }
-        // Update lastSignalId
         lastSignalId = sig.id;
 
         const dt = new Date(sig.created_at);
@@ -728,7 +741,7 @@
 
         card.innerHTML = `
           <div class="signal-header">
-            <h2 class="${actionClass}">${sig.action.toUpperCase()} ${sig.asset} - ${dt.toLocaleDateString('en-GB')}</h2>
+            <h2 class="${actionClass}">${sig.action.toUpperCase()} ${sig.asset} – ${dt.toLocaleDateString('en-GB')}</h2>
             <div class="time">${dt.toLocaleTimeString('en-GB')}</div>
             <button class="refresh-btn" onclick="loadLatestSignal()">🔄</button>
           </div>
@@ -766,11 +779,11 @@
 
     // ─── 6) LOGOUT ─────────────────────────────────────────────────────────────
     function logout() {
-      // Clear both sessionStorage and localStorage tokens
-      sessionStorage.removeItem('cbeLoggedIn');
-      sessionStorage.removeItem('cbeUserId');
+      localStorage.removeItem('isLoggedIn');
       localStorage.removeItem('sessionToken');
-      window.location.replace('login.html');
+      sessionStorage.removeItem('userId');
+      sessionStorage.removeItem('userName');
+      window.location.replace('login.html?message=logged_out');
     }
 
     // ─── 7) GOLD NEWS ──────────────────────────────────────────────────────────
@@ -778,6 +791,7 @@
       const ul = document.getElementById('news-list');
       ul.innerHTML = '<li>Loading…</li>';
       try {
+        // Using a CORS‐friendly proxy (allorigins.win) to fetch Investing.com RSS
         const res = await fetch('https://api.allorigins.win/raw?url=https://www.investing.com/rss/news_285.rss');
         const xml = new DOMParser().parseFromString(await res.text(), 'text/xml');
         const items = Array.from(xml.querySelectorAll('item')).slice(0, 8);
@@ -799,6 +813,7 @@
       const tbody = document.getElementById('calendar-body');
       tbody.innerHTML = '<tr><td colspan="7">Loading…</td></tr>';
       try {
+        // Mock events (you can replace with a live API if desired)
         const events = [
           { date: "05-25-2025", time: "6:40pm", currency: "USD", event: "Fed Chair Powell Speaks", impact: "Medium", actual: "", previous: "" },
           { date: "05-26-2025", time: "7:00am", currency: "GBP", event: "Bank Holiday", impact: "Holiday", actual: "", previous: "" },
@@ -854,40 +869,37 @@
 
       // Watch for new rows in "signals". On INSERT → reload & ring bell
       supabase
-        .from('signals')
-        .on('INSERT', async payload => {
-          // Immediately load latest (which will ring if ID changed)
-          loadLatestSignal();
+        .channel('signals_changes')
+        .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'signals' }, payload => {
+          loadLatestSignal();  // this will ring if ID changed
+          // Optionally notify via Netlify Function:
+          (async () => {
+            try {
+              const currentUserId = sessionStorage.getItem('userId');
+              if (!currentUserId) return;
 
-          try {
-            // Lookup current user’s email & name
-            const currentUserId = sessionStorage.getItem('cbeUserId');
-            if (!currentUserId) return;
+              const { data: userData, error: userErr } = await supabase
+                .from('users')
+                .select('email, name')
+                .eq('id', currentUserId)
+                .single();
 
-            const { data: userData, error: userErr } = await supabase
-              .from('users')
-              .select('email,name')
-              .eq('id', currentUserId)
-              .single();
+              if (userErr || !userData) return;
 
-            if (userErr || !userData) return;
+              const payloadBody = {
+                email: userData.email,
+                name: userData.name
+              };
 
-            // Call our Netlify Function to notify user to log in
-            const payloadBody = {
-              email: userData.email,
-              name: userData.name
-            };
-
-            await fetch("/.netlify/functions/send-signal-alert", {
-              method: "POST",
-              headers: {
-                "Content-Type": "application/json"
-              },
-              body: JSON.stringify(payloadBody)
-            });
-          } catch (e) {
-            console.error("Error in new-signal subscription:", e);
-          }
+              await fetch("/.netlify/functions/send-signal-alert", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify(payloadBody)
+              });
+            } catch (e) {
+              console.error("Error in new-signal subscription:", e);
+            }
+          })();
         })
         .subscribe();
 
