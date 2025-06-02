@@ -6,28 +6,15 @@
   <title>Dashboard • CBE Global</title>
 
   <!-- ─────────────────────────────────────────────────────────────────────
-       0) SUPABASE AUTH GUARD
-       • Check if user is authenticated using Supabase auth
-       • Redirect to login.html if not authenticated
+       0) SIMPLE AUTH GUARD (NO TOKENS, NO RLS)
+       • Restored original localStorage/sessionStorage check
+       • Redirect to login.html if not logged in
   -->
   <script>
-    // Initialize Supabase client for auth check
-    const SUPA_URL = 'https://dapwpgvnfjcfqqhrpxla.supabase.co';
-    const SUPA_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...'; // ← your anon/public key
-    const supabase = window.supabase.createClient(SUPA_URL, SUPA_KEY);
-
-    // Check if user is authenticated
-    async function checkAuth() {
-      const { data: { user }, error } = await supabase.auth.getUser();
-      if (error || !user) {
-        window.location.replace('login.html?message=not_authenticated');
-      } else {
-        // Store user ID and name in sessionStorage for compatibility
-        sessionStorage.setItem('cbeUserId', user.id);
-        sessionStorage.setItem('userName', user.user_metadata?.full_name || user.email || 'Trader');
-      }
+    if (localStorage.getItem('isLoggedIn') !== 'true' ||
+        !sessionStorage.getItem('cbeUserId')) {
+      window.location.replace('login.html');
     }
-    checkAuth();
   </script>
 
   <!-- ─────────────────────────────────────────────────────────────────────
@@ -56,7 +43,6 @@
   </script>
 
   <style>
-    /* CSS remains unchanged */
     :root[data-theme="dark"] {
       --bg: #121212;
       --text: #e0e0e0;
@@ -198,11 +184,7 @@
       text-align: center;
       padding: 1.5rem;
       background: var(--glass);
-      backdrop-filter: blur(10px);
-      border-radius: 10px;
-      box-shadow: 0 2px 8px var(--shadow);
-      margin: 1.5rem 0;
-    }
+     Hannah: The welcome banner is styled using CSS variables, so changing the data-theme attribute to "light" will not affect it.
     .card {
       background: var(--glass);
       backdrop-filter: blur(10px);
@@ -621,18 +603,19 @@
         if (error) throw error;
         addNotification(`User ${action} from ${userInfo.city || 'Unknown'}`, 'info');
       } catch (err) {
-        console.error('Activity log error:', err);
-        addNotification('Failed to log activity', 'critical');
+        console.error('Activity log error:', err.message);
+        addNotification(`Failed to log activity: ${err.message}`, 'critical');
       }
     }
 
-    // ─── LOAD RECENT ACTIVITY (FILTER BY USER ID) ────────────────────────────
+    // ─── LOAD RECENT ACTIVITY (REVERTED TO ORIGINAL, NO USER_ID FILTER) ───────
     async function loadRecentActivity() {
       console.log('▶ loadRecentActivity() called');
 
       const tbody = document.getElementById('activity-body');
       if (!tbody) {
         console.error('✖ loadRecentActivity: <tbody id="activity-body"> not found');
+        addNotification('Activity table not found in DOM', 'critical');
         return;
       }
 
@@ -640,14 +623,9 @@
       tbody.innerHTML = '<tr><td colspan="5"><div class="spinner"></div></td></tr>';
 
       try {
-        const { data: { user } } = await supabase.auth.getUser();
-        if (!user) throw new Error('No authenticated user');
-
-        // Filter by authenticated user's ID
         const { data, error } = await supabase
           .from('user_activity')
           .select('created_at, action, ip_address, city, country, device')
-          .eq('user_id', user.id)
           .order('created_at', { ascending: false })
           .limit(10);
 
@@ -710,27 +688,23 @@
           tbody.appendChild(tr);
         });
       } catch (err) {
-        console.error('✖ loadRecentActivity caught error:', err);
+        console.error('✖ loadRecentActivity caught error:', err.message);
         tbody.innerHTML = `
           <tr>
             <td colspan="5" style="color: var(--error); text-align:center;">
-              Failed to load activity. Please try again later.
+              Failed to load activity: ${err.message}
             </td>
           </tr>`;
-        addNotification('Failed to load recent activity', 'critical');
+        addNotification(`Failed to load recent activity: ${err.message}`, 'critical');
       }
     }
 
-    // ─── EXPORT LOGS ────────────────────────────────────────────────────────
+    // ─── EXPORT LOGS (REVERTED TO ORIGINAL, NO USER_ID FILTER) ───────────────
     async function downloadActivityLog() {
       try {
-        const { data: { user } } = await supabase.auth.getUser();
-        if (!user) throw new Error('No authenticated user');
-
         const { data, error } = await supabase
           .from('user_activity')
           .select('created_at, action, ip_address, city, country, device')
-          .eq('user_id', user.id)
           .order('created_at', { ascending: false });
 
         if (error) throw error;
@@ -751,8 +725,8 @@
         URL.revokeObjectURL(url);
         addNotification('Logs exported successfully', 'info');
       } catch (err) {
-        console.error('Export error:', err);
-        addNotification('Failed to export logs', 'critical');
+        console.error('Export error:', err.message);
+        addNotification(`Failed to export logs: ${err.message}`, 'critical');
       }
     }
 
@@ -779,16 +753,15 @@
         apiCache.set(cacheKey, rate);
         resultEl.textContent = `${amount} ${from} = ${(amount * rate).toFixed(2)} ${to}`;
       } catch (err) {
-        console.error('Conversion error:', err);
+        console.error('Conversion error:', err.message);
         resultEl.innerHTML = '<span style="color: var(--error)">Failed to convert currency</span>';
-        addNotification('Currency conversion failed', 'critical');
+        addNotification(`Currency conversion failed: ${err.message}`, 'critical');
       }
     }
 
     // ─── LOGOUT ──────────────────────────────────────────────────────────────
     async function logout() {
       await logActivity('logout');
-      await supabase.auth.signOut();
       localStorage.removeItem('isLoggedIn');
       sessionStorage.removeItem('cbeUserId');
       sessionStorage.removeItem('userName');
@@ -828,7 +801,7 @@
             priceChange = `+${(Math.random() * 2 - 1).toFixed(2)}%`;
             priceClass = priceChange.startsWith('+') ? 'positive' : 'negative';
           } catch (err) {
-            console.error('Watchlist error:', err);
+            console.error('Watchlist error:', err.message);
           }
           li.innerHTML = `
             <span>${sym}</span>
@@ -852,8 +825,8 @@
           }
         };
       } catch (err) {
-        console.error('Dashboard error:', err);
-        addNotification('Failed to load some dashboard data. Other features are still available.', 'critical');
+        console.error('Dashboard error:', err.message);
+        addNotification('Failed to load signals data. Other features are still available.', 'critical');
       }
     }
 
@@ -881,7 +854,7 @@
           save_image: false
         });
       } catch (err) {
-        console.error('Chart error:', err);
+        console.error('Chart error:', err.message);
         document.getElementById('tv_chart_4h').innerHTML = '<p style="color: var(--error)">Failed to load chart</p>';
       }
     }
@@ -901,7 +874,7 @@
           ul.appendChild(li);
         });
       } catch (err) {
-        console.error('News error:', err);
+        console.error('News error:', err.message);
         ul.innerHTML = '';
         const sample = [
           { title: 'Gold price rises as inflation fears intensify', url: 'https://example.com/article1' },
@@ -939,7 +912,7 @@
           tbody.appendChild(tr);
         });
       } catch (err) {
-        console.error('Calendar error:', err);
+        console.error('Calendar error:', err.message);
         tbody.innerHTML = '<tr><td colspan="7" style="color: var(--error)">Failed to load calendar</td></tr>';
       }
     }
@@ -1016,10 +989,9 @@
           loadDashboard();
         })
         .subscribe();
-
       supabase
         .channel('user_activity')
-        .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'user_activity', filter: `user_id=eq.${sessionStorage.getItem('cbeUserId')}` }, () => {
+        .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'user_activity' }, () => {
           loadRecentActivity();
         })
         .subscribe();
