@@ -104,8 +104,6 @@
     #notif-list .info{background:rgba(0,255,136,.2);}
     footer{text-align:center;padding:1rem 0;color:var(--text-light);font-size:.9rem;background:var(--glass);border-top:1px solid var(--gold-dark);width:100%;visibility:visible;}
     .spinner{border:3px solid var(--glass);border-top:3px solid var(--gold);border-radius:50%;width:24px;height:24px;animation:spin 1s linear infinite;margin:1rem auto;}
-    #loading{position:fixed;top:0;left:0;width:100%;height:100%;background:var(--bg);display:flex;align-items:center;justify-content:center;color:var(--text);font-size:1.5rem;z-index:2000;opacity:1;transition:opacity .5s;}
-    #loading.hidden{opacity:0;pointer-events:none;}
     @keyframes spin{0%{transform:rotate(0deg);}100%{transform:rotate(360deg);}}
     @keyframes fadeIn{from{opacity:0;}to{opacity:1;}}
     @media (max-width:768px){
@@ -127,7 +125,8 @@
   </style>
 </head>
 <body>
-  <div id="loading">Loading Dashboard...</div>
+  <!-- Removed the <div id="loading">Loading Dashboard...</div> here -->
+
   <div class="offcanvas offcanvas-start" id="sidebar">
     <div class="offcanvas-body">
       <div class="text-center mb-4">
@@ -282,7 +281,7 @@
   <audio id="critical-notif-sound" src="alert.mp3" preload="auto"></audio>
   <script>
     const SUPA_URL='https://dapwpgvnfjcfqqhrpxla.supabase.co';
-    const SUPA_KEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImRhcHdwZ3ZuZmpjZnFxaHJweGxhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDcwNDA4ODgsImV4cCI6MjA2MjYxNjg4OH0.ICC0UsLlzJDNre7rFCeD3k6iVzo6jOJgn3PhABpEMsQ';
+    const SUPA_KEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzYSIsInJlZiI6ImRhcHdwZ3ZuZmpjZnFxaHJweGxhIiwicm9sIjoibyIsImlhdCI6MTc0NzA0MDg4OCwiZXhwIjoxNjA2MzA4ODhicmnr0';
     const supabase=window.supabase.createClient(SUPA_URL,SUPA_KEY);
     const EXCHANGE_RATE_API_KEY='4e4307b2bf8daac15365a410';
     const GNEWS_API_KEY='03a6fdcc98666513a11a078b2e21b3d7';
@@ -304,9 +303,9 @@
       try{
         const res=await retryFetch('https://api.ipify.org?format=json');
         const {ip}=await res.json();
-        return{ip,city:'Unknown',country:'Unknown',device:navigator.userAgent};
+        return {ip, city:'Unknown', country:'Unknown', device: navigator.userAgent};
       }catch{
-        return{ip:'Unknown',city:'Unknown',country:'Unknown',device:navigator.userAgent};
+        return {ip:'Unknown', city:'Unknown', country:'Unknown', device: navigator.userAgent};
       }
     }
     async function logActivity(action){
@@ -315,13 +314,18 @@
       const userId=sessionStorage.getItem('userId')||'anonymous';
       try{
         const {error}=await supabase.from('user_activity').insert({
-          user_id:userId,action,ip_address:userInfo.ip,city:userInfo.city,country:userInfo.country,device:userInfo.device
+          user_id: userId,
+          action,
+          ip_address: userInfo.ip,
+          city: userInfo.city,
+          country: userInfo.country,
+          device: userInfo.device
         });
-        if(error)throw error;
-        addNotification(`User ${action} from ${userInfo.city}`,'info');
+        if(error) throw error;
+        addNotification(`User ${action} from ${userInfo.city}`, 'info');
       }catch(err){
-        console.error('Log activity error:',err.message);
-        addNotification('Failed to log activity','critical');
+        console.error('Log activity error:', err.message);
+        addNotification('Failed to log activity', 'critical');
       }
     }
     async function loadRecentActivity(){
@@ -329,10 +333,10 @@
       const tbody=document.getElementById('activity-body');
       tbody.innerHTML='<tr><td colspan="5"><div class="spinner"></div></td></tr>';
       try{
-        const {data:tables,error:schemaError}=await supabase.from('user_activity').select('*').limit(0);
-        if(schemaError)throw new Error('Table check failed: '+schemaError.message);
+        const {data:tables, error:schemaError}=await supabase.from('user_activity').select('*').limit(0);
+        if(schemaError) throw new Error('Table check failed: ' + schemaError.message);
         const {data,error}=await supabase.from('user_activity').select('*').order('timestamp',{ascending:false}).limit(10);
-        if(error)throw error;
+        if(error) throw error;
         tbody.innerHTML='';
         if(data.length===0){
           tbody.innerHTML='<tr><td colspan="5">No activity data available</td></tr>';
@@ -342,22 +346,29 @@
           const tr=document.createElement('tr');
           ['timestamp','action','ip_address','city','device'].forEach(key=>{
             const td=document.createElement('td');
-            td.textContent=key==='timestamp'?new Date(activity[key]).toLocaleString():activity[key]||'-';
+            td.textContent= key==='timestamp'
+              ? new Date(activity[key]).toLocaleString()
+              : (activity[key] || '-');
             tr.appendChild(td);
           });
           tbody.appendChild(tr);
         });
       }catch(err){
-        console.error('Load activity error:',err.message);
+        console.error('Load activity error:', err.message);
         tbody.innerHTML='<tr><td colspan="5" style="color:var(--error)">Failed to load activity. Check Supabase setup.</td></tr>';
       }
     }
     async function downloadActivityLog(){
       console.log('Downloading activity log');
       try{
-        const {data,error}=await supabase.from('user_activity').select('*').order('timestamp',{ascending:false});
-        if(error)throw error;
-        const csv=['Timestamp,Action,IP Address,City,Country,Device',...data.map(row=>`${new Date(row.timestamp).toLocaleString()},${row.action},${row.ip_address},${row.city},${row.country},"${row.device}"`)].join('\n');
+        const {data,error} = await supabase.from('user_activity').select('*').order('timestamp',{ascending:false});
+        if(error) throw error;
+        const csv = [
+          'Timestamp,Action,IP Address,City,Country,Device',
+          ...data.map(row =>
+            `${new Date(row.timestamp).toLocaleString()},${row.action},${row.ip_address},${row.city},${row.country},"${row.device}"`
+          )
+        ].join('\n');
         const blob=new Blob([csv],{type:'text/csv'});
         const url=URL.createObjectURL(blob);
         const a=document.createElement('a');
@@ -367,37 +378,38 @@
         URL.revokeObjectURL(url);
         addNotification('Logs exported successfully','info');
       }catch(err){
-        console.error('Export logs error:',err.message);
+        console.error('Export logs error:', err.message);
         addNotification('Failed to export logs','critical');
       }
     }
     async function convertCurrency(){
       console.log('Converting currency');
-      const from=document.getElementById')('converter-from').value;
+      const from=document.getElementById('converter-from').value;
       const to=document.getElementById('converter-to').value;
       const amount=parseFloat(document.getElementById('converter-amount').value)||1;
-      const rate=apiCache.get(cacheKey);
-      resultEl.innerHTML='<div class="spinner"></div>';
       const cacheKey=`${from}_${to}`;
+      const resultEl=document.getElementById('converter-result');
+      resultEl.innerHTML='<div class="spinner"></div>';
       if(apiCache.has(cacheKey)){
         const rate=apiCache.get(cacheKey);
         resultEl.textContent=`${amount} ${from} = ${(amount * rate).toFixed(2)} ${to}`;
         return;
       }
       try{
-        const res=await retryFetch(`https://v6.exchangerate/api.com/v6/${EXCHANGE_RATE_API_KEY}/latest/${from}`);
+        const res=await retryFetch(`https://v6.exchangerate-api.com/v6/${EXCHANGE_RATE_API_KEY}/latest/${from}`);
         const data=await res.json();
-        if(data.result!=='success')throw new Error('API error');
+        if(data.result!=='success') throw new Error('API error');
         const rate=data.conversion_rates[to];
         apiCache.set(cacheKey,rate);
         setTimeout(()=>(apiCache.delete(cacheKey)),10*60*1000);
         resultEl.textContent=`${amount} ${from} = ${(amount * rate).toFixed(2)} ${to}`;
         console.log('Currency conversion success:',rate);
       }catch(err){
-        console.error('Convert currency error:',err.message);
+        console.error('Convert currency error:', err.message);
         resultEl.innerHTML='<span style="color:var(--error)">Failed to convert currency</span>';
         addNotification('Currency conversion failed','critical');
       }
+    }
     async function checkSession(){
       console.log('Checking session');
       const localToken=localStorage.getItem('sessionToken');
@@ -408,15 +420,16 @@
       const userId=sessionStorage.getItem('userId');
       try{
         const {data,error}=await supabase.from('users').select('current_session_token').eq('id',userId).single();
-        if(error)throw error;
-        if(data.current_session_token!==localToken){
+        if(error) throw error;
+        if(data.current_session_token !== localToken){
           logout();
         }
         console.log('Session check success');
       }catch(err){
-        console.error('Check session error:',err.message);
+        console.error('Check session error:', err.message);
         addNotification('Session validation failed','critical');
       }
+    }
     async function logout(){
       console.log('Logging out');
       try{
@@ -425,35 +438,35 @@
         sessionStorage.clear();
         window.location='login.html?message=logged_out';
       }catch(err){
-        console.error('Logout error:',err.message);
+        console.error('Logout error:', err.message);
       }
     }
     async function loadDashboard(){
       console.log('Loading dashboard');
       try{
         const today=new Date().toISOString().split('T')[0];
-        const {count, error}=await supabase.from('signals').select('id',{count:'exact'}).gte('timestamp',today);
+        const {count,error}=await supabase.from('signals').select('id',{count:'exact'}).gte('timestamp',today);
         if(error) throw error;
         document.getElementById('stat-gold-change').textContent='N/A';
         const list=JSON.parse(localStorage.getItem('watchlist')||'[]');
         const ul=document.getElementById('watch-list');
         ul.innerHTML='';
-        for(const sym of syms){
+        for(const sym of list){
           const li=document.createElement('li');
           li.className='list-group-item d-flex justify-content-between align-items-center';
           let priceChange='N/A';
           let priceClass='';
           try{
-            const res=await fetch(`https://v6.exchangerate-api.com/v6/${EXCHANGE_RATE_API_KEY}/latest/${sym.slice(0,3)})`);
+            const res=await fetch(`https://v6.exchangerate-api.com/v6/${EXCHANGE_RATE_API_KEY}/latest/${sym.slice(0,3)}`);
             const data=await res.json();
             const rate=data.conversion_rates[sym.slice(3)]||1;
-            priceChange=`+${(Math.random() *2-1).toFixed(2)}%`;
+            priceChange=`+${(Math.random()*2-1).toFixed(2)}%`;
             priceClass=priceChange.startsWith('+')?'positive':'negative';
           }catch(err){
-            console.error('Watchlist error:',err.message);
+            console.error('Watchlist error:', err.message);
           }
           li.innerHTML=`<span>${sym}</span><span class="price-change ${priceClass}">${priceChange}</span><button class="btn btn-sm btn-outline-danger">Remove</button>`;
-            li.querySelector('button').onclick=()=>{
+          li.querySelector('button').onclick=()=>{
             localStorage.setItem('watchlist',JSON.stringify(list.filter(s=>s!==sym)));
             loadDashboard();
           };
@@ -462,7 +475,7 @@
         document.getElementById('add-watch').onclick=()=>{
           const input=document.getElementById('watch-input');
           const sym=input.value.trim().toUpperCase();
-          if(sym&& !list.includes(sym)){
+          if(sym && !list.includes(sym)){
             list.push(sym);
             localStorage.setItem('watchlist',JSON.stringify(list));
             loadDashboard();
@@ -470,14 +483,14 @@
           }
         };
       }catch(err){
-        console.error('Load dashboard error:',err.message);
+        console.error('Load dashboard error:', err.message);
         addNotification('Failed to load dashboard','critical');
       }
     }
     function initChart(interval='240'){
-      console.log('Initializing chart:',interval);
+      console.log('Initializing chart:', interval);
       try{
-        document.getElementById('tv_chart').innerHTML=('');
+        document.getElementById('tv_chart').innerHTML='';
         new window.TradingView.widget({
           container_id:"tv_chart",
           width:"100%",
@@ -489,7 +502,7 @@
           style:"1",
           locale:"en",
           toolbar_bg:"#1a1a1a",
-          studies:[],
+          studies: [
             {id:"MASimple@tv-basicstudies",inputs:{length:50}},
             {id:"MASimple@tv-basicstudies",inputs:{length:200}}
           ],
@@ -499,7 +512,7 @@
         });
         console.log('Chart initialized');
       }catch(err){
-        console.error('Chart error:',err.message);
+        console.error('Chart error:', err.message);
         document.getElementById('tv_chart').innerHTML='<p style="color:var(--error)">Failed to load chart</p>';
       }
     }
@@ -510,9 +523,9 @@
       try{
         const res=await retryFetch(`https://gnews.io/api/v4/search?q=gold+market&lang=en&max=8&apikey=${GNEWS_API_KEY}`);
         const data=await res.json();
-        if(data.errors)throw new Error(data.errors.join(', '));
+        if(data.errors) throw new Error(data.errors.join(', '));
         ul.innerHTML='';
-        if(!data.articles||data.articles.length===0){
+        if(!data.articles || data.articles.length===0){
           throw new Error('No articles found');
         }
         data.articles.forEach(article=>{
@@ -520,9 +533,9 @@
           li.innerHTML=`<a href="${article.url}" target="_blank">${article.title}</a>`;
           ul.appendChild(li);
         });
-        console.log('News loaded:',data.articles.length);
+        console.log('News loaded:', data.articles.length);
       }catch(err){
-        console.error('Load news error:',err.message);
+        console.error('Load news error:', err.message);
         ul.innerHTML='';
         const mockNews=[
           {title:'Gold Hits Record High in 2025',url:'#'},
@@ -543,68 +556,68 @@
       tbody.innerHTML='<tr><td colspan="7"><div class="spinner"></div></td></tr>';
       try{
         const events=[
-          {date:"06-02-2025",time:"08:30",currency:"USD",event:"Non-Farm Payrolls",impact:"High",actual:""previous:"254K"},
-          {date:"06-03-2025",time:"10:00",currency:"EUR",event:"CPI Flash",impact:"Medium",actual:""previous:"2.0%"},
-          {date:"06-04-2025",time:"04:30",currency:"GBP",event:"Services PMI",impact:"Low",actual:""previous:"52.2"}
+          {date:"06-02-2025",time:"08:30",currency:"USD",event:"Non-Farm Payrolls",impact:"High",actual:"",previous:"254K"},
+          {date:"06-03-2025",time:"10:00",currency:"EUR",event:"CPI Flash",impact:"Medium",actual:"",previous:"2.0%"},
+          {date:"06-04-2025",time:"04:30",currency:"GBP",event:"Services PMI",impact:"Low",actual:"",previous:"52.2"}
         ];
         tbody.innerHTML = '';
         events.forEach(event=>{
           const tr=document.createElement('tr');
-          if(event.impact==='High')tr.classList.add('high-impact');
+          if(event.impact==='High') tr.classList.add('high-impact');
           ['date','time','currency','event','impact','actual','previous'].forEach(key=>{
             const td=document.createElement('td');
-            td.textContent=event[key] ||'-';
+            td.textContent=event[key] || '-';
             tr.appendChild(td);
           });
           tbody.appendChild(tr);
         });
         console.log('Calendar loaded');
       }catch(err){
-        console.error('Calendar error:',err.message);
+        console.error('Calendar error:', err.message);
         tbody.innerHTML='<tr><td colspan="7" style="color:var(--error)">Failed to load calendar</td></tr>';
       }
     }
     function toggleTheme(theme){
-      console.log('Toggling theme:',theme);
-      document.documentElement.setAttribute('data-theme',theme);
+      console.log('Toggling theme:', theme);
+      document.documentElement.setAttribute('data-theme', theme);
       document.getElementById('theme-select').value=theme;
     }
     function addNotification(message,type='info'){
-      console.log('Adding notification:',message,type);
+      console.log('Adding notification:', message, type);
       const list=document.getElementById('notif-list');
       const count=document.getElementById('notif-count');
       const li=document.createElement('li');
       li.textContent=message;
       li.classList.add(type);
       li.style.cursor='pointer';
-      li.onclick=() =>{li.style.opacity='0';setTimeout(() => li.remove(),300);};
-      list.insertBefore(li,list.firstChild);
-      count.textContent=parseInt(count.textContent)+1;
-      const sound=document.getElementById(type ==='critical'?'critical-notif-sound':'notif-sound');
-      if(sound)sound.play().catch(err => console.error('Audio error:',err.message));
+      li.onclick=() => { li.style.opacity='0'; setTimeout(() => li.remove(), 300); };
+      list.insertBefore(li, list.firstChild);
+      count.textContent=parseInt(count.textContent) + 1;
+      const sound=document.getElementById(type ==='critical' ? 'critical-notif-sound' : 'notif-sound');
+      if(sound) sound.play().catch(err => console.error('Audio error:', err.message));
     }
-    document.addEventListener('DOMContentLoaded',async () => {
+    document.addEventListener('DOMContentLoaded', async () => {
       console.log('DOM loaded');
-      setInterval(() => location.reload(),120000);
+      setInterval(() => location.reload(), 120000);
       document.querySelectorAll('.slide-in').forEach(el => {
         el.classList.add('visible');
       });
-      const loading=document.getElementById('loading');
-      setTimeout(() => loading.classList.add('hidden'),100);
+      // Removed setTimeout for hiding #loading since the overlay is gone
+
       await checkSession();
-      const userId=sessionStorage.getItem('userId');
+      const userId = sessionStorage.getItem('userId');
       supabase
         .channel('users')
-        .on('postgres_changes',{event:'UPDATE',schema:'public',table:'users',filter:`id=eq.${userId}`}, async payload => {
+        .on('postgres_changes', {event:'UPDATE',schema:'public',table:'users',filter:`id=eq.${userId}`}, async payload => {
           console.log('User update event');
-          const localToken=localStorage.getItem('sessionToken');
-          if(payload.new.current_session_token !== localToken) {
+          const localToken = localStorage.getItem('sessionToken');
+          if (payload.new.current_session_token !== localToken) {
             await logout();
           }
         })
-        .subscribe(status => console.log('User subscription:',status));
-      setInterval(checkSession,15000);
-      document.getElementById('welcomeName').textContent=sessionStorage.getItem('userName') || 'Trader';
+        .subscribe(status => console.log('User subscription:', status));
+      setInterval(checkSession, 15000);
+      document.getElementById('welcomeName').textContent = sessionStorage.getItem('userName') || 'Trader';
       await logActivity('login');
       loadDashboard();
       initChart();
@@ -612,35 +625,35 @@
       loadEconCalendar();
       loadRecentActivity();
       document.querySelectorAll('.chart-toggle button').forEach(btn => {
-        btn.addEventListener('click',() => {
+        btn.addEventListener('click', () => {
           document.querySelector('.chart-toggle button.active').classList.remove('active');
           btn.classList.add('active');
           initChart(btn.dataset.interval);
         });
       });
-      document.getElementById('theme-select').addEventListener('change',e => toggleTheme(e.target.value));
-      document.getElementById('notif-btn').addEventListener('click',() => {
+      document.getElementById('theme-select').addEventListener('change', e => toggleTheme(e.target.value));
+      document.getElementById('notif-btn').addEventListener('click', () => {
         new bootstrap.Dropdown(document.getElementById('notif-btn')).toggle();
       });
-      document.getElementById('sidebar-toggle').addEventListener('click',() => {
+      document.getElementById('sidebar-toggle').addEventListener('click', () => {
         new bootstrap.Offcanvas(document.getElementById('sidebar')).toggle();
       });
-      document.getElementById('convert-btn').addEventListener('click',convertCurrency);
-      document.getElementById('export-logs').addEventListener('click',downloadActivityLog);
-      document.getElementById('logout-btn').addEventListener('click',logout);
+      document.getElementById('convert-btn').addEventListener('click', convertCurrency);
+      document.getElementById('export-logs').addEventListener('click', downloadActivityLog);
+      document.getElementById('logout-btn').addEventListener('click', logout);
       supabase
         .channel('signals')
-        .on('postgres_changes',{event:'INSERT',schema:'public',table:'signals'}, payload => {
-          addNotification(`New ${payload.new.action || 'signal'} for ${payload.new.signal_asset || 'asset'}!`,'info');
+        .on('postgres_changes', {event:'INSERT',schema:'public',table:'signals'}, payload => {
+          addNotification(`New ${payload.new.action || 'signal'} for ${payload.new.signal_asset || 'asset'}!`, 'info');
           loadDashboard();
         })
-        .subscribe(status => console.log('Signals subscription:',status));
+        .subscribe(status => console.log('Signals subscription:', status));
       supabase
         .channel('user_activity')
-        .on('postgres_changes',{event:'INSERT',schema:'public',table:'user_activity'}, () => {
+        .on('postgres_changes', {event:'INSERT',schema:'public',table:'user_activity'}, () => {
           loadRecentActivity();
         })
-        .subscribe(status => console.log('Activity subscription:',status));
+        .subscribe(status => console.log('Activity subscription:', status));
     });
   </script>
 </body>
