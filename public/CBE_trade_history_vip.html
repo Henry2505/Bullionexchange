@@ -14,28 +14,23 @@
     const supabase = window.supabase.createClient(SUPA_URL, SUPA_KEY);
 
     (async function enforceSingleSession() {
-      // Check if user is logged in via localStorage (old dashboard compatibility)
       const isLoggedIn = localStorage.getItem('isLoggedIn') === 'true';
       if (!isLoggedIn) {
         window.location.replace('login.html');
         return;
       }
 
-      // Grab stored values from sessionStorage and localStorage
       const userId = sessionStorage.getItem('cbeUserId');
       const localToken = localStorage.getItem('sessionToken');
       if (!userId || !localToken) {
         localStorage.removeItem('isLoggedIn');
         sessionStorage.removeItem('cbeUserId');
-        localStorage.removeItem('session 
-   
-Token');
+        localStorage.removeItem('sessionToken');
         window.location.replace('login.html');
         return;
       }
 
       try {
-        // Verify session token with Supabase
         const { data: userData, error: userErr } = await supabase
           .from('users')
           .select('current_session_token')
@@ -51,7 +46,6 @@ Token');
           sessionStorage.removeItem('cbeUserId');
           localStorage.removeItem('sessionToken');
           window.location.replace('login.html');
-          return;
         }
       } catch (err) {
         console.error('Session validation error:', err);
@@ -91,8 +85,8 @@ Token');
       text-align: center;
       box-shadow: 0 4px 10px rgba(0,0,0,0.5);
     }
-    header h1 { margin:0; font-size:42px; color: var(--gold); }
-    header p  { margin-top:8px; font-size:18px; color:#ccc; }
+    header h1 { margin: 0; font-size: 42px; color: var(--gold); }
+    header p  { margin-top: 8px; font-size: 18px; color: #ccc; }
 
     .notice {
       text-align: center;
@@ -101,12 +95,31 @@ Token');
       margin: 20px auto 40px;
     }
 
+    #controlsContainer {
+      max-width: 1200px;
+      margin: 0 auto 20px;
+      padding: 0 20px;
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+    #searchInput, #dateFilter {
+      padding: 10px;
+      font-size: 16px;
+      border: 1px solid var(--gold);
+      border-radius: 5px;
+      background: var(--bg);
+      color: var(--text);
+      flex: 1;
+      min-width: 200px;
+    }
+
     main#historyContainer {
       max-width: 1200px;
       margin: 0 auto 60px;
       padding: 0 20px;
       display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(280px,1fr));
+      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
       gap: 24px;
     }
 
@@ -118,7 +131,10 @@ Token');
       box-shadow: 0 0 12px rgba(0,0,0,0.5);
       display: flex;
       flex-direction: column;
+      cursor: pointer;
+      transition: transform 0.2s;
     }
+    .history-card:hover { transform: scale(1.02); }
     .history-card img {
       width: 100%;
       display: block;
@@ -152,6 +168,37 @@ Token');
       margin-bottom: 12px;
     }
 
+    /* Modal for Image Zoom */
+    .modal {
+      display: none;
+      position: fixed;
+      z-index: 1000;
+      left: 0; top: 0;
+      width: 100%; height: 100%;
+      overflow: auto;
+      background-color: rgba(0,0,0,0.9);
+    }
+    .modal-content {
+      margin: auto;
+      display: block;
+      width: 80%;
+      max-width: 700px;
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+    }
+    .close {
+      position: absolute;
+      top: 15px;
+      right: 35px;
+      color: #f1f1f1;
+      font-size: 40px;
+      font-weight: bold;
+      cursor: pointer;
+    }
+    .close:hover { color: #bbb; }
+
     footer {
       text-align: center;
       padding: 20px;
@@ -174,58 +221,117 @@ Token');
     📢 Unauthorized sharing or resale of these records is strictly prohibited.
   </p>
 
+  <!-- Search and Filter Controls -->
+  <div id="controlsContainer">
+    <input type="text" id="searchInput" placeholder="Search by month or notes...">
+    <input type="month" id="dateFilter" placeholder="Filter by date">
+  </div>
+
   <!-- Container for trade-history cards -->
   <main id="historyContainer"></main>
+
+  <!-- Modal for Image Zoom -->
+  <div id="myModal" class="modal">
+    <span class="close">&times;</span>
+    <img class="modal-content" id="img01">
+  </div>
 
   <!-- Footer -->
   <footer>
     © 2025 CBE – Chukwuemeka Bullion Exchange. All rights reserved.
   </footer>
 
-  <!-- Supabase UMD Client (minified) -->
+  <!-- Supabase UMD Client -->
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js/dist/umd/supabase.min.js"></script>
   <script>
     (async () => {
-      // Theme
+      // Theme Management
       const savedTheme = localStorage.getItem('theme') || 'dark';
       document.documentElement.setAttribute('data-theme', savedTheme);
 
-      // Supabase init
+      // Supabase Initialization
       const SUPA_URL = 'https://dapwpgvnfjcfqqhrpxla.supabase.co';
       const SUPA_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImRhcHdwZ3ZuZmpjZnFxaHJweGxhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDcwNDA4ODgsImV4cCI6MjA2MjYxNjg4OH0.ICC0UsLlzJDNre7rFCeD3k6iVzo6jOJgn3PhABpEMsQ';
       const supabase = window.supabase.createClient(SUPA_URL, SUPA_KEY);
 
-      // Fetch history
+      // Fetch Trade History
       const { data, error } = await supabase
         .from('trade_history')
         .select('*')
         .order('trade_date', { ascending: false });
 
       const container = document.getElementById('historyContainer');
+      let historyData = data || [];
 
       if (error) {
         console.error('Error fetching trade history:', error);
         container.innerHTML = '<p class="notice">Failed to load trade history.</p>';
         return;
       }
-      if (!data.length) {
+      if (!historyData.length) {
         container.innerHTML = '<p class="notice">No trade history available yet.</p>';
         return;
       }
 
-      // Render cards
-      data.forEach(item => {
-        const card = document.createElement('div');
-        card.className = 'history-card';
-        card.innerHTML = `
-          <img src="${item.screenshot_url}" alt="${item.month} screenshot">
-          <div class="img-blocker"></div>
-          <div class="history-content">
-            <div class="history-month">${item.month}</div>
-            <div class="history-note">${item.notes || ''}</div>
-          </div>
-        `;
-        container.appendChild(card);
+      // Render History Cards
+      function renderCards(filteredData) {
+        container.innerHTML = '';
+        filteredData.forEach(item => {
+          const card = document.createElement('div');
+          card.className = 'history-card';
+          card.dataset.date = item.trade_date;
+          card.innerHTML = `
+            <img src="${item.screenshot_url}" alt="${item.month} screenshot" class="history-img">
+            <div class="img-blocker"></div>
+            <div class="history-content">
+              <div class="history-month">${item.month}</div>
+              <div class="history-note">${item.notes || 'No notes available'}</div>
+            </div>
+          `;
+          container.appendChild(card);
+        });
+      }
+      renderCards(historyData);
+
+      // Search Functionality
+      const searchInput = document.getElementById('searchInput');
+      searchInput.addEventListener('input', filterCards);
+
+      // Date Filter Functionality
+      const dateFilter = document.getElementById('dateFilter');
+      dateFilter.addEventListener('change', filterCards);
+
+      function filterCards() {
+        const searchTerm = searchInput.value.toLowerCase();
+        const dateValue = dateFilter.value; // e.g., "2023-10"
+
+        const filteredData = historyData.filter(item => {
+          const monthMatch = item.month.toLowerCase().includes(searchTerm) ||
+                           (item.notes || '').toLowerCase().includes(searchTerm);
+          const dateMatch = dateValue ? item.trade_date.startsWith(dateValue) : true;
+          return monthMatch && dateMatch;
+        });
+
+        renderCards(filteredData);
+      }
+
+      // Image Zoom Functionality
+      const modal = document.getElementById('myModal');
+      const modalImg = document.getElementById('img01');
+      const closeBtn = document.querySelector('.close');
+
+      container.addEventListener('click', (e) => {
+        const card = e.target.closest('.history-card');
+        if (card) {
+          const imgSrc = card.querySelector('.history-img').src;
+          modal.style.display = 'block';
+          modalImg.src = imgSrc;
+        }
+      });
+
+      closeBtn.addEventListener('click', () => modal.style.display = 'none');
+      modal.addEventListener('click', (e) => {
+        if (e.target !== modalImg) modal.style.display = 'none';
       });
     })();
   </script>
