@@ -5,8 +5,71 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Trade History • CBE VIP</title>
 
-  <!-- Auth guard -->
-  <script src="auth-guard.js"></script>
+  <!-- Supabase Client & Session Enforcement -->
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>
+  <script>
+    // Supabase initialization
+    const SUPA_URL = 'https://dapwpgvnfjcfqqhrpxla.supabase.co';
+    const SUPA_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImRhcHdwZ3ZuZmpjZnFxaHJweGxhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDcwNDA4ODgsImV4cCI6MjA2MjYxNjg4OH0.ICC0UsLlzJDNre7rFCeD3k6iVzo6jOJgn3PhABpEMsQ';
+    const supabase = window.supabase.createClient(SUPA_URL, SUPA_KEY);
+
+    (async function enforceSingleSession() {
+      // Check if user is logged in via localStorage (old dashboard compatibility)
+      const isLoggedIn = localStorage.getItem('isLoggedIn') === 'true';
+      if (!isLoggedIn) {
+        window.location.replace('login.html');
+        return;
+      }
+
+      // Grab stored values from sessionStorage and localStorage
+      const userId = sessionStorage.getItem('cbeUserId');
+      const localToken = localStorage.getItem('sessionToken');
+      if (!userId || !localToken) {
+        localStorage.removeItem('isLoggedIn');
+        sessionStorage.removeItem('cbeUserId');
+        localStorage.removeItem('session 
+   
+Token');
+        window.location.replace('login.html');
+        return;
+      }
+
+      try {
+        // Verify session token with Supabase
+        const { data: userData, error: userErr } = await supabase
+          .from('users')
+          .select('current_session_token')
+          .eq('id', userId)
+          .single();
+
+        if (userErr || !userData) {
+          throw new Error('User lookup failed');
+        }
+
+        if (userData.current_session_token !== localToken) {
+          localStorage.removeItem('isLoggedIn');
+          sessionStorage.removeItem('cbeUserId');
+          localStorage.removeItem('sessionToken');
+          window.location.replace('login.html');
+          return;
+        }
+      } catch (err) {
+        console.error('Session validation error:', err);
+        localStorage.removeItem('isLoggedIn');
+        sessionStorage.removeItem('cbeUserId');
+        localStorage.removeItem('sessionToken');
+        window.location.replace('login.html');
+      }
+    })();
+  </script>
+
+  <!-- Client-side Guard -->
+  <script>
+    if (localStorage.getItem('isLoggedIn') !== 'true') {
+      window.location.replace('login.html');
+    }
+  </script>
+
   <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;500;700&display=swap" rel="stylesheet"/>
 
   <style>
@@ -123,23 +186,16 @@
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js/dist/umd/supabase.min.js"></script>
   <script>
     (async () => {
-      // 1) Auth guard (also in auth-guard.js)
-      if (localStorage.getItem('isLoggedIn') !== 'true') {
-        window.location.href = 'admin-login.html?redirect=' +
-          encodeURIComponent(window.location.pathname);
-        return;
-      }
-
-      // 2) Theme
+      // Theme
       const savedTheme = localStorage.getItem('theme') || 'dark';
       document.documentElement.setAttribute('data-theme', savedTheme);
 
-      // 3) Supabase init
+      // Supabase init
       const SUPA_URL = 'https://dapwpgvnfjcfqqhrpxla.supabase.co';
       const SUPA_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImRhcHdwZ3ZuZmpjZnFxaHJweGxhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDcwNDA4ODgsImV4cCI6MjA2MjYxNjg4OH0.ICC0UsLlzJDNre7rFCeD3k6iVzo6jOJgn3PhABpEMsQ';
       const supabase = window.supabase.createClient(SUPA_URL, SUPA_KEY);
 
-      // 4) Fetch history
+      // Fetch history
       const { data, error } = await supabase
         .from('trade_history')
         .select('*')
@@ -157,7 +213,7 @@
         return;
       }
 
-      // 5) Render cards
+      // Render cards
       data.forEach(item => {
         const card = document.createElement('div');
         card.className = 'history-card';
