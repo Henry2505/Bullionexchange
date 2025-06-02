@@ -5,14 +5,12 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Dashboard • CBE Global</title>
 
-  <!-- Auth Guard (disabled) -->
-  <!--
+  <!-- Auth Guard (enabled) -->
   <script>
-    if (sessionStorage.getItem('loggedIn') !== 'true') {
+    if (localStorage.getItem('isLoggedIn') !== 'true') {
       window.location.replace('login.html');
     }
   </script>
-  -->
 
   <!-- Dependencies -->
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-QWTKZyjpPEjISv5WaRU9OFeRpok6YctnYmDr5pNlyT2bRjXh0JMhjY6hW+ALEwIH" crossorigin="anonymous">
@@ -635,42 +633,16 @@
       }
     }
 
-    // ─── SESSION VALIDATION ──────────────────────────────────────────────────
-    // (Disabled to keep page visible without redirect)
-    /*
-    async function checkSession() {
-      const localToken = localStorage.getItem('sessionToken');
-      if (!localToken) {
-        logout();
-        return;
-      }
-      const userId = sessionStorage.getItem('userId');
-      try {
-        const { data, error } = await supabase
-          .from('users')
-          .select('current_session_token')
-          .eq('id', userId)
-          .single();
-        if (error) throw error;
-        if (data.current_session_token !== localToken) {
-          logout();
-        }
-      } catch (err) {
-        console.error('Session error:', err);
-        addNotification('Session validation failed', 'critical');
-      }
-    }
-    */
-
     // ─── LOGOUT ──────────────────────────────────────────────────────────────
     async function logout() {
       try {
         await logActivity('logout');
+        localStorage.removeItem('isLoggedIn');
         localStorage.removeItem('sessionToken');
         sessionStorage.removeItem('loggedIn');
         sessionStorage.removeItem('userId');
         sessionStorage.removeItem('userName');
-        window.location.href = 'login.html?message=logged_out_elsewhere';
+        window.location.href = 'login.html?message=logged_out';
       } catch (err) {
         console.error('Logout error:', err);
       }
@@ -877,22 +849,6 @@
         }, { threshold: 0.1 }).observe(el);
       });
 
-      // Session check (disabled in order to prevent redirect)
-      // await checkSession();
-      // const userId = sessionStorage.getItem('userId');
-      // supabase
-      //   .channel(`users:id=eq.${userId}`)
-      //   .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'users', filter: `id=eq.${userId}` }, payload => {
-      //     const localToken = localStorage.getItem('sessionToken');
-      //     if (payload.new.current_session_token !== localToken) {
-      //       logout();
-      //     }
-      //   })
-      //   .subscribe(status => {
-      //     if (status === 'SUBSCRIBED') console.log('Realtime subscription active');
-      //   });
-
-      // setInterval(checkSession, 15000);
       document.getElementById('welcomeName').textContent = sessionStorage.getItem('userName') || 'Trader';
       await logActivity('login');
       loadDashboard();
