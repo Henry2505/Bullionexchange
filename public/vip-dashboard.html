@@ -6,115 +6,20 @@
   <title>Dashboard • CBE Global</title>
 
   <!-- ─────────────────────────────────────────────────────────────────────
-       0) SINGLE-SESSION ENFORCEMENT & AUTH GUARD
-       ─────────────────────────────────────────────────────────────────────
-       Calls checkSession() to verify:
-         • localStorage.isLoggedIn === 'true'
-         • sessionStorage.cbeUserId exists
-         • localStorage.sessionToken exists
-         • Supabase’s section_tokens.user_id = cbeUserId has token === localStorage.sessionToken
-       If any check fails, clear storage and redirect to login.html?message=logged_out_elsewhere.
-  -->
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>
-  <script>
-    // 0a) Initialize Supabase (exactly match your project)
-    const SUPA_URL = 'https://dapwpgvnfjcfqqhrpxla.supabase.co';
-    const SUPA_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJzI...'; // ← your anon/public key
-    const supabase = window.supabase.createClient(SUPA_URL, SUPA_KEY);
-
-    // 0b) Check both localStorage.isLoggedIn and sessionStorage.cbeUserId then validate token in DB
-    async function checkSession() {
-      const isLoggedIn  = localStorage.getItem('isLoggedIn') === 'true';
-      const cbeUserId   = sessionStorage.getItem('cbeUserId');
-      const localToken  = localStorage.getItem('sessionToken');
-
-      if (!isLoggedIn || !cbeUserId || !localToken) {
-        // Missing required keys → clear everything and redirect
-        localStorage.removeItem('isLoggedIn');
-        localStorage.removeItem('sessionToken');
-        sessionStorage.removeItem('cbeUserId');
-        sessionStorage.removeItem('userName');
-        window.location.replace('login.html?message=logged_out_elsewhere');
-        return;
-      }
-
-      try {
-        // Query section_tokens table for this user_id
-        const { data, error } = await supabase
-          .from('section_tokens')
-          .select('token')
-          .eq('user_id', cbeUserId)
-          .single();
-
-        if (error || !data) {
-          // Row missing or error → force logout
-          throw new Error(error?.message || 'Session lookup failed');
-        }
-
-        // If token mismatches, force logout
-        if (data.token !== localToken) {
-          localStorage.removeItem('isLoggedIn');
-          localStorage.removeItem('sessionToken');
-          sessionStorage.removeItem('cbeUserId');
-          sessionStorage.removeItem('userName');
-          window.location.replace('login.html?message=logged_out_elsewhere');
-        }
-      } catch (err) {
-        console.error('Session validation error:', err);
-        localStorage.removeItem('isLoggedIn');
-        localStorage.removeItem('sessionToken');
-        sessionStorage.removeItem('cbeUserId');
-        sessionStorage.removeItem('userName');
-        window.location.replace('login.html?message=logged_out_elsewhere');
-      }
-    }
-
-    // 0c) Subscribe to any updates on section_tokens for this user to catch “logged in elsewhere”
-    function subscribeToSessionChanges() {
-      const cbeUserId = sessionStorage.getItem('cbeUserId');
-      if (!cbeUserId) return;
-
-      supabase
-        .channel('section_tokens:' + cbeUserId)
-        .on(
-          'postgres_changes',
-          { event: 'UPDATE', schema: 'public', table: 'section_tokens', filter: `user_id=eq.${cbeUserId}` },
-          async payload => {
-            const newToken = payload.new.token;
-            const localToken = localStorage.getItem('sessionToken');
-            if (newToken !== localToken) {
-              alert('You have been logged out because your account was signed in elsewhere.');
-              localStorage.removeItem('isLoggedIn');
-              localStorage.removeItem('sessionToken');
-              sessionStorage.removeItem('cbeUserId');
-              sessionStorage.removeItem('userName');
-              window.location.replace('login.html?message=logged_out_elsewhere');
-            }
-          }
-        )
-        .subscribe();
-    }
-
-    // Immediately run checkSession on page load
-    window.addEventListener('DOMContentLoaded', () => {
-      checkSession();
-      subscribeToSessionChanges();
-    });
-  </script>
-
-  <!-- ─────────────────────────────────────────────────────────────────────
-       1) CLIENT-SIDE GUARD (extra check)
-       ─────────────────────────────────────────────────────────────────────
-       Even before the full Supabase check completes, we ensure isLoggedIn is set.
+       0) SIMPLE AUTH GUARD (NO TOKENS, NO RLS)
+       • Just ensure localStorage.isLoggedIn === 'true'
+       • And sessionStorage.cbeUserId exists
+       Otherwise redirect to login.html
   -->
   <script>
-    if (localStorage.getItem('isLoggedIn') !== 'true') {
+    if (localStorage.getItem('isLoggedIn') !== 'true' ||
+        !sessionStorage.getItem('cbeUserId')) {
       window.location.replace('login.html');
     }
   </script>
 
   <!-- ─────────────────────────────────────────────────────────────────────
-       2) FONTS, BOOTSTRAP & OTHER DEPENDENCIES
+       1) DEPENDENCIES
   -->
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css"
         rel="stylesheet"
@@ -124,6 +29,7 @@
         rel="stylesheet">
   <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;700&family=Orbitron:wght@400;700&display=swap"
         rel="stylesheet">
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>
   <script src="https://s3.tradingview.com/tv.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/particles.js@2.0.0/particles.min.js"></script>
   <script>
@@ -139,7 +45,7 @@
 
   <style>
     /* ---------------------------------------------------------
-       THEMES & VARIABLES
+       THEMES & VARIABLES (unchanged)
        --------------------------------------------------------- */
     :root[data-theme="dark"] {
       --bg: #121212;
@@ -531,24 +437,16 @@
           </a>
         </li>
         <li class="nav-item">
-          <a class="nav-link" href="signals.html">
-            <i class="bi-lightning me-2"></i>Signals
-          </a>
+          <a class="nav-link" href="signals.html"><i class="bi-lightning me-2"></i>Signals</a>
         </li>
         <li class="nav-item">
-          <a class="nav-link" href="CBE_trade_history_vip.html">
-            <i class="bi-clock-history me-2"></i>History
-          </a>
+          <a class="nav-link" href="CBE_trade_history_vip.html"><i class="bi-clock-history me-2"></i>History</a>
         </li>
         <li class="nav-item">
-          <a class="nav-link" href="CBE_trade_insights_vip.html">
-            <i class="bi-graph-up me-2"></i>Insights
-          </a>
+          <a class="nav-link" href="CBE_trade_insights_vip.html"><i class="bi-graph-up me-2"></i>Insights</a>
         </li>
         <li class="nav-item">
-          <a class="nav-link" href="#" onclick="downloadActivityLog()">
-            <i class="bi-download me-2"></i>Download Logs
-          </a>
+          <a class="nav-link" href="#" onclick="downloadActivityLog()"><i class="bi-download me-2"></i>Download Logs</a>
         </li>
       </ul>
     </div>
@@ -712,7 +610,7 @@
   <audio id="critical-notif-sound" src="alert.mp3" preload="auto"></audio>
 
   <script>
-    // ─── SUPABASE INIT ──────────────────────────────────────────────────────
+    // ─── SUPABASE INIT (only to read signals, activity, etc.) ─────────────────
     const SUPA_URL = 'https://dapwpgvnfjcfqqhrpxla.supabase.co';
     const SUPA_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJzI...'; // ← your anon/public key
     const supabase = window.supabase.createClient(SUPA_URL, SUPA_KEY);
@@ -840,7 +738,6 @@
     async function logout() {
       await logActivity('logout');
       localStorage.removeItem('isLoggedIn');
-      localStorage.removeItem('sessionToken');
       sessionStorage.removeItem('cbeUserId');
       sessionStorage.removeItem('userName');
       window.location.href = 'login.html?message=logged_out';
@@ -970,7 +867,7 @@
       const tbody = document.getElementById('calendar-body');
       tbody.innerHTML = '<tr><td colspan="7"><div class="spinner"></div></td></tr>';
       try {
-        // Mock data (replace with Financial Modeling Prep API if desired)
+        // Mock data (replace if you have a real API)
         const events = [
           { date: "06-02-2025", time: "08:30", currency: "USD", event: "Non-Farm Payrolls", impact: "High", actual: "", previous: "254K" },
           { date: "06-02-2025", time: "10:00", currency: "EUR", event: "CPI Flash Estimate", impact: "Medium", actual: "", previous: "2.0%" },
@@ -1026,7 +923,7 @@
         }, { threshold: 0.1 }).observe(el);
       });
 
-      // Set welcome name
+      // Welcome name
       document.getElementById('welcomeName').textContent = sessionStorage.getItem('userName') || 'Trader';
 
       // Log this login action
@@ -1074,12 +971,11 @@
 
       // ─── SILENT REFRESH EVERY 2 MINUTES ───────────────────────────────────
       setInterval(() => {
-        checkSession();      // Re-verify single-session enforcement
-        loadDashboard();     // Refresh dashboard data
-        loadGoldNews();      // Refresh news
-        loadEconCalendar();  // Refresh calendar
-        loadRecentActivity();// Refresh activity log
-        // TradingView updates itself—no need to re-init chart every 2 minutes
+        // We skip session recheck entirely (so it won’t log you out). Just refresh data.
+        loadDashboard();
+        loadGoldNews();
+        loadEconCalendar();
+        loadRecentActivity();
       }, 120000);
     });
   </script>
