@@ -6,6 +6,7 @@
   <title>Login • Chukwuemeka Bullion Exchange</title>
   <meta name="description" content="Login to Chukwuemeka Bullion Exchange’s VIP trading community."/>
   <style>
+    /* (all of your existing CSS is unchanged) */
     :root[data-theme="dark"] {
       --bg: #121212; 
       --text: #f0f0f0; 
@@ -144,7 +145,7 @@
     const loginCard = document.getElementById('login-card');
     const toggleBtn  = document.getElementById('theme-toggle');
     window.addEventListener('DOMContentLoaded', () => {
-      // Fade-in the card
+      // Fade-in animation for the login card
       loginCard.classList.add('visible');
 
       // Restore saved theme (dark/light)
@@ -152,7 +153,7 @@
       document.documentElement.setAttribute('data-theme', savedTheme);
       toggleBtn.textContent = savedTheme === 'dark' ? '🌞' : '🌜';
 
-      // If redirected with message=logged_out_elsewhere, show warning
+      // If redirected with message=logged_out_elsewhere, show a warning
       const urlParams = new URLSearchParams(window.location.search);
       if (urlParams.get('message') === 'logged_out_elsewhere') {
         const alertDiv = document.getElementById('login-alert');
@@ -191,7 +192,7 @@
       const password = document.getElementById('password').value;
 
       try {
-        // 1) Fetch user by email
+        // ─── 4.1) Fetch user by email ───────────────────────────────────────────────
         const { data: user, error: fetchError } = await sb
           .from('users')
           .select('id, name, email, password, status')
@@ -201,21 +202,20 @@
         if (fetchError) throw fetchError;
         if (!user) throw new Error('No account found for that email.');
 
-        // 2) Password check (in a real setup, hash+salt comparison should be used; this assumes you store plaintext)
+        // ─── 4.2) Password check ────────────────────────────────────────────────────
+        // (If you store hashed passwords, replace this with your hashing logic.)
         if (user.password !== password) {
           throw new Error('Invalid login credentials.');
         }
 
-        // 3) Approval check
+        // ─── 4.3) Approval check ────────────────────────────────────────────────────
         if (String(user.status).toLowerCase() !== 'approved') {
           throw new Error('Your account is not yet approved—please check back soon.');
         }
 
-        // 4) Device Fingerprint Check
-        //    If this is the first known device for this email, store it.
-        //    If it changes, send a Netlify Function alert.
-        const deviceKey    = `cbeDevice_${email}`;
-        const savedDevice  = localStorage.getItem(deviceKey);
+        // ─── 4.4) Device Fingerprint Check ─────────────────────────────────────────
+        const deviceKey     = `cbeDevice_${email}`;
+        const savedDevice   = localStorage.getItem(deviceKey);
         const currentDevice = navigator.userAgent;
 
         if (!savedDevice) {
@@ -224,12 +224,12 @@
           // Device changed: overwrite stored device and fire off an alert
           localStorage.setItem(deviceKey, currentDevice);
           const payload = {
-            email: user.email,
-            name:  user.name,
+            email:  user.email,
+            name:   user.name,
             device: currentDevice,
-            time: new Date().toLocaleString("en-US", { timeZone: "Africa/Lagos" })
+            time:   new Date().toLocaleString("en-US", { timeZone: "Africa/Lagos" })
           };
-          // Make sure you have a Netlify Function at /.netlify/functions/send-login-alert
+          // Ensure you have a Netlify Function at /.netlify/functions/send-login-alert
           await fetch("/.netlify/functions/send-login-alert", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
@@ -237,28 +237,57 @@
           });
         }
 
-        // 5) Generate and store a new session token
+        // ─── 4.5) Generate a new session token ──────────────────────────────────────
         const sessionToken = uuidv4();
 
-        //    Upsert into your existing section_tokens table:
-        //    (Replace 'section_tokens' with exactly the name of your Supabase table.)
-        const { error: tokenError } = await sb
+        // ─── 4.6) Insert or Update into section_tokens ─────────────────────────────
+        // First, check if a row already exists for this user_id
+        const { data: existingRow, error: selectErr } = await sb
           .from('section_tokens')
-          .upsert({ user_id: user.id, token: sessionToken }, { onConflict: 'user_id' });
-        if (tokenError) throw new Error('Failed to update session token: ' + tokenError.message);
+          .select('user_id')
+          .eq('user_id', user.id)
+          .single();
 
-        // 6) Store session data in localStorage/sessionStorage using the keys the dashboard expects:
+        if (selectErr && selectErr.code !== 'PGRST116') {
+          // PGRST116 means “No rows found” in this context; any other error is fatal
+          throw selectErr;
+        }
+
+        if (existingRow) {
+          // If a row already exists, do an UPDATE
+          const { error: updateError } = await sb
+            .from('section_tokens')
+            .update({ token: sessionToken })
+            .eq('user_id', user.id);
+
+          if (updateError) {
+            console.error("Supabase UPDATE error:", updateError);
+            throw new Error('Failed to update session token: ' + updateError.message);
+          }
+        } else {
+          // If no row exists yet, do an INSERT
+          const { error: insertError } = await sb
+            .from('section_tokens')
+            .insert({ user_id: user.id, token: sessionToken });
+
+          if (insertError) {
+            console.error("Supabase INSERT error:", insertError);
+            throw new Error('Failed to insert session token: ' + insertError.message);
+          }
+        }
+
+        // ─── 4.7) Store session data in localStorage/sessionStorage ───────────────
         localStorage.setItem('isLoggedIn', 'true');
         localStorage.setItem('sessionToken', sessionToken);
         sessionStorage.setItem('userId', user.id);      // must match dashboard’s checkSession()
         sessionStorage.setItem('userName', user.name);
 
-        // 7) Redirect to the VIP dashboard
+        // ─── 4.8) Redirect to the VIP dashboard ───────────────────────────────────
         window.location.assign('vip-dashboard.html');
       } catch (err) {
         console.error("Login error:", err);
         alertDiv.style.color = "var(--error-color)";
-        alertDiv.textContent = err.message;
+        alertDiv.textContent = err.message || "An unexpected error occurred.";
       }
     });
   </script>
