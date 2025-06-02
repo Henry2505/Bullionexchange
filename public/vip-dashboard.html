@@ -772,7 +772,7 @@
       const tbody = document.getElementById('calendar-body');
       tbody.innerHTML = '<tr><td colspan="7"><div class="spinner"></div></td></tr>';
       try {
-        // Mock data (replace with Financial Modeling Prep API)
+        // Mock data (replace with Financial Modeling Prep API if desired)
         const events = [
           { date: "06-02-2025", time: "08:30", currency: "USD", event: "Non-Farm Payrolls", impact: "High", actual: "", previous: "254K" },
           { date: "06-02-2025", time: "10:00", currency: "EUR", event: "CPI Flash Estimate", impact: "Medium", actual: "", previous: "2.0%" },
@@ -814,12 +814,70 @@
       if (sound) sound.play().catch(() => console.error('Audio error'));
     }
 
+    // ─── SESSION CHECK (single-login enforcement) ────────────────────────────
+    async function checkSession() {
+      // sessionToken should have been set in sessionStorage at login time
+      const userId = sessionStorage.getItem('userId');
+      const localToken = localStorage.getItem('sessionToken');
+
+      if (!userId || !localToken) {
+        // Missing token or userId → force logout
+        await logout();
+        return;
+      }
+
+      // Query Supabase for the current token in section_tokens table
+      const { data, error } = await supabase
+        .from('section_tokens')
+        .select('token')
+        .eq('user_id', userId)
+        .limit(1)
+        .single();
+
+      if (error || !data) {
+        // Table not found or row missing → force logout
+        console.error('Session check error:', error);
+        await logout();
+        return;
+      }
+
+      // If the token in DB no longer matches the one in localStorage, force logout
+      if (data.token !== localToken) {
+        alert('You have been logged out because your account was signed in elsewhere.');
+        await logout();
+      }
+    }
+
+    // ─── REAL-TIME SUBSCRIPTION ON section_tokens ───────────────────────────
+    function subscribeToSessionChanges() {
+      const userId = sessionStorage.getItem('userId');
+      if (!userId) return;
+
+      supabase
+        .channel('section_tokens:' + userId)
+        .on(
+          'postgres_changes',
+          { event: 'UPDATE', schema: 'public', table: 'section_tokens', filter: `user_id=eq.${userId}` },
+          async payload => {
+            const newToken = payload.new.token;
+            const localToken = localStorage.getItem('sessionToken');
+            // If a new token appears that doesn’t match local, force logout
+            if (newToken !== localToken) {
+              alert('You have been logged out because your account was signed in elsewhere.');
+              await logout();
+            }
+          }
+        )
+        .subscribe();
+    }
+
     // ─── ON LOAD ─────────────────────────────────────────────────────────────
     document.addEventListener('DOMContentLoaded', async () => {
-      // Auto-refresh every 2 minutes
-      setInterval(() => location.reload(), 120000);
+      // First: verify that our sessionToken is still valid (single-login enforcement)
+      await checkSession();
+      subscribeToSessionChanges();
 
-      // Particles.js
+      // Init Particles.js
       particlesJS('particles-js', {
         particles: {
           number: { value: 30, density: { enable: true, value_area: 800 } },
@@ -849,8 +907,13 @@
         }, { threshold: 0.1 }).observe(el);
       });
 
+      // Welcome name
       document.getElementById('welcomeName').textContent = sessionStorage.getItem('userName') || 'Trader';
+
+      // Log login
       await logActivity('login');
+
+      // Initial data load
       loadDashboard();
       initChart();
       loadGoldNews();
@@ -875,7 +938,7 @@
       document.getElementById('convert-btn').addEventListener('click', convertCurrency);
       document.getElementById('export-logs').addEventListener('click', downloadActivityLog);
 
-      // Realtime subscriptions (only for new signals & activity logs)
+      // Realtime subscriptions for new signals & activity logs
       supabase
         .channel('signals')
         .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'signals' }, payload => {
@@ -889,6 +952,20 @@
           loadRecentActivity();
         })
         .subscribe();
+
+      // ─── SILENT REFRESH EVERY 2 MINUTES ───────────────────────────────────
+      setInterval(() => {
+        // Re-fetch everything without reloading the page:
+        checkSession();            // In case the session was invalidated in the meantime
+        loadDashboard();           // Update signals count, watchlist, gold change
+        loadGoldNews();            // Update news widget
+        loadEconCalendar();        // Update economic calendar
+        loadRecentActivity();      // Update recent activity log
+        // We do NOT call initChart() every 2 minutes, since TradingView has its own realtime. 
+        // But if you want to re-draw the chart periodically, uncomment:
+        // const activeBtn = document.querySelector('.chart-toggle button.active');
+        // initChart(activeBtn ? activeBtn.dataset.interval : '240');
+      }, 120000);
     });
   </script>
 </body>
