@@ -3,25 +3,25 @@
 <head>
   <meta charset="UTF-8"/>
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>VIP Dashboard • CBE</title>
+  <title>VIP Signals • CBE</title>
 
-  <!-- CLIENT-SIDE GUARD (allows access if either sessionStorage or persisted localStorage tokens exist) -->
+  <!--
+    GUARD SCRIPT: 
+    1) Look for localStorage.cbeUserId & localStorage.cbeSessionToken.
+    2) If both exist, copy them into sessionStorage and allow the page to load.
+    3) If either is missing, redirect immediately to login.html.
+  -->
   <script>
-    // If there's no “loggedIn” flag in sessionStorage, but there is a stored sessionToken & userId in localStorage,
-    // restore sessionStorage so that navigating from the VIP Dashboard still works.
-    const sessionLoggedIn = sessionStorage.getItem('cbeLoggedIn') === 'true';
-    const storedToken    = localStorage.getItem('cbeSessionToken');
     const storedUserId   = localStorage.getItem('cbeUserId');
+    const storedToken    = localStorage.getItem('cbeSessionToken');
 
-    if (!sessionLoggedIn) {
-      if (storedToken && storedUserId) {
-        // Restore the session flags in sessionStorage
-        sessionStorage.setItem('cbeLoggedIn', 'true');
-        sessionStorage.setItem('cbeUserId', storedUserId);
-      } else {
-        // No valid session anywhere → force redirect to login
-        window.location.replace('login.html');
-      }
+    if (!storedUserId || !storedToken) {
+      // No valid localStorage credentials → force redirect
+      window.location.replace('login.html');
+    } else {
+      // Restore sessionStorage so subsequent checks (e.g. logout) work
+      sessionStorage.setItem('cbeLoggedIn', 'true');
+      sessionStorage.setItem('cbeUserId', storedUserId);
     }
   </script>
 
@@ -34,29 +34,31 @@
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 
   <style>
+    /* (All your existing CSS remains unchanged below…) */
+
     /* Theme Variables */
     :root[data-theme="dark"] {
-      --bg: #000000; /* Pure black background */
-      --text: #ffd700; /* Gold text for visibility */
+      --bg: #000;
+      --text: #ffd700;
       --gold: #ffd700;
       --gold-dark: #cca300;
-      --glass: rgba(255, 255, 255, 0.1);
-      --shadow: rgba(0, 0, 0, 0.5);
-      --text-light: #e6b800; /* Lighter gold for secondary text */
-      --text-muted: #ffd700; /* Bright gold for better visibility */
+      --glass: rgba(255,255,255,0.1);
+      --shadow: rgba(0,0,0,0.5);
+      --text-light: #e6b800;
+      --text-muted: #ffd700;
       --success: #4caf50;
       --error: #e57373;
-      --accent: #1e1e1e; /* Subtle dark accent for contrast */
-      --buy: #4caf50; /* Green for buy signals */
-      --sell: #e57373; /* Red for sell signals */
+      --accent: #1e1e1e;
+      --buy: #4caf50;
+      --sell: #e57373;
     }
     :root[data-theme="light"] {
       --bg: #f5f5f5;
       --text: #333;
       --gold: #cca300;
       --gold-dark: #b58900;
-      --glass: rgba(0, 0, 0, 0.08);
-      --shadow: rgba(0, 0, 0, 0.15);
+      --glass: rgba(0,0,0,0.08);
+      --shadow: rgba(0,0,0,0.15);
       --text-light: #555;
       --text-muted: #666;
       --success: #388e3c;
@@ -66,7 +68,6 @@
       --sell: #d32f2f;
     }
 
-    /* Reset & Base */
     * { margin: 0; padding: 0; box-sizing: border-box; }
     html { scroll-behavior: smooth; }
     body {
@@ -104,14 +105,10 @@
       white-space: nowrap;
     }
     html::before {
-      top: 20%;
-      left: 10%;
-      transform: rotate(-45deg);
+      top: 20%; left: 10%; transform: rotate(-45deg);
     }
     html::after {
-      bottom: 20%;
-      right: 10%;
-      transform: rotate(45deg);
+      bottom: 20%; right: 10%; transform: rotate(45deg);
     }
     .container::before, .container::after {
       content: "Reselling of this signal is prohibited and punishable by law";
@@ -124,14 +121,10 @@
       z-index: 900;
     }
     .container::before {
-      top: 10%;
-      left: 5%;
-      transform: rotate(-30deg);
+      top: 10%; left: 5%; transform: rotate(-30deg);
     }
     .container::after {
-      bottom: 10%;
-      right: 5%;
-      transform: rotate(30deg);
+      bottom: 10%; right: 5%; transform: rotate(30deg);
     }
 
     /* ===========================
@@ -139,11 +132,10 @@
        =========================== */
     nav {
       position: fixed;
-      top: 0;
-      left: 0;
+      top: 0; left: 0;
       width: 100%;
       height: 60px;
-      background: rgba(30, 30, 30, 0.75);
+      background: rgba(30,30,30,0.75);
       backdrop-filter: blur(10px);
       display: flex;
       align-items: center;
@@ -153,19 +145,19 @@
       z-index: 1000;
     }
     nav .logo {
-      font-size: 1.25rem; /* Reduced from 1.35rem to fit bell */
+      font-size: 1.25rem;
       font-weight: 700;
       color: var(--gold);
       letter-spacing: 1px;
-      padding: 5px 10px; /* Reduced padding */
+      padding: 5px 10px;
       background: linear-gradient(45deg, var(--gold), var(--gold-dark));
       border-radius: 8px;
-      box-shadow: 0 3px 10px rgba(255, 215, 0, 0.3);
+      box-shadow: 0 3px 10px rgba(255,215,0,0.3);
       transition: transform 0.3s ease, box-shadow 0.3s ease;
     }
     nav .logo:hover {
       transform: scale(1.04);
-      box-shadow: 0 5px 14px rgba(255, 215, 0, 0.5);
+      box-shadow: 0 5px 14px rgba(255,215,0,0.5);
     }
     nav .nav-links {
       display: flex;
@@ -174,7 +166,7 @@
     }
     nav .nav-links button {
       background: var(--glass);
-      border: 1px solid rgba(255, 215, 0, 0.2);
+      border: 1px solid rgba(255,215,0,0.2);
       padding: 6px 12px;
       border-radius: 6px;
       font-weight: 500;
@@ -186,11 +178,10 @@
       background: linear-gradient(45deg, var(--gold), var(--gold-dark));
       color: #000;
       transform: translateY(-1px);
-      box-shadow: 0 3px 12px rgba(255, 215, 0, 0.3);
+      box-shadow: 0 3px 12px rgba(255,215,0,0.3);
     }
     nav .theme-toggle {
-      background: none;
-      border: none;
+      background: none; border: none;
       font-size: 1.6rem;
       color: var(--text);
       cursor: pointer;
@@ -200,7 +191,6 @@
       transform: rotate(180deg);
     }
 
-    /* Adjust container top spacing to avoid overlap */
     .container {
       margin-top: 70px;
       width: 100%;
@@ -209,7 +199,6 @@
       position: relative;
     }
 
-    /* Section Headings */
     .section-title {
       font-family: 'Poppins', sans-serif;
       font-size: 2.8rem;
@@ -219,7 +208,7 @@
       margin: 2rem 0 1.5rem;
       text-transform: uppercase;
       letter-spacing: 2px;
-      text-shadow: 0 2px 10px rgba(255, 215, 0, 0.3);
+      text-shadow: 0 2px 10px rgba(255,215,0,0.3);
     }
     .section-title .update-note {
       font-size: 1rem;
@@ -236,7 +225,7 @@
       padding: 2.5rem;
       border-radius: 20px;
       box-shadow: 0 8px 30px var(--shadow);
-      border: 1px solid rgba(255, 215, 0, 0.15);
+      border: 1px solid rgba(255,215,0,0.15);
       margin-bottom: 2rem;
       max-width: 100%;
     }
@@ -245,7 +234,7 @@
       justify-content: space-between;
       align-items: center;
       padding-bottom: 1rem;
-      border-bottom: 1px solid rgba(255, 215, 0, 0.2);
+      border-bottom: 1px solid rgba(255,215,0,0.2);
     }
     .signal-header h2 {
       font-size: 1.8rem;
@@ -255,8 +244,7 @@
     .signal-sell { color: var(--sell); }
     .signal-header .time { color: var(--text-light); font-size: 1rem; }
     .signal-header .refresh-btn {
-      background: none;
-      border: none;
+      background: none; border: none;
       color: var(--gold);
       font-size: 1.5rem;
       cursor: pointer;
@@ -271,7 +259,7 @@
     }
     .detail {
       background: var(--accent);
-      border: 1px solid rgba(255, 215, 0, 0.2);
+      border: 1px solid rgba(255,215,0,0.2);
       border-radius: 8px;
       padding: 12px 16px;
       display: flex;
@@ -280,8 +268,8 @@
       transition: all 0.3s ease;
     }
     .detail:hover {
-      background: rgba(255, 215, 0, 0.15);
-      box-shadow: 0 4px 15px rgba(255, 215, 0, 0.3);
+      background: rgba(255,215,0,0.15);
+      box-shadow: 0 4px 15px rgba(255,215,0,0.3);
     }
     .detail span {
       font-weight: 500;
@@ -300,7 +288,7 @@
     .copy-btn:hover {
       background: linear-gradient(45deg, var(--gold-dark), var(--gold));
       transform: translateY(-2px);
-      box-shadow: 0 4px 15px rgba(255, 215, 0, 0.3);
+      box-shadow: 0 4px 15px rgba(255,215,0,0.3);
     }
     .admin-note {
       background: var(--glass);
@@ -313,7 +301,7 @@
       font-size: 0.95rem;
     }
     .loader {
-      border: 4px solid rgba(255, 215, 0, 0.2);
+      border: 4px solid rgba(255,215,0,0.2);
       border-top: 4px solid var(--gold);
       border-radius: 50%;
       width: 36px;
@@ -327,7 +315,7 @@
     #gold-chart {
       background: var(--glass);
       backdrop-filter: blur(15px);
-      border: 1px solid rgba(255, 215, 0, 0.15);
+      border: 1px solid rgba(255,215,0,0.15);
       border-radius: 20px;
       box-shadow: 0 8px 30px var(--shadow);
       margin-bottom: 2rem;
@@ -343,15 +331,14 @@
       width: 100% !important;
       height: 100% !important;
       position: absolute;
-      top: 0;
-      left: 0;
+      top: 0; left: 0;
     }
 
     /* Gold News */
     #gold-news {
       background: var(--glass);
       backdrop-filter: blur(15px);
-      border: 1px solid rgba(255, 215, 0, 0.15);
+      border: 1px solid rgba(255,215,0,0.15);
       border-radius: 20px;
       box-shadow: 0 8px 30px var(--shadow);
       margin-bottom: 2rem;
@@ -360,19 +347,18 @@
     }
     #gold-news ul {
       list-style: none;
-      margin: 0;
-      padding: 0;
+      margin: 0; padding: 0;
       height: 400px;
       overflow-y: auto;
     }
     #gold-news li {
       padding: 1.2rem;
-      border-bottom: 1px solid rgba(255, 215, 0, 0.05);
+      border-bottom: 1px solid rgba(255,215,0,0.05);
       transition: all 0.3s ease;
     }
     #gold-news li:hover {
-      background: rgba(255, 215, 0, 0.15);
-      box-shadow: 0 4px 15px rgba(255, 215, 0, 0.3);
+      background: rgba(255,215,0,0.15);
+      box-shadow: 0 4px 15px rgba(255,215,0,0.3);
     }
     #gold-news a {
       color: var(--text);
@@ -393,7 +379,7 @@
     #calendar-widget {
       background: var(--glass);
       backdrop-filter: blur(15px);
-      border: 1px solid rgba(255, 215, 0, 0.15);
+      border: 1px solid rgba(255,215,0,0.15);
       border-radius: 20px;
       box-shadow: 0 8px 30px var(--shadow);
       margin-bottom: 2rem;
@@ -416,13 +402,12 @@
       text-transform: uppercase;
       letter-spacing: 1px;
       position: sticky;
-      top: 0;
-      z-index: 2;
+      top: 0; z-index: 2;
     }
     #calendar-widget td {
       padding: 1.2rem;
       background: var(--accent);
-      border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+      border-bottom: 1px solid rgba(255,255,255,0.05);
       vertical-align: middle;
       border-radius: 8px;
     }
@@ -431,7 +416,7 @@
       border-radius: 12px;
     }
     #calendar-widget tbody tr:hover {
-      background: rgba(255, 215, 0, 0.15);
+      background: rgba(255,215,0,0.15);
       box-shadow: 0 6px 20px var(--shadow);
       transform: translateY(-3px);
     }
@@ -449,27 +434,16 @@
       color: var(--text-light);
       font-size: 0.9rem;
       background: var(--glass);
-      border-top: 1px solid rgba(255, 215, 0, 0.2);
+      border-top: 1px solid rgba(255,215,0,0.2);
       width: 100%;
     }
 
     /* Responsive */
     @media (max-width: 768px) {
-      nav {
-        padding: 0 4vw;
-        height: 55px;
-      }
-      nav .logo {
-        font-size: 1.2rem;
-        padding: 5px 10px;
-      }
-      nav .nav-links button {
-        padding: 5px 10px;
-        font-size: 0.9rem;
-      }
-      nav .theme-toggle {
-        font-size: 1.4rem;
-      }
+      nav { padding: 0 4vw; height: 55px; }
+      nav .logo { font-size: 1.2rem; padding: 5px 10px; }
+      nav .nav-links button { padding: 5px 10px; font-size: 0.9rem; }
+      nav .theme-toggle { font-size: 1.4rem; }
       .container { margin-top: 65px; padding: 0 4vw; }
       .section-title { font-size: 2rem; }
       .signal-card { padding: 1.5rem; }
@@ -481,21 +455,10 @@
       .container::before, .container::after { font-size: 1.2rem; }
     }
     @media (max-width: 576px) {
-      nav {
-        padding: 0 3vw;
-        height: 50px;
-      }
-      nav .logo {
-        font-size: 1.1rem;
-        padding: 4px 8px;
-      }
-      nav .nav-links button {
-        padding: 4px 8px;
-        font-size: 0.8rem;
-      }
-      nav .theme-toggle {
-        font-size: 1.2rem;
-      }
+      nav { padding: 0 3vw; height: 50px; }
+      nav .logo { font-size: 1.1rem; padding: 4px 8px; }
+      nav .nav-links button { padding: 4px 8px; font-size: 0.8rem; }
+      nav .theme-toggle { font-size: 1.2rem; }
       .signal-header { flex-direction: column; gap: 12px; }
       .signal-header h2 { font-size: 1.3rem; }
       .detail { flex-direction: column; gap: 8px; text-align: center; }
@@ -634,26 +597,23 @@
 
     // ─── 4) AUTH: ENSURE SINGLE BROWSER SESSION ─────────────────────────────────
     async function checkSession() {
-      const userId   = sessionStorage.getItem('cbeUserId');
-      const localToken = localStorage.getItem('cbeSessionToken');
-      if (!userId || !localToken) {
+      const userId     = sessionStorage.getItem('cbeUserId');
+      const storedToken = localStorage.getItem('cbeSessionToken');
+      if (!userId || !storedToken) {
         logout();
         return;
       }
-
       try {
         const { data, error } = await supabase
           .from('users')
           .select('current_session_token')
           .eq('id', userId)
           .single();
-
         if (error || !data) {
           logout();
           return;
         }
-
-        if (data.current_session_token !== localToken) {
+        if (data.current_session_token !== storedToken) {
           // Session token mismatch → logged in elsewhere
           logout();
         }
@@ -664,9 +624,9 @@
     }
 
     function subscribeToSessionChanges() {
-      const userId   = sessionStorage.getItem('cbeUserId');
-      const localToken = localStorage.getItem('cbeSessionToken');
-      if (!userId || !localToken) return;
+      const userId     = sessionStorage.getItem('cbeUserId');
+      const storedToken = localStorage.getItem('cbeSessionToken');
+      if (!userId || !storedToken) return;
 
       supabase
         .channel(`users:id=eq.${userId}`)
@@ -825,7 +785,7 @@
         tbody.innerHTML = '';
         events.forEach(ev => {
           const tr = document.createElement('tr');
-          ['date', 'time', 'currency', 'event', 'impact', 'actual', 'previous'].forEach(key => {
+          ['date','time','currency','event','impact','actual','previous'].forEach(key => {
             const td = document.createElement('td');
             td.textContent = ev[key] || '-';
             tr.appendChild(td);
@@ -840,9 +800,9 @@
 
     // ─── 11) INIT: Load everything & enforce single session ──────────────────
     window.addEventListener('DOMContentLoaded', () => {
-      // 1) Check session on first load
+      // 1) Immediately validate that localStorage still matches Supabase
       checkSession();
-      // 2) Subscribe to session changes to force logout if needed
+      // 2) Subscribe to Supabase changes so that if someone else logs in, we forcibly log out here
       subscribeToSessionChanges();
 
       // Apply slide-in animations
@@ -866,11 +826,10 @@
       supabase
         .from('signals')
         .on('INSERT', async payload => {
-          // Immediately load latest (which will ring if ID changed)
+          // Immediately load latest (which rings if ID changed)
           loadLatestSignal();
 
           try {
-            // Lookup current user’s email & name to notify them via Netlify function
             const currentUserId = sessionStorage.getItem('cbeUserId');
             if (!currentUserId) return;
 
