@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Dashboard • CBE Global</title>
 
-  <!-- Auth Guard (enabled) -->
+  <!-- Auth Guard -->
   <script>
     if (localStorage.getItem('isLoggedIn') !== 'true') {
       window.location.replace('login.html');
@@ -650,6 +650,11 @@
 
     // ─── LOAD DASHBOARD ──────────────────────────────────────────────────────
     async function loadDashboard() {
+      // Reinforce login state
+      if (localStorage.getItem('isLoggedIn') !== 'true') {
+        window.location.href = 'login.html';
+        return;
+      }
       try {
         const today = new Date().toISOString().split('T')[0];
         const { count, error: signalError } = await supabase
@@ -848,6 +853,12 @@
           });
         }, { threshold: 0.1 }).observe(el);
       });
+
+      // Reinforce login state
+      if (localStorage.getItem('isLoggedIn') !== 'true') {
+        window.location.href = 'login.html';
+        return;
+      }
 
       document.getElementById('welcomeName').textContent = sessionStorage.getItem('userName') || 'Trader';
       await logActivity('login');
