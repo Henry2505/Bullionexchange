@@ -561,7 +561,9 @@
   <!-- Audio element for new‐signal alert -->
   <audio id="alertSound" src="alert.mp3" preload="auto"></audio>
 
-  <!-- UPDATED NAVIGATION -->
+  <!-- ─────────────────────────────────────────────────────────────────────
+       NAVIGATION
+  -->
   <nav class="slide-in">
     <div class="logo" onclick="location.href='vip-dashboard.html'">
       CBE VIP Dashboard
@@ -625,14 +627,14 @@
   <footer class="slide-in">© 2025 CBE – Chukwuemeka Bullion Exchange. All rights reserved.</footer>
 
   <!-- ─────────────────────────────────────────────────────────────────────
-       2) MAIN SCRIPT: Supabase initialization, load/render signal,
-          subscribe for new inserts, plus news & calendar auto‐refresh
+       MAIN SCRIPT: Supabase initialization, load/render signal,
+       subscribe for new inserts, plus news & calendar auto‐refresh
   -->
   <script>
     // ─── A) INITIALIZE SUPABASE with your exact URL & full anon key ─────────
     const SUPA_URL = 'https://dapwpgvnfjcfqqhrpxla.supabase.co';
     const SUPA_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJzI...'; 
-    // ← **Please paste the full anon/public key here, exactly as in your dashboard.**
+    // ← **Paste the full anon/public key here, exactly as in your dashboard**
     const supabase = window.supabase.createClient(SUPA_URL, SUPA_KEY);
 
     // ─── B) TRADINGVIEW CHART INITIALIZATION ─────────────────────────────────
@@ -705,6 +707,7 @@
           .limit(1);
 
         if (error) throw error;
+
         if (!signals || signals.length === 0) {
           // No signals exist
           card.innerHTML = `
@@ -715,6 +718,7 @@
         }
 
         const sig = signals[0];
+
         // If we've loaded one before, and the ID has changed, ring the bell
         if (lastSignalId !== null && sig.id !== lastSignalId) {
           ringBell();
@@ -842,7 +846,7 @@
 
     // ─── J) ONCE DOM IS READY: run initial loads & subscribe ───────────────────
     document.addEventListener('DOMContentLoaded', () => {
-      // Fade‐in slide‐in elements
+      // 1) Fade‐in slide‐in elements
       document.querySelectorAll('.slide-in').forEach(el => {
         new IntersectionObserver((entries, obs) => {
           entries.forEach(e => {
@@ -854,21 +858,25 @@
         }, { threshold: 0.2 }).observe(el);
       });
 
-      // 1) Chart, 2) Latest Signal, 3) News, 4) Calendar
+      // 2) Initial loads
       initTradingViewChart();
       loadLatestSignal();
       loadGoldNews();
       loadEconCalendar();
 
-      // Subscribe to INSERTs on "signals" → reloadLatestSignal
+      // 3) Real‐time subscription (v2 syntax) → whenever a new row is inserted in "signals", reload latest
       supabase
-        .from('signals')
-        .on('INSERT', () => {
-          loadLatestSignal();
-        })
+        .channel('public:signals')
+        .on(
+          'postgres_changes',
+          { event: 'INSERT', schema: 'public', table: 'signals' },
+          () => {
+            loadLatestSignal();
+          }
+        )
         .subscribe();
 
-      // Refresh news & calendar every 60 seconds
+      // 4) Refresh news & calendar every 60 seconds
       setInterval(loadGoldNews, 60000);
       setInterval(loadEconCalendar, 60000);
     });
