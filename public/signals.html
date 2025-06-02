@@ -6,11 +6,10 @@
   <title>VIP Signal • CBE</title>
 
   <!-- ─────────────────────────────────────────────────────────────────────
-       0) SIMPLE AUTH GUARD:
-          • If localStorage.isLoggedIn !== 'true' OR sessionStorage.cbeUserId is missing,
-            redirect back to login.html immediately.
+       0) AUTH GUARD: If not truly logged in, bounce back to login.html
   -->
   <script>
+    // If either localStorage.isLoggedIn ≠ 'true' OR sessionStorage.cbeUserId is missing, redirect.
     if (
       localStorage.getItem('isLoggedIn') !== 'true' ||
       !sessionStorage.getItem('cbeUserId')
@@ -20,7 +19,7 @@
   </script>
 
   <!-- ─────────────────────────────────────────────────────────────────────
-       1) DEPENDENCIES: Fonts, Bootstrap, Supabase, TradingView, etc.
+       1) DEPENDENCIES: Fonts, Bootstrap, Icons, Supabase, TradingView
   -->
   <link
     href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;500;700&display=swap"
@@ -175,6 +174,7 @@
       border-radius: 8px;
       box-shadow: 0 3px 10px rgba(255, 215, 0, 0.3);
       transition: transform 0.3s ease, box-shadow 0.3s ease;
+      cursor: pointer;
     }
     nav .logo:hover {
       transform: scale(1.04);
@@ -559,11 +559,13 @@
 <body>
 
   <!-- Audio element for new‐signal alert -->
-  <audio id="alertSound" src="alert.mp3"></audio>
+  <audio id="alertSound" src="alert.mp3" preload="auto"></audio>
 
   <!-- UPDATED NAVIGATION -->
   <nav class="slide-in">
-    <a href="vip-dashboard.html" class="logo">CBE VIP Dashboard</a>
+    <div class="logo" onclick="location.href='vip-dashboard.html'">
+      CBE VIP Dashboard
+    </div>
     <div class="nav-links">
       <button id="notifBell" onclick="ringBell()" title="New Signal">🔔</button>
       <button onclick="loadLatestSignal()">🔄 Refresh</button>
@@ -623,16 +625,17 @@
   <footer class="slide-in">© 2025 CBE – Chukwuemeka Bullion Exchange. All rights reserved.</footer>
 
   <!-- ─────────────────────────────────────────────────────────────────────
-       2) MAIN SCRIPT: initialize Supabase, load & render latest signal,
-          subscribe for new signals, plus news & calendar refresh
+       2) MAIN SCRIPT: Supabase initialization, load/render signal,
+          subscribe for new inserts, plus news & calendar auto‐refresh
   -->
   <script>
-    // ─── Supabase init: same URL & anon key used in login/dashboard ─────────
+    // ─── A) INITIALIZE SUPABASE with your exact URL & full anon key ─────────
     const SUPA_URL = 'https://dapwpgvnfjcfqqhrpxla.supabase.co';
-    const SUPA_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJzI...'; // ← full PUBLIC anon key
+    const SUPA_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJzI...'; 
+    // ← **Please paste the full anon/public key here, exactly as in your dashboard.**
     const supabase = window.supabase.createClient(SUPA_URL, SUPA_KEY);
 
-    // ─── 1) TRADINGVIEW CHART INITIALIZATION ─────────────────────────────────
+    // ─── B) TRADINGVIEW CHART INITIALIZATION ─────────────────────────────────
     function initTradingViewChart() {
       new TradingView.widget({
         container_id: "tradingview_chart",
@@ -661,16 +664,17 @@
       }
     });
 
-    // ─── 2) THEME TOGGLE ───────────────────────────────────────────────────────
+    // ─── C) THEME TOGGLE ───────────────────────────────────────────────────────
     function toggleTheme() {
       const html = document.documentElement;
       const currentTheme = html.getAttribute('data-theme');
       const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
       html.setAttribute('data-theme', newTheme);
       document.querySelector('.theme-toggle').innerHTML = newTheme === 'dark' ? '🌞' : '🌜';
+      localStorage.setItem('theme', newTheme);
     }
 
-    // ─── 3) RING THE BELL ON NEW SIGNAL ───────────────────────────────────────
+    // ─── D) RING BELL WHEN A NEW SIGNAL ARRIVES ───────────────────────────────
     function ringBell() {
       const audio = document.getElementById('alertSound');
       if (audio) {
@@ -681,7 +685,7 @@
       }
     }
 
-    // ─── 4) LOAD LATEST SIGNAL (only 1 record, old ones disappear) ────────────
+    // ─── E) LOAD LATEST SIGNAL (just one record) ──────────────────────────────
     let lastSignalId = null;
 
     async function loadLatestSignal() {
@@ -693,7 +697,7 @@
           Loading latest signal…
         </p>`;
       try {
-        // Fetch only the newest signal (order by created_at descending, limit 1)
+        // Fetch the very newest signal from "signals"
         const { data: signals, error } = await supabase
           .from('signals')
           .select('id, action, asset, entry, sl, tp1, tp2, note, created_at')
@@ -701,8 +705,8 @@
           .limit(1);
 
         if (error) throw error;
-        if (!signals.length) {
-          // No signals found
+        if (!signals || signals.length === 0) {
+          // No signals exist
           card.innerHTML = `
             <p style="text-align:center;color: var(--error);padding:40px;">
               No signals available. Check back soon.
@@ -711,16 +715,16 @@
         }
 
         const sig = signals[0];
-        // If a previous signal existed and its ID differs from the new one, ring the bell
+        // If we've loaded one before, and the ID has changed, ring the bell
         if (lastSignalId !== null && sig.id !== lastSignalId) {
           ringBell();
         }
-        lastSignalId = sig.id; // Update lastSignalId
+        lastSignalId = sig.id;
 
         const dt = new Date(sig.created_at);
         const actionClass = sig.action.toLowerCase() === 'buy' ? 'signal-buy' : 'signal-sell';
 
-        // Render the single latest signal
+        // Render the latest signal with copy buttons
         card.innerHTML = `
           <div class="signal-header">
             <h2 class="${actionClass}">
@@ -750,7 +754,7 @@
           <div class="admin-note">Note: ${sig.note || 'Trade at your own risk.'}</div>
         `;
       } catch (err) {
-        console.error('Signal load error:', err);
+        console.error('Error loading latest signal:', err);
         card.innerHTML = `
           <p style="text-align:center;color: var(--error);padding:40px;">
             Failed to load signal. Try again later.
@@ -758,7 +762,7 @@
       }
     }
 
-    // ─── 5) COPY TO CLIPBOARD ───────────────────────────────────────────────────
+    // ─── F) COPY TEXT TO CLIPBOARD ─────────────────────────────────────────────
     function copyText(txt) {
       if (!txt) return;
       navigator.clipboard.writeText(txt)
@@ -766,7 +770,7 @@
         .catch(() => alert('Copy failed'));
     }
 
-    // ─── 6) LOGOUT ─────────────────────────────────────────────────────────────
+    // ─── G) LOGOUT FUNCTION ───────────────────────────────────────────────────
     function logout() {
       localStorage.removeItem('isLoggedIn');
       sessionStorage.removeItem('cbeUserId');
@@ -774,12 +778,12 @@
       window.location.replace('login.html?message=logged_out');
     }
 
-    // ─── 7) GOLD NEWS ──────────────────────────────────────────────────────────
+    // ─── H) GOLD NEWS (via Investing.com RSS, proxied through allorigins) ─────
     async function loadGoldNews() {
       const ul = document.getElementById('news-list');
       ul.innerHTML = '<li>Loading…</li>';
       try {
-        // Use a CORS‐friendly proxy to fetch Investing.com RSS feed
+        // Fetch the Investing.com RSS feed via a CORS proxy
         const res = await fetch('https://api.allorigins.win/raw?url=https://www.investing.com/rss/news_285.rss');
         const xml = new DOMParser().parseFromString(await res.text(), 'text/xml');
         const items = Array.from(xml.querySelectorAll('item')).slice(0, 8);
@@ -796,12 +800,12 @@
       }
     }
 
-    // ─── 8) ECONOMIC CALENDAR ──────────────────────────────────────────────────
+    // ─── I) ECONOMIC CALENDAR (static sample, refresh every minute) ───────────
     async function loadEconCalendar() {
       const tbody = document.getElementById('calendar-body');
       tbody.innerHTML = '<tr><td colspan="7">Loading…</td></tr>';
       try {
-        // Mock events—replace with real API if needed
+        // Mock events; replace with your own API if needed
         const events = [
           { date: "05-25-2025", time: "6:40pm", currency: "USD", event: "Fed Chair Powell Speaks", impact: "Medium", actual: "", previous: "" },
           { date: "05-26-2025", time: "7:00am", currency: "GBP", event: "Bank Holiday", impact: "Holiday", actual: "", previous: "" },
@@ -836,9 +840,9 @@
       }
     }
 
-    // ─── 9) INIT: On DOMContentLoaded, run initial loads & subscribe to new signals
-    window.addEventListener('DOMContentLoaded', () => {
-      // Fade‐in slide-in elements
+    // ─── J) ONCE DOM IS READY: run initial loads & subscribe ───────────────────
+    document.addEventListener('DOMContentLoaded', () => {
+      // Fade‐in slide‐in elements
       document.querySelectorAll('.slide-in').forEach(el => {
         new IntersectionObserver((entries, obs) => {
           entries.forEach(e => {
@@ -850,27 +854,27 @@
         }, { threshold: 0.2 }).observe(el);
       });
 
+      // 1) Chart, 2) Latest Signal, 3) News, 4) Calendar
       initTradingViewChart();
       loadLatestSignal();
       loadGoldNews();
       loadEconCalendar();
 
-      // Subscribe to new inserts in "signals" table:
-      //   On INSERT → reloadLatestSignal (which will ring if ID changed)
+      // Subscribe to INSERTs on "signals" → reloadLatestSignal
       supabase
         .from('signals')
-        .on('INSERT', payload => {
+        .on('INSERT', () => {
           loadLatestSignal();
         })
         .subscribe();
 
-      // Refresh news & calendar every minute
+      // Refresh news & calendar every 60 seconds
       setInterval(loadGoldNews, 60000);
       setInterval(loadEconCalendar, 60000);
     });
   </script>
 
-  <!-- Smartsupp Live Chat (unchanged) -->
+  <!-- Smartsupp Live Chat script (unchanged) -->
   <script type="text/javascript">
     var _smartsupp = _smartsupp || {};
     _smartsupp.key = '018a8bbd868518221e725341a7b2601231ec7ce8';
