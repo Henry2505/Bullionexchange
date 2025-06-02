@@ -5,7 +5,6 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Login • Chukwuemeka Bullion Exchange</title>
   <meta name="description" content="Login to Chukwuemeka Bullion Exchange’s VIP trading community."/>
-
   <style>
     :root[data-theme="dark"] {
       --bg: #121212; 
@@ -118,7 +117,6 @@
       font-size: .85rem;
     }
   </style>
-
   <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700&family=Roboto:wght@300;400;700&display=swap" rel="stylesheet"/>
 </head>
 <body>
@@ -165,7 +163,6 @@
     });
 
     // ─── 2) INITIALIZE SUPABASE ─────────────────────────────────────────────────
-    // Note: RLS is disabled on the users table, allowing unrestricted access
     const SUPA_URL = 'https://dapwpgvnfjcfqqhrpxla.supabase.co';
     const SUPA_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImRhcHdwZ3ZuZmpjZnFxaHJweGxhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDcwNDA4ODgsImV4cCI6MjA2MjYxNjg4OH0.ICC0UsLlzJDNre7rFCeD3k6iVzo6jOJgn3PhABpEMsQ';
     const sb = supabase.createClient(SUPA_URL, SUPA_ANON_KEY);
@@ -187,23 +184,24 @@
       const password = document.getElementById('password').value;
 
       try {
-        // Fetch user by email
-        const { data: user, error, count } = await sb
+        console.log('1. Fetching user data for email:', email);
+        const { data: user, error } = await sb
           .from('users')
-          .select('id, name, email, password, status', { count: 'exact' })
-          .ilike('email', email)
-          .limit(1)
-          .maybeSingle();
+          .select('id, name, email, password, status')
+          .eq('email', email) // Changed to .eq for exact match
+          .single();
         if (error) throw error;
-        if (count === 0) throw new Error('No account found for that email.');
+        if (!user) throw new Error('No account found for that email.');
 
-        // Password check
+        console.log('2. User found:', user);
+
         if (user.password !== password) throw new Error('Invalid login credentials.');
+        console.log('3. Password matched.');
 
-        // Approval check
         if (String(user.status).toLowerCase() !== 'approved') {
           throw new Error('Your account is not yet approved—please check back soon.');
         }
+        console.log('4. Account is approved.');
 
         // Device Fingerprint Check
         const deviceKey = `cbeDevice_${email}`;
@@ -225,41 +223,36 @@
             body: JSON.stringify(payload)
           });
         }
+        console.log('5. Device fingerprint checked.');
 
-        // Generate and save session token via RPC
+        // Generate session token
         const sessionToken = uuidv4();
-        const { error: tokenError } = await sb.rpc('update_session_token', {
-          p_email: email,
-          p_password: password,
-          p_token: sessionToken
-        });
-        if (tokenError) throw new Error('Failed to update session token.');
+        console.log('6. Generated session token:', sessionToken);
 
-        // Store session token
+        // Update session token directly in the database
+        const { error: tokenError } = await sb
+          .from('users')
+          .update({ current_session_token: sessionToken })
+          .eq('id', user.id);
+        if (tokenError) throw new Error('Failed to update session token: ' + tokenError.message);
+        console.log('7. Session token updated in database.');
+
+        // Store session data
         localStorage.setItem('sessionToken', sessionToken);
         sessionStorage.setItem('loggedIn', 'true');
         sessionStorage.setItem('userId', user.id);
         sessionStorage.setItem('userName', user.name);
+        console.log('8. Session data stored in localStorage and sessionStorage.');
 
         // Redirect to VIP dashboard
+        console.log('9. Redirecting to vip-dashboard.html');
         window.location.assign('vip-dashboard.html');
       } catch (err) {
-        console.error("Login error:", err);
-        alertDiv.style.color = "var(--error-color)";
+        console.error('Login error:', err);
+        alertDiv.style.color = 'var(--error-color)';
         alertDiv.textContent = err.message;
       }
     });
-  </script>
-
-  <script>
-    var _smartsupp = _smartsupp || {};
-    _smartsupp.key = '018a8bbd868518221e725341a7b2601231ec7ce8';
-    window.smartsupp||(function(d) {
-      var s,c,o=smartsupp=function(){ o._.push(arguments)};o._=[];
-      s=d.getElementsByTagName('script')[0];c=d.createElement('script');
-      c.type='text/javascript';c.charset='utf-8';c.async=true;
-      c.src='https://www.smartsuppchat.com/loader.js?';s.parentNode.insertBefore(c,s);
-    })(document);
   </script>
 </body>
 </html>
