@@ -7,18 +7,20 @@
   <title>Dashboard • CBE Global</title>
   <link rel="icon" href="https://i.imgur.com/your-favicon.ico" type="image/x-icon">
 
-  <!-- Client‐side redirect if not logged in -->
+  <!-- Existing client‐side redirect for sessionStorage 'loggedIn' flag -->
   <script>
     if (!sessionStorage.getItem('loggedIn')) {
       window.location.replace('login.html');
     }
   </script>
 
-  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-QWTKZyjpPEjISv5WaRU9OFeRpok6YctnYmDr5pNlyT2bRjXh0JMhjY6hW+ALEwIH" crossorigin="anonymous">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet"
+        integrity="sha384-QWTKZyjpPEjISv5WaRU9OFeRpok6YctnYmDr5pNlyT2bRjXh0JMhjY6hW+ALEwIH" crossorigin="anonymous">
   <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" rel="stylesheet">
-  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;700&family=Orbitron:wght@400;700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;700&family=Orbitron:wght@400;700&display=swap"
+        rel="stylesheet">
 
-  <!-- Supabase JS, TradingView, Particles.js -->
+  <!-- Load Supabase JS library -->
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js" async></script>
   <script src="https://s3.tradingview.com/tv.js" async></script>
   <script src="https://cdn.jsdelivr.net/npm/particles.js@2.0.0/particles.min.js" async></script>
@@ -32,7 +34,6 @@
       c.src='https://www.smartsuppchat.com/loader.js?';s.parentNode.insertBefore(c,s);
     })(document);
   </script>
-
   <style>
     :root[data-theme="dark"] {
       --bg: #121212;
@@ -60,382 +61,98 @@
       --error: #dc3545;
       --accent: #fff;
     }
-    * { margin: 0; padding: 0; box-sizing: border-box; }
-    html { scroll-behavior: smooth; }
-    body {
-      font-family: 'Poppins', sans-serif;
-      background: var(--bg);
-      color: var(--text);
-      min-height: 100vh;
-      overflow-x: hidden;
-      line-height: 1.6;
-      -webkit-font-smoothing: antialiased;
+    *{margin:0;padding:0;box-sizing:border-box;}
+    html{scroll-behavior:smooth;}
+    body{font-family:'Poppins',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;overflow-x:hidden;line-height:1.6;-webkit-font-smoothing:antialiased;}
+    a,button,h1,h2,h3,h4,h5,h6,p,span,td,th,li,input,select,label{color:var(--text)!important;}
+    a:hover{color:var(--gold-dark)!important;}
+    #particles-js{position:fixed;top:0;left:0;width:100%;height:100%;z-index:-10;opacity:.2;}
+    .slide-in{opacity:0;transform:translateY(20px);transition:opacity .8s ease-out,transform .8s ease-out;}
+    .slide-in.visible{opacity:1;transform:translateY(0);}
+    header{position:sticky;top:0;background:var(--glass);backdrop-filter:blur(10px);padding:1rem 2rem;box-shadow:0 2px 8px var(--shadow);z-index:1000;display:flex;align-items:center;justify-content:space-between;}
+    header .logo{font-family:'Orbitron',sans-serif;font-size:1.5rem;font-weight:700;padding:.5rem 1rem;background:linear-gradient(45deg,var(--gold),var(--gold-dark));border-radius:8px;box-shadow:0 2px 6px var(--shadow);transition:transform .3s ease;}
+    header .logo:hover{transform:scale(1.05);}
+    header .nav-links{display:flex;align-items:center;gap:1rem;}
+    header .nav-links button,header .nav-links select{background:var(--glass);border:1px solid var(--gold-dark);padding:.5rem 1rem;border-radius:6px;font-size:.9rem;cursor:pointer;transition:background .3s ease,transform .2s;}
+    header .nav-links button:hover,header .nav-links select:hover{background:var(--gold-dark);color:#000!important;transform:scale(1.02);}
+    #theme-select{background:var(--glass);border:1px solid var(--gold-dark);padding:.5rem;border-radius:6px;}
+    #notif-btn{position:relative;}
+    #notif-count{font-size:.7rem;padding:.2rem .5rem;}
+    #sidebar-toggle{font-size:1.5rem;padding:.5rem;}
+    .offcanvas{background:var(--glass);backdrop-filter:blur(10px);border-right:1px solid var(--gold-dark);}
+    .offcanvas .nav-link{font-size:1.1rem;padding:.8rem;border-radius:6px;transition:background .3s ease;}
+    .offcanvas .nav-link:hover,.offcanvas .nav-link.active{background:var(--gold-dark);color:#000!important;}
+    .container-fluid{padding:0 2rem;}
+    .welcome-banner{font-family:'Orbitron',sans-serif;font-size:2rem;text-align:center;padding:1.5rem;background:var(--glass);backdrop-filter:blur(10px);border-radius:10px;box-shadow:0 2px 8px var(--shadow);margin:1.5rem 0;font-weight:700;}
+    .card{background:var(--glass);backdrop-filter:blur(10px);border:1px solid var(--gold-dark);border-radius:10px;box-shadow:0 2px 8px var(--shadow);padding:1.5rem;transition:transform .3s ease,box-shadow .3s;}
+    .card:hover{transform:translateY(-4px);box-shadow:0 4px 12px var(--shadow);}
+    .btn-gold{background:linear-gradient(45deg,var(--gold),var(--gold-dark));color:#000!important;border:none;padding:.7rem 1.2rem;border-radius:6px;font-weight:500;transition:transform .3s ease;}
+    .btn-gold:hover{transform:scale(1.03);}
+    #tv_chart_4h{width:100%;height:450px;border-radius:8px;overflow:hidden;box-shadow:0 2px 8px var(--shadow);}
+    .chart-toggle{display:flex;gap:.5rem;margin-bottom:1rem;}
+    .chart-toggle button{background:var(--glass);border:1px solid var(--gold-dark);padding:.5rem 1rem;border-radius:6px;transition:background .3s ease,transform .2s;}
+    .chart-toggle button.active,.chart-toggle button:hover{background:var(--gold-dark);color:#000!important;transform:scale(1.02);}
+    #news-widget{background:var(--glass);border:1px solid var(--gold-dark);border-radius:10px;box-shadow:0 2px 8px var(--shadow);padding:0;height:350px;overflow:hidden;}
+    #news-widget ul{list-style:none;margin:0;padding:0;height:100%;overflow-y:auto;}
+    #news-widget li{padding:1rem;border-bottom:1px solid var(--gold-dark);transition:background .3s ease;}
+    #news-widget li:hover{background:rgba(255,215,0,.1);}
+    #calendar-widget,#activity-widget{background:var(--glass);border:1px solid var(--gold-dark);border-radius:10px;box-shadow:0 2px 8px var(--shadow);padding:1rem;height:350px;overflow:auto;}
+    #calendar-widget table,#activity-widget table{width:100%;border-collapse:separate;border-spacing:0 8px;}
+    #calendar-widget th,#activity-widget th{background:linear-gradient(45deg,var(--gold-dark),var(--gold));color:#000!important;padding:.8rem;text-align:center;border-radius:6px;position:sticky;top:0;z-index:2;}
+    #calendar-widget td,#activity-widget td{padding:.8rem;background:var(--accent);border-radius:6px;}
+    #calendar-widget tbody tr.high-impact{background:rgba(255,215,0,.2);}
+    #converter-widget select,#converter-widget input{background:var(--accent);border:1px solid var(--gold-dark);border-radius:6px;padding:.5rem;}
+    #watch-list .list-group-item{background:var(--glass);border:1px solid var(--gold-dark);border-radius:6px;margin-bottom:.5rem;box-shadow:0 2px 6px var(--shadow);transition:transform .2s;}
+    #watch-list .list-group-item:hover{transform:scale(1.01);}
+    .price-change.positive{color:var(--success)!important;}
+    .price-change.negative{color:var(--error)!important;}
+    #notif-menu{background:var(--glass);backdrop-filter:blur(10px);border:1px solid var(--gold-dark);width:250px;box-shadow:0 2px 8px var(--shadow);animation:fadeIn .3s ease;}
+    #notif-list li{padding:.5rem 1rem;border-bottom:1px solid var(--gold-dark);transition:opacity .3s;}
+    #notif-list .critical{background:rgba(255,0,0,.2);}
+    #notif-list .info{background:rgba(0,255,136,.2);}
+    footer{text-align:center;padding:1rem 0;color:var(--text-light);font-size:.9rem;background:var(--glass);border-top:1px solid var(--gold-dark);width:100%;}
+    .spinner{border:3px solid var(--glass);border-top:3px solid var(--gold);border-radius:50%;width:24px;height:24px;animation:spin 1s linear infinite;margin:1rem auto;}
+    @keyframes spin{0%{transform:rotate(0deg);}100%{transform:rotate(360deg);}}
+    @keyframes fadeIn{from{opacity:0;}to{opacity:1;}}
+    @media (max-width:768px){
+      .container-fluid{padding:0 1rem;}
+      .welcome-banner{font-size:1.5rem;padding:1rem;}
+      .card{padding:1rem;}
+      #tv_chart_4h,#news-widget,#calendar-widget,#activity-widget{height:300px;}
+      header{padding:.8rem 1rem;}
+      header .logo{font-size:1.2rem;}
+      header .nav-links{gap:.5rem;}
     }
-    a, button, h1, h2, h3, h4, h5, h6, p, span, td, th, li, input, select, label {
-      color: var(--text) !important;
+    @media (max-width:576px){
+      .welcome-banner{font-size:1.2rem;}
+      .btn-gold{padding:.5rem 1rem;font-size:.9rem;}
     }
-    a:hover { color: var(--gold-dark) !important; }
-    #particles-js {
-      position: fixed;
-      top: 0;
-      left: 0;
-      width: 100%;
-      height: 100%;
-      z-index: -10;
-      opacity: .2;
-    }
-    .slide-in {
-      opacity: 0;
-      transform: translateY(20px);
-      transition: opacity .8s ease-out, transform .8s ease-out;
-    }
-    .slide-in.visible {
-      opacity: 1;
-      transform: translateY(0);
-    }
-    header {
-      position: sticky;
-      top: 0;
-      background: var(--glass);
-      backdrop-filter: blur(10px);
-      padding: 1rem 2rem;
-      box-shadow: 0 2px 8px var(--shadow);
-      z-index: 1000;
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-    }
-    header .logo {
-      font-family: 'Orbitron', sans-serif;
-      font-size: 1.5rem;
-      font-weight: 700;
-      padding: .5rem 1rem;
-      background: linear-gradient(45deg, var(--gold), var(--gold-dark));
-      border-radius: 8px;
-      box-shadow: 0 2px 6px var(--shadow);
-      transition: transform .3s ease;
-    }
-    header .logo:hover {
-      transform: scale(1.05);
-    }
-    header .nav-links {
-      display: flex;
-      align-items: center;
-      gap: 1rem;
-    }
-    header .nav-links button,
-    header .nav-links select {
-      background: var(--glass);
-      border: 1px solid var(--gold-dark);
-      padding: .5rem 1rem;
-      border-radius: 6px;
-      font-size: .9rem;
-      cursor: pointer;
-      transition: background .3s ease, transform .2s;
-    }
-    header .nav-links button:hover,
-    header .nav-links select:hover {
-      background: var(--gold-dark);
-      color: #000 !important;
-      transform: scale(1.02);
-    }
-    #theme-select {
-      background: var(--glass);
-      border: 1px solid var(--gold-dark);
-      padding: .5rem;
-      border-radius: 6px;
-    }
-    #notif-btn {
-      position: relative;
-    }
-    #notif-count {
-      font-size: .7rem;
-      padding: .2rem .5rem;
-    }
-    #sidebar-toggle {
-      font-size: 1.5rem;
-      padding: .5rem;
-    }
-    .offcanvas {
-      background: var(--glass);
-      backdrop-filter: blur(10px);
-      border-right: 1px solid var(--gold-dark);
-    }
-    .offcanvas .nav-link {
-      font-size: 1.1rem;
-      padding: .8rem;
-      border-radius: 6px;
-      transition: background .3s ease;
-    }
-    .offcanvas .nav-link:hover,
-    .offcanvas .nav-link.active {
-      background: var(--gold-dark);
-      color: #000 !important;
-    }
-    .container-fluid {
-      padding: 0 2rem;
-    }
-    .welcome-banner {
-      font-family: 'Orbitron', sans-serif;
-      font-size: 2rem;
-      text-align: center;
-      padding: 1.5rem;
-      background: var(--glass);
-      backdrop-filter: blur(10px);
-      border-radius: 10px;
-      box-shadow: 0 2px 8px var(--shadow);
-      margin: 1.5rem 0;
-      font-weight: 700;
-    }
-    .card {
-      background: var(--glass);
-      backdrop-filter: blur(10px);
-      border: 1px solid var(--gold-dark);
-      border-radius: 10px;
-      box-shadow: 0 2px 8px var(--shadow);
-      padding: 1.5rem;
-      transition: transform .3s ease, box-shadow .3s;
-    }
-    .card:hover {
-      transform: translateY(-4px);
-      box-shadow: 0 4px 12px var(--shadow);
-    }
-    .btn-gold {
-      background: linear-gradient(45deg, var(--gold), var(--gold-dark));
-      color: #000 !important;
-      border: none;
-      padding: .7rem 1.2rem;
-      border-radius: 6px;
-      font-weight: 500;
-      transition: transform .3s ease;
-    }
-    .btn-gold:hover {
-      transform: scale(1.03);
-    }
-    #tv_chart_4h {
-      width: 100%;
-      height: 450px;
-      border-radius: 8px;
-      overflow: hidden;
-      box-shadow: 0 2px 8px var(--shadow);
-    }
-    .chart-toggle {
-      display: flex;
-      gap: .5rem;
-      margin-bottom: 1rem;
-    }
-    .chart-toggle button {
-      background: var(--glass);
-      border: 1px solid var(--gold-dark);
-      padding: .5rem 1rem;
-      border-radius: 6px;
-      transition: background .3s ease, transform .2s;
-    }
-    .chart-toggle button.active,
-    .chart-toggle button:hover {
-      background: var(--gold-dark);
-      color: #000 !important;
-      transform: scale(1.02);
-    }
-    #news-widget {
-      background: var(--glass);
-      border: 1px solid var(--gold-dark);
-      border-radius: 10px;
-      box-shadow: 0 2px 8px var(--shadow);
-      padding: 0;
-      height: 350px;
-      overflow: hidden;
-    }
-    #news-widget ul {
-      list-style: none;
-      margin: 0;
-      padding: 0;
-      height: 100%;
-      overflow-y: auto;
-    }
-    #news-widget li {
-      padding: 1rem;
-      border-bottom: 1px solid var(--gold-dark);
-      transition: background .3s ease;
-    }
-    #news-widget li:hover {
-      background: rgba(255, 215, 0, .1);
-    }
-    #calendar-widget, #activity-widget {
-      background: var(--glass);
-      border: 1px solid var(--gold-dark);
-      border-radius: 10px;
-      box-shadow: 0 2px 8px var(--shadow);
-      padding: 1rem;
-      height: 350px;
-      overflow: auto;
-    }
-    #calendar-widget table, #activity-widget table {
-      width: 100%;
-      border-collapse: separate;
-      border-spacing: 0 8px;
-    }
-    #calendar-widget th, #activity-widget th {
-      background: linear-gradient(45deg, var(--gold-dark), var(--gold));
-      color: #000 !important;
-      padding: .8rem;
-      text-align: center;
-      border-radius: 6px;
-      position: sticky;
-      top: 0;
-      z-index: 2;
-    }
-    #calendar-widget td, #activity-widget td {
-      padding: .8rem;
-      background: var(--accent);
-      border-radius: 6px;
-    }
-    #calendar-widget tbody tr.high-impact {
-      background: rgba(255, 215, 0, .2);
-    }
-    #converter-widget select, #converter-widget input {
-      background: var(--accent);
-      border: 1px solid var(--gold-dark);
-      border-radius: 6px;
-      padding: .5rem;
-    }
-    #watch-list .list-group-item {
-      background: var(--glass);
-      border: 1px solid var(--gold-dark);
-      border-radius: 6px;
-      margin-bottom: .5rem;
-      box-shadow: 0 2px 6px var(--shadow);
-      transition: transform .2s;
-    }
-    #watch-list .list-group-item:hover {
-      transform: scale(1.01);
-    }
-    .price-change.positive {
-      color: var(--success) !important;
-    }
-    .price-change.negative {
-      color: var(--error) !important;
-    }
-    #notif-menu {
-      background: var(--glass);
-      backdrop-filter: blur(10px);
-      border: 1px solid var(--gold-dark);
-      width: 250px;
-      box-shadow: 0 2px 8px var(--shadow);
-      animation: fadeIn .3s ease;
-    }
-    #notif-list li {
-      padding: .5rem 1rem;
-      border-bottom: 1px solid var(--gold-dark);
-      transition: opacity .3s;
-    }
-    #notif-list .critical {
-      background: rgba(255, 0, 0, .2);
-    }
-    #notif-list .info {
-      background: rgba(0, 255, 136, .2);
-    }
-    footer {
-      text-align: center;
-      padding: 1rem 0;
-      color: var(--text-light);
-      font-size: .9rem;
-      background: var(--glass);
-      border-top: 1px solid var(--gold-dark);
-      width: 100%;
-    }
-    .spinner {
-      border: 3px solid var(--glass);
-      border-top: 3px solid var(--gold);
-      border-radius: 50%;
-      width: 24px;
-      height: 24px;
-      animation: spin 1s linear infinite;
-      margin: 1rem auto;
-    }
-    @keyframes spin {
-      0% { transform: rotate(0deg); }
-      100% { transform: rotate(360deg); }
-    }
-    @keyframes fadeIn {
-      from { opacity: 0; }
-      to { opacity: 1; }
-    }
-    @media (max-width: 768px) {
-      .container-fluid { padding: 0 1rem; }
-      .welcome-banner { font-size: 1.5rem; padding: 1rem; }
-      .card { padding: 1rem; }
-      #tv_chart_4h, #news-widget, #calendar-widget, #activity-widget { height: 300px; }
-      header { padding: .8rem 1rem; }
-      header .logo { font-size: 1.2rem; }
-      header .nav-links { gap: .5rem; }
-    }
-    @media (max-width: 576px) {
-      .welcome-banner { font-size: 1.2rem; }
-      .btn-gold { padding: .5rem 1rem; font-size: .9rem; }
-    }
-    :root {
-      --smartsupp-base-color: var(--gold);
-      --smartsupp-btn-color: var(--gold-dark);
-      --smartsupp-text-color: var(--text);
-      --smartsupp-bg: var(--glass);
-    }
-    #smartsupp .ss-widget-container {
-      background: var(--glass) !important;
-      backdrop-filter: blur(10px) !important;
-    }
-    #smartsupp .ss-widget-button {
-      background: linear-gradient(45deg, var(--gold), var(--gold-dark)) !important;
-      border-color: var(--gold-dark) !important;
-      color: #000 !important;
-    }
+    :root{--smartsupp-base-color:var(--gold);--smartsupp-btn-color:var(--gold-dark);--smartsupp-text-color:var(--text);--smartsupp-bg:var(--glass);}
+    #smartsupp .ss-widget-container{background:var(--glass)!important;backdrop-filter:blur(10px)!important;}
+    #smartsupp .ss-widget-button{background:linear-gradient(45deg,var(--gold),var(--gold-dark))!important;border-color:var(--gold-dark)!important;color:#000!important;}
   </style>
 </head>
 <body>
   <div id="particles-js"></div>
 
-  <!-- Sidebar Offcanvas -->
   <div class="offcanvas offcanvas-start" id="sidebar">
     <div class="offcanvas-body">
       <div class="text-center mb-4">
         <div class="logo">CBE Global</div>
       </div>
       <ul class="nav nav-pills flex-column">
-        <li class="nav-item">
-          <a class="nav-link active" href="#" onclick="loadDashboard()" data-bs-dismiss="offcanvas">
-            <i class="bi bi-speedometer2 me-2"></i>Dashboard
-          </a>
-        </li>
-        <li class="nav-item">
-          <a href="signals.html" class="nav-link">
-            <i class="bi bi-lightning me-2"></i>Sign Up
-          </a>
-        </li>
-        <li class="nav-item">
-          <a href="CBE_trade_history_vip.html" class="nav-link">
-            <i class="bi bi-clock-history me-2"></i>History
-          </a>
-        </li>
-        <li class="nav-item">
-          <a href="CBE_trade_insights_vip.html" class="nav-link">
-            <i class="bi bi-graph-up me-2"></i>Insights
-          </a>
-        </li>
-        <li class="nav-item">
-          <a href="#" onclick="downloadActivityLog()" class="nav-link">
-            <i class="bi bi-download me-2"></i>Download Logs
-          </a>
-        </li>
+        <li class="nav-item"><a class="nav-link active" href="#" onclick="loadDashboard()" data-bs-dismiss="offcanvas"><i class="bi bi-speedometer2 me-2"></i>Dashboard</a></li>
+        <li class="nav-item"><a href="signals.html" class="bi bi-lightning me-2"></i>Sign Up</a></li>
+        <li class="nav-item"><a href="CBE_trade_history_vip.html" class="bi bi-clock-history me-2"></i>History</a></li>
+        <li class="nav-item"><a href="CBE_trade_insights_vip.html" class="bi bi-graph-up me-2"></i>Insights</a></li>
+        <li class="nav-item"><a href="#" onclick="downloadActivityLog()" class="bi bi-download me-2"><i></i>Download Logs</a></li>
       </ul>
     </div>
   </div>
 
-  <!-- Header -->
   <header class="slide-in">
     <div class="d-flex align-items-center">
-      <button id="sidebar-toggle" class="btn btn-link d-md-none me-2">
-        <i class="bi bi-list"></i>
-      </button>
+      <button id="sidebar-toggle" class="btn btn-link d-md-none me-2"><i class="bi bi-list"></i></button>
       <a href="index.html" class="logo">CBE Dashboard</a>
     </div>
     <div class="nav-links">
@@ -455,13 +172,9 @@
     </div>
   </header>
 
-  <!-- Main Container -->
   <div class="container-fluid">
-    <div class="welcome-banner slide-in">
-      Welcome, <strong id="welcomeName">Trader</strong>!
-    </div>
+    <div class="welcome-banner slide-in">Welcome, <strong id="welcomeName">Trader</strong>!</div>
 
-    <!-- Top Cards Row -->
     <div class="row g-4 mb-4 slide-in">
       <div class="col-md-3">
         <div class="card p-3 text-center">
@@ -489,7 +202,6 @@
       </div>
     </div>
 
-    <!-- Currency Converter -->
     <div class="card p-3 mb-4 slide-in" id="converter-widget">
       <h3 class="mb-3">Currency Converter</h3>
       <div class="row g-3">
@@ -517,7 +229,6 @@
       </div>
     </div>
 
-    <!-- XAU/USD Chart -->
     <div class="card p-3 mb-4 slide-in">
       <h3 class="mb-3">XAU/USD Chart</h3>
       <div class="chart-toggle">
@@ -528,15 +239,11 @@
       <div id="tv_chart"></div>
     </div>
 
-    <!-- Gold News -->
     <div class="card p-3 mb-4 slide-in">
       <h3 class="mb-2">Gold News <small class="text-muted">Updated every minute</small></h3>
-      <div id="news-widget">
-        <ul id="news-list"></ul>
-      </div>
+      <div id="news-widget"><ul id="news-list"></ul></div>
     </div>
 
-    <!-- Economic Calendar -->
     <div class="card p-3 mb-4 slide-in">
       <h3 class="mb-2">Economic Calendar <small class="text-muted">Updated daily</small></h3>
       <div id="calendar-widget">
@@ -557,13 +264,10 @@
       </div>
     </div>
 
-    <!-- Recent Activity -->
     <div class="card p-3 mb-4 slide-in" id="activity-widget">
       <h3 class="mb-2">Recent Activity <small class="text-muted">Login/Logout Logs</small></h3>
       <div class="d-flex justify-content-end mb-2">
-        <button id="export-logs" class="btn btn-gold">
-          <i class="bi bi-download me-2"></i>Export Logs
-        </button>
+        <button id="export-logs" class="btn btn-gold"><i class="bi bi-download me-2"></i>Export Logs</button>
       </div>
       <table>
         <thead>
@@ -579,14 +283,11 @@
       </table>
     </div>
 
-    <!-- Watchlist -->
     <div class="card p-3 mb-4 slide-in">
       <h3 class="mb-3">My Watchlist</h3>
       <div class="d-flex mb-2">
         <input id="watch-input" class="form-control me-2" placeholder="Add symbol (e.g., EURUSD)">
-        <button id="add-watch" class="btn btn-gold">
-          <i class="bi bi-plus"></i>Add
-        </button>
+        <button id="add-watch" class="btn btn-gold"><i class="bi bi-plus"></i>Add</button>
       </div>
       <ul id="watch-list" class="list-group"></ul>
     </div>
@@ -594,21 +295,23 @@
 
   <footer class="slide-in">© 2025 CBE Global. All rights reserved.</footer>
 
-  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js" integrity="sha384-YvpcrYf0tY3lHB60NNkmXc5s9fDVZLESaAA55NDzOxhy9GkcIdslK1eN7N6jIeHz" crossorigin="anonymous" async></script>
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"
+          integrity="sha384-YvpcrYf0tY3lHB60NNkmXc5s9fDVZLESaAA55NDzOxhy9GkcIdslK1eN7N6jIeHz" crossorigin="anonymous" async></script>
   <audio id="notif-sound" src="ding.mp3" preload="auto"></audio>
   <audio id="critical-notif-sound" src="alert.mp3" preload="auto"></audio>
 
   <script>
-    /*–– Supabase setup and session check ––*/
+    /*–– Supabase & API Setup ––*/
     const SUPA_URL = 'https://dapwpgvnfjcfqqhrpxla.supabase.co';
-    const SUPA_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ5bGFiYXNlIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDcwNDA4ODgsImV4cCI6MjA2MjYxNjg4OH0.ICC0UsLlzJDNre7rFCeD3k6iVzo6jOJgn3PhABpEMsQ';
+    const SUPA_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzYWMiLCJyZWYiOiIkQGRhcHdwZ3ZuZmpjZnFxaHJweGxhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDcwNDA4ODgsImV4cCI6MjA2MjYxNjg4OH0.ICC0UsLlzJDNre7rFCeD3k6iVzo6jOJgn3PhABpEMsQ';
     const supabase = window.supabase.createClient(SUPA_URL, SUPA_KEY);
 
     const EXCHANGE_RATE_API_KEY = '4e4307b2bf8daac15365a410';
     const GNEWS_API_KEY = '03a6fdcc98666513a11a078b2e21b3d7';
+    const FINNHUB_API_KEY = 'd0um351r01qn5fk68hc0d0um351r01qn5fk68hcg'; // Your Finnhub key
     const apiCache = new Map();
 
-    async function retryFetch(url, options = {}, retries = 1, delay = 2000) {
+    async function retryFetch(url, options, retries = 1, delay = 2000) {
       for (let i = 0; i <= retries; i++) {
         try {
           const res = await fetch(url, options);
@@ -660,7 +363,7 @@
         const { data, error } = await supabase.from('user_activity').select('*').order('timestamp', { ascending: false }).limit(10);
         if (error) throw error;
         tbody.innerHTML = '';
-        if (!data || data.length === 0) {
+        if (data.length === 0) {
           tbody.innerHTML = '<tr><td colspan="5">No activity data available</td></tr>';
           return;
         }
@@ -683,12 +386,8 @@
       try {
         const { data, error } = await supabase.from('user_activity').select('*').order('timestamp', { ascending: false });
         if (error) throw error;
-        const csv = [
-          'Timestamp,Action,IP Address,City,Country,Device',
-          ...data.map(row => 
-            `${new Date(row.timestamp).toLocaleString()},${row.action},${row.ip_address},${row.city},${row.country},"${row.device}"`
-          )
-        ].join('\n');
+        const csv = ['Timestamp,Action,IP Address,City,Country,Device', ...data.map(row =>
+          `${new Date(row.timestamp).toLocaleString()},${row.action},${row.ip_address},${row.city},${row.country},"${row.device}"`)].join('\n');
         const blob = new Blob([csv], { type: 'text/csv' });
         const url = URL.createObjectURL(blob);
         const a = document.createElement('a');
@@ -730,6 +429,7 @@
       }
     }
 
+    /*–– Supabase session validation ––*/
     async function checkSession() {
       const localToken = localStorage.getItem('sessionToken');
       if (!localToken) {
@@ -763,7 +463,10 @@
     async function loadDashboard() {
       try {
         const today = new Date().toISOString().split('T')[0];
-        const { count, error: signalError } = await supabase.from('signals').select('id', { count: 'exact' }).gte('timestamp', today);
+        const { count, error: signalError } = await supabase
+          .from('signals')
+          .select('id', { count: 'exact' })
+          .gte('timestamp', today);
         if (signalError) throw signalError;
         document.getElementById('stat-gold-change').textContent = 'N/A';
         const list = JSON.parse(localStorage.getItem('watchlist') || '[]');
@@ -871,89 +574,65 @@
       }
     }
 
-    // ─────────────────────────────────────────────────────────
-    // UPDATED loadEconCalendar(): fetch live data or fallback
-    // ─────────────────────────────────────────────────────────
+    /** 
+     * ── REVISED: loadEconCalendar() now fetches from Finnhub.io ──
+     **/
     async function loadEconCalendar() {
       const tbody = document.getElementById('calendar-body');
-      // Show spinner while loading
       tbody.innerHTML = '<tr><td colspan="7"><div class="spinner"></div></td></tr>';
       try {
-        // Build date range: today → today + 2 days (format YYYY-MM-DD)
-        const todayObj = new Date();
-        const pad = num => num.toString().padStart(2, '0');
-        const yyyy = todayObj.getFullYear();
-        const mm = pad(todayObj.getMonth() + 1);
-        const dd = pad(todayObj.getDate());
-        const todayStr = `${yyyy}-${mm}-${dd}`;
+        // Calculate date range: today and next 7 days
+        const today = new Date();
+        const toDate = new Date();
+        toDate.setDate(toDate.getDate() + 7);
+        const yyyy = today.getFullYear();
+        const mm = String(today.getMonth() + 1).padStart(2, '0');
+        const dd = String(today.getDate()).padStart(2, '0');
+        const fromStr = `${yyyy}-${mm}-${dd}`;
 
-        const futureObj = new Date();
-        futureObj.setDate(futureObj.getDate() + 2);
-        const fyyyy = futureObj.getFullYear();
-        const fmm = pad(futureObj.getMonth() + 1);
-        const fdd = pad(futureObj.getDate());
-        const futureStr = `${fyyyy}-${fmm}-${fdd}`;
+        const yyyy2 = toDate.getFullYear();
+        const mm2 = String(toDate.getMonth() + 1).padStart(2, '0');
+        const dd2 = String(toDate.getDate()).padStart(2, '0');
+        const toStr = `${yyyy2}-${mm2}-${dd2}`;
 
-        // Fetch from TradingEconomics free guest API
-        const url = `https://api.tradingeconomics.com/calendar?c=guest:guest&country=all&startDate=${todayStr}&endDate=${futureStr}`;
-        const res = await retryFetch(url, {}, 2, 1500);
-        const events = await res.json();
+        const url = `https://finnhub.io/api/v1/calendar/economic?from=${fromStr}&to=${toStr}&token=${FINNHUB_API_KEY}`;
+        const res = await retryFetch(url);
+        const data = await res.json();
+        if (!data || !data.data) throw new Error('No calendar data returned');
 
         tbody.innerHTML = '';
-        if (!Array.isArray(events) || events.length === 0) {
-          throw new Error('No events returned');
+        const allDates = Object.keys(data.data).sort();
+        for (const dateKey of allDates) {
+          const eventsOnDate = data.data[dateKey];
+          eventsOnDate.forEach(evt => {
+            const tr = document.createElement('tr');
+            if (evt.importance === 3) tr.classList.add('high-impact');
+            const cols = [
+              dateKey,
+              evt.time || '-',
+              evt.country || '-',
+              evt.event || '-',
+              evt.importance === 3 ? 'High' : evt.importance === 2 ? 'Medium' : 'Low',
+              evt.actual !== null ? evt.actual : '-',
+              evt.previous !== null ? evt.previous : '-'
+            ];
+            cols.forEach(text => {
+              const td = document.createElement('td');
+              td.textContent = text;
+              tr.appendChild(td);
+            });
+            tbody.appendChild(tr);
+          });
         }
 
-        events.forEach(ev => {
-          const tr = document.createElement('tr');
-          if (ev.impact && ev.impact.toLowerCase() === 'high') {
-            tr.classList.add('high-impact');
-          }
-          // TradingEconomics returns ISO date string, e.g. "2025-06-02T08:30:00Z"
-          const dt = new Date(ev.date);
-          const dateText = dt.toLocaleDateString();
-          const timeText = dt.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-
-          const rowData = {
-            date: dateText,
-            time: timeText,
-            currency: ev.country || '-',
-            event: ev.event || '-',
-            impact: ev.impact || '-',
-            actual: ev.actual !== null ? ev.actual : '-',
-            previous: ev.previous !== null ? ev.previous : '-'
-          };
-
-          ['date', 'time', 'currency', 'event', 'impact', 'actual', 'previous'].forEach(key => {
-            const td = document.createElement('td');
-            td.textContent = rowData[key];
-            tr.appendChild(td);
-          });
-          tbody.appendChild(tr);
-        });
+        if (tbody.children.length === 0) {
+          tbody.innerHTML = '<tr><td colspan="7">No upcoming events found in the next 7 days</td></tr>';
+        }
       } catch (err) {
         console.error('Load calendar error:', err.message);
-        // Fallback: original mock events + error note
-        tbody.innerHTML = '';
-        const fallbackEvents = [
-          { date: "06-02-2025", time: "08:30", currency: "USD", event: "Non-Farm Payrolls", impact: "High", actual: "", previous: "254K" },
-          { date: "06-03-2025", time: "10:00", currency: "EUR", event: "CPI Flash Estimate", impact: "Medium", actual: "", previous: "2.0%" },
-          { date: "06-04-2025", time: "04:30", currency: "GBP", event: "Services PMI", impact: "Low", actual: "", previous: "52.2" }
-        ];
-        fallbackEvents.forEach(event => {
-          const tr = document.createElement('tr');
-          if (event.impact === 'High') tr.classList.add('high-impact');
-          ['date', 'time', 'currency', 'event', 'impact', 'actual', 'previous'].forEach(key => {
-            const td = document.createElement('td');
-            td.textContent = event[key] || '-';
-            tr.appendChild(td);
-          });
-          tbody.appendChild(tr);
-        });
-        tbody.innerHTML += '<tr><td colspan="7" style="color:var(--error)">Failed to fetch live calendar data</td></tr>';
+        tbody.innerHTML = '<tr><td colspan="7" style="color:var(--error)">Failed to load calendar</td></tr>';
       }
     }
-    // ─────────────────────────────────────────────────────────
 
     function toggleTheme(theme) {
       document.documentElement.setAttribute('data-theme', theme);
@@ -978,10 +657,10 @@
     }
 
     document.addEventListener('DOMContentLoaded', async () => {
-      // Revalidate session on load
+      /*–– Revalidate session every two minutes and on load ––*/
       await checkSession();
 
-      // Subscribe to changes in the user's session token
+      /*–– Subscribe to real-time session-token changes for current user ––*/
       const userId = sessionStorage.getItem('userId');
       supabase.channel(`users:id=eq.${userId}`)
         .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'users', filter: `id=eq.${userId}` }, payload => {
@@ -994,8 +673,7 @@
           if (status === 'SUBSCRIBED') console.log('Realtime user subscription active');
         });
 
-      // Re-check session every 15 seconds
-      setInterval(checkSession, 15000);
+      setInterval(checkSession, 15000); // re-check every 15s
 
       document.getElementById('welcomeName').textContent = sessionStorage.getItem('userName') || 'Trader';
       await logActivity('login');
