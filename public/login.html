@@ -7,7 +7,6 @@
   <meta name="description" content="Login to Chukwuemeka Bullion Exchange’s VIP trading community."/>
 
   <style>
-    /* Dark/Light Theme Variables */
     :root[data-theme="dark"] {
       --bg: #121212; 
       --text: #f0f0f0; 
@@ -32,8 +31,6 @@
       --success-color: #2ecc71;
       --warning-color: #f39c12;
     }
-
-    /* RESET / BASE */
     * { margin: 0; padding: 0; box-sizing: border-box; }
     body {
       font-family: 'Roboto', sans-serif;
@@ -44,8 +41,6 @@
       justify-content: center;
       min-height: 100vh;
     }
-
-    /* LOGIN CARD */
     .login-card {
       width: 100%; 
       max-width: 400px;
@@ -127,15 +122,10 @@
   <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700&family=Roboto:wght@300;400;700&display=swap" rel="stylesheet"/>
 </head>
 <body>
-  <!-- LOGO -->
   <div class="logo">
     <a href="index.html"><img src="CBE_logo.PNG" alt="CBE Logo"/></a>
   </div>
-
-  <!-- THEME TOGGLE -->
   <button id="theme-toggle" aria-label="Toggle theme">🌞</button>
-
-  <!-- LOGIN CARD -->
   <div class="login-card" id="login-card">
     <h1>Member Login</h1>
     <form id="login-form">
@@ -147,12 +137,9 @@
     </form>
     <div id="login-alert"></div>
   </div>
-
   <footer>© 2025 Chukwuemeka Bullion Exchange. All rights reserved.</footer>
 
-  <!-- Supabase UMD -->
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>
-
   <script>
     // ─── 1) SETUP & THEME TOGGLE ────────────────────────────────────────────────
     const loginCard = document.getElementById('login-card');
@@ -162,8 +149,6 @@
       const savedTheme = localStorage.getItem('theme') || 'dark';
       document.documentElement.setAttribute('data-theme', savedTheme);
       toggleBtn.textContent = savedTheme === 'dark' ? '🌞' : '🌜';
-
-      // Display message if logged out due to another session
       const urlParams = new URLSearchParams(window.location.search);
       if (urlParams.get('message') === 'logged_out_elsewhere') {
         const alertDiv = document.getElementById('login-alert');
@@ -180,12 +165,12 @@
     });
 
     // ─── 2) INITIALIZE SUPABASE ─────────────────────────────────────────────────
-    const SUPA_URL      = 'https://dapwpgvnfjcfqqhrpxla.supabase.co';
+    // Note: RLS is disabled on the users table, allowing unrestricted access
+    const SUPA_URL = 'https://dapwpgvnfjcfqqhrpxla.supabase.co';
     const SUPA_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImRhcHdwZ3ZuZmpjZnFxaHJweGxhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDcwNDA4ODgsImV4cCI6MjA2MjYxNjg4OH0.ICC0UsLlzJDNre7rFCeD3k6iVzo6jOJgn3PhABpEMsQ';
     const sb = supabase.createClient(SUPA_URL, SUPA_ANON_KEY);
 
     // ─── 3) SESSION TOKEN GENERATOR ─────────────────────────────────────────────
-    // Generates a unique session token (UUID v4) for each login
     function uuidv4() {
       return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
         const r = Math.random() * 16 | 0, v = c === 'x' ? r : (r & 0x3 | 0x8);
@@ -198,42 +183,36 @@
       e.preventDefault();
       const alertDiv = document.getElementById('login-alert');
       alertDiv.textContent = '';
-
-      const email    = document.getElementById('email').value.trim().toLowerCase();
+      const email = document.getElementById('email').value.trim().toLowerCase();
       const password = document.getElementById('password').value;
 
       try {
-        // 4.a) Fetch user by email
+        // Fetch user by email
         const { data: user, error, count } = await sb
           .from('users')
           .select('id, name, email, password, status', { count: 'exact' })
           .ilike('email', email)
           .limit(1)
           .maybeSingle();
-
         if (error) throw error;
         if (count === 0) throw new Error('No account found for that email.');
 
-        // 4.b) Password check
+        // Password check
         if (user.password !== password) throw new Error('Invalid login credentials.');
 
-        // 4.c) Approval check
+        // Approval check
         if (String(user.status).toLowerCase() !== 'approved') {
           throw new Error('Your account is not yet approved—please check back soon.');
         }
 
-        // 4.d) Device Fingerprint Check
+        // Device Fingerprint Check
         const deviceKey = `cbeDevice_${email}`;
         const savedDevice = localStorage.getItem(deviceKey);
         const currentDevice = navigator.userAgent;
-
-        // If first login from this browser/device → just store, no email
         if (!savedDevice) {
           localStorage.setItem(deviceKey, currentDevice);
-        }
-        // If savedDevice exists but differs → suspicious login alert
-        else if (savedDevice !== currentDevice) {
-          localStorage.setItem(deviceKey, currentDevice); // Overwrite to avoid spamming
+        } else if (savedDevice !== currentDevice) {
+          localStorage.setItem(deviceKey, currentDevice);
           const payload = {
             email: user.email,
             name: user.name,
@@ -247,8 +226,7 @@
           });
         }
 
-        // 4.e) Generate and save session token securely using RPC
-        // Note: RLS is disabled on the users table, so the RPC function can update freely
+        // Generate and save session token via RPC
         const sessionToken = uuidv4();
         const { error: tokenError } = await sb.rpc('update_session_token', {
           p_email: email,
@@ -257,16 +235,15 @@
         });
         if (tokenError) throw new Error('Failed to update session token.');
 
-        // 4.f) Store session token locally
+        // Store session token
         localStorage.setItem('sessionToken', sessionToken);
-
-        // 4.g) LOGIN SUCCESS → store session token and redirects to dashboard
         sessionStorage.setItem('loggedIn', 'true');
         sessionStorage.setItem('userId', user.id);
         sessionStorage.setItem('userName', user.name);
+
+        // Redirect to dashboard
         window.location.assign('dashboard.html');
-      }
-      catch (err) {
+      } catch (err) {
         console.error("Login error:", err);
         alertDiv.style.color = "var(--error-color)";
         alertDiv.textContent = err.message;
@@ -274,8 +251,7 @@
     });
   </script>
 
-  <!-- Smartsupp Live Chat (optional) -->
-  <script type="https://cdnjs.cloudflare.com/ajax/libs/three.js/r134/three.min.js">
+  <script>
     var _smartsupp = _smartsupp || {};
     _smartsupp.key = '018a8bbd868518221e725341a7b2601231ec7ce8';
     window.smartsupp||(function(d) {
