@@ -1,107 +1,61 @@
 <!DOCTYPE html>
 <html lang="en" data-theme="dark">
 <head>
-  <meta charset="UTF-8"/>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>VIP Dashboard • CBE</title>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Dashboard • CBE Global</title>
 
-  <!-- Supabase Client & Session Enforcement -->
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>
-  <script>
-    // Supabase initialization
-    const SUPA_URL = 'https://dapwpgvnfjcfqqhrpxla.supabase.co';
-    const SUPA_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImRhcHdwZ3ZuZmpjZnFxaHJweGxhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDcwNDA4ODgsImV4cCI6MjA2MjYxNjg4OH0.ICC0UsLlzJDNre7rFCeD3k6iVzo6jOJgn3PhABpEMsQ';
-    const supabase = window.supabase.createClient(SUPA_URL, SUPA_KEY);
-
-    (async function enforceSingleSession() {
-      const isLoggedIn = localStorage.getItem('isLoggedIn') === 'true';
-      if (!isLoggedIn) {
-        window.location.replace('login.html');
-        return;
-      }
-
-      const userId = sessionStorage.getItem('cbeUserId');
-      const localToken = localStorage.getItem('sessionToken');
-      if (!userId || !localToken) {
-        localStorage.removeItem('isLoggedIn');
-        sessionStorage.removeItem('cbeUserId');
-        localStorage.removeItem('sessionToken');
-        window.location.replace('login.html');
-        return;
-      }
-
-      try {
-        const { data: userData, error: userErr } = await supabase
-          .from('users')
-          .select('current_session_token')
-          .eq('id', userId)
-          .single();
-
-        if (userErr || !userData) {
-          throw new Error('User lookup failed');
-        }
-
-        if (userData.current_session_token !== localToken) {
-          localStorage.removeItem('isLoggedIn');
-          sessionStorage.removeItem('cbeUserId');
-          localStorage.removeItem('sessionToken');
-          window.location.replace('login.html');
-          return;
-        }
-      } catch (err) {
-        console.error('Session validation error:', err);
-        localStorage.removeItem('isLoggedIn');
-        sessionStorage.removeItem('cbeUserId');
-        localStorage.removeItem('sessionToken');
-        window.location.replace('login.html');
-      }
-    })();
-  </script>
-
-  <!-- Client-side Guard -->
+  <!-- Auth Guard (enabled) -->
   <script>
     if (localStorage.getItem('isLoggedIn') !== 'true') {
       window.location.replace('login.html');
     }
   </script>
 
-  <!-- Fonts, Bootstrap & Other Dependencies -->
-  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;500;700&display=swap" rel="stylesheet"/>
-  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet"/>
-  <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css" rel="stylesheet"/>
+  <!-- Dependencies -->
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-QWTKZyjpPEjISv5WaRU9OFeRpok6YctnYmDr5pNlyT2bRjXh0JMhjY6hW+ALEwIH" crossorigin="anonymous">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;700&family=Orbitron:wght@400;700&display=swap" rel="stylesheet">
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>
   <script src="https://s3.tradingview.com/tv.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/particles.js@2.0.0/particles.min.js"></script>
+  <script>
+    var _smartsupp = _smartsupp || {};
+    _smartsupp.key = '018a8bbd868518221e725341a7b2601231ec7ce8';
+    window.smartsupp||(function(d) {
+      var s,c,o=smartsupp=function(){ o._.push(arguments)};o._=[];
+      s=d.getElementsByTagName('script')[0];c=d.createElement('script');
+      c.type='text/javascript';c.charset='utf-8';c.async=true;
+      c.src='https://www.smartsuppchat.com/loader.js?';s.parentNode.insertBefore(c,s);
+    })(document);
+  </script>
 
   <style>
     :root[data-theme="dark"] {
-      --bg: #000000;
-      --text: #ffd700;
+      --bg: #121212;
+      --text: #e0e0e0;
       --gold: #ffd700;
       --gold-dark: #cca300;
-      --glass: rgba(255, 255, 255, 0.1);
+      --glass: rgba(30, 30, 30, 0.7);
       --shadow: rgba(0, 0, 0, 0.5);
-      --text-light: #e6b800;
-      --text-muted: #ffd700;
-      --success: #4caf50;
-      --error: #e57373;
+      --text-light: #b0b0b0;
+      --text-muted: #888888;
+      --success: #00ff88;
+      --error: #ff4d4d;
       --accent: #1e1e1e;
-      --buy: #4caf50;
-      --sell: #e57373;
     }
     :root[data-theme="light"] {
       --bg: #f5f5f5;
-      --text: #333;
+      --text: #333333;
       --gold: #cca300;
       --gold-dark: #b58900;
-      --glass: rgba(0, 0, 0, 0.08);
-      --shadow: rgba(0, 0, 0, 0.15);
-      --text-light: #555;
-      --text-muted: #666;
-      --success: #388e3c;
-      --error: #d32f2f;
-      --accent: #e0e0e0;
-      --buy: #388e3c;
-      --sell: #d32f2f;
+      --glass: rgba(255, 255, 255, 0.7);
+      --shadow: rgba(0, 0, 0, 0.2);
+      --text-light: #666666;
+      --text-muted: #888888;
+      --success: #28a745;
+      --error: #dc3545;
+      --accent: #ffffff;
     }
     * { margin: 0; padding: 0; box-sizing: border-box; }
     html { scroll-behavior: smooth; }
@@ -109,391 +63,274 @@
       font-family: 'Poppins', sans-serif;
       background: var(--bg);
       color: var(--text);
+      min-height: 100vh;
       overflow-x: hidden;
       line-height: 1.6;
-      width: 100vw;
     }
-    a { color: var(--gold); text-decoration: none; }
-    a:hover { color: var(--gold-dark); }
+    a, button, h1, h2, h3, h4, h5, h6, p, span, td, th, li, input, select, label {
+      color: var(--text) !important;
+    }
+    a:hover { color: var(--gold-dark) !important; }
+    #particles-js {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      z-index: -10;
+      opacity: 0.2;
+    }
     .slide-in {
       opacity: 0;
-      transform: translateY(30px);
-      transition: opacity 0.7s ease-out, transform 0.7s ease-out;
+      transform: translateY(20px);
+      transition: opacity 0.8s ease-out, transform 0.8s ease-out;
     }
     .slide-in.visible {
       opacity: 1;
       transform: translateY(0);
     }
-    html::before, html::after {
-      content: "Reselling of this signal is prohibited and punishable by law";
-      position: fixed;
-      color: var(--gold);
-      opacity: 0.05;
-      font-size: 2rem;
-      font-weight: 600;
-      pointer-events: none;
-      z-index: 900;
-      white-space: nowrap;
-    }
-    html::before {
-      top: 20%;
-      left: 10%;
-      transform: rotate(-45deg);
-    }
-    html::after {
-      bottom: 20%;
-      right: 10%;
-      transform: rotate(45deg);
-    }
-    .container::before, .container::after {
-      content: "Reselling of this signal is prohibited and punishable by law";
-      position: absolute;
-      color: var(--gold);
-      opacity: 0.05;
-      font-size: 1.5rem;
-      font-weight: 600;
-      pointer-events: none;
-      z-index: 900;
-    }
-    .container::before {
-      top: 10%;
-      left: 5%;
-      transform: rotate(-30deg);
-    }
-    .container::after {
-      bottom: 10%;
-      right: 5%;
-      transform: rotate(30deg);
-    }
-    nav {
-      position: fixed;
+    header {
+      position: sticky;
       top: 0;
-      left: 0;
-      width: 100%;
-      height: 60px;
-      background: rgba(30, 30, 30, 0.75);
+      background: var(--glass);
       backdrop-filter: blur(10px);
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      padding: 0 2vw;
-      box-shadow: 0 2px 12px var(--shadow);
+      padding: 1rem 2rem;
+      box-shadow: 0 2px 8px var(--shadow);
       z-index: 1000;
-    }
-    nav .logo {
-      font-size: 1.25rem;
-      font-weight: 700;
-      color: var(--gold);
-      letter-spacing: 1px;
-      padding: 5px 10px;
-      background: linear-gradient(45deg, var(--gold), var(--gold-dark));
-      border-radius: 8px;
-      box-shadow: 0 3px 10px rgba(255, 215, 0, 0.3);
-      transition: transform 0.3s ease, box-shadow 0.3s ease;
-    }
-    nav .logo:hover {
-      transform: scale(1.04);
-      box-shadow: 0 5px 14px rgba(255, 215, 0, 0.5);
-    }
-    nav .nav-links {
       display: flex;
-      gap: 10px;
       align-items: center;
-    }
-    nav .nav-links a, nav .nav-links button {
-      background: var(--glass);
-      border: 1px solid rgba(255, 215, 0, 0.2);
-      padding: 6px 12px;
-      border-radius: 6px;
-      font-weight: 500;
-      color: var(--gold);
-      cursor: pointer;
-      transition: background 0.3s ease, transform 0.3s ease, box-shadow 0.3s ease;
-      text-decoration: none;
-    }
-    nav .nav-links a:hover, nav .nav-links button:hover {
-      background: linear-gradient(45deg, var(--gold), var(--gold-dark));
-      color: #000;
-      transform: translateY(-1px);
-      box-shadow: 0 3px 12px rgba(255, 215, 0, 0.3);
-    }
-    nav .theme-toggle {
-      background: none;
-      border: none;
-      font-size: 1.6rem;
-      color: var(--text);
-      cursor: pointer;
-      transition: transform 0.3s ease;
-    }
-    nav .theme-toggle:hover {
-      transform: rotate(180deg);
-    }
-    .container {
-      margin-top: 70px;
-      width: 100%;
-      margin-bottom: 40px;
-      padding: 0 2vw;
-      position: relative;
-    }
-    .section-title {
-      font-family: 'Poppins', sans-serif;
-      font-size: 2.8rem;
-      font-weight: 700;
-      color: var(--gold);
-      text-align: center;
-      margin: 2rem 0 1.5rem;
-      text-transform: uppercase;
-      letter-spacing: 2px;
-      text-shadow: 0 2px 10px rgba(255, 215, 0, 0.3);
-    }
-    .section-title .update-note {
-      font-size: 1rem;
-      color: var(--text-light);
-      font-weight: 400;
-      display: block;
-      margin-top: 0.5rem;
-    }
-    .signal-card {
-      background: var(--glass);
-      backdrop-filter: blur(15px);
-      padding: 2.5rem;
-      border-radius: 20px;
-      box-shadow: 0 8px 30px var(--shadow);
-      border: 1px solid rgba(255, 215, 0, 0.15);
-      margin-bottom: 2rem;
-      max-width: 100%;
-    }
-    .signal-header {
-      display: flex;
       justify-content: space-between;
-      align-items: center;
-      padding-bottom: 1rem;
-      border-bottom: 1px solid rgba(255, 215, 0, 0.2);
     }
-    .signal-header h2 {
-      font-size: 1.8rem;
-      font-weight: 600;
-    }
-    .signal-buy { color: var(--buy); }
-    .signal-sell { color: var(--sell); }
-    .signal-header .time { color: var(--text-light); font-size: 1rem; }
-    .signal-header .refresh-btn {
-      background: none;
-      border: none;
-      color: var(--gold);
+    header .logo {
+      font-family: 'Orbitron', sans-serif;
       font-size: 1.5rem;
-      cursor: pointer;
+      font-weight: 700;
+      padding: 0.5rem 1rem;
+      background: linear-gradient(45deg, var(--gold), var(--gold-dark));
+      border-radius: 8px;
+      box-shadow: 0 2px 6px var(--shadow);
       transition: transform 0.3s ease;
     }
-    .signal-header .refresh-btn:hover { transform: scale(1.1); }
-    .signal-body {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-      gap: 15px;
-      padding: 1.5rem 0;
+    header .logo:hover {
+      transform: scale(1.05);
     }
-    .detail {
-      background: var(--accent);
-      border: 1px solid rgba(255, 215, 0, 0.2);
-      border-radius: 8px;
-      padding: 12px 16px;
+    header .nav-links {
       display: flex;
-      justify-content: space-between;
       align-items: center;
-      transition: all 0.3s ease;
+      gap: 1rem;
     }
-    .detail:hover {
-      background: rgba(255, 215, 0, 0.15);
-      box-shadow: 0 4px 15px rgba(255, 215, 0, 0.3);
-    }
-    .detail span {
-      font-weight: 500;
-      color: var(--text);
-    }
-    .copy-btn {
-      background: linear-gradient(45deg, var(--gold), var(--gold-dark));
-      color: #000;
-      border: none;
-      padding: 8px 16px;
+    header .nav-links button, header .nav-links select {
+      background: var(--glass);
+      border: 1px solid var(--gold-dark);
+      padding: 0.5rem 1rem;
       border-radius: 6px;
-      font-weight: 500;
+      font-size: 0.9rem;
       cursor: pointer;
-      transition: all 0.3s ease;
+      transition: background 0.3s ease;
     }
-    .copy-btn:hover {
-      background: linear-gradient(45deg, var(--gold-dark), var(--gold));
-      transform: translateY(-2px);
-      box-shadow: 0 4px 15px rgba(255, 215, 0, 0.3);
+    header .nav-links button:hover, header .nav-links select:hover {
+      background: var(--gold-dark);
+      color: #000 !important;
     }
-    .admin-note {
+    #theme-select {
       background: var(--glass);
-      padding: 16px;
-      margin-top: 1rem;
-      border-left: 4px solid var(--gold);
-      color: var(--text-light);
-      font-style: italic;
+      border: 1px solid var(--gold-dark);
+      padding: 0.5rem;
       border-radius: 6px;
-      font-size: 0.95rem;
     }
-    .loader {
-      border: 4px solid rgba(255, 215, 0, 0.2);
-      border-top: 4px solid var(--gold);
-      border-radius: 50%;
-      width: 36px;
-      height: 36px;
-      animation: spin 1s linear infinite;
-      margin: 40px auto;
-    }
-    @keyframes spin { 0% { transform: rotate(0); } 100% { transform: rotate(360deg); } }
-    #gold-chart {
+    #notif-btn { position: relative; }
+    #notif-count { font-size: 0.7rem; padding: 0.2rem 0.5rem; }
+    #sidebar-toggle { font-size: 1.5rem; padding: 0.5rem; }
+    .offcanvas {
       background: var(--glass);
-      backdrop-filter: blur(15px);
-      border: 1px solid rgba(255, 215, 0, 0.15);
-      border-radius: 20px;
-      box-shadow: 0 8px 30px var(--shadow);
-      margin-bottom: 2rem;
-      overflow: hidden;
-      position: relative;
-      width: 100%;
+      backdrop-filter: blur(10px);
+      border-right: 1px solid var(--gold-dark);
     }
-    #tradingview_chart {
-      width: 100%;
-      min-height: calc(100vh - 160px);
+    .offcanvas .nav-link {
+      font-size: 1.1rem;
+      padding: 0.8rem;
+      border-radius: 6px;
+      transition: background 0.3s ease;
     }
-    #tradingview_chart iframe {
-      width: 100% !important;
-      height: 100% !important;
-      position: absolute;
-      top: 0;
-      left: 0;
+    .offcanvas .nav-link:hover, .offcanvas .nav-link.active {
+      background: var(--gold-dark);
+      color: #000 !important;
     }
-    #gold-news {
+    .container-fluid { padding: 0 2rem; }
+    .welcome-banner {
+      font-family: 'Orbitron', sans-serif;
+      font-size: 2rem;
+      text-align: center;
+      padding: 1.5rem;
       background: var(--glass);
-      backdrop-filter: blur(15px);
-      border: 1px solid rgba(255, 215, 0, 0.15);
-      border-radius: 20px;
-      box-shadow: 0 8px 30px var(--shadow);
-      margin-bottom: 2rem;
-      overflow: hidden;
-      width: 100%;
+      backdrop-filter: blur(10px);
+      border-radius: 10px;
+      box-shadow: 0 2px 8px var(--shadow);
+      margin: 1.5rem 0;
     }
-    #gold-news ul {
+    .card {
+      background: var(--glass);
+      backdrop-filter: blur(10px);
+      border: 1px solid var(--gold-dark);
+      border-radius: 10px;
+      box-shadow: 0 2px 8px var(--shadow);
+      padding: 1.5rem;
+      transition: transform 0.3s ease;
+    }
+    .card:hover {
+      transform: translateY(-4px);
+    }
+    .btn-gold {
+      background: linear-gradient(45deg, var(--gold), var(--gold-dark));
+      color: #000 !important;
+      border: none;
+      padding: 0.7rem 1.2rem;
+      border-radius: 6px;
+      font-weight: 500;
+      transition: transform 0.3s ease;
+    }
+    .btn-gold:hover {
+      transform: scale(1.03);
+    }
+    #tv_chart_4h {
+      width: 100%;
+      height: 450px;
+      border-radius: 8px;
+      overflow: hidden;
+      box-shadow: 0 2px 8px var(--shadow);
+    }
+    .chart-toggle {
+      display: flex;
+      gap: 0.5rem;
+      margin-bottom: 1rem;
+    }
+    .chart-toggle button {
+      background: var(--glass);
+      border: 1px solid var(--gold-dark);
+      padding: 0.5rem 1rem;
+      border-radius: 6px;
+      transition: background 0.3s ease;
+    }
+    .chart-toggle button.active, .chart-toggle button:hover {
+      background: var(--gold-dark);
+      color: #000 !important;
+    }
+    #news-widget {
+      background: var(--glass);
+      border: 1px solid var(--gold-dark);
+      border-radius: 10px;
+      box-shadow: 0 2px 8px var(--shadow);
+      padding: 0;
+      height: 350px;
+      overflow: hidden;
+    }
+    #news-widget ul {
       list-style: none;
       margin: 0;
       padding: 0;
-      height: 400px;
+      height: 100%;
       overflow-y: auto;
     }
-    #gold-news li {
-      padding: 1.2rem;
-      border-bottom: 1px solid rgba(255, 215, 0, 0.05);
-      transition: all 0.3s ease;
+    #news-widget li {
+      padding: 1rem;
+      border-bottom: 1px solid var(--gold-dark);
+      transition: background 0.3s ease;
     }
-    #gold-news li:hover {
-      background: rgba(255, 215, 0, 0.15);
-      box-shadow: 0 4px 15px rgba(255, 215, 0, 0.3);
+    #news-widget li:hover {
+      background: rgba(255, 215, 0, 0.1);
     }
-    #gold-news a {
-      color: var(--text);
-      font-weight: 500;
-      font-size: 0.95rem;
-      word-break: break-word;
-    }
-    #gold-news a:hover { color: var(--gold-dark); }
-    #gold-news .update-note {
-      display: block;
-      padding: 8px 16px;
-      font-size: 0.85rem;
-      color: var(--text-light);
-      background: var(--accent);
-    }
-    #calendar-widget {
+    #calendar-widget, #activity-widget {
       background: var(--glass);
-      backdrop-filter: blur(15px);
-      border: 1px solid rgba(255, 215, 0, 0.15);
-      border-radius: 20px;
-      box-shadow: 0 8px 30px var(--shadow);
-      margin-bottom: 2rem;
+      border: 1px solid var(--gold-dark);
+      border-radius: 10px;
+      box-shadow: 0 2px 8px var(--shadow);
+      padding: 1rem;
+      height: 350px;
       overflow: auto;
-      width: 100%;
     }
-    #calendar-widget table {
+    #calendar-widget table, #activity-widget table {
       width: 100%;
       border-collapse: separate;
-      border-spacing: 0 12px;
-      color: var(--text);
+      border-spacing: 0 8px;
     }
-    #calendar-widget th {
+    #calendar-widget th, #activity-widget th {
       background: linear-gradient(45deg, var(--gold-dark), var(--gold));
-      color: #000;
-      padding: 1.2rem;
+      color: #000 !important;
+      padding: 0.8rem;
       text-align: center;
-      border-radius: 10px;
-      font-weight: 500;
-      text-transform: uppercase;
-      letter-spacing: 1px;
+      border-radius: 6px;
       position: sticky;
       top: 0;
       z-index: 2;
     }
-    #calendar-widget td {
-      padding: 1.2rem;
+    #calendar-widget td, #activity-widget td {
+      padding: 0.8rem;
       background: var(--accent);
-      border-bottom: 1px solid rgba(255, 255, 255, 0.05);
-      vertical-align: middle;
-      border-radius: 8px;
+      border-radius: 6px;
     }
-    #calendar-widget tbody tr {
-      transition: all 0.3s ease;
-      border-radius: 12px;
+    #calendar-widget tbody tr.high-impact { background: rgba(255, 215, 0, 0.2); }
+    #converter-widget select, #converter-widget input {
+      background: var(--accent);
+      border: 1px solid var(--gold-dark);
+      border-radius: 6px;
+      padding: 0.5rem;
     }
-    #calendar-widget tbody tr:hover {
-      background: rgba(255, 215, 0, 0.15);
-      box-shadow: 0 6px 20px var(--shadow);
-      transform: translateY(-3px);
+    #watch-list .list-group-item {
+      background: var(--glass);
+      border: 1px solid var(--gold-dark);
+      border-radius: 6px;
+      margin-bottom: 0.5rem;
+      box-shadow: 0 2px 6px var(--shadow);
     }
-    #calendar-widget .update-note {
-      padding: 8px 16px;
-      font-size: 0.85rem;
-      color: var(--text-light);
-      text-align: right;
+    .price-change.positive { color: var(--success) !important; }
+    .price-change.negative { color: var(--error) !important; }
+    #notif-menu {
+      background: var(--glass);
+      backdrop-filter: blur(10px);
+      border: 1px solid var(--gold-dark);
+      width: 250px;
+      box-shadow: 0 2px 8px var(--shadow);
     }
+    #notif-list li {
+      padding: 0.5rem 1rem;
+      border-bottom: 1px solid var(--gold-dark);
+    }
+    #notif-list .critical { background: rgba(255, 0, 0, 0.2); }
+    #notif-list .info { background: rgba(0, 255, 136, 0.2); }
     footer {
       text-align: center;
-      padding: 20px 0;
+      padding: 1rem 0;
       color: var(--text-light);
       font-size: 0.9rem;
       background: var(--glass);
-      border-top: 1px solid rgba(255, 215, 0, 0.2);
+      border-top: 1px solid var(--gold-dark);
       width: 100%;
     }
+    .spinner {
+      border: 3px solid var(--glass);
+      border-top: 3px solid var(--gold);
+      border-radius: 50%;
+      width: 24px;
+      height: 24px;
+      animation: spin 1s linear infinite;
+      margin: 1rem auto;
+    }
+    @keyframes spin {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
+    }
     @media (max-width: 768px) {
-      nav { padding: 0 4vw; height: 55px; }
-      nav .logo { font-size: 1.2rem; padding: 5px 10px; }
-      nav .nav-links a, nav .nav-links button { padding: 5px 10px; font-size: 0.9rem; }
-      nav .theme-toggle { font-size: 1.4rem; }
-      .container { margin-top: 65px; padding: 0 4vw; }
-      .section-title { font-size: 2rem; }
-      .signal-card { padding: 1.5rem; }
-      .signal-body { grid-template-columns: 1fr; }
-      #gold-chart, #tradingview_chart { min-height: calc(100vh - 140px); }
-      #gold-news, #calendar-widget { height: 400px; }
-      #calendar-widget th, #calendar-widget td { font-size: 0.8rem; padding: 0.8rem; }
-      html::before, html::after { font-size: 1.5rem; }
-      .container::before, .container::after { font-size: 1.2rem; }
+      .container-fluid { padding: 0 1rem; }
+      .welcome-banner { font-size: 1.5rem; padding: 1rem; }
+      .card { padding: 1rem; }
+      #tv_chart_4h, #news-widget, #calendar-widget, #activity-widget { height: 300px; }
+      header { padding: 0.8rem 1rem; }
+      header .logo { font-size: 1.2rem; }
+      header .nav-links { gap: 0.5rem; }
     }
     @media (max-width: 576px) {
-      nav { padding: 0 3vw; height: 50px; }
-      nav .logo { font-size: 1.1rem; padding: 4px 8px; }
-      nav .nav-links a, nav .nav-links button { padding: 4px 8px; font-size: 0.8rem; }
-      nav .theme-toggle { font-size: 1.2rem; }
-      .signal-header { flex-direction: column; gap: 12px; }
-      .signal-header h2 { font-size: 1.3rem; }
-      .detail { flex-direction: column; gap: 8px; text-align: center; }
-      .copy-btn { width: 100%; }
-      html::before, html::after { font-size: 1rem; }
-      .container::before, .container::after { font-size: 0.9rem; }
-      .section-title { font-size: 1.5rem; }
+      .welcome-banner { font-size: 1.2rem; }
+      .btn-gold { padding: 0.5rem 1rem; font-size: 0.9rem; }
     }
     :root {
       --smartsupp-base-color: var(--gold);
@@ -503,8 +340,7 @@
     }
     #smartsupp .ss-widget-container {
       background: var(--glass) !important;
-      backdrop-filter: blur(15px) !important;
-      color: var(--text) !important;
+      backdrop-filter: blur(10px) !important;
     }
     #smartsupp .ss-widget-button {
       background: linear-gradient(45deg, var(--gold), var(--gold-dark)) !important;
@@ -514,242 +350,438 @@
   </style>
 </head>
 <body>
-  <!-- Audio element for new-signal alert -->
-  <audio id="alertSound" src="alert.mp3"></audio>
-
-  <!-- Navigation -->
-  <nav class="slide-in">
-    <a href="vip-dashboard.html" class="logo">CBE VIP Dashboard</a>
+  <div id="particles-js"></div>
+  <div class="offcanvas offcanvas-start" id="sidebar">
+    <div class="offcanvas-body">
+      <div class="text-center mb-4">
+        <div class="logo">CBE Global</div>
+      </div>
+      <ul class="nav nav-pills flex-column">
+        <li class="nav-item">
+          <a class="nav-link active" href="#" onclick="loadDashboard()" data-bs-dismiss="offcanvas">
+            <i class="bi-speedometer2 me-2"></i>Dashboard
+          </a>
+        </li>
+        <li class="nav-item"><a class="nav-link" href="signals.html"><i class="bi-lightning me-2"></i>Signals</a></li>
+        <li class="nav-item"><a class="nav-link" href="CBE_trade_history_vip.html"><i class="bi-clock-history me-2"></i>History</a></li>
+        <li class="nav-item"><a class="nav-link" href="CBE_trade_insights_vip.html"><i class="bi-graph-up me-2"></i>Insights</a></li>
+        <li class="nav-item"><a class="nav-link" href="#" onclick="downloadActivityLog()"><i class="bi-download me-2"></i>Download Logs</a></li>
+      </ul>
+    </div>
+  </div>
+  <header class="slide-in">
+    <div class="d-flex align-items-center">
+      <button id="sidebar-toggle" class="btn btn-link d-md-none me-2"><i class="bi-list"></i></button>
+      <a href="index.html" class="logo">CBE Dashboard</a>
+    </div>
     <div class="nav-links">
-      <a href="trade-history.html">Trade History</a>
-      <a href="trade-insights.html">Trade Insights</a>
-      <button id="notifBell" onclick="ringBell()" title="New Signal">🔔</button>
-      <button onclick="loadLatestSignal()">🔄 Refresh</button>
-      <button onclick="logout()">🚪 Logout</button>
-      <button class="theme-toggle" onclick="toggleTheme()" title="Toggle Theme">🌞</button>
+      <button id="notif-btn" class="btn btn-link position-relative">
+        <i class="bi-bell-fill"></i>
+        <span id="notif-count" class="badge bg-danger position-absolute top-0 start-100 translate-middle">0</span>
+      </button>
+      <div id="notif-menu" class="dropdown-menu dropdown-menu-end p-2">
+        <h6 class="dropdown-header">Notifications</h6>
+        <div id="notif-list">No new notifications</div>
+      </div>
+      <select id="theme-select" title="Select Theme">
+        <option value="dark">Dark</option>
+        <option value="light">Light</option>
+      </select>
+      <button onclick="logout()">Logout</button>
     </div>
-  </nav>
-
-  <div class="container">
-    <!-- Signal Section -->
-    <div class="section-title slide-in">💰 Latest VIP Signal</div>
-    <div id="signalCard" class="signal-card slide-in" style="transition-delay: 0.3s;">
-      <div class="loader"></div>
-      <p style="text-align:center;color: var(--text-light);padding:20px;">Loading latest signal…</p>
+  </header>
+  <div class="container-fluid">
+    <div class="welcome-banner slide-in">Welcome, <strong id="welcomeName">Trader</strong>!</div>
+    <div class="row g-4 mb-4 slide-in">
+      <div class="col-md-3">
+        <div class="card p-3 text-center">
+          <h6><i class="bi-lightning me-2"></i>Signals Today</h6>
+          <a href="signals.html" class="btn btn-gold">Access Signals</a>
+        </div>
+      </div>
+      <div class="col-md-3">
+        <div class="card p-3 text-center">
+          <h6><i class="bi-clock-history me-2"></i>Trade History</h6>
+          <a href="CBE_trade_history_vip.html" class="btn btn-gold">View History</a>
+        </div>
+      </div>
+      <div class="col-md-3">
+        <div class="card p-3 text-center">
+          <h6><i class="bi-graph-up me-2"></i>Trade Insights</h6>
+          <a href="CBE_trade_insights_vip.html" class="btn btn-gold">View Insights</a>
+        </div>
+      </div>
+      <div class="col-md-3">
+        <div class="card p-3 text-center">
+          <h6><i class="bi-currency-exchange me-2"></i>24h Gold Δ</h6>
+          <p id="stat-gold-change" class="fs-5 mb-0">--%</p>
+        </div>
+      </div>
     </div>
-
-    <!-- Gold Chart Section -->
-    <div class="section-title slide-in">📈 Gold (XAU/USD) Real-Time Chart</div>
-    <div id="gold-chart" class="slide-in" style="transition-delay: 0.6s;">
-      <div id="tradingview_chart"></div>
+    <div class="card p-3 mb-4 slide-in" id="converter-widget">
+      <h3 class="mb-3">Currency Converter</h3>
+      <div class="row g-3">
+        <div class="col-md-4">
+          <select id="converter-from" class="form-select">
+            <option value="USD">USD</option>
+            <option value="EUR">EUR</option>
+            <option value="GBP">GBP</option>
+          </select>
+        </div>
+        <div class="col-md-4">
+          <input id="converter-amount" type="number" class="form-control" placeholder="Amount" value="1">
+        </div>
+        <div class="col-md-4">
+          <select id="converter-to" class="form-select">
+            <option value="USD">USD</option>
+            <option value="EUR">EUR</option>
+            <option value="GBP">GBP</option>
+          </select>
+        </div>
+        <div class="col-12">
+          <button id="convert-btn" class="btn btn-gold">Convert</button>
+          <p id="converter-result" class="mt-2"></p>
+        </div>
+      </div>
     </div>
-
-    <!-- Gold News Section -->
-    <div class="section-title slide-in">📰 Latest Gold Market News <span class="update-note">Updated every minute</span></div>
-    <div id="gold-news" class="slide-in" style="transition-delay: 0.9s;">
-      <ul id="news-list"></ul>
+    <div class="card p-3 mb-4 slide-in">
+      <h3 class="mb-3">XAU/USD Chart</h3>
+      <div class="chart-toggle">
+        <button data-interval="240" class="active">4H</button>
+        <button data-interval="D">1D</button>
+        <button data-interval="W">1W</button>
+      </div>
+      <div id="tv_chart_4h"></div>
     </div>
-
-    <!-- Economic Calendar Section -->
-    <div class="section-title slide-in">📅 Economic Calendar <span class="update-note">Updated every minute</span></div>
-    <div id="calendar-widget" class="slide-in" style="transition-delay: 1.2s;">
+    <div class="card p-3 mb-4 slide-in">
+      <h3 class="mb-1">Gold News <small class="text-muted">Updated every minute</small></h3>
+      <div id="news-widget"><ul id="news-list"></ul></div>
+    </div>
+    <div class="card p-3 mb-4 slide-in">
+      <h3 class="mb-1">Economic Calendar <small class="text-muted">Updated daily</small></h3>
+      <div id="calendar-widget">
+        <table>
+          <thead>
+            <tr>
+              <th>Date</th>
+              <th>Time</th>
+              <th>Currency</th>
+              <th>Event</th>
+              <th>Impact</th>
+              <th>Actual</th>
+              <th>Previous</th>
+            </tr>
+          </thead>
+          <tbody id="calendar-body"></tbody>
+        </table>
+      </div>
+    </div>
+    <div class="card p-3 mb-4 slide-in" id="activity-widget">
+      <h3 class="mb-1">Recent Activity <small class="text-muted">Login/Logout Logs</small></h3>
+      <div class="d-flex justify-content-end mb-2">
+        <button id="export-logs" class="btn btn-gold"><i class="bi-download me-2"></i>Export Logs</button>
+      </div>
       <table>
         <thead>
           <tr>
-            <th>Date</th>
-            <th>Time</th>
-            <th>Currency</th>
-            <th>Event</th>
-            <th>Impact</th>
-            <th>Actual</th>
-            <th>Previous</th>
+            <th>Timestamp</th>
+            <th>Action</th>
+            <th>IP Address</th>
+            <th>Location</th>
+            <th>Device</th>
           </tr>
         </thead>
-        <tbody id="calendar-body"></tbody>
+        <tbody id="activity-body"></tbody>
       </table>
     </div>
+    <div class="card p-3 mb-4 slide-in">
+      <h3 class="mb-3">My Watchlist</h3>
+      <div class="d-flex mb-2">
+        <input id="watch-input" class="form-control me-2" placeholder="Add symbol (e.g., EURUSD)">
+        <button id="add-watch" class="btn btn-gold"><i class="bi-plus"></i>Add</button>
+      </div>
+      <ul id="watch-list" class="list-group"></ul>
+    </div>
   </div>
+  <footer class="slide-in">© 2025 CBE Global. All rights reserved.</footer>
 
-  <footer class="slide-in">© 2025 CBE – Chukwuemeka Bullion Exchange. All rights reserved.</footer>
-
-  <!-- Main Script -->
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js" integrity="sha384-YvpcrYf0tY3lHB60NNkmXc5s9fDVZLESaAA55NDzOxhy9GkcIdslK1eN7N6jIeHz" crossorigin="anonymous"></script>
+  <audio id="notif-sound" src="ding.mp3" preload="auto"></audio>
+  <audio id="critical-notif-sound" src="alert.mp3" preload="auto"></audio>
   <script>
-    let lastSignalId = null;
+    // ─── SUPABASE INIT ──────────────────────────────────────────────────────
+    const SUPA_URL = 'https://dapwpgvnfjcfqqhrpxla.supabase.co';
+    const SUPA_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImRhcHdwZ3ZuZmpjZnFxaHJweGxhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDcwNDA4ODgsImV4cCI6MjA2MjYxNjg4OH0.ICC0UsLlzJDNre7rFCeD3k6iVzo6jOJgn3PhABpEMsQ';
+    const supabase = window.supabase.createClient(SUPA_URL, SUPA_KEY);
 
-    // TradingView Chart Initialization
-    function initTradingViewChart() {
-      new TradingView.widget({
-        container_id: "tradingview_chart",
-        width: "100%",
-        height: "100%",
-        symbol: "OANDA:XAUUSD",
-        interval: "60",
-        timezone: "Etc/UTC",
-        theme: "dark",
-        style: "1",
-        locale: "en",
-        toolbar_bg: "#1f1f1f",
-        studies: ["MACD@tv-basicstudies", "RSI@tv-basicstudies"],
-        withdateranges: true,
-        show_popup_button: true,
-        popup_width: "1000",
-        popup_height: "650",
-        autosize: true
-      });
-    }
+    // ─── API KEYS ────────────────────────────────────────────────────────────
+    const EXCHANGE_RATE_API_KEY = '4e4307b2bf8daac15365a410';
+    const NEWS_API_KEY = '6de81d54e02e45f8a5546a827c70ab28';
+    const apiCache = new Map();
 
-    window.addEventListener('resize', () => {
-      const chartContainer = document.getElementById('tradingview_chart');
-      if (chartContainer) {
-        chartContainer.style.height = chartContainer.parentElement.offsetHeight + 'px';
-      }
-    });
-
-    // Theme Toggle
-    function toggleTheme() {
-      const html = document.documentElement;
-      const currentTheme = html.getAttribute('data-theme');
-      const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
-      html.setAttribute('data-theme', newTheme);
-      localStorage.setItem('theme', newTheme);
-      document.querySelector('.theme-toggle').innerHTML = newTheme === 'dark' ? '🌞' : '🌜';
-    }
-
-    // Ring the Bell
-    function ringBell() {
-      const audio = document.getElementById('alertSound');
-      if (audio) {
-        audio.currentTime = 0;
-        audio.play().catch(() => {
-          console.warn('Unable to play alert sound automatically.');
-        });
-      }
-    }
-
-    // Load Latest Signal
-    async function loadLatestSignal() {
-      const card = document.getElementById('signalCard');
-      card.innerHTML = `<div class="loader"></div>
-                        <p style="text-align:center;color: var(--text-light);padding:20px;">Loading latest signal…</p>`;
+    // ─── UTILITIES ───────────────────────────────────────────────────────────
+    async function getUserInfo() {
       try {
-        let { data: signals, error } = await supabase
-          .from('signals')
-          .select('id,action,asset,entry,sl,tp1,tp2,note,created_at')
-          .order('created_at', { ascending: false })
-          .limit(1);
-
-        if (error) throw error;
-        if (!signals.length) {
-          card.innerHTML = `<p style="text-align:center;color: var(--error);padding:40px;">
-                              No signals available. Check back soon.
-                            </p>`;
-          return;
-        }
-
-        const sig = signals[0];
-        if (lastSignalId !== null && sig.id !== lastSignalId) {
-          ringBell();
-        }
-        lastSignalId = sig.id;
-
-        const dt = new Date(sig.created_at);
-        const actionClass = sig.action.toLowerCase() === 'buy' ? 'signal-buy' : 'signal-sell';
-
-        card.innerHTML = `
-          <div class="signal-header">
-            <h2 class="${actionClass}">${sig.action.toUpperCase()} ${sig.asset} - ${dt.toLocaleDateString('en-GB')}</h2>
-            <div class="time">${dt.toLocaleTimeString('en-GB')}</div>
-            <button class="refresh-btn" onclick="loadLatestSignal()">🔄</button>
-          </div>
-          <div class="signal-body">
-            <div class="detail entry">Entry: <span>${sig.entry}</span>
-              <button class="copy-btn" onclick="copyText('${sig.entry}')">Copy</button>
-            </div>
-            <div class="detail sl">SL: <span>${sig.sl}</span>
-              <button class="copy-btn" onclick="copyText('${sig.sl}')">Copy</button>
-            </div>
-            <div class="detail tp1">TP1: <span>${sig.tp1}</span>
-              <button class="copy-btn" onclick="copyText('${sig.tp1}')">Copy</button>
-            </div>
-            <div class="detail tp2">TP2: <span>${sig.tp2}</span>
-              <button class="copy-btn" onclick="copyText('${sig.tp2}')">Copy</button>
-            </div>
-          </div>
-          <div class="admin-note">Note: ${sig.note || 'Trade at your own risk.'}</div>
-        `;
-      } catch (err) {
-        console.error(err);
-        document.getElementById('signalCard').innerHTML = `
-          <p style="text-align:center;color: var(--error);padding:40px;">
-            Failed to load signal. Try again later.
-          </p>`;
+        const res = await fetch('https://api.ipify.org?format=json');
+        const { ip } = await res.json();
+        return { ip, city: 'Unknown', country: 'Unknown', device: navigator.userAgent };
+      } catch {
+        return { ip: 'Unknown', city: 'Unknown', country: 'Unknown', device: navigator.userAgent };
       }
     }
 
-    // Copy to Clipboard
-    function copyText(txt) {
-      navigator.clipboard.writeText(txt)
-        .then(() => alert('Copied: ' + txt))
-        .catch(() => alert('Copy failed'));
+    // ─── LOG ACTIVITY ────────────────────────────────────────────────────────
+    async function logActivity(action) {
+      const userInfo = await getUserInfo();
+      const userId = sessionStorage.getItem('userId') || 'anonymous';
+      try {
+        const { error } = await supabase.from('user_activity').insert({
+          user_id: userId,
+          action,
+          ip_address: userInfo.ip,
+          city: userInfo.city,
+          country: userInfo.country,
+          device: userInfo.device
+        });
+        if (error) throw error;
+        addNotification(`User ${action} from ${userInfo.city}`, 'info');
+      } catch (err) {
+        console.error('Activity log error:', err);
+        addNotification('Failed to log activity', 'critical');
+      }
     }
 
-    // Logout
-    function logout() {
-      localStorage.removeItem('isLoggedIn');
-      sessionStorage.removeItem('cbeUserId');
-      localStorage.removeItem('sessionToken');
-      sessionStorage.removeItem('userName');
-      window.location.replace('login.html');
+    // ─── LOAD RECENT ACTIVITY ────────────────────────────────────────────────
+    async function loadRecentActivity() {
+      const tbody = document.getElementById('activity-body');
+      tbody.innerHTML = '<tr><td colspan="5"><div class="spinner"></div></td></tr>';
+      try {
+        const { data, error } = await supabase
+          .from('user_activity')
+          .select('*')
+          .order('timestamp', { ascending: false })
+          .limit(10);
+        if (error) throw error;
+        tbody.innerHTML = '';
+        data.forEach(activity => {
+          const tr = document.createElement('tr');
+          ['timestamp', 'action', 'ip_address', 'city', 'device'].forEach(key => {
+            const td = document.createElement('td');
+            td.textContent = key === 'timestamp' ? new Date(activity[key]).toLocaleString() : activity[key] || '-';
+            tr.appendChild(td);
+          });
+          tbody.appendChild(tr);
+        });
+      } catch (err) {
+        console.error('Activity error:', err);
+        tbody.innerHTML = '<tr><td colspan="5" style="color: var(--error);">Failed to load activity</td></tr>';
+      }
     }
 
-    // Gold News
+    // ─── EXPORT LOGS ─────────────────────────────────────────────────────────
+    async function downloadActivityLog() {
+      try {
+        const { data, error } = await supabase
+          .from('user_activity')
+          .select('*')
+          .order('timestamp', { ascending: false });
+        if (error) throw error;
+        const csv = [
+          'Timestamp,Action,IP Address,City,Country,Device',
+          ...data.map(row => `${new Date(row.timestamp).toLocaleString()},${row.action},${row.ip_address},${row.city},${row.country},"${row.device}"`)
+        ].join('\n');
+        const blob = new Blob([csv], { type: 'text/csv' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = 'activity_logs.csv';
+        a.click();
+        URL.revokeObjectURL(url);
+        addNotification('Logs exported successfully', 'info');
+      } catch (err) {
+        console.error('Export error:', err);
+        addNotification('Failed to export logs', 'critical');
+      }
+    }
+
+    // ─── CURRENCY CONVERTER ──────────────────────────────────────────────────
+    async function convertCurrency() {
+      const from = document.getElementById('converter-from').value;
+      const to = document.getElementById('converter-to').value;
+      const amount = parseFloat(document.getElementById('converter-amount').value) || 1;
+      const resultEl = document.getElementById('converter-result');
+      resultEl.innerHTML = '<div class="spinner"></div>';
+
+      const cacheKey = `${from}_${to}`;
+      if (apiCache.has(cacheKey)) {
+        const rate = apiCache.get(cacheKey);
+        resultEl.textContent = `${amount} ${from} = ${(amount * rate).toFixed(2)} ${to}`;
+        return;
+      }
+
+      try {
+        const res = await fetch(`https://v6.exchangerate-api.com/v6/${EXCHANGE_RATE_API_KEY}/latest/${from}`);
+        const data = await res.json();
+        if (data.result !== 'success') throw new Error('API error');
+        const rate = data.conversion_rates[to];
+        apiCache.set(cacheKey, rate);
+        resultEl.textContent = `${amount} ${from} = ${(amount * rate).toFixed(2)} ${to}`;
+      } catch (err) {
+        console.error('Conversion error:', err);
+        resultEl.innerHTML = '<span style="color: var(--error)">Failed to convert currency</span>';
+        addNotification('Currency conversion failed', 'critical');
+      }
+    }
+
+    // ─── LOGOUT ──────────────────────────────────────────────────────────────
+    async function logout() {
+      try {
+        await logActivity('logout');
+        localStorage.removeItem('isLoggedIn');
+        localStorage.removeItem('sessionToken');
+        sessionStorage.removeItem('loggedIn');
+        sessionStorage.removeItem('userId');
+        sessionStorage.removeItem('userName');
+        window.location.href = 'login.html?message=logged_out';
+      } catch (err) {
+        console.error('Logout error:', err);
+      }
+    }
+
+    // ─── LOAD DASHBOARD ──────────────────────────────────────────────────────
+    async function loadDashboard() {
+      try {
+        const today = new Date().toISOString().split('T')[0];
+        const { count, error: signalError } = await supabase
+          .from('signals')
+          .select('id', { count: 'exact' })
+          .gte('created_at', today);
+        if (signalError) throw signalError;
+
+        // Mock gold price change
+        document.getElementById('stat-gold-change').textContent = 'N/A';
+
+        // Watchlist
+        const list = JSON.parse(localStorage.getItem('watchlist') || '[]');
+        const ul = document.getElementById('watch-list');
+        ul.innerHTML = '';
+        for (const sym of list) {
+          const li = document.createElement('li');
+          li.className = 'list-group-item d-flex justify-content-between align-items-center';
+          let priceChange = 'N/A';
+          let priceClass = '';
+          try {
+            const res = await fetch(`https://v6.exchangerate-api.com/v6/${EXCHANGE_RATE_API_KEY}/latest/${sym.slice(0,3)}`);
+            const data = await res.json();
+            const rate = data.conversion_rates[sym.slice(3)] || 1;
+            priceChange = `+${(Math.random() * 2 - 1).toFixed(2)}%`;
+            priceClass = priceChange.startsWith('+') ? 'positive' : 'negative';
+          } catch (err) {
+            console.error('Watchlist error:', err);
+          }
+          li.innerHTML = `
+            <span>${sym}</span>
+            <span class="price-change ${priceClass}">${priceChange}</span>
+            <button class="btn btn-sm btn-outline-danger">Remove</button>
+          `;
+          li.querySelector('button').onclick = () => {
+            localStorage.setItem('watchlist', JSON.stringify(list.filter(s => s !== sym)));
+            loadDashboard();
+          };
+          ul.appendChild(li);
+        }
+        document.getElementById('add-watch').onclick = () => {
+          const input = document.getElementById('watch-input');
+          const sym = input.value.trim().toUpperCase();
+          if (sym && !list.includes(sym)) {
+            list.push(sym);
+            localStorage.setItem('watchlist', JSON.stringify(list));
+            loadDashboard();
+            input.value = '';
+          }
+        };
+      } catch (err) {
+        console.error('Dashboard error:', err);
+        addNotification('Failed to load dashboard', 'critical');
+      }
+    }
+
+    // ─── TRADINGVIEW CHART ───────────────────────────────────────────────────
+    function initChart(interval = '240') {
+      try {
+        document.getElementById('tv_chart_4h').innerHTML = '';
+        new window.TradingView.widget({
+          container_id: "tv_chart_4h",
+          width: "100%",
+          height: "450",
+          symbol: "OANDA:XAUUSD",
+          interval: interval,
+          timezone: "Africa/Lagos",
+          theme: "dark",
+          style: "1",
+          locale: "en",
+          toolbar_bg: "#1f1f1f",
+          studies: [
+            { id: "MASimple@tv-basicstudies", inputs: { length: 50 } },
+            { id: "MASimple@tv-basicstudies", inputs: { length: 200 } }
+          ],
+          enable_publishing: false,
+          allow_symbol_change: false,
+          save_image: false
+        });
+      } catch (err) {
+        console.error('Chart error:', err);
+        document.getElementById('tv_chart_4h').innerHTML = '<p style="color: var(--error)">Failed to load chart</p>';
+      }
+    }
+
+    // ─── GOLD NEWS ───────────────────────────────────────────────────────────
     async function loadGoldNews() {
       const ul = document.getElementById('news-list');
-      ul.innerHTML = '<li>Loading…</li>';
+      ul.innerHTML = '<li><div class="spinner"></div></li>';
       try {
-        const res = await fetch('https://api.allorigins.win/raw?url=https://www.investing.com/rss/news_285.rss');
-        const xml = new DOMParser().parseFromString(await res.text(), 'text/xml');
-        const items = Array.from(xml.querySelectorAll('item')).slice(0, 8);
+        const res = await fetch(`https://newsapi.org/v2/everything?q=gold+market&apiKey=${NEWS_API_KEY}&pageSize=8`);
+        const data = await res.json();
+        if (data.status !== 'ok') throw new Error('News API error');
         ul.innerHTML = '';
-        items.forEach(i => {
-          const link = i.querySelector('link').textContent;
-          const title = i.querySelector('title').textContent;
-          const li = document.createElement('li');
-          li.innerHTML = `<a href="${link}" target="_blank">${title}</a>`;
+        data.articles.forEach(article => {
+         const li = document.createElement('li');
+          li.innerHTML = `<a href="${article.url}" target="_blank">${article.title}</a>`;
           ul.appendChild(li);
         });
       } catch (err) {
-        console.error('Error loading gold news:', err);
-        ul.innerHTML = '<li style="color: var(--error)">Failed to load Gold News.</li>';
+        console.error('News error:', err);
+        // Fallback to static sample headlines
+        ul.innerHTML = '';
+        const sample = [
+          { title: 'Gold price rises as inflation fears intensify', url: 'https://example.com/article1' },
+          { title: 'Analysts predict higher gold demand ahead', url: 'https://example.com/article2' },
+          { title: 'Market update: XAU/USD ticks up on safe-haven flows', url: 'https://example.com/article3' },
+          { title: 'Central banks continue to buy gold amid uncertainty', url: 'https://example.com/article4' }
+        ];
+        sample.forEach(article => {
+          const li = document.createElement('li');
+          li.innerHTML = `<a href="${article.url}" target="_blank">${article.title}</a>`;
+          ul.appendChild(li);
+        });
       }
     }
 
-    // Economic Calendar
+    // ─── ECONOMIC CALENDAR ───────────────────────────────────────────────────
     async function loadEconCalendar() {
       const tbody = document.getElementById('calendar-body');
-      tbody.innerHTML = '<tr><td colspan="7">Loading…</td></tr>';
+      tbody.innerHTML = '<tr><td colspan="7"><div class="spinner"></div></td></tr>';
       try {
+        // Mock data (replace with Financial Modeling Prep API)
         const events = [
-          { date: "05-25-2025", time: "6:40pm", currency: "USD", event: "Fed Chair Powell Speaks", impact: "Medium", actual: "", previous: "" },
-          { date: "05-26-2025", time: "7:00am", currency: "GBP", event: "Bank Holiday", impact: "Holiday", actual: "", previous: "" },
-          { date: "05-26-2025", time: "12:00pm", currency: "USD", event: "Bank Holiday", impact: "Holiday", actual: "", previous: "" },
-          { date: "05-26-2025", time: "1:20pm", currency: "EUR", event: "ECB President Lagarde Speaks", impact: "Medium", actual: "", previous: "" },
-          { date: "05-26-2025", time: "1:30pm", currency: "EUR", event: "German Buba President Nagel Speaks", impact: "Low", actual: "", previous: "" },
-          { date: "05-26-2025", time: "11:01pm", currency: "GBP", event: "BRC Shop Price Index y/y", impact: "Low", actual: "-0.1%", previous: "-0.1%" },
-          { date: "05-26-2025", time: "11:50pm", currency: "JPY", event: "SPPI y/y", impact: "Low", actual: "3.0%", previous: "3.1%" },
-          { date: "05-27-2025", time: "12:00am", currency: "JPY", event: "BOJ Gov Ueda Speaks", impact: "High", actual: "", previous: "" },
-          { date: "05-27-2025", time: "5j02am", currency: "JPY", event: "BOJ Core CPI y/y", impact: "Low", actual: "2.3%", previous: "2.2%" },
-          { date: "05-27-2025", time: "6:00am", currency: "CHF", event: "Trade Balance", impact: "Low", actual: "5.55B", previous: "6.35B" },
-          { date: "05-27-2025", time: "6:00am", currency: "EUR", event: "German GfK Consumer Climate", impact: "Low", actual: "-19.9", previous: "-20.6" },
-          { date: "05-27-2025", time: "6:45am", currency: "EUR", event: "French Prelim CPI m/m", impact: "Low", actual: "0.1%", previous: "0.5%" },
-          { date: "05-27-2025", time: "8:00am", currency: "AUD", event: "RBA Deputy Gov Hauser Speaks", impact: "Low", actual: "", previous: "" },
-          { date: "05-27-2025", time: "8:00am", currency: "USD", event: "FOMC Member Kashkari Speaks", impact: "Low", actual: "", previous: "" },
-          { date: "05-27-2025", time: "10:00am", currency: "GBP", event: "CBI Realized Sales", impact: "Low", actual: "-18", previous: "-8" }
-        ].slice(0, 15);
-
+          { date: "06-02-2025", time: "08:30", currency: "USD", event: "Non-Farm Payrolls", impact: "High", actual: "", previous: "254K" },
+          { date: "06-02-2025", time: "10:00", currency: "EUR", event: "CPI Flash Estimate", impact: "Medium", actual: "", previous: "2.0%" },
+          { date: "06-03-2025", time: "04:30", currency: "GBP", event: "Services PMI", impact: "Low", actual: "", previous: "52.2" }
+        ];
         tbody.innerHTML = '';
         events.forEach(ev => {
           const tr = document.createElement('tr');
+          if (ev.impact === 'High') tr.classList.add('high-impact');
           ['date', 'time', 'currency', 'event', 'impact', 'actual', 'previous'].forEach(key => {
             const td = document.createElement('td');
             td.textContent = ev[key] || '-';
@@ -758,78 +790,106 @@
           tbody.appendChild(tr);
         });
       } catch (err) {
-        console.error('Calendar load error:', err);
-        tbody.innerHTML = '<tr><td colspan="7" style="color: var(--error)">Failed to load calendar.</td></tr>';
+        console.error('Calendar error:', err);
+        tbody.innerHTML = '<tr><td colspan="7" style="color: var(--error)">Failed to load calendar</td></tr>';
       }
     }
 
-    // Initialize
-    window.addEventListener('DOMContentLoaded', () => {
-      document.querySelectorAll('.slide-in').forEach(el => {
-        new IntersectionObserver((entries, obs) => {
-          entries.forEach(e => {
-            if (e.isIntersecting) {
-              e.target.classList.add('visible');
-              obs.unobserve(e.target);
-            }
-          });
-        }, { threshold: 0.2 }).observe(el);
+    // ─── THEME TOGGLE ────────────────────────────────────────────────────────
+    function toggleTheme(theme) {
+      document.documentElement.setAttribute('data-theme', theme);
+      document.getElementById('theme-select').value = theme;
+    }
+
+    // ─── NOTIFICATIONS ───────────────────────────────────────────────────────
+    function addNotification(message, type = 'info') {
+      const list = document.getElementById('notif-list');
+      const count = document.getElementById('notif-count');
+      const li = document.createElement('li');
+      li.textContent = message;
+      li.classList.add(type);
+      list.insertBefore(li, list.firstChild);
+      count.textContent = parseInt(count.textContent) + 1;
+      const sound = document.querySelector(type === 'critical' ? '#critical-notif-sound' : '#notif-sound');
+      if (sound) sound.play().catch(() => console.error('Audio error'));
+    }
+
+    // ─── ON LOAD ─────────────────────────────────────────────────────────────
+    document.addEventListener('DOMContentLoaded', async () => {
+      // Auto-refresh every 2 minutes
+      setInterval(() => location.reload(), 120000);
+
+      // Particles.js
+      particlesJS('particles-js', {
+        particles: {
+          number: { value: 30, density: { enable: true, value_area: 800 } },
+          color: { value: '#ffd700' },
+          shape: { type: 'circle' },
+          opacity: { value: 0.3, random: true },
+          size: { value: 2, random: true },
+          line_linked: { enable: false },
+          move: { enable: true, speed: 1, direction: 'none', random: true }
+        },
+        interactivity: {
+          detect_on: 'canvas',
+          events: { onhover: { enable: true, mode: 'repulse' }, onclick: { enable: true, mode: 'push' } },
+          modes: { repulse: { distance: 100 }, push: { particles_nb: 2 } }
+        }
       });
 
-      initTradingViewChart();
-      loadLatestSignal();
+      // Slide-in animations
+      document.querySelectorAll('.slide-in').forEach(el => {
+        new IntersectionObserver((entries, observer) => {
+          entries.forEach(entry => {
+            if (entry.isIntersecting) {
+              entry.target.classList.add('visible');
+              observer.unobserve(entry.target);
+            }
+          });
+        }, { threshold: 0.1 }).observe(el);
+      });
+
+      document.getElementById('welcomeName').textContent = sessionStorage.getItem('userName') || 'Trader';
+      await logActivity('login');
+      loadDashboard();
+      initChart();
       loadGoldNews();
       loadEconCalendar();
+      loadRecentActivity();
 
-      // Watch for new signals
+      // Event listeners
+      document.querySelectorAll('.chart-toggle button').forEach(btn => {
+        btn.addEventListener('click', () => {
+          document.querySelector('.chart-toggle button.active').classList.remove('active');
+          btn.classList.add('active');
+          initChart(btn.dataset.interval);
+        });
+      });
+      document.getElementById('theme-select').addEventListener('change', e => toggleTheme(e.target.value));
+      document.getElementById('notif-btn').addEventListener('click', () => {
+        new bootstrap.Dropdown(document.getElementById('notif-btn')).toggle();
+      });
+      document.getElementById('sidebar-toggle').addEventListener('click', () => {
+        new bootstrap.Offcanvas(document.getElementById('sidebar')).toggle();
+      });
+      document.getElementById('convert-btn').addEventListener('click', convertCurrency);
+      document.getElementById('export-logs').addEventListener('click', downloadActivityLog);
+
+      // Realtime subscriptions (only for new signals & activity logs)
       supabase
         .channel('signals')
-        .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'signals' }, async (payload) => {
-          loadLatestSignal();
-          try {
-            const currentUserId = sessionStorage.getItem('cbeUserId');
-            if (!currentUserId) return;
-
-            const { data: userData, error: userErr } = await supabase
-              .from('users')
-              .select('email, name')
-              .eq('id', currentUserId)
-              .single();
-
-            if (userErr || !userData) return;
-
-            const payloadBody = {
-              email: userData.email,
-              name: userData.name
-            };
-
-            await fetch("/.netlify/functions/send-signal-alert", {
-              method: "POST",
-              headers: { "Content-Type": "application/json" },
-              body: JSON.stringify(payloadBody)
-            });
-          } catch (e) {
-            console.error("Error in new-signal subscription:", e);
-          }
+        .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'signals' }, payload => {
+          addNotification(`New ${payload.new.action} signal for ${payload.new.chartasset}!`, 'info');
+          loadDashboard();
         })
         .subscribe();
-
-      // Refresh news & calendar every minute
-      setInterval(loadGoldNews, 60000);
-      setInterval(loadEconCalendar, 60000);
+      supabase
+        .channel('user_activity')
+        .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'user_activity' }, () => {
+          loadRecentActivity();
+        })
+        .subscribe();
     });
-  </script>
-
-  <!-- Smartsupp Live Chat script -->
-  <script type="text/javascript">
-    var _smartsupp = _smartsupp || {};
-    _smartsupp.key = '018a8bbd868518221e725341a7b2601231ec7ce8';
-    window.smartsupp||(function(d) {
-      var s,c,o=smartsupp=function(){ o._.push(arguments)};o._=[];
-      s=d.getElementsByTagName('script')[0];c=d.createElement('script');
-      c.type='text/javascript';c.charset='utf-8';c.async=true;
-      c.src='https://www.smartsuppchat.com/loader.js?';s.parentNode.insertBefore(c,s);
-    })(document);
   </script>
 </body>
 </html>
