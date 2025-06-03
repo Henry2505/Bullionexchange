@@ -5,9 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Affiliate Dashboard • CBE Global</title>
 
-  <!-- ─────────────────────────────────────────────────────────────────────
-       1) DEPENDENCIES: Bootstrap CSS & Icons, and Supabase JS
-  -->
+  <!-- DEPENDENCIES: Bootstrap CSS & Icons, and Supabase JS -->
   <link
     href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css"
     rel="stylesheet"
@@ -21,9 +19,7 @@
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>
 
   <style>
-    /* ---------------------------------------------------------
-       Dark Theme Variables
-       --------------------------------------------------------- */
+    /* Dark Theme Variables */
     :root[data-theme="dark"] {
       --bg: #121212;
       --text: #e0e0e0;
@@ -173,9 +169,7 @@
   </style>
 </head>
 <body>
-  <!-- ─────────────────────────────────────────────────────────────────────
-       2) AUTH GUARD: Redirect if not logged in
-  -->
+  <!-- AUTH GUARD: Redirect if not logged in -->
   <script>
     const SUPA_URL   = 'https://dapwpgvnfjcfqqhrpxla.supabase.co';
     const SUPA_KEY   = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.'
@@ -193,11 +187,7 @@
     });
   </script>
 
-  <!-- ─────────────────────────────────────────────────────────────────────
-       3) PAGE LAYOUT:
-       • Sidebar (Referral Info, Navigation, Logout)
-       • Main Content (Bank Accounts, Wallets, Converter, Profile)
-  -->
+  <!-- PAGE LAYOUT: Sidebar & Main Content -->
   <div class="row g-0">
     <!-- Sidebar -->
     <div class="col-12 col-md-3 sidebar d-flex flex-column">
@@ -482,9 +472,7 @@
   ></script>
 
   <script>
-    // ─────────────────────────────────────────────────────────────────────────
-    // 4) GLOBAL VARIABLES & UTILITY FUNCTIONS
-    // ─────────────────────────────────────────────────────────────────────────
+    // GLOBAL VARIABLES & UTILITY FUNCTIONS
     let currentUser = null;
     let currentUserId = null;
     const supabase = supabaseClient;
@@ -503,11 +491,9 @@
         .catch(() => showToast('Copy failed'));
     }
 
-    // ─────────────────────────────────────────────────────────────────────────
-    // 5) ON DOM CONTENT LOADED: Fetch user, then initialize all sections
-    // ─────────────────────────────────────────────────────────────────────────
+    // ON DOM CONTENT LOADED: Fetch user, then initialize all sections
     document.addEventListener('DOMContentLoaded', async () => {
-      // 5.1) FETCH CURRENT USER & IDs
+      // FETCH CURRENT USER & IDs
       const { data: { user }, error: userErr } = await supabase.auth.getUser();
       if (userErr || !user) {
         window.location.replace('affiliate_login.html');
@@ -516,24 +502,24 @@
       currentUser = user;
       currentUserId = user.id;
 
-      // 5.2) DISPLAY USER PROFILE (email, joined date)
+      // DISPLAY USER PROFILE (email, joined date)
       document.getElementById('user-email').textContent = user.email;
       document.getElementById('joined-date').textContent =
         new Date(user.created_at).toLocaleDateString();
 
-      // 5.3) FETCH & DISPLAY REFERRAL CODE + LINK
+      // FETCH & DISPLAY REFERRAL CODE + LINK
       await fetchReferralCode();
 
-      // 5.4) FETCH & DISPLAY TOTAL REFERRALS
+      // FETCH & DISPLAY TOTAL REFERRALS
       await fetchTotalReferrals();
 
-      // 5.5) SETUP LOGOUT BUTTON
+      // SETUP LOGOUT BUTTON
       document.getElementById('logout-btn').addEventListener('click', async () => {
         await supabase.auth.signOut();
         window.location.href = 'affiliate_login.html';
       });
 
-      // 5.6) COPY REFERRAL CODE & LINK
+      // COPY REFERRAL CODE & LINK
       document.getElementById('copy-referral').addEventListener('click', () => {
         const code = document.getElementById('referral-code').textContent;
         if (code && code !== '—') copyTextToClipboard(code);
@@ -543,13 +529,13 @@
         if (link) copyTextToClipboard(link);
       });
 
-      // 5.7) LOAD BANK ACCOUNTS
+      // LOAD BANK ACCOUNTS
       await loadBankAccounts();
 
-      // 5.8) LOAD CRYPTO WALLETS
+      // LOAD CRYPTO WALLETS
       await loadWallets();
 
-      // 5.9) SETUP ADD BANK ACCOUNT FORM HANDLER
+      // SETUP ADD BANK ACCOUNT FORM HANDLER
       document.getElementById('bank-form').addEventListener('submit', async (e) => {
         e.preventDefault();
         const bankName = document.getElementById('bank-name').value.trim();
@@ -590,7 +576,7 @@
         }
       });
 
-      // 5.10) SETUP ADD WALLET FORM HANDLER
+      // SETUP ADD WALLET FORM HANDLER
       document.getElementById('wallet-form').addEventListener('submit', async (e) => {
         e.preventDefault();
         const currency = document.getElementById('crypto-currency').value;
@@ -627,7 +613,7 @@
         }
       });
 
-      // 5.11) SETUP CONVERTER FORM HANDLER
+      // SETUP CONVERTER FORM HANDLER
       document.getElementById('converter-form').addEventListener('submit', async (e) => {
         e.preventDefault();
         const from = document.getElementById('convert-from').value;
@@ -639,8 +625,7 @@
         convertText.textContent = 'Converting…';
         convertSpinner.style.display = 'inline-block';
         try {
-          // ── Replace YOUR_EXCHANGERATE_API_KEY with your actual key ──
-          const response = await fetch(`https://v6.exchangerate-api.com/v6/YOUR_EXCHANGERATE_API_KEY/latest/${from}`);
+          const response = await fetch(`https://v6.exchangerate-api.com/v6/4e4307b2bf8daac15365a410/latest/${from}`);
           const data = await response.json();
           if (data.result !== 'success') throw new Error('Failed to fetch rates');
           const rate = data.conversion_rates[to];
@@ -665,9 +650,7 @@
       });
     });
 
-    // ─────────────────────────────────────────────────────────────────────────
-    // 6) FETCH REFERRAL CODE & SET LINK
-    // ─────────────────────────────────────────────────────────────────────────
+    // FETCH REFERRAL CODE & SET LINK
     async function fetchReferralCode() {
       const refSpan = document.getElementById('referral-code');
       const linkInput = document.getElementById('referral-link');
@@ -690,12 +673,8 @@
       }
     }
 
-    // ─────────────────────────────────────────────────────────────────────────
-    // 7) FETCH TOTAL REFERRALS (count number of users who signed up with this referral code)
-    // ─────────────────────────────────────────────────────────────────────────
+    // FETCH TOTAL REFERRALS
     async function fetchTotalReferrals() {
-      // In our schema, `users.referred_by` = affiliate’s user_id.
-      // You can adjust `.eq('referred_by', currentUserId)` if you store referral_code instead.
       const { data, error, count } = await supabase
         .from('users')
         .select('*', { count: 'exact' })
@@ -709,9 +688,7 @@
       }
     }
 
-    // ─────────────────────────────────────────────────────────────────────────
-    // 8) LOAD BANK ACCOUNTS: Fetch & Render
-    // ─────────────────────────────────────────────────────────────────────────
+    // LOAD BANK ACCOUNTS: Fetch & Render
     async function loadBankAccounts() {
       const tbody = document.getElementById('bank-accounts-body');
       tbody.innerHTML = `<tr><td colspan="5"><div class="text-center spinner-border"></div></td></tr>`;
@@ -750,9 +727,7 @@
       });
     }
 
-    // ─────────────────────────────────────────────────────────────────────────
-    // 9) DELETE BANK ACCOUNT
-    // ─────────────────────────────────────────────────────────────────────────
+    // DELETE BANK ACCOUNT
     async function deleteBankAccount(id) {
       if (!confirm('Delete this bank account?')) return;
       const { error } = await supabase
@@ -768,9 +743,7 @@
       }
     }
 
-    // ─────────────────────────────────────────────────────────────────────────
-    // 10) LOAD CRYPTO WALLETS: Fetch & Render
-    // ─────────────────────────────────────────────────────────────────────────
+    // LOAD CRYPTO WALLETS: Fetch & Render
     async function loadWallets() {
       const tbody = document.getElementById('wallets-body');
       tbody.innerHTML = `<tr><td colspan="3"><div class="text-center spinner-border"></div></td></tr>`;
@@ -807,9 +780,7 @@
       });
     }
 
-    // ─────────────────────────────────────────────────────────────────────────
-    // 11) DELETE WALLET
-    // ─────────────────────────────────────────────────────────────────────────
+    // DELETE WALLET
     async function deleteWallet(id) {
       if (!confirm('Delete this wallet?')) return;
       const { error } = await supabase
