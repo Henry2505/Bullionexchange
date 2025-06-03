@@ -56,8 +56,12 @@
       --gold: #ffd700;
       --gold-dark: #cca300;
       --overlay: rgba(0, 0, 0, 0.15);
+      --glass-bg: rgba(255, 255, 255, 0.05);
       --sidebar-width: 250px;
       --transition-fast: 0.2s ease-in-out;
+      --sidebar-bg: #111;
+      --log-bg: #000;
+      --log-text: #ffd700;
     }
     [data-theme='light'] {
       --bg: #f5f5f5;
@@ -65,6 +69,10 @@
       --gold: #cca300;
       --gold-dark: #b58900;
       --overlay: rgba(255, 255, 255, 0.15);
+      --glass-bg: rgba(0, 0, 0, 0.05);
+      --sidebar-bg: #fff;
+      --log-bg: #f5f5f5;
+      --log-text: #b58900;
     }
     a {
       color: var(--gold);
@@ -78,11 +86,7 @@
       max-width: 100%;
       display: block;
     }
-    /* Sidebar background override for solid dark */
-    .sidebar {
-      background: #111 !important;
-    }
-    /* Glass effect utility (used only where intended) */
+    /* Glass effect utility */
     .glass {
       background: var(--glass-bg);
       backdrop-filter: blur(10px);
@@ -91,6 +95,19 @@
       background: rgba(0, 0, 0, 0.7);
       backdrop-filter: blur(12px);
     }
+    /* Hide scrollbars where appropriate */
+    .no-scrollbar::-webkit-scrollbar {
+      display: none;
+    }
+    .no-scrollbar {
+      -ms-overflow-style: none;
+      scrollbar-width: none;
+    }
+
+    /* ================================
+       SIDEBAR & HEADER LAYOUT
+    ================================= */
+    /* Overlay for mobile sidebar */
     .overlay {
       position: fixed;
       top: 0;
@@ -99,59 +116,43 @@
       height: 100%;
       background: var(--overlay);
       z-index: 1;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity var(--transition-fast);
+    }
+    .sidebar-open .overlay {
+      opacity: 1;
+      pointer-events: auto;
     }
 
-    /* ================================
-       LAYOUT: SIDEBAR & HEADER
-    ================================= */
     .sidebar {
       position: fixed;
       top: 0;
       left: 0;
       width: var(--sidebar-width);
       height: 100%;
+      background: var(--sidebar-bg);
       border-right: 1px solid var(--gold);
       padding: 1.5rem 1rem;
       transition: transform var(--transition-fast);
       z-index: 10;
-      display: flex;
-      flex-direction: column;
+      overflow-y: auto;
     }
     .sidebar.collapsed {
       transform: translateX(-100%);
     }
     .sidebar .logo {
       text-align: center;
-      margin-bottom: 1.5rem;
+      margin-bottom: 2rem;
       cursor: pointer;
     }
     .sidebar .logo img {
       height: 45px;
     }
-    /* Three-dots toggle button */
-    #sidebar-menu-button {
-      background: none;
-      border: none;
-      color: var(--text);
-      font-size: 1.5rem;
-      cursor: pointer;
-      margin-bottom: 1rem;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-    }
-    #sidebar-menu-button:hover {
-      color: var(--gold);
-    }
-    /* Collapsible nav container */
-    #sidebarNav {
-      overflow-y: auto;
-      flex-grow: 1;
-    }
     .sidebar nav ul {
       list-style: none;
       padding: 0;
-      margin: 0;
+      margin: 1rem 0;
     }
     .sidebar nav li {
       margin: 1rem 0;
@@ -172,50 +173,48 @@
       color: var(--gold);
     }
 
-    /* Mobile: fade overlay when sidebar is open */
-    .sidebar-open .overlay {
-      pointer-events: auto;
-      opacity: 1;
-    }
-    .overlay {
-      opacity: 0;
-      pointer-events: none;
-      transition: opacity var(--transition-fast);
-    }
-
-    /* Header (top bar) */
     header.admin-header {
       position: sticky;
       top: 0;
-      left: 0;
+      left: var(--sidebar-width);
       right: 0;
       height: 60px;
       display: flex;
       align-items: center;
       justify-content: space-between;
       padding: 0 1.5rem;
-      background: var(--glass-bg);
-      backdrop-filter: blur(10px);
+      background: var(--bg);
       border-bottom: 1px solid var(--gold);
       z-index: 5;
+      transition: left var(--transition-fast);
     }
-    #sidebar-toggle {
-      background: none;
-      border: none;
-      font-size: 1.5rem;
-      color: var(--text);
+    .collapsed + header.admin-header {
+      left: 0;
+    }
+
+    /* Logo (click → dashboard) */
+    .header-logo {
       cursor: pointer;
-      transition: transform var(--transition-fast);
+      display: flex;
+      align-items: center;
     }
-    #sidebar-toggle.collapsed {
-      transform: rotate(180deg);
+    .header-logo img {
+      height: 40px;
     }
-    /* Header right: search, notifications, user-menu, theme-toggle */
+    /* Live clock */
+    #current-datetime {
+      color: var(--text);
+      margin-left: 1rem;
+      font-size: 0.9rem;
+    }
+
+    /* Header tools: search, notifications, user, more, theme */
     .header-tools {
       display: flex;
       align-items: center;
       gap: 1rem;
     }
+    /* SEARCH BOX */
     .header-tools .search-box {
       position: relative;
       display: flex;
@@ -243,6 +242,7 @@
       left: 8px;
       color: var(--gold);
     }
+    /* ICON BUTTONS (bell, user, more, theme) */
     .header-tools .icon-btn {
       position: relative;
       background: none;
@@ -262,9 +262,11 @@
       padding: 2px 5px;
     }
     .header-tools .dropdown-menu {
-      background: var(--glass-bg);
-      backdrop-filter: blur(12px);
+      background: var(--bg) !important;
       border: 1px solid var(--gold);
+      max-height: 300px;
+      overflow-y: auto;
+      color: var(--text);
     }
     .header-tools .dropdown-item {
       color: var(--text);
@@ -275,31 +277,49 @@
     }
 
     /* ================================
-       MAIN CONTENT AREA (push right when sidebar open)
+       MAIN CONTENT AREA
     ================================= */
     main.admin-content {
       margin-left: var(--sidebar-width);
       padding: 1.5rem;
+      max-width: 1280px;
       transition: margin-left var(--transition-fast);
     }
-    .collapsed + main.admin-content {
+    .collapsed + header.admin-header + main.admin-content {
       margin-left: 0;
-    }
-    @media (max-width: 992px) {
-      .sidebar {
-        transform: translateX(-100%);
-      }
-      .sidebar.collapsed {
-        transform: translateX(0);
-      }
-      main.admin-content {
-        margin-left: 0;
-      }
     }
 
     /* ================================
        DASHBOARD PANELS & COMPONENTS
     ================================= */
+    /* QUICK ACTIONS */
+    .quick-actions {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 1rem;
+      margin: 1.5rem 0;
+    }
+    .quick-actions .btn-quick {
+      flex: 1 1 140px;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      justify-content: center;
+      background: var(--gold);
+      color: #000;
+      border: none;
+      border-radius: 6px;
+      padding: 0.6rem;
+      font-weight: 600;
+      font-size: 0.9rem;
+      transition: background var(--transition-fast);
+      text-decoration: none;
+    }
+    .quick-actions .btn-quick:hover {
+      background: var(--gold-dark);
+      color: #fff;
+    }
+
     /* STAT CARDS (DRAG & DROP) */
     .stats-row {
       display: grid;
@@ -350,6 +370,8 @@
       padding: 1rem;
       backdrop-filter: blur(8px);
       position: relative;
+      display: flex;
+      flex-direction: column;
     }
     .chart-container h4 {
       color: var(--gold);
@@ -361,38 +383,70 @@
     .chart-container canvas {
       width: 100% !important;
       height: auto !important;
+      flex: 1 1 auto;
+    }
+    .chart-actions {
+      margin-top: 0.75rem;
+      display: flex;
+      justify-content: center;
+      gap: 0.5rem;
+    }
+    .chart-actions button {
+      background: var(--gold);
+      border: none;
+      color: #000;
+      font-size: 0.85rem;
+      padding: 0.4rem 0.8rem;
+      border-radius: 4px;
+      cursor: pointer;
+      transition: background var(--transition-fast);
+    }
+    .chart-actions button:hover {
+      background: var(--gold-dark);
+      color: #fff;
     }
 
-    /* ACTIVITY LOGS SECTION */
+    /* ACTIVITY LOGS TABLE */
     .activity-card {
-      background: #000;
+      background: var(--log-bg);
       border: 1px solid var(--gold);
       border-radius: 8px;
       padding: 1rem;
       margin-bottom: 2rem;
+      position: relative;
     }
     .activity-card h3 {
       color: var(--gold);
-      margin-bottom: 1rem;
+      margin-bottom: 0.75rem;
       font-weight: 600;
       font-size: 1.1rem;
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
+      display: inline-block;
+      cursor: default;
+    }
+    /* Collapse/expand icon for logs */
+    .activity-card .collapse-icon {
+      position: absolute;
+      top: 1rem;
+      right: 1rem;
+      color: var(--gold);
+      font-size: 1.2rem;
       cursor: pointer;
     }
-    .activity-card h3 .toggle-icon {
-      font-size: 1.25rem;
-      transition: transform var(--transition-fast);
+    .activity-card .collapse-icon:hover {
+      color: var(--gold-dark);
     }
-    .activity-card .collapse.show + h3 .toggle-icon {
-      transform: rotate(180deg);
+    /* Hidden by default */
+    #activity-filter,
+    #export-logs,
+    #activity-table-wrapper {
+      display: none;
     }
     .activity-card table {
       width: 100%;
       border-collapse: collapse;
+      color: var(--log-text);
+      margin-top: 0.5rem;
       table-layout: fixed;
-      color: var(--gold);
     }
     .activity-card th,
     .activity-card td {
@@ -401,17 +455,14 @@
       border-bottom: 1px solid rgba(255, 215, 0, 0.2);
       font-size: 0.85rem;
       word-wrap: break-word;
+      color: var(--log-text);
     }
     .activity-card th {
       background: rgba(0, 0, 0, 0.3);
       color: var(--gold);
     }
     .activity-card .btn-export {
-      background: linear-gradient(
-        45deg,
-        var(--gold),
-        var(--gold-dark)
-      );
+      background: linear-gradient(45deg, var(--gold), var(--gold-dark));
       color: #000;
       border: none;
       padding: 0.45rem 1rem;
@@ -419,54 +470,45 @@
       font-weight: 500;
       font-size: 0.9rem;
       transition: opacity var(--transition-fast);
+      margin-left: auto;
     }
     .activity-card .btn-export:hover {
       opacity: 0.9;
     }
-    .activity-search {
-      margin-bottom: 0.75rem;
-    }
-    .activity-search input {
-      width: 100%;
-      padding: 0.4rem 0.75rem;
+    #activity-filter {
+      width: 200px;
+      padding: 0.4rem 0.6rem;
       border: 1px solid var(--gold);
       border-radius: 4px;
-      background: transparent;
+      background: #111;
       color: var(--gold);
+      margin-right: 0.5rem;
+      transition: width var(--transition-fast);
     }
-    .activity-search input::placeholder {
+    #activity-filter::placeholder {
       color: rgba(255, 215, 0, 0.6);
     }
-
-    /* QUICK ACTIONS */
-    .quick-actions {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 1rem;
-      margin: 1.5rem 0;
-    }
-    .quick-actions .btn-quick {
-      flex: 1 1 140px;
-      display: flex;
-      align-items: center;
-      gap: 0.5rem;
-      justify-content: center;
-      background: var(--gold);
-      color: #000;
-      border: none;
-      border-radius: 6px;
-      padding: 0.6rem;
-      font-weight: 600;
-      font-size: 0.9rem;
-      transition: background var(--transition-fast);
-      text-decoration: none;
-    }
-    .quick-actions .btn-quick:hover {
-      background: var(--gold-dark);
-      color: #fff;
+    #activity-filter:focus {
+      width: 240px;
+      outline: none;
+      box-shadow: 0 0 5px var(--gold);
     }
 
     /* RESPONSIVE TWEAKS */
+    @media (max-width: 992px) {
+      .sidebar {
+        transform: translateX(-100%);
+      }
+      .sidebar.collapsed {
+        transform: translateX(0);
+      }
+      header.admin-header {
+        left: 0;
+      }
+      main.admin-content {
+        margin-left: 0;
+      }
+    }
     @media (max-width: 576px) {
       .header-tools .search-box input {
         width: 120px;
@@ -477,70 +519,61 @@
       .stats-row {
         grid-template-columns: 1fr 1fr;
       }
-      .quick-actions {
-        flex-direction: column;
-      }
     }
   </style>
 </head>
 <body>
-  <!-- Overlay for sidebar on mobile -->
+  <!-- Overlay for mobile sidebar -->
   <div class="overlay"></div>
 
   <!-- ====================
        SIDEBAR NAVIGATION
   ==================== -->
-  <aside class="sidebar glass-strong collapsed" id="sidebar">
-    <!-- Logo / Dashboard Home -->
+  <aside class="sidebar collapsed" id="sidebar">
     <div class="logo" id="sidebar-logo">
       <img src="CBE_logo.PNG" alt="CBE Logo" />
     </div>
-
-    <!-- Three-dots menu toggle -->
-    <button id="sidebar-menu-button" aria-label="Toggle menu">
-      <i class="bi-three-dots-vertical"></i>
-    </button>
-
-    <!-- Collapsible nav links -->
-    <div id="sidebarNav" class="collapse">
-      <nav>
-        <ul>
-          <li><a href="admin-dashboard.html" class="active"><i class="bi-speedometer2"></i> Dashboard</a></li>
-          <li><a href="admin-capital-applications.html"><i class="bi-folder2-open"></i> Capital Applications</a></li>
-          <li><a href="admin-messages.html"><i class="bi-chat-dots-fill"></i> Messages</a></li>
-          <li><a href="admin-settings-payments.html"><i class="bi-credit-card"></i> Settings & Payments</a></li>
-          <li><a href="admin-signals.html"><i class="bi-lightning-fill"></i> Signals</a></li>
-          <li><a href="admin-testimonials.html"><i class="bi-chat-quote"></i> Testimonials</a></li>
-          <li><a href="admin-trade-history.html"><i class="bi-clock-history"></i> Trade History</a></li>
-          <li><a href="admin-trade-insights.html"><i class="bi-graph-up"></i> Trade Insights</a></li>
-          <li><a href="admin-users.html"><i class="bi-people-fill"></i> Users</a></li>
-          <li><a href="logout.html"><i class="bi-box-arrow-right"></i> Logout</a></li>
-        </ul>
-      </nav>
-    </div>
-
-    <!-- Version / Footer -->
-    <div class="mt-auto text-center small" style="color: rgba(255, 255, 255, 0.6);">
-      CBE Admin v1.0
-    </div>
+    <nav>
+      <ul>
+        <li><a href="admin-dashboard.html" class="active"><i class="bi-speedometer2"></i> Dashboard</a></li>
+        <li><a href="admin-capital-applications.html"><i class="bi-folder2-open"></i> Capital Applications</a></li>
+        <li><a href="admin-messages.html"><i class="bi-chat-dots-fill"></i> Messages</a></li>
+        <li><a href="admin-settings-payments.html"><i class="bi-credit-card"></i> Settings & Payments</a></li>
+        <li><a href="admin-signals.html"><i class="bi-lightning-fill"></i> Signals</a></li>
+        <li><a href="admin-testimonials.html"><i class="bi-chat-quote"></i> Testimonials</a></li>
+        <li><a href="admin-trade-history.html"><i class="bi-clock-history"></i> Trade History</a></li>
+        <li><a href="admin-trade-insights.html"><i class="bi-graph-up"></i> Trade Insights</a></li>
+        <li><a href="admin-users.html"><i class="bi-people-fill"></i> Users</a></li>
+        <li>
+          <a href="#activity-section" id="sidebar-activity-link"><i class="bi-list-task"></i> Recent Activity Logs</a>
+        </li>
+        <li>
+          <a href="#" id="sidebar-download-logs"><i class="bi-download"></i> Download Logs</a>
+        </li>
+        <li><a href="logout.html"><i class="bi-box-arrow-right"></i> Logout</a></li>
+      </ul>
+    </nav>
   </aside>
 
   <!-- ====================
        HEADER (Top Bar)
   ==================== -->
   <header class="admin-header glass">
-    <button
-      id="sidebar-toggle"
-      class="collapsed"
-      aria-label="Toggle sidebar"
-    >
+    <button id="sidebar-toggle" class="collapsed" aria-label="Toggle sidebar">
       <i class="bi-list"></i>
     </button>
 
-    <div class="header-tools">
-      <!-- LIVE CLOCK -->
-      <small id="current-datetime" style="color: var(--text); margin-right: 1rem;"></small>
+    <div class="d-flex align-items-center">
+      <!-- Logo (click → dashboard) -->
+      <div class="header-logo" id="header-logo">
+        <img src="CBE_logo.PNG" alt="CBE Logo" />
+      </div>
+      <!-- Live Clock -->
+      <small id="current-datetime"></small>
+    </div>
 
+    <!-- Header Tools: search, notifications, user menu, more menu, theme -->
+    <div class="header-tools">
       <!-- SEARCH BOX -->
       <div class="search-box">
         <i class="bi-search"></i>
@@ -565,7 +598,7 @@
           <span class="badge" id="notif-badge">3</span>
         </button>
         <ul
-          class="dropdown-menu dropdown-menu-end glass"
+          class="dropdown-menu dropdown-menu-end glass no-scrollbar"
           aria-labelledby="notifDropdown"
         >
           <li class="dropdown-header text-gold">Notifications</li>
@@ -608,16 +641,100 @@
           />
         </button>
         <ul
-          class="dropdown-menu dropdown-menu-end glass"
+          class="dropdown-menu dropdown-menu-end glass no-scrollbar"
           aria-labelledby="userDropdown"
         >
           <li>
             <h6 class="dropdown-header text-gold">Admin Name</h6>
           </li>
-          <li><a class="dropdown-item" href="#"><i class="bi-person me-2"></i> Profile</a></li>
-          <li><a class="dropdown-item" href="#"><i class="bi-gear me-2"></i> Settings</a></li>
+          <li>
+            <a class="dropdown-item" href="#"><i class="bi-person me-2"></i> Profile</a>
+          </li>
+          <li>
+            <a class="dropdown-item" href="#"><i class="bi-gear me-2"></i> Settings</a>
+          </li>
           <li><hr class="dropdown-divider" /></li>
-          <li><a class="dropdown-item" href="logout.html"><i class="bi-box-arrow-right me-2"></i> Logout</a></li>
+          <li>
+            <a class="dropdown-item" href="logout.html"
+              ><i class="bi-box-arrow-right me-2"></i> Logout</a
+            >
+          </li>
+        </ul>
+      </div>
+
+      <!-- MORE OPTIONS (Three-dot Menu with ALL Nav Links) -->
+      <div class="dropdown">
+        <button
+          class="icon-btn"
+          id="moreDropdown"
+          data-bs-toggle="dropdown"
+          aria-expanded="false"
+          aria-label="More options"
+        >
+          <i class="bi-three-dots-vertical"></i>
+        </button>
+        <ul
+          class="dropdown-menu dropdown-menu-end glass no-scrollbar"
+          aria-labelledby="moreDropdown"
+        >
+          <li><h6 class="dropdown-header text-gold">Navigation</h6></li>
+          <li>
+            <a class="dropdown-item" href="admin-dashboard.html"
+              ><i class="bi-speedometer2 me-2"></i> Dashboard</a
+            >
+          </li>
+          <li>
+            <a class="dropdown-item" href="admin-capital-applications.html"
+              ><i class="bi-folder2-open me-2"></i> Capital Applications</a
+            >
+          </li>
+          <li>
+            <a class="dropdown-item" href="admin-messages.html"
+              ><i class="bi-chat-dots-fill me-2"></i> Messages</a
+            >
+          </li>
+          <li>
+            <a class="dropdown-item" href="admin-settings-payments.html"
+              ><i class="bi-credit-card me-2"></i> Settings & Payments</a
+            >
+          </li>
+          <li>
+            <a class="dropdown-item" href="admin-signals.html"
+              ><i class="bi-lightning-fill me-2"></i> Signals</a
+            >
+          </li>
+          <li>
+            <a class="dropdown-item" href="admin-testimonials.html"
+              ><i class="bi-chat-quote me-2"></i> Testimonials</a
+            >
+          </li>
+          <li>
+            <a class="dropdown-item" href="admin-trade-history.html"
+              ><i class="bi-clock-history me-2"></i> Trade History</a
+            >
+          </li>
+          <li>
+            <a class="dropdown-item" href="admin-trade-insights.html"
+              ><i class="bi-graph-up me-2"></i> Trade Insights</a
+            >
+          </li>
+          <li>
+            <a class="dropdown-item" href="admin-users.html"
+              ><i class="bi-people-fill me-2"></i> Users</a
+            >
+          </li>
+          <li><hr class="dropdown-divider" /></li>
+          <li class="dropdown-header text-gold">Quick Access</li>
+          <li>
+            <a class="dropdown-item" href="#stats-container"
+              ><i class="bi-bar-chart-fill me-2"></i> View Stats</a
+            >
+          </li>
+          <li>
+            <a class="dropdown-item" href="#activity-section"
+              ><i class="bi-list-task me-2"></i> View Activity Logs</a
+            >
+          </li>
         </ul>
       </div>
 
@@ -632,20 +749,28 @@
        MAIN CONTENT
   ==================== -->
   <main class="admin-content">
-    <!-- QUICK ACTIONS (e.g., Add User, Send Broadcast, etc.) -->
+    <!-- QUICK ACTIONS -->
     <div class="quick-actions">
+      <a href="#" class="btn-quick" id="btn-refresh-stats">
+        <i class="bi-arrow-clockwise"></i> Refresh Stats
+      </a>
       <a href="admin-users.html" class="btn-quick">
         <i class="bi-plus-circle"></i> Add New User
       </a>
       <a href="admin-settings-payments.html" class="btn-quick">
         <i class="bi-currency-bitcoin"></i> Fund Account
       </a>
-      <a href="https://my.brevo.com/advanced/batlist" target="_blank" class="btn-quick">
+      <a
+        href="https://my.brevo.com/advanced/batlist"
+        class="btn-quick"
+        target="_blank"
+        rel="noopener"
+      >
         <i class="bi-envelope"></i> Send Broadcast
       </a>
-      <button id="generate-report" class="btn-quick">
+      <a href="admin-trade-insights.html" class="btn-quick">
         <i class="bi-graph-up"></i> Generate Report
-      </button>
+      </a>
     </div>
 
     <!-- DRAG-AND-DROP STAT CARDS -->
@@ -674,57 +799,63 @@
 
     <!-- CHARTS SECTION -->
     <div class="charts">
-      <div class="chart-container">
+      <div class="chart-container" id="container-pnl">
         <h4>Weekly P&L (Pips)</h4>
         <canvas id="chart-pnl"></canvas>
+        <div class="chart-actions">
+          <button data-chart-id="chart-pnl">Download P&L Chart</button>
+        </div>
       </div>
-      <div class="chart-container">
+      <div class="chart-container" id="container-winrate">
         <h4>Weekly Win Rate (%)</h4>
         <canvas id="chart-winrate"></canvas>
+        <div class="chart-actions">
+          <button data-chart-id="chart-winrate">Download Win Rate Chart</button>
+        </div>
       </div>
-      <div class="chart-container">
+      <div class="chart-container" id="container-status">
         <h4>User Status Distribution</h4>
         <canvas id="chart-status"></canvas>
+        <div class="chart-actions">
+          <button data-chart-id="chart-status">Download Status Chart</button>
+        </div>
       </div>
     </div>
 
-    <!-- ACTIVITY LOGS SECTION (collapsed by default) -->
-    <section class="activity-card">
-      <h3 id="activity-header">
-        Recent Activity Logs
-        <i class="bi-chevron-down toggle-icon"></i>
-      </h3>
-      <div class="collapse" id="activityCollapse">
-        <!-- Search input for filtering logs -->
-        <div class="activity-search">
-          <input
-            type="text"
-            id="activity-search-input"
-            placeholder="Search logs..."
-            aria-label="Search activity logs"
-          />
-        </div>
-        <div class="table-responsive">
-          <table class="table table-borderless table-hover">
-            <thead>
-              <tr>
-                <th>User ID</th>
-                <th>Action</th>
-                <th>Timestamp</th>
-                <th>IP Address</th>
-                <th>City</th>
-                <th>Country</th>
-                <th>Device</th>
-              </tr>
-            </thead>
-            <tbody id="activity-body"></tbody>
-          </table>
-        </div>
-        <div class="text-end mt-2">
-          <button id="export-logs" class="btn-export">
-            <i class="bi-download"></i> Download Logs
-          </button>
-        </div>
+    <!-- ACTIVITY LOGS SECTION -->
+    <section class="activity-card" id="activity-section">
+      <!-- Header with Collapse Icon (collapsed by default) -->
+      <h3 id="activity-header">Recent Activity Logs</h3>
+      <i class="bi-plus-circle collapse-icon" id="toggle-activity" title="Expand Logs"></i>
+
+      <!-- Filter & Export (hidden initially) -->
+      <div class="d-flex align-items-center" id="filter-export-row" style="margin-top: 1rem;">
+        <input
+          type="text"
+          id="activity-filter"
+          placeholder="Filter by UserID/Action"
+        />
+        <button id="export-logs" class="btn-export">
+          <i class="bi-download"></i> Download Logs
+        </button>
+      </div>
+
+      <!-- Table Wrapper (hidden initially) -->
+      <div class="table-responsive" id="activity-table-wrapper" style="margin-top: 0.75rem;">
+        <table class="table table-borderless table-hover">
+          <thead>
+            <tr>
+              <th>User ID</th>
+              <th>Action</th>
+              <th>Timestamp</th>
+              <th>IP Address</th>
+              <th>City</th>
+              <th>Country</th>
+              <th>Device</th>
+            </tr>
+          </thead>
+          <tbody id="activity-body"></tbody>
+        </table>
       </div>
     </section>
   </main>
@@ -741,7 +872,7 @@
     const supabase      = window.supabase.createClient(SUPA_URL, SUPA_ANON_KEY);
 
     document.addEventListener('DOMContentLoaded', () => {
-      // 2) SIDEBAR TOGGLE (Responsive)
+      // SIDEBAR TOGGLE (Responsive)
       const sidebar = document.getElementById('sidebar');
       const sidebarToggle = document.getElementById('sidebar-toggle');
       const overlay = document.querySelector('.overlay');
@@ -767,22 +898,18 @@
         }
       });
       overlay.addEventListener('click', closeSidebar);
-      // Clicking the logo always resets to Dashboard and closes sidebar on mobile
+
+      // Clicking sidebar logo resets to Dashboard
       document.getElementById('sidebar-logo').onclick = () => {
         window.location.href = 'admin-dashboard.html';
         if (window.innerWidth < 992) closeSidebar();
       };
+      // Clicking header logo resets to Dashboard
+      document.getElementById('header-logo').onclick = () => {
+        window.location.href = 'admin-dashboard.html';
+      };
 
-      // 3) SIDEBAR MENU BUTTON (three-dots) TOGGLE NAV ITEMS
-      const sidebarMenuBtn = document.getElementById('sidebar-menu-button');
-      const sidebarNav = document.getElementById('sidebarNav');
-      sidebarMenuBtn.addEventListener('click', () => {
-        new bootstrap.Collapse(sidebarNav, {
-          toggle: true
-        });
-      });
-
-      // 4) THEME TOGGLE
+      // THEME TOGGLE
       const themeBtn = document.getElementById('theme-toggle');
       const setTheme = (t) => {
         document.documentElement.setAttribute('data-theme', t);
@@ -794,7 +921,7 @@
       });
       setTheme(localStorage.getItem('theme') || 'dark');
 
-      // 5) LIVE CLOCK (top right corner)
+      // LIVE CLOCK
       const clkEl = document.getElementById('current-datetime');
       function updateClock() {
         clkEl.textContent = new Date().toLocaleString();
@@ -802,14 +929,8 @@
       updateClock();
       setInterval(updateClock, 60000);
 
-      // 6) QUICK ACTION: GENERATE REPORT
-      document.getElementById('generate-report').addEventListener('click', () => {
-        // Placeholder: you can replace this with actual report generation logic
-        alert('Report generation triggered!');
-      });
-
-      // 7) FETCH STATS & RENDER CHARTS
-      (async () => {
+      // FETCH STATS & RENDER CHARTS (and allow manual refresh)
+      async function loadStatsAndCharts() {
         try {
           // Parallel data fetches
           const [
@@ -854,8 +975,11 @@
             .map((i) => new Date(i.week_ending).toLocaleDateString())
             .reverse();
           const pipsData = insights.map((i) => i.pips).reverse();
+
           // P&L Line Chart
-          new Chart(document.getElementById('chart-pnl'), {
+          const pnlCtx = document.getElementById('chart-pnl').getContext('2d');
+          if (window.pnlChart) window.pnlChart.destroy();
+          window.pnlChart = new Chart(pnlCtx, {
             type: 'line',
             data: {
               labels,
@@ -880,8 +1004,11 @@
               }
             }
           });
+
           // Win-Rate Bar Chart
-          new Chart(document.getElementById('chart-winrate'), {
+          const winCtx = document.getElementById('chart-winrate').getContext('2d');
+          if (window.winChart) window.winChart.destroy();
+          window.winChart = new Chart(winCtx, {
             type: 'bar',
             data: {
               labels,
@@ -889,11 +1016,13 @@
                 {
                   label: 'Win (100%) or Loss (0%)',
                   data: insights.map((i) => (i.pips > 0 ? 100 : 0)).reverse(),
-                  backgroundColor: insights.map((i) =>
-                    i.pips > 0
-                      ? hexToRgba(varToRgb('--gold'), 0.7)
-                      : hexToRgba('#dc3545', 0.7)
-                  )
+                  backgroundColor: insights
+                    .map((i) =>
+                      i.pips > 0
+                        ? hexToRgba(varToRgb('--gold'), 0.7)
+                        : hexToRgba('#dc3545', 0.7)
+                    )
+                    .reverse()
                 }
               ]
             },
@@ -910,12 +1039,15 @@
               plugins: { legend: { display: false } }
             }
           });
+
           // User-Status Doughnut Chart
           const statusCounts = allUsers.reduce((acc, u) => {
             acc[u.status] = (acc[u.status] || 0) + 1;
             return acc;
           }, {});
-          new Chart(document.getElementById('chart-status'), {
+          const statusCtx = document.getElementById('chart-status').getContext('2d');
+          if (window.statusChart) window.statusChart.destroy();
+          window.statusChart = new Chart(statusCtx, {
             type: 'doughnut',
             data: {
               labels: ['Active', 'Expired', 'Pending', 'Deleted'],
@@ -947,25 +1079,34 @@
           console.error('Error loading dashboard:', err);
           showToast('Error loading dashboard data', 'critical');
         }
-      })();
+      }
 
-      // 8) LOAD RECENT ACTIVITY LOGS
+      // Initial load of stats/charts
+      loadStatsAndCharts();
+
+      // Manual “Refresh Stats” button
+      document.getElementById('btn-refresh-stats').addEventListener('click', () => {
+        showToast('Refreshing stats...', 'info');
+        loadStatsAndCharts();
+      });
+
+      // LOAD RECENT ACTIVITY LOGS
       async function loadRecentActivity() {
         try {
           const { data, error } = await supabase
             .from('user_activity')
             .select('*')
             .order('timestamp', { ascending: false })
-            .limit(1000); // load enough for search
+            .limit(50); // fetch last 50 for filtering
           if (error) throw error;
           const tbody = document.getElementById('activity-body');
           tbody.innerHTML = '';
           data.forEach((row) => {
             const tr = document.createElement('tr');
             tr.innerHTML = `
-              <td>${row.user_id || 'N/A'}</td>
-              <td>${row.action || 'N/A'}</td>
-              <td>${row.timestamp ? new Date(row.timestamp).toLocaleString() : 'N/A'}</td>
+              <td class="act-user">${row.user_id || 'N/A'}</td>
+              <td class="act-action">${row.action || 'N/A'}</td>
+              <td>${row.timestamp ? new Date(row.timestamp).toLocaleDateString() : 'N/A'}</td>
               <td>${row.ip_address || 'N/A'}</td>
               <td>${row.city || 'N/A'}</td>
               <td>${row.country || 'N/A'}</td>
@@ -973,6 +1114,7 @@
             `;
             tbody.appendChild(tr);
           });
+          applyActivityFilter();
         } catch (err) {
           console.error('Activity load error:', err);
           showToast('Failed to load activity logs', 'critical');
@@ -981,7 +1123,7 @@
         }
       }
 
-      // 9) EXPORT ACTIVITY LOGS AS CSV
+      // EXPORT ACTIVITY LOGS AS CSV
       async function downloadActivityLog() {
         try {
           const { data, error } = await supabase
@@ -990,11 +1132,11 @@
             .order('timestamp', { ascending: false });
           if (error) throw error;
           const csvRows = [
-            'Timestamp,Action,IP Address,City,Country,Device'
+            'User ID,Action,Timestamp,IP Address,City,Country,Device'
           ].concat(
             data.map((row) => {
-              const ts = row.timestamp ? new Date(row.timestamp).toLocaleString() : '';
-              return `${ts},${row.action},${row.ip_address},${row.city},${row.country},"${row.device}"`;
+              const ts = row.timestamp ? new Date(row.timestamp).toLocaleDateString() : '';
+              return `${row.user_id || ''},${row.action || ''},${ts},${row.ip_address || ''},${row.city || ''},${row.country || ''},"${row.device || ''}"`;
             })
           );
           const csvContent = csvRows.join('\n');
@@ -1005,56 +1147,94 @@
           a.download = 'activity_logs.csv';
           a.click();
           URL.revokeObjectURL(url);
-          showToast('Logs exported successfully', 'success');
+          showToast('Logs exported successfully', 'info');
         } catch (err) {
           console.error('Export error:', err);
           showToast('Failed to export logs', 'critical');
         }
       }
 
-      // 10) COLLAPSE/EXPAND Activity Logs
-      const activityHeader = document.getElementById('activity-header');
-      const activityCollapse = new bootstrap.Collapse(document.getElementById('activityCollapse'), {
-        toggle: false
-      });
-      activityHeader.addEventListener('click', () => {
-        activityCollapse.toggle();
-      });
-
-      // 11) SEARCH FILTER FOR ACTIVITY LOGS
-      document.getElementById('activity-search-input').addEventListener('input', (e) => {
-        const filter = e.target.value.toLowerCase();
-        const rows = document.querySelectorAll('#activity-body tr');
-        rows.forEach((row) => {
-          const text = row.textContent.toLowerCase();
-          row.style.display = text.includes(filter) ? '' : 'none';
-        });
-      });
-
-      // Initialize activity on first expand
-      document.getElementById('activityCollapse').addEventListener('shown.bs.collapse', () => {
-        loadRecentActivity();
-      });
-
+      // REAL-TIME UPDATES FOR ACTIVITY LOGS
+      loadRecentActivity();
       document.getElementById('export-logs').addEventListener('click', downloadActivityLog);
-
-      // 12) REAL-TIME UPDATES FOR ACTIVITY LOGS
+      document.getElementById('sidebar-download-logs').addEventListener('click', (e) => {
+        e.preventDefault();
+        downloadActivityLog();
+      });
       supabase
         .channel('user_activity')
         .on(
           'postgres_changes',
           { event: 'INSERT', schema: 'public', table: 'user_activity' },
           () => {
-            // reload if expanded
-            const collapseEl = document.getElementById('activityCollapse');
-            if (collapseEl.classList.contains('show')) {
-              loadRecentActivity();
-            }
+            loadRecentActivity();
           }
         )
         .subscribe();
 
-      // 13) SHOW TOAST NOTIFICATIONS
+      // ACTIVITY FILTER LOGIC
+      const filterInput = document.getElementById('activity-filter');
+      filterInput.addEventListener('input', applyActivityFilter);
+
+      function applyActivityFilter() {
+        const filterText = filterInput.value.trim().toLowerCase();
+        const rows = document.querySelectorAll('#activity-body tr');
+        rows.forEach((tr) => {
+          const userCell = tr.querySelector('.act-user').textContent.toLowerCase();
+          const actionCell = tr.querySelector('.act-action').textContent.toLowerCase();
+          if (
+            userCell.includes(filterText) ||
+            actionCell.includes(filterText) ||
+            filterText === ''
+          ) {
+            tr.style.display = '';
+          } else {
+            tr.style.display = 'none';
+          }
+        });
+      }
+
+      // COLLAPSE / EXPAND ACTIVITY LOGS (collapsed initially)
+      const toggleActivity = document.getElementById('toggle-activity');
+      const filterExportRow = document.getElementById('filter-export-row');
+      const tableWrapper = document.getElementById('activity-table-wrapper');
+      let activityCollapsed = true; // start collapsed
+
+      toggleActivity.addEventListener('click', () => {
+        activityCollapsed = !activityCollapsed;
+        if (!activityCollapsed) {
+          // Expand
+          filterExportRow.style.display = 'flex';
+          tableWrapper.style.display = '';
+          toggleActivity.classList.replace('bi-plus-circle', 'bi-dash-circle');
+          document.getElementById('activity-header').title = 'Collapse Logs';
+        } else {
+          // Collapse
+          filterExportRow.style.display = 'none';
+          tableWrapper.style.display = 'none';
+          toggleActivity.classList.replace('bi-dash-circle', 'bi-plus-circle');
+          document.getElementById('activity-header').title = 'Expand Logs';
+        }
+      });
+
+      // DOWNLOAD CHART AS IMAGE
+      document.querySelectorAll('.chart-actions button').forEach((btn) => {
+        btn.addEventListener('click', () => {
+          const chartId = btn.getAttribute('data-chart-id');
+          const chartCanvas = document.getElementById(chartId);
+          chartCanvas.toBlob((blob) => {
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = chartId + '.png';
+            a.click();
+            URL.revokeObjectURL(url);
+            showToast(`${chartId} downloaded`, 'info');
+          });
+        });
+      });
+
+      // SHOW TOAST NOTIFICATIONS
       function showToast(message, type = 'info') {
         const toastEl = document.createElement('div');
         toastEl.className = `toast align-items-center text-white bg-${
@@ -1070,16 +1250,14 @@
         new bootstrap.Toast(toastEl, { delay: 3000 }).show();
       }
 
-      // 14) HELPER FUNCTIONS: CONVERT CSS VARS TO RGB/RGBA
+      // HELPER FUNCTIONS: CONVERT CSS VARS TO RGB/RGBA
       function varToRgb(varName) {
-        // read computed RGB triplet from CSS variable
         const rgb = getComputedStyle(document.documentElement)
           .getPropertyValue(varName)
           .trim();
         return rgb || '#fff';
       }
       function hexToRgba(hex, alpha) {
-        // convert hex or rgb string to rgba
         if (hex.startsWith('#')) {
           let r = parseInt(hex.slice(1, 3), 16);
           let g = parseInt(hex.slice(3, 5), 16);
