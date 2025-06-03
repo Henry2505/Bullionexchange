@@ -665,7 +665,7 @@
           .order('created_at', { ascending: false })
           .limit(1);
 
-        if (error) throw error;
+        if (error) throw new Error(`Supabase error: ${error.message} (Code: ${error.code})`);
         if (!signals || signals.length === 0) {
           // No signals exist
           card.innerHTML = `
@@ -685,7 +685,10 @@
         const dt = new Date(sig.created_at);
         const actionClass = sig.action.toLowerCase() === 'buy' ? 'signal-buy' : 'signal-sell';
 
-        // Render the latest signal with copy buttons, using .toFixed(3)
+        // Format numbers to three decimal places
+        const formatNumber = (num) => typeof num === 'number' ? num.toFixed(3) : 'N/A';
+
+        // Render the latest signal with copy buttons
         card.innerHTML = `
           <div class="signal-header">
             <h2 class="${actionClass}">
@@ -696,20 +699,20 @@
           </div>
           <div class="signal-body">
             <div class="detail entry">
-              Entry: <span>${sig.entry.toFixed(3)}</span>
-              <button class="copy-btn" onclick="copyText('${sig.entry.toFixed(3)}')">Copy</button>
+              Entry: <span>${formatNumber(sig.entry)}</span>
+              <button class="copy-btn" onclick="copyText('${formatNumber(sig.entry)}')">Copy</button>
             </div>
             <div class="detail sl">
-              SL: <span>${sig.sl.toFixed(3)}</span>
-              <button class="copy-btn" onclick="copyText('${sig.sl.toFixed(3)}')">Copy</button>
+              SL: <span>${formatNumber(sig.sl)}</span>
+              <button class="copy-btn" onclick="copyText('${formatNumber(sig.sl)}')">Copy</button>
             </div>
             <div class="detail tp1">
-              TP1: <span>${sig.tp1.toFixed(3)}</span>
-              <button class="copy-btn" onclick="copyText('${sig.tp1.toFixed(3)}')">Copy</button>
+              TP1: <span>${formatNumber(sig.tp1)}</span>
+              <button class="copy-btn" onclick="copyText('${formatNumber(sig.tp1)}')">Copy</button>
             </div>
             <div class="detail tp2">
-              TP2: <span>${sig.tp2 !== null ? sig.tp2.toFixed(3) : 'N/A'}</span>
-              <button class="copy-btn" onclick="copyText('${sig.tp2 !== null ? sig.tp2.toFixed(3) : ''}')">Copy</button>
+              TP2: <span>${sig.tp2 !== null ? formatNumber(sig.tp2) : 'N/A'}</span>
+              <button class="copy-btn" onclick="copyText('${sig.tp2 !== null ? formatNumber(sig.tp2) : ''}')">Copy</button>
             </div>
           </div>
           <div class="admin-note">Note: ${sig.note || 'Trade at your own risk.'}</div>
@@ -718,7 +721,7 @@
         console.error('Error loading latest signal:', err);
         card.innerHTML = `
           <p style="text-align:center;color: var(--error);padding:40px;">
-            Failed to load signal. Try again later.
+            Failed to load signal: ${err.message}. Please try again later.
           </p>`;
       }
     }
