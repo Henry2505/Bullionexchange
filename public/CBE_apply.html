@@ -344,10 +344,11 @@
       const card = document.getElementById("apply-card");
       card.classList.add("visible");
 
-      // 3) If URL includes “?ref=CODE”, show a note
+      // 3) If URL includes “?ref=CODE”, show a note and pre-fill the referral input
       const refCodeURL = getReferralFromURL();
       if (refCodeURL) {
         document.getElementById("referral-note").textContent = "You were referred by: " + refCodeURL;
+        document.getElementById("apply-referral").value = refCodeURL;
       }
     });
 
@@ -410,22 +411,22 @@
         const urlRef = getReferralFromURL();
         const referralCodeToUse = manualRef || urlRef || null;
 
-        // 2) If a code exists, validate it against Supabase
+        // 2) If a code exists, validate it against Supabase (now checking "affiliates" table)
         if (referralCodeToUse) {
-          const { data: affiliateUser, error: checkErr } = await supabaseClient
-            .from("affiliate_user")
+          const { data: affiliateRow, error: checkErr } = await supabaseClient
+            .from("affiliates")
             .select("id")
             .eq("referral_code", referralCodeToUse)
             .single();
 
-          if (checkErr || !affiliateUser) {
+          if (checkErr || !affiliateRow) {
             alertDiv.style.color = "var(--error-color)";
             alertDiv.textContent = "Invalid referral code. Please double-check.";
             submitBtn.disabled = false;
             submitBtn.textContent = "Submit Application";
             return;
           }
-          // Valid code at this point
+          // If we get here, the code is valid
         }
 
         // 3) Prepare payload for Netlify function
@@ -438,7 +439,7 @@
           referral_code: referralCodeToUse, // either valid code or null
         };
 
-        // 4) Call the new Netlify function endpoint
+        // 4) Call the Netlify function endpoint
         const fnResponse = await fetch("/.netlify/functions/send-application", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
