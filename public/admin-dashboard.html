@@ -127,6 +127,42 @@
       font-size:1.25rem; cursor:pointer;
       color:var(--text);
     }
+
+    /* ACTIVITY LOGS TABLE */
+    .activity-card {
+      background:var(--glass-bg);
+      border:1px solid var(--gold);
+      border-radius:8px;
+      padding:1rem;
+      margin-bottom:2rem;
+      backdrop-filter:blur(8px);
+    }
+    .activity-card h3 {
+      color:var(--gold);
+      margin-bottom:1rem;
+    }
+    .activity-card table {
+      width:100%;
+      border-collapse:collapse;
+      color:#fff;
+    }
+    .activity-card th, .activity-card td {
+      padding:0.5rem;
+      text-align:left;
+      border-bottom:1px solid rgba(255,215,0,0.2);
+    }
+    .activity-card th {
+      background:rgba(0,0,0,0.3);
+      color:var(--gold);
+    }
+    .activity-card .btn-export {
+      background:linear-gradient(45deg, var(--gold), var(--gold-dark));
+      color:#000;
+      border:none;
+      padding:0.5rem 1rem;
+      border-radius:4px;
+      font-weight:500;
+    }
   </style>
 </head>
 <body>
@@ -156,7 +192,6 @@
         <li><a href="admin-trade-history.html"><i class="bi-clock-history"></i> Trade History</a></li>
         <li><a href="admin-trade-insights.html"><i class="bi-graph-up"></i> Trade Insights</a></li>
         <li><a href="admin-users.html"><i class="bi-people-fill"></i> Users</a></li>
-        <li><a href="#" onclick="event.preventDefault(); downloadActivityLog()"><i class="bi-download"></i> Download Logs</a></li>
         <li><a href="logout.html"><i class="bi-box-arrow-right"></i> Logout</a></li>
       </ul>
     </nav>
@@ -170,16 +205,16 @@
         <h5>Total Users</h5><h2 id="stat-users">0</h2>
       </div>
       <div class="card-stat" data-key="payments">
-        <h5>Pending Payments</h5><h2 id="stat-payments">0</h2>
+        <h5>Pending Payments</h5><h2 id="stats-payments">0</h2>
       </div>
       <div class="card-stat" data-key="trades">
-        <h5>Trades This Month</h5><h2 id="stat-trades">0</h2>
+        <h5>Trades This Month</h5><h2 id="stats-trades">0</h2>
       </div>
       <div class="card-stat" data-key="signals">
-        <h5>Signals Published</h5><h2 id="stat-signals">0</h2>
+        <h5>Signals Published</h5><h2 id="stats-signals">0</h2>
       </div>
       <div class="card-stat" data-key="winrate">
-        <h5>Win Rate (%)</h5><h2 id="stat-winrate">0</h2>
+        <h5>Win Rate (%)</h5><h2 id="stats-winrate">0</h2>
       </div>
     </div>
 
@@ -189,6 +224,28 @@
       <canvas id="chart-winrate" height="200"></canvas>
       <canvas id="chart-status" height="200"></canvas>
     </div>
+
+    <!-- Activity Logs Section -->
+    <section class="activity-card">
+      <div class="d-flex justify-content-between align-items-center mb-3">
+        <h3>Activity Logs</h3>
+        <button id="export-logs" class="btn-export">Export Logs</button>
+      </div>
+      <table>
+        <thead>
+          <tr>
+            <th>User ID</th>
+            <th>Action</th>
+            <th>Timestamp</th>
+            <th>IP Address</th>
+            <th>City</th>
+            <th>Country</th>
+            <th>Device</th>
+          </tr>
+        </thead>
+        <tbody id="activity-body"></tbody>
+      </table>
+    </section>
   </main>
 
   <!-- SCRIPTS -->
@@ -251,12 +308,12 @@
 
           // Update cards
           document.getElementById('stat-users').textContent    = usersCount;
-          document.getElementById('stat-payments').textContent = payments.length;
-          document.getElementById('stat-trades').textContent   = trades.length;
-          document.getElementById('stat-signals').textContent  = signals.length;
+          document.getElementById('stats-payments').textContent = payments.length;
+          document.getElementById('stats-trades').textContent   = trades.length;
+          document.getElementById('stats-signals').textContent  = signals.length;
           const wins = insights.filter(x => x.pips > 0).length;
           const rate = insights.length ? Math.round(wins / insights.length * 100) : 0;
-          document.getElementById('stat-winrate').textContent = rate;
+          document.getElementById('stats-winrate').textContent = rate;
 
           // Make cards draggable
           new Sortable(document.getElementById('stats-container'), {
@@ -311,49 +368,90 @@
           new bootstrap.Toast(toast, { delay:3000 }).show();
         }
       })();
-    });
 
-    // Download Logs Function
-    async function downloadActivityLog() {
-      try {
-        const { data, error } = await supabase
-          .from('user_activity')
-          .select('*')
-          .order('timestamp', { ascending: false });
-        if (error) throw error;
-        const csv = [
-          'Timestamp,Action,IP Address,City,Country,Device',
-          ...data.map(row => {
-            const ts = row.timestamp ? new Date(row.timestamp).toLocaleString() : '';
-            return `${ts},${row.action},${row.ip_address},${row.city},${row.country},"${row.device}"`;
-          })
-        ].join('\n');
-        const blob = new Blob([csv], { type: 'text/csv' });
-        const url = URL.createObjectURL(blob);
-        const a = document.createElement('a');
-        a.href = url;
-        a.download = 'activity_logs.csv';
-        a.click();
-        URL.revokeObjectURL(url);
-        addNotification('Logs exported successfully', 'info');
-      } catch (err) {
-        console.error('Export error:', err);
-        addNotification('Failed to export logs', 'critical');
+      // Load Recent Activity
+      async function loadRecentActivity() {
+        try {
+          const { data, error } = await supabase
+            .from('user_activity')
+            .select('*')
+            .order('timestamp', { ascending: false })
+            .limit(10);
+          if (error) throw error;
+          const tbody = document.getElementById('activity-body');
+          tbody.innerHTML = '';
+          data.forEach(row => {
+            const tr = document.createElement('tr');
+            tr.innerHTML = `
+              <td>${row.user_id || 'N/A'}</td>
+              <td>${row.action || 'N/A'}</td>
+              <td>${row.timestamp ? new Date(row.timestamp).toLocaleString() : 'N/A'}</td>
+              <td>${row.ip_address || 'N/A'}</td>
+              <td>${row.city || 'N/A'}</td>
+              <td>${row.country || 'N/A'}</td>
+              <td>${row.device || 'N/A'}</td>
+            `;
+            tbody.appendChild(tr);
+          });
+        } catch (err) {
+          console.error('Activity load error:', err);
+          addNotification('Failed to load activity logs', 'critical');
+          document.getElementById('activity-body').innerHTML = '<tr><td colspan="7" style="color:#ff4d4d">Failed to load logs</td></tr>';
+        }
       }
-    }
 
-    // Notification Function
-    function addNotification(message, type = 'info') {
-      const toast = document.createElement('div');
-      toast.className = `toast align-items-center text-white bg-${type === 'critical' ? 'danger' : 'success'} border-0 position-fixed top-0 end-0 m-3`;
-      toast.innerHTML = `
-        <div class="d-flex">
-          <div class="toast-body">${message}</div>
-          <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast"></button>
-        </div>`;
-      document.body.append(toast);
-      new bootstrap.Toast(toast, { delay: 3000 }).show();
-    }
+      // Download Activity Logs
+      async function downloadActivityLog() {
+        try {
+          const { data, error } = await supabase
+            .from('user_activity')
+            .select('*')
+            .order('timestamp', { ascending: false });
+          if (error) throw error;
+          const csv = [
+            'Timestamp,Action,IP Address,City,Country,Device',
+            ...data.map(row => {
+              const ts = row.timestamp ? new Date(row.timestamp).toLocaleString() : '';
+              return `${ts},${row.action},${row.ip_address},${row.city},${row.country},"${row.device}"`;
+            })
+          ].join('\n');
+          const blob = new Blob([csv], { type: 'text/csv' });
+          const url = URL.createObjectURL(blob);
+          const a = document.createElement('a');
+          a.href = url;
+          a.download = 'activity_logs.csv';
+          a.click();
+          URL.revokeObjectURL(url);
+          addNotification('Logs exported successfully', 'info');
+        } catch (err) {
+          console.error('Export error:', err);
+          addNotification('Failed to export logs', 'critical');
+        }
+      }
+
+      // Notification Function
+      function addNotification(message, type = 'info') {
+        const toast = document.createElement('div');
+        toast.className = `toast align-items-center text-white bg-${type === 'critical' ? 'danger' : 'success'} border-0 position-fixed top-0 end-0 m-3`;
+        toast.innerHTML = `
+          <div class="d-flex">
+            <div class="toast-body">${message}</div>
+            <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast"></button>
+          </div>`;
+        document.body.append(toast);
+        new bootstrap.Toast(toast, { delay: 3000 }).show();
+      }
+
+      // Initialize Activity Logs
+      loadRecentActivity();
+      document.getElementById('export-logs').addEventListener('click', downloadActivityLog);
+      supabase
+        .channel('user_activity')
+        .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'user_activity' }, () => {
+          loadRecentActivity();
+        })
+        .subscribe();
+    });
   </script>
 </body>
 </html>
