@@ -436,18 +436,10 @@
             <i class="bi-speedometer2 me-2"></i>Dashboard
           </a>
         </li>
-        <li class="nav-item">
-          <a class="nav-link" href="signals.html"><i class="bi-lightning me-2"></i>Signals</a>
-        </li>
-        <li class="nav-item">
-          <a class="nav-link" href="CBE_trade_history_vip.html"><i class="bi-clock-history me-2"></i>History</a>
-        </li>
-        <li class="nav-item">
-          <a class="nav-link" href="CBE_trade_insights_vip.html"><i class="bi-graph-up me-2"></i>Insights</a>
-        </li>
-        <li class="nav-item">
-          <a class="nav-link" href="#" onclick="downloadActivityLog()"><i class="bi-download me-2"></i>Download Logs</a>
-        </li>
+        <li class="nav-item"><a class="nav-link" href="signals.html"><i class="bi-lightning me-2"></i>Signals</a></li>
+        <li class="nav-item"><a class="nav-link" href="CBE_trade_history_vip.html"><i class="bi-clock-history me-2"></i>History</a></li>
+        <li class="nav-item"><a class="nav-link" href="CBE_trade_insights_vip.html"><i class="bi-graph-up me-2"></i>Insights</a></li>
+        <li class="nav-item"><a class="nav-link" href="#" onclick="downloadActivityLog()"><i class="bi-download me-2"></i>Download Logs</a></li>
       </ul>
     </div>
   </div>
@@ -455,9 +447,7 @@
   <!-- Header -->
   <header class="slide-in">
     <div class="d-flex align-items-center">
-      <button id="sidebar-toggle" class="btn btn-link d-md-none me-2">
-        <i class="bi-list"></i>
-      </button>
+      <button id="sidebar-toggle" class="btn btn-link d-md-none me-2"><i class="bi-list"></i></button>
       <a href="index.html" class="logo">CBE Dashboard</a>
     </div>
     <div class="nav-links">
@@ -479,10 +469,7 @@
 
   <!-- Main Content -->
   <div class="container-fluid">
-    <div class="welcome-banner slide-in">
-      Welcome, <strong id="welcomeName">Trader</strong>!
-    </div>
-
+    <div class="welcome-banner slide-in">Welcome, <strong id="welcomeName">Trader</strong>!</div>
     <div class="row g-4 mb-4 slide-in">
       <div class="col-md-3">
         <div class="card p-3 text-center">
@@ -610,9 +597,9 @@
   <audio id="critical-notif-sound" src="alert.mp3" preload="auto"></audio>
 
   <script>
-    // ─── SUPABASE INIT (only to read signals, activity, etc.) ─────────────────
+    // ─── SUPABASE INIT (with full anon key) ─────────────────────────────────
     const SUPA_URL = 'https://dapwpgvnfjcfqqhrpxla.supabase.co';
-    const SUPA_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...'; // ← your anon/public key
+    const SUPA_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImRhcHdwZ3ZuZmpjZnFxaHJweGxhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDcwNDA4ODgsImV4cCI6MjA2MjYxNjg4OH0.ICC0UsLlzJDNre7rFCeD3k6iVzo6jOJgn3PhABpEMsQ';
     const supabase = window.supabase.createClient(SUPA_URL, SUPA_KEY);
 
     // ─── API KEYS ────────────────────────────────────────────────────────────
@@ -652,10 +639,9 @@
       }
     }
 
-    // ─── LOAD RECENT ACTIVITY (UPDATED) ─────────────────────────────────────
+    // ─── LOAD RECENT ACTIVITY (WORKING) ──────────────────────────────────────
     async function loadRecentActivity() {
       console.log('▶ loadRecentActivity() called');
-
       const tbody = document.getElementById('activity-body');
       if (!tbody) {
         console.error('✖ loadRecentActivity: <tbody id="activity-body"> not found');
@@ -678,11 +664,8 @@
         }
 
         console.log('✔ Supabase returned:', data);
-
-        // Clear out the spinner
         tbody.innerHTML = '';
 
-        // If no rows, show a “No recent activity” message
         if (!data || data.length === 0) {
           tbody.innerHTML = `
             <tr>
@@ -693,7 +676,6 @@
           return;
         }
 
-        // Otherwise, build rows normally
         data.forEach(activity => {
           const tr = document.createElement('tr');
 
@@ -714,7 +696,7 @@
           tdIP.textContent = activity.ip_address || '-';
           tr.appendChild(tdIP);
 
-          // 4) Location cell (combine city + country)
+          // 4) Location cell
           const tdLocation = document.createElement('td');
           const city = activity.city || '';
           const country = activity.country || '';
@@ -1036,7 +1018,7 @@
 
       // ─── SILENT REFRESH EVERY 2 MINUTES ───────────────────────────────────
       setInterval(() => {
-        // We skip session recheck entirely (so it won’t log you out). Just refresh data.
+        // Refresh data, but do not re‐check login
         loadDashboard();
         loadGoldNews();
         loadEconCalendar();
