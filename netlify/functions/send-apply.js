@@ -29,8 +29,10 @@ exports.handler = async (event) => {
     };
   }
 
-  const SUPABASE_URL      = process.env.SUPABASE_URL;
-  const SUPABASE_ANON_KEY = process.env.SUPABASE_ANON_KEY;
+  // ─── Supabase credentials (hard-coded per your request) ─────────────────────────
+  const SUPABASE_URL      = "https://dapwpgvnfjcfqqhrpxla.supabase.co";
+  const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImRhcHdwZ3ZuZmpjZnFxaHJweGxhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDcwNDA4ODgsImV4cCI6MjA2MjYxNjg4OH0.ICC0UsLlzJDNre7rFCeD3k6iVzo6jOJgn3PhABpEMsQ";
+
   if (!SUPABASE_URL || !SUPABASE_ANON_KEY) {
     console.error("Supabase environment variables missing");
     return {
@@ -112,6 +114,7 @@ exports.handler = async (event) => {
       };
     }
 
+    // ─── Brevo email notification ────────────────────────────────────────────────
     const BREVO_API_KEY = process.env.BREVO_API_KEY;
     if (!BREVO_API_KEY) {
       console.error("Missing BREVO_API_KEY environment variable");
