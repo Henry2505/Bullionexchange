@@ -1,4 +1,4 @@
-// netlify/functions/send-application.js
+// netlify/functions/send-apply.js
 
 const { createClient } = require("@supabase/supabase-js");
 
@@ -21,7 +21,7 @@ exports.handler = async (event) => {
     };
   }
 
-  const { name, email, password, phone, experience, referral_code } = data;
+  const { name, email, password, phone, experience } = data;
   if (!name || !email || !password || !phone || !experience) {
     return {
       statusCode: 400,
@@ -29,44 +29,16 @@ exports.handler = async (event) => {
     };
   }
 
-  // ─── Supabase credentials (hard-coded) ────────────────────────────────────────────
-  const SUPABASE_URL =
-    "https://dapwpgvnfjcfqqhrpxla.supabase.co";
-  const SUPABASE_ANON_KEY =
-    "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImRhcHdwZ3ZuZmpjZnFxaHJweGxhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDcwNDA4ODgsImV4cCI6MjA2MjYxNjg4OH0.ICC0UsLlzJDNre7rFCeD3k6iVzo6jOJgn3PhABpEMsQ";
-
+  const SUPABASE_URL      = process.env.SUPABASE_URL;
+  const SUPABASE_ANON_KEY = process.env.SUPABASE_ANON_KEY;
   if (!SUPABASE_URL || !SUPABASE_ANON_KEY) {
-    console.error("Supabase credentials missing");
+    console.error("Supabase environment variables missing");
     return {
       statusCode: 500,
       body: JSON.stringify({ error: "Supabase not configured." }),
     };
   }
   const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
-
-  let referredById = null;
-  if (referral_code) {
-    const { data: affiliateRow, error: checkReferralErr } = await supabase
-      .from("affiliates")
-      .select("user_id")
-      .eq("referral_code", referral_code)
-      .single();
-
-    if (checkReferralErr) {
-      console.error("Error checking referral code:", checkReferralErr);
-      return {
-        statusCode: 500,
-        body: JSON.stringify({ error: "Failed to verify referral code." }),
-      };
-    }
-    if (!affiliateRow) {
-      return {
-        statusCode: 400,
-        body: JSON.stringify({ error: "Invalid referral code." }),
-      };
-    }
-    referredById = affiliateRow.user_id;
-  }
 
   try {
     const { data: existingUser, error: checkError } = await supabase
@@ -89,21 +61,11 @@ exports.handler = async (event) => {
       };
     }
 
-    const insertPayload = {
-      name,
-      email,
-      password,
-      phone,
-      experience,
-      status: "pending",
-    };
-    if (referredById) {
-      insertPayload.referred_by = referredById;
-    }
-
     const { error: insertError } = await supabase
       .from("users")
-      .insert([insertPayload]);
+      .insert([
+        { name, email, password, phone, experience, status: "pending" },
+      ]);
 
     if (insertError) {
       console.error("Supabase insert error:", insertError);
@@ -122,9 +84,9 @@ exports.handler = async (event) => {
       };
     }
 
-    const BREVO_SENDER_NAME = "Chukwuemeka Bullion Exchange";
+    const BREVO_SENDER_NAME  = "Chukwuemeka Bullion Exchange";
     const BREVO_SENDER_EMAIL = "noreply@apexincomeoptions.com.ng";
-    const BREVO_TEMPLATE_ID = 1;
+    const BREVO_TEMPLATE_ID  = 1;
 
     const brevoPayload = {
       sender: {
@@ -142,7 +104,7 @@ exports.handler = async (event) => {
         NAME: name,
         EMAIL: email,
         PHONE: phone,
-        EXPERIENCE: experience,
+        EXPERIENCE: experience
       },
     };
 
@@ -163,27 +125,23 @@ exports.handler = async (event) => {
     }
 
     if (!brevoResponse.ok) {
-      console.error(
-        "Brevo responded with error:",
-        brevoResponse.status,
-        brevoResult
-      );
-      const brevoMsg =
-        brevoResult?.message || brevoResult?.error || "Unknown Brevo error";
+      console.error("Brevo responded with error:", brevoResponse.status, brevoResult);
+      const brevoMsg = brevoResult?.message || brevoResult?.error || "Unknown Brevo error";
       return {
         statusCode: 502,
         body: JSON.stringify({ error: "Brevo error: " + brevoMsg }),
       };
     }
 
+    // ←  Only this part changed:
     return {
       statusCode: 200,
       body: JSON.stringify({
-        message: "Registration successful! Your application is pending approval.",
+        message: "Registration successful! Your application is pending approval."
       }),
     };
   } catch (err) {
-    console.error("Unexpected error in send-application function:", err);
+    console.error("Unexpected error in send-apply function:", err);
     return {
       statusCode: 500,
       body: JSON.stringify({ error: "Internal server error." }),
