@@ -57,9 +57,7 @@
       --gold-dark: #cca300;
       --overlay: rgba(0, 0, 0, 0.15);
       --glass-bg: rgba(255, 255, 255, 0.05);
-      --sidebar-width: 250px;
       --transition-fast: 0.2s ease-in-out;
-      --sidebar-bg: #111;
       --log-bg: #000;
       --log-text: #ffd700;
     }
@@ -70,7 +68,6 @@
       --gold-dark: #b58900;
       --overlay: rgba(255, 255, 255, 0.15);
       --glass-bg: rgba(0, 0, 0, 0.05);
-      --sidebar-bg: #fff;
       --log-bg: #f5f5f5;
       --log-text: #b58900;
     }
@@ -105,78 +102,12 @@
     }
 
     /* ================================
-       SIDEBAR & HEADER LAYOUT
+       HEADER (Top Bar)
     ================================= */
-    /* Overlay for mobile sidebar */
-    .overlay {
-      position: fixed;
-      top: 0;
-      left: 0;
-      width: 100%;
-      height: 100%;
-      background: var(--overlay);
-      z-index: 1;
-      opacity: 0;
-      pointer-events: none;
-      transition: opacity var(--transition-fast);
-    }
-    .sidebar-open .overlay {
-      opacity: 1;
-      pointer-events: auto;
-    }
-
-    .sidebar {
-      position: fixed;
-      top: 0;
-      left: 0;
-      width: var(--sidebar-width);
-      height: 100%;
-      background: var(--sidebar-bg);
-      border-right: 1px solid var(--gold);
-      padding: 1.5rem 1rem;
-      transition: transform var(--transition-fast);
-      z-index: 10;
-      overflow-y: auto;
-    }
-    .sidebar.collapsed {
-      transform: translateX(-100%);
-    }
-    .sidebar .logo {
-      text-align: center;
-      margin-bottom: 2rem;
-      cursor: pointer;
-    }
-    .sidebar .logo img {
-      height: 45px;
-    }
-    .sidebar nav ul {
-      list-style: none;
-      padding: 0;
-      margin: 1rem 0;
-    }
-    .sidebar nav li {
-      margin: 1rem 0;
-    }
-    .sidebar nav li a {
-      display: flex;
-      align-items: center;
-      gap: 0.75rem;
-      font-weight: 500;
-      padding: 0.5rem 0.25rem;
-      color: var(--text);
-      border-radius: 4px;
-      transition: background var(--transition-fast);
-    }
-    .sidebar nav li a:hover,
-    .sidebar nav li a.active {
-      background: rgba(255, 215, 0, 0.1);
-      color: var(--gold);
-    }
-
     header.admin-header {
       position: sticky;
       top: 0;
-      left: var(--sidebar-width);
+      left: 0;
       right: 0;
       height: 60px;
       display: flex;
@@ -186,13 +117,7 @@
       background: var(--bg);
       border-bottom: 1px solid var(--gold);
       z-index: 5;
-      transition: left var(--transition-fast);
     }
-    /* When sidebar is collapsed, header spans full width */
-    .collapsed + header.admin-header {
-      left: 0;
-    }
-
     /* Logo (click → dashboard) */
     .header-logo {
       cursor: pointer;
@@ -281,13 +206,9 @@
        MAIN CONTENT AREA
     ================================= */
     main.admin-content {
-      margin-left: var(--sidebar-width);
+      margin: 0 auto;
       padding: 1.5rem;
       max-width: 1280px;
-      transition: margin-left var(--transition-fast);
-    }
-    .collapsed + header.admin-header + main.admin-content {
-      margin-left: 0;
     }
 
     /* ================================
@@ -495,20 +416,6 @@
     }
 
     /* RESPONSIVE TWEAKS */
-    @media (max-width: 992px) {
-      .sidebar {
-        transform: translateX(-100%);
-      }
-      .sidebar.collapsed {
-        transform: translateX(0);
-      }
-      header.admin-header {
-        left: 0;
-      }
-      main.admin-content {
-        margin-left: 0;
-      }
-    }
     @media (max-width: 576px) {
       .header-tools .search-box input {
         width: 120px;
@@ -523,50 +430,12 @@
   </style>
 </head>
 <body>
-  <!-- Overlay for mobile sidebar -->
-  <div class="overlay"></div>
-
-  <!-- ====================
-       SIDEBAR NAVIGATION
-  ==================== -->
-  <!-- Start collapsed by default -->
-  <aside class="sidebar collapsed" id="sidebar">
-    <div class="logo" id="sidebar-logo">
-      <img src="CBE_logo.PNG" alt="CBE Logo" />
-    </div>
-    <nav>
-      <ul>
-        <li><a href="admin-dashboard.html" class="active"><i class="bi-speedometer2"></i> Dashboard</a></li>
-        <li><a href="admin-capital-applications.html"><i class="bi-folder2-open"></i> Capital Applications</a></li>
-        <li><a href="admin-messages.html"><i class="bi-chat-dots-fill"></i> Messages</a></li>
-        <li><a href="admin-settings-payments.html"><i class="bi-credit-card"></i> Settings & Payments</a></li>
-        <li><a href="admin-signals.html"><i class="bi-lightning-fill"></i> Signals</a></li>
-        <li><a href="admin-testimonials.html"><i class="bi-chat-quote"></i> Testimonials</a></li>
-        <li><a href="admin-trade-history.html"><i class="bi-clock-history"></i> Trade History</a></li>
-        <li><a href="admin-trade-insights.html"><i class="bi-graph-up"></i> Trade Insights</a></li>
-        <li><a href="admin-users.html"><i class="bi-people-fill"></i> Users</a></li>
-        <li>
-          <a href="#activity-section" id="sidebar-activity-link"><i class="bi-list-task"></i> Recent Activity Logs</a>
-        </li>
-        <li>
-          <a href="#" id="sidebar-download-logs"><i class="bi-download"></i> Download Logs</a>
-        </li>
-        <li><a href="logout.html"><i class="bi-box-arrow-right"></i> Logout</a></li>
-      </ul>
-    </nav>
-  </aside>
-
   <!-- ====================
        HEADER (Top Bar)
   ==================== -->
   <header class="admin-header glass">
-    <!-- Three-dot button to toggle sidebar -->
-    <button id="sidebar-toggle" class="collapsed" aria-label="Toggle navigation">
-      <i class="bi-three-dots-vertical"></i>
-    </button>
-
+    <!-- Logo (click → dashboard) -->
     <div class="d-flex align-items-center">
-      <!-- Logo (click → dashboard) -->
       <div class="header-logo" id="header-logo">
         <img src="CBE_logo.PNG" alt="CBE Logo" />
       </div>
@@ -874,39 +743,6 @@
     const supabase      = window.supabase.createClient(SUPA_URL, SUPA_ANON_KEY);
 
     document.addEventListener('DOMContentLoaded', () => {
-      // SIDEBAR TOGGLE (Responsive)
-      const sidebar = document.getElementById('sidebar');
-      const sidebarToggle = document.getElementById('sidebar-toggle');
-      const overlay = document.querySelector('.overlay');
-
-      function closeSidebar() {
-        sidebar.classList.add('collapsed');
-        document.body.classList.remove('sidebar-open');
-        sidebarToggle.classList.add('collapsed');
-        overlay.style.opacity = 0;
-      }
-      function openSidebar() {
-        sidebar.classList.remove('collapsed');
-        document.body.classList.add('sidebar-open');
-        sidebarToggle.classList.remove('collapsed');
-        overlay.style.opacity = 1;
-      }
-
-      // Initially collapsed (already has .collapsed in HTML)
-      sidebarToggle.addEventListener('click', () => {
-        if (sidebar.classList.contains('collapsed')) {
-          openSidebar();
-        } else {
-          closeSidebar();
-        }
-      });
-      overlay.addEventListener('click', closeSidebar);
-
-      // Clicking sidebar logo resets to Dashboard
-      document.getElementById('sidebar-logo').onclick = () => {
-        window.location.href = 'admin-dashboard.html';
-        if (window.innerWidth < 992) closeSidebar();
-      };
       // Clicking header logo resets to Dashboard
       document.getElementById('header-logo').onclick = () => {
         window.location.href = 'admin-dashboard.html';
@@ -1130,7 +966,7 @@
       async function downloadActivityLog() {
         try {
           const { data, error } = await supabase
-            .from('user_activity')
+            .from('user_activity') 
             .select('*')
             .order('timestamp', { ascending: false });
           if (error) throw error;
@@ -1160,10 +996,6 @@
       // REAL-TIME UPDATES FOR ACTIVITY LOGS
       loadRecentActivity();
       document.getElementById('export-logs').addEventListener('click', downloadActivityLog);
-      document.getElementById('sidebar-download-logs').addEventListener('click', (e) => {
-        e.preventDefault();
-        downloadActivityLog();
-      });
       supabase
         .channel('user_activity')
         .on(
