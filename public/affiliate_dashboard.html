@@ -6,7 +6,7 @@
   <title>Affiliate Dashboard • CBE Global</title>
 
   <!-- ─────────────────────────────────────────────────────────────────────
-       1) DEPENDENCIES: Bootstrap, Icons, Supabase, and Toasts CSS
+       1) DEPENDENCIES: Bootstrap CSS & Icons, and Supabase JS
   -->
   <link
     href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css"
@@ -46,9 +46,6 @@
     a:hover { color: var(--gold-dark); }
 
     /* Layout */
-    .container-fluid {
-      padding: 1rem 2rem;
-    }
     .sidebar {
       background: var(--accent);
       min-height: 100vh;
@@ -68,6 +65,8 @@
     }
     .main-content {
       padding: 1rem;
+      overflow-y: auto;
+      height: 100vh;
     }
 
     /* Cards & Sections */
@@ -123,7 +122,8 @@
     /* Tables */
     table {
       width: 100%;
-      border-collapse: collapse;
+      border-collapse: separate;
+      border-spacing: 0 8px;
     }
     th {
       background: linear-gradient(45deg, var(--gold-dark), var(--gold));
@@ -184,26 +184,33 @@
       + 'ZmpjZnFxaHJweGxhIiwicm9sZSI6ImFub24iLCJpYXQiOj'
       + 'E3NDcwNDA4ODgsImV4cCI6MjA2MjYxNjg4OH0.'
       + 'ICC0UsLlzJDNre7rFCeD3k6iVzo6jOJgn3PhABpEMsQ';
-    const supabase = window.supabase.createClient(SUPA_URL, SUPA_KEY);
+    const supabaseClient = window.supabase.createClient(SUPA_URL, SUPA_KEY);
 
-    // If no logged-in user, redirect to affiliate_login.html
-    supabase.auth.getUser().then(({ data: { user } }) => {
-      if (!user) {
+    // We'll store user info in globals
+    let currentUser = null;
+    let currentUserId = null;
+
+    // Immediately get the user; if none, redirect to login
+    supabaseClient.auth.getUser().then(({ data: { user }, error }) => {
+      if (error || !user) {
         window.location.replace('affiliate_login.html');
+      } else {
+        currentUser = user;
+        currentUserId = user.id;
       }
     });
   </script>
 
   <!-- ─────────────────────────────────────────────────────────────────────
        3) PAGE LAYOUT:
-       • Sidebar (Referral Info, Navigation)
+       • Sidebar (Referral Info, Navigation, Logout)
        • Main Content (Bank Accounts, Wallets, Converter, Profile)
   -->
-  <div class="row g-0 vh-100">
+  <div class="row g-0">
     <!-- Sidebar -->
     <div class="col-12 col-md-3 sidebar d-flex flex-column">
       <div class="px-3 pb-3">
-        <h4 class="text-center">Your Affiliate Info</h4>
+        <h4 class="text-center">Affiliate Info</h4>
         <div id="referral-section" class="card">
           <div class="card-header">Referral Code</div>
           <div class="card-body text-center">
@@ -217,7 +224,6 @@
           </div>
         </div>
       </div>
-
       <nav class="nav flex-column px-3 pb-3">
         <a class="nav-link active" href="#bank-accounts-section">🏦 Bank Accounts</a>
         <a class="nav-link" href="#crypto-wallets-section">💰 Crypto Wallets</a>
@@ -230,7 +236,7 @@
     </div>
 
     <!-- Main Content -->
-    <div class="col-12 col-md-9 main-content overflow-auto">
+    <div class="col-12 col-md-9 main-content">
       <div class="container-fluid">
         <!-- Bank Accounts Section -->
         <section id="bank-accounts-section" class="mb-5">
@@ -307,7 +313,6 @@
                     <option value="USDT">Tether (USDT)</option>
                     <option value="BCH">Bitcoin Cash (BCH)</option>
                     <option value="LTC">Litecoin (LTC)</option>
-                    <!-- Add more as needed -->
                   </select>
                 </div>
                 <div class="col-md-6">
@@ -398,7 +403,11 @@
             <div class="card-body">
               <p><strong>Email:</strong> <span id="user-email">Loading…</span></p>
               <p><strong>Joined On:</strong> <span id="joined-date">--</span></p>
-              <p><strong>Total Referrals:</strong> <span id="total-referrals">--</span> (Coming Soon)</p>
+              <p>
+                <strong>Total Referrals:</strong>
+                <span id="total-referrals">0</span> 
+                <small class="text-muted">(coming soon)</small>
+              </p>
             </div>
           </div>
         </section>
@@ -416,92 +425,60 @@
     </div>
   </div>
 
-  <!-- Bootstrap JS + Popper -->
+  <!-- Bootstrap JS Bundle -->
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"
           integrity="sha384-YvpcrYf0tY3lHB60NNkmXc5s9fDVZLESaAA55NDzOxhy9GkcIdslK1eN7N6jIeHz"
           crossorigin="anonymous"></script>
 
   <script>
     // ─────────────────────────────────────────────────────────────────────────
-    // 4) INITIALIZE SUPABASE CLIENT
+    // 4) GLOBAL VARIABLES & UTILITY FUNCTIONS
     // ─────────────────────────────────────────────────────────────────────────
-    const SUPA_URL = 'https://dapwpgvnfjcfqqhrpxla.supabase.co';
-    const SUPA_KEY =
-      'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.'
-      + 'eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImRhcHdwZ3Zu'
-      + 'ZmpjZnFxaHJweGxhIiwicm9sZSI6ImFub24iLCJpYXQiOj'
-      + 'E3NDcwNDA4ODgsImV4cCI6MjA2MjYxNjg4OH0.'
-      + 'ICC0UsLlzJDNre7rFCeD3k6iVzo6jOJgn3PhABpEMsQ';
-    const supabaseClient = window.supabase.createClient(SUPA_URL, SUPA_KEY);
+    let currentUser = null;
+    let currentUserId = null;
+    const supabase = supabaseClient;
 
-    // ─────────────────────────────────────────────────────────────────────────
-    // 5) TOAST UTILITY
-    // ─────────────────────────────────────────────────────────────────────────
+    // Show a Bootstrap Toast message
     function showToast(message) {
       const toastEl = document.getElementById('liveToast');
       document.getElementById('toast-body').textContent = message;
-      const bsToast = new bootstrap.Toast(toastEl);
-      bsToast.show();
+      new bootstrap.Toast(toastEl).show();
     }
 
-    // ─────────────────────────────────────────────────────────────────────────
-    // 6) COPY TO CLIPBOARD UTILITY
-    // ─────────────────────────────────────────────────────────────────────────
+    // Copy text to clipboard with feedback
     function copyTextToClipboard(text) {
-      navigator.clipboard.writeText(text).then(() => {
-        showToast('Copied to clipboard');
-      }).catch(() => {
-        showToast('Copy failed');
-      });
+      navigator.clipboard.writeText(text)
+        .then(() => showToast('Copied to clipboard'))
+        .catch(() => showToast('Copy failed'));
     }
 
     // ─────────────────────────────────────────────────────────────────────────
-    // 7) ON LOAD: Fetch User, Referral Info, Profile Data, Bank Accounts, Wallets
+    // 5) ON DOM CONTENT LOADED: Fetch user, then initialize all sections
     // ─────────────────────────────────────────────────────────────────────────
     document.addEventListener('DOMContentLoaded', async () => {
-      // 7.1) GET CURRENT USER
-      const {
-        data: { user },
-        error: userErr
-      } = await supabaseClient.auth.getUser();
+      // 5.1) FETCH CURRENT USER & IDs
+      const { data: { user }, error: userErr } = await supabase.auth.getUser();
       if (userErr || !user) {
-        // Not logged in → redirect
         window.location.replace('affiliate_login.html');
         return;
       }
-      const userId = user.id;
-      const userEmail = user.email;
+      currentUser = user;
+      currentUserId = user.id;
 
-      // 7.2) DISPLAY USER EMAIL & Join Date
-      document.getElementById('user-email').textContent = userEmail;
-      const createdAt = new Date(user.created_at).toLocaleDateString();
-      document.getElementById('joined-date').textContent = createdAt;
+      // 5.2) DISPLAY USER PROFILE (email, joined date)
+      document.getElementById('user-email').textContent = user.email;
+      document.getElementById('joined-date').textContent = new Date(user.created_at).toLocaleDateString();
 
-      // 7.3) FETCH AFFILIATE RECORD → REFERRAL CODE
-      const { data: affiliateData, error: affErr } = await supabaseClient
-        .from('affiliates')
-        .select('referral_code')
-        .eq('user_id', userId)
-        .single();
-      if (affErr || !affiliateData) {
-        console.error('Failed to load affiliate data:', affErr);
-        document.getElementById('referral-code').textContent = '—';
-      } else {
-        const code = affiliateData.referral_code;
-        document.getElementById('referral-code').textContent = code;
-        // Build referral link (adjust domain as needed)
-        const link = `${window.location.origin}/?ref=${code}`;
-        const linkInput = document.getElementById('referral-link');
-        linkInput.value = link;
-      }
+      // 5.3) FETCH & DISPLAY REFERRAL CODE + LINK
+      await fetchReferralCode();
 
-      // 7.4) SET UP LOGOUT BUTTON
+      // 5.4) SETUP LOGOUT BUTTON
       document.getElementById('logout-btn').addEventListener('click', async () => {
-        await supabaseClient.auth.signOut();
+        await supabase.auth.signOut();
         window.location.href = 'affiliate_login.html';
       });
 
-      // 7.5) COPY BUTTONS: Referral Code & Link
+      // 5.5) COPY REFERRAL CODE & LINK
       document.getElementById('copy-referral').addEventListener('click', () => {
         const code = document.getElementById('referral-code').textContent;
         if (code && code !== '—') copyTextToClipboard(code);
@@ -511,47 +488,34 @@
         if (link) copyTextToClipboard(link);
       });
 
-      // 7.6) LOAD BANK ACCOUNTS
+      // 5.6) LOAD BANK ACCOUNTS
       await loadBankAccounts();
 
-      // 7.7) LOAD CRYPTO WALLETS
+      // 5.7) LOAD CRYPTO WALLETS
       await loadWallets();
 
-      // 7.8) HANDLE ADD BANK ACCOUNT FORM
+      // 5.8) SETUP ADD BANK ACCOUNT FORM HANDLER
       document.getElementById('bank-form').addEventListener('submit', async (e) => {
         e.preventDefault();
         const bankName = document.getElementById('bank-name').value.trim();
         const bankCode = document.getElementById('bank-code').value.trim();
         const accountNumber = document.getElementById('account-number').value.trim();
         const accountName = document.getElementById('account-name').value.trim();
-
         if (!bankName || !bankCode || !accountNumber || !accountName) {
           showToast('Please fill in all bank fields.');
           return;
         }
-
-        // Show spinner
         const bankBtn = document.getElementById('add-bank-btn');
         const bankText = document.getElementById('bank-btn-text');
         const bankSpinner = document.getElementById('bank-spinner');
-        bankBtn.setAttribute('disabled', 'true');
+        bankBtn.setAttribute('disabled', true);
         bankText.textContent = 'Adding…';
         bankSpinner.style.display = 'inline-block';
-
         try {
-          const { error: insertErr } = await supabaseClient
+          const { error } = await supabase
             .from('affiliate_bank_accounts')
-            .insert([
-              {
-                user_id: userId,
-                bank_name: bankName,
-                bank_code: bankCode,
-                account_number: accountNumber,
-                account_name: accountName
-              }
-            ]);
-          if (insertErr) throw insertErr;
-
+            .insert([{ user_id: currentUserId, bank_name: bankName, bank_code: bankCode, account_number: accountNumber, account_name: accountName }]);
+          if (error) throw error;
           showToast('Bank account added!');
           document.getElementById('bank-form').reset();
           await loadBankAccounts();
@@ -565,37 +529,26 @@
         }
       });
 
-      // 7.9) HANDLE ADD WALLET FORM
+      // 5.9) SETUP ADD WALLET FORM HANDLER
       document.getElementById('wallet-form').addEventListener('submit', async (e) => {
         e.preventDefault();
         const currency = document.getElementById('crypto-currency').value;
         const address = document.getElementById('crypto-address').value.trim();
-
         if (!currency || !address) {
           showToast('Please select currency and enter address.');
           return;
         }
-
-        // Show spinner
         const walletBtn = document.getElementById('add-wallet-btn');
         const walletText = document.getElementById('wallet-btn-text');
         const walletSpinner = document.getElementById('wallet-spinner');
-        walletBtn.setAttribute('disabled', 'true');
+        walletBtn.setAttribute('disabled', true);
         walletText.textContent = 'Adding…';
         walletSpinner.style.display = 'inline-block';
-
         try {
-          const { error: insertErr } = await supabaseClient
+          const { error } = await supabase
             .from('affiliate_wallets')
-            .insert([
-              {
-                user_id: userId,
-                currency: currency,
-                address: address
-              }
-            ]);
-          if (insertErr) throw insertErr;
-
+            .insert([{ user_id: currentUserId, currency: currency, address: address }]);
+          if (error) throw error;
           showToast('Wallet added!');
           document.getElementById('wallet-form').reset();
           await loadWallets();
@@ -609,29 +562,27 @@
         }
       });
 
-      // 7.10) HANDLE CURRENCY CONVERTER FORM
+      // 5.10) SETUP CONVERTER FORM HANDLER
       document.getElementById('converter-form').addEventListener('submit', async (e) => {
         e.preventDefault();
         const from = document.getElementById('convert-from').value;
         const to = document.getElementById('convert-to').value;
         const amount = parseFloat(document.getElementById('convert-amount').value) || 0;
-
         document.getElementById('convert-text').textContent = 'Converting…';
         document.getElementById('convert-spinner').style.display = 'inline-block';
-
         try {
-          // Use ExchangeRate-API: https://www.exchangerate-api.com/
-          // (Replace YOUR_API_KEY with a real API key or proxy as needed.)
+          // Replace YOUR_API_KEY with your real key
           const response = await fetch(`https://v6.exchangerate-api.com/v6/YOUR_API_KEY/latest/${from}`);
           const data = await response.json();
           if (data.result !== 'success') throw new Error('Failed to fetch rates');
-          let rate = data.conversion_rates[to];
+          const rate = data.conversion_rates[to];
           if (!rate) {
             showToast(`Conversion rate ${from}→${to} not available.`);
-            return;
+            document.getElementById('convert-result').textContent = '--';
+          } else {
+            const converted = (amount * rate).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 8 });
+            document.getElementById('convert-result').textContent = `${amount} ${from} = ${converted} ${to}`;
           }
-          let converted = (amount * rate).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 8 });
-          document.getElementById('convert-result').textContent = `${amount} ${from} = ${converted} ${to}`;
         } catch (err) {
           console.error('Conversion error:', err);
           showToast('Currency conversion failed.');
@@ -644,16 +595,40 @@
     });
 
     // ─────────────────────────────────────────────────────────────────────────
-    // 8) LOAD BANK ACCOUNTS: Fetch & Render
+    // 6) FETCH REFERRAL CODE & SET LINK
+    // ─────────────────────────────────────────────────────────────────────────
+    async function fetchReferralCode() {
+      const refSpan = document.getElementById('referral-code');
+      const linkInput = document.getElementById('referral-link');
+      refSpan.textContent = 'Loading…';
+
+      const { data, error } = await supabase
+        .from('affiliates')
+        .select('referral_code')
+        .eq('user_id', currentUserId)
+        .single();
+
+      if (error || !data) {
+        console.error('Failed to load affiliate data:', error);
+        refSpan.textContent = '—';
+      } else {
+        const code = data.referral_code;
+        refSpan.textContent = code;
+        linkInput.value = `${window.location.origin}/?ref=${code}`;
+      }
+    }
+
+    // ─────────────────────────────────────────────────────────────────────────
+    // 7) LOAD BANK ACCOUNTS: Fetch & Render
     // ─────────────────────────────────────────────────────────────────────────
     async function loadBankAccounts() {
       const tbody = document.getElementById('bank-accounts-body');
       tbody.innerHTML = `<tr><td colspan="5"><div class="text-center spinner-border"></div></td></tr>`;
 
-      const { data, error } = await supabaseClient
+      const { data, error } = await supabase
         .from('affiliate_bank_accounts')
         .select('*')
-        .eq('user_id', supabaseClient.auth.user()?.id)
+        .eq('user_id', currentUserId)
         .order('created_at', { ascending: false });
 
       if (error) {
@@ -685,12 +660,11 @@
     }
 
     // ─────────────────────────────────────────────────────────────────────────
-    // 9) DELETE BANK ACCOUNT
+    // 8) DELETE BANK ACCOUNT
     // ─────────────────────────────────────────────────────────────────────────
     async function deleteBankAccount(id) {
-      if (!confirm('Are you sure you want to delete this bank account?')) return;
-
-      const { error } = await supabaseClient
+      if (!confirm('Delete this bank account?')) return;
+      const { error } = await supabase
         .from('affiliate_bank_accounts')
         .delete()
         .eq('id', id);
@@ -704,16 +678,16 @@
     }
 
     // ─────────────────────────────────────────────────────────────────────────
-    // 10) LOAD CRYPTO WALLETS: Fetch & Render
+    // 9) LOAD CRYPTO WALLETS: Fetch & Render
     // ─────────────────────────────────────────────────────────────────────────
     async function loadWallets() {
       const tbody = document.getElementById('wallets-body');
       tbody.innerHTML = `<tr><td colspan="3"><div class="text-center spinner-border"></div></td></tr>`;
 
-      const { data, error } = await supabaseClient
+      const { data, error } = await supabase
         .from('affiliate_wallets')
         .select('*')
-        .eq('user_id', supabaseClient.auth.user()?.id)
+        .eq('user_id', currentUserId)
         .order('created_at', { ascending: false });
 
       if (error) {
@@ -743,12 +717,11 @@
     }
 
     // ─────────────────────────────────────────────────────────────────────────
-    // 11) DELETE WALLET
+    // 10) DELETE WALLET
     // ─────────────────────────────────────────────────────────────────────────
     async function deleteWallet(id) {
-      if (!confirm('Are you sure you want to delete this wallet?')) return;
-
-      const { error } = await supabaseClient
+      if (!confirm('Delete this wallet?')) return;
+      const { error } = await supabase
         .from('affiliate_wallets')
         .delete()
         .eq('id', id);
