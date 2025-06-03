@@ -3,9 +3,9 @@
 /**
  * 1) Validates POST payload
  * 2) Checks “users” table for existing email
- * 3) Verifies referral_code (if provided)
- * 4) (Optional) Hashes password—or just stores it raw
- * 5) Inserts new row into Supabase `users` with status="pending"
+ * 3) Verifies referral_code (if provided) by looking up affiliates → gets affiliate.user_id
+ * 4) Hashes password (optional) or stores raw
+ * 5) Inserts new row into Supabase `users` with status="pending" and referred_by=affiliate_id
  * 6) Sends a confirmation email via Brevo
  */
 
@@ -85,7 +85,6 @@ exports.handler = async (event, context) => {
       .eq('email', email)
       .single();
 
-    // Supabase can throw an error if no rows; ignore “no rows” error code
     if (checkError && checkError.code !== 'PGRST116') {
       console.error('Error checking existing user:', checkError);
       return {
@@ -107,21 +106,23 @@ exports.handler = async (event, context) => {
     };
   }
 
-  // ─── 3) If referral_code provided, verify it in affiliate_user ────────────────────
+  // ─── 3) If referral_code provided, verify it in "affiliates" ───────────────────────
+  let referredByUserId = null;
   if (referral_code) {
     try {
-      const { data: affUser, error: checkErr } = await supabase
-        .from('affiliate_user')
-        .select('id')
+      const { data: affRow, error: checkErr } = await supabase
+        .from('affiliates')
+        .select('user_id')
         .eq('referral_code', referral_code)
         .single();
 
-      if (checkErr || !affUser) {
+      if (checkErr || !affRow) {
         return {
           statusCode: 400,
           body: JSON.stringify({ error: 'Invalid referral code.' }),
         };
       }
+      referredByUserId = affRow.user_id;
     } catch (err) {
       console.error('Error validating referral code:', err);
       return {
@@ -132,9 +133,9 @@ exports.handler = async (event, context) => {
   }
 
   // ─── 4) Hash the password (optional) ────────────────────────────────────────────────
-  // If you want to store the hashed password in a "password" column, uncomment the hashing lines.
+  // Uncomment the below lines if you want to store a hashed password:
   //
-  // let pwToStore = password; 
+  // let pwToStore = password;
   // try {
   //   const hash = crypto.createHash('sha256');
   //   hash.update(password);
@@ -146,8 +147,8 @@ exports.handler = async (event, context) => {
   //     body: JSON.stringify({ error: 'Error hashing password.' }),
   //   };
   // }
-
-  // Or, if you just want to store the raw password in your existing `password` column:
+  //
+  // Or just store the raw password if that’s your preference:
   const pwToStore = password;
 
   // ─── 5) Insert new user into `users` table ─────────────────────────────────────────
@@ -159,11 +160,11 @@ exports.handler = async (event, context) => {
         {
           name,
           email,
-          password: pwToStore,            // ← store under the "password" column
+          password: pwToStore,
           phone,
           experience,
-          referral_code: referral_code || null,
-          status: 'pending',              // make sure your `users` table has a "status" column
+          referred_by: referredByUserId, // ← store affiliate’s user_id here
+          status: 'pending',             // ensure `users` table has a "status" column
         },
       ])
       .single();
