@@ -89,11 +89,11 @@
     .btn-primary:hover {
       background: linear-gradient(45deg, var(--gold-dark), var(--gold));
     }
-    .referral-display {
-      margin-top: 1.5rem;
+    .success-message {
       text-align: center;
       color: var(--gold);
       font-weight: 500;
+      margin-top: 1rem;
     }
     .text-link {
       color: var(--gold);
@@ -113,7 +113,7 @@
 </head>
 
 <body>
-  <div class="signup-card">
+  <div class="signup-card" id="card-container">
     <h2>Join Our Affiliate Program</h2>
     <form id="signup-form" novalidate>
       <div class="mb-3">
@@ -152,9 +152,11 @@
       </button>
     </form>
 
-    <!-- Will show once signup succeeds -->
-    <div id="referral-code-container" class="referral-display" style="display: none;">
-      Your referral code: <span id="referral-code"></span>
+    <div id="success-container" style="display: none;">
+      <p class="success-message">
+        Signup successful!<br />
+        Please <a href="affiliate_login.html" class="text-link">log in now</a> to view your referral code.
+      </p>
     </div>
 
     <a href="affiliate_login.html" class="text-link">Already an affiliate? Log in</a>
@@ -188,10 +190,10 @@
     const signupBtn = document.getElementById('signup-btn');
     const btnText = document.getElementById('btn-text');
     const btnSpinner = document.getElementById('btn-spinner');
-    const referralContainer = document.getElementById('referral-code-container');
-    const referralCodeEl = document.getElementById('referral-code');
+    const successContainer = document.getElementById('success-container');
+    const cardContainer = document.getElementById('card-container');
 
-    // ─── 4) HANDLE FORM VALIDATION ───────────────────────────────────────────
+    // ─── 4) HANDLE FORM VALIDATION & SIGNUP ──────────────────────────────────
     form.addEventListener('submit', async (e) => {
       e.preventDefault();
       // clear validation states
@@ -251,17 +253,18 @@
           throw insertError;
         }
 
-        // 3) Display referral code to the user
-        referralCodeEl.textContent = code;
-        referralContainer.style.display = 'block';
-
-        // 4) Optionally, you could auto‐redirect to affiliate login/dashboard after a short delay:
-        // setTimeout(() => { window.location.href = 'affiliate_login.html'; }, 3000);
+        // 3) Instead of showing code immediately, show “Signup successful” message
+        form.style.display = 'none';
+        successContainer.style.display = 'block';
 
       } catch (err) {
         console.error('Signup error:', err);
         let message = 'An error occurred. Please try again.';
-        if (err.message.includes('User already registered') || err.status === 400) {
+        if (
+          err.message.includes('User already registered') ||
+          err.status === 400 ||
+          err.code === '23505'
+        ) {
           message = 'This email is already in use.';
         }
         alert(message);
