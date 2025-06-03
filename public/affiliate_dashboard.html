@@ -30,19 +30,18 @@
       --shadow: rgba(0, 0, 0, 0.5);
     }
 
-    /* ========== Global & Layout ========== */
     html {
-      scroll-behavior: smooth;    /* ➔ enables smooth scrolling for anchor links */
+      scroll-behavior: smooth;
     }
     body {
       margin: 0;
       padding: 0;
       box-sizing: border-box;
       background: var(--bg);
-      color: var(--text);         /* ensures default text color is light */
+      color: var(--text);
       height: 100%;
       font-family: 'Poppins', sans-serif;
-      overflow-x: hidden;         /* hide any horizontal overflow */
+      overflow-x: hidden;
     }
     a {
       color: var(--gold);
@@ -58,10 +57,10 @@
       min-height: 100vh;
       padding-top: 1rem;
       border-right: 1px solid var(--gold-dark);
-      color: var(--text);       /* explicitly inherit light text */
+      color: var(--text);
     }
     .sidebar .nav-link {
-      color: var(--text) !important; 
+      color: var(--text) !important;
       margin-bottom: 0.5rem;
       border-radius: 6px;
       transition: background 0.3s ease;
@@ -77,7 +76,7 @@
       padding: 1rem;
       overflow-y: auto;
       height: 100vh;
-      color: var(--text);        /* ensure all text in main area is light */
+      color: var(--text);
     }
 
     /* ========== Cards & Sections ========== */
@@ -87,7 +86,7 @@
       border-radius: 10px;
       box-shadow: 0 2px 8px var(--shadow);
       margin-bottom: 1.5rem;
-      color: var(--text);        /* explicitly set card text to light */
+      color: var(--text);
     }
     .card-header {
       background: var(--accent);
@@ -97,18 +96,18 @@
     }
     .card-body {
       padding: 1rem;
-      color: var(--text);        /* ensure any <p>, <span>, etc. inside cards are light */
+      color: var(--text);
     }
 
     /* ========== Form Controls ========== */
     .form-control,
     .form-select {
       background: var(--accent) !important;
-      color: var(--text) !important;          
+      color: var(--text) !important;
       border: 1px solid var(--gold-dark) !important;
     }
     .form-control::placeholder {
-      color: #bbbbbb !important; /* slightly lighter placeholder to stand out on dark background */
+      color: #bbbbbb !important;
     }
     .form-control:focus,
     .form-select:focus {
@@ -141,7 +140,7 @@
       width: 100%;
       border-collapse: separate;
       border-spacing: 0 8px;
-      color: var(--text);        /* ensure table body text is light */
+      color: var(--text);
     }
     th {
       background: linear-gradient(45deg, var(--gold-dark), var(--gold));
@@ -157,7 +156,7 @@
       padding: 0.8rem;
       border-radius: 6px;
       text-align: center;
-      color: var(--text);        /* explicitly set td text to light */
+      color: var(--text);
     }
     .spinner-border {
       color: var(--gold);
@@ -514,6 +513,16 @@
         .catch(() => showToast('Copy failed'));
     }
 
+    // Generate a random 8-character alphanumeric referral code
+    function generateReferralCode() {
+      const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
+      let code = '';
+      for (let i = 0; i < 8; i++) {
+        code += chars.charAt(Math.floor(Math.random() * chars.length));
+      }
+      return code;
+    }
+
     // ON DOM CONTENT LOADED: Fetch user, then initialize all sections
     document.addEventListener('DOMContentLoaded', async () => {
       // FETCH CURRENT USER & IDs
@@ -673,30 +682,54 @@
       });
     });
 
-    // FETCH REFERRAL CODE & SET LINK
+    // ─── FETCH OR GENERATE REFERRAL CODE & SET LINK ─────────────────────────────────────
     async function fetchReferralCode() {
       const refSpan = document.getElementById('referral-code');
       const linkInput = document.getElementById('referral-link');
       refSpan.textContent = 'Loading…';
 
+      // 1) Try to load existing code
       const { data, error } = await supabase
         .from('affiliates')
         .select('referral_code')
         .eq('user_id', currentUserId)
         .single();
 
-      if (error || !data) {
+      if (error && error.code !== 'PGRST116') {
         console.error('Failed to load affiliate data:', error);
         refSpan.textContent = '—';
         linkInput.value = '';
-      } else {
-        const code = data.referral_code;
-        refSpan.textContent = code;
-        linkInput.value = `${window.location.origin}/?ref=${code}`;
+        return;
       }
+
+      let code;
+      if (!data) {
+        // 2) No existing affiliate row → generate a new code
+        code = generateReferralCode();
+        try {
+          const { data: inserted, error: insertErr } = await supabase
+            .from('affiliates')
+            .insert([{ user_id: currentUserId, referral_code: code }])
+            .select('referral_code')
+            .single();
+          if (insertErr) throw insertErr;
+          code = inserted.referral_code;
+        } catch (err) {
+          console.error('Error creating new affiliate row:', err);
+          refSpan.textContent = '—';
+          linkInput.value = '';
+          return;
+        }
+      } else {
+        code = data.referral_code;
+      }
+
+      // 3) Show code + link after ensuring we have a valid code
+      refSpan.textContent = code;
+      linkInput.value = `${window.location.origin}/apply.html?ref=${code}`;
     }
 
-    // FETCH TOTAL REFERRALS
+    // ─── FETCH TOTAL REFERRALS ──────────────────────────────────────────────────────────
     async function fetchTotalReferrals() {
       const { data, error, count } = await supabase
         .from('users')
@@ -711,7 +744,7 @@
       }
     }
 
-    // LOAD BANK ACCOUNTS: Fetch & Render
+    // ─── LOAD BANK ACCOUNTS: Fetch & Render ───────────────────────────────────────────
     async function loadBankAccounts() {
       const tbody = document.getElementById('bank-accounts-body');
       tbody.innerHTML = `<tr><td colspan="5"><div class="text-center spinner-border"></div></td></tr>`;
@@ -750,7 +783,7 @@
       });
     }
 
-    // DELETE BANK ACCOUNT
+    // ─── DELETE BANK ACCOUNT ───────────────────────────────────────────────────────────
     async function deleteBankAccount(id) {
       if (!confirm('Delete this bank account?')) return;
       const { error } = await supabase
@@ -766,7 +799,7 @@
       }
     }
 
-    // LOAD CRYPTO WALLETS: Fetch & Render
+    // ─── LOAD CRYPTO WALLETS: Fetch & Render ──────────────────────────────────────────
     async function loadWallets() {
       const tbody = document.getElementById('wallets-body');
       tbody.innerHTML = `<tr><td colspan="3"><div class="text-center spinner-border"></div></td></tr>`;
@@ -803,7 +836,7 @@
       });
     }
 
-    // DELETE WALLET
+    // ─── DELETE WALLET ─────────────────────────────────────────────────────────────────
     async function deleteWallet(id) {
       if (!confirm('Delete this wallet?')) return;
       const { error } = await supabase
