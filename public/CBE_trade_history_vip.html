@@ -5,25 +5,31 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Trade History • CBE VIP</title>
 
-  <!-- Supabase Client & Session Enforcement -->
+  <!-- ─────────────────────────────────────────────────────────────────────
+       1) SUPABASE INIT & SINGLE‐SESSION ENFORCEMENT
+       (matches sessionStorage.cbeLoggedIn, sessionStorage.cbeUserId,
+        localStorage.sessionToken, and Supabase’s users.current_session_token)
+  -->
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>
   <script>
-    // Supabase initialization
+    // 1a) Initialize Supabase (use your real URL & anon key)
     const SUPA_URL = 'https://dapwpgvnfjcfqqhrpxla.supabase.co';
     const SUPA_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImRhcHdwZ3ZuZmpjZnFxaHJweGxhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDcwNDA4ODgsImV4cCI6MjA2MjYxNjg4OH0.ICC0UsLlzJDNre7rFCeD3k6iVzo6jOJgn3PhABpEMsQ';
     const supabase = window.supabase.createClient(SUPA_URL, SUPA_KEY);
 
     (async function enforceSingleSession() {
-      const isLoggedIn = localStorage.getItem('isLoggedIn') === 'true';
+      // 1b) Check if sessionStorage.cbeLoggedIn === 'true'
+      const isLoggedIn = sessionStorage.getItem('cbeLoggedIn') === 'true';
       if (!isLoggedIn) {
         window.location.replace('login.html');
         return;
       }
 
+      // 1c) Ensure sessionStorage.cbeUserId and localStorage.sessionToken exist
       const userId = sessionStorage.getItem('cbeUserId');
       const localToken = localStorage.getItem('sessionToken');
       if (!userId || !localToken) {
-        localStorage.removeItem('isLoggedIn');
+        sessionStorage.removeItem('cbeLoggedIn');
         sessionStorage.removeItem('cbeUserId');
         localStorage.removeItem('sessionToken');
         window.location.replace('login.html');
@@ -31,6 +37,7 @@
       }
 
       try {
+        // 1d) Fetch current_session_token from Supabase users table
         const { data: userData, error: userErr } = await supabase
           .from('users')
           .select('current_session_token')
@@ -41,15 +48,18 @@
           throw new Error('User lookup failed');
         }
 
+        // 1e) Compare tokens; if mismatch, force logout
         if (userData.current_session_token !== localToken) {
-          localStorage.removeItem('isLoggedIn');
+          sessionStorage.removeItem('cbeLoggedIn');
           sessionStorage.removeItem('cbeUserId');
           localStorage.removeItem('sessionToken');
           window.location.replace('login.html');
+          return;
         }
+        // If tokens match, page continues loading normally
       } catch (err) {
         console.error('Session validation error:', err);
-        localStorage.removeItem('isLoggedIn');
+        sessionStorage.removeItem('cbeLoggedIn');
         sessionStorage.removeItem('cbeUserId');
         localStorage.removeItem('sessionToken');
         window.location.replace('login.html');
@@ -57,15 +67,19 @@
     })();
   </script>
 
-  <!-- Client-side Guard -->
+  <!-- ─────────────────────────────────────────────────────────────────────
+       2) CLIENT‐SIDE GUARD (redundant check)
+  -->
   <script>
-    if (localStorage.getItem('isLoggedIn') !== 'true') {
+    if (sessionStorage.getItem('cbeLoggedIn') !== 'true') {
       window.location.replace('login.html');
     }
   </script>
 
+  <!-- ─────────────────────────────────────────────────────────────────────
+       3) FONTS & STYLES
+  -->
   <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;500;700&display=swap" rel="stylesheet"/>
-
   <style>
     * { user-select: none; }
     html, body {
@@ -241,20 +255,18 @@
     © 2025 CBE – Chukwuemeka Bullion Exchange. All rights reserved.
   </footer>
 
-  <!-- Supabase UMD Client -->
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js/dist/umd/supabase.min.js"></script>
+  <!-- ─────────────────────────────────────────────────────────────────────
+       4) MAIN SCRIPT: Fetch & Render Trade History (runs only after session check)
+  -->
   <script>
     (async () => {
-      // Theme Management
+      // 4a) Apply saved theme (dark/light) if any
       const savedTheme = localStorage.getItem('theme') || 'dark';
       document.documentElement.setAttribute('data-theme', savedTheme);
 
-      // Supabase Initialization
-      const SUPA_URL = 'https://dapwpgvnfjcfqqhrpxla.supabase.co';
-      const SUPA_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImRhcHdwZ3ZuZmpjZnFxaHJweGxhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDcwNDA4ODgsImV4cCI6MjA2MjYxNjg4OH0.ICC0UsLlzJDNre7rFCeD3k6iVzo6jOJgn3PhABpEMsQ';
-      const supabase = window.supabase.createClient(SUPA_URL, SUPA_KEY);
+      // 4b) Supabase client is already initialized above (in enforceSingleSession)
 
-      // Fetch Trade History
+      // 4c) Fetch trade_history table, ordered by trade_date descending
       const { data, error } = await supabase
         .from('trade_history')
         .select('*')
@@ -273,7 +285,7 @@
         return;
       }
 
-      // Render History Cards
+      // 4d) Helper to render cards given an array of items
       function renderCards(filteredData) {
         container.innerHTML = '';
         filteredData.forEach(item => {
@@ -293,11 +305,10 @@
       }
       renderCards(historyData);
 
-      // Search Functionality
+      // 4e) Search and filter logic
       const searchInput = document.getElementById('searchInput');
       searchInput.addEventListener('input', filterCards);
 
-      // Date Filter Functionality
       const dateFilter = document.getElementById('dateFilter');
       dateFilter.addEventListener('change', filterCards);
 
@@ -307,7 +318,7 @@
 
         const filteredData = historyData.filter(item => {
           const monthMatch = item.month.toLowerCase().includes(searchTerm) ||
-                           (item.notes || '').toLowerCase().includes(searchTerm);
+                             (item.notes || '').toLowerCase().includes(searchTerm);
           const dateMatch = dateValue ? item.trade_date.startsWith(dateValue) : true;
           return monthMatch && dateMatch;
         });
@@ -315,7 +326,7 @@
         renderCards(filteredData);
       }
 
-      // Image Zoom Functionality
+      // 4f) Image zoom modal logic
       const modal = document.getElementById('myModal');
       const modalImg = document.getElementById('img01');
       const closeBtn = document.querySelector('.close');
@@ -329,12 +340,11 @@
         }
       });
 
-      closeBtn.addEventListener('click', () => modal.style.display = 'none');
+      closeBtn.addEventListener('click', () => (modal.style.display = 'none'));
       modal.addEventListener('click', (e) => {
         if (e.target !== modalImg) modal.style.display = 'none';
       });
     })();
   </script>
-  <script src="ui.js"></script>
 </body>
 </html>
