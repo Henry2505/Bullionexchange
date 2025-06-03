@@ -223,9 +223,8 @@
       font-size: 0.9rem;
       font-weight: 600;
       min-height: 24px;
-      /* default color is “success”, but we’ll override as needed */
       color: var(--success-color);
-      white-space: pre-wrap; /* allow multiline JSON if needed */
+      white-space: pre-wrap;
     }
 
     footer {
@@ -303,7 +302,7 @@
 
           <!-- Optional “Referral Code” input -->
           <div class="form-group optional">
-            <label for="apply-referral">Referral Code (optional)</label>
+            <label for="apply-referral">Referral Code (auto or manual)</label>
             <input type="text" id="apply-referral" placeholder="Enter code if you have one" />
           </div>
 
@@ -351,11 +350,12 @@
       const card = document.getElementById("apply-card");
       card.classList.add("visible");
 
-      // 3) If URL includes “?ref=CODE”, show a note
+      // 3) If URL includes “?ref=CODE”, auto-fill the referral field & show a note
       const refCodeURL = getReferralFromURL();
       if (refCodeURL) {
         document.getElementById("referral-note").textContent =
           "You were referred by: " + refCodeURL;
+        document.getElementById("apply-referral").value = refCodeURL;
       }
     });
 
@@ -383,7 +383,7 @@
 
     form.addEventListener("submit", async (evt) => {
       evt.preventDefault();
-      alertDiv.textContent = ""; 
+      alertDiv.textContent = "";
       alertDiv.style.color = "";
 
       const name = document.getElementById("apply-name").value.trim();
@@ -418,21 +418,23 @@
         const urlRef = getReferralFromURL();
         const referralCodeToUse = manualRef || urlRef || null;
 
-        // 2) If a code exists, validate it against Supabase affiliate_user
+        // 2) If a code exists, validate it against Supabase `affiliates`
+        let referredByUserId = null;
         if (referralCodeToUse) {
-          const { data: affiliateUser, error: checkErr } = await supabaseClient
-            .from("affiliate_user")
-            .select("id")
+          const { data: affiliateRow, error: checkErr } = await supabaseClient
+            .from("affiliates")
+            .select("user_id")
             .eq("referral_code", referralCodeToUse)
             .single();
 
-          if (checkErr || !affiliateUser) {
+          if (checkErr || !affiliateRow) {
             alertDiv.style.color = "var(--error-color)";
             alertDiv.textContent = "Invalid referral code. Please double-check.";
             submitBtn.disabled = false;
             submitBtn.textContent = "Submit Application";
             return;
           }
+          referredByUserId = affiliateRow.user_id;
         }
 
         // 3) Prepare payload for Netlify function
@@ -442,7 +444,7 @@
           password,
           phone,
           experience,
-          referral_code: referralCodeToUse, // either valid code or null
+          referral_code: referralCodeToUse,
         };
 
         // 4) Call the Netlify function endpoint (send-application.js)
