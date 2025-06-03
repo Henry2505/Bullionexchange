@@ -221,6 +221,7 @@
       font-weight: 600;
       min-height: 24px;
       color: var(--success-color);
+      word-break: break-word;
     }
 
     footer {
@@ -322,15 +323,15 @@
   </div>
 
   <script>
-    // ─── Helper: read “ref” param from URL ─────────────────────────────────────────────
+    // ─── Helper: read “ref” param from URL ───────────────────────────────────────────
     function getReferralFromURL() {
       const params = new URLSearchParams(window.location.search);
       return params.get("ref") || null;
     }
 
-    // ─── Theme & card animation ──────────────────────────────────────────────────────
+    // ─── Theme & card animation ───────────────────────────────────────────────────
     document.addEventListener("DOMContentLoaded", () => {
-      // 1) Set saved theme (dark or light)
+      // 1) Apply saved theme
       const savedTheme = localStorage.getItem("theme") || "dark";
       document.documentElement.setAttribute("data-theme", savedTheme);
       document.getElementById("theme-toggle").textContent = savedTheme === "dark" ? "🌞" : "🌜";
@@ -339,14 +340,14 @@
       const card = document.getElementById("apply-card");
       setTimeout(() => card.classList.add("visible"), 50);
 
-      // 3) If URL includes “?ref=CODE”, show a note
+      // 3) If “?ref=XYZ” is present, show “You were referred by: XYZ”
       const refCodeURL = getReferralFromURL();
       if (refCodeURL) {
         document.getElementById("referral-note").textContent = "You were referred by: " + refCodeURL;
       }
     });
 
-    // ─── Theme toggle button ──────────────────────────────────────────────────────────
+    // ─── Theme toggle button ─────────────────────────────────────────────────────
     const toggleBtn = document.getElementById("theme-toggle");
     toggleBtn.addEventListener("click", () => {
       const current = document.documentElement.getAttribute("data-theme");
@@ -356,13 +357,13 @@
       toggleBtn.textContent = next === "dark" ? "🌞" : "🌜";
     });
 
-    // ─── Form handling ─────────────────────────────────────────────────────────────────
+    // ─── Form handling ─────────────────────────────────────────────────────────────
     const form = document.getElementById("apply-form");
     const agree = document.getElementById("agree-terms");
     const submitBtn = document.getElementById("submit-btn");
     const alertDiv = document.getElementById("apply-alert");
 
-    // Enable “Submit” only when terms are checked
+    // Only enable “Submit” when the user checks the terms checkbox
     agree.addEventListener("change", () => {
       submitBtn.disabled = !agree.checked;
       submitBtn.classList.toggle("enabled", agree.checked);
@@ -373,7 +374,6 @@
       alertDiv.textContent = "";
       alertDiv.style.color = "";
 
-      // Read all form values
       const name = document.getElementById("apply-name").value.trim();
       const email = document.getElementById("apply-email").value.trim().toLowerCase();
       const password = document.getElementById("apply-password").value;
@@ -381,7 +381,7 @@
       const experience = document.getElementById("apply-message").value.trim();
       const manualRef = document.getElementById("apply-referral").value.trim();
 
-      // ─── Basic front-end validation ─────────────────────────────────────────
+      // ─── Basic front-end validation ───────────────────────────────────────
       if (!name || !email || !password || !phone || !experience) {
         alertDiv.style.color = "var(--error-color)";
         alertDiv.textContent = "Please complete all fields.";
@@ -403,7 +403,7 @@
       submitBtn.textContent = "Submitting…";
 
       try {
-        // 1) Decide which referral code to use: manual field > URL param > null
+        // 1) Decide which referral code to use
         const urlRef = getReferralFromURL();
         const referralCodeToUse = manualRef || urlRef || null;
 
@@ -432,16 +432,25 @@
         }
 
         if (!fnResponse.ok) {
-          // If server returned an error status, show it
+          // ─── If the server returned a non-200, show the exact JSON error (if any)
           console.error("Function returned error:", fnResponse.status, fnResult);
           alertDiv.style.color = "var(--error-color)";
-          alertDiv.textContent = fnResult?.error || "Server encountered an error.";
+
+          // If fnResult.error exists, show it. Otherwise, show entire JSON or generic.
+          if (fnResult && fnResult.error) {
+            alertDiv.textContent = fnResult.error;
+          } else if (fnResult) {
+            alertDiv.textContent = JSON.stringify(fnResult);
+          } else {
+            alertDiv.textContent = "Server encountered an error.";
+          }
+
           submitBtn.disabled = false;
           submitBtn.textContent = "Submit Application";
           return;
         }
 
-        // 4) Success → show confirmation and reset form
+        // ─── Success path
         alertDiv.style.color = "var(--success-color)";
         alertDiv.textContent = fnResult.message || "Application submitted successfully.";
         form.reset();
