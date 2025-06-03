@@ -1,8 +1,8 @@
 <!DOCTYPE html>
 <html lang="en" data-theme="dark">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Admin — CBE Dashboard</title>
 
   <!-- 1) AUTH GUARD (runs before any UI) -->
@@ -13,177 +13,446 @@
     }
   </script>
 
-  <!-- 2) Styles & Fonts -->
-  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700&display=swap" rel="stylesheet">
-  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-  <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css" rel="stylesheet">
+  <!-- 2) GOOGLE FONTS & BOOTSTRAP CSS -->
+  <link
+    href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700&display=swap"
+    rel="stylesheet"
+  />
+  <link
+    href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css"
+    rel="stylesheet"
+  />
+  <link
+    href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css"
+    rel="stylesheet"
+  />
 
-  <!-- 3) Chart.js & Sortable.js -->
+  <!-- 3) CHART.JS & SORTABLE.JS -->
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.0/Sortable.min.js"></script>
 
   <style>
-    /* RESET & THEME VARIABLES */
-    * { margin:0; padding:0; box-sizing:border-box; }
-    html { scroll-behavior:smooth; }
+    /* ================================
+       RESET, THEME VARIABLES & GLOBALS
+    ================================= */
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+    html {
+      scroll-behavior: smooth;
+    }
     body {
-      font-family:'Poppins',sans-serif;
-      background:var(--bg); color:var(--text);
-      overflow-x:hidden;
+      font-family: 'Poppins', sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      overflow-x: hidden;
+      min-height: 100vh;
     }
     :root {
-      --bg:#000; --text:#fff;
-      --gold:#ffd700; --gold-dark:#cca300;
-      --overlay:rgba(0,0,0,0.15);
-      --glass-bg:rgba(255,255,255,0.05);
+      --bg: #000;
+      --text: #fff;
+      --gold: #ffd700;
+      --gold-dark: #cca300;
+      --overlay: rgba(0, 0, 0, 0.15);
+      --glass-bg: rgba(255, 255, 255, 0.05);
+      --sidebar-width: 250px;
+      --transition-fast: 0.2s ease-in-out;
     }
-    [data-theme="light"] {
-      --bg:#f5f5f5; --text:#333;
-      --gold:#cca300; --gold-dark:#b58900;
-      --overlay:rgba(255,255,255,0.15);
-      --glass-bg:rgba(0,0,0,0.05);
+    [data-theme='light'] {
+      --bg: #f5f5f5;
+      --text: #333;
+      --gold: #cca300;
+      --gold-dark: #b58900;
+      --overlay: rgba(255, 255, 255, 0.15);
+      --glass-bg: rgba(0, 0, 0, 0.05);
     }
-    a { color:var(--gold); text-decoration:none; }
-    img { max-width:100%; display:block; }
+    a {
+      color: var(--gold);
+      text-decoration: none;
+    }
+    a:hover {
+      color: var(--gold-dark);
+      text-decoration: none;
+    }
+    img {
+      max-width: 100%;
+      display: block;
+    }
+    /* Glass effect utility */
+    .glass {
+      background: var(--glass-bg);
+      backdrop-filter: blur(10px);
+    }
+    .glass-strong {
+      background: rgba(0, 0, 0, 0.7);
+      backdrop-filter: blur(12px);
+    }
     .overlay {
-      position:fixed; top:0; left:0;
-      width:100%; height:100%;
-      background:var(--overlay); z-index:-1;
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: var(--overlay);
+      z-index: 1;
     }
-    .glass { backdrop-filter:blur(10px); }
 
-    /* HEADER */
+    /* ================================
+       LAYOUT: SIDEBAR & HEADER
+    ================================= */
+    .sidebar {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: var(--sidebar-width);
+      height: 100%;
+      background: var(--glass-bg);
+      backdrop-filter: blur(12px);
+      border-right: 1px solid var(--gold);
+      padding: 1.5rem 1rem;
+      transition: transform var(--transition-fast);
+      z-index: 10;
+    }
+    .sidebar.collapsed {
+      transform: translateX(-100%);
+    }
+    .sidebar .logo {
+      text-align: center;
+      margin-bottom: 2rem;
+      cursor: pointer;
+    }
+    .sidebar .logo img {
+      height: 45px;
+    }
+    .sidebar nav ul {
+      list-style: none;
+      padding: 0;
+      margin: 1rem 0;
+    }
+    .sidebar nav li {
+      margin: 1rem 0;
+    }
+    .sidebar nav li a {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      font-weight: 500;
+      padding: 0.5rem 0.25rem;
+      color: var(--text);
+      border-radius: 4px;
+      transition: background var(--transition-fast);
+    }
+    .sidebar nav li a:hover,
+    .sidebar nav li a.active {
+      background: rgba(255, 215, 0, 0.1);
+      color: var(--gold);
+    }
+    /* Hide scrollbars in sidebar */
+    .sidebar nav {
+      overflow-y: auto;
+      max-height: calc(100% - 150px);
+    }
+    /* Mobile: fade overlay when sidebar is open */
+    .sidebar-open .overlay {
+      pointer-events: auto;
+      opacity: 1;
+    }
+    .overlay {
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity var(--transition-fast);
+    }
+
+    /* Header (top bar) */
     header.admin-header {
-      display:flex; justify-content:space-between; align-items:center;
-      padding:1rem 2rem; background:rgba(0,0,0,0.6);
-      border-bottom:1px solid var(--gold); position:relative; z-index:10;
+      position: sticky;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 60px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 1.5rem;
+      background: var(--glass-bg);
+      backdrop-filter: blur(10px);
+      border-bottom: 1px solid var(--gold);
+      z-index: 5;
     }
-    #menu-toggle {
-      background:none; border:none; cursor:pointer;
-      display:flex; flex-direction:column; gap:5px;
-      width:40px; height:40px;
+    #sidebar-toggle {
+      background: none;
+      border: none;
+      font-size: 1.5rem;
+      color: var(--text);
+      cursor: pointer;
+      transition: transform var(--transition-fast);
     }
-    #menu-toggle span {
-      width:30px; height:3px; background:var(--gold);
-      transition:all .3s ease;
+    #sidebar-toggle.collapsed {
+      transform: rotate(180deg);
     }
-    .logo { cursor:pointer; }
-    .logo img { height:40px; }
+    /* Header right: search, notifications, user-menu, theme-toggle */
+    .header-tools {
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+    }
+    .header-tools .search-box {
+      position: relative;
+      display: flex;
+      align-items: center;
+    }
+    .header-tools .search-box input {
+      padding: 0.35rem 0.75rem 0.35rem 2rem;
+      border: 1px solid var(--gold);
+      border-radius: 4px;
+      background: transparent;
+      color: var(--text);
+      width: 180px;
+      transition: width var(--transition-fast);
+    }
+    .header-tools .search-box input::placeholder {
+      color: rgba(255, 215, 0, 0.6);
+    }
+    .header-tools .search-box input:focus {
+      width: 230px;
+      outline: none;
+      box-shadow: 0 0 5px var(--gold);
+    }
+    .header-tools .search-box .bi-search {
+      position: absolute;
+      left: 8px;
+      color: var(--gold);
+    }
+    .header-tools .icon-btn {
+      position: relative;
+      background: none;
+      border: none;
+      color: var(--text);
+      font-size: 1.25rem;
+      cursor: pointer;
+    }
+    .header-tools .icon-btn .badge {
+      position: absolute;
+      top: -4px;
+      right: -4px;
+      background: #dc3545;
+      color: #fff;
+      font-size: 0.6rem;
+      border-radius: 50%;
+      padding: 2px 5px;
+    }
+    .header-tools .dropdown-menu {
+      background: var(--glass-bg);
+      backdrop-filter: blur(12px);
+      border: 1px solid var(--gold);
+    }
+    .header-tools .dropdown-item {
+      color: var(--text);
+    }
+    .header-tools .dropdown-item:hover {
+      background: rgba(255, 215, 0, 0.1);
+      color: var(--gold);
+    }
 
-    /* NAV PANEL */
-    #nav-panel {
-      position:absolute; top:100%; right:2rem;
-      width:240px; background:rgba(0,0,0,0.9);
-      border:1px solid var(--gold); border-radius:0 0 4px 4px;
-      padding:.75rem 1rem;
-      transform:translateY(-20px); opacity:0;
-      transition:transform .3s,opacity .3s;
-      pointer-events:none;
+    /* ================================
+       MAIN CONTENT AREA (push right when sidebar open)
+    ================================= */
+    main.admin-content {
+      margin-left: var(--sidebar-width);
+      padding: 1.5rem;
+      transition: margin-left var(--transition-fast);
     }
-    #nav-panel.show {
-      transform:translateY(0); opacity:1;
-      pointer-events:auto;
+    .collapsed + main.admin-content {
+      margin-left: 0;
     }
-    #nav-panel ul { list-style:none; margin:0; padding:0; }
-    #nav-panel li { margin:.5rem 0; }
-    #nav-panel a {
-      color:#fff; font-weight:500; display:flex; align-items:center; gap:.5rem;
+    @media (max-width: 992px) {
+      .sidebar {
+        transform: translateX(-100%);
+      }
+      .sidebar.collapsed {
+        transform: translateX(0);
+      }
+      main.admin-content {
+        margin-left: 0;
+      }
     }
-    #nav-panel a:hover { color:var(--gold); }
 
-    /* DRAG-AND-DROP STATS CARDS */
+    /* ================================
+       DASHBOARD PANELS & COMPONENTS
+    ================================= */
+    /* STAT CARDS (DRAG & DROP) */
     .stats-row {
-      display:grid;
-      grid-template-columns:repeat(auto-fill,minmax(200px,1fr));
-      gap:1rem; margin:2rem 0;
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+      gap: 1rem;
+      margin: 1.5rem 0;
     }
     .card-stat {
-      background:var(--glass-bg);
-      border:1px solid var(--gold);
-      border-radius:8px;
-      padding:1rem;
-      text-align:center;
-      color:#fff;
-      backdrop-filter:blur(8px);
-      cursor:grab;
-      user-select:none;
+      background: var(--glass-bg);
+      border: 1px solid var(--gold);
+      border-radius: 8px;
+      padding: 1rem;
+      text-align: center;
+      color: var(--text);
+      backdrop-filter: blur(8px);
+      cursor: grab;
+      user-select: none;
+      transition: transform var(--transition-fast),
+        box-shadow var(--transition-fast);
     }
-    .card-stat:active { cursor:grabbing; }
-    .card-stat h5 { color:var(--gold); margin-bottom:.5rem; }
-    .card-stat h2 { font-size:2rem; }
+    .card-stat:active {
+      cursor: grabbing;
+      transform: scale(1.02);
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
+    }
+    .card-stat h5 {
+      color: var(--gold);
+      font-weight: 600;
+      margin-bottom: 0.5rem;
+      font-size: 0.95rem;
+    }
+    .card-stat h2 {
+      font-size: 1.75rem;
+      font-weight: 700;
+    }
 
     /* CHARTS LAYOUT */
     .charts {
-      display:grid;
-      grid-template-columns:repeat(auto-fit,minmax(280px,1fr));
-      gap:1rem; margin-bottom:2rem;
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+      gap: 1rem;
+      margin-bottom: 2rem;
     }
-
-    /* HEADER-RIGHT */
-    #header-right { display:flex; align-items:center; gap:1rem; }
-    #current-datetime { color:#fff; }
-    #theme-toggle {
-      background:none; border:none;
-      font-size:1.25rem; cursor:pointer;
-      color:var(--text);
+    .chart-container {
+      background: var(--glass-bg);
+      border: 1px solid var(--gold);
+      border-radius: 8px;
+      padding: 1rem;
+      backdrop-filter: blur(8px);
+      position: relative;
+    }
+    .chart-container h4 {
+      color: var(--gold);
+      font-weight: 600;
+      margin-bottom: 0.75rem;
+      font-size: 1rem;
+      text-align: center;
+    }
+    .chart-container canvas {
+      width: 100% !important;
+      height: auto !important;
     }
 
     /* ACTIVITY LOGS TABLE */
     .activity-card {
-      background:var(--glass-bg);
-      border:1px solid var(--gold);
-      border-radius:8px;
-      padding:1rem;
-      margin-bottom:2rem;
-      backdrop-filter:blur(8px);
+      background: var(--glass-bg);
+      border: 1px solid var(--gold);
+      border-radius: 8px;
+      padding: 1rem;
+      backdrop-filter: blur(8px);
+      margin-bottom: 2rem;
     }
     .activity-card h3 {
-      color:var(--gold);
-      margin-bottom:1rem;
+      color: var(--gold);
+      margin-bottom: 1rem;
+      font-weight: 600;
+      font-size: 1.1rem;
     }
     .activity-card table {
-      width:100%;
-      border-collapse:collapse;
-      color:#fff;
+      width: 100%;
+      border-collapse: collapse;
+      color: var(--text);
+      table-layout: fixed;
     }
-    .activity-card th, .activity-card td {
-      padding:0.5rem;
-      text-align:left;
-      border-bottom:1px solid rgba(255,215,0,0.2);
+    .activity-card th,
+    .activity-card td {
+      padding: 0.5rem;
+      text-align: left;
+      border-bottom: 1px solid rgba(255, 215, 0, 0.2);
+      font-size: 0.85rem;
+      word-wrap: break-word;
     }
     .activity-card th {
-      background:rgba(0,0,0,0.3);
-      color:var(--gold);
+      background: rgba(0, 0, 0, 0.3);
+      color: var(--gold);
     }
     .activity-card .btn-export {
-      background:linear-gradient(45deg, var(--gold), var(--gold-dark));
-      color:#000;
-      border:none;
-      padding:0.5rem 1rem;
-      border-radius:4px;
-      font-weight:500;
+      background: linear-gradient(
+        45deg,
+        var(--gold),
+        var(--gold-dark)
+      );
+      color: #000;
+      border: none;
+      padding: 0.45rem 1rem;
+      border-radius: 4px;
+      font-weight: 500;
+      font-size: 0.9rem;
+      transition: opacity var(--transition-fast);
+    }
+    .activity-card .btn-export:hover {
+      opacity: 0.9;
+    }
+
+    /* QUICK ACTIONS */
+    .quick-actions {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 1rem;
+      margin: 1.5rem 0;
+    }
+    .quick-actions .btn-quick {
+      flex: 1 1 140px;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      justify-content: center;
+      background: var(--gold);
+      color: #000;
+      border: none;
+      border-radius: 6px;
+      padding: 0.6rem;
+      font-weight: 600;
+      font-size: 0.9rem;
+      transition: background var(--transition-fast);
+    }
+    .quick-actions .btn-quick:hover {
+      background: var(--gold-dark);
+      color: #fff;
+    }
+
+    /* RESPONSIVE TWEAKS */
+    @media (max-width: 576px) {
+      .header-tools .search-box input {
+        width: 120px;
+      }
+      .charts {
+        grid-template-columns: 1fr;
+      }
+      .stats-row {
+        grid-template-columns: 1fr 1fr;
+      }
     }
   </style>
 </head>
 <body>
-
+  <!-- Overlay for sidebar on mobile -->
   <div class="overlay"></div>
 
-  <!-- HEADER -->
-  <header class="admin-header glass">
-    <button id="menu-toggle" aria-label="Toggle menu">
-      <span></span><span></span><span></span>
-    </button>
-    <div class="logo" id="logo">
-      <img src="CBE_logo.PNG" alt="CBE Logo">
+  <!-- ====================
+       SIDEBAR NAVIGATION
+  ==================== -->
+  <aside class="sidebar glass-strong collapsed" id="sidebar">
+    <!-- Logo / Dashboard Home -->
+    <div class="logo" id="sidebar-logo">
+      <img src="CBE_logo.PNG" alt="CBE Logo" />
     </div>
-    <div id="header-right">
-      <small id="current-datetime"></small>
-      <button id="theme-toggle" aria-label="Toggle theme">🌞</button>
-    </div>
-    <nav id="nav-panel" aria-label="Admin navigation">
+    <!-- Main Navigation -->
+    <nav>
       <ul>
-        <li><a href="admin-dashboard.html"><i class="bi-speedometer2"></i> Dashboard</a></li>
+        <li><a href="admin-dashboard.html" class="active"><i class="bi-speedometer2"></i> Dashboard</a></li>
         <li><a href="admin-capital-applications.html"><i class="bi-folder2-open"></i> Capital Applications</a></li>
         <li><a href="admin-messages.html"><i class="bi-chat-dots-fill"></i> Messages</a></li>
         <li><a href="admin-settings-payments.html"><i class="bi-credit-card"></i> Settings & Payments</a></li>
@@ -195,77 +464,246 @@
         <li><a href="logout.html"><i class="bi-box-arrow-right"></i> Logout</a></li>
       </ul>
     </nav>
+    <!-- Version / Footer -->
+    <div class="mt-auto text-center small" style="color: rgba(255, 255, 255, 0.6);">
+      CBE Admin v1.0
+    </div>
+  </aside>
+
+  <!-- ====================
+       HEADER (Top Bar)
+  ==================== -->
+  <header class="admin-header glass">
+    <button
+      id="sidebar-toggle"
+      class="collapsed"
+      aria-label="Toggle sidebar"
+    >
+      <i class="bi-list"></i>
+    </button>
+
+    <div class="header-tools">
+      <!-- SEARCH BOX -->
+      <div class="search-box">
+        <i class="bi-search"></i>
+        <input
+          type="text"
+          id="global-search"
+          placeholder="Search..."
+          aria-label="Search"
+        />
+      </div>
+
+      <!-- NOTIFICATIONS DROPDOWN -->
+      <div class="dropdown">
+        <button
+          class="icon-btn"
+          id="notifDropdown"
+          data-bs-toggle="dropdown"
+          aria-expanded="false"
+          aria-label="Notifications"
+        >
+          <i class="bi-bell"></i>
+          <span class="badge" id="notif-badge">3</span>
+        </button>
+        <ul
+          class="dropdown-menu dropdown-menu-end glass"
+          aria-labelledby="notifDropdown"
+        >
+          <li class="dropdown-header text-gold">Notifications</li>
+          <li>
+            <a class="dropdown-item" href="#">
+              <i class="bi-chat-left-text me-2"></i> New message from John
+              <small class="d-block text-muted">2m ago</small>
+            </a>
+          </li>
+          <li>
+            <a class="dropdown-item" href="#">
+              <i class="bi-graph-up me-2"></i> Weekly Insights ready
+              <small class="d-block text-muted">1h ago</small>
+            </a>
+          </li>
+          <li>
+            <a class="dropdown-item" href="#">
+              <i class="bi-person-plus me-2"></i> 5 new users joined
+              <small class="d-block text-muted">3h ago</small>
+            </a>
+          </li>
+          <li><hr class="dropdown-divider" /></li>
+          <li><a class="dropdown-item text-center" href="#">View all</a></li>
+        </ul>
+      </div>
+
+      <!-- USER PROFILE MENU -->
+      <div class="dropdown">
+        <button
+          class="icon-btn"
+          id="userDropdown"
+          data-bs-toggle="dropdown"
+          aria-expanded="false"
+          aria-label="User menu"
+        >
+          <img
+            src="https://via.placeholder.com/30"
+            alt="Admin Avatar"
+            class="rounded-circle"
+          />
+        </button>
+        <ul
+          class="dropdown-menu dropdown-menu-end glass"
+          aria-labelledby="userDropdown"
+        >
+          <li>
+            <h6 class="dropdown-header text-gold">Admin Name</h6>
+          </li>
+          <li><a class="dropdown-item" href="#"><i class="bi-person me-2"></i> Profile</a></li>
+          <li><a class="dropdown-item" href="#"><i class="bi-gear me-2"></i> Settings</a></li>
+          <li><hr class="dropdown-divider" /></li>
+          <li><a class="dropdown-item" href="logout.html"><i class="bi-box-arrow-right me-2"></i> Logout</a></li>
+        </ul>
+      </div>
+
+      <!-- THEME TOGGLE -->
+      <button id="theme-toggle" aria-label="Toggle theme" class="icon-btn">
+        🌞
+      </button>
+    </div>
   </header>
 
-  <!-- MAIN CONTENT -->
-  <main class="container py-4">
-    <!-- Drag-and-Drop Stat Cards -->
+  <!-- ====================
+       MAIN CONTENT
+  ==================== -->
+  <main class="admin-content">
+    <!-- QUICK ACTIONS (e.g., Add User, Send Broadcast, etc.) -->
+    <div class="quick-actions">
+      <button class="btn-quick">
+        <i class="bi-plus-circle"></i> Add New User
+      </button>
+      <button class="btn-quick">
+        <i class="bi-currency-bitcoin"></i> Fund Account
+      </button>
+      <button class="btn-quick">
+        <i class="bi-envelope"></i> Send Broadcast
+      </button>
+      <button class="btn-quick">
+        <i class="bi-graph-up"></i> Generate Report
+      </button>
+    </div>
+
+    <!-- DRAG-AND-DROP STAT CARDS -->
     <div class="stats-row" id="stats-container">
       <div class="card-stat" data-key="users">
-        <h5>Total Users</h5><h2 id="stat-users">0</h2>
+        <h5>Total Users</h5>
+        <h2 id="stat-users">0</h2>
       </div>
       <div class="card-stat" data-key="payments">
-        <h5>Pending Payments</h5><h2 id="stats-payments">0</h2>
+        <h5>Pending Payments</h5>
+        <h2 id="stats-payments">0</h2>
       </div>
       <div class="card-stat" data-key="trades">
-        <h5>Trades This Month</h5><h2 id="stats-trades">0</h2>
+        <h5>Trades This Month</h5>
+        <h2 id="stats-trades">0</h2>
       </div>
       <div class="card-stat" data-key="signals">
-        <h5>Signals Published</h5><h2 id="stats-signals">0</h2>
+        <h5>Signals Published</h5>
+        <h2 id="stats-signals">0</h2>
       </div>
       <div class="card-stat" data-key="winrate">
-        <h5>Win Rate (%)</h5><h2 id="stats-winrate">0</h2>
+        <h5>Win Rate (%)</h5>
+        <h2 id="stats-winrate">0</h2>
       </div>
     </div>
 
-    <!-- Three Charts: P&L, Win-Rate, User Status -->
+    <!-- CHARTS SECTION -->
     <div class="charts">
-      <canvas id="chart-pnl" height="200"></canvas>
-      <canvas id="chart-winrate" height="200"></canvas>
-      <canvas id="chart-status" height="200"></canvas>
+      <div class="chart-container">
+        <h4>Weekly P&L (Pips)</h4>
+        <canvas id="chart-pnl"></canvas>
+      </div>
+      <div class="chart-container">
+        <h4>Weekly Win Rate (%)</h4>
+        <canvas id="chart-winrate"></canvas>
+      </div>
+      <div class="chart-container">
+        <h4>User Status Distribution</h4>
+        <canvas id="chart-status"></canvas>
+      </div>
     </div>
 
-    <!-- Activity Logs Section -->
+    <!-- ACTIVITY LOGS SECTION -->
     <section class="activity-card">
       <div class="d-flex justify-content-between align-items-center mb-3">
-        <h3>Activity Logs</h3>
-        <button id="export-logs" class="btn-export">Export Logs</button>
+        <h3>Recent Activity Logs</h3>
+        <button id="export-logs" class="btn-export">
+          <i class="bi-download"></i> Export Logs
+        </button>
       </div>
-      <table>
-        <thead>
-          <tr>
-            <th>User ID</th>
-            <th>Action</th>
-            <th>Timestamp</th>
-            <th>IP Address</th>
-            <th>City</th>
-            <th>Country</th>
-            <th>Device</th>
-          </tr>
-        </thead>
-        <tbody id="activity-body"></tbody>
-      </table>
+      <div class="table-responsive">
+        <table class="table table-borderless table-hover">
+          <thead>
+            <tr>
+              <th>User ID</th>
+              <th>Action</th>
+              <th>Timestamp</th>
+              <th>IP Address</th>
+              <th>City</th>
+              <th>Country</th>
+              <th>Device</th>
+            </tr>
+          </thead>
+          <tbody id="activity-body"></tbody>
+        </table>
+      </div>
     </section>
   </main>
 
-  <!-- SCRIPTS -->
+  <!-- ====================
+       SCRIPTS: BOOTSTRAP, SUPABASE, DASHBOARD LOGIC
+  ==================== -->
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
   <script>
-    // Initialize Supabase with anon key
+    // 1) INITIALIZE SUPABASE
     const SUPA_URL      = 'https://dapwpgvnfjcfqqhrpxla.supabase.co';
     const SUPA_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImRhcHdwZ3ZuZmpjZnFxaHJweGxhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDcwNDA4ODgsImV4cCI6MjA2MjYxNjg4OH0.ICC0UsLlzJDNre7rFCeD3k6iVzo6jOJgn3PhABpEMsQ';
     const supabase      = window.supabase.createClient(SUPA_URL, SUPA_ANON_KEY);
 
     document.addEventListener('DOMContentLoaded', () => {
-      // Logo click → dashboard
-      document.getElementById('logo').onclick = () => {
+      // 2) SIDEBAR TOGGLE (Responsive)
+      const sidebar = document.getElementById('sidebar');
+      const sidebarToggle = document.getElementById('sidebar-toggle');
+      const overlay = document.querySelector('.overlay');
+
+      function closeSidebar() {
+        sidebar.classList.add('collapsed');
+        document.body.classList.remove('sidebar-open');
+        sidebarToggle.classList.add('collapsed');
+        overlay.style.opacity = 0;
+      }
+      function openSidebar() {
+        sidebar.classList.remove('collapsed');
+        document.body.classList.add('sidebar-open');
+        sidebarToggle.classList.remove('collapsed');
+        overlay.style.opacity = 1;
+      }
+
+      sidebarToggle.addEventListener('click', () => {
+        if (sidebar.classList.contains('collapsed')) {
+          openSidebar();
+        } else {
+          closeSidebar();
+        }
+      });
+      overlay.addEventListener('click', closeSidebar);
+      // Clicking the logo always resets to Dashboard and closes sidebar on mobile
+      document.getElementById('sidebar-logo').onclick = () => {
         window.location.href = 'admin-dashboard.html';
+        if (window.innerWidth < 992) closeSidebar();
       };
 
-      // Theme toggle
+      // 3) THEME TOGGLE
       const themeBtn = document.getElementById('theme-toggle');
-      const setTheme = t => {
+      const setTheme = (t) => {
         document.documentElement.setAttribute('data-theme', t);
         localStorage.setItem('theme', t);
         themeBtn.textContent = t === 'dark' ? '🌞' : '🌜';
@@ -275,101 +713,161 @@
       });
       setTheme(localStorage.getItem('theme') || 'dark');
 
-      // Live clock
-      const clk = () => {
-        document.getElementById('current-datetime').textContent = new Date().toLocaleString();
-      };
-      clk(); setInterval(clk, 60000);
+      // 4) LIVE CLOCK (top right corner)
+      const clkEl = document.createElement('small');
+      clkEl.id = 'current-datetime';
+      clkEl.style.color = 'var(--text)';
+      clkEl.style.marginLeft = '0.75rem';
+      document.getElementById('sidebar-toggle').insertAdjacentElement('afterend', clkEl);
 
-      // Nav toggle
-      const menuToggle = document.getElementById('menu-toggle');
-      const navPanel   = document.getElementById('nav-panel');
-      menuToggle.addEventListener('click', () => {
-        const showing = navPanel.classList.toggle('show');
-        menuToggle.setAttribute('aria-expanded', showing);
-      });
+      function updateClock() {
+        clkEl.textContent = new Date().toLocaleString();
+      }
+      updateClock();
+      setInterval(updateClock, 60000);
 
-      // Fetch stats & render charts
+      // 5) FETCH STATS & RENDER CHARTS
       (async () => {
         try {
+          // Parallel data fetches
           const [
             { count: usersCount },
             { data: payments },
             { data: trades },
             { data: signals },
-            { data: insights }
+            { data: insights },
+            { data: allUsers }
           ] = await Promise.all([
             supabase.from('users').select('id', { head: true, count: 'exact' }),
-            supabase.from('payments').select('id').eq('status','Pending'),
+            supabase.from('payments').select('id').eq('status', 'Pending'),
             supabase.from('trade_history').select('id'),
             supabase.from('signals').select('id'),
-            supabase.from('trade_insights').select('week_ending,pips').order('week_ending',{ ascending: false }),
+            supabase
+              .from('trade_insights')
+              .select('week_ending,pips')
+              .order('week_ending', { ascending: false })
+              .limit(12), // last 12 weeks
+            supabase.from('users').select('status')
           ]);
 
-          // Update cards
-          document.getElementById('stat-users').textContent    = usersCount;
+          // Update stat cards
+          document.getElementById('stat-users').textContent = usersCount;
           document.getElementById('stats-payments').textContent = payments.length;
-          document.getElementById('stats-trades').textContent   = trades.length;
-          document.getElementById('stats-signals').textContent  = signals.length;
-          const wins = insights.filter(x => x.pips > 0).length;
-          const rate = insights.length ? Math.round(wins / insights.length * 100) : 0;
+          document.getElementById('stats-trades').textContent = trades.length;
+          document.getElementById('stats-signals').textContent = signals.length;
+          const wins = insights.filter((i) => i.pips > 0).length;
+          const rate = insights.length ? Math.round((wins / insights.length) * 100) : 0;
           document.getElementById('stats-winrate').textContent = rate;
 
-          // Make cards draggable
+          // Make stat cards draggable
           new Sortable(document.getElementById('stats-container'), {
-            animation:150,
-            ghostClass:'sortable-ghost',
-            dragClass:'sortable-drag',
-            handle:'.card-stat'
+            animation: 150,
+            ghostClass: 'sortable-ghost',
+            dragClass: 'sortable-drag',
+            handle: '.card-stat'
           });
 
+          // Prepare labels & data for charts
+          const labels = insights
+            .map((i) => new Date(i.week_ending).toLocaleDateString())
+            .reverse();
+          const pipsData = insights.map((i) => i.pips).reverse();
           // P&L Line Chart
           new Chart(document.getElementById('chart-pnl'), {
-            type:'line',
-            data:{
-              labels: insights.map(i => new Date(i.week_ending).toLocaleDateString()),
-              datasets:[{ data: insights.map(i => i.pips), tension:0.4, borderColor:'#ffd700', backgroundColor:'rgba(255,215,0,0.2)' }]
+            type: 'line',
+            data: {
+              labels,
+              datasets: [
+                {
+                  label: 'Pips',
+                  data: pipsData,
+                  tension: 0.3,
+                  borderColor: varToRgb('--gold'),
+                  backgroundColor: hexToRgba(varToRgb('--gold'), 0.2)
+                }
+              ]
             },
-            options:{ responsive:true, plugins:{ legend:{ display:false } } }
+            options: {
+              responsive: true,
+              scales: {
+                x: { ticks: { color: varToRgb('--text') } },
+                y: { ticks: { color: varToRgb('--text') } }
+              },
+              plugins: {
+                legend: { display: false }
+              }
+            }
           });
-
           // Win-Rate Bar Chart
           new Chart(document.getElementById('chart-winrate'), {
-            type:'bar',
-            data:{
-              labels: insights.map(i => new Date(i.week_ending).toLocaleDateString()),
-              datasets:[{ data: insights.map(i => i.pips > 0 ? 100 : 0) }]
+            type: 'bar',
+            data: {
+              labels,
+              datasets: [
+                {
+                  label: 'Win (100%) or Loss (0%)',
+                  data: insights.map((i) => (i.pips > 0 ? 100 : 0)).reverse(),
+                  backgroundColor: insights.map((i) =>
+                    i.pips > 0
+                      ? hexToRgba(varToRgb('--gold'), 0.7)
+                      : hexToRgba('#dc3545', 0.7)
+                  )
+                }
+              ]
             },
-            options:{ responsive:true, plugins:{ legend:{ display:false } } }
+            options: {
+              responsive: true,
+              scales: {
+                x: { ticks: { color: varToRgb('--text') } },
+                y: {
+                  ticks: { color: varToRgb('--text') },
+                  beginAtZero: true,
+                  max: 100
+                }
+              },
+              plugins: { legend: { display: false } }
+            }
           });
-
           // User-Status Doughnut Chart
-          const { data: allUsers } = await supabase.from('users').select('status');
-          const statusCounts = allUsers.reduce((acc,u) => (acc[u.status] = (acc[u.status]||0)+1, acc), {});
+          const statusCounts = allUsers.reduce((acc, u) => {
+            acc[u.status] = (acc[u.status] || 0) + 1;
+            return acc;
+          }, {});
           new Chart(document.getElementById('chart-status'), {
-            type:'doughnut',
-            data:{
-              labels:['Active','Expired','Pending','Deleted'],
-              datasets:[{ data:['Active','Expired','Pending','Deleted'].map(l => statusCounts[l]||0) }]
+            type: 'doughnut',
+            data: {
+              labels: ['Active', 'Expired', 'Pending', 'Deleted'],
+              datasets: [
+                {
+                  data: ['Active', 'Expired', 'Pending', 'Deleted'].map(
+                    (label) => statusCounts[label] || 0
+                  ),
+                  backgroundColor: [
+                    hexToRgba(varToRgb('--gold'), 0.7),
+                    hexToRgba('#dc3545', 0.7),
+                    hexToRgba('#ffc107', 0.7),
+                    hexToRgba('#6c757d', 0.7)
+                  ]
+                }
+              ]
             },
-            options:{ responsive:true, plugins:{ legend:{ position:'bottom' } } }
+            options: {
+              responsive: true,
+              plugins: {
+                legend: {
+                  position: 'bottom',
+                  labels: { color: varToRgb('--text') }
+                }
+              }
+            }
           });
-
-        } catch(err) {
+        } catch (err) {
           console.error('Error loading dashboard:', err);
-          const toast = document.createElement('div');
-          toast.className = 'toast align-items-center text-white bg-danger border-0 position-fixed top-0 end-0 m-3';
-          toast.innerHTML = `
-            <div class="d-flex">
-              <div class="toast-body">Error loading dashboard</div>
-              <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast"></button>
-            </div>`;
-          document.body.append(toast);
-          new bootstrap.Toast(toast, { delay:3000 }).show();
+          showToast('Error loading dashboard data', 'critical');
         }
       })();
 
-      // Load Recent Activity
+      // 6) LOAD RECENT ACTIVITY LOGS
       async function loadRecentActivity() {
         try {
           const { data, error } = await supabase
@@ -380,7 +878,7 @@
           if (error) throw error;
           const tbody = document.getElementById('activity-body');
           tbody.innerHTML = '';
-          data.forEach(row => {
+          data.forEach((row) => {
             const tr = document.createElement('tr');
             tr.innerHTML = `
               <td>${row.user_id || 'N/A'}</td>
@@ -395,12 +893,13 @@
           });
         } catch (err) {
           console.error('Activity load error:', err);
-          addNotification('Failed to load activity logs', 'critical');
-          document.getElementById('activity-body').innerHTML = '<tr><td colspan="7" style="color:#ff4d4d">Failed to load logs</td></tr>';
+          showToast('Failed to load activity logs', 'critical');
+          document.getElementById('activity-body').innerHTML =
+            '<tr><td colspan="7" class="text-danger">Failed to load logs</td></tr>';
         }
       }
 
-      // Download Activity Logs
+      // 7) EXPORT ACTIVITY LOGS AS CSV
       async function downloadActivityLog() {
         try {
           const { data, error } = await supabase
@@ -408,49 +907,83 @@
             .select('*')
             .order('timestamp', { ascending: false });
           if (error) throw error;
-          const csv = [
-            'Timestamp,Action,IP Address,City,Country,Device',
-            ...data.map(row => {
+          const csvRows = [
+            'Timestamp,Action,IP Address,City,Country,Device'
+          ].concat(
+            data.map((row) => {
               const ts = row.timestamp ? new Date(row.timestamp).toLocaleString() : '';
               return `${ts},${row.action},${row.ip_address},${row.city},${row.country},"${row.device}"`;
             })
-          ].join('\n');
-          const blob = new Blob([csv], { type: 'text/csv' });
+          );
+          const csvContent = csvRows.join('\n');
+          const blob = new Blob([csvContent], { type: 'text/csv' });
           const url = URL.createObjectURL(blob);
           const a = document.createElement('a');
           a.href = url;
           a.download = 'activity_logs.csv';
           a.click();
           URL.revokeObjectURL(url);
-          addNotification('Logs exported successfully', 'info');
+          showToast('Logs exported successfully', 'info');
         } catch (err) {
           console.error('Export error:', err);
-          addNotification('Failed to export logs', 'critical');
+          showToast('Failed to export logs', 'critical');
         }
       }
 
-      // Notification Function
-      function addNotification(message, type = 'info') {
-        const toast = document.createElement('div');
-        toast.className = `toast align-items-center text-white bg-${type === 'critical' ? 'danger' : 'success'} border-0 position-fixed top-0 end-0 m-3`;
-        toast.innerHTML = `
-          <div class="d-flex">
-            <div class="toast-body">${message}</div>
-            <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast"></button>
-          </div>`;
-        document.body.append(toast);
-        new bootstrap.Toast(toast, { delay: 3000 }).show();
-      }
-
-      // Initialize Activity Logs
+      // 8) REAL-TIME UPDATES FOR ACTIVITY LOGS
       loadRecentActivity();
       document.getElementById('export-logs').addEventListener('click', downloadActivityLog);
       supabase
         .channel('user_activity')
-        .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'user_activity' }, () => {
-          loadRecentActivity();
-        })
+        .on(
+          'postgres_changes',
+          { event: 'INSERT', schema: 'public', table: 'user_activity' },
+          () => {
+            loadRecentActivity();
+          }
+        )
         .subscribe();
+
+      // 9) SHOW TOAST NOTIFICATIONS
+      function showToast(message, type = 'info') {
+        const toastEl = document.createElement('div');
+        toastEl.className = `toast align-items-center text-white bg-${
+          type === 'critical' ? 'danger' : 'success'
+        } border-0 position-fixed top-0 end-0 m-3`;
+        toastEl.style.zIndex = '1055';
+        toastEl.innerHTML = `
+          <div class="d-flex">
+            <div class="toast-body">${message}</div>
+            <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast"></button>
+          </div>`;
+        document.body.append(toastEl);
+        new bootstrap.Toast(toastEl, { delay: 3000 }).show();
+      }
+
+      // 10) HELPER FUNCTIONS: CONVERT CSS VARS TO RGB/RGBA
+      function varToRgb(varName) {
+        // read computed RGB triplet from CSS variable
+        const rgb = getComputedStyle(document.documentElement)
+          .getPropertyValue(varName)
+          .trim();
+        return rgb || '#fff';
+      }
+      function hexToRgba(hex, alpha) {
+        // convert hex or rgb string to rgba
+        // if hex starts with '#', parse
+        if (hex.startsWith('#')) {
+          let r = parseInt(hex.slice(1, 3), 16);
+          let g = parseInt(hex.slice(3, 5), 16);
+          let b = parseInt(hex.slice(5, 7), 16);
+          return `rgba(${r},${g},${b},${alpha})`;
+        }
+        // if already rgb(r,g,b), convert
+        const rgbMatch = hex.match(/#?(\d+),\s*(\d+),\s*(\d+)/);
+        if (rgbMatch) {
+          return `rgba(${rgbMatch[1]},${rgbMatch[2]},${rgbMatch[3]},${alpha})`;
+        }
+        return hex;
+      }
     });
   </script>
 </body>
