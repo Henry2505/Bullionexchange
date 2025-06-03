@@ -448,33 +448,26 @@
           aria-label="Notifications"
         >
           <i class="bi-bell"></i>
-          <span class="badge" id="notif-badge">3</span>
+          <span class="badge" id="notif-badge">0</span>
         </button>
         <ul
           class="dropdown-menu dropdown-menu-end glass no-scrollbar"
           aria-labelledby="notifDropdown"
+          id="notif-list"
         >
+          <!--
+            The first item is a header with title "Notifications"
+            Below it, notification items will be injected dynamically.
+            Finally, a "View all" link remains.
+          -->
           <li class="dropdown-header text-gold">Notifications</li>
-          <li>
-            <a class="dropdown-item" href="#">
-              <i class="bi-chat-left-text me-2"></i> New message from John
-              <small class="d-block text-muted">2m ago</small>
-            </a>
-          </li>
-          <li>
-            <a class="dropdown-item" href="#">
-              <i class="bi-graph-up me-2"></i> Weekly Insights ready
-              <small class="d-block text-muted">1h ago</small>
-            </a>
-          </li>
-          <li>
-            <a class="dropdown-item" href="#">
-              <i class="bi-person-plus me-2"></i> 5 new users joined
-              <small class="d-block text-muted">3h ago</small>
-            </a>
-          </li>
+          <!-- dynamic notification items will go here -->
           <li><hr class="dropdown-divider" /></li>
-          <li><a class="dropdown-item text-center" href="#">View all</a></li>
+          <li>
+            <a class="dropdown-item text-center" href="admin-notifications.html">
+              View all
+            </a>
+          </li>
         </ul>
       </div>
 
@@ -897,6 +890,133 @@
         showToast('Refreshing stats...', 'info');
         loadStatsAndCharts();
       });
+
+      // ==============================
+      // NOTIFICATIONS: Fetch + Real‐Time
+      // ==============================
+
+      // 1) Fetch unread notifications count and list
+      async function loadNotifications() {
+        try {
+          // Assume a "notifications" table with fields:
+          //   id, message, icon (e.g. "bi-chat-left-text"), created_at, read (boolean)
+          // Fetch unread notifications, most recent first
+          const { data: notifs, error } = await supabase
+            .from('notifications')
+            .select('id, message, icon, created_at, read')
+            .eq('read', false)
+            .order('created_at', { ascending: false })
+            .limit(20);
+
+          if (error) throw error;
+
+          const badgeEl = document.getElementById('notif-badge');
+          const listEl = document.getElementById('notif-list');
+
+          // Update badge count
+          badgeEl.textContent = notifs.length;
+
+          // Remove any previous notification <li> (except the header/divider/View All)
+          // First, remove all <li> that have data-notif-id
+          Array.from(listEl.querySelectorAll('li[data-notif-id]')).forEach((li) => li.remove());
+
+          // Find the divider <li> (the one that has <hr>), so we insert above it
+          const divider = listEl.querySelector('.dropdown-divider').parentElement;
+
+          // Insert each notification as a new <li> before the divider
+          notifs.forEach((notif) => {
+            const timeAgo = timeSince(new Date(notif.created_at));
+            const li = document.createElement('li');
+            li.setAttribute('data-notif-id', notif.id);
+            li.innerHTML = `
+              <a class="dropdown-item" href="#">
+                <i class="${notif.icon} me-2"></i>
+                ${notif.message}
+                <small class="d-block text-muted">${timeAgo} ago</small>
+              </a>
+            `;
+            listEl.insertBefore(li, divider);
+          });
+
+          // If no unread notifications, show a fallback
+          if (notifs.length === 0) {
+            const li = document.createElement('li');
+            li.setAttribute('data-notif-id', 'none');
+            li.innerHTML = `
+              <span class="dropdown-item text-muted">No new notifications</span>
+            `;
+            listEl.insertBefore(li, divider);
+          }
+        } catch (err) {
+          console.error('Error loading notifications:', err);
+        }
+      }
+
+      // 2) Mark notifications as read when dropdown is shown (smart feature)
+      document.getElementById('notifDropdown').addEventListener('shown.bs.dropdown', async () => {
+        // First, fetch and display notifications
+        await loadNotifications();
+
+        // Then mark all currently displayed unread as "read" in Supabase:
+        try {
+          const unreadIds = Array.from(
+            document.querySelectorAll('#notif-list li[data-notif-id]')
+          )
+            .map((li) => li.getAttribute('data-notif-id'))
+            .filter((id) => id !== 'none');
+
+          if (unreadIds.length > 0) {
+            const { error } = await supabase
+              .from('notifications')
+              .update({ read: true })
+              .in('id', unreadIds);
+
+            if (error) throw error;
+          }
+        } catch (err) {
+          console.error('Error marking notifications read:', err);
+        }
+      });
+
+      // 3) Real‐time subscription: whenever a new notification is inserted, reload
+      supabase
+        .channel('notifications_channel')
+        .on(
+          'postgres_changes',
+          { event: 'INSERT', schema: 'public', table: 'notifications' },
+          () => {
+            // If dropdown is closed, just update badge
+            const badgeEl = document.getElementById('notif-badge');
+            const currentCount = parseInt(badgeEl.textContent, 10) || 0;
+            badgeEl.textContent = currentCount + 1;
+          }
+        )
+        .subscribe();
+
+      // Utility: convert timestamp to “Xm / Xh / Xd ago”
+      function timeSince(date) {
+        const seconds = Math.floor((new Date() - date) / 1000);
+        const intervals = [
+          { label: 'day', seconds: 86400 },
+          { label: 'hour', seconds: 3600 },
+          { label: 'minute', seconds: 60 },
+          { label: 'second', seconds: 1 }
+        ];
+        for (const interval of intervals) {
+          const count = Math.floor(seconds / interval.seconds);
+          if (count >= 1) {
+            return count + ' ' + interval.label + (count > 1 ? 's' : '');
+          }
+        }
+        return 'just now';
+      }
+
+      // Load notifications once at startup (badge only)
+      loadNotifications();
+
+      // ==============================
+      // END NOTIFICATIONS
+      // ==============================
 
       // LOAD RECENT ACTIVITY LOGS
       async function loadRecentActivity() {
