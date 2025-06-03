@@ -6,10 +6,13 @@
   <meta name="description" content="Join the Chukwuemeka Bullion Exchange VIP trading community." />
   <title>Apply • Chukwuemeka Bullion Exchange</title>
 
+  <!-- Google Fonts -->
   <link
     href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700&family=Roboto:wght@300;400;700&display=swap"
     rel="stylesheet"
   />
+
+  <!-- Supabase JS (UMD) -->
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js/dist/umd/supabase.min.js"></script>
 
   <style>
@@ -303,7 +306,7 @@
           </div>
 
           <div class="terms-container">
-            <input type="checkbox" id="agree-terms" aria-label=" Agree to Privacy Policy and Terms & Conditions" />
+            <input type="checkbox" id="agree-terms" aria-label="Agree to Privacy Policy and Terms & Conditions" />
             <label for="agree-terms">
               I agree to the
               <a href="https://apexincomeoptions.com.ng/privacy" target="_blank" rel="noopener">Privacy Policy</a>
@@ -322,33 +325,40 @@
   </div>
 
   <script>
-    // Supabase client for referral-code validation
+    // ─── Supabase client for referral-code validation ─────────────────────────────────
+    // Replace with your Supabase project URL & anon key (already configured in your Netlify ENV too)
     const SUPA_URL = "https://dapwpgvnfjcfqqhrpxla.supabase.co";
-    const SUPA_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImRhcHdwZ3ZuZmpjZnFxaHJweGxhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDcwNDA4ODgsImV4cCI6MjA2MjYxNjg4OH0.ICC0UsLlzJDNre7rFCeD3k6iVzo6jOJgn3PhABpEMsQ";
+    const SUPA_ANON_KEY =
+      "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImRhcHdwZ3ZuZmpjZnFxaHJweGxhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDcwNDA4ODgsImV4cCI6MjA2MjYxNjg4OH0.ICC0UsLlzJDNre7rFCeD3k6iVzo6jOJgn3PhABpEMsQ";
     const supabaseClient = supabase.createClient(SUPA_URL, SUPA_ANON_KEY);
 
-    // Helper: read “ref” param from URL
+    // ─── Helper: read “ref” param from URL ─────────────────────────────────────────────
     function getReferralFromURL() {
       const params = new URLSearchParams(window.location.search);
       return params.get("ref") || null;
     }
 
-    // Theme & card animation
+    // ─── Theme & card animation ──────────────────────────────────────────────────────
     document.addEventListener("DOMContentLoaded", () => {
+      // 1) Set saved theme (dark or light)
       const savedTheme = localStorage.getItem("theme") || "dark";
       document.documentElement.setAttribute("data-theme", savedTheme);
-      document.getElementById("theme-toggle").textContent = savedTheme === "dark" ? "🌞" : "🌜";
+      document.getElementById("theme-toggle").textContent =
+        savedTheme === "dark" ? "🌞" : "🌜";
 
+      // 2) Make the card visible (fade/translate animation)
       const card = document.getElementById("apply-card");
       card.classList.add("visible");
 
+      // 3) If URL includes “?ref=CODE”, show a note
       const refCodeURL = getReferralFromURL();
       if (refCodeURL) {
-        document.getElementById("referral-note").textContent = "You were referred by: " + refCodeURL;
+        document.getElementById("referral-note").textContent =
+          "You were referred by: " + refCodeURL;
       }
     });
 
-    // Theme toggle button
+    // ─── Theme toggle button ──────────────────────────────────────────────────────────
     const toggleBtn = document.getElementById("theme-toggle");
     toggleBtn.addEventListener("click", () => {
       const current = document.documentElement.getAttribute("data-theme");
@@ -358,12 +368,13 @@
       toggleBtn.textContent = next === "dark" ? "🌞" : "🌜";
     });
 
-    // Form handling
+    // ─── Form handling ─────────────────────────────────────────────────────────────────
     const form = document.getElementById("apply-form");
     const agree = document.getElementById("agree-terms");
     const submitBtn = document.getElementById("submit-btn");
     const alertDiv = document.getElementById("apply-alert");
 
+    // Enable “Submit” only when terms are checked
     agree.addEventListener("change", () => {
       submitBtn.disabled = !agree.checked;
       submitBtn.classList.toggle("enabled", agree.checked);
@@ -381,7 +392,7 @@
       const experience = document.getElementById("apply-message").value.trim();
       const manualRef = document.getElementById("apply-referral").value.trim();
 
-      // Basic validation
+      // ─── Basic validation ────────────────────────────────────────────────────────────
       if (!name || !email || !password || !phone || !experience) {
         alertDiv.style.color = "var(--error-color)";
         alertDiv.textContent = "Please complete all fields.";
@@ -402,9 +413,11 @@
       submitBtn.textContent = "Submitting…";
 
       try {
+        // 1) Determine referral code: manual takes priority, else URL param, else null
         const urlRef = getReferralFromURL();
         const referralCodeToUse = manualRef || urlRef || null;
 
+        // 2) If a code exists, validate it against Supabase affiliate_user table
         if (referralCodeToUse) {
           const { data: affiliateUser, error: checkErr } = await supabaseClient
             .from("affiliate_user")
@@ -419,31 +432,42 @@
             submitBtn.textContent = "Submit Application";
             return;
           }
+          // Valid code at this point
         }
 
+        // 3) Prepare payload for Netlify function
         const payload = {
           name,
           email,
           password,
           phone,
           experience,
-          referral_code: referralCodeToUse
+          referral_code: referralCodeToUse, // either valid code or null
         };
 
+        // 4) Call the Netlify function endpoint (send-application.js)
         const fnResponse = await fetch("/.netlify/functions/send-application", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(payload)
+          body: JSON.stringify(payload),
         });
 
-        let fnResult = await fnResponse.json();
+        let fnResult = null;
+        try {
+          fnResult = await fnResponse.json();
+        } catch (parseErr) {
+          console.error("Could not parse JSON:", parseErr);
+        }
 
         if (!fnResponse.ok) {
           console.error("Function error:", fnResponse.status, fnResult);
-          throw new Error(fnResult.error || "Server encountered an error.");
+          const errMsg =
+            fnResult?.error ||
+            "Server encountered an error while processing your application.";
+          throw new Error(errMsg);
         }
 
-        // Success
+        // 5) Success: show confirmation
         alertDiv.style.color = "var(--success-color)";
         alertDiv.textContent = fnResult.message;
         form.reset();
