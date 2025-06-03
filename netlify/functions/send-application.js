@@ -1,36 +1,35 @@
 // netlify/functions/send-application.js
 
 /**
- * This single function will:
- * 1) Validate the incoming POST payload
- * 2) Check for existing email in `users` (to avoid duplicates)
- * 3) Verify referral_code (if provided)
- * 4) Hash the password with SHA-256
- * 5) Insert into Supabase `users` table with status "pending"
- * 6) Send a confirmation email via Brevo
+ * 1) Validates POST payload
+ * 2) Checks “users” table for existing email
+ * 3) Verifies referral_code (if provided)
+ * 4) Hashes password (SHA-256 → base64)
+ * 5) Inserts new row into Supabase `users` with status="pending"
+ * 6) Sends a confirmation email via Brevo
  */
 
 const { createClient } = require('@supabase/supabase-js');
 const crypto = require('crypto');
-const fetch = require('node-fetch'); // Import node-fetch for sending the Brevo request
 
-// Initialize Supabase client with Service Role key (must be stored as an ENV var on Netlify)
+// ─── Environment variables (set these in Netlify’s Settings → Build & Deploy → Environment) ───
 const SUPABASE_URL = process.env.SUPABASE_URL;
 const SUPABASE_SERVICE_KEY = process.env.SUPABASE_SERVICE_KEY;
+const BREVO_API_KEY = process.env.BREVO_API_KEY;
+
+// If any of these are missing, log & return an error
 if (!SUPABASE_URL || !SUPABASE_SERVICE_KEY) {
-  console.error('Missing SUPABASE_URL or SUPABASE_SERVICE_KEY in environment variables');
+  console.error('❌ Missing SUPABASE_URL or SUPABASE_SERVICE_KEY');  
+}
+if (!BREVO_API_KEY) {
+  console.error('❌ Missing BREVO_API_KEY');
 }
 
+// Initialize Supabase client (service‐role key gives us insert/delete privileges)
 const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_KEY);
 
-// Brevo (Sendinblue) configuration (must be set on Netlify as BREVO_API_KEY)
-const BREVO_API_KEY = process.env.BREVO_API_KEY;
-const BREVO_SENDER_NAME = 'Chukwuemeka Bullion Exchange';
-const BREVO_SENDER_EMAIL = 'noreply@apexincomeoptions.com.ng';
-const BREVO_TEMPLATE_ID = 1; // Adjust to your actual Brevo template ID
-
 exports.handler = async (event, context) => {
-  // Only accept POST
+  // Only allow POST
   if (event.httpMethod !== 'POST') {
     return {
       statusCode: 405,
@@ -39,6 +38,7 @@ exports.handler = async (event, context) => {
     };
   }
 
+  // Parse JSON
   let payload;
   try {
     payload = JSON.parse(event.body);
@@ -51,7 +51,7 @@ exports.handler = async (event, context) => {
 
   const { name, email, password, phone, experience, referral_code } = payload;
 
-  // ─── Basic server-side validation ─────────────────────────────────────────────────
+  // ─── 1) Basic server-side validation ───────────────────────────────────────────────
   if (!name || !email || !password || !phone || !experience) {
     return {
       statusCode: 400,
@@ -78,17 +78,16 @@ exports.handler = async (event, context) => {
     };
   }
 
-  // ─── Check if email already exists in "users" ──────────────────────────────────────
+  // ─── 2) Check if email already exists in "users" ──────────────────────────────────
   try {
     const { data: existingUser, error: checkError } = await supabase
       .from('users')
       .select('id')
       .eq('email', email)
-      .limit(1)
       .single();
 
+    // Supabase returns an error if no rows are found. We only care if it’s some other DB error.
     if (checkError && checkError.code !== 'PGRST116') {
-      // PGRST116 = “no rows returned” in some Supabase versions, treat that as “no user”
       console.error('Error checking existing user:', checkError);
       return {
         statusCode: 500,
@@ -109,7 +108,7 @@ exports.handler = async (event, context) => {
     };
   }
 
-  // ─── If a referral_code was provided, verify it exists in affiliate_user ───────────
+  // ─── 3) If referral_code provided, verify it in affiliate_user ────────────────────
   if (referral_code) {
     try {
       const { data: affUser, error: checkErr } = await supabase
@@ -133,7 +132,7 @@ exports.handler = async (event, context) => {
     }
   }
 
-  // ─── Hash the password with SHA-256 → base64 ────────────────────────────────────────
+  // ─── 4) Hash the password with SHA-256 → base64 ─────────────────────────────────────
   let password_hash;
   try {
     const hash = crypto.createHash('sha256');
@@ -147,7 +146,7 @@ exports.handler = async (event, context) => {
     };
   }
 
-  // ─── Insert new user into `users` table ────────────────────────────────────────────
+  // ─── 5) Insert new user into `users` table ─────────────────────────────────────────
   let newUser;
   try {
     const { data, error: insertErr } = await supabase
@@ -160,7 +159,7 @@ exports.handler = async (event, context) => {
           phone,
           experience,
           referral_code: referral_code || null,
-          status: 'pending', // you can mark as pending until admin approval
+          status: 'pending', // can adjust as needed
         },
       ])
       .single();
@@ -181,9 +180,9 @@ exports.handler = async (event, context) => {
     };
   }
 
-  // ─── Send confirmation email via Brevo ────────────────────────────────────────────
+  // ─── 6) Send confirmation email via Brevo ────────────────────────────────────────
   if (!BREVO_API_KEY) {
-    console.error('Missing BREVO_API_KEY environment variable');
+    console.error('Missing BREVO_API_KEY');
     return {
       statusCode: 500,
       body: JSON.stringify({ error: 'Email service not configured.' }),
@@ -192,8 +191,8 @@ exports.handler = async (event, context) => {
 
   const brevoPayload = {
     sender: {
-      name: BREVO_SENDER_NAME,
-      email: BREVO_SENDER_EMAIL,
+      name: 'Chukwuemeka Bullion Exchange',
+      email: 'noreply@apexincomeoptions.com.ng',
     },
     to: [
       {
@@ -201,7 +200,7 @@ exports.handler = async (event, context) => {
         name: name,
       },
     ],
-    templateId: BREVO_TEMPLATE_ID,
+    templateId: 1, // adjust to your actual Brevo template ID
     params: {
       NAME: name,
       EMAIL: email,
@@ -210,8 +209,8 @@ exports.handler = async (event, context) => {
     },
   };
 
-  let brevoResult;
   try {
+    // Netlify/Node 18+ has a global `fetch`; no need to `require('node-fetch')`.
     const brevoResponse = await fetch('https://api.brevo.com/v3/smtp/email', {
       method: 'POST',
       headers: {
@@ -221,6 +220,7 @@ exports.handler = async (event, context) => {
       body: JSON.stringify(brevoPayload),
     });
 
+    let brevoResult = null;
     try {
       brevoResult = await brevoResponse.json();
     } catch (jsonErr) {
@@ -229,8 +229,7 @@ exports.handler = async (event, context) => {
 
     if (!brevoResponse.ok) {
       console.error('Brevo responded with error:', brevoResponse.status, brevoResult);
-      const brevoMsg =
-        brevoResult?.message || brevoResult?.error || 'Unknown Brevo error';
+      const brevoMsg = brevoResult?.message || brevoResult?.error || 'Unknown Brevo error';
       return {
         statusCode: 502,
         body: JSON.stringify({ error: 'Brevo error: ' + brevoMsg }),
@@ -244,12 +243,11 @@ exports.handler = async (event, context) => {
     };
   }
 
-  // ─── Success response ─────────────────────────────────────────────────────────────
+  // ─── 7) Success ───────────────────────────────────────────────────────────────────
   return {
     statusCode: 200,
     body: JSON.stringify({
-      message:
-        'Application submitted successfully! A confirmation email has been sent.',
+      message: 'Application submitted successfully! A confirmation email has been sent.',
     }),
   };
 };
