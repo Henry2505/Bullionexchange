@@ -83,7 +83,6 @@
       max-width: 100%;
       display: block;
     }
-    /* Glass effect utility */
     .glass {
       background: var(--glass-bg);
       backdrop-filter: blur(10px);
@@ -92,7 +91,6 @@
       background: rgba(0, 0, 0, 0.7);
       backdrop-filter: blur(12px);
     }
-    /* Hide scrollbars where appropriate */
     .no-scrollbar::-webkit-scrollbar {
       display: none;
     }
@@ -118,7 +116,6 @@
       border-bottom: 1px solid var(--gold);
       z-index: 5;
     }
-    /* Logo (click → dashboard) */
     .header-logo {
       cursor: pointer;
       display: flex;
@@ -127,20 +124,16 @@
     .header-logo img {
       height: 40px;
     }
-    /* Live clock */
     #current-datetime {
       color: var(--text);
       margin-left: 1rem;
       font-size: 0.9rem;
     }
-
-    /* Header tools: search, notifications, user, more, theme */
     .header-tools {
       display: flex;
       align-items: center;
       gap: 1rem;
     }
-    /* SEARCH BOX */
     .header-tools .search-box {
       position: relative;
       display: flex;
@@ -168,7 +161,6 @@
       left: 8px;
       color: var(--gold);
     }
-    /* ICON BUTTONS (bell, user, more, theme) */
     .header-tools .icon-btn {
       position: relative;
       background: none;
@@ -214,7 +206,6 @@
     /* ================================
        DASHBOARD PANELS & COMPONENTS
     ================================= */
-    /* QUICK ACTIONS */
     .quick-actions {
       display: flex;
       flex-wrap: wrap;
@@ -242,7 +233,6 @@
       color: #fff;
     }
 
-    /* STAT CARDS (DRAG & DROP) */
     .stats-row {
       display: grid;
       grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
@@ -278,7 +268,6 @@
       font-weight: 700;
     }
 
-    /* CHARTS LAYOUT */
     .charts {
       display: grid;
       grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
@@ -330,7 +319,7 @@
 
     /* ACTIVITY LOGS TABLE */
     .activity-card {
-      background: var(--log-bg); /* black background */
+      background: var(--log-bg);
       border: 1px solid var(--gold);
       border-radius: 8px;
       padding: 1rem;
@@ -344,7 +333,6 @@
       font-size: 1.1rem;
       display: inline-block;
     }
-    /* Collapse/expand icon for logs */
     .activity-card .collapse-icon {
       position: absolute;
       top: 1rem;
@@ -356,13 +344,11 @@
     .activity-card .collapse-icon:hover {
       color: var(--gold-dark);
     }
-    /* Hidden by default */
     #activity-filter,
     #export-logs,
     #activity-table-wrapper {
       display: none;
     }
-    /* Table container background */
     .activity-card table {
       width: 100%;
       border-collapse: collapse;
@@ -370,12 +356,11 @@
       table-layout: fixed;
       background-color: var(--log-bg) !important;
     }
-    /* Override default .table styles */
     .activity-card table,
     .activity-card th,
     .activity-card td {
       background-color: var(--log-bg) !important;
-      color: var(--log-text); /* golden text */
+      color: var(--log-text);
     }
     .activity-card th {
       background: rgba(0, 0, 0, 0.3) !important;
@@ -436,18 +421,14 @@
        HEADER (Top Bar)
   ==================== -->
   <header class="admin-header glass">
-    <!-- Logo (click → dashboard) -->
     <div class="d-flex align-items-center">
       <div class="header-logo" id="header-logo">
         <img src="CBE_logo.PNG" alt="CBE Logo" />
       </div>
-      <!-- Live Clock -->
       <small id="current-datetime"></small>
     </div>
 
-    <!-- Header Tools: search, notifications, user menu, more menu, theme -->
     <div class="header-tools">
-      <!-- SEARCH BOX -->
       <div class="search-box">
         <i class="bi-search"></i>
         <input
@@ -458,7 +439,6 @@
         />
       </div>
 
-      <!-- NOTIFICATIONS DROPDOWN -->
       <div class="dropdown">
         <button
           class="icon-btn"
@@ -498,7 +478,6 @@
         </ul>
       </div>
 
-      <!-- USER PROFILE MENU -->
       <div class="dropdown">
         <button
           class="icon-btn"
@@ -535,7 +514,6 @@
         </ul>
       </div>
 
-      <!-- MORE OPTIONS (Three-dot Menu with ALL Nav Links) -->
       <div class="dropdown">
         <button
           class="icon-btn"
@@ -611,7 +589,6 @@
         </ul>
       </div>
 
-      <!-- THEME TOGGLE -->
       <button id="theme-toggle" aria-label="Toggle theme" class="icon-btn">
         🌞
       </button>
@@ -697,7 +674,6 @@
 
     <!-- ACTIVITY LOGS SECTION -->
     <section class="activity-card" id="activity-section">
-      <!-- Header with Collapse Icon (collapsed by default) -->
       <h3 id="activity-header">Recent Activity Logs</h3>
       <i class="bi-plus-circle collapse-icon" id="toggle-activity" title="Expand Logs"></i>
 
@@ -773,7 +749,6 @@
       // FETCH STATS & RENDER CHARTS (and allow manual refresh)
       async function loadStatsAndCharts() {
         try {
-          // Parallel data fetches
           const [
             { count: usersCount },
             { data: payments },
@@ -790,11 +765,10 @@
               .from('trade_insights')
               .select('week_ending,pips')
               .order('week_ending', { ascending: false })
-              .limit(12), // last 12 weeks
+              .limit(12),
             supabase.from('users').select('status')
           ]);
 
-          // Update stat cards
           document.getElementById('stat-users').textContent = usersCount;
           document.getElementById('stats-payments').textContent = payments.length;
           document.getElementById('stats-trades').textContent = trades.length;
@@ -803,7 +777,6 @@
           const rate = insights.length ? Math.round((wins / insights.length) * 100) : 0;
           document.getElementById('stats-winrate').textContent = rate;
 
-          // Make stat cards draggable
           new Sortable(document.getElementById('stats-container'), {
             animation: 150,
             ghostClass: 'sortable-ghost',
@@ -811,13 +784,11 @@
             handle: '.card-stat'
           });
 
-          // Prepare labels & data for charts
           const labels = insights
             .map((i) => new Date(i.week_ending).toLocaleDateString())
             .reverse();
           const pipsData = insights.map((i) => i.pips).reverse();
 
-          // P&L Line Chart
           const pnlCtx = document.getElementById('chart-pnl').getContext('2d');
           if (window.pnlChart) window.pnlChart.destroy();
           window.pnlChart = new Chart(pnlCtx, {
@@ -846,7 +817,6 @@
             }
           });
 
-          // Win-Rate Bar Chart
           const winCtx = document.getElementById('chart-winrate').getContext('2d');
           if (window.winChart) window.winChart.destroy();
           window.winChart = new Chart(winCtx, {
@@ -881,7 +851,6 @@
             }
           });
 
-          // User-Status Doughnut Chart
           const statusCounts = allUsers.reduce((acc, u) => {
             acc[u.status] = (acc[u.status] || 0) + 1;
             return acc;
@@ -922,10 +891,8 @@
         }
       }
 
-      // Initial load of stats/charts
       loadStatsAndCharts();
 
-      // Manual “Refresh Stats” button
       document.getElementById('btn-refresh-stats').addEventListener('click', () => {
         showToast('Refreshing stats...', 'info');
         loadStatsAndCharts();
@@ -938,7 +905,7 @@
             .from('user_activity')
             .select('*')
             .order('timestamp', { ascending: false })
-            .limit(100); // fetch up to last 100 logs
+            .limit(100);
           if (error) throw error;
           const tbody = document.getElementById('activity-body');
           tbody.innerHTML = '';
@@ -947,7 +914,13 @@
             tr.innerHTML = `
               <td class="act-user">${row.user_id || 'N/A'}</td>
               <td class="act-action">${row.action || 'N/A'}</td>
-              <td>${row.timestamp ? new Date(row.timestamp).toLocaleDateString() + ' ' + new Date(row.timestamp).toLocaleTimeString() : 'N/A'}</td>
+              <td>${
+                row.timestamp
+                  ? new Date(row.timestamp).toLocaleDateString() +
+                    ' ' +
+                    new Date(row.timestamp).toLocaleTimeString()
+                  : 'N/A'
+              }</td>
               <td>${row.ip_address || 'N/A'}</td>
               <td>${row.city || 'N/A'}</td>
               <td>${row.country || 'N/A'}</td>
@@ -976,8 +949,13 @@
             'User ID,Action,Timestamp,IP Address,City,Country,Device'
           ].concat(
             data.map((row) => {
-              const ts = row.timestamp ? new Date(row.timestamp).toLocaleDateString() + ' ' + new Date(row.timestamp).toLocaleTimeString() : '';
-              return `${row.user_id || ''},${row.action || ''},${ts},${row.ip_address || ''},${row.city || ''},${row.country || ''},"${row.device || ''}"`;
+              const ts = row.timestamp
+                ? new Date(row.timestamp).toLocaleDateString() +
+                  ' ' +
+                  new Date(row.timestamp).toLocaleTimeString()
+                : '';
+              return `${row.user_id || ''},${row.action || ''},${ts},${row.ip_address ||
+                ''},${row.city || ''},${row.country || ''},"${row.device || ''}"`;
             })
           );
           const csvContent = csvRows.join('\n');
@@ -995,7 +973,6 @@
         }
       }
 
-      // REAL-TIME UPDATES FOR ACTIVITY LOGS
       loadRecentActivity();
       document.getElementById('export-logs').addEventListener('click', downloadActivityLog);
       supabase
@@ -1033,23 +1010,21 @@
         });
       }
 
-      // COLLAPSE / EXPAND ACTIVITY LOGS (collapsed initially)
+      // COLLAPSE / EXPAND ACTIVITY LOGS
       const toggleActivity = document.getElementById('toggle-activity');
       const filterExportRow = document.getElementById('filter-export-row');
       const tableWrapper = document.getElementById('activity-table-wrapper');
-      let activityCollapsed = true; // start collapsed
+      let activityCollapsed = true;
 
       toggleActivity.addEventListener('click', () => {
         activityCollapsed = !activityCollapsed;
         if (!activityCollapsed) {
-          // Expand
           filterExportRow.style.display = 'flex';
           tableWrapper.style.display = 'block';
           toggleActivity.classList.replace('bi-plus-circle', 'bi-dash-circle');
           document.getElementById('activity-header').title = 'Collapse Logs';
           loadRecentActivity();
         } else {
-          // Collapse
           filterExportRow.style.display = 'none';
           tableWrapper.style.display = 'none';
           toggleActivity.classList.replace('bi-dash-circle', 'bi-plus-circle');
@@ -1090,7 +1065,7 @@
         new bootstrap.Toast(toastEl, { delay: 3000 }).show();
       }
 
-      // HELPER FUNCTIONS: CONVERT CSS VARS TO RGB/RGBA
+      // HELPER FUNCTIONS
       function varToRgb(varName) {
         const rgb = getComputedStyle(document.documentElement)
           .getPropertyValue(varName)
