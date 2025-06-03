@@ -7,20 +7,20 @@
 
   <!-- ─────────────────────────────────────────────────────────────────────
        1) SUPABASE INIT & SINGLE‐SESSION ENFORCEMENT
-       (matches sessionStorage.cbeLoggedIn, sessionStorage.cbeUserId,
-        localStorage.sessionToken, and Supabase’s users.current_session_token)
+       (must match sessionStorage.cbeLoggedIn, sessionStorage.cbeUserId,
+        localStorage.sessionToken, and users.current_session_token in Supabase)
   -->
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>
   <script>
-    // 1a) Initialize Supabase (use your real URL & anon key)
+    // 1a) Initialize Supabase (replace with your actual values)
     const SUPA_URL = 'https://dapwpgvnfjcfqqhrpxla.supabase.co';
     const SUPA_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImRhcHdwZ3ZuZmpjZnFxaHJweGxhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDcwNDA4ODgsImV4cCI6MjA2MjYxNjg4OH0.ICC0UsLlzJDNre7rFCeD3k6iVzo6jOJgn3PhABpEMsQ';
     const supabase = window.supabase.createClient(SUPA_URL, SUPA_KEY);
 
     (async function enforceSingleSession() {
-      // 1b) Check if sessionStorage.cbeLoggedIn === 'true'
-      const isLoggedIn = sessionStorage.getItem('cbeLoggedIn') === 'true';
-      if (!isLoggedIn) {
+      // 1b) Check that sessionStorage.cbeLoggedIn === 'true'
+      if (sessionStorage.getItem('cbeLoggedIn') !== 'true') {
+        console.warn('Not flagged as logged in → redirecting to login.');
         window.location.replace('login.html');
         return;
       }
@@ -29,6 +29,7 @@
       const userId = sessionStorage.getItem('cbeUserId');
       const localToken = localStorage.getItem('sessionToken');
       if (!userId || !localToken) {
+        console.warn('Missing cbeUserId or sessionToken → clearing and redirecting.');
         sessionStorage.removeItem('cbeLoggedIn');
         sessionStorage.removeItem('cbeUserId');
         localStorage.removeItem('sessionToken');
@@ -48,15 +49,16 @@
           throw new Error('User lookup failed');
         }
 
-        // 1e) Compare tokens; if mismatch, force logout
+        // 1e) Compare stored token vs. browser’s localStorage.sessionToken
         if (userData.current_session_token !== localToken) {
+          console.warn('Token mismatch → logging out.');
           sessionStorage.removeItem('cbeLoggedIn');
           sessionStorage.removeItem('cbeUserId');
           localStorage.removeItem('sessionToken');
           window.location.replace('login.html');
           return;
         }
-        // If tokens match, page continues loading normally
+        // If tokens match, we allow the rest of the page to load
       } catch (err) {
         console.error('Session validation error:', err);
         sessionStorage.removeItem('cbeLoggedIn');
@@ -68,7 +70,7 @@
   </script>
 
   <!-- ─────────────────────────────────────────────────────────────────────
-       2) CLIENT‐SIDE GUARD (redundant check)
+       2) CLIENT‐SIDE GUARD (extra safety net)
   -->
   <script>
     if (sessionStorage.getItem('cbeLoggedIn') !== 'true') {
@@ -264,7 +266,7 @@
       const savedTheme = localStorage.getItem('theme') || 'dark';
       document.documentElement.setAttribute('data-theme', savedTheme);
 
-      // 4b) Supabase client is already initialized above (in enforceSingleSession)
+      // 4b) Supabase client is already initialized above in enforceSingleSession()
 
       // 4c) Fetch trade_history table, ordered by trade_date descending
       const { data, error } = await supabase
