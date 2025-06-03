@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Admin — CBE Dashboard</title>
 
-  <!-- Auth Guard -->
+  <!-- 1) AUTH GUARD (runs before any UI) -->
   <script>
     if (localStorage.getItem('isLoggedIn') !== 'true') {
       const current = 'admin-dashboard.html';
@@ -13,17 +13,28 @@
     }
   </script>
 
-  <!-- Google Fonts & Bootstrap CSS -->
-  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700&display=swap" rel="stylesheet" />
-  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet" />
-  <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css" rel="stylesheet" />
+  <!-- 2) GOOGLE FONTS & BOOTSTRAP CSS -->
+  <link
+    href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700&display=swap"
+    rel="stylesheet"
+  />
+  <link
+    href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css"
+    rel="stylesheet"
+  />
+  <link
+    href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css"
+    rel="stylesheet"
+  />
 
-  <!-- Chart.js & Sortable.js -->
+  <!-- 3) CHART.JS & SORTABLE.JS -->
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.0/Sortable.min.js"></script>
 
   <style>
-    /* Reset, Theme Variables & Globals */
+    /* ================================
+       RESET, THEME VARIABLES & GLOBALS
+    ================================= */
     * {
       margin: 0;
       padding: 0;
@@ -46,7 +57,11 @@
       --gold-dark: #cca300;
       --overlay: rgba(0, 0, 0, 0.15);
       --glass-bg: rgba(255, 255, 255, 0.05);
+      --sidebar-width: 250px;
       --transition-fast: 0.2s ease-in-out;
+      --sidebar-bg: #111;
+      --log-bg: #000;
+      --log-text: #ffd700;
     }
     [data-theme='light'] {
       --bg: #f5f5f5;
@@ -55,6 +70,9 @@
       --gold-dark: #b58900;
       --overlay: rgba(255, 255, 255, 0.15);
       --glass-bg: rgba(0, 0, 0, 0.05);
+      --sidebar-bg: #fff;
+      --log-bg: #f5f5f5;
+      --log-text: #b58900;
     }
     a {
       color: var(--gold);
@@ -62,15 +80,22 @@
     }
     a:hover {
       color: var(--gold-dark);
+      text-decoration: none;
     }
     img {
       max-width: 100%;
       display: block;
     }
+    /* Glass effect utility */
     .glass {
       background: var(--glass-bg);
       backdrop-filter: blur(10px);
     }
+    .glass-strong {
+      background: rgba(0, 0, 0, 0.7);
+      backdrop-filter: blur(12px);
+    }
+    /* Hide scrollbars where appropriate */
     .no-scrollbar::-webkit-scrollbar {
       display: none;
     }
@@ -79,11 +104,79 @@
       scrollbar-width: none;
     }
 
-    /* Header Styles */
+    /* ================================
+       SIDEBAR & HEADER LAYOUT
+    ================================= */
+    /* Overlay for mobile sidebar */
+    .overlay {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: var(--overlay);
+      z-index: 1;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity var(--transition-fast);
+    }
+    .sidebar-open .overlay {
+      opacity: 1;
+      pointer-events: auto;
+    }
+
+    .sidebar {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: var(--sidebar-width);
+      height: 100%;
+      background: var(--sidebar-bg);
+      border-right: 1px solid var(--gold);
+      padding: 1.5rem 1rem;
+      transition: transform var(--transition-fast);
+      z-index: 10;
+      overflow-y: auto;
+    }
+    .sidebar.collapsed {
+      transform: translateX(-100%);
+    }
+    .sidebar .logo {
+      text-align: center;
+      margin-bottom: 2rem;
+      cursor: pointer;
+    }
+    .sidebar .logo img {
+      height: 45px;
+    }
+    .sidebar nav ul {
+      list-style: none;
+      padding: 0;
+      margin: 1rem 0;
+    }
+    .sidebar nav li {
+      margin: 1rem 0;
+    }
+    .sidebar nav li a {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      font-weight: 500;
+      padding: 0.5rem 0.25rem;
+      color: var(--text);
+      border-radius: 4px;
+      transition: background var(--transition-fast);
+    }
+    .sidebar nav li a:hover,
+    .sidebar nav li a.active {
+      background: rgba(255, 215, 0, 0.1);
+      color: var(--gold);
+    }
+
     header.admin-header {
       position: sticky;
       top: 0;
-      left: 0;
+      left: var(--sidebar-width);
       right: 0;
       height: 60px;
       display: flex;
@@ -93,7 +186,14 @@
       background: var(--bg);
       border-bottom: 1px solid var(--gold);
       z-index: 5;
+      transition: left var(--transition-fast);
     }
+    /* When sidebar is collapsed, header spans full width */
+    .collapsed + header.admin-header {
+      left: 0;
+    }
+
+    /* Logo (click → dashboard) */
     .header-logo {
       cursor: pointer;
       display: flex;
@@ -102,16 +202,20 @@
     .header-logo img {
       height: 40px;
     }
+    /* Live clock */
     #current-datetime {
       color: var(--text);
       margin-left: 1rem;
       font-size: 0.9rem;
     }
+
+    /* Header tools: search, notifications, user, more, theme */
     .header-tools {
       display: flex;
       align-items: center;
       gap: 1rem;
     }
+    /* SEARCH BOX */
     .header-tools .search-box {
       position: relative;
       display: flex;
@@ -139,6 +243,7 @@
       left: 8px;
       color: var(--gold);
     }
+    /* ICON BUTTONS (bell, user, more, theme) */
     .header-tools .icon-btn {
       position: relative;
       background: none;
@@ -158,7 +263,7 @@
       padding: 2px 5px;
     }
     .header-tools .dropdown-menu {
-      background: var(--bg);
+      background: var(--bg) !important;
       border: 1px solid var(--gold);
       max-height: 300px;
       overflow-y: auto;
@@ -172,14 +277,23 @@
       color: var(--gold);
     }
 
-    /* Main Content */
+    /* ================================
+       MAIN CONTENT AREA
+    ================================= */
     main.admin-content {
-      margin: 0 auto;
+      margin-left: var(--sidebar-width);
       padding: 1.5rem;
       max-width: 1280px;
+      transition: margin-left var(--transition-fast);
+    }
+    .collapsed + header.admin-header + main.admin-content {
+      margin-left: 0;
     }
 
-    /* Quick Actions */
+    /* ================================
+       DASHBOARD PANELS & COMPONENTS
+    ================================= */
+    /* QUICK ACTIONS */
     .quick-actions {
       display: flex;
       flex-wrap: wrap;
@@ -207,7 +321,7 @@
       color: #fff;
     }
 
-    /* Stat Cards */
+    /* STAT CARDS (DRAG & DROP) */
     .stats-row {
       display: grid;
       grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
@@ -224,7 +338,8 @@
       backdrop-filter: blur(8px);
       cursor: grab;
       user-select: none;
-      transition: transform var(--transition-fast), box-shadow var(--transition-fast);
+      transition: transform var(--transition-fast),
+        box-shadow var(--transition-fast);
     }
     .card-stat:active {
       cursor: grabbing;
@@ -242,7 +357,7 @@
       font-weight: 700;
     }
 
-    /* Charts Layout */
+    /* CHARTS LAYOUT */
     .charts {
       display: grid;
       grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
@@ -292,9 +407,9 @@
       color: #fff;
     }
 
-    /* Activity Logs */
+    /* ACTIVITY LOGS TABLE */
     .activity-card {
-      background: #000;
+      background: var(--log-bg);
       border: 1px solid var(--gold);
       border-radius: 8px;
       padding: 1rem;
@@ -307,8 +422,8 @@
       font-weight: 600;
       font-size: 1.1rem;
       display: inline-block;
-      cursor: pointer;
     }
+    /* Collapse/expand icon for logs */
     .activity-card .collapse-icon {
       position: absolute;
       top: 1rem;
@@ -320,10 +435,16 @@
     .activity-card .collapse-icon:hover {
       color: var(--gold-dark);
     }
+    /* Hidden by default */
+    #activity-filter,
+    #export-logs,
+    #activity-table-wrapper {
+      display: none;
+    }
     .activity-card table {
       width: 100%;
       border-collapse: collapse;
-      color: var(--gold);
+      color: var(--log-text);
       margin-top: 0.5rem;
       table-layout: fixed;
     }
@@ -334,6 +455,7 @@
       border-bottom: 1px solid rgba(255, 215, 0, 0.2);
       font-size: 0.85rem;
       word-wrap: break-word;
+      color: var(--log-text);
     }
     .activity-card th {
       background: rgba(0, 0, 0, 0.3);
@@ -360,7 +482,7 @@
       border-radius: 4px;
       background: #111;
       color: var(--gold);
-      margin-bottom: 0.75rem;
+      margin-right: 0.5rem;
       transition: width var(--transition-fast);
     }
     #activity-filter::placeholder {
@@ -371,13 +493,22 @@
       outline: none;
       box-shadow: 0 0 5px var(--gold);
     }
-    #activity-filter,
-    #export-logs,
-    #activity-table-wrapper {
-      display: none;
-    }
 
-    /* Responsive Tweaks */
+    /* RESPONSIVE TWEAKS */
+    @media (max-width: 992px) {
+      .sidebar {
+        transform: translateX(-100%);
+      }
+      .sidebar.collapsed {
+        transform: translateX(0);
+      }
+      header.admin-header {
+        left: 0;
+      }
+      main.admin-content {
+        margin-left: 0;
+      }
+    }
     @media (max-width: 576px) {
       .header-tools .search-box input {
         width: 120px;
@@ -392,112 +523,325 @@
   </style>
 </head>
 <body>
-  <!-- Header -->
-  <header class="admin-header">
-    <div class="header-logo" id="header-logo">
+  <!-- Overlay for mobile sidebar -->
+  <div class="overlay"></div>
+
+  <!-- ====================
+       SIDEBAR NAVIGATION
+  ==================== -->
+  <!-- Start collapsed by default -->
+  <aside class="sidebar collapsed" id="sidebar">
+    <div class="logo" id="sidebar-logo">
       <img src="CBE_logo.PNG" alt="CBE Logo" />
     </div>
-    <small id="current-datetime"></small>
+    <nav>
+      <ul>
+        <li><a href="admin-dashboard.html" class="active"><i class="bi-speedometer2"></i> Dashboard</a></li>
+        <li><a href="admin-capital-applications.html"><i class="bi-folder2-open"></i> Capital Applications</a></li>
+        <li><a href="admin-messages.html"><i class="bi-chat-dots-fill"></i> Messages</a></li>
+        <li><a href="admin-settings-payments.html"><i class="bi-credit-card"></i> Settings & Payments</a></li>
+        <li><a href="admin-signals.html"><i class="bi-lightning-fill"></i> Signals</a></li>
+        <li><a href="admin-testimonials.html"><i class="bi-chat-quote"></i> Testimonials</a></li>
+        <li><a href="admin-trade-history.html"><i class="bi-clock-history"></i> Trade History</a></li>
+        <li><a href="admin-trade-insights.html"><i class="bi-graph-up"></i> Trade Insights</a></li>
+        <li><a href="admin-users.html"><i class="bi-people-fill"></i> Users</a></li>
+        <li>
+          <a href="#activity-section" id="sidebar-activity-link"><i class="bi-list-task"></i> Recent Activity Logs</a>
+        </li>
+        <li>
+          <a href="#" id="sidebar-download-logs"><i class="bi-download"></i> Download Logs</a>
+        </li>
+        <li><a href="logout.html"><i class="bi-box-arrow-right"></i> Logout</a></li>
+      </ul>
+    </nav>
+  </aside>
+
+  <!-- ====================
+       HEADER (Top Bar)
+  ==================== -->
+  <header class="admin-header glass">
+    <button id="sidebar-toggle" class="collapsed" aria-label="Toggle sidebar">
+      <i class="bi-list"></i>
+    </button>
+
+    <div class="d-flex align-items-center">
+      <!-- Logo (click → dashboard) -->
+      <div class="header-logo" id="header-logo">
+        <img src="CBE_logo.PNG" alt="CBE Logo" />
+      </div>
+      <!-- Live Clock -->
+      <small id="current-datetime"></small>
+    </div>
+
+    <!-- Header Tools: search, notifications, user menu, more menu, theme -->
     <div class="header-tools">
+      <!-- SEARCH BOX -->
       <div class="search-box">
         <i class="bi-search"></i>
-        <input type="text" id="global-search" placeholder="Search..." aria-label="Search" />
+        <input
+          type="text"
+          id="global-search"
+          placeholder="Search..."
+          aria-label="Search"
+        />
       </div>
+
+      <!-- NOTIFICATIONS DROPDOWN -->
       <div class="dropdown">
-        <button class="icon-btn" id="notifDropdown" data-bs-toggle="dropdown" aria-expanded="false" aria-label="Notifications">
+        <button
+          class="icon-btn"
+          id="notifDropdown"
+          data-bs-toggle="dropdown"
+          aria-expanded="false"
+          aria-label="Notifications"
+        >
           <i class="bi-bell"></i>
           <span class="badge" id="notif-badge">3</span>
         </button>
-        <ul class="dropdown-menu dropdown-menu-end glass no-scrollbar" aria-labelledby="notifDropdown">
+        <ul
+          class="dropdown-menu dropdown-menu-end glass no-scrollbar"
+          aria-labelledby="notifDropdown"
+        >
           <li class="dropdown-header text-gold">Notifications</li>
-          <li><a class="dropdown-item" href="#"><i class="bi-chat-left-text me-2"></i> New message from John <small class="d-block text-muted">2m ago</small></a></li>
-          <li><a class="dropdown-item" href="#"><i class="bi-graph-up me-2"></i> Weekly Insights ready <small class="d-block text-muted">1h ago</small></a></li>
-          <li><a class="dropdown-item" href="#"><i class="bi-person-plus me-2"></i> 5 new users joined <small class="d-block text-muted">3h ago</small></a></li>
+          <li>
+            <a class="dropdown-item" href="#">
+              <i class="bi-chat-left-text me-2"></i> New message from John
+              <small class="d-block text-muted">2m ago</small>
+            </a>
+          </li>
+          <li>
+            <a class="dropdown-item" href="#">
+              <i class="bi-graph-up me-2"></i> Weekly Insights ready
+              <small class="d-block text-muted">1h ago</small>
+            </a>
+          </li>
+          <li>
+            <a class="dropdown-item" href="#">
+              <i class="bi-person-plus me-2"></i> 5 new users joined
+              <small class="d-block text-muted">3h ago</small>
+            </a>
+          </li>
           <li><hr class="dropdown-divider" /></li>
           <li><a class="dropdown-item text-center" href="#">View all</a></li>
         </ul>
       </div>
+
+      <!-- USER PROFILE MENU -->
       <div class="dropdown">
-        <button class="icon-btn" id="userDropdown" data-bs-toggle="dropdown" aria-expanded="false" aria-label="User menu">
-          <img src="https://via.placeholder.com/30" alt="Admin Avatar" class="rounded-circle" />
+        <button
+          class="icon-btn"
+          id="userDropdown"
+          data-bs-toggle="dropdown"
+          aria-expanded="false"
+          aria-label="User menu"
+        >
+          <img
+            src="https://via.placeholder.com/30"
+            alt="Admin Avatar"
+            class="rounded-circle"
+          />
         </button>
-        <ul class="dropdown-menu dropdown-menu-end glass no-scrollbar" aria-labelledby="userDropdown">
-          <li><h6 class="dropdown-header text-gold">Admin Name</h6></li>
-          <li><a class="dropdown-item" href="#"><i class="bi-person me-2"></i> Profile</a></li>
-          <li><a class="dropdown-item" href="#"><i class="bi-gear me-2"></i> Settings</a></li>
+        <ul
+          class="dropdown-menu dropdown-menu-end glass no-scrollbar"
+          aria-labelledby="userDropdown"
+        >
+          <li>
+            <h6 class="dropdown-header text-gold">Admin Name</h6>
+          </li>
+          <li>
+            <a class="dropdown-item" href="#"><i class="bi-person me-2"></i> Profile</a>
+          </li>
+          <li>
+            <a class="dropdown-item" href="#"><i class="bi-gear me-2"></i> Settings</a>
+          </li>
           <li><hr class="dropdown-divider" /></li>
-          <li><a class="dropdown-item" href="logout.html"><i class="bi-box-arrow-right me-2"></i> Logout</a></li>
+          <li>
+            <a class="dropdown-item" href="logout.html"
+              ><i class="bi-box-arrow-right me-2"></i> Logout</a
+            >
+          </li>
         </ul>
       </div>
+
+      <!-- MORE OPTIONS (Three-dot Menu with ALL Nav Links) -->
       <div class="dropdown">
-        <button class="icon-btn" id="moreDropdown" data-bs-toggle="dropdown" aria-expanded="false" aria-label="More options">
+        <button
+          class="icon-btn"
+          id="moreDropdown"
+          data-bs-toggle="dropdown"
+          aria-expanded="false"
+          aria-label="More options"
+        >
           <i class="bi-three-dots-vertical"></i>
         </button>
-        <ul class="dropdown-menu dropdown-menu-end glass no-scrollbar" aria-labelledby="moreDropdown">
+        <ul
+          class="dropdown-menu dropdown-menu-end glass no-scrollbar"
+          aria-labelledby="moreDropdown"
+        >
           <li><h6 class="dropdown-header text-gold">Navigation</h6></li>
-          <li><a class="dropdown-item" href="admin-dashboard.html"><i class="bi-speedometer2 me-2"></i> Dashboard</a></li>
-          <li><a class="dropdown-item" href="admin-capital-applications.html"><i class="bi-folder2-open me-2"></i> Capital Applications</a></li>
-          <li><a class="dropdown-item" href="admin-messages.html"><i class="bi-chat-dots-fill me-2"></i> Messages</a></li>
-          <li><a class="dropdown-item" href="admin-settings-payments.html"><i class="bi-credit-card me-2"></i> Settings & Payments</a></li>
-          <li><a class="dropdown-item" href="admin-signals.html"><i class="bi-lightning-fill me-2"></i> Signals</a></li>
-          <li><a class="dropdown-item" href="admin-testimonials.html"><i class="bi-chat-quote me-2"></i> Testimonials</a></li>
-          <li><a class="dropdown-item" href="admin-trade-history.html"><i class="bi-clock-history me-2"></i> Trade History</a></li>
-          <li><a class="dropdown-item" href="admin-trade-insights.html"><i class="bi-graph-up me-2"></i> Trade Insights</a></li>
-          <li><a class="dropdown-item" href="admin-users.html"><i class="bi-people-fill me-2"></i> Users</a></li>
-          <li><a class="dropdown-item" href="logout.html"><i class="bi-box-arrow-right me-2"></i> Logout</a></li>
+          <li>
+            <a class="dropdown-item" href="admin-dashboard.html"
+              ><i class="bi-speedometer2 me-2"></i> Dashboard</a
+            >
+          </li>
+          <li>
+            <a class="dropdown-item" href="admin-capital-applications.html"
+              ><i class="bi-folder2-open me-2"></i> Capital Applications</a
+            >
+          </li>
+          <li>
+            <a class="dropdown-item" href="admin-messages.html"
+              ><i class="bi-chat-dots-fill me-2"></i> Messages</a
+            >
+          </li>
+          <li>
+            <a class="dropdown-item" href="admin-settings-payments.html"
+              ><i class="bi-credit-card me-2"></i> Settings & Payments</a
+            >
+          </li>
+          <li>
+            <a class="dropdown-item" href="admin-signals.html"
+              ><i class="bi-lightning-fill me-2"></i> Signals</a
+            >
+          </li>
+          <li>
+            <a class="dropdown-item" href="admin-testimonials.html"
+              ><i class="bi-chat-quote me-2"></i> Testimonials</a
+            >
+          </li>
+          <li>
+            <a class="dropdown-item" href="admin-trade-history.html"
+              ><i class="bi-clock-history me-2"></i> Trade History</a
+            >
+          </li>
+          <li>
+            <a class="dropdown-item" href="admin-trade-insights.html"
+              ><i class="bi-graph-up me-2"></i> Trade Insights</a
+            >
+          </li>
+          <li>
+            <a class="dropdown-item" href="admin-users.html"
+              ><i class="bi-people-fill me-2"></i> Users</a
+            >
+          </li>
           <li><hr class="dropdown-divider" /></li>
           <li class="dropdown-header text-gold">Quick Access</li>
-          <li><a class="dropdown-item" href="#stats-container"><i class="bi-bar-chart-fill me-2"></i> View Stats</a></li>
-          <li><a class="dropdown-item" href="#activity-section"><i class="bi-list-task me-2"></i> View Activity Logs</a></li>
+          <li>
+            <a class="dropdown-item" href="#stats-container"
+              ><i class="bi-bar-chart-fill me-2"></i> View Stats</a
+            >
+          </li>
+          <li>
+            <a class="dropdown-item" href="#activity-section"
+              ><i class="bi-list-task me-2"></i> View Activity Logs</a
+            >
+          </li>
         </ul>
       </div>
-      <button id="theme-toggle" aria-label="Toggle theme" class="icon-btn">🌞</button>
+
+      <!-- THEME TOGGLE -->
+      <button id="theme-toggle" aria-label="Toggle theme" class="icon-btn">
+        🌞
+      </button>
     </div>
   </header>
 
-  <!-- Main Content -->
+  <!-- ====================
+       MAIN CONTENT
+  ==================== -->
   <main class="admin-content">
+    <!-- QUICK ACTIONS -->
     <div class="quick-actions">
-      <a href="#" class="btn-quick" id="btn-refresh-stats"><i class="bi-arrow-clockwise"></i> Refresh Stats</a>
-      <a href="admin-users.html" class="btn-quick"><i class="bi-plus-circle"></i> Add New User</a>
-      <a href="admin-settings-payments.html" class="btn-quick"><i class="bi-currency-bitcoin"></i> Fund Account</a>
-      <a href="https://my.brevo.com/advanced/batlist" class="btn-quick" target="_blank" rel="noopener"><i class="bi-envelope"></i> Send Broadcast</a>
-      <a href="admin-reports.html" class="btn-quick"><i class="bi-graph-up"></i> Generate Report</a>
+      <a href="#" class="btn-quick" id="btn-refresh-stats">
+        <i class="bi-arrow-clockwise"></i> Refresh Stats
+      </a>
+      <a href="admin-users.html" class="btn-quick">
+        <i class="bi-plus-circle"></i> Add New User
+      </a>
+      <a href="admin-settings-payments.html" class="btn-quick">
+        <i class="bi-currency-bitcoin"></i> Fund Account
+      </a>
+      <a
+        href="https://my.brevo.com/advanced/batlist"
+        class="btn-quick"
+        target="_blank"
+        rel="noopener"
+      >
+        <i class="bi-envelope"></i> Send Broadcast
+      </a>
+      <a href="admin-trade-insights.html" class="btn-quick">
+        <i class="bi-graph-up"></i> Generate Report
+      </a>
     </div>
 
+    <!-- DRAG-AND-DROP STAT CARDS -->
     <div class="stats-row" id="stats-container">
-      <div class="card-stat" data-key="users"><h5>Total Users</h5><h2 id="stat-users">0</h2></div>
-      <div class="card-stat" data-key="payments"><h5>Pending Payments</h5><h2 id="stats-payments">0</h2></div>
-      <div class="card-stat" data-key="trades"><h5>Trades This Month</h5><h2 id="stats-trades">0</h2></div>
-      <div class="card-stat" data-key="signals"><h5>Signals Published</h5><h2 id="stats-signals">0</h2></div>
-      <div class="card-stat" data-key="winrate"><h5>Win Rate (%)</h5><h2 id="stats-winrate">0</h2></div>
+      <div class="card-stat" data-key="users">
+        <h5>Total Users</h5>
+        <h2 id="stat-users">0</h2>
+      </div>
+      <div class="card-stat" data-key="payments">
+        <h5>Pending Payments</h5>
+        <h2 id="stats-payments">0</h2>
+      </div>
+      <div class="card-stat" data-key="trades">
+        <h5>Trades This Month</h5>
+        <h2 id="stats-trades">0</h2>
+      </div>
+      <div class="card-stat" data-key="signals">
+        <h5>Signals Published</h5>
+        <h2 id="stats-signals">0</h2>
+      </div>
+      <div class="card-stat" data-key="winrate">
+        <h5>Win Rate (%)</h5>
+        <h2 id="stats-winrate">0</h2>
+      </div>
     </div>
 
+    <!-- CHARTS SECTION -->
     <div class="charts">
       <div class="chart-container" id="container-pnl">
         <h4>Weekly P&L (Pips)</h4>
         <canvas id="chart-pnl"></canvas>
-        <div class="chart-actions"><button data-chart-id="chart-pnl">Download P&L Chart</button></div>
+        <div class="chart-actions">
+          <button data-chart-id="chart-pnl">Download P&L Chart</button>
+        </div>
       </div>
       <div class="chart-container" id="container-winrate">
         <h4>Weekly Win Rate (%)</h4>
         <canvas id="chart-winrate"></canvas>
-        <div class="chart-actions"><button data-chart-id="chart-winrate">Download Win Rate Chart</button></div>
+        <div class="chart-actions">
+          <button data-chart-id="chart-winrate">Download Win Rate Chart</button>
+        </div>
       </div>
       <div class="chart-container" id="container-status">
         <h4>User Status Distribution</h4>
         <canvas id="chart-status"></canvas>
-        <div class="chart-actions"><button data-chart-id="chart-status">Download Status Chart</button></div>
+        <div class="chart-actions">
+          <button data-chart-id="chart-status">Download Status Chart</button>
+        </div>
       </div>
     </div>
 
+    <!-- ACTIVITY LOGS SECTION -->
     <section class="activity-card" id="activity-section">
-      <h3 id="activity-header" title="Expand Logs">Recent Activity Logs</h3>
+      <!-- Header with Collapse Icon (collapsed by default) -->
+      <h3 id="activity-header">Recent Activity Logs</h3>
       <i class="bi-plus-circle collapse-icon" id="toggle-activity" title="Expand Logs"></i>
+
+      <!-- Filter & Export (hidden initially) -->
       <div class="d-flex align-items-center" id="filter-export-row" style="margin-top: 1rem;">
-        <input type="text" id="activity-filter" placeholder="Filter by UserID/Action" />
-        <button id="export-logs" class="btn-export"><i class="bi-download"></i> Download Logs</button>
+        <input
+          type="text"
+          id="activity-filter"
+          placeholder="Filter by UserID/Action"
+        />
+        <button id="export-logs" class="btn-export">
+          <i class="bi-download"></i> Download Logs
+        </button>
       </div>
+
+      <!-- Table Wrapper (hidden initially) -->
       <div class="table-responsive" id="activity-table-wrapper" style="margin-top: 0.75rem;">
         <table class="table table-borderless table-hover">
           <thead>
@@ -517,120 +861,286 @@
     </section>
   </main>
 
-  <!-- Scripts -->
+  <!-- ====================
+       SCRIPTS: BOOTSTRAP, SUPABASE, DASHBOARD LOGIC
+  ==================== -->
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
   <script>
-    const SUPA_URL = 'https://dapwpgvnfjcfqqhrpxla.supabase.co';
+    // 1) INITIALIZE SUPABASE
+    const SUPA_URL      = 'https://dapwpgvnfjcfqqhrpxla.supabase.co';
     const SUPA_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImRhcHdwZ3ZuZmpjZnFxaHJweGxhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDcwNDA4ODgsImV4cCI6MjA2MjYxNjg4OH0.ICC0UsLlzJDNre7rFCeD3k6iVzo6jOJgn3PhABpEMsQ';
-    const supabase = window.supabase.createClient(SUPA_URL, SUPA_ANON_KEY);
+    const supabase      = window.supabase.createClient(SUPA_URL, SUPA_ANON_KEY);
 
     document.addEventListener('DOMContentLoaded', () => {
-      document.getElementById('header-logo').onclick = () => window.location.href = 'admin-dashboard.html';
+      // SIDEBAR TOGGLE (Responsive)
+      const sidebar = document.getElementById('sidebar');
+      const sidebarToggle = document.getElementById('sidebar-toggle');
+      const overlay = document.querySelector('.overlay');
 
+      function closeSidebar() {
+        sidebar.classList.add('collapsed');
+        document.body.classList.remove('sidebar-open');
+        sidebarToggle.classList.add('collapsed');
+        overlay.style.opacity = 0;
+      }
+      function openSidebar() {
+        sidebar.classList.remove('collapsed');
+        document.body.classList.add('sidebar-open');
+        sidebarToggle.classList.remove('collapsed');
+        overlay.style.opacity = 1;
+      }
+
+      // Initially collapsed (already has .collapsed in HTML)
+      sidebarToggle.addEventListener('click', () => {
+        if (sidebar.classList.contains('collapsed')) {
+          openSidebar();
+        } else {
+          closeSidebar();
+        }
+      });
+      overlay.addEventListener('click', closeSidebar);
+
+      // Clicking sidebar logo resets to Dashboard
+      document.getElementById('sidebar-logo').onclick = () => {
+        window.location.href = 'admin-dashboard.html';
+        if (window.innerWidth < 992) closeSidebar();
+      };
+      // Clicking header logo resets to Dashboard
+      document.getElementById('header-logo').onclick = () => {
+        window.location.href = 'admin-dashboard.html';
+      };
+
+      // THEME TOGGLE
       const themeBtn = document.getElementById('theme-toggle');
       const setTheme = (t) => {
         document.documentElement.setAttribute('data-theme', t);
         localStorage.setItem('theme', t);
         themeBtn.textContent = t === 'dark' ? '🌞' : '🌜';
       };
-      themeBtn.addEventListener('click', () => setTheme(document.documentElement.getAttribute('data-theme') === 'dark' ? 'light' : 'dark'));
+      themeBtn.addEventListener('click', () => {
+        setTheme(document.documentElement.getAttribute('data-theme') === 'dark' ? 'light' : 'dark');
+      });
       setTheme(localStorage.getItem('theme') || 'dark');
 
+      // LIVE CLOCK
       const clkEl = document.getElementById('current-datetime');
-      function updateClock() { clkEl.textContent = new Date().toLocaleString(); }
+      function updateClock() {
+        clkEl.textContent = new Date().toLocaleString();
+      }
       updateClock();
       setInterval(updateClock, 60000);
 
+      // FETCH STATS & RENDER CHARTS (and allow manual refresh)
       async function loadStatsAndCharts() {
         try {
-          const [{ count: usersCount }, { data: payments }, { data: trades }, { data: signals }, { data: insights }, { data: allUsers }] = await Promise.all([
+          // Parallel data fetches
+          const [
+            { count: usersCount },
+            { data: payments },
+            { data: trades },
+            { data: signals },
+            { data: insights },
+            { data: allUsers }
+          ] = await Promise.all([
             supabase.from('users').select('id', { head: true, count: 'exact' }),
             supabase.from('payments').select('id').eq('status', 'Pending'),
             supabase.from('trade_history').select('id'),
             supabase.from('signals').select('id'),
-            supabase.from('trade_insights').select('week_ending,pips').order('week_ending', { ascending: false }).limit(12),
+            supabase
+              .from('trade_insights')
+              .select('week_ending,pips')
+              .order('week_ending', { ascending: false })
+              .limit(12), // last 12 weeks
             supabase.from('users').select('status')
           ]);
 
+          // Update stat cards
           document.getElementById('stat-users').textContent = usersCount;
           document.getElementById('stats-payments').textContent = payments.length;
           document.getElementById('stats-trades').textContent = trades.length;
           document.getElementById('stats-signals').textContent = signals.length;
-          const wins = insights.filter(i => i.pips > 0).length;
+          const wins = insights.filter((i) => i.pips > 0).length;
           const rate = insights.length ? Math.round((wins / insights.length) * 100) : 0;
           document.getElementById('stats-winrate').textContent = rate;
 
-          new Sortable(document.getElementById('stats-container'), { animation: 150, ghostClass: 'sortable-ghost', dragClass: 'sortable-drag', handle: '.card-stat' });
+          // Make stat cards draggable
+          new Sortable(document.getElementById('stats-container'), {
+            animation: 150,
+            ghostClass: 'sortable-ghost',
+            dragClass: 'sortable-drag',
+            handle: '.card-stat'
+          });
 
-          const labels = insights.map(i => new Date(i.week_ending).toLocaleDateString()).reverse();
-          const pipsData = insights.map(i => i.pips).reverse();
+          // Prepare labels & data for charts
+          const labels = insights
+            .map((i) => new Date(i.week_ending).toLocaleDateString())
+            .reverse();
+          const pipsData = insights.map((i) => i.pips).reverse();
 
+          // P&L Line Chart
+          const pnlCtx = document.getElementById('chart-pnl').getContext('2d');
           if (window.pnlChart) window.pnlChart.destroy();
-          window.pnlChart = new Chart(document.getElementById('chart-pnl').getContext('2d'), {
+          window.pnlChart = new Chart(pnlCtx, {
             type: 'line',
-            data: { labels, datasets: [{ label: 'Pips', data: pipsData, tension: 0.3, borderColor: varToRgb('--gold'), backgroundColor: hexToRgba(varToRgb('--gold'), 0.2) }] },
-            options: { responsive: true, scales: { x: { ticks: { color: varToRgb('--text') } }, y: { ticks: { color: varToRgb('--text') } } }, plugins: { legend: { display: false } } }
+            data: {
+              labels,
+              datasets: [
+                {
+                  label: 'Pips',
+                  data: pipsData,
+                  tension: 0.3,
+                  borderColor: varToRgb('--gold'),
+                  backgroundColor: hexToRgba(varToRgb('--gold'), 0.2)
+                }
+              ]
+            },
+            options: {
+              responsive: true,
+              scales: {
+                x: { ticks: { color: varToRgb('--text') } },
+                y: { ticks: { color: varToRgb('--text') } }
+              },
+              plugins: {
+                legend: { display: false }
+              }
+            }
           });
 
+          // Win-Rate Bar Chart
+          const winCtx = document.getElementById('chart-winrate').getContext('2d');
           if (window.winChart) window.winChart.destroy();
-          window.winChart = new Chart(document.getElementById('chart-winrate').getContext('2d'), {
+          window.winChart = new Chart(winCtx, {
             type: 'bar',
-            data: { labels, datasets: [{ label: 'Win (100%) or Loss (0%)', data: insights.map(i => i.pips > 0 ? 100 : 0).reverse(), backgroundColor: insights.map(i => i.pips > 0 ? hexToRgba(varToRgb('--gold'), 0.7) : hexToRgba('#dc3545', 0.7)).reverse() }] },
-            options: { responsive: true, scales: { x: { ticks: { color: varToRgb('--text') } }, y: { ticks: { color: varToRgb('--text') }, beginAtZero: true, max: 100 } }, plugins: { legend: { display: false } } }
+            data: {
+              labels,
+              datasets: [
+                {
+                  label: 'Win (100%) or Loss (0%)',
+                  data: insights.map((i) => (i.pips > 0 ? 100 : 0)).reverse(),
+                  backgroundColor: insights
+                    .map((i) =>
+                      i.pips > 0
+                        ? hexToRgba(varToRgb('--gold'), 0.7)
+                        : hexToRgba('#dc3545', 0.7)
+                    )
+                    .reverse()
+                }
+              ]
+            },
+            options: {
+              responsive: true,
+              scales: {
+                x: { ticks: { color: varToRgb('--text') } },
+                y: {
+                  ticks: { color: varToRgb('--text') },
+                  beginAtZero: true,
+                  max: 100
+                }
+              },
+              plugins: { legend: { display: false } }
+            }
           });
 
-          const statusCounts = allUsers.reduce((acc, u) => { acc[u.status] = (acc[u.status] || 0) + 1; return acc; }, {});
+          // User-Status Doughnut Chart
+          const statusCounts = allUsers.reduce((acc, u) => {
+            acc[u.status] = (acc[u.status] || 0) + 1;
+            return acc;
+          }, {});
+          const statusCtx = document.getElementById('chart-status').getContext('2d');
           if (window.statusChart) window.statusChart.destroy();
-          window.statusChart = new Chart(document.getElementById('chart-status').getContext('2d'), {
+          window.statusChart = new Chart(statusCtx, {
             type: 'doughnut',
-            data: { labels: ['Active', 'Expired', 'Pending', 'Deleted'], datasets: [{ data: ['Active', 'Expired', 'Pending', 'Deleted'].map(label => statusCounts[label] || 0), backgroundColor: [hexToRgba(varToRgb('--gold'), 0.7), hexToRgba('#dc3545', 0.7), hexToRgba('#ffc107', 0.7), hexToRgba('#6c757d', 0.7)] }] },
-            options: { responsive: true, plugins: { legend: { position: 'bottom', labels: { color: varToRgb('--text') } } } }
+            data: {
+              labels: ['Active', 'Expired', 'Pending', 'Deleted'],
+              datasets: [
+                {
+                  data: ['Active', 'Expired', 'Pending', 'Deleted'].map(
+                    (label) => statusCounts[label] || 0
+                  ),
+                  backgroundColor: [
+                    hexToRgba(varToRgb('--gold'), 0.7),
+                    hexToRgba('#dc3545', 0.7),
+                    hexToRgba('#ffc107', 0.7),
+                    hexToRgba('#6c757d', 0.7)
+                  ]
+                }
+              ]
+            },
+            options: {
+              responsive: true,
+              plugins: {
+                legend: {
+                  position: 'bottom',
+                  labels: { color: varToRgb('--text') }
+                }
+              }
+            }
           });
         } catch (err) {
           console.error('Error loading dashboard:', err);
           showToast('Error loading dashboard data', 'critical');
         }
       }
-      loadStatsAndCharts();
-      document.getElementById('btn-refresh-stats').addEventListener('click', () => { showToast('Refreshing stats...', 'info'); loadStatsAndCharts(); });
 
+      // Initial load of stats/charts
+      loadStatsAndCharts();
+
+      // Manual “Refresh Stats” button
+      document.getElementById('btn-refresh-stats').addEventListener('click', () => {
+        showToast('Refreshing stats...', 'info');
+        loadStatsAndCharts();
+      });
+
+      // LOAD RECENT ACTIVITY LOGS
       async function loadRecentActivity() {
         try {
-          const { data, error } = await supabase.from('user_activity').select('*').order('timestamp', { ascending: false }).limit(50);
+          const { data, error } = await supabase
+            .from('user_activity')
+            .select('*')
+            .order('timestamp', { ascending: false })
+            .limit(50); // fetch last 50 for filtering
           if (error) throw error;
           const tbody = document.getElementById('activity-body');
           tbody.innerHTML = '';
-          if (data.length === 0) {
-            tbody.innerHTML = '<tr><td colspan="7" class="text-center">No activity logs found</td></tr>';
-          } else {
-            data.forEach(row => {
-              const tr = document.createElement('tr');
-              tr.innerHTML = `
-                <td class="act-user">${row.user_id || 'N/A'}</td>
-                <td class="act-action">${row.action || 'N/A'}</td>
-                <td>${row.timestamp ? new Date(row.timestamp).toLocaleString() : 'N/A'}</td>
-                <td>${row.ip_address || 'N/A'}</td>
-                <td>${row.city || 'N/A'}</td>
-                <td>${row.country || 'N/A'}</td>
-                <td>${row.device || 'N/A'}</td>
-              `;
-              tbody.appendChild(tr);
-            });
-          }
+          data.forEach((row) => {
+            const tr = document.createElement('tr');
+            tr.innerHTML = `
+              <td class="act-user">${row.user_id || 'N/A'}</td>
+              <td class="act-action">${row.action || 'N/A'}</td>
+              <td>${row.timestamp ? new Date(row.timestamp).toLocaleDateString() : 'N/A'}</td>
+              <td>${row.ip_address || 'N/A'}</td>
+              <td>${row.city || 'N/A'}</td>
+              <td>${row.country || 'N/A'}</td>
+              <td>${row.device || 'N/A'}</td>
+            `;
+            tbody.appendChild(tr);
+          });
           applyActivityFilter();
         } catch (err) {
           console.error('Activity load error:', err);
           showToast('Failed to load activity logs', 'critical');
-          document.getElementById('activity-body').innerHTML = '<tr><td colspan="7" class="text-danger">Failed to load logs</td></tr>';
+          document.getElementById('activity-body').innerHTML =
+            '<tr><td colspan="7" class="text-danger">Failed to load logs</td></tr>';
         }
       }
 
+      // EXPORT ACTIVITY LOGS AS CSV
       async function downloadActivityLog() {
         try {
-          const { data, error } = await supabase.from('user_activity').select('*').order('timestamp', { ascending: false });
+          const { data, error } = await supabase
+            .from('user_activity')
+            .select('*')
+            .order('timestamp', { ascending: false });
           if (error) throw error;
-          const csvRows = ['Timestamp,Action,IP Address,City,Country,Device'].concat(data.map(row => `${row.timestamp ? new Date(row.timestamp).toLocaleString() : ''},${row.action},${row.ip_address},${row.city},${row.country},"${row.device}"`));
+          const csvRows = [
+            'User ID,Action,Timestamp,IP Address,City,Country,Device'
+          ].concat(
+            data.map((row) => {
+              const ts = row.timestamp ? new Date(row.timestamp).toLocaleDateString() : '';
+              return `${row.user_id || ''},${row.action || ''},${ts},${row.ip_address || ''},${row.city || ''},${row.country || ''},"${row.device || ''}"`;
+            })
+          );
           const csvContent = csvRows.join('\n');
           const blob = new Blob([csvContent], { type: 'text/csv' });
           const url = URL.createObjectURL(blob);
@@ -646,52 +1156,75 @@
         }
       }
 
+      // REAL-TIME UPDATES FOR ACTIVITY LOGS
       loadRecentActivity();
       document.getElementById('export-logs').addEventListener('click', downloadActivityLog);
-      supabase.channel('user_activity').on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'user_activity' }, () => loadRecentActivity()).subscribe();
+      document.getElementById('sidebar-download-logs').addEventListener('click', (e) => {
+        e.preventDefault();
+        downloadActivityLog();
+      });
+      supabase
+        .channel('user_activity')
+        .on(
+          'postgres_changes',
+          { event: 'INSERT', schema: 'public', table: 'user_activity' },
+          () => {
+            loadRecentActivity();
+          }
+        )
+        .subscribe();
 
+      // ACTIVITY FILTER LOGIC
       const filterInput = document.getElementById('activity-filter');
       filterInput.addEventListener('input', applyActivityFilter);
+
       function applyActivityFilter() {
         const filterText = filterInput.value.trim().toLowerCase();
         const rows = document.querySelectorAll('#activity-body tr');
-        rows.forEach(tr => {
+        rows.forEach((tr) => {
           const userCell = tr.querySelector('.act-user').textContent.toLowerCase();
           const actionCell = tr.querySelector('.act-action').textContent.toLowerCase();
-          tr.style.display = (userCell.includes(filterText) || actionCell.includes(filterText) || filterText === '') ? '' : 'none';
+          if (
+            userCell.includes(filterText) ||
+            actionCell.includes(filterText) ||
+            filterText === ''
+          ) {
+            tr.style.display = '';
+          } else {
+            tr.style.display = 'none';
+          }
         });
       }
 
+      // COLLAPSE / EXPAND ACTIVITY LOGS (collapsed initially)
       const toggleActivity = document.getElementById('toggle-activity');
-      const activityHeader = document.getElementById('activity-header');
       const filterExportRow = document.getElementById('filter-export-row');
       const tableWrapper = document.getElementById('activity-table-wrapper');
-      let activityCollapsed = true;
+      let activityCollapsed = true; // start collapsed
 
-      function toggleActivityLogs() {
+      toggleActivity.addEventListener('click', () => {
         activityCollapsed = !activityCollapsed;
         if (!activityCollapsed) {
+          // Expand
           filterExportRow.style.display = 'flex';
           tableWrapper.style.display = '';
           toggleActivity.classList.replace('bi-plus-circle', 'bi-dash-circle');
-          activityHeader.title = 'Collapse Logs';
-          toggleActivity.title = 'Collapse Logs';
+          document.getElementById('activity-header').title = 'Collapse Logs';
         } else {
+          // Collapse
           filterExportRow.style.display = 'none';
           tableWrapper.style.display = 'none';
           toggleActivity.classList.replace('bi-dash-circle', 'bi-plus-circle');
-          activityHeader.title = 'Expand Logs';
-          toggleActivity.title = 'Expand Logs';
+          document.getElementById('activity-header').title = 'Expand Logs';
         }
-      }
-      toggleActivity.addEventListener('click', toggleActivityLogs);
-      activityHeader.addEventListener('click', toggleActivityLogs);
+      });
 
-      document.querySelectorAll('.chart-actions button').forEach(btn => {
+      // DOWNLOAD CHART AS IMAGE
+      document.querySelectorAll('.chart-actions button').forEach((btn) => {
         btn.addEventListener('click', () => {
           const chartId = btn.getAttribute('data-chart-id');
           const chartCanvas = document.getElementById(chartId);
-          chartCanvas.toBlob(blob => {
+          chartCanvas.toBlob((blob) => {
             const url = URL.createObjectURL(blob);
             const a = document.createElement('a');
             a.href = url;
@@ -703,17 +1236,28 @@
         });
       });
 
+      // SHOW TOAST NOTIFICATIONS
       function showToast(message, type = 'info') {
         const toastEl = document.createElement('div');
-        toastEl.className = `toast align-items-center text-white bg-${type === 'critical' ? 'danger' : 'success'} border-0 position-fixed top-0 end-0 m-3`;
+        toastEl.className = `toast align-items-center text-white bg-${
+          type === 'critical' ? 'danger' : 'success'
+        } border-0 position-fixed top-0 end-0 m-3`;
         toastEl.style.zIndex = '1055';
-        toastEl.innerHTML = `<div class="d-flex"><div class="toast-body">${message}</div><button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast"></button></div>`;
+        toastEl.innerHTML = `
+          <div class="d-flex">
+            <div class="toast-body">${message}</div>
+            <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast"></button>
+          </div>`;
         document.body.append(toastEl);
         new bootstrap.Toast(toastEl, { delay: 3000 }).show();
       }
 
+      // HELPER FUNCTIONS: CONVERT CSS VARS TO RGB/RGBA
       function varToRgb(varName) {
-        return getComputedStyle(document.documentElement).getPropertyValue(varName).trim() || '#fff';
+        const rgb = getComputedStyle(document.documentElement)
+          .getPropertyValue(varName)
+          .trim();
+        return rgb || '#fff';
       }
       function hexToRgba(hex, alpha) {
         if (hex.startsWith('#')) {
@@ -723,7 +1267,9 @@
           return `rgba(${r},${g},${b},${alpha})`;
         }
         const rgbMatch = hex.match(/#?(\d+),\s*(\d+),\s*(\d+)/);
-        if (rgbMatch) return `rgba(${rgbMatch[1]},${rgbMatch[2]},${rgbMatch[3]},${alpha})`;
+        if (rgbMatch) {
+          return `rgba(${rgbMatch[1]},${rgbMatch[2]},${rgbMatch[3]},${alpha})`;
+        }
         return hex;
       }
     });
