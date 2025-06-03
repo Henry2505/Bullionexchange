@@ -223,7 +223,9 @@
       font-size: 0.9rem;
       font-weight: 600;
       min-height: 24px;
+      /* default color is “success”, but we’ll override as needed */
       color: var(--success-color);
+      white-space: pre-wrap; /* allow multiline JSON if needed */
     }
 
     footer {
@@ -326,7 +328,6 @@
 
   <script>
     // ─── Supabase client for referral-code validation ─────────────────────────────────
-    // Replace with your Supabase project URL & anon key (already configured in your Netlify ENV too)
     const SUPA_URL = "https://dapwpgvnfjcfqqhrpxla.supabase.co";
     const SUPA_ANON_KEY =
       "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImRhcHdwZ3ZuZmpjZnFxaHJweGxhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDcwNDA4ODgsImV4cCI6MjA2MjYxNjg4OH0.ICC0UsLlzJDNre7rFCeD3k6iVzo6jOJgn3PhABpEMsQ";
@@ -346,7 +347,7 @@
       document.getElementById("theme-toggle").textContent =
         savedTheme === "dark" ? "🌞" : "🌜";
 
-      // 2) Make the card visible (fade/translate animation)
+      // 2) Fade-in the card
       const card = document.getElementById("apply-card");
       card.classList.add("visible");
 
@@ -382,7 +383,7 @@
 
     form.addEventListener("submit", async (evt) => {
       evt.preventDefault();
-      alertDiv.textContent = "";
+      alertDiv.textContent = ""; 
       alertDiv.style.color = "";
 
       const name = document.getElementById("apply-name").value.trim();
@@ -417,7 +418,7 @@
         const urlRef = getReferralFromURL();
         const referralCodeToUse = manualRef || urlRef || null;
 
-        // 2) If a code exists, validate it against Supabase affiliate_user table
+        // 2) If a code exists, validate it against Supabase affiliate_user
         if (referralCodeToUse) {
           const { data: affiliateUser, error: checkErr } = await supabaseClient
             .from("affiliate_user")
@@ -432,7 +433,6 @@
             submitBtn.textContent = "Submit Application";
             return;
           }
-          // Valid code at this point
         }
 
         // 3) Prepare payload for Netlify function
@@ -460,11 +460,11 @@
         }
 
         if (!fnResponse.ok) {
-          console.error("Function error:", fnResponse.status, fnResult);
-          const errMsg =
-            fnResult?.error ||
-            "Server encountered an error while processing your application.";
-          throw new Error(errMsg);
+          // Show the full JSON error from the function
+          const errorMsg = fnResult?.error || JSON.stringify(fnResult) || "Unknown server error.";
+          alertDiv.style.color = "var(--error-color)";
+          alertDiv.textContent = `Error: ${errorMsg}`;
+          throw new Error(errorMsg);
         }
 
         // 5) Success: show confirmation
@@ -475,8 +475,7 @@
         submitBtn.classList.remove("enabled");
       } catch (err) {
         console.error("Submission error:", err);
-        alertDiv.style.color = "var(--error-color)";
-        alertDiv.textContent = err.message || "An unexpected error occurred.";
+        // If err.message already shown above, no need to override again
       } finally {
         submitBtn.disabled = true;
         submitBtn.textContent = "Submit Application";
