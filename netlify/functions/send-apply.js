@@ -1,4 +1,4 @@
-// netlify/functions/send-apply.js
+// netlify/functions/send-application.js
 
 const { createClient } = require("@supabase/supabase-js");
 
@@ -29,12 +29,14 @@ exports.handler = async (event) => {
     };
   }
 
-  // ─── Supabase credentials (hard-coded per your request) ─────────────────────────
-  const SUPABASE_URL      = "https://dapwpgvnfjcfqqhrpxla.supabase.co";
-  const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImRhcHdwZ3ZuZmpjZnFxaHJweGxhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDcwNDA4ODgsImV4cCI6MjA2MjYxNjg4OH0.ICC0UsLlzJDNre7rFCeD3k6iVzo6jOJgn3PhABpEMsQ";
+  // ─── Supabase credentials (hard-coded) ────────────────────────────────────────────
+  const SUPABASE_URL =
+    "https://dapwpgvnfjcfqqhrpxla.supabase.co";
+  const SUPABASE_ANON_KEY =
+    "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImRhcHdwZ3ZuZmpjZnFxaHJweGxhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDcwNDA4ODgsImV4cCI6MjA2MjYxNjg4OH0.ICC0UsLlzJDNre7rFCeD3k6iVzo6jOJgn3PhABpEMsQ";
 
   if (!SUPABASE_URL || !SUPABASE_ANON_KEY) {
-    console.error("Supabase environment variables missing");
+    console.error("Supabase credentials missing");
     return {
       statusCode: 500,
       body: JSON.stringify({ error: "Supabase not configured." }),
@@ -44,7 +46,6 @@ exports.handler = async (event) => {
 
   let referredById = null;
   if (referral_code) {
-    // Validate referral code against the "affiliates" table
     const { data: affiliateRow, error: checkReferralErr } = await supabase
       .from("affiliates")
       .select("user_id")
@@ -68,7 +69,6 @@ exports.handler = async (event) => {
   }
 
   try {
-    // Check if email already exists in "users"
     const { data: existingUser, error: checkError } = await supabase
       .from("users")
       .select("id")
@@ -89,7 +89,6 @@ exports.handler = async (event) => {
       };
     }
 
-    // Insert new user into "users" table, including referred_by if applicable
     const insertPayload = {
       name,
       email,
@@ -114,7 +113,6 @@ exports.handler = async (event) => {
       };
     }
 
-    // ─── Brevo email notification ────────────────────────────────────────────────
     const BREVO_API_KEY = process.env.BREVO_API_KEY;
     if (!BREVO_API_KEY) {
       console.error("Missing BREVO_API_KEY environment variable");
@@ -124,9 +122,9 @@ exports.handler = async (event) => {
       };
     }
 
-    const BREVO_SENDER_NAME  = "Chukwuemeka Bullion Exchange";
+    const BREVO_SENDER_NAME = "Chukwuemeka Bullion Exchange";
     const BREVO_SENDER_EMAIL = "noreply@apexincomeoptions.com.ng";
-    const BREVO_TEMPLATE_ID  = 1;
+    const BREVO_TEMPLATE_ID = 1;
 
     const brevoPayload = {
       sender: {
@@ -165,8 +163,13 @@ exports.handler = async (event) => {
     }
 
     if (!brevoResponse.ok) {
-      console.error("Brevo responded with error:", brevoResponse.status, brevoResult);
-      const brevoMsg = brevoResult?.message || brevoResult?.error || "Unknown Brevo error";
+      console.error(
+        "Brevo responded with error:",
+        brevoResponse.status,
+        brevoResult
+      );
+      const brevoMsg =
+        brevoResult?.message || brevoResult?.error || "Unknown Brevo error";
       return {
         statusCode: 502,
         body: JSON.stringify({ error: "Brevo error: " + brevoMsg }),
@@ -176,11 +179,11 @@ exports.handler = async (event) => {
     return {
       statusCode: 200,
       body: JSON.stringify({
-        message: "Registration successful! Your application is pending approval."
+        message: "Registration successful! Your application is pending approval.",
       }),
     };
   } catch (err) {
-    console.error("Unexpected error in send-apply function:", err);
+    console.error("Unexpected error in send-application function:", err);
     return {
       statusCode: 500,
       body: JSON.stringify({ error: "Internal server error." }),
