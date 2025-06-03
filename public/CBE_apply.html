@@ -221,6 +221,7 @@
       font-weight: 600;
       min-height: 24px;
       color: var(--success-color);
+      /* we’ll override color to error or success in JS */
     }
 
     footer {
@@ -411,7 +412,7 @@
         const urlRef = getReferralFromURL();
         const referralCodeToUse = manualRef || urlRef || null;
 
-        // 2) If a code exists, validate it against Supabase (now checking "affiliates" table)
+        // 2) If a code exists, validate it against Supabase (checking "affiliates" table)
         if (referralCodeToUse) {
           const { data: affiliateRow, error: checkErr } = await supabaseClient
             .from("affiliates")
@@ -440,32 +441,48 @@
         };
 
         // 4) Call the Netlify function endpoint
+        //    Make sure this path exactly matches your deployed function
         const fnResponse = await fetch("/.netlify/functions/send-application", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify(payload),
         });
 
-        let fnResult = null;
+        // ── NEW: Check for non‐200 and log more info ─────────────────────────────────
+        if (!fnResponse.ok) {
+          console.error("Function returned status:", fnResponse.status);
+          let text = null;
+          try {
+            text = await fnResponse.text();
+            console.error("Function response body:", text);
+          } catch (parseErr) {
+            console.error("Could not read response body:", parseErr);
+          }
+          alertDiv.style.color = "var(--error-color)";
+          alertDiv.textContent = "Server encountered an error: " 
+            + (text ? text : `status ${fnResponse.status}`);
+          return;
+        }
+
+        // 5) If OK, parse JSON
+        let fnResult;
         try {
           fnResult = await fnResponse.json();
         } catch (parseErr) {
           console.error("Could not parse JSON:", parseErr);
+          alertDiv.style.color = "var(--error-color)";
+          alertDiv.textContent = "Server returned invalid JSON.";
+          return;
         }
 
-        if (!fnResponse.ok) {
-          console.error("Function error:", fnResponse.status, fnResult);
-          throw new Error(fnResult?.error || "Server encountered an error.");
-        }
-
-        // 5) Success: show confirmation
+        // 6) Success: show confirmation
         alertDiv.style.color = "var(--success-color)";
-        alertDiv.textContent = fnResult.message;
+        alertDiv.textContent = fnResult.message || "Application submitted successfully!";
         form.reset();
         agree.checked = false;
         submitBtn.classList.remove("enabled");
       } catch (err) {
-        console.error("Submission error:", err);
+        console.error("Submission error (caught):", err);
         alertDiv.style.color = "var(--error-color)";
         alertDiv.textContent = err.message || "An unexpected error occurred.";
       } finally {
