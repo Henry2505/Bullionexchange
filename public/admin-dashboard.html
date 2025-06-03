@@ -57,7 +57,6 @@
       --gold-dark: #cca300;
       --overlay: rgba(0, 0, 0, 0.15);
       --glass-bg: rgba(255, 255, 255, 0.05);
-      --sidebar-width: 250px;
       --transition-fast: 0.2s ease-in-out;
     }
     [data-theme='light'] {
@@ -89,79 +88,18 @@
       background: rgba(0, 0, 0, 0.7);
       backdrop-filter: blur(12px);
     }
-    .overlay {
-      position: fixed;
-      top: 0;
-      left: 0;
-      width: 100%;
-      height: 100%;
-      background: var(--overlay);
-      z-index: 1;
-      opacity: 0;
-      pointer-events: none;
-      transition: opacity var(--transition-fast);
+    /* Hide scrollbars where appropriate */
+    .no-scrollbar::-webkit-scrollbar {
+      display: none;
+    }
+    .no-scrollbar {
+      -ms-overflow-style: none;
+      scrollbar-width: none;
     }
 
     /* ================================
-       LAYOUT: SIDEBAR & HEADER
+       HEADER (Top Bar)
     ================================= */
-    .sidebar {
-      position: fixed;
-      top: 0;
-      left: 0;
-      width: var(--sidebar-width);
-      height: 100%;
-      background: var(--glass-bg);
-      backdrop-filter: blur(12px);
-      border-right: 1px solid var(--gold);
-      padding: 1.5rem 1rem;
-      transition: transform var(--transition-fast);
-      z-index: 10;
-    }
-    .sidebar.collapsed {
-      transform: translateX(-100%);
-    }
-    .sidebar .logo {
-      text-align: center;
-      margin-bottom: 2rem;
-      cursor: pointer;
-    }
-    .sidebar .logo img {
-      height: 45px;
-    }
-    .sidebar nav ul {
-      list-style: none;
-      padding: 0;
-      margin: 1rem 0;
-    }
-    .sidebar nav li {
-      margin: 1rem 0;
-    }
-    .sidebar nav li a {
-      display: flex;
-      align-items: center;
-      gap: 0.75rem;
-      font-weight: 500;
-      padding: 0.5rem 0.25rem;
-      color: var(--text);
-      border-radius: 4px;
-      transition: background var(--transition-fast);
-    }
-    .sidebar nav li a:hover,
-    .sidebar nav li a.active {
-      background: rgba(255, 215, 0, 0.1);
-      color: var(--gold);
-    }
-    .sidebar nav {
-      overflow-y: auto;
-      max-height: calc(100% - 150px);
-    }
-    .sidebar-open .overlay {
-      pointer-events: auto;
-      opacity: 1;
-    }
-
-    /* Header (top bar) */
     header.admin-header {
       position: sticky;
       top: 0;
@@ -177,17 +115,22 @@
       border-bottom: 1px solid var(--gold);
       z-index: 5;
     }
-    #sidebar-toggle {
-      background: none;
-      border: none;
-      font-size: 1.5rem;
-      color: var(--text);
+    /* Logo (click → dashboard) */
+    .header-logo {
       cursor: pointer;
-      transition: transform var(--transition-fast);
+      display: flex;
+      align-items: center;
     }
-    #sidebar-toggle.collapsed {
-      transform: rotate(180deg);
+    .header-logo img {
+      height: 40px;
     }
+    /* Live clock */
+    #current-datetime {
+      color: var(--text);
+      margin-left: 1rem;
+      font-size: 0.9rem;
+    }
+    /* Header tools: search, notifications, user, more, theme */
     .header-tools {
       display: flex;
       align-items: center;
@@ -244,6 +187,8 @@
       background: var(--glass-bg);
       backdrop-filter: blur(12px);
       border: 1px solid var(--gold);
+      max-height: 300px;
+      overflow-y: auto;
     }
     .header-tools .dropdown-item {
       color: var(--text);
@@ -257,23 +202,9 @@
        MAIN CONTENT AREA
     ================================= */
     main.admin-content {
-      margin-left: var(--sidebar-width);
+      margin: 0 auto;
       padding: 1.5rem;
-      transition: margin-left var(--transition-fast);
-    }
-    .collapsed + main.admin-content {
-      margin-left: 0;
-    }
-    @media (max-width: 992px) {
-      .sidebar {
-        transform: translateX(-100%);
-      }
-      .sidebar.collapsed {
-        transform: translateX(0);
-      }
-      main.admin-content {
-        margin-left: 0;
-      }
+      max-width: 1280px;
     }
 
     /* ================================
@@ -407,6 +338,7 @@
       font-weight: 600;
       font-size: 1.1rem;
       display: inline-block;
+      cursor: pointer; /* clickable */
     }
     /* Collapse/expand icon for logs */
     .activity-card .collapse-icon {
@@ -473,6 +405,13 @@
       box-shadow: 0 0 5px var(--gold);
     }
 
+    /* Hide these by default (collapsed state) */
+    #activity-filter,
+    #export-logs,
+    #activity-table-wrapper {
+      display: none;
+    }
+
     /* RESPONSIVE TWEAKS */
     @media (max-width: 576px) {
       .header-tools .search-box input {
@@ -488,49 +427,17 @@
   </style>
 </head>
 <body>
-  <!-- Overlay for sidebar on mobile -->
-  <div class="overlay"></div>
-
-  <!-- ====================
-       SIDEBAR NAVIGATION
-  ==================== -->
-  <aside class="sidebar glass-strong collapsed" id="sidebar">
-    <div class="logo" id="sidebar-logo">
-      <img src="CBE_logo.PNG" alt="CBE Logo" />
-    </div>
-    <nav>
-      <ul>
-        <li><a href="admin-dashboard.html" class="active"><i class="bi-speedometer2"></i> Dashboard</a></li>
-        <li><a href="admin-capital-applications.html"><i class="bi-folder2-open"></i> Capital Applications</a></li>
-        <li><a href="admin-messages.html"><i class="bi-chat-dots-fill"></i> Messages</a></li>
-        <li><a href="admin-settings-payments.html"><i class="bi-credit-card"></i> Settings & Payments</a></li>
-        <li><a href="admin-signals.html"><i class="bi-lightning-fill"></i> Signals</a></li>
-        <li><a href="admin-testimonials.html"><i class="bi-chat-quote"></i> Testimonials</a></li>
-        <li><a href="admin-trade-history.html"><i class="bi-clock-history"></i> Trade History</a></li>
-        <li><a href="admin-trade-insights.html"><i class="bi-graph-up"></i> Trade Insights</a></li>
-        <li><a href="admin-users.html"><i class="bi-people-fill"></i> Users</a></li>
-        <li><a href="logout.html"><i class="bi-box-arrow-right"></i> Logout</a></li>
-      </ul>
-    </nav>
-    <div class="mt-auto text-center small" style="color: rgba(255, 255, 255, 0.6);">
-      CBE Admin v1.0
-    </div>
-  </aside>
-
   <!-- ====================
        HEADER (Top Bar)
   ==================== -->
   <header class="admin-header glass">
-    <!-- Sidebar Toggle -->
-    <button
-      id="sidebar-toggle"
-      class="collapsed"
-      aria-label="Toggle sidebar"
-    >
-      <i class="bi-list"></i>
-    </button>
+    <!-- Logo (click → dashboard) -->
+    <div class="header-logo" id="header-logo">
+      <img src="CBE_logo.PNG" alt="CBE Logo" />
+    </div>
 
-    <!-- Live Clock inserted via JS next to toggle -->
+    <!-- Live Clock -->
+    <small id="current-datetime"></small>
 
     <!-- Header Tools: search, notifications, user menu, more menu, theme -->
     <div class="header-tools">
@@ -558,7 +465,7 @@
           <span class="badge" id="notif-badge">3</span>
         </button>
         <ul
-          class="dropdown-menu dropdown-menu-end glass"
+          class="dropdown-menu dropdown-menu-end glass no-scrollbar"
           aria-labelledby="notifDropdown"
         >
           <li class="dropdown-header text-gold">Notifications</li>
@@ -601,7 +508,7 @@
           />
         </button>
         <ul
-          class="dropdown-menu dropdown-menu-end glass"
+          class="dropdown-menu dropdown-menu-end glass no-scrollbar"
           aria-labelledby="userDropdown"
         >
           <li>
@@ -622,7 +529,7 @@
         </ul>
       </div>
 
-      <!-- MORE OPTIONS (Three‐dot Menu) -->
+      <!-- MORE OPTIONS (Three-dot Menu with ALL Nav Links) -->
       <div class="dropdown">
         <button
           class="icon-btn"
@@ -634,10 +541,10 @@
           <i class="bi-three-dots-vertical"></i>
         </button>
         <ul
-          class="dropdown-menu dropdown-menu-end glass"
+          class="dropdown-menu dropdown-menu-end glass no-scrollbar"
           aria-labelledby="moreDropdown"
         >
-          <li><h6 class="dropdown-header text-gold">Quick Links</h6></li>
+          <li><h6 class="dropdown-header text-gold">Navigation</h6></li>
           <li>
             <a class="dropdown-item" href="admin-dashboard.html"
               ><i class="bi-speedometer2 me-2"></i> Dashboard</a
@@ -683,6 +590,18 @@
               ><i class="bi-people-fill me-2"></i> Users</a
             >
           </li>
+          <li><hr class="dropdown-divider" /></li>
+          <li class="dropdown-header text-gold">Quick Access</li>
+          <li>
+            <a class="dropdown-item" href="#stats-container"
+              ><i class="bi-bar-chart-fill me-2"></i> View Stats</a
+            >
+          </li>
+          <li>
+            <a class="dropdown-item" href="#activity-section"
+              ><i class="bi-list-task me-2"></i> View Activity Logs</a
+            >
+          </li>
         </ul>
       </div>
 
@@ -697,7 +616,7 @@
        MAIN CONTENT
   ==================== -->
   <main class="admin-content">
-    <!-- QUICK ACTIONS (Add Refresh Stats) -->
+    <!-- QUICK ACTIONS -->
     <div class="quick-actions">
       <button class="btn-quick" id="btn-refresh-stats">
         <i class="bi-arrow-clockwise"></i> Refresh Stats
@@ -767,11 +686,12 @@
 
     <!-- ACTIVITY LOGS SECTION -->
     <section class="activity-card" id="activity-section">
-      <!-- Header with Collapse Icon -->
-      <h3>Recent Activity Logs</h3>
-      <i class="bi-dash-circle collapse-icon" id="toggle-activity" title="Collapse/Expand Logs"></i>
-      <!-- Filter & Export Row -->
-      <div class="d-flex align-items-center" style="margin-top: 1rem;">
+      <!-- Header with Collapse Icon (collapsed by default) -->
+      <h3 id="activity-header">Recent Activity Logs</h3>
+      <i class="bi-plus-circle collapse-icon" id="toggle-activity" title="Expand Logs"></i>
+
+      <!-- Filter & Export (hidden initially) -->
+      <div class="d-flex align-items-center" id="filter-export-row" style="margin-top: 1rem;">
         <input
           type="text"
           id="activity-filter"
@@ -781,7 +701,8 @@
           <i class="bi-download"></i> Export Logs
         </button>
       </div>
-      <!-- Table -->
+
+      <!-- Table Wrapper (hidden initially) -->
       <div class="table-responsive" id="activity-table-wrapper" style="margin-top: 0.75rem;">
         <table class="table table-borderless table-hover">
           <thead>
@@ -813,38 +734,12 @@
     const supabase      = window.supabase.createClient(SUPA_URL, SUPA_ANON_KEY);
 
     document.addEventListener('DOMContentLoaded', () => {
-      // 2) SIDEBAR TOGGLE (Responsive)
-      const sidebar = document.getElementById('sidebar');
-      const sidebarToggle = document.getElementById('sidebar-toggle');
-      const overlay = document.querySelector('.overlay');
-
-      function closeSidebar() {
-        sidebar.classList.add('collapsed');
-        document.body.classList.remove('sidebar-open');
-        sidebarToggle.classList.add('collapsed');
-        overlay.style.opacity = 0;
-      }
-      function openSidebar() {
-        sidebar.classList.remove('collapsed');
-        document.body.classList.add('sidebar-open');
-        sidebarToggle.classList.remove('collapsed');
-        overlay.style.opacity = 1;
-      }
-
-      sidebarToggle.addEventListener('click', () => {
-        if (sidebar.classList.contains('collapsed')) {
-          openSidebar();
-        } else {
-          closeSidebar();
-        }
-      });
-      overlay.addEventListener('click', closeSidebar);
-      document.getElementById('sidebar-logo').onclick = () => {
+      // HEADER LOGO CLICK → dashboard
+      document.getElementById('header-logo').onclick = () => {
         window.location.href = 'admin-dashboard.html';
-        if (window.innerWidth < 992) closeSidebar();
       };
 
-      // 3) THEME TOGGLE
+      // 2) THEME TOGGLE
       const themeBtn = document.getElementById('theme-toggle');
       const setTheme = (t) => {
         document.documentElement.setAttribute('data-theme', t);
@@ -856,20 +751,15 @@
       });
       setTheme(localStorage.getItem('theme') || 'dark');
 
-      // 4) LIVE CLOCK (insert after sidebar toggle)
-      const clkEl = document.createElement('small');
-      clkEl.id = 'current-datetime';
-      clkEl.style.color = 'var(--text)';
-      clkEl.style.marginLeft = '0.75rem';
-      document.getElementById('sidebar-toggle').insertAdjacentElement('afterend', clkEl);
-
+      // 3) LIVE CLOCK
+      const clkEl = document.getElementById('current-datetime');
       function updateClock() {
         clkEl.textContent = new Date().toLocaleString();
       }
       updateClock();
       setInterval(updateClock, 60000);
 
-      // 5) FETCH STATS & RENDER CHARTS (and allow manual refresh)
+      // 4) FETCH STATS & RENDER CHARTS (and allow manual refresh)
       async function loadStatsAndCharts() {
         try {
           // Parallel data fetches
@@ -1021,7 +911,7 @@
         }
       }
 
-      // Initial load
+      // Initial load of stats/charts
       loadStatsAndCharts();
 
       // Manual “Refresh Stats” button
@@ -1030,7 +920,7 @@
         loadStatsAndCharts();
       });
 
-      // 6) LOAD RECENT ACTIVITY LOGS
+      // 5) LOAD RECENT ACTIVITY LOGS
       async function loadRecentActivity() {
         try {
           const { data, error } = await supabase
@@ -1063,7 +953,7 @@
         }
       }
 
-      // 7) EXPORT ACTIVITY LOGS AS CSV
+      // 6) EXPORT ACTIVITY LOGS AS CSV
       async function downloadActivityLog() {
         try {
           const { data, error } = await supabase
@@ -1075,7 +965,7 @@
             'Timestamp,Action,IP Address,City,Country,Device'
           ].concat(
             data.map((row) => {
-              const ts = row.timestamp ? new Date(row.timestamp).toLocaleString() : '';
+              const ts = row.timestamp ? new Date(row.timestamp).toLocaleDateString() : '';
               return `${ts},${row.action},${row.ip_address},${row.city},${row.country},"${row.device}"`;
             })
           );
@@ -1094,7 +984,7 @@
         }
       }
 
-      // 8) REAL-TIME UPDATES FOR ACTIVITY LOGS
+      // 7) REAL-TIME UPDATES FOR ACTIVITY LOGS
       loadRecentActivity();
       document.getElementById('export-logs').addEventListener('click', downloadActivityLog);
       supabase
@@ -1108,7 +998,7 @@
         )
         .subscribe();
 
-      // 9) ACTIVITY FILTER LOGIC
+      // 8) ACTIVITY FILTER LOGIC
       const filterInput = document.getElementById('activity-filter');
       filterInput.addEventListener('input', applyActivityFilter);
 
@@ -1130,27 +1020,30 @@
         });
       }
 
-      // 10) COLLAPSE / EXPAND ACTIVITY LOGS
+      // 9) COLLAPSE / EXPAND ACTIVITY LOGS (collapsed initially)
       const toggleActivity = document.getElementById('toggle-activity');
-      let activityCollapsed = false;
+      const filterExportRow = document.getElementById('filter-export-row');
+      const tableWrapper = document.getElementById('activity-table-wrapper');
+      let activityCollapsed = true; // start collapsed
+
       toggleActivity.addEventListener('click', () => {
         activityCollapsed = !activityCollapsed;
-        const wrapper = document.getElementById('activity-table-wrapper');
-        const filterRow = filterInput.parentElement;
-        if (activityCollapsed) {
-          wrapper.style.display = 'none';
-          filterRow.style.display = 'none';
-          document.getElementById('export-logs').style.display = 'none';
-          toggleActivity.classList.replace('bi-dash-circle', 'bi-plus-circle');
-        } else {
-          wrapper.style.display = '';
-          filterRow.style.display = 'flex';
-          document.getElementById('export-logs').style.display = '';
+        if (!activityCollapsed) {
+          // Expand
+          filterExportRow.style.display = 'flex';
+          tableWrapper.style.display = '';
           toggleActivity.classList.replace('bi-plus-circle', 'bi-dash-circle');
+          document.getElementById('activity-header').title = 'Collapse Logs';
+        } else {
+          // Collapse
+          filterExportRow.style.display = 'none';
+          tableWrapper.style.display = 'none';
+          toggleActivity.classList.replace('bi-dash-circle', 'bi-plus-circle');
+          document.getElementById('activity-header').title = 'Expand Logs';
         }
       });
 
-      // 11) DOWNLOAD CHART AS IMAGE
+      // 10) DOWNLOAD CHART AS IMAGE
       document.querySelectorAll('.chart-actions button').forEach((btn) => {
         btn.addEventListener('click', () => {
           const chartId = btn.getAttribute('data-chart-id');
@@ -1167,7 +1060,7 @@
         });
       });
 
-      // 12) SHOW TOAST NOTIFICATIONS
+      // 11) SHOW TOAST NOTIFICATIONS
       function showToast(message, type = 'info') {
         const toastEl = document.createElement('div');
         toastEl.className = `toast align-items-center text-white bg-${
@@ -1183,7 +1076,7 @@
         new bootstrap.Toast(toastEl, { delay: 3000 }).show();
       }
 
-      // 13) HELPER FUNCTIONS: CONVERT CSS VARS TO RGB/RGBA
+      // 12) HELPER FUNCTIONS: CONVERT CSS VARS TO RGB/RGBA
       function varToRgb(varName) {
         const rgb = getComputedStyle(document.documentElement)
           .getPropertyValue(varName)
