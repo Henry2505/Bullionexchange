@@ -221,7 +221,6 @@
       font-weight: 600;
       min-height: 24px;
       color: var(--success-color);
-      /* we’ll override color to error or success in JS */
     }
 
     footer {
@@ -345,11 +344,10 @@
       const card = document.getElementById("apply-card");
       card.classList.add("visible");
 
-      // 3) If URL includes “?ref=CODE”, show a note and pre-fill the referral input
+      // 3) If URL includes “?ref=CODE”, show a note
       const refCodeURL = getReferralFromURL();
       if (refCodeURL) {
         document.getElementById("referral-note").textContent = "You were referred by: " + refCodeURL;
-        document.getElementById("apply-referral").value = refCodeURL;
       }
     });
 
@@ -412,22 +410,22 @@
         const urlRef = getReferralFromURL();
         const referralCodeToUse = manualRef || urlRef || null;
 
-        // 2) If a code exists, validate it against Supabase (checking "affiliates" table)
+        // 2) If a code exists, validate it against Supabase
         if (referralCodeToUse) {
-          const { data: affiliateRow, error: checkErr } = await supabaseClient
-            .from("affiliates")
+          const { data: affiliateUser, error: checkErr } = await supabaseClient
+            .from("affiliate_user")
             .select("id")
             .eq("referral_code", referralCodeToUse)
             .single();
 
-          if (checkErr || !affiliateRow) {
+          if (checkErr || !affiliateUser) {
             alertDiv.style.color = "var(--error-color)";
             alertDiv.textContent = "Invalid referral code. Please double-check.";
             submitBtn.disabled = false;
             submitBtn.textContent = "Submit Application";
             return;
           }
-          // If we get here, the code is valid
+          // Valid code at this point
         }
 
         // 3) Prepare payload for Netlify function
@@ -440,49 +438,33 @@
           referral_code: referralCodeToUse, // either valid code or null
         };
 
-        // 4) Call the Netlify function endpoint
-        //    Make sure this path exactly matches your deployed function
+        // 4) Call the new Netlify function endpoint
         const fnResponse = await fetch("/.netlify/functions/send-application", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify(payload),
         });
 
-        // ── NEW: Check for non‐200 and log more info ─────────────────────────────────
-        if (!fnResponse.ok) {
-          console.error("Function returned status:", fnResponse.status);
-          let text = null;
-          try {
-            text = await fnResponse.text();
-            console.error("Function response body:", text);
-          } catch (parseErr) {
-            console.error("Could not read response body:", parseErr);
-          }
-          alertDiv.style.color = "var(--error-color)";
-          alertDiv.textContent = "Server encountered an error: " 
-            + (text ? text : `status ${fnResponse.status}`);
-          return;
-        }
-
-        // 5) If OK, parse JSON
-        let fnResult;
+        let fnResult = null;
         try {
           fnResult = await fnResponse.json();
         } catch (parseErr) {
           console.error("Could not parse JSON:", parseErr);
-          alertDiv.style.color = "var(--error-color)";
-          alertDiv.textContent = "Server returned invalid JSON.";
-          return;
         }
 
-        // 6) Success: show confirmation
+        if (!fnResponse.ok) {
+          console.error("Function error:", fnResponse.status, fnResult);
+          throw new Error(fnResult?.error || "Server encountered an error.");
+        }
+
+        // 5) Success: show confirmation
         alertDiv.style.color = "var(--success-color)";
-        alertDiv.textContent = fnResult.message || "Application submitted successfully!";
+        alertDiv.textContent = fnResult.message;
         form.reset();
         agree.checked = false;
         submitBtn.classList.remove("enabled");
       } catch (err) {
-        console.error("Submission error (caught):", err);
+        console.error("Submission error:", err);
         alertDiv.style.color = "var(--error-color)";
         alertDiv.textContent = err.message || "An unexpected error occurred.";
       } finally {
