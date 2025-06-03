@@ -156,6 +156,7 @@
         <li><a href="admin-trade-history.html"><i class="bi-clock-history"></i> Trade History</a></li>
         <li><a href="admin-trade-insights.html"><i class="bi-graph-up"></i> Trade Insights</a></li>
         <li><a href="admin-users.html"><i class="bi-people-fill"></i> Users</a></li>
+        <li><a href="#" onclick="event.preventDefault(); downloadActivityLog()"><i class="bi-download"></i> Download Logs</a></li>
         <li><a href="logout.html"><i class="bi-box-arrow-right"></i> Logout</a></li>
       </ul>
     </nav>
@@ -311,6 +312,48 @@
         }
       })();
     });
+
+    // Download Logs Function
+    async function downloadActivityLog() {
+      try {
+        const { data, error } = await supabase
+          .from('user_activity')
+          .select('*')
+          .order('timestamp', { ascending: false });
+        if (error) throw error;
+        const csv = [
+          'Timestamp,Action,IP Address,City,Country,Device',
+          ...data.map(row => {
+            const ts = row.timestamp ? new Date(row.timestamp).toLocaleString() : '';
+            return `${ts},${row.action},${row.ip_address},${row.city},${row.country},"${row.device}"`;
+          })
+        ].join('\n');
+        const blob = new Blob([csv], { type: 'text/csv' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = 'activity_logs.csv';
+        a.click();
+        URL.revokeObjectURL(url);
+        addNotification('Logs exported successfully', 'info');
+      } catch (err) {
+        console.error('Export error:', err);
+        addNotification('Failed to export logs', 'critical');
+      }
+    }
+
+    // Notification Function
+    function addNotification(message, type = 'info') {
+      const toast = document.createElement('div');
+      toast.className = `toast align-items-center text-white bg-${type === 'critical' ? 'danger' : 'success'} border-0 position-fixed top-0 end-0 m-3`;
+      toast.innerHTML = `
+        <div class="d-flex">
+          <div class="toast-body">${message}</div>
+          <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast"></button>
+        </div>`;
+      document.body.append(toast);
+      new bootstrap.Toast(toast, { delay: 3000 }).show();
+    }
   </script>
 </body>
 </html>
