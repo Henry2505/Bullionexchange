@@ -4,7 +4,7 @@
  * 1) Validates POST payload
  * 2) Checks “users” table for existing email
  * 3) Verifies referral_code (if provided)
- * 4) Hashes password (SHA-256 → base64)
+ * 4) (Optional) Hashes password—or just stores it raw
  * 5) Inserts new row into Supabase `users` with status="pending"
  * 6) Sends a confirmation email via Brevo
  */
@@ -17,15 +17,14 @@ const SUPABASE_URL = process.env.SUPABASE_URL;
 const SUPABASE_SERVICE_KEY = process.env.SUPABASE_SERVICE_KEY;
 const BREVO_API_KEY = process.env.BREVO_API_KEY;
 
-// If any of these are missing, log & return an error
 if (!SUPABASE_URL || !SUPABASE_SERVICE_KEY) {
-  console.error('❌ Missing SUPABASE_URL or SUPABASE_SERVICE_KEY');  
+  console.error('❌ Missing SUPABASE_URL or SUPABASE_SERVICE_KEY');
 }
 if (!BREVO_API_KEY) {
   console.error('❌ Missing BREVO_API_KEY');
 }
 
-// Initialize Supabase client (service‐role key gives us insert/delete privileges)
+// Initialize Supabase client with Service Role key
 const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_KEY);
 
 exports.handler = async (event, context) => {
@@ -38,7 +37,7 @@ exports.handler = async (event, context) => {
     };
   }
 
-  // Parse JSON
+  // Parse JSON payload
   let payload;
   try {
     payload = JSON.parse(event.body);
@@ -61,7 +60,7 @@ exports.handler = async (event, context) => {
     };
   }
 
-  // Email format
+  // Email format check
   const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
   if (!emailRegex.test(email)) {
     return {
@@ -70,7 +69,7 @@ exports.handler = async (event, context) => {
     };
   }
 
-  // Password length
+  // Password length check
   if (password.length < 8) {
     return {
       statusCode: 400,
@@ -86,7 +85,7 @@ exports.handler = async (event, context) => {
       .eq('email', email)
       .single();
 
-    // Supabase returns an error if no rows are found. We only care if it’s some other DB error.
+    // Supabase can throw an error if no rows; ignore “no rows” error code
     if (checkError && checkError.code !== 'PGRST116') {
       console.error('Error checking existing user:', checkError);
       return {
@@ -132,19 +131,24 @@ exports.handler = async (event, context) => {
     }
   }
 
-  // ─── 4) Hash the password with SHA-256 → base64 ─────────────────────────────────────
-  let password_hash;
-  try {
-    const hash = crypto.createHash('sha256');
-    hash.update(password);
-    password_hash = hash.digest('base64');
-  } catch (hashErr) {
-    console.error('Password hashing error:', hashErr);
-    return {
-      statusCode: 500,
-      body: JSON.stringify({ error: 'Error hashing password.' }),
-    };
-  }
+  // ─── 4) Hash the password (optional) ────────────────────────────────────────────────
+  // If you want to store the hashed password in a "password" column, uncomment the hashing lines.
+  //
+  // let pwToStore = password; 
+  // try {
+  //   const hash = crypto.createHash('sha256');
+  //   hash.update(password);
+  //   pwToStore = hash.digest('base64');
+  // } catch (hashErr) {
+  //   console.error('Password hashing error:', hashErr);
+  //   return {
+  //     statusCode: 500,
+  //     body: JSON.stringify({ error: 'Error hashing password.' }),
+  //   };
+  // }
+
+  // Or, if you just want to store the raw password in your existing `password` column:
+  const pwToStore = password;
 
   // ─── 5) Insert new user into `users` table ─────────────────────────────────────────
   let newUser;
@@ -155,11 +159,11 @@ exports.handler = async (event, context) => {
         {
           name,
           email,
-          password_hash,
+          password: pwToStore,            // ← store under the "password" column
           phone,
           experience,
           referral_code: referral_code || null,
-          status: 'pending', // can adjust as needed
+          status: 'pending',              // make sure your `users` table has a "status" column
         },
       ])
       .single();
@@ -200,7 +204,7 @@ exports.handler = async (event, context) => {
         name: name,
       },
     ],
-    templateId: 1, // adjust to your actual Brevo template ID
+    templateId: 1, // ← Adjust this to your actual Brevo template ID
     params: {
       NAME: name,
       EMAIL: email,
@@ -210,7 +214,7 @@ exports.handler = async (event, context) => {
   };
 
   try {
-    // Netlify/Node 18+ has a global `fetch`; no need to `require('node-fetch')`.
+    // Netlify/Node 18+ provides a global `fetch`
     const brevoResponse = await fetch('https://api.brevo.com/v3/smtp/email', {
       method: 'POST',
       headers: {
