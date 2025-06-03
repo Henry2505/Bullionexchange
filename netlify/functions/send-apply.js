@@ -21,7 +21,7 @@ exports.handler = async (event) => {
     };
   }
 
-  const { name, email, password, phone, experience } = data;
+  const { name, email, password, phone, experience, referral_code } = data;
   if (!name || !email || !password || !phone || !experience) {
     return {
       statusCode: 400,
@@ -40,7 +40,33 @@ exports.handler = async (event) => {
   }
   const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
+  let referredById = null;
+  if (referral_code) {
+    // Validate referral code against the "affiliates" table
+    const { data: affiliateRow, error: checkReferralErr } = await supabase
+      .from("affiliates")
+      .select("user_id")
+      .eq("referral_code", referral_code)
+      .single();
+
+    if (checkReferralErr) {
+      console.error("Error checking referral code:", checkReferralErr);
+      return {
+        statusCode: 500,
+        body: JSON.stringify({ error: "Failed to verify referral code." }),
+      };
+    }
+    if (!affiliateRow) {
+      return {
+        statusCode: 400,
+        body: JSON.stringify({ error: "Invalid referral code." }),
+      };
+    }
+    referredById = affiliateRow.user_id;
+  }
+
   try {
+    // Check if email already exists in "users"
     const { data: existingUser, error: checkError } = await supabase
       .from("users")
       .select("id")
@@ -61,11 +87,22 @@ exports.handler = async (event) => {
       };
     }
 
+    // Insert new user into "users" table, including referred_by if applicable
+    const insertPayload = {
+      name,
+      email,
+      password,
+      phone,
+      experience,
+      status: "pending",
+    };
+    if (referredById) {
+      insertPayload.referred_by = referredById;
+    }
+
     const { error: insertError } = await supabase
       .from("users")
-      .insert([
-        { name, email, password, phone, experience, status: "pending" },
-      ]);
+      .insert([insertPayload]);
 
     if (insertError) {
       console.error("Supabase insert error:", insertError);
@@ -104,7 +141,7 @@ exports.handler = async (event) => {
         NAME: name,
         EMAIL: email,
         PHONE: phone,
-        EXPERIENCE: experience
+        EXPERIENCE: experience,
       },
     };
 
@@ -133,7 +170,6 @@ exports.handler = async (event) => {
       };
     }
 
-    // ←  Only this part changed:
     return {
       statusCode: 200,
       body: JSON.stringify({
