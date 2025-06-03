@@ -19,35 +19,31 @@
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>
 
   <style>
-    /* Dark Theme Variables */
+    /* ========== Dark Theme Variables ========== */
     :root[data-theme="dark"] {
       --bg: #121212;
       --text: #e0e0e0;
-      --accent: rgba(30, 30, 30, 0.7);
-      --accent-solid: #1e1e1e;
+      --accent: #1e1e1e;
       --gold: #ffd700;
       --gold-dark: #cca300;
       --glass: rgba(30, 30, 30, 0.7);
       --shadow: rgba(0, 0, 0, 0.5);
     }
 
-    /* GLOBAL RESET & TYPOGRAPHY */
-    html, body {
+    /* ========== Global & Layout ========== */
+    html {
+      scroll-behavior: smooth;    /* ➔ enables smooth scrolling for anchor links */
+    }
+    body {
       margin: 0;
       padding: 0;
       box-sizing: border-box;
       background: var(--bg);
-      color: var(--text);
+      color: var(--text);         /* ensures default text color is light */
       height: 100%;
       font-family: 'Poppins', sans-serif;
-      overflow: hidden; /* Prevent double scrollbars */
+      overflow-x: hidden;         /* hide any horizontal overflow */
     }
-
-    /* SMOOTH SCROLLING INSIDE MAIN CONTENT */
-    .main-content {
-      scroll-behavior: smooth;
-    }
-
     a {
       color: var(--gold);
       text-decoration: none;
@@ -56,15 +52,16 @@
       color: var(--gold-dark);
     }
 
-    /* Layout */
+    /* ========== Sidebar ========== */
     .sidebar {
-      background: var(--accent-solid);
+      background: var(--accent);
       min-height: 100vh;
       padding-top: 1rem;
       border-right: 1px solid var(--gold-dark);
+      color: var(--text);       /* explicitly inherit light text */
     }
     .sidebar .nav-link {
-      color: var(--text) !important;
+      color: var(--text) !important; 
       margin-bottom: 0.5rem;
       border-radius: 6px;
       transition: background 0.3s ease;
@@ -74,57 +71,57 @@
       background: var(--gold-dark);
       color: #000 !important;
     }
+
+    /* ========== Main Content ========== */
     .main-content {
       padding: 1rem;
       overflow-y: auto;
       height: 100vh;
+      color: var(--text);        /* ensure all text in main area is light */
     }
 
-    /* Cards & Sections */
+    /* ========== Cards & Sections ========== */
     .card {
       background: var(--glass);
       border: 1px solid var(--gold-dark);
       border-radius: 10px;
       box-shadow: 0 2px 8px var(--shadow);
       margin-bottom: 1.5rem;
-      color: var(--text);
+      color: var(--text);        /* explicitly set card text to light */
     }
     .card-header {
-      background: var(--accent-solid);
+      background: var(--accent);
       border-bottom: 1px solid var(--gold-dark);
       font-weight: 600;
       color: var(--gold);
     }
     .card-body {
       padding: 1rem;
-      color: var(--text);
+      color: var(--text);        /* ensure any <p>, <span>, etc. inside cards are light */
     }
 
-    /* Form Controls (Ensuring Light Text) */
+    /* ========== Form Controls ========== */
     .form-control,
-    .form-select,
-    .form-control:focus,
-    .form-select:focus {
-      background: var(--accent-solid) !important;
-      color: var(--text) !important;
+    .form-select {
+      background: var(--accent) !important;
+      color: var(--text) !important;          
       border: 1px solid var(--gold-dark) !important;
+    }
+    .form-control::placeholder {
+      color: #bbbbbb !important; /* slightly lighter placeholder to stand out on dark background */
     }
     .form-control:focus,
     .form-select:focus {
+      background: var(--accent) !important;
+      color: var(--text) !important;
       border: 1px solid var(--gold) !important;
       box-shadow: 0 0 0 0.25rem rgba(255, 215, 0, 0.25) !important;
     }
-    /* Placeholder text must be light enough to read on dark */
-    input::placeholder,
-    textarea::placeholder {
-      color: #aaa;
-      opacity: 1; /* Force full opacity of placeholder */
-    }
-
     .btn-primary {
       background: linear-gradient(45deg, var(--gold), var(--gold-dark));
       border: none;
       transition: background 0.3s ease;
+      color: #000;
     }
     .btn-primary:hover {
       background: linear-gradient(45deg, var(--gold-dark), var(--gold));
@@ -139,11 +136,12 @@
       border-color: var(--gold-dark) !important;
     }
 
-    /* Tables */
+    /* ========== Tables ========== */
     table {
       width: 100%;
       border-collapse: separate;
       border-spacing: 0 8px;
+      color: var(--text);        /* ensure table body text is light */
     }
     th {
       background: linear-gradient(45deg, var(--gold-dark), var(--gold));
@@ -155,17 +153,17 @@
       z-index: 2;
     }
     td {
-      background: var(--accent-solid);
+      background: var(--accent);
       padding: 0.8rem;
       border-radius: 6px;
       text-align: center;
-      color: var(--text);
+      color: var(--text);        /* explicitly set td text to light */
     }
     .spinner-border {
       color: var(--gold);
     }
 
-    /* Utility */
+    /* ========== Utility ========== */
     .copy-btn {
       background: var(--gold);
       color: #000 !important;
@@ -224,14 +222,13 @@
             <span id="referral-code" class="h5">Loading…</span>
             <button id="copy-referral" class="copy-btn ms-2"><i class="bi bi-clipboard"></i></button>
             <div class="mt-2">
-              <small>Share this link:</small><br/>
+              <small style="color: var(--text);">Share this link:</small><br/>
               <input
                 type="text"
                 id="referral-link"
                 readonly
                 class="form-control form-control-sm text-center"
-                style="background: var(--accent-solid); color: var(--text);"
-                placeholder="Your referral link will appear here"
+                style="background: var(--accent); color: var(--text);"
               />
               <button id="copy-link" class="copy-btn mt-1">
                 <i class="bi bi-link-45deg"></i> Copy Link
@@ -264,7 +261,7 @@
             <div class="card-body">
               <form id="bank-form" class="row g-3">
                 <div class="col-md-6">
-                  <label for="bank-name" class="form-label">Bank Name</label>
+                  <label for="bank-name" class="form-label" style="color: var(--text);">Bank Name</label>
                   <input
                     type="text"
                     id="bank-name"
@@ -274,7 +271,7 @@
                   />
                 </div>
                 <div class="col-md-6">
-                  <label for="bank-code" class="form-label">Bank Code/Branch</label>
+                  <label for="bank-code" class="form-label" style="color: var(--text);">Bank Code/Branch</label>
                   <input
                     type="text"
                     id="bank-code"
@@ -284,7 +281,7 @@
                   />
                 </div>
                 <div class="col-md-6">
-                  <label for="account-number" class="form-label">Account Number</label>
+                  <label for="account-number" class="form-label" style="color: var(--text);">Account Number</label>
                   <input
                     type="text"
                     id="account-number"
@@ -294,7 +291,7 @@
                   />
                 </div>
                 <div class="col-md-6">
-                  <label for="account-name" class="form-label">Account Name</label>
+                  <label for="account-name" class="form-label" style="color: var(--text);">Account Name</label>
                   <input
                     type="text"
                     id="account-name"
@@ -350,7 +347,7 @@
             <div class="card-body">
               <form id="wallet-form" class="row g-3">
                 <div class="col-md-6">
-                  <label for="crypto-currency" class="form-label">Currency</label>
+                  <label for="crypto-currency" class="form-label" style="color: var(--text);">Currency</label>
                   <select id="crypto-currency" class="form-select" required>
                     <option value="">Select Currency</option>
                     <option value="BTC">Bitcoin (BTC)</option>
@@ -361,7 +358,7 @@
                   </select>
                 </div>
                 <div class="col-md-6">
-                  <label for="crypto-address" class="form-label">Wallet Address</label>
+                  <label for="crypto-address" class="form-label" style="color: var(--text);">Wallet Address</label>
                   <input
                     type="text"
                     id="crypto-address"
@@ -414,7 +411,7 @@
             <div class="card-body">
               <form id="converter-form" class="row g-3 align-items-end">
                 <div class="col-md-3">
-                  <label for="convert-from" class="form-label">From</label>
+                  <label for="convert-from" class="form-label" style="color: var(--text);">From</label>
                   <select id="convert-from" class="form-select">
                     <option value="USD" selected>USD</option>
                     <option value="EUR">EUR</option>
@@ -424,7 +421,7 @@
                   </select>
                 </div>
                 <div class="col-md-3">
-                  <label for="convert-to" class="form-label">To</label>
+                  <label for="convert-to" class="form-label" style="color: var(--text);">To</label>
                   <select id="convert-to" class="form-select">
                     <option value="NGN" selected>NGN</option>
                     <option value="USD">USD</option>
@@ -434,7 +431,7 @@
                   </select>
                 </div>
                 <div class="col-md-3">
-                  <label for="convert-amount" class="form-label">Amount</label>
+                  <label for="convert-amount" class="form-label" style="color: var(--text);">Amount</label>
                   <input type="number" id="convert-amount" class="form-control" value="1" min="0" />
                 </div>
                 <div class="col-md-3 text-end">
@@ -444,7 +441,7 @@
                   </button>
                 </div>
                 <div class="col-12 text-center mt-3">
-                  <h5 id="convert-result">--</h5>
+                  <h5 id="convert-result" style="color: var(--text);">--</h5>
                 </div>
               </form>
             </div>
@@ -456,11 +453,11 @@
           <div class="section-title">👤 Your Profile</div>
           <div class="card">
             <div class="card-body">
-              <p><strong>Email:</strong> <span id="user-email">Loading…</span></p>
-              <p><strong>Joined On:</strong> <span id="joined-date">--</span></p>
+              <p><strong style="color: var(--text);">Email:</strong> <span id="user-email" style="color: var(--text);">Loading…</span></p>
+              <p><strong style="color: var(--text);">Joined On:</strong> <span id="joined-date" style="color: var(--text);">--</span></p>
               <p>
-                <strong>Total Referrals:</strong>
-                <span id="total-referrals">0</span>
+                <strong style="color: var(--text);">Total Referrals:</strong>
+                <span id="total-referrals" style="color: var(--text);">0</span>
               </p>
             </div>
           </div>
@@ -479,7 +476,7 @@
       aria-atomic="true"
     >
       <div class="d-flex">
-        <div class="toast-body" id="toast-body">Hello, world! This is a toast message.</div>
+        <div class="toast-body" id="toast-body" style="color: var(--text);">Hello, world! This is a toast message.</div>
         <button
           type="button"
           class="btn-close btn-close-white me-2 m-auto"
