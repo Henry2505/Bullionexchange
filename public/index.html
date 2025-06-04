@@ -1,6 +1,9 @@
 <!DOCTYPE html>
 <html lang="en" data-theme="dark">
 <head>
+  <!-- ==============================================
+       META & FAVICONS
+  ============================================== -->
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <meta
@@ -92,8 +95,8 @@
       --text-light: #b0b0b0;
       --error: #ff4d4d;
       --success: #00ff88;
-      --rise-color: #00f;
-      --fall-color: #f00;
+      --rise-color: #00f; /* Blue for rise */
+      --fall-color: #f00; /* Red for fall */
     }
     [data-theme="light"] {
       --bg: #f5f5f5;
@@ -107,8 +110,8 @@
       --chat-whatsapp: linear-gradient(135deg, #25d366, #128c7e);
       --chat-telegram: linear-gradient(135deg, #0088cc, #005f99);
       --text-light: #666666;
-      --rise-color: #0055ff;
-      --fall-color: #ff3333;
+      --rise-color: #0055ff; /* Lighter blue */
+      --fall-color: #ff3333; /* Lighter red */
     }
 
     /* ==========================================================================
@@ -185,14 +188,15 @@
       left: 0;
       width: 100%;
       height: 70px;
-      background: var(--glass-bg);
+      /* Slightly more opaque so links always stand out */
+      background: rgba(26, 26, 26, 0.85);
       backdrop-filter: blur(10px);
       display: flex;
       align-items: center;
       justify-content: space-between;
       padding: 0 20px;
       box-shadow: 0 2px 8px var(--shadow);
-      z-index: 150;
+      z-index: 1000;
     }
     #nav-menu .logo {
       font-family: "Orbitron", sans-serif;
@@ -213,10 +217,11 @@
     /* Desktop Links */
     #desktop-links {
       display: flex;
-      flex-wrap: wrap;
       gap: 15px;
       list-style: none;
-      justify-content: center;
+      overflow-x: auto;
+      white-space: nowrap;
+      z-index: 1000;
     }
     #desktop-links li {
       flex-shrink: 0;
@@ -237,6 +242,58 @@
       color: #000 !important;
     }
 
+    /* Three-dot “More” Menu */
+    .more-menu-container {
+      position: relative;
+      display: flex;
+      align-items: center;
+    }
+    #more-toggle {
+      background: none;
+      border: none;
+      font-size: 1.5rem;
+      color: var(--text);
+      cursor: pointer;
+      padding: 8px;
+      margin-left: 15px;
+      transition: transform 0.3s;
+      z-index: 1000;
+    }
+    #more-toggle:hover {
+      transform: rotate(90deg);
+    }
+    #more-menu {
+      display: none;
+      position: absolute;
+      right: 0;
+      top: 60px;
+      background: var(--glass-bg);
+      border: 1px solid var(--gold-dark);
+      border-radius: 8px;
+      box-shadow: 0 2px 8px var(--shadow);
+      list-style: none;
+      min-width: 220px;
+      z-index: 1000;
+    }
+    #more-menu li {
+      border-bottom: 1px solid var(--gold-dark);
+    }
+    #more-menu li:last-child {
+      border-bottom: none;
+    }
+    #more-menu li a {
+      display: block;
+      padding: 10px 15px;
+      color: var(--text);
+      font-weight: 500;
+      transition: background 0.2s;
+      white-space: nowrap;
+    }
+    #more-menu li a:hover {
+      background: rgba(255, 215, 0, 0.2);
+      color: #000;
+    }
+
     /* Hamburger Toggle (Mobile) */
     #menu-toggle {
       background: none;
@@ -249,7 +306,7 @@
       height: 25px;
       justify-content: center;
       align-items: center;
-      z-index: 155;
+      z-index: 1000;
     }
     #menu-toggle span {
       width: 30px;
@@ -267,39 +324,37 @@
       transform: rotate(-45deg) translate(5px, -5px);
     }
 
-    /* Side Menu (Mobile) - Enhanced for Visibility */
+    /* Side Menu (Mobile) */
     #menu-list {
       list-style: none;
       position: fixed;
-      top: 0;
-      left: 0;
-      width: 100%;
-      height: 100%;
-      background: rgba(0, 0, 0, 0.9);
+      top: 70px;
+      right: -260px;
+      width: 260px;
+      background: var(--glass-bg);
+      backdrop-filter: blur(10px);
       padding: 20px;
-      display: flex;
-      flex-direction: column;
-      justify-content: center;
-      align-items: center;
-      transition: transform 0.3s ease;
-      transform: translateX(100%);
-      z-index: 150;
+      border-left: 1px solid var(--gold-dark);
+      transition: right 0.3s ease;
+      height: calc(100% - 70px);
+      overflow-y: auto;
+      z-index: 1000;
     }
     #menu-list.active {
-      transform: translateX(0);
+      right: 0;
     }
     #menu-list li {
-      margin: 20px 0;
+      margin: 15px 0;
     }
     #menu-list a {
-      color: var(--gold);
-      font-size: 1.5rem;
-      font-weight: 700;
-      text-transform: uppercase;
-      transition: color 0.3s;
+      color: var(--text);
+      font-weight: 500;
+      transition: color 0.3s, padding-left 0.3s;
+      white-space: nowrap;
     }
     #menu-list a:hover {
-      color: var(--gold-dark);
+      color: var(--gold);
+      padding-left: 5px;
     }
 
     /* Mobile / Desktop Breakpoints */
@@ -309,6 +364,9 @@
       }
       #menu-toggle {
         display: flex;
+      }
+      .more-menu-container {
+        display: none;
       }
     }
     @media (min-width: 993px) {
@@ -326,7 +384,7 @@
       text-align: center;
       position: relative;
       background: linear-gradient(to bottom, #000, var(--accent));
-      margin-top: 70px;
+      margin-top: 70px; /* account for fixed nav */
     }
     header.hero .logo-hero img {
       width: 160px;
@@ -632,22 +690,34 @@
       animation: blink-down 1s infinite;
     }
     @keyframes blink-up {
-      0% { opacity: 1; }
-      50% { opacity: 0.2; }
-      100% { opacity: 1; }
+      0% {
+        opacity: 1;
+      }
+      50% {
+        opacity: 0.2;
+      }
+      100% {
+        opacity: 1;
+      }
     }
     @keyframes blink-down {
-      0% { opacity: 1; }
-      50% { opacity: 0.2; }
-      100% { opacity: 1; }
+      0% {
+        opacity: 1;
+      }
+      50% {
+        opacity: 0.2;
+      }
+      100% {
+        opacity: 1;
+      }
     }
 
     /* ==========================================================================
        LIVE GOLD CHART SECTION
        ========================================================================== */
-    #chart-container {
+    #gold-chart {
       width: 100%;
-      height: 200vh; /* Doubled height for maximum impact */
+      height: 200vh; /* 2× the viewport height on desktop */
       margin: 20px auto;
       position: relative;
       background: var(--accent);
@@ -788,6 +858,14 @@
     }
 
     /* ==========================================================================
+       SMARTSUPP CHAT WIDGET HEIGHT OVERRIDE
+       ========================================================================== */
+    /* Ensure Smartsupp’s injected iframe is taller */
+    iframe[src*="smartsuppchat"] {
+      height: 500px !important;
+    }
+
+    /* ==========================================================================
        MEDIA QUERIES
        ========================================================================== */
     @media (max-width: 768px) {
@@ -813,8 +891,8 @@
       #live-gold .gold-price-container {
         flex-direction: column;
       }
-      #chart-container {
-        height: 120vh; /* Adjusted for mobile */
+      #gold-chart {
+        height: 120vh; /* scaled down for mobile */
       }
       #economic-calendar {
         padding: 0.5rem;
@@ -838,9 +916,10 @@
         padding: 8px 12px;
       }
       #tradingview_fullscreen {
-        height: 600px;
+        height: 300px;
       }
     }
+
   </style>
 </head>
 <body id="top">
@@ -885,6 +964,26 @@
       <li><a href="affiliate_login.html" class="nav-link">Affiliate Login</a></li>
       <li><a href="login.html" class="nav-link">User Login</a></li>
     </ul>
+    <!-- Three-dot “More” Menu -->
+    <div class="more-menu-container">
+      <button id="more-toggle" aria-label="More menu"><i class="fas fa-ellipsis-v"></i></button>
+      <ul id="more-menu">
+        <li><a href="index.html">Home</a></li>
+        <li><a href="about.html">About</a></li>
+        <li><a href="services.html">Services</a></li>
+        <li><a href="CBE_trade_insights_public.html">Trade Insights</a></li>
+        <li><a href="FAQ.html">FAQ</a></li>
+        <li><a href="apex-income-options.html">Apex Income Options</a></li>
+        <li><a href="vip-subscription.html">VIP Subscription</a></li>
+        <li><a href="CBE_apply.html">Apply</a></li>
+        <li><a href="capital-support.html">Capital Accelerator</a></li>
+        <li><a href="CBE_contact.html">Contact</a></li>
+        <li><a href="testimonials.html">Testimonials</a></li>
+        <li><a href="affiliate_signup.html">Affiliate Signup</a></li>
+        <li><a href="affiliate_login.html">Affiliate Login</a></li>
+        <li><a href="login.html">User Login</a></li>
+      </ul>
+    </div>
     <button id="menu-toggle" aria-label="Toggle navigation menu" aria-expanded="false">
       <span></span>
       <span></span>
@@ -977,16 +1076,22 @@
       <small>Gold & Economic Headlines — Rotating Continuously</small>
     </p>
     <div id="news-section">
+      <!-- GOLD NEWS TICKER -->
       <div class="news-ticker">
         <h3><i class="fas fa-chart-line"></i> Gold Market</h3>
         <div class="ticker-container">
-          <div class="ticker-content" id="gold-ticker-content"></div>
+          <div class="ticker-content" id="gold-ticker-content">
+            <!-- Populated by JS -->
+          </div>
         </div>
       </div>
+      <!-- ECONOMIC NEWS TICKER -->
       <div class="news-ticker">
         <h3><i class="fas fa-chart-bar"></i> Economic News</h3>
         <div class="ticker-container">
-          <div class="ticker-content" id="econ-ticker-content"></div>
+          <div class="ticker-content" id="econ-ticker-content">
+            <!-- Populated by JS -->
+          </div>
         </div>
       </div>
     </div>
@@ -994,7 +1099,7 @@
 
   <!-- LIVE GOLD PRICE SECTION -->
   <section id="live-gold" class="slide-in">
-    <h2><i class Ascendant="true"></i> Live Gold Price</h2>
+    <h2><i class="fas fa-coins"></i> Live Gold Price</h2>
     <div class="gold-price-container">
       <span id="gold-price">--</span>
       <span id="price-change" class="price-change">--</span>
@@ -1002,9 +1107,9 @@
   </section>
 
   <!-- LIVE GOLD CHART SECTION -->
-  <section id="gold-chart-section" class="slide-in">
+  <section id="gold-chart" class="slide-in">
     <h2><i class="fas fa-chart-line"></i> Live Gold Chart</h2>
-    <div id="chart-container">
+    <div id="gold-chart">
       <div class="chart-toggle">
         <button data-interval="60" class="active">1H</button>
         <button data-interval="240">4H</button>
@@ -1023,7 +1128,7 @@
     </div>
   </section>
 
-  <!-- VIP PLANS SECTION -->
+  <!-- VIP PLANS SECTION (moved to bottom) -->
   <section id="plans" class="slide-in">
     <h2><i class="fas fa-dollar-sign"></i> VIP Subscription Plans</h2>
     <div class="plans">
@@ -1035,7 +1140,9 @@
           <li>VIP Chat Access</li>
           <li>Basic Insights</li>
         </ul>
-        <a href="payment-options.html?plan=weekly" class="subscribe-btn">Choose Weekly</a>
+        <a href="payment-options.html?plan=weekly" class="subscribe-btn"
+          >Choose Weekly</a
+        >
       </div>
       <div class="plan-card">
         <h3>Monthly Plan</h3>
@@ -1047,7 +1154,9 @@
           <li>Advanced Insights</li>
           <li>1 Mentorship Session</li>
         </ul>
-        <a href="payment-options.html?plan=monthly" class="subscribe-btn">Choose Monthly</a>
+        <a href="payment-options.html?plan=monthly" class="subscribe-btn"
+          >Choose Monthly</a
+        >
       </div>
       <div class="plan-card">
         <h3>Yearly Plan</h3>
@@ -1060,7 +1169,9 @@
           <li>Monthly Mentorship</li>
           <li>Account Management</li>
         </ul>
-        <a href="payment-options.html?plan=yearly" class="subscribe-btn">Choose Yearly</a>
+        <a href="payment-options.html?plan=yearly" class="subscribe-btn"
+          >Choose Yearly</a
+        >
       </div>
     </div>
   </section>
@@ -1073,7 +1184,9 @@
       18+ only.
     </p>
     <p>
-      <a href="privacy.html">Privacy Policy</a> | <a href="terms.html">Terms & Conditions</a>
+      <a href="privacy.html">Privacy Policy</a> | <a href="terms.html"
+        >Terms & Conditions</a
+      >
     </p>
   </footer>
 
@@ -1085,18 +1198,24 @@
       rel="noopener"
       class="whatsapp"
       title="WhatsApp Chat"
-    ><i class="fab fa-whatsapp"></i><span>WhatsApp</span></a>
+      ><i class="fab fa-whatsapp"></i><span>WhatsApp</span></a
+    >
     <a
       href="https://t.me/apexincomeoptions"
       target="_blank"
       rel="noopener"
       class="telegram"
       title="Telegram Chat"
-    ><i class="fab fa-telegram-plane"></i><span>Telegram</span></a>
+      ><i class="fab fa-telegram-plane"></i><span>Telegram</span></a
+    >
   </div>
 
-  <!-- SCRIPTS & INTEGRATIONS -->
+  <!-- ----------------------------------------------
+       SCRIPTS & INTEGRATIONS
+  ---------------------------------------------- -->
+  <!-- TradingView Widget -->
   <script src="https://s3.tradingview.com/tv.js"></script>
+  <!-- Particles.js -->
   <script src="https://cdn.jsdelivr.net/npm/particles.js@2.0.0/particles.min.js"></script>
 
   <!-- Smartsupp Live Chat script -->
@@ -1112,10 +1231,18 @@
   </script>
 
   <script>
-    const METALPRICE_API_KEY = "01b8a67f9ac08887dd3b33a93eeb5d66";
+    /**********************************************************
+     * API KEYS (⚠️ Move these server-side in production!)
+     * Using MetalpriceAPI for Live Gold Price
+     **********************************************************/
+    const GOLDAPI_KEY = "01b8a67f9ac08887dd3b33a93eeb5d66";
     const NEWS_API_KEY = "6de81d54e02e45f8a5546a827c70ab28";
+    // Exchange rate API still used for currency converter
     const EXCHANGE_RATE_API_KEY = "4e4307b2bf8daac15365a410";
 
+    /**********************************************************
+     * INTERSECTION OBSERVER FOR SLIDE-IN ANIMATIONS
+     **********************************************************/
     document.addEventListener("DOMContentLoaded", () => {
       const slideEls = document.querySelectorAll(".slide-in");
       slideEls.forEach((el) => {
@@ -1134,13 +1261,20 @@
       });
     });
 
+    /**********************************************************
+     * SCROLL PROGRESS BAR
+     **********************************************************/
     window.addEventListener("scroll", () => {
       const scrollTop = window.scrollY;
-      const docHeight = document.documentElement.scrollHeight - window.innerHeight;
+      const docHeight =
+        document.documentElement.scrollHeight - window.innerHeight;
       const percent = docHeight > 0 ? (scrollTop / docHeight) * 100 : 0;
       document.getElementById("scroll-progress").style.width = percent + "%";
     });
 
+    /**********************************************************
+     * THEME TOGGLE & PERSISTENCE
+     **********************************************************/
     const themeBtn = document.getElementById("theme-toggle");
     themeBtn.addEventListener("click", () => {
       const current = document.documentElement.getAttribute("data-theme");
@@ -1148,7 +1282,7 @@
       document.documentElement.setAttribute("data-theme", next);
       localStorage.setItem("theme", next);
       themeBtn.textContent = next === "dark" ? "🌞" : "🌜";
-      initGoldChart();
+      initGoldChart(); // reinitialize chart with new theme
     });
     (function () {
       const saved = localStorage.getItem("theme") || "dark";
@@ -1156,6 +1290,9 @@
       themeBtn.textContent = saved === "dark" ? "🌞" : "🌜";
     })();
 
+    /**********************************************************
+     * NAVIGATION MENU TOGGLE (MOBILE)
+     **********************************************************/
     document.addEventListener("DOMContentLoaded", () => {
       const toggle = document.getElementById("menu-toggle");
       const menu = document.getElementById("menu-list");
@@ -1167,6 +1304,31 @@
       });
     });
 
+    /**********************************************************
+     * MORE MENU (Three-dot) TOGGLE
+     **********************************************************/
+    document.addEventListener("DOMContentLoaded", () => {
+      const moreToggle = document.getElementById("more-toggle");
+      const moreMenu = document.getElementById("more-menu");
+      moreToggle.addEventListener("click", (e) => {
+        e.stopPropagation();
+        moreMenu.style.display =
+          moreMenu.style.display === "block" ? "none" : "block";
+      });
+      // Close when clicking outside
+      document.addEventListener("click", (e) => {
+        if (
+          !e.target.closest(".more-menu-container") &&
+          moreMenu.style.display === "block"
+        ) {
+          moreMenu.style.display = "none";
+        }
+      });
+    });
+
+    /**********************************************************
+     * INITIALIZE PARTICLES.JS
+     **********************************************************/
     particlesJS("particles-js", {
       particles: {
         number: { value: 80, density: { enable: true, value_area: 800 } },
@@ -1186,6 +1348,9 @@
       },
     });
 
+    /**********************************************************
+     * INITIALIZE TRADINGVIEW GOLD CHART
+     **********************************************************/
     function initGoldChart(interval = "60") {
       const theme = document.documentElement.getAttribute("data-theme");
       document.getElementById("tradingview_fullscreen").innerHTML = "";
@@ -1208,27 +1373,37 @@
     }
     document.addEventListener("DOMContentLoaded", () => {
       initGoldChart();
+      // Chart-toggle buttons
       document.querySelectorAll(".chart-toggle button").forEach((btn) => {
         btn.addEventListener("click", () => {
-          document.querySelector(".chart-toggle button.active").classList.remove("active");
+          document
+            .querySelector(".chart-toggle button.active")
+            .classList.remove("active");
           btn.classList.add("active");
           initGoldChart(btn.dataset.interval);
         });
       });
     });
 
+    /**********************************************************
+     * LIVE CURRENCY CONVERTER FUNCTIONALITY
+     **********************************************************/
     const apiCache = new Map();
     async function convertCurrency() {
       const from = document.getElementById("converter-from").value;
       const to = document.getElementById("converter-to").value;
-      const amount = parseFloat(document.getElementById("converter-amount").value) || 1;
+      const amount = parseFloat(
+        document.getElementById("converter-amount").value
+      ) || 1;
       const resultEl = document.getElementById("converter-result");
       resultEl.innerHTML = '<span style="opacity:0.7;">Converting…</span>';
 
       const cacheKey = `${from}_${to}`;
       if (apiCache.has(cacheKey)) {
         const rate = apiCache.get(cacheKey);
-        resultEl.textContent = `${amount} ${from} = ${(amount * rate).toFixed(2)} ${to}`;
+        resultEl.textContent = `${amount} ${from} = ${(
+          amount * rate
+        ).toFixed(2)} ${to}`;
         return;
       }
 
@@ -1240,16 +1415,24 @@
         if (data.result !== "success") throw new Error("API error");
         const rate = data.conversion_rates[to];
         apiCache.set(cacheKey, rate);
-        resultEl.textContent = `${amount} ${from} = ${(amount * rate).toFixed(2)} ${to}`;
+        resultEl.textContent = `${amount} ${from} = ${(
+          amount * rate
+        ).toFixed(2)} ${to}`;
       } catch (err) {
         console.error("Conversion error:", err);
-        resultEl.innerHTML = '<span style="color: var(--error)">Failed to convert currency</span>';
+        resultEl.innerHTML =
+          '<span style="color: var(--error)">Failed to convert currency</span>';
       }
     }
     document.addEventListener("DOMContentLoaded", () => {
-      document.getElementById("convert-btn").addEventListener("click", convertCurrency);
+      document
+        .getElementById("convert-btn")
+        .addEventListener("click", convertCurrency);
     });
 
+    /**********************************************************
+     * ROTATING GOLD NEWS TICKER
+     **********************************************************/
     async function loadGoldTicker() {
       const container = document.getElementById("gold-ticker-content");
       container.textContent = "Loading gold news…";
@@ -1285,6 +1468,9 @@
       }
     }
 
+    /**********************************************************
+     * ROTATING ECONOMIC NEWS TICKER
+     **********************************************************/
     async function loadEconTicker() {
       const container = document.getElementById("econ-ticker-content");
       container.textContent = "Loading economic news…";
@@ -1320,25 +1506,29 @@
       }
     }
 
+    /**********************************************************
+     * LIVE GOLD PRICE (Using MetalpriceAPI)
+     **********************************************************/
     let prevGoldPrice = null;
     async function loadGoldPrice() {
       try {
-        const res = await fetch("https://api.metalpriceapi.com/v1/latest?base=XAU&currencies=USD", {
-          headers: {
-            "api-key": METALPRICE_API_KEY,
-            "Content-Type": "application/json",
-          },
-        });
+        // MetalpriceAPI endpoint (XAU → USD). The JSON structure: { "rates": { "USD": 1965.12 }, ... }
+        const res = await fetch(
+          `https://api.metalpriceapi.com/v1/latest?api_key=${GOLDAPI_KEY}&base=XAU&currencies=USD`
+        );
         const data = await res.json();
-        // Assuming the price is in rates.XAU or similar; adjust based on actual API response
-        const price = data.rates && data.rates.USD ? parseFloat(1 / data.rates.USD) : null;
+        // Extract the USD rate
+        const price = data.rates && data.rates.USD ? parseFloat(data.rates.USD) : null;
+
         const goldEl = document.getElementById("gold-price");
         const changeEl = document.getElementById("price-change");
         if (price !== null) {
           if (prevGoldPrice !== null) {
             const diff = price - prevGoldPrice;
             const diffPercent = ((diff / prevGoldPrice) * 100).toFixed(2);
-            changeEl.textContent = `${diff > 0 ? "+" : ""}${diff.toFixed(2)} (${diffPercent}%)`;
+            changeEl.textContent = `${diff > 0 ? "+" : ""}${diff.toFixed(
+              2
+            )} (${diffPercent}%)`;
             if (diff > 0) {
               goldEl.classList.remove("price-down");
               goldEl.classList.add("price-up");
@@ -1369,12 +1559,45 @@
       }
     }
 
+    /**********************************************************
+     * ECONOMIC CALENDAR ROTATOR (Live)
+     **********************************************************/
     const economicEvents = [
-      { date: "06-03-2025", time: "08:30", currency: "USD", event: "Non-Farm Payrolls", impact: "High" },
-      { date: "06-03-2025", time: "10:00", currency: "EUR", event: "CPI Flash Estimate", impact: "Medium" },
-      { date: "06-04-2025", time: "04:30", currency: "GBP", event: "Services PMI", impact: "Low" },
-      { date: "06-05-2025", time: "12:00", currency: "CAD", event: "Interest Rate Decision", impact: "High" },
-      { date: "06-06-2025", time: "09:00", currency: "AUD", event: "Employment Change", impact: "Medium" },
+      {
+        date: "06-03-2025",
+        time: "08:30",
+        currency: "USD",
+        event: "Non-Farm Payrolls",
+        impact: "High",
+      },
+      {
+        date: "06-03-2025",
+        time: "10:00",
+        currency: "EUR",
+        event: "CPI Flash Estimate",
+        impact: "Medium",
+      },
+      {
+        date: "06-04-2025",
+        time: "04:30",
+        currency: "GBP",
+        event: "Services PMI",
+        impact: "Low",
+      },
+      {
+        date: "06-05-2025",
+        time: "12:00",
+        currency: "CAD",
+        event: "Interest Rate Decision",
+        impact: "High",
+      },
+      {
+        date: "06-06-2025",
+        time: "09:00",
+        currency: "AUD",
+        event: "Employment Change",
+        impact: "Medium",  
+      },
     ];
     let currentEventIndex = 0;
     function displayEvent(index) {
@@ -1397,6 +1620,9 @@
       currentEventIndex = (currentEventIndex + 1) % economicEvents.length;
     }
 
+    /**********************************************************
+     * LOCAL TIME & DATE DISPLAY (Next to Logo)
+     **********************************************************/
     function updateLocalTime() {
       const now = new Date();
       const formatted = now.toLocaleString("en-US", {
@@ -1421,18 +1647,63 @@
       timeEl.textContent = formatted;
     }
 
+    /**********************************************************
+     * ON LOAD: INITIALIZE EVERYTHING
+     **********************************************************/
     document.addEventListener("DOMContentLoaded", () => {
+      // Animate sections
+      document.querySelectorAll(".slide-in").forEach((el) => {
+        const io = new IntersectionObserver(
+          (entries, observer) => {
+            entries.forEach((entry) => {
+              if (entry.isIntersecting) {
+                entry.target.classList.add("visible");
+                observer.unobserve(entry.target);
+              }
+            });
+          },
+          { threshold: 0.1 }
+        );
+        io.observe(el);
+      });
+
+      // Load news tickers
       loadGoldTicker();
       loadEconTicker();
-      setInterval(loadGoldTicker, 60 * 1000);
-      setInterval(loadEconTicker, 60 * 1000);
+      setInterval(loadGoldTicker, 60 * 1000); // refresh every minute
+      setInterval(loadEconTicker, 60 * 1000); // refresh every minute
+
+      // Load live gold price every 5 seconds
       loadGoldPrice();
       setInterval(loadGoldPrice, 5000);
+
+      // Load economic calendar events
       rotateEvents();
       setInterval(rotateEvents, 5000);
+
+      // Update local time every second
       updateLocalTime();
       setInterval(updateLocalTime, 1000);
     });
   </script>
+
+  <!-- ==========================================================================
+       NAVIGATION LIST (FOR REFERENCE - DO NOT DELETE)
+       =============================================================================
+       Home                → index.html
+       About               → about.html
+       Services            → services.html
+       Trade Insights      → CBE_trade_insights_public.html
+       FAQ                 → FAQ.html
+       Apex Income Options → apex-income-options.html
+       VIP Subscription    → vip-subscription.html
+       Apply               → CBE_apply.html
+       Capital Accelerator → capital-support.html
+       Contact             → CBE_contact.html
+       Testimonials        → testimonials.html
+       Affiliate Signup    → affiliate_signup.html
+       Affiliate Login     → affiliate_login.html
+       User Login          → login.html
+     ============================================================================ -->
 </body>
 </html>
