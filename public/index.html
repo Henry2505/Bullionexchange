@@ -195,7 +195,7 @@
       justify-content: space-between;
       padding: 0 20px;
       box-shadow: 0 2px 8px var(--shadow);
-      z-index: 150;
+      z-index: 1000; /* Increased to ensure top layer */
     }
     #nav-menu .logo {
       font-family: "Orbitron", sans-serif;
@@ -220,6 +220,7 @@
       list-style: none;
       overflow-x: auto;
       white-space: nowrap;
+      z-index: 1000; /* Ensure visible above other elements */
     }
     #desktop-links li {
       flex-shrink: 0;
@@ -255,6 +256,7 @@
       padding: 8px;
       margin-left: 15px;
       transition: transform 0.3s;
+      z-index: 1000;
     }
     #more-toggle:hover {
       transform: rotate(90deg);
@@ -270,7 +272,7 @@
       box-shadow: 0 2px 8px var(--shadow);
       list-style: none;
       min-width: 220px;
-      z-index: 160;
+      z-index: 1000; /* Ensure dropdown is on top */
     }
     #more-menu li {
       border-bottom: 1px solid var(--gold-dark);
@@ -303,7 +305,7 @@
       height: 25px;
       justify-content: center;
       align-items: center;
-      z-index: 155;
+      z-index: 1000;
     }
     #menu-toggle span {
       width: 30px;
@@ -335,7 +337,7 @@
       transition: right 0.3s ease;
       height: calc(100% - 70px);
       overflow-y: auto;
-      z-index: 150;
+      z-index: 1000; /* Ensure side menu is on top */
     }
     #menu-list.active {
       right: 0;
@@ -714,7 +716,7 @@
        ========================================================================== */
     #gold-chart {
       width: 100%;
-      height: 100vh; /* Fully expanded for maximum visibility */
+      height: 200vh; /* Increased height by 2× */
       margin: 20px auto;
       position: relative;
       background: var(--accent);
@@ -809,28 +811,6 @@
     }
 
     /* ==========================================================================
-       BACK-TO-TOP (JET) BUTTON
-       ========================================================================== */
-    #jet {
-      position: fixed;
-      left: 20px;
-      bottom: 100px;
-      background: var(--gold);
-      color: #000;
-      padding: 12px;
-      border-radius: 50%;
-      font-size: 1.5rem;
-      cursor: pointer;
-      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.5);
-      display: none;
-      z-index: 100;
-      transition: transform 0.3s;
-    }
-    #jet:hover {
-      transform: scale(1.1);
-    }
-
-    /* ==========================================================================
        CHAT BUTTONS (WhatsApp & Telegram)
        ========================================================================== */
     .chat-btns {
@@ -904,16 +884,13 @@
         flex-direction: column;
       }
       #gold-chart {
-        height: 60vh;
+        height: 120vh; /* Scaled appropriately for mobile */
       }
       #economic-calendar {
         padding: 0.5rem;
       }
       .chat-btns {
         bottom: 10px;
-        left: 10px;
-      }
-      #jet {
         left: 10px;
       }
       .chart-toggle button {
@@ -925,10 +902,6 @@
       .btn-gold {
         padding: 0.5rem 1rem;
         font-size: 0.9rem;
-      }
-      #jet {
-        left: 10px;
-        bottom: 80px;
       }
       .chat-btns a {
         font-size: 0.9rem;
@@ -1209,9 +1182,6 @@
     </p>
   </footer>
 
-  <!-- BACK-TO-TOP (JET) BUTTON -->
-  <div id="jet" title="Back to top">🚀</div>
-
   <!-- CHAT BUTTONS: WhatsApp & Telegram -->
   <div class="chat-btns">
     <a
@@ -1255,9 +1225,9 @@
   <script>
     /**********************************************************
      * API KEYS (⚠️ Move these server-side in production!)
-     * Using GoldAPI.io for Live Gold Price
+     * Using MetalpriceAPI for Live Gold Price
      **********************************************************/
-    const GOLDAPI_KEY = "goldapi-2449msmbh6lmp8-io";
+    const GOLDAPI_KEY = "01b8a67f9ac08887dd3b33a93eeb5d66";
     const NEWS_API_KEY = "6de81d54e02e45f8a5546a827c70ab28";
     // Exchange rate API still used for currency converter
     const EXCHANGE_RATE_API_KEY = "4e4307b2bf8daac15365a410";
@@ -1284,7 +1254,7 @@
     });
 
     /**********************************************************
-     * SCROLL PROGRESS BAR & JET BUTTON LOGIC
+     * SCROLL PROGRESS BAR
      **********************************************************/
     window.addEventListener("scroll", () => {
       const scrollTop = window.scrollY;
@@ -1292,10 +1262,6 @@
         document.documentElement.scrollHeight - window.innerHeight;
       const percent = docHeight > 0 ? (scrollTop / docHeight) * 100 : 0;
       document.getElementById("scroll-progress").style.width = percent + "%";
-
-      // Show/hide “Jet” button
-      const jet = document.getElementById("jet");
-      jet.style.display = scrollTop > window.innerHeight / 2 ? "block" : "none";
     });
 
     /**********************************************************
@@ -1350,13 +1316,6 @@
           moreMenu.style.display = "none";
         }
       });
-    });
-
-    /**********************************************************
-     * BACK-TO-TOP (JET) BUTTON SCROLL TO TOP
-     **********************************************************/
-    document.getElementById("jet").addEventListener("click", () => {
-      window.scrollTo({ top: 0, behavior: "smooth" });
     });
 
     /**********************************************************
@@ -1540,7 +1499,7 @@
     }
 
     /**********************************************************
-     * LIVE GOLD PRICE (Using GoldAPI.io)
+     * LIVE GOLD PRICE (Using MetalpriceAPI)
      **********************************************************/
     let prevGoldPrice = null;
     async function loadGoldPrice() {
