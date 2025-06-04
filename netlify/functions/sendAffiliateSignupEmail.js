@@ -5,13 +5,13 @@
  * via Brevo (Sendinblue) SMTP, using template ID 10.
  *
  * Expects a POST body: { email, firstName, token, referralCode }
- * Reads BREVO_API_KEY and BREVO_TEMPLATE_ID from environment variables.
+ * Reads BREVO_API and BREVO_TEMPLATE_ID from environment variables.
  */
 
-import fetch from "node-fetch"; // Only needed if your environment doesn’t support global fetch.
+import fetch from "node-fetch"; // If using Node 18+ with global fetch, you can remove this import.
 
 exports.handler = async function(event, context) {
-  // 1) Only accept POST
+  // Only accept POST requests
   if (event.httpMethod !== "POST") {
     return {
       statusCode: 405,
@@ -19,7 +19,7 @@ exports.handler = async function(event, context) {
     };
   }
 
-  // 2) Parse JSON payload
+  // Parse the incoming JSON payload
   let body;
   try {
     body = JSON.parse(event.body);
@@ -38,21 +38,21 @@ exports.handler = async function(event, context) {
     };
   }
 
-  // 3) Build confirmation URL (Supabase verifies token)
+  // Build the Supabase confirmation URL from the token
   const confirmationUrl = `https://dapwpgvnfjcfqqhrpxla.supabase.co/auth/v1/verify?token=${token}`;
 
-  // 4) Read Brevo credentials from environment
-  const BREVO_API_KEY   = process.env.BREVO_API_KEY;
-  const TEMPLATE_ID     = process.env.BREVO_TEMPLATE_ID; // "10"
-  if (!BREVO_API_KEY || !TEMPLATE_ID) {
-    console.error("Missing BREVO_API_KEY or BREVO_TEMPLATE_ID in environment");
+  // Read Brevo credentials from environment
+  const BREVO_API       = process.env.BREVO_API;
+  const TEMPLATE_ID     = process.env.BREVO_TEMPLATE_ID; // should be "10"
+  if (!BREVO_API || !TEMPLATE_ID) {
+    console.error("Missing BREVO_API or BREVO_TEMPLATE_ID in environment");
     return {
       statusCode: 500,
       body: "Server is not configured properly"
     };
   }
 
-  // 5) Prepare payload for Brevo SMTP API
+  // Prepare payload for Brevo SMTP API
   const payload = {
     sender: {
       name: "CBE Support",
@@ -72,13 +72,13 @@ exports.handler = async function(event, context) {
     }
   };
 
-  // 6) Call Brevo’s /smtp/email endpoint
+  // Call Brevo’s /smtp/email endpoint
   try {
     const resp = await fetch("https://api.brevo.com/v3/smtp/email", {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
-        "api-key": BREVO_API_KEY
+        "api-key": BREVO_API
       },
       body: JSON.stringify(payload)
     });
@@ -92,7 +92,7 @@ exports.handler = async function(event, context) {
       };
     }
 
-    // Success
+    // Email sent successfully
     return {
       statusCode: 200,
       body: JSON.stringify({ message: "Email sent", brevo: data })
