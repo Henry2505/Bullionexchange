@@ -1,258 +1,196 @@
 <!DOCTYPE html>
 <html lang="en" data-theme="dark">
 <head>
-  <meta charset="UTF-8"/>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Affiliate Login • Chukwuemeka Bullion Exchange</title>
-  <meta name="description" content="Login to Chukwuemeka Bullion Exchange’s VIP affiliate dashboard."/>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Affiliate Login • CBE Global</title>
+
+  <!-- ========== DEPENDENCIES: Bootstrap & Supabase JS ========== -->
+  <link
+    href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css"
+    rel="stylesheet"
+    integrity="sha384-QWTKZyjpPEjISv5WaRU9OFeRpok6YctnYmDr5pNlyT2bRjXh0JMhjY6hW+ALEwIH"
+    crossorigin="anonymous"
+  />
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>
 
   <style>
-    /* ---------------------------------------------------------
-       Dark/Light Theme Variables
-       --------------------------------------------------------- */
+    /* Dark / Light theme variables */
     :root[data-theme="dark"] {
       --bg: #121212;
-      --text: #f0f0f0;
-      --gold: #d4af37;
-      --gold-dark: #b3932b;
-      --glass-bg: rgba(30,30,30,0.6);
-      --text-light: #bbbbbb;
-      --text-muted: #888888;
-      --error-color: #e74c3c;
-      --success-color: #2ecc71;
-      --warning-color: #f39c12;
+      --text: #e0e0e0;
+      --accent: #1e1e1e;
+      --gold: #ffd700;
+      --gold-dark: #cca300;
+      --glass: rgba(30, 30, 30, 0.7);
+      --shadow: rgba(0, 0, 0, 0.5);
     }
     :root[data-theme="light"] {
-      --bg: #fafafa;
-      --text: #222222;
-      --gold: #d4af37;
-      --gold-dark: #b3932b;
-      --glass-bg: rgba(255,255,255,0.6);
-      --text-light: #555555;
-      --text-muted: #666666;
-      --error-color: #e74c3c;
-      --success-color: #2ecc71;
-      --warning-color: #f39c12;
+      --bg: #f5f5f5;
+      --text: #333;
+      --accent: #ffffff;
+      --gold: #cca300;
+      --gold-dark: #b58900;
+      --glass: rgba(255, 255, 255, 0.7);
+      --shadow: rgba(0, 0, 0, 0.2);
     }
-
-    * { margin: 0; padding: 0; box-sizing: border-box; }
+    html { scroll-behavior: smooth; }
     body {
-      font-family: 'Roboto', sans-serif;
+      margin: 0; padding: 0; box-sizing: border-box;
       background: var(--bg);
       color: var(--text);
+      font-family: 'Poppins', sans-serif;
       display: flex;
       align-items: center;
       justify-content: center;
       min-height: 100vh;
     }
-    .login-card {
-      width: 100%;
+    .container {
       max-width: 400px;
-      background: var(--glass-bg);
-      backdrop-filter: blur(8px);
-      padding: 30px 25px;
-      border-radius: 10px;
-      box-shadow: 0 4px 30px rgba(0,0,0,0.5);
-      opacity: 0;
-      transform: translateY(20px);
-      transition: opacity .6s ease-out, transform .6s ease-out;
-    }
-    .login-card.visible {
-      opacity: 1;
-      transform: translateY(0);
-    }
-    .login-card h1 {
-      font-family: 'Playfair Display', serif;
-      font-size: 1.8rem;
-      color: var(--gold);
-      text-align: center;
-      margin-bottom: 20px;
-    }
-    form { display: flex; flex-direction: column; gap: 15px; }
-    label { font-size: .95rem; color: var(--text-light); }
-    input {
-      padding: 10px;
-      border: none;
-      border-radius: 6px;
-      background: #1c1c1c;
-      color: var(--text);
-      font-size: 1rem;
-    }
-    input:focus {
-      outline: none;
-      box-shadow: 0 0 6px var(--gold);
-    }
-    button {
-      padding: 12px;
-      border: none;
-      border-radius: 6px;
-      background: var(--gold);
-      color: #000;
-      font-weight: 700;
-      cursor: pointer;
-      transition: background .3s, box-shadow .3s;
-    }
-    button:hover {
-      background: var(--gold-dark);
-      box-shadow: 0 0 12px var(--gold);
-    }
-    #login-alert {
-      margin-top: 12px;
-      text-align: center;
-      font-weight: 600;
-    }
-    .logo { position: fixed; top: 20px; left: 20px; }
-    .logo img { width: 130px; }
-    #theme-toggle {
-      position: fixed;
-      top: 20px;
-      right: 20px;
-      background: none;
-      border: none;
-      font-size: 1.4rem;
-      color: var(--text);
-      cursor: pointer;
-    }
-    footer {
-      position: fixed;
-      bottom: 20px;
       width: 100%;
-      text-align: center;
-      color: var(--text-muted);
-      font-size: .85rem;
+      background: var(--glass);
+      border: 1px solid var(--gold-dark);
+      border-radius: 8px;
+      padding: 2rem;
+      box-shadow: 0 2px 8px var(--shadow);
+    }
+    .form-control, .form-select {
+      background: var(--accent) !important;
+      color: var(--text) !important;
+      border: 1px solid var(--gold-dark) !important;
+    }
+    .form-control::placeholder { color: #bbbbbb !important; }
+    .form-control:focus, .form-select:focus {
+      background: var(--accent) !important;
+      color: var(--text) !important;
+      border: 1px solid var(--gold) !important;
+      box-shadow: 0 0 0 0.25rem rgba(255, 215, 0, 0.25) !important;
+    }
+    .btn-primary {
+      background: linear-gradient(45deg, var(--gold), var(--gold-dark));
+      border: none;
+      color: #000;
+      font-weight: 600;
+      width: 100%;
+      margin-top: 1rem;
+    }
+    .btn-primary:hover {
+      background: linear-gradient(45deg, var(--gold-dark), var(--gold));
+    }
+    .text-center a {
+      color: var(--gold);
+    }
+    .text-center a:hover {
+      color: var(--gold-dark);
+      text-decoration: underline;
+    }
+    .alert {
+      background: var(--accent);
+      color: var(--text);
+      border: 1px solid var(--gold-dark);
     }
   </style>
-
-  <link 
-    href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700&family=Roboto:wght@300;400;700&display=swap"
-    rel="stylesheet"
-  />
 </head>
+
 <body>
-  <div class="logo">
-    <a href="index.html"><img src="CBE_logo.PNG" alt="CBE Logo"/></a>
-  </div>
-  <button id="theme-toggle" aria-label="Toggle theme">🌞</button>
+  <div class="container">
+    <h3 class="text-center mb-4">Affiliate Login</h3>
 
-  <div class="login-card" id="login-card">
-    <h1>Affiliate Login</h1>
+    <div id="alert-container"></div>
+
     <form id="login-form">
-      <label for="email">Email Address</label>
-      <input type="email" id="email" required/>
-      <label for="password">Password</label>
-      <input type="password" id="password" required/>
-      <button type="submit">Log In</button>
+      <div class="mb-3">
+        <label for="email" class="form-label">Email address</label>
+        <input
+          type="email"
+          class="form-control"
+          id="email"
+          placeholder="you@example.com"
+          required
+        />
+      </div>
+
+      <div class="mb-3">
+        <label for="password" class="form-label">Password</label>
+        <input
+          type="password"
+          class="form-control"
+          id="password"
+          placeholder="••••••••"
+          required
+        />
+      </div>
+
+      <button type="submit" class="btn btn-primary" id="submit-btn">
+        <span id="btn-text">Log In</span>
+        <span id="btn-spinner" class="spinner-border spinner-border-sm ms-2" role="status" style="display: none;"></span>
+      </button>
     </form>
-    <div id="login-alert"></div>
+
+    <p class="text-center mt-3">
+      Don’t have an account? 
+      <a href="affiliate_signup.html">Sign up here</a>
+    </p>
   </div>
 
-  <footer>© 2025 Chukwuemeka Bullion Exchange. All rights reserved.</footer>
-
-  <!-- Supabase JS (used to query public.users) -->
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>
   <script>
-    document.addEventListener('DOMContentLoaded', () => {
-      console.log("DOM loaded: attaching login logic");
+    // ────────────────────────────────────────────────────────────────────────────
+    // 1) Initialize Supabase client (use your own URL & KEY)
+    const SUPA_URL = 'https://dapwpgvnfjcfqqhrpxla.supabase.co';
+    const SUPA_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.' +
+                     'eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImRhcHdwZ3Zu' +
+                     'ZmpjZnFxaHJweGxhIiwicm9sZSI6ImFub24iLCJpYXQiOj' +
+                     'E3NDcwNDA4ODgsImV4cCI6MjA2MjYxNjg4OH0.' +
+                     'ICC0UsLlzJDNre7rFCeD3k6iVzo6jOJgn3PhABpEMsQ';
+    const supabase = supabase.createClient(SUPA_URL, SUPA_KEY);
 
-      // Fade‑in the card
-      const loginCard = document.getElementById('login-card');
-      loginCard.classList.add('visible');
+    // ────────────────────────────────────────────────────────────────────────────
+    // 2) Helper: show Bootstrap‐style alert
+    function showAlert(message, type = 'danger') {
+      const container = document.getElementById('alert-container');
+      container.innerHTML = `
+        <div class="alert alert-${type} alert-dismissible fade show" role="alert">
+          ${message}
+          <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>`;
+    }
 
-      // Theme toggle
-      const toggleBtn = document.getElementById('theme-toggle');
-      const savedTheme = localStorage.getItem('theme') || 'dark';
-      document.documentElement.setAttribute('data-theme', savedTheme);
-      toggleBtn.textContent = savedTheme === 'dark' ? '🌞' : '🌜';
-      toggleBtn.addEventListener('click', () => {
-        const current = document.documentElement.getAttribute('data-theme');
-        const next = current === 'dark' ? 'light' : 'dark';
-        document.documentElement.setAttribute('data-theme', next);
-        localStorage.setItem('theme', next);
-        toggleBtn.textContent = next === 'dark' ? '🌞' : '🌜';
+    // ────────────────────────────────────────────────────────────────────────────
+    // 3) On form submit: authenticate via Supabase Auth
+    document.getElementById('login-form').addEventListener('submit', async (evt) => {
+      evt.preventDefault();
+      const emailEl = document.getElementById('email');
+      const pwEl = document.getElementById('password');
+      const btnText = document.getElementById('btn-text');
+      const btnSpinner = document.getElementById('btn-spinner');
+      const submitBtn = document.getElementById('submit-btn');
+
+      // Disable button & show spinner
+      submitBtn.setAttribute('disabled', 'true');
+      btnText.textContent = 'Logging In…';
+      btnSpinner.style.display = 'inline-block';
+
+      // Sign in with Supabase
+      const { data, error } = await supabase.auth.signInWithPassword({
+        email: emailEl.value,
+        password: pwEl.value
       });
 
-      // Initialize Supabase client with your Project URL & Anon Key
-      const SUPA_URL      = 'https://dapwpgvnfjcfqqhrpxla.supabase.co';
-      const SUPA_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImRhcHdwZ3ZuZmpjZnFxaHJweGxhIiwicm9sZSI6IkFub24iLCJpYXQiOjE3NDcwNDA4ODgsImV4cCI6MjA2MjYxNjg4OH0.ICC0UsLlzJDNre7rFCeD3k6iVzo6jOJgn3PhABpEMsQ';
-      const sb = supabase.createClient(SUPA_URL, SUPA_ANON_KEY);
-
-      // Attach login form handler
-      const loginForm = document.getElementById('login-form');
-      loginForm.addEventListener('submit', async (e) => {
-        e.preventDefault();
-        console.log("Login form submitted");
-
-        const alertDiv = document.getElementById('login-alert');
-        alertDiv.textContent = '';
-        alertDiv.style.color = '';
-
-        const email    = document.getElementById('email').value.trim().toLowerCase();
-        const password = document.getElementById('password').value;
-
-        console.log("Attempting login for:", email);
-
-        try {
-          // 1) Fetch user by email from public.users
-          const { data: user, error: fetchError } = await sb
-            .from('users')
-            .select('id, name, email, password, status')
-            .eq('email', email)
-            .single();
-
-          if (fetchError) {
-            console.error("Fetch error:", fetchError);
-            throw fetchError;
-          }
-          if (!user) {
-            throw new Error('No account found for that email.');
-          }
-
-          // 2) Check password (raw comparison)
-          if (user.password !== password) {
-            throw new Error('Invalid login credentials.');
-          }
-
-          // 3) Check status is “approved”
-          if (String(user.status).toLowerCase() !== 'approved') {
-            throw new Error('Your account is not yet approved—please check back soon.');
-          }
-
-          // 4) Device fingerprint (optional)
-          const deviceKey     = `cbeDevice_${email}`;
-          const savedDevice   = localStorage.getItem(deviceKey);
-          const currentDevice = navigator.userAgent;
-          if (!savedDevice) {
-            localStorage.setItem(deviceKey, currentDevice);
-          } else if (savedDevice !== currentDevice) {
-            localStorage.setItem(deviceKey, currentDevice);
-            const payload = {
-              email:  user.email,
-              name:   user.name,
-              device: currentDevice,
-              time:   new Date().toLocaleString("en-US", { timeZone: "Africa/Lagos" })
-            };
-            console.log("Device changed—sending alert:", payload);
-            await fetch("/.netlify/functions/send-login-alert", {
-              method: "POST",
-              headers: { "Content-Type": "application/json" },
-              body: JSON.stringify(payload)
-            });
-          }
-
-          // 5) Mark user as logged in locally
-          localStorage.setItem('isLoggedIn', 'true');
-          sessionStorage.setItem('cbeUserId', user.id);
-          sessionStorage.setItem('userName', user.name);
-
-          console.log("Login successful—redirecting to dashboard");
-          // 6) Redirect
-          window.location.assign('affiliate_dashboard.html');
-        } catch (err) {
-          console.error("Login error:", err);
-          alertDiv.style.color = "var(--error-color)";
-          alertDiv.textContent = err.message || "An unexpected error occurred.";
+      if (error) {
+        let msg = error.message;
+        // If email not confirmed, offer a note
+        if (error.status === 400 && error.message.includes('confirmation')) {
+          msg = 'Please confirm your email before logging in.';
         }
-      });
+        showAlert(msg, 'danger');
+        submitBtn.removeAttribute('disabled');
+        btnText.textContent = 'Log In';
+        btnSpinner.style.display = 'none';
+        return;
+      }
+
+      // On success, redirect to the dashboard
+      window.location.href = 'affiliate_dashboard.html';
     });
   </script>
 </body>
