@@ -12,10 +12,11 @@
     rel="stylesheet"
   />
 
-  <!-- Supabase JS (for referral-code lookup) -->
+  <!-- Supabase JS (for referral‑code lookup) -->
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js/dist/umd/supabase.min.js"></script>
 
   <style>
+    /* Dark / Light theme variables */
     :root[data-theme="dark"] {
       --bg: #121212;
       --text: #f0f0f0;
@@ -265,6 +266,7 @@
       <section class="apply-card" id="apply-card">
         <h1>Apply to Join CBE</h1>
 
+        <!-- Optional “Referred by” notice (from URL) -->
         <p class="referral-note" id="referral-note"></p>
 
         <form id="apply-form" novalidate>
@@ -299,6 +301,7 @@
             ></textarea>
           </div>
 
+          <!-- Optional “Referral Code” input -->
           <div class="form-group optional">
             <label for="apply-referral">Referral Code (auto or manual)</label>
             <input type="text" id="apply-referral" placeholder="Enter code if you have one" />
@@ -324,34 +327,43 @@
   </div>
 
   <script>
-    // Supabase client for referral-code lookup
+    // ─── Supabase client for referral‑code lookup ─────────────────────────────────
+    // We only need the ANON key here to verify referral codes; no full auth on this page.
     const SUPA_URL = "https://dapwpgvnfjcfqqhrpxla.supabase.co";
-    const SUPA_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImRhcHdwZ3ZuZmpjZnFxaHJweGxhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDcwNDA4ODgsImV4cCI6MjA2MjYxNjg4OH0.ICC0UsLlzJDNre7rFCeD3k6iVzo6jOJgn3PhABpEMsQ";
+    const SUPA_ANON_KEY =
+      "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9." +
+      "eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImRhcHdwZ3ZuZmpjZnFxaHJweGxhIiwicm9sZSI6IkFub24iLCJpYXQiOjE3NDcwNDA4ODgsImV4cCI6MjA2MjYxNjg4OH0." +
+      "ICC0UsLlzJDNre7rFCeD3k6iVzo6jOJgn3PhABpEMsQ";
     const supabaseClient = supabase.createClient(SUPA_URL, SUPA_ANON_KEY);
 
-    // Helper: read "ref" param from URL
+    // ─── Helper: read “ref” param from URL ─────────────────────────────────────────────
     function getReferralFromURL() {
       const params = new URLSearchParams(window.location.search);
       return params.get("ref") || null;
     }
 
-    // Theme & card animation
+    // ─── Theme & card animation ──────────────────────────────────────────────────────
     document.addEventListener("DOMContentLoaded", () => {
+      // 1) Set saved theme (dark or light)
       const savedTheme = localStorage.getItem("theme") || "dark";
       document.documentElement.setAttribute("data-theme", savedTheme);
-      document.getElementById("theme-toggle").textContent = savedTheme === "dark" ? "🌞" : "🌜";
+      document.getElementById("theme-toggle").textContent =
+        savedTheme === "dark" ? "🌞" : "🌜";
 
+      // 2) Fade-in the card
       const card = document.getElementById("apply-card");
       card.classList.add("visible");
 
+      // 3) If URL includes “?ref=CODE”, auto-fill the referral field & show a note
       const refCodeURL = getReferralFromURL();
       if (refCodeURL) {
-        document.getElementById("referral-note").textContent = "You were referred by: " + refCodeURL;
+        document.getElementById("referral-note").textContent =
+          "You were referred by: " + refCodeURL;
         document.getElementById("apply-referral").value = refCodeURL;
       }
     });
 
-    // Theme toggle
+    // ─── Theme toggle button ──────────────────────────────────────────────────────────
     const toggleBtn = document.getElementById("theme-toggle");
     toggleBtn.addEventListener("click", () => {
       const current = document.documentElement.getAttribute("data-theme");
@@ -361,12 +373,13 @@
       toggleBtn.textContent = next === "dark" ? "🌞" : "🌜";
     });
 
-    // Form handling
+    // ─── Form handling ─────────────────────────────────────────────────────────────────
     const form = document.getElementById("apply-form");
     const agree = document.getElementById("agree-terms");
     const submitBtn = document.getElementById("submit-btn");
     const alertDiv = document.getElementById("apply-alert");
 
+    // Enable “Submit” only when terms are checked
     agree.addEventListener("change", () => {
       const canSubmit = agree.checked;
       submitBtn.disabled = !canSubmit;
@@ -378,13 +391,15 @@
       alertDiv.textContent = "";
       alertDiv.style.color = "";
 
+      // Gather form values:
       const name = document.getElementById("apply-name").value.trim();
       const email = document.getElementById("apply-email").value.trim().toLowerCase();
       const password = document.getElementById("apply-password").value;
       const phone = document.getElementById("apply-phone").value.trim();
       const experience = document.getElementById("apply-message").value.trim();
-      const referralCode = document.getElementById("apply-referral").value.trim();
+      const manualRef = document.getElementById("apply-referral").value.trim();
 
+      // ─── Basic validation ────────────────────────────────────────────────────────────
       if (!name || !email || !password || !phone || !experience) {
         alertDiv.style.color = "var(--error-color)";
         alertDiv.textContent = "Please complete all required fields.";
@@ -401,16 +416,22 @@
         return;
       }
 
+      // Disable button while submitting:
       submitBtn.disabled = true;
       submitBtn.textContent = "Submitting…";
 
       try {
-        let validReferredBy = null;
-        if (referralCode) {
+        // 1) Determine referral code: manual input takes priority, else URL param, else null
+        const urlRef = getReferralFromURL();
+        const referralCodeToUse = manualRef || urlRef || null;
+
+        // 2) If a code exists, validate it against `affiliates.referral_code` → get `user_id`
+        let referredByUserId = null;
+        if (referralCodeToUse) {
           const { data: affiliateRow, error: checkErr } = await supabaseClient
             .from("affiliates")
             .select("user_id")
-            .eq("referral_code", referralCode)
+            .eq("referral_code", referralCodeToUse)
             .single();
 
           if (checkErr || !affiliateRow) {
@@ -420,18 +441,21 @@
             submitBtn.textContent = "Submit Application";
             return;
           }
-          validReferredBy = affiliateRow.user_id;
+          referredByUserId = affiliateRow.user_id; // UUID of the affiliate
         }
 
+        // 3) Package payload for Netlify function
         const payload = {
           name,
           email,
           password,
           phone,
           experience,
-          referral_code: referralCode || null,
+          referral_code: referralCodeToUse,
+          referred_by: referredByUserId, // pass the UUID if any
         };
 
+        // 4) Invoke Netlify function to create Auth user + insert into your `users` table
         const fnResponse = await fetch("/.netlify/functions/send-application", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
@@ -446,12 +470,14 @@
         }
 
         if (!fnResponse.ok) {
-          const errorMsg = fnResult?.error || JSON.stringify(fnResult) || "Unknown server error";
+          // Show the full JSON error from the function if available
+          const errorMsg = fnResult?.error || JSON.stringify(fnResult) || "Unknown server error.";
           alertDiv.style.color = "var(--error-color)";
           alertDiv.textContent = `Error: ${errorMsg}`;
           throw new Error(errorMsg);
         }
 
+        // 5) Success: show confirmation, reset form
         alertDiv.style.color = "var(--success-color)";
         alertDiv.textContent = fnResult.message || "Application submitted successfully!";
         form.reset();
