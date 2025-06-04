@@ -1,23 +1,19 @@
 // netlify/functions/send-application.js
 
-/**
- * 1) Validates POST payload
- * 2) Checks “users” table for existing email
- * 3) Verifies referral_code (if provided) by looking up affiliates → gets affiliate.user_id
- * 4) Creates Supabase Auth user (admin role) with email/password
- * 5) Inserts new row into public.users (auth_id, name, email, password, phone, experience, referred_by, status)
- * 6) Sends a confirmation email via Brevo
- */
-
 const { createClient } = require('@supabase/supabase-js');
 
-// ─── Environment variables (set these in Netlify’s Settings → Build & Deploy → Environment) ───
+// Environment variables
 const SUPABASE_URL = process.env.SUPABASE_URL;
 const SUPABASE_SERVICE_KEY = process.env.SUPABASE_SERVICE_KEY;
 const BREVO_API_KEY = process.env.BREVO_API_KEY;
 
+// Validate environment variables
 if (!SUPABASE_URL || !SUPABASE_SERVICE_KEY) {
   console.error('❌ Missing SUPABASE_URL or SUPABASE_SERVICE_KEY');
+  return {
+    statusCode: 500,
+    body: JSON.stringify({ error: 'Server configuration error' }),
+  };
 }
 if (!BREVO_API_KEY) {
   console.error('❌ Missing BREVO_API_KEY');
@@ -47,9 +43,9 @@ exports.handler = async (event, context) => {
     };
   }
 
-  const { name, email, password, phone, experience, referred_by } = payload;
+  const { name, email, password, phone, experience, referral_code, referred_by } = payload;
 
-  // ─── 1) Basic server-side validation ───────────────────────────────────────────────
+  // 1) Basic server-side validation
   if (!name || !email || !password || !phone || !experience) {
     return {
       statusCode: 400,
@@ -76,7 +72,7 @@ exports.handler = async (event, context) => {
     };
   }
 
-  // ─── 2) Check if email already exists in "public.users" ─────────────────────────────
+  // 2) Check if email already exists in "public.users"
   try {
     const { data: existingUser, error: checkError } = await supabase
       .from('users')
@@ -84,7 +80,7 @@ exports.handler = async (event, context) => {
       .eq('email', email)
       .single();
 
-    if (checkError && checkError.code !== 'PGRST116') {
+    if (checkError && checkError.code !== 'PGRST116') { // PGRST116 = no rows found
       console.error('Error checking existing user:', checkError);
       return {
         statusCode: 500,
@@ -105,25 +101,25 @@ exports.handler = async (event, context) => {
     };
   }
 
-  // ─── 3) If referred_by (UUID) was passed, verify it’s a valid affiliate user_id ────────
+  // 3) If referral_code is provided, verify it and get user_id
   let validReferredBy = null;
-  if (referred_by) {
+  if (referral_code) {
     try {
       const { data: affRow, error: checkErr } = await supabase
         .from('affiliates')
         .select('user_id')
-        .eq('user_id', referred_by)
+        .eq('referral_code', referral_code)
         .single();
 
       if (checkErr || !affRow) {
         return {
           statusCode: 400,
-          body: JSON.stringify({ error: 'Invalid referral code or affiliate.' }),
+          body: JSON.stringify({ error: 'Invalid referral code.' }),
         };
       }
       validReferredBy = affRow.user_id;
     } catch (err) {
-      console.error('Error validating referral code as user_id:', err);
+      console.error('Error validating referral code:', err);
       return {
         statusCode: 500,
         body: JSON.stringify({ error: 'Failed to validate referral code.' }),
@@ -131,74 +127,68 @@ exports.handler = async (event, context) => {
     }
   }
 
-  // ─── 4) Create a Supabase Auth user (admin) so they can log in later ─────────────────
+  // 4) Create a Supabase Auth user
   let newAuthUser = null;
   try {
     const { data: authData, error: authErr } = await supabase.auth.admin.createUser({
       email: email,
       password: password,
-      email_confirm: true,  // mark email as confirmed so they can log in immediately
+      email_confirm: true,
       user_metadata: { name: name },
     });
 
     if (authErr) {
       console.error('Error creating Auth user:', authErr);
       return {
-        statusCode: 500,
-        body: JSON.stringify({ error: 'Failed to create authentication user.' }),
+        statusCode: 400,
+        body: JSON.stringify({ error: `Failed to create authentication user: ${authErr.message}` }),
       };
     }
-    newAuthUser = authData;
+    newAuthUser = authData.user;
   } catch (err) {
     console.error('Unexpected error creating Auth user:', err);
     return {
       statusCode: 500,
-      body: JSON.stringify({ error: 'Authentication creation failed.' }),
+      body: JSON.stringify({ error: `Authentication creation failed: ${err.message}` }),
     };
   }
 
-  // ─── 5) Insert new row into public.users (auth_id = Auth UUID, plus other fields) ─────
+  // 5) Insert new row into public.users
   try {
-    const { data: insertedUser, error: insertErr } = await supabase
+    const { error: insertErr } = await supabase
       .from('users')
       .insert([
         {
-          auth_id: newAuthUser.id,          // UUID from Auth
+          id: newAuthUser.id, // Use auth user ID
           name: name,
           email: email,
-          password: password,               // store raw or hashed as you prefer
           phone: phone,
           experience: experience,
-          referred_by: validReferredBy,     // may be null
+          referral_code: referral_code || null,
+          referred_by: validReferredBy,
           status: 'pending',
         },
-      ])
-      .single();
+      ]);
 
     if (insertErr) {
       console.error('Error inserting into public.users:', insertErr);
+      // Optionally delete the auth user to avoid orphaned accounts
+      await supabase.auth.admin.deleteUser(newAuthUser.id);
       return {
         statusCode: 500,
-        body: JSON.stringify({ error: 'Failed to insert user details.' }),
+        body: JSON.stringify({ error: `Failed to insert user details: ${insertErr.message}` }),
       };
     }
   } catch (err) {
     console.error('Unexpected error inserting into users:', err);
+    await supabase.auth.admin.deleteUser(newAuthUser.id);
     return {
       statusCode: 500,
-      body: JSON.stringify({ error: 'Database insertion failed.' }),
+      body: JSON.stringify({ error: `Database insertion failed: ${err.message}` }),
     };
   }
 
-  // ─── 6) Send confirmation email via Brevo ──────────────────────────────────────────
-  if (!BREVO_API_KEY) {
-    console.error('Missing BREVO_API_KEY');
-    return {
-      statusCode: 500,
-      body: JSON.stringify({ error: 'Email service not configured.' }),
-    };
-  }
-
+  // 6) Send confirmation email via Brevo
   const brevoPayload = {
     sender: {
       name: 'Chukwuemeka Bullion Exchange',
@@ -210,7 +200,7 @@ exports.handler = async (event, context) => {
         name: name,
       },
     ],
-    templateId: 1, // ← Adjust this to your actual Brevo template ID
+    templateId: 1, // Adjust to your actual Brevo template ID
     params: {
       NAME: name,
       EMAIL: email,
@@ -220,7 +210,6 @@ exports.handler = async (event, context) => {
   };
 
   try {
-    // Netlify/Node 18+ provides a global `fetch`
     const brevoResponse = await fetch('https://api.brevo.com/v3/smtp/email', {
       method: 'POST',
       headers: {
@@ -230,19 +219,12 @@ exports.handler = async (event, context) => {
       body: JSON.stringify(brevoPayload),
     });
 
-    let brevoResult = null;
-    try {
-      brevoResult = await brevoResponse.json();
-    } catch (jsonErr) {
-      console.warn('Could not parse Brevo response JSON:', jsonErr);
-    }
-
     if (!brevoResponse.ok) {
+      const brevoResult = await brevoResponse.json();
       console.error('Brevo responded with error:', brevoResponse.status, brevoResult);
-      const brevoMsg = brevoResult?.message || brevoResult?.error || 'Unknown Brevo error';
       return {
         statusCode: 502,
-        body: JSON.stringify({ error: 'Brevo error: ' + brevoMsg }),
+        body: JSON.stringify({ error: `Brevo error: ${brevoResult.message || 'Unknown error'}` }),
       };
     }
   } catch (err) {
@@ -253,7 +235,7 @@ exports.handler = async (event, context) => {
     };
   }
 
-  // ─── 7) Success ───────────────────────────────────────────────────────────────────
+  // 7) Success
   return {
     statusCode: 200,
     body: JSON.stringify({
