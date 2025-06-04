@@ -8,14 +8,11 @@ const BREVO_API_KEY = process.env.BREVO_API_KEY;
 
 // Validate environment variables
 if (!SUPABASE_URL || !SUPABASE_SERVICE_KEY) {
-  console.error('❌ Missing SUPABASE_URL or SUPABASE_SERVICE_KEY');
+  console.error('Missing SUPABASE_URL or SUPABASE_SERVICE_KEY');
   return {
     statusCode: 500,
     body: JSON.stringify({ error: 'Server configuration error: Missing Supabase credentials' }),
   };
-}
-if (!BREVO_API_KEY) {
-  console.error('❌ Missing BREVO_API_KEY');
 }
 
 const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_KEY);
@@ -41,13 +38,11 @@ exports.handler = async (event, context) => {
 
   const { name, email, password, phone, experience, referral_code } = payload;
 
-  // 1) Basic validation
+  // Basic validation
   if (!name || !email || !password || !phone || !experience) {
     return {
       statusCode: 400,
-      body: JSON.stringify({
-        error: 'Please provide name, email, password, phone, and experience',
-      }),
+      body: JSON.stringify({ error: 'Please provide name, email, password, phone, and experience' }),
     };
   }
 
@@ -66,7 +61,7 @@ exports.handler = async (event, context) => {
     };
   }
 
-  // 2) Check if email exists in public.users
+  // Check if email exists in public.users
   try {
     const { data: existingUser, error: checkError } = await supabase
       .from('users')
@@ -88,14 +83,14 @@ exports.handler = async (event, context) => {
       };
     }
   } catch (err) {
-    console.error('Unexpected error while checking existing user:', err);
+    console.error('Unexpected error checking user:', err);
     return {
       statusCode: 500,
-      body: JSON.stringify({ error: `Database check failed: ${err.message}` }),
+      body: JSON.stringify({ error: 'Database check failed' }),
     };
   }
 
-  // 3) Validate referral_code
+  // Validate referral_code (optional)
   let validReferredBy = null;
   if (referral_code) {
     try {
@@ -106,22 +101,18 @@ exports.handler = async (event, context) => {
         .single();
 
       if (checkErr || !affRow) {
-        return {
-          statusCode: 400,
-          body: JSON.stringify({ error: 'Invalid referral code' }),
-        };
+        console.warn('Invalid referral code:', referral_code);
+        // Allow submission without referral
+      } else {
+        validReferredBy = affRow.user_id;
       }
-      validReferredBy = affRow.user_id;
     } catch (err) {
       console.error('Error validating referral code:', err);
-      return {
-        statusCode: 500,
-        body: JSON.stringify({ error: `Failed to validate referral code: ${err.message}` }),
-      };
+      // Allow submission without referral
     }
   }
 
-  // 4) Create Supabase Auth user
+  // Create Supabase Auth user
   let newAuthUser = null;
   try {
     const { data: existingAuthUser, error: authCheckError } = await supabase.auth.admin.getUserByEmail(email);
@@ -140,39 +131,39 @@ exports.handler = async (event, context) => {
     }
 
     const { data: authData, error: authErr } = await supabase.auth.admin.createUser({
-      email: email,
-      password: password,
+      email,
+      password,
       email_confirm: true,
-      user_metadata: { name: name },
+      user_metadata: { name },
     });
 
     if (authErr) {
-      console.error('Error creating Auth user:', authErr);
+      console.error('Error creating auth user:', authErr);
       return {
         statusCode: 400,
-        body: JSON.stringify({ error: `Failed to create authentication user: ${authErr.message}` }),
+        body: JSON.stringify({ error: `Failed to create user: ${authErr.message}` }),
       };
     }
     newAuthUser = authData.user;
   } catch (err) {
-    console.error('Unexpected error creating Auth user:', err);
+    console.error('Unexpected error creating auth user:', err);
     return {
       statusCode: 500,
-      body: JSON.stringify({ error: `Authentication creation failed: ${err.message}` }),
+      body: JSON.stringify({ error: 'Authentication creation failed' }),
     };
   }
 
-  // 5) Insert into public.users
+  // Insert into public.users
   try {
     const { error: insertErr } = await supabase
       .from('users')
       .insert([
         {
           id: newAuthUser.id,
-          name: name,
-          email: email,
-          phone: phone,
-          experience: experience,
+          name,
+          email,
+          phone,
+          experience,
           referral_code: referral_code || null,
           referred_by: validReferredBy,
           status: 'pending',
@@ -180,74 +171,54 @@ exports.handler = async (event, context) => {
       ]);
 
     if (insertErr) {
-      console.error('Error inserting into public.users:', insertErr);
+      console.error('Error inserting into users:', insertErr);
       await supabase.auth.admin.deleteUser(newAuthUser.id);
       return {
         statusCode: 500,
-        body: JSON.stringify({ error: `Failed to insert user details: ${insertErr.message}` }),
+        body: JSON.stringify({ error: `Failed to insert user: ${insertErr.message}` }),
       };
     }
   } catch (err) {
-    console.error('Unexpected error inserting into users:', err);
+    console.error('Unexpected error inserting user:', err);
     await supabase.auth.admin.deleteUser(newAuthUser.id);
     return {
       statusCode: 500,
-      body: JSON.stringify({ error: `Database insertion failed: ${err.message}` }),
+      body: JSON.stringify({ error: 'Database insertion failed' }),
     };
   }
 
-  // 6) Send confirmation email via Brevo
-  const brevoPayload = {
-    sender: {
-      name: 'Chukwuemeka Bullion Exchange',
-      email: 'noreply@apexincomeoptions.com.ng',
-    },
-    to: [
-      {
-        email: email,
-        name: name,
+  // Send confirmation email via Brevo (optional)
+  if (BREVO_API_KEY) {
+    const brevoPayload = {
+      sender: {
+        name: 'Chukwuemeka Bullion Exchange',
+        email: 'noreply@apexincomeoptions.com.ng',
       },
-    ],
-    templateId: 1,
-    params: {
-      NAME: name,
-      EMAIL: email,
-      PHONE: phone,
-      EXPERIENCE: experience,
-    },
-  };
+      to: [{ email, name }],
+      templateId: 1,
+      params: { NAME: name, EMAIL: email, PHONE: phone, EXPERIENCE: experience },
+    };
 
-  try {
-    const brevoResponse = await fetch('https://api.brevo.com/v3/smtp/email', {
-      method: 'POST',
-      headers: {
-        'api-key': BREVO_API_KEY,
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify(brevoPayload),
-    });
+    try {
+      const brevoResponse = await fetch('https://api.brevo.com/v3/smtp/email', {
+        method: 'POST',
+        headers: {
+          'api-key': BREVO_API_KEY,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(brevoPayload),
+      });
 
-    if (!brevoResponse.ok) {
-      const brevoResult = await brevoResponse.json();
-      console.error('Brevo responded with error:', brevoResponse.status, brevoResult);
-      return {
-        statusCode: 502,
-        body: JSON.stringify({ error: `Brevo error: ${brevoResult.message || 'Unknown error'}` }),
-      };
+      if (!brevoResponse.ok) {
+        console.error('Brevo error:', await brevoResponse.json());
+      }
+    } catch (err) {
+      console.error('Error sending Brevo email:', err);
     }
-  } catch (err) {
-    console.error('Unexpected error sending Brevo email:', err);
-    return {
-      statusCode: 502,
-      body: JSON.stringify({ error: 'Failed to send confirmation email' }),
-    };
   }
 
-  // 7) Success
   return {
     statusCode: 200,
-    body: JSON.stringify({
-      message: 'Application submitted successfully! A confirmation email has been sent.',
-    }),
+    body: JSON.stringify({ message: 'Application submitted successfully!' }),
   };
 };
