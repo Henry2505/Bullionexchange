@@ -218,17 +218,13 @@
       display: flex;
       gap: 15px;
       list-style: none;
-      overflow-x: auto;
-    }
-    #desktop-links li {
-      flex-shrink: 0;
     }
     #desktop-links li a {
       font-weight: 500;
-      padding: 8px 12px;
+      padding: 6px 10px; /* Adjusted for more links to fit */
       border-radius: 4px;
       transition: background 0.3s, transform 0.3s;
-      white-space: nowrap;
+      font-size: 0.95rem; /* Slightly smaller */
     }
     #desktop-links li a:hover {
       background: rgba(255, 215, 0, 0.2);
@@ -268,7 +264,7 @@
       border-radius: 8px;
       box-shadow: 0 2px 8px var(--shadow);
       list-style: none;
-      min-width: 220px;
+      min-width: 200px;
       z-index: 160;
     }
     #more-menu li {
@@ -283,7 +279,6 @@
       color: var(--text);
       font-weight: 500;
       transition: background 0.2s;
-      white-space: nowrap;
     }
     #more-menu li a:hover {
       background: rgba(255, 215, 0, 0.2);
@@ -346,7 +341,6 @@
       color: var(--text);
       font-weight: 500;
       transition: color 0.3s, padding-left 0.3s;
-      white-space: nowrap;
     }
     #menu-list a:hover {
       color: var(--gold);
@@ -712,7 +706,7 @@
        ========================================================================== */
     #gold-chart {
       width: 100%;
-      height: 95vh; /* Expanded to be balanced and visible */
+      height: 100vh; /* Increased from 90vh */
       margin: 20px auto;
       position: relative;
       background: var(--accent);
@@ -740,7 +734,6 @@
       padding: 8px 20px;
       transition: all 0.3s;
       cursor: pointer;
-      white-space: nowrap;
     }
     .chart-toggle button.active,
     .chart-toggle button:hover {
@@ -891,7 +884,7 @@
         flex-direction: column;
       }
       #gold-chart {
-        height: 60vh;
+        height: 70vh; /* Adjusted from 60vh */
       }
       #economic-calendar {
         padding: 0.5rem;
@@ -922,10 +915,9 @@
         padding: 8px 12px;
       }
       #tradingview_fullscreen {
-        height: 300px;
+        height: 400px; /* Increased from 300px */
       }
     }
-
   </style>
 </head>
 <body id="top">
@@ -1227,25 +1219,13 @@
   <!-- Particles.js -->
   <script src="https://cdn.jsdelivr.net/npm/particles.js@2.0.0/particles.min.js"></script>
 
-  <!-- Smartsupp Live Chat script -->
-  <script type="text/javascript">
-    var _smartsupp = _smartsupp || {};
-    _smartsupp.key = '018a8bbd868518221e725341a7b2601231ec7ce8';
-    window.smartsupp || (function(d) {
-      var s, c, o = smartsupp = function() { o._.push(arguments) }; o._ = [];
-      s = d.getElementsByTagName('script')[0]; c = d.createElement('script');
-      c.type = 'text/javascript'; c.charset = 'utf-8'; c.async = true;
-      c.src = 'https://www.smartsuppchat.com/loader.js?'; s.parentNode.insertBefore(c, s);
-    })(document);
-  </script>
-
   <script>
     /**********************************************************
      * API KEYS (⚠️ Move these server-side in production!)
      **********************************************************/
-    const ALPHA_KEY = "9TLZDSNS2GN22EQV"; // Alpha Vantage
+    const EXCHANGE_RATE_API_KEY = "4e4307b2bf8daac15365a410";
     const NEWS_API_KEY = "6de81d54e02e45f8a5546a827c70ab28";
-    const EXCHANGE_RATE_API_KEY = "4e4307b2bf8daac15365a410"; // Not used for gold price now
+    const ALPHA_KEY = "9TLZDSNS2GN22EQV"; // Alpha Vantage
 
     /**********************************************************
      * INTERSECTION OBSERVER FOR SLIDE-IN ANIMATIONS
@@ -1525,18 +1505,17 @@
     }
 
     /**********************************************************
-     * LIVE GOLD PRICE (Using Alpha Vantage)
+     * LIVE GOLD PRICE (Replacing Crypto)
      **********************************************************/
     let prevGoldPrice = null;
     async function loadGoldPrice() {
       try {
         const res = await fetch(
-          `https://www.alphavantage.co/query?function=CURRENCY_EXCHANGE_RATE&from_currency=XAU&to_currency=USD&apikey=${ALPHA_KEY}`
+          `https://v6.exchangerate-api.com/v6/${EXCHANGE_RATE_API_KEY}/pair/XAU/USD`
         );
         const data = await res.json();
-        const rateInfo = data["Realtime Currency Exchange Rate"];
-        const price = rateInfo
-          ? parseFloat(rateInfo["5. Exchange Rate"])
+        const price = data.conversion_rate
+          ? parseFloat(data.conversion_rate.toFixed(2))
           : null;
         const goldEl = document.getElementById("gold-price");
         const changeEl = document.getElementById("price-change");
@@ -1562,7 +1541,7 @@
               changeEl.classList.remove("price-up", "price-down");
             }
           }
-          goldEl.textContent = `$${price.toFixed(2)}`;
+          goldEl.textContent = `$${price}`;
           prevGoldPrice = price;
         } else {
           goldEl.textContent = "N/A";
@@ -1703,6 +1682,18 @@
       updateLocalTime();
       setInterval(updateLocalTime, 1000);
     });
+  </script>
+
+  <!-- Smartsupp Live Chat script -->
+  <script type="text/javascript">
+  var _smartsupp = _smartsupp || {};
+  _smartsupp.key = '018a8bbd868518221e725341a7b2601231ec7ce8';
+  window.smartsupp||(function(d) {
+    var s,c,o=smartsupp=function(){ o._.push(arguments)};o._=[];
+    s=d.getElementsByTagName('script')[0];c=d.createElement('script');
+    c.type='text/javascript';c.charset='utf-8';c.async=true;
+    c.src='https://www.smartsuppchat.com/loader.js?';s.parentNode.insertBefore(c,s);
+  })(document);
   </script>
 </body>
 </html>
