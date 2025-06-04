@@ -1,5 +1,4 @@
 // netlify/functions/send-application.js
-
 const { createClient } = require('@supabase/supabase-js');
 
 // Environment variables
@@ -136,7 +135,7 @@ exports.handler = async (event, context) => {
       console.error('Error checking auth user:', authCheckError);
       return {
         statusCode: 500,
-        body: JSON.stringify({ error: `Failed to verify auth user: ${authCheckError.message}` }),
+        body: JSON.stringify({ error: 'Failed to verify auth user: ${authCheckError.message}' }),
       };
     }
 
@@ -151,7 +150,7 @@ exports.handler = async (event, context) => {
       console.error('Error creating Auth user:', authErr);
       return {
         statusCode: 400,
-        body: JSON.stringify({ error: `Failed to create authentication user: ${authErr.message}` }),
+        body: JSON.stringify({ error: 'Failed to create authentication user: ${authErr.message}' }),
       };
     }
     newAuthUser = authData.user;
@@ -159,7 +158,7 @@ exports.handler = async (event, context) => {
     console.error('Unexpected error creating Auth user:', err);
     return {
       statusCode: 500,
-      body: JSON.stringify({ error: `Authentication creation failed: ${err.message}` }),
+      body: JSON.stringify({ error: 'Authentication creation failed: ${err.message}' }),
     };
   }
 
@@ -185,7 +184,7 @@ exports.handler = async (event, context) => {
       await supabase.auth.admin.deleteUser(newAuthUser.id);
       return {
         statusCode: 500,
-        body: JSON.stringify({ error: `Failed to insert user details: ${insertErr.message}` }),
+        body: JSON.stringify({ error: 'Failed to insert user details: ${insertErr.message}' }),
       };
     }
   } catch (err) {
@@ -193,7 +192,7 @@ exports.handler = async (event, context) => {
     await supabase.auth.admin.deleteUser(newAuthUser.id);
     return {
       statusCode: 500,
-      body: JSON.stringify({ error: `Database insertion failed: ${err.message}` }),
+      body: JSON.stringify({ error: 'Database insertion failed: ${err.message}' }),
     };
   }
 
@@ -209,7 +208,7 @@ exports.handler = async (event, context) => {
         name: name,
       },
     ],
-    templateId: 1, // Verify this ID in Brevo
+    templateId: 1,
     params: {
       NAME: name,
       EMAIL: email,
@@ -233,7 +232,7 @@ exports.handler = async (event, context) => {
       console.error('Brevo responded with error:', brevoResponse.status, brevoResult);
       return {
         statusCode: 502,
-        body: JSON.stringify({ error: `Brevo error: ${brevoResult.message || 'Unknown error'}` }),
+        body: JSON.stringify({ error: 'Brevo error: ${brevoResult.message || 'Unknown error'}' }),
       };
     }
   } catch (err) {
