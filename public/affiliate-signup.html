@@ -118,12 +118,6 @@
       throw new Error('Form element not found');
     }
 
-    function generateReferralCode(name) {
-      const base = name.trim().toLowerCase().replace(/\s+/g, '');
-      const rand = Math.floor(Math.random() * 1000);
-      return `${base}${rand}`;
-    }
-
     // Form submission handler
     form.addEventListener('submit', async (e) => {
       e.preventDefault();
@@ -141,9 +135,6 @@
         const name = document.getElementById('name').value.trim();
         const email = document.getElementById('email').value.trim().toLowerCase();
         const password = document.getElementById('password').value;
-        const referral_code = generateReferralCode(name);
-        const urlParams = new URLSearchParams(window.location.search);
-        const referred_by = urlParams.get('ref') || null;
 
         // Validate inputs
         console.log('Validating inputs:', { name, email, password });
@@ -173,7 +164,13 @@
           throw new Error('No user data returned from signup');
         }
 
-        // Step 2: Validate referral code if provided
+        // Note: Affiliate table insert is commented out to isolate auth issue
+        /*
+        const referral_code = generateReferralCode(name);
+        const urlParams = new URLSearchParams(window.location.search);
+        const referred_by = urlParams.get('ref') || null;
+
+        // Validate referral code if provided
         if (referred_by) {
           console.log('Validating referral code:', referred_by);
           const { data: refData, error: refError } = await sb
@@ -188,7 +185,7 @@
           }
         }
 
-        // Step 3: Check for unique referral code
+        // Check for unique referral code
         console.log('Checking referral code uniqueness:', referral_code);
         const { data: existingCode, error: codeError } = await sb
           .from('affiliate')
@@ -201,7 +198,7 @@
           throw new Error('Referral code already exists. Please try again.');
         }
 
-        // Step 4: Insert into affiliate table
+        // Insert into affiliate table
         console.log('Inserting into affiliate table...');
         const { error: dbError } = await sb.from('affiliate').insert({
           id: authData.user.id,
@@ -214,6 +211,7 @@
         if (dbError) {
           throw new Error(`Database error: ${dbError.message}`);
         }
+        */
 
         status.innerText = 'Application submitted! Check your email for confirmation.';
         status.style.color = '#2ecc71';
@@ -228,7 +226,7 @@
       }
     });
 
-    // Prevent form submission via Enter key or default behavior
+    // Prevent form submission via Enter key
     form.addEventListener('keypress', (e) => {
       if (e.key === 'Enter') {
         e.preventDefault();
