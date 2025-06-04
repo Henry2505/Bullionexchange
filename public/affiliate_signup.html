@@ -50,6 +50,10 @@
       border-radius: 6px;
       cursor: pointer;
     }
+    button:disabled {
+      background: #666;
+      cursor: not-allowed;
+    }
     #status {
       margin-top: 15px;
       text-align: center;
@@ -62,7 +66,7 @@
     <h1>Apply to CBE</h1>
     <form id="apply-form">
       <label>Name</label>
-      <input type="text" id="name" required />
+      <input type="text" id="name" required pattern="[a-zA-Z\s]+" title="Name must contain only letters and spaces"/>
 
       <label>Email</label>
       <input type="email" id="email" required />
@@ -81,7 +85,16 @@
     // Supabase configuration
     const SUPA_URL = 'https://dapwpgvnfjcfqqhrpxla.supabase.co';
     const SUPA_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImRhcHdwZ3ZuZmpjZnFxaHJweGxhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDcwNDA4ODgsImV4cCI6MjA2MjYxNjg4OH0.ICC0UsLlzJDNre7rFCeD3k6iVzo6jOJgn3PhABpEMsQ';
-    const sb = supabase.createClient(SUPA_URL, SUPA_ANON_KEY);
+    
+    // Initialize Supabase client
+    let sb;
+    try {
+      sb = supabase.createClient(SUPA_URL, SUPA_ANON_KEY);
+    } catch (err) {
+      console.error('Failed to initialize Supabase client:', err);
+      document.getElementById('status').style.color = 'red';
+      document.getElementById('status').textContent = 'Error: Failed to connect to server. Please try again later.';
+    }
 
     function generateReferralCode(name) {
       const base = name.trim().toLowerCase().replace(/\s+/g, '');
@@ -92,6 +105,9 @@
     document.getElementById('apply-form').addEventListener('submit', async (e) => {
       e.preventDefault();
       const status = document.getElementById('status');
+      const button = document.querySelector('button');
+      button.disabled = true;
+      button.textContent = 'Submitting...';
       status.textContent = 'Submitting...';
 
       const name = document.getElementById('name').value.trim();
@@ -102,6 +118,11 @@
       const referred_by = urlParams.get('ref') || null;
 
       try {
+        // Validate name
+        if (!/^[a-zA-Z\s]+$/.test(name)) {
+          throw new Error('Name must contain only letters and spaces');
+        }
+
         // Step 1: Sign up the user with Supabase Auth
         const { data: authData, error: authError } = await sb.auth.signUp({
           email,
@@ -111,10 +132,36 @@
           }
         });
 
-        if (authError) throw new Error(`Auth error: ${authError.message}`);
+        if (authError) {
+          console.error('Auth error details:', authError);
+          throw new Error(`Auth error: ${authError.message}`);
+        }
 
-        // Step 2: Insert additional user data into the 'users' table
-        const { error: dbError } = await sb.from('users').insert({
+        // Step 2: Validate referral code if provided
+        if (referred_by) {
+          const { data: refData, error: refError } = await sb
+            .from('affiliate')
+            .select('referral_code')
+            .eq('referral_code', referred_by);
+          if (refError || !refData.length) {
+            throw new Error('Invalid referral code');
+          }
+        }
+
+        // Step 3: Check for unique referral code
+        const { data: existingCode, error: codeError } = await sb
+          .from('affiliate')
+          .select('referral_code')
+          .eq('referral_code', referral_code);
+        if (codeError) {
+          throw new Error(`Error checking referral code: ${codeError.message}`);
+        }
+        if (existingCode.length > 0) {
+          throw new Error('Referral code already exists. Please try again.');
+        }
+
+        // Step 4: Insert additional user data into the 'affiliate' table
+        const { error: dbError } = await sb.from('affiliate').insert({
           id: authData.user.id, // Use the auth user ID
           name,
           email,
@@ -123,14 +170,21 @@
           status: 'pending'
         });
 
-        if (dbError) throw new Error(`Database error: ${dbError.message}`);
+        if (dbError) {
+          console.error('Database error details:', dbError);
+          throw new Error(`Database error: ${dbError.message}`);
+        }
 
         status.style.color = '#2ecc71';
         status.textContent = 'Application submitted! Check your email for confirmation.';
         document.getElementById('apply-form').reset();
       } catch (err) {
+        console.error('Signup error:', err);
         status.style.color = 'red';
         status.textContent = `Signup failed: ${err.message || 'Unexpected error'}`;
+      } finally {
+        button.disabled = false;
+        button.textContent = 'Apply Now';
       }
     });
   </script>
