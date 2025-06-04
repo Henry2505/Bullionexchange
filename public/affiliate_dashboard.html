@@ -247,16 +247,16 @@
     .overview-card:hover {
       transform: translateY(-4px);
     }
+    .overview-card .title {
+      font-size: 0.95rem;
+      font-weight: 500;
+      color: var(--text);
+    }
     .overview-card .value {
       font-size: 1.75rem;
       font-weight: 700;
       margin-top: 0.5rem;
       color: var(--gold);
-    }
-    .overview-card .label {
-      font-size: 0.95rem;
-      font-weight: 500;
-      color: var(--text);
     }
 
     /* ===================== Canvas Chart Container ===================== */
@@ -367,6 +367,18 @@
       color: var(--gold);
       font-size: 1.25rem;
     }
+
+    /* ===================== “Earn $5 per Referral” Banner ===================== */
+    .earn-banner {
+      background: var(--gold-dark);
+      color: #000;
+      text-align: center;
+      padding: 0.5rem;
+      border-radius: 6px;
+      margin-top: 0.5rem;
+      font-weight: 500;
+      font-size: 0.95rem;
+    }
   </style>
 </head>
 <body>
@@ -419,6 +431,10 @@
                 <i class="bi bi-link-45deg"></i> Copy
               </button>
             </div>
+            <!-- ====== NEW: Earn $5 per referral banner ====== -->
+            <div class="earn-banner">
+              🎉 Earn <strong>$5</strong> for each successful referral!
+            </div>
           </div>
         </div>
       </div>
@@ -450,22 +466,22 @@
           <div class="overview-cards">
             <!-- Total Referrals -->
             <div class="overview-card" id="card-total-referrals">
-              <div class="label">Total Referrals</div>
+              <div class="title">Total Referrals</div>
               <div class="value" id="overview-total-referrals">0</div>
             </div>
-            <!-- Total Commissions ($) -->
-            <div class="overview-card" id="card-total-commissions">
-              <div class="label">Total Commissions (USD)</div>
-              <div class="value" id="overview-total-commissions">$0.00</div>
+            <!-- Estimated Earnings (USD) -->
+            <div class="overview-card" id="card-estimated-earnings-usd">
+              <div class="title">Est. Earnings (USD)</div>
+              <div class="value" id="overview-est-earn-usd">$0.00</div>
             </div>
-            <!-- Pending Payouts -->
-            <div class="overview-card" id="card-pending-payouts">
-              <div class="label">Pending Payouts</div>
-              <div class="value" id="overview-pending-payouts">$0.00</div>
+            <!-- Estimated Earnings (NGN) -->
+            <div class="overview-card" id="card-estimated-earn-ngn">
+              <div class="title">Est. Earnings (NGN)</div>
+              <div class="value" id="overview-est-earn-ngn">₦0.00</div>
             </div>
             <!-- Conversion Rate -->
             <div class="overview-card" id="card-conversion-rate">
-              <div class="label">Conversion Rate</div>
+              <div class="title">Conversion Rate</div>
               <div class="value" id="overview-conversion-rate">0%</div>
             </div>
           </div>
@@ -710,6 +726,9 @@
           </div>
           <!-- Request Payout Card -->
           <div class="withdraw-card mb-3">
+            <div class="mb-2" style="font-size: 0.95rem; color: var(--text-light);">
+              You earn <strong>$5</strong> per referral. If you request NGN, it will be paid at current USD→NGN rate. For crypto, we’ll send directly to your saved wallet.
+            </div>
             <div class="row g-3">
               <div class="col-md-4">
                 <label for="withdraw-amount" class="form-label">Request Amount (USD)</label>
@@ -728,6 +747,7 @@
                   <option value="">Select Method</option>
                   <option value="bank">Bank Transfer</option>
                   <option value="crypto">Crypto Wallet</option>
+                  <option value="ngn">Naira (NGN Bank)</option>
                 </select>
               </div>
               <div class="col-md-4 align-self-end text-end">
@@ -758,6 +778,8 @@
               <p><strong>Email:</strong> <span id="user-email">Loading…</span></p>
               <p><strong>Joined On:</strong> <span id="joined-date">--</span></p>
               <p><strong>Total Referrals:</strong> <span id="total-referrals">0</span></p>
+              <p><strong>Est. Earnings (USD):</strong> <span id="overview-est-earn-usd-inline">$0.00</span></p>
+              <p><strong>Est. Earnings (NGN):</strong> <span id="overview-est-earn-ngn-inline">₦0.00</span></p>
             </div>
           </div>
         </section>
@@ -838,6 +860,19 @@
       });
     }
 
+    // Format number as NGN currency string
+    function toNGN(value) {
+      return parseFloat(value).toLocaleString('en-NG', {
+        style: 'currency',
+        currency: 'NGN',
+      });
+    }
+
+    // Helper to get CSS variable value
+    function varGet(name) {
+      return getComputedStyle(document.documentElement).getPropertyValue(name);
+    }
+
     // ON DOM CONTENT LOADED: Fetch user, then initialize all sections
     document.addEventListener('DOMContentLoaded', async () => {
       // FETCH CURRENT USER & IDs
@@ -857,11 +892,14 @@
       // FETCH & DISPLAY REFERRAL CODE + LINK
       await fetchReferralCode();
 
-      // FETCH & DISPLAY TOTAL REFERRALS (for overview card & profile)
+      // FETCH & DISPLAY TOTAL REFERRALS (for overview & profile)
       await fetchTotalReferrals();
 
-      // FETCH & DISPLAY TOTAL COMMISSIONS & PENDING PAYOUTS (overview)
-      await fetchCommissionData();
+      // CALCULATE & DISPLAY ESTIMATED EARNINGS (USD & NGN)
+      await calculateAndDisplayEarnings();
+
+      // FETCH & DISPLAY CONVERSION RATE (overview)
+      await fetchConversionRate();
 
       // SETUP LOGOUT BUTTON
       document.getElementById('logout-btn').addEventListener('click', async () => {
@@ -1030,8 +1068,8 @@
           document.getElementById('withdraw-amount').value = '';
           document.getElementById('withdraw-method').value = '';
           await loadPayouts();
-          // Also refresh overview pending payouts count
-          await fetchCommissionData();
+          // Also refresh earned values
+          await calculateAndDisplayEarnings();
         } catch (err) {
           console.error('Payout request error:', err);
           showToast('Failed to request payout.');
@@ -1102,7 +1140,7 @@
     }
 
     // -----------------------------------------
-    // FETCH TOTAL REFERRALS (for overview + profile)
+    // FETCH TOTAL REFERRALS (for overview & profile)
     // -----------------------------------------
     async function fetchTotalReferrals() {
       const { count, error } = await supabase
@@ -1122,57 +1160,57 @@
     }
 
     // -----------------------------------------
-    // FETCH COMMISSION DATA & PENDING PAYOUTS (overview)
+    // CALCULATE & DISPLAY ESTIMATED EARNINGS (USD & NGN)
     // -----------------------------------------
-    async function fetchCommissionData() {
-      // Assumes there's a table 'affiliate_commissions' and 'affiliate_payouts'
-      // affiliate_commissions has columns: user_id, amount, created_at
-      // affiliate_payouts has columns: user_id, amount, status
-      // 1. Total commissions (sum of all amounts)
-      const { data: commissionsData, error: commErr } = await supabase
-        .from('affiliate_commissions')
-        .select('amount', { aggregate: 'sum' })
-        .eq('user_id', currentUserId);
+    async function calculateAndDisplayEarnings() {
+      // We pay $5 per referral, no need for an extra table—just totalReferrals * 5
+      const totalRefs = parseInt(document.getElementById('overview-total-referrals').textContent) || 0;
+      const usdEarnings = totalRefs * 5;
+      document.getElementById('overview-est-earn-usd').textContent = toUSD(usdEarnings);
+      document.getElementById('overview-est-earn-usd-inline').textContent = toUSD(usdEarnings);
 
-      let totalCommission = 0;
-      if (!commErr && commissionsData && commissionsData.length > 0) {
-        totalCommission = commissionsData[0].sum || 0;
+      // Now fetch USD → NGN rate and compute
+      try {
+        const response = await fetch(`https://v6.exchangerate-api.com/v6/4e4307b2bf8daac15365a410/latest/USD`);
+        const data = await response.json();
+        if (data.result === 'success' && data.conversion_rates.NGN) {
+          const rate = parseFloat(data.conversion_rates.NGN);
+          const ngnValue = usdEarnings * rate;
+          document.getElementById('overview-est-earn-ngn').textContent = toNGN(ngnValue);
+          document.getElementById('overview-est-earn-ngn-inline').textContent = toNGN(ngnValue);
+        } else {
+          document.getElementById('overview-est-earn-ngn').textContent = '–';
+          document.getElementById('overview-est-earn-ngn-inline').textContent = '–';
+        }
+      } catch (err) {
+        console.error('NGN conversion fetch error:', err);
+        document.getElementById('overview-est-earn-ngn').textContent = '–';
+        document.getElementById('overview-est-earn-ngn-inline').textContent = '–';
       }
+    }
 
-      // 2. Pending payouts (sum of amounts where status = 'pending')
-      const { data: pendingData, error: pendErr } = await supabase
-        .from('affiliate_payouts')
-        .select('amount', { aggregate: 'sum' })
-        .eq('user_id', currentUserId)
-        .eq('status', 'pending');
-
-      let pendingPayout = 0;
-      if (!pendErr && pendingData && pendingData.length > 0) {
-        pendingPayout = pendingData[0].sum || 0;
-      }
-
-      // 3. Conversion rate = (total referrals who converted) / total referrals
-      //    Assumes 'users' table has a boolean 'converted' column (true if they converted to paid user)
-      const { data: convertedData, count: convertedCount, error: convErr } = await supabase
-        .from('users')
-        .select('converted', { count: 'exact', head: true })
-        .eq('referred_by', currentUserId)
-        .eq('converted', true);
-
+    // -----------------------------------------
+    // FETCH CONVERSION RATE & DISPLAY (just reuse earnings function)
+    // -----------------------------------------
+    async function fetchConversionRate() {
+      // Conversion rate = (convertedReferrals / totalReferrals) * 100
       const { count: totalRefCount, error: totErr } = await supabase
         .from('users')
         .select('*', { count: 'exact', head: true })
         .eq('referred_by', currentUserId);
 
-      let conversionRate = 0;
-      if (!convErr && !totErr && totalRefCount > 0) {
-        conversionRate = ((convertedCount / totalRefCount) * 100).toFixed(2);
-      }
+      const { count: convertedCount, error: convErr } = await supabase
+        .from('users')
+        .select('converted', { count: 'exact', head: true })
+        .eq('referred_by', currentUserId)
+        .eq('converted', true);
 
-      // Update overview cards
-      document.getElementById('overview-total-commissions').textContent = toUSD(totalCommission);
-      document.getElementById('overview-pending-payouts').textContent = toUSD(pendingPayout);
-      document.getElementById('overview-conversion-rate').textContent = `${conversionRate}%`;
+      if (!totErr && !convErr && totalRefCount > 0) {
+        const conversionRate = ((convertedCount / totalRefCount) * 100).toFixed(2);
+        document.getElementById('overview-conversion-rate').textContent = `${conversionRate}%`;
+      } else {
+        document.getElementById('overview-conversion-rate').textContent = '0%';
+      }
     }
 
     // -----------------------------------------
@@ -1419,25 +1457,16 @@
       });
     }
 
-    // Helper to get CSS variable value
-    function varGet(name) {
-      return getComputedStyle(document.documentElement).getPropertyValue(name);
-    }
-
     // -----------------------------------------
     // LOAD LEADERBOARD: Top Affiliates by Referrals
     // -----------------------------------------
     async function loadLeaderboard() {
-      // Query top 5 affiliates by count of referrals in last 30 days
-      // Assume there's a view or table 'affiliates' with fields (user_id, referral_code)
-      // and 'users' table has referred_by. We'll join and group.
-
+      // Query top affiliates by count of referrals
       const { data, error } = await supabase
         .from('users')
         .select('referred_by ( referral_code ), id', { count: 'exact' })
         .neq('referred_by', null);
 
-      // Simplify client grouping if no direct SQL
       if (error) {
         console.error('Leaderboard fetch error:', error);
         document.getElementById('leaderboard-list').innerHTML =
