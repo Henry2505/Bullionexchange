@@ -367,7 +367,7 @@
     <div class="px-3 pb-3">
       <h4 class="sidebar-title">Affiliate Dashboard</h4>
 
-      <!-- Referral Code (moved to main‐content top; kept here for mobile if sidebar is open) -->
+      <!-- Referral Code (if sidebar is open on mobile) -->
       <div id="referral-section-sidebar" class="card mb-3">
         <div class="card-header">
           <div><i class="bi bi-people-fill header-icon"></i>Referral Code</div>
@@ -399,6 +399,7 @@
 
     <nav class="nav flex-column px-3 pb-3">
       <a class="nav-link active" href="#overview-section">🏠 Overview</a>
+      <a class="nav-link" href="#referral-section-main">🗂️ Referral Dashboard</a>
       <a class="nav-link" href="#referral-activity-section">📈 Referral Activity</a>
       <a class="nav-link" href="#leaderboard-section">🏆 Leaderboard</a>
       <a class="nav-link" href="#bank-accounts-section">🏦 Bank Accounts</a>
@@ -416,7 +417,7 @@
   <div class="main-content" id="main-content">
     <div class="container-fluid">
 
-      <!-- ===================== REFERRAL SECTION (moved here for prominence) ===================== -->
+      <!-- ===================== REFERRAL SECTION (TOP) ===================== -->
       <section id="referral-section-main" class="mb-5">
         <div class="section-title">
           <i class="bi bi-people-fill"></i> Your Referral Dashboard
@@ -905,7 +906,7 @@
         .catch(() => showToast('Copy failed'));
     }
 
-    // Generate a random 8-character alphanumeric referral code
+    // Generate a random 8-character alphanumeric referral code (for fallback if needed)
     function generateReferralCode() {
       const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
       let code = '';
@@ -947,7 +948,7 @@
       return getComputedStyle(document.documentElement).getPropertyValue(name);
     }
 
-    // Calculate last 7 days and last 30 days timestamp
+    // Calculate date N days ago
     function getDateNDaysAgo(n) {
       const d = new Date();
       d.setDate(d.getDate() - n);
@@ -978,8 +979,8 @@
       // 3) FETCH & DISPLAY TOTAL REFERRALS (for overview & profile)
       await fetchTotalReferrals();
 
-      // 4) CALCULATE & DISPLAY ESTIMATED EARNINGS (USD & weekly/monthly)
-      calculateAndDisplayEarnings();
+      // 4) CALCULATE & DISPLAY ESTIMATED & PERIODIC EARNINGS (USD & weekly/monthly)
+      await calculateAndDisplayEarnings();
 
       // 5) FETCH & DISPLAY CONVERSION RATE (overview & inline)
       await fetchConversionRate();
@@ -1169,7 +1170,7 @@
       await loadPayouts();
       await loadReferralChartData(); // fill chartDataAllTime & chartData30Days
       await renderReferralChart('30days'); // default to last 30 days
-      await loadLeaderboard();
+      await loadLeaderboard(); // populates the leaderboard
 
       // 13) SETUP REFERRAL RANGE TOGGLE
       document.getElementById('toggle-referral-range').addEventListener('click', () => {
@@ -1237,14 +1238,14 @@
       refSpanMain.textContent = 'Loading…';
       refSpanSide.textContent = 'Loading…';
 
-      // 1) Try to load existing code
+      // 1) Try to load existing code from public.affiliates
       const { data, error } = await supabase
         .from('affiliates')
         .select('referral_code')
         .eq('user_id', currentUserId)
         .single();
 
-      if (error && error.code !== 'PGRST116') {
+      if (error) {
         console.error('Failed to load affiliate data:', error);
         refSpanMain.textContent = '—';
         linkInputMain.value = '';
@@ -1253,31 +1254,30 @@
         return;
       }
 
-      let code;
-      if (!data) {
-        // 2) No existing affiliate row → generate a new code
-        code = generateReferralCode();
+      let code = data ? data.referral_code : null;
+
+      // If for some reason there is no row, generate one (fallback)
+      if (!code) {
         try {
+          const generated = generateReferralCode();
           const { data: inserted, error: insertErr } = await supabase
             .from('affiliates')
-            .insert([{ user_id: currentUserId, referral_code: code }])
+            .insert([{ user_id: currentUserId, referral_code: generated }])
             .select('referral_code')
             .single();
           if (insertErr) throw insertErr;
           code = inserted.referral_code;
         } catch (err) {
-          console.error('Error creating new affiliate row:', err);
+          console.error('Error creating new affiliate row (fallback):', err);
           refSpanMain.textContent = '—';
           linkInputMain.value = '';
           refSpanSide.textContent = '—';
           linkInputSide.value = '';
           return;
         }
-      } else {
-        code = data.referral_code;
       }
 
-      // 3) Display code + link + QR
+      // 2) Display code + link + QR
       refSpanMain.textContent = code;
       const fullLink = `${window.location.origin}/CBE_apply.html?ref=${code}`;
       linkInputMain.value = fullLink;
@@ -1318,17 +1318,15 @@
     // CALCULATE & DISPLAY ESTIMATED & PERIODIC EARNINGS (USD)
     // -----------------------------------------
     async function calculateAndDisplayEarnings() {
-      // 1) TOTAL referrals (re‑use count that was set above)
+      // 1) TOTAL referrals → all‐time earnings
       const totalRefs = parseInt(document.getElementById('overview-total-referrals').textContent) || 0;
       const usdEarnings = totalRefs * 5;
       document.getElementById('overview-est-earn-usd').textContent = toUSD(usdEarnings);
       document.getElementById('overview-est-earn-usd-inline').textContent = toUSD(usdEarnings);
       window.currentEarningsUSD = usdEarnings;
-
       document.getElementById('alltime-earnings').textContent = toUSD(usdEarnings);
 
-      // 2) Weekly & Monthly earnings: query user referrals over last 7 & 30 days
-      //   We fetch users whose created_at is within those windows and get counts; multiply by $5.
+      // 2) Weekly & Monthly earnings: count referrals in last 7 & 30 days
       try {
         // LAST 7 DAYS
         const { count: wCount, error: wErr } = await supabase
@@ -1336,13 +1334,8 @@
           .select('*', { count: 'exact', head: true })
           .eq('referred_by', currentUserId)
           .gt('created_at', getDateNDaysAgo(7).toISOString());
-        if (!wErr) {
-          const wEarn = (wCount || 0) * 5;
-          document.getElementById('weekly-earnings').textContent = toUSD(wEarn);
-        } else {
-          console.warn('Weekly earnings fetch error:', wErr);
-          document.getElementById('weekly-earnings').textContent = toUSD(0);
-        }
+        const wEarn = (!wErr ? (wCount || 0) * 5 : 0);
+        document.getElementById('weekly-earnings').textContent = toUSD(wEarn);
 
         // LAST 30 DAYS
         const { count: mCount, error: mErr } = await supabase
@@ -1350,13 +1343,8 @@
           .select('*', { count: 'exact', head: true })
           .eq('referred_by', currentUserId)
           .gt('created_at', getDateNDaysAgo(30).toISOString());
-        if (!mErr) {
-          const mEarn = (mCount || 0) * 5;
-          document.getElementById('monthly-earnings').textContent = toUSD(mEarn);
-        } else {
-          console.warn('Monthly earnings fetch error:', mErr);
-          document.getElementById('monthly-earnings').textContent = toUSD(0);
-        }
+        const mEarn = (!mErr ? (mCount || 0) * 5 : 0);
+        document.getElementById('monthly-earnings').textContent = toUSD(mEarn);
       } catch (err) {
         console.error('Periodic earnings calculation error:', err);
         document.getElementById('weekly-earnings').textContent = toUSD(0);
@@ -1549,22 +1537,7 @@
     // LOAD REFERRAL CHART DATA (ALL TIME & LAST 30 DAYS)
     // -----------------------------------------
     async function loadReferralChartData() {
-      // 1) Attempt to call a RPC function if you created one:
-      //    CREATE FUNCTION public.referrals_by_date(p_user_id uuid, p_days int)
-      //    RETURNS TABLE(date date, count int) AS $$
-      //      SELECT
-      //        DATE_TRUNC('day', created_at)::date AS date,
-      //        COUNT(*) AS count
-      //      FROM users
-      //      WHERE referred_by = p_user_id
-      //        AND created_at >= NOW() - INTERVAL '1 day' * p_days
-      //      GROUP BY date
-      //      ORDER BY date;
-      //    $$ LANGUAGE sql STABLE;
-      //
-      //    If you didn’t create that RPC, fallback to client‑side grouping.
-
-      // Fallback approach: fetch all “users” referred by currentUser, then group in JS.
+      // Fetch all users referred by currentUser
       const { data: rawUsers, error: rawErr } = await supabase
         .from('users')
         .select('created_at')
@@ -1575,28 +1548,26 @@
         return;
       }
 
-      // Build two maps: one for last 30 days, one for all time
+      // Build maps for all‑time and last‑30‑days
       const allMap = {};
       const last30Map = {};
       rawUsers.forEach(u => {
         const dKey = new Date(u.created_at).toISOString().split('T')[0];
-        // all-time grouping
-        if (!allMap[dKey]) allMap[dKey] = 0;
-        allMap[dKey]++;
-        // last 30 days only
+        // All‑time grouping
+        allMap[dKey] = (allMap[dKey] || 0) + 1;
+        // Last 30 days grouping
         const createdDate = new Date(u.created_at);
         if (createdDate >= getDateNDaysAgo(30)) {
-          if (!last30Map[dKey]) last30Map[dKey] = 0;
-          last30Map[dKey]++;
+          last30Map[dKey] = (last30Map[dKey] || 0) + 1;
         }
       });
 
-      // Prepare sorted arrays of dates
+      // Prepare sorted arrays for all‑time
       const sortedAllDates = Object.keys(allMap).sort((a, b) => new Date(a) - new Date(b));
       chartDataAllTime.labels = sortedAllDates;
       chartDataAllTime.counts = sortedAllDates.map(d => allMap[d]);
 
-      // For last 30 days, ensure every date in the last 30 is present (fill zeros)
+      // Prepare arrays for last 30 days (fill zeros)
       const last30Labels = [];
       const last30Counts = [];
       const now = new Date();
@@ -1616,7 +1587,6 @@
     // -----------------------------------------
     async function renderReferralChart(range) {
       const ctx = document.getElementById('referralChart').getContext('2d');
-      // If chart already exists, destroy first
       if (referralChart) {
         referralChart.destroy();
       }
@@ -1659,45 +1629,20 @@
     }
 
     // -----------------------------------------
-    // LOAD LEADERBOARD: Top 5 Affiliates by Referrals (server‑side grouping)
+    // LOAD LEADERBOARD: Top 5 Affiliates by Referrals
     // -----------------------------------------
     async function loadLeaderboard() {
-      // This query groups by referred_by and counts in a single Supabase call:
-      // SELECT referred_by, COUNT(*) as cnt
-      // FROM users
-      // WHERE referred_by IS NOT NULL
-      // GROUP BY referred_by
-      // ORDER BY cnt DESC
-      // LIMIT 5;
-      const { data, error } = await supabase
-        .from('users')
-        .select('referred_by, count:user_id', { count: 'exact', count_page: false })
-        .neq('referred_by', null)
-        .group('referred_by');
+      const listEl = document.getElementById('leaderboard-list');
+      listEl.innerHTML = `<li class="text-center text-muted">Loading leaderboard…</li>`;
 
-      // Supabase doesn’t support “group + count” so we fallback to a simple RPC
-      // Alternatively, you can create a view or RPC like:
-      // CREATE VIEW public.top_affiliates AS
-      //   SELECT referred_by, COUNT(*) AS cnt
-      //   FROM users
-      //   WHERE referred_by IS NOT NULL
-      //   GROUP BY referred_by
-      //   ORDER BY cnt DESC
-      //   LIMIT 5;
-      //
-      // and then just SELECT * FROM public.top_affiliates;
-      //
-      // For now, do a client‐side fallback:
-
-      // Client‐side grouping
+      // Fetch all users with referred_by not null
       const { data: allReferred, error: refErr } = await supabase
         .from('users')
         .select('referred_by');
 
       if (refErr) {
         console.error('Leaderboard grouping error:', refErr);
-        document.getElementById('leaderboard-list').innerHTML =
-          `<li style="color: var(--gold);">Failed to load leaderboard.</li>`;
+        listEl.innerHTML = `<li style="color: var(--gold);">Failed to load leaderboard.</li>`;
         return;
       }
 
@@ -1715,16 +1660,15 @@
       arr.sort((a, b) => b.cnt - a.cnt);
       const top5 = arr.slice(0, 5);
 
-      const listEl = document.getElementById('leaderboard-list');
-      listEl.innerHTML = '';
       if (top5.length === 0) {
         listEl.innerHTML = `<li style="color: var(--text);">No referrals yet.</li>`;
         return;
       }
 
-      // Fetch affiliate’s email and referral_code in parallel
+      listEl.innerHTML = '';
+      // Fetch email & referral_code for each top affiliate in parallel
       for (const item of top5) {
-        const [{ data: userData, error: userErr2 }, { data: affiliateData, error: affErr2 }] = await Promise.all([
+        const [ { data: userData, error: userErr2 }, { data: affiliateData, error: affErr2 } ] = await Promise.all([
           supabase.from('users').select('email').eq('id', item.userId).single(),
           supabase.from('affiliates').select('referral_code').eq('user_id', item.userId).single()
         ]);
@@ -1746,7 +1690,6 @@
     function setupThemeToggle() {
       const btn = document.getElementById('theme-toggle-btn');
       const icon = document.getElementById('theme-icon');
-      // Initialize from localStorage (or default dark)
       const saved = localStorage.getItem('dashboardTheme') || 'dark';
       document.documentElement.setAttribute('data-theme', saved);
       icon.className = saved === 'dark' ? 'bi bi-sun-fill' : 'bi bi-moon-stars-fill';
