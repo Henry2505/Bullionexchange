@@ -152,18 +152,17 @@
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>
   <script>
     document.addEventListener('DOMContentLoaded', () => {
-      console.log("DOM ready, attaching listeners");
+      console.log("DOM loaded: attaching login logic");
 
-      // 1) Fade‑in animation
+      // Fade‑in the card
       const loginCard = document.getElementById('login-card');
       loginCard.classList.add('visible');
 
-      // 2) Theme toggle logic
+      // Theme toggle
       const toggleBtn = document.getElementById('theme-toggle');
       const savedTheme = localStorage.getItem('theme') || 'dark';
       document.documentElement.setAttribute('data-theme', savedTheme);
       toggleBtn.textContent = savedTheme === 'dark' ? '🌞' : '🌜';
-
       toggleBtn.addEventListener('click', () => {
         const current = document.documentElement.getAttribute('data-theme');
         const next = current === 'dark' ? 'light' : 'dark';
@@ -172,12 +171,12 @@
         toggleBtn.textContent = next === 'dark' ? '🌞' : '🌜';
       });
 
-      // 3) Initialize Supabase (anon key; used to query public.users)
+      // Initialize Supabase client with your Project URL & Anon Key
       const SUPA_URL      = 'https://dapwpgvnfjcfqqhrpxla.supabase.co';
       const SUPA_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImRhcHdwZ3ZuZmpjZnFxaHJweGxhIiwicm9sZSI6IkFub24iLCJpYXQiOjE3NDcwNDA4ODgsImV4cCI6MjA2MjYxNjg4OH0.ICC0UsLlzJDNre7rFCeD3k6iVzo6jOJgn3PhABpEMsQ';
       const sb = supabase.createClient(SUPA_URL, SUPA_ANON_KEY);
 
-      // 4) LOGIN FORM HANDLING
+      // Attach login form handler
       const loginForm = document.getElementById('login-form');
       loginForm.addEventListener('submit', async (e) => {
         e.preventDefault();
@@ -187,15 +186,13 @@
         alertDiv.textContent = '';
         alertDiv.style.color = '';
 
-        const emailInput = document.getElementById('email');
-        const passwordInput = document.getElementById('password');
-        const email = emailInput.value.trim().toLowerCase();
-        const password = passwordInput.value;
+        const email    = document.getElementById('email').value.trim().toLowerCase();
+        const password = document.getElementById('password').value;
 
-        console.log("Attempting login for email:", email);
+        console.log("Attempting login for:", email);
 
         try {
-          // 4.1) Fetch the user record by email from public.users
+          // 1) Fetch user by email from public.users
           const { data: user, error: fetchError } = await sb
             .from('users')
             .select('id, name, email, password, status')
@@ -210,17 +207,17 @@
             throw new Error('No account found for that email.');
           }
 
-          // 4.2) Check password (raw comparison)
+          // 2) Check password (raw comparison)
           if (user.password !== password) {
             throw new Error('Invalid login credentials.');
           }
 
-          // 4.3) Check that status is “approved”
+          // 3) Check status is “approved”
           if (String(user.status).toLowerCase() !== 'approved') {
             throw new Error('Your account is not yet approved—please check back soon.');
           }
 
-          // 4.4) Device fingerprint (optional)
+          // 4) Device fingerprint (optional)
           const deviceKey     = `cbeDevice_${email}`;
           const savedDevice   = localStorage.getItem(deviceKey);
           const currentDevice = navigator.userAgent;
@@ -234,7 +231,7 @@
               device: currentDevice,
               time:   new Date().toLocaleString("en-US", { timeZone: "Africa/Lagos" })
             };
-            console.log("Sending login alert:", payload);
+            console.log("Device changed—sending alert:", payload);
             await fetch("/.netlify/functions/send-login-alert", {
               method: "POST",
               headers: { "Content-Type": "application/json" },
@@ -242,13 +239,13 @@
             });
           }
 
-          // 4.5) Mark user as logged in locally
+          // 5) Mark user as logged in locally
           localStorage.setItem('isLoggedIn', 'true');
           sessionStorage.setItem('cbeUserId', user.id);
           sessionStorage.setItem('userName', user.name);
 
-          console.log("Login successful, redirecting to dashboard");
-          // 4.6) Redirect to affiliate dashboard
+          console.log("Login successful—redirecting to dashboard");
+          // 6) Redirect
           window.location.assign('affiliate_dashboard.html');
         } catch (err) {
           console.error("Login error:", err);
