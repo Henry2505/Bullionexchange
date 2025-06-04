@@ -6,10 +6,14 @@
   <title>Apply • Chukwuemeka Bullion Exchange</title>
   <style>
     body {
-      background: #121212; color: #fff;
+      background: #121212;
+      color: #fff;
       font-family: 'Roboto', sans-serif;
-      display: flex; justify-content: center; align-items: center;
-      height: 100vh; margin: 0;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+      margin: 0;
     }
     .form-card {
       background: rgba(0,0,0,0.6);
@@ -20,16 +24,20 @@
       box-shadow: 0 0 10px #d4af37;
     }
     h1 {
-      color: #d4af37; text-align: center;
+      color: #d4af37;
+      text-align: center;
     }
     label {
-      display: block; margin-top: 15px;
+      display: block;
+      margin-top: 15px;
       font-size: 0.95rem;
     }
     input {
-      width: 100%; padding: 10px;
+      width: 100%;
+      padding: 10px;
       margin-top: 5px;
-      border: none; border-radius: 6px;
+      border: none;
+      border-radius: 6px;
     }
     button {
       margin-top: 20px;
@@ -59,8 +67,8 @@
       <label>Email</label>
       <input type="email" id="email" required />
 
-      <label>Password</label>
-      <input type="password" id="password" required />
+      <label>Password (minimum 6 characters)</label>
+      <input type="password" id="password" minlength="6" required />
 
       <button type="submit">Apply Now</button>
     </form>
@@ -70,8 +78,9 @@
   <!-- Supabase SDK -->
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>
   <script>
+    // Supabase configuration
     const SUPA_URL = 'https://dapwpgvnfjcfqqhrpxla.supabase.co';
-    const SUPA_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...'; // truncated for security
+    const SUPA_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImRhcHdwZ3ZuZmpjZnFxaHJweGxhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDcwNDA4ODgsImV4cCI6MjA2MjYxNjg4OH0.ICC0UsLlzJDNre7rFCeD3k6iVzo6jOJgn3PhABpEMsQ';
     const sb = supabase.createClient(SUPA_URL, SUPA_ANON_KEY);
 
     function generateReferralCode(name) {
@@ -89,27 +98,39 @@
       const email = document.getElementById('email').value.trim().toLowerCase();
       const password = document.getElementById('password').value;
       const referral_code = generateReferralCode(name);
-
       const urlParams = new URLSearchParams(window.location.search);
       const referred_by = urlParams.get('ref') || null;
 
       try {
-        const { data, error } = await sb.from('users').insert({
-          name,
+        // Step 1: Sign up the user with Supabase Auth
+        const { data: authData, error: authError } = await sb.auth.signUp({
           email,
           password,
+          options: {
+            data: { name } // Store name in auth metadata
+          }
+        });
+
+        if (authError) throw new Error(`Auth error: ${authError.message}`);
+
+        // Step 2: Insert additional user data into the 'users' table
+        const { error: dbError } = await sb.from('users').insert({
+          id: authData.user.id, // Use the auth user ID
+          name,
+          email,
           referral_code,
           referred_by,
           status: 'pending'
         });
 
-        if (error) throw error;
+        if (dbError) throw new Error(`Database error: ${dbError.message}`);
+
         status.style.color = '#2ecc71';
-        status.textContent = 'Application submitted! Await approval.';
+        status.textContent = 'Application submitted! Check your email for confirmation.';
         document.getElementById('apply-form').reset();
       } catch (err) {
         status.style.color = 'red';
-        status.textContent = 'Signup failed: ' + (err.message || 'Unexpected error');
+        status.textContent = `Signup failed: ${err.message || 'Unexpected error'}`;
       }
     });
   </script>
