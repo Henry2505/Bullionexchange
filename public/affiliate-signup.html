@@ -82,13 +82,25 @@
   <!-- Supabase SDK -->
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>
   <script>
+    // Log to ensure script is running
+    console.log('Script loaded at:', new Date().toISOString());
+
     // Supabase configuration
     const SUPA_URL = 'https://dapwpgvnfjcfqqhrpxla.supabase.co';
     const SUPA_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImRhcHdwZ3ZuZmpjZnFxaHJweGxhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDcwNDA4ODgsImV4cCI6MjA2MjYxNjg4OH0.ICC0UsLlzJDNre7rFCeD3k6iVzo6jOJgn3PhABpEMsQ';
-    
+
+    // Check if Supabase SDK is loaded
+    if (typeof supabase === 'undefined') {
+      console.error('Supabase SDK not loaded');
+      document.getElementById('status').style.color = 'red';
+      document.getElementById('status').textContent = 'Error: Failed to load Supabase SDK. Please try again later.';
+      return;
+    }
+
     // Initialize Supabase client
     let sb;
     try {
+      console.log('Initializing Supabase client...');
       sb = supabase.createClient(SUPA_URL, SUPA_ANON_KEY);
       console.log('Supabase client initialized successfully');
     } catch (err) {
@@ -108,6 +120,7 @@
     async function signUpWithRetry(email, password, name, maxRetries = 3) {
       for (let attempt = 1; attempt <= maxRetries; attempt++) {
         try {
+          console.log(`Auth signup attempt ${attempt}/${maxRetries}`);
           const { data, error } = await sb.auth.signUp({
             email,
             password,
@@ -123,10 +136,22 @@
       }
     }
 
-    document.getElementById('apply-form').addEventListener('submit', async (e) => {
+    // Form submission handler
+    const form = document.getElementById('apply-form');
+    if (!form) {
+      console.error('Form element not found');
+      document.getElementById('status').style.color = 'red';
+      document.getElementById('status').textContent = 'Error: Form not found. Please refresh the page.';
+      return;
+    }
+
+    form.addEventListener('submit', async (e) => {
       e.preventDefault();
+      e.stopPropagation(); // Extra precaution to prevent form submission
+      console.log('Form submission triggered');
+
       const status = document.getElementById('status');
-      const button = document.querySelector('button');
+      const button = form.querySelector('button');
       button.disabled = true;
       button.textContent = 'Submitting...';
       status.textContent = 'Submitting...';
@@ -140,6 +165,7 @@
 
       try {
         // Validate inputs
+        console.log('Validating inputs...');
         if (!/^[a-zA-Z\s]+$/.test(name)) {
           throw new Error('Name must contain only letters and spaces');
         }
@@ -205,7 +231,7 @@
 
         status.style.color = '#2ecc71';
         status.textContent = 'Application submitted! Check your email for confirmation.';
-        document.getElementById('apply-form').reset();
+        form.reset();
       } catch (err) {
         console.error('Signup error:', err);
         status.style.color = 'red';
