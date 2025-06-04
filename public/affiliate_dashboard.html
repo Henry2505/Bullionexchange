@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Affiliate Dashboard • CBE Global</title>
 
-  <!-- DEPENDENCIES: Bootstrap CSS & Icons, and Supabase JS -->
+  <!-- DEPENDENCIES: Bootstrap CSS & Icons, Supabase JS, Chart.js -->
   <link
     href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css"
     rel="stylesheet"
@@ -17,9 +17,11 @@
     rel="stylesheet"
   />
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>
+  <!-- Chart.js for graphs -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.3.0/dist/chart.umd.min.js"></script>
 
   <style>
-    /* ========== Dark Theme Variables ========== */
+    /* ===================== Dark Theme Variables ===================== */
     :root[data-theme="dark"] {
       --bg: #121212;
       --text: #e0e0e0;
@@ -51,13 +53,17 @@
       color: var(--gold-dark);
     }
 
-    /* ========== Sidebar ========== */
+    /* ===================== Sidebar ===================== */
     .sidebar {
       background: var(--accent);
       min-height: 100vh;
       padding-top: 1rem;
       border-right: 1px solid var(--gold-dark);
       color: var(--text);
+      position: fixed;
+      width: 100%;
+      max-width: 280px;
+      z-index: 1000;
     }
     .sidebar .nav-link {
       color: var(--text) !important;
@@ -70,16 +76,33 @@
       background: var(--gold-dark);
       color: #000 !important;
     }
-
-    /* ========== Main Content ========== */
-    .main-content {
-      padding: 1rem;
-      overflow-y: auto;
-      height: 100vh;
-      color: var(--text);
+    .sidebar .sidebar-title {
+      font-size: 1.2rem;
+      font-weight: 600;
+      text-align: center;
+      margin-bottom: 1rem;
+      color: var(--gold);
     }
 
-    /* ========== Cards & Sections ========== */
+    /* ===================== Main Content ===================== */
+    .main-content {
+      margin-left: 280px; /* leaves room for fixed sidebar */
+      padding: 1rem 1.5rem;
+      overflow-y: auto;
+      height: 100vh;
+      transition: margin-left 0.3s ease;
+    }
+    @media (max-width: 992px) {
+      .sidebar {
+        position: static;
+        width: 100%;
+      }
+      .main-content {
+        margin-left: 0;
+      }
+    }
+
+    /* ===================== Cards & Sections ===================== */
     .card {
       background: var(--glass);
       border: 1px solid var(--gold-dark);
@@ -93,13 +116,20 @@
       border-bottom: 1px solid var(--gold-dark);
       font-weight: 600;
       color: var(--gold);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+    .card-header .header-icon {
+      margin-right: 0.5rem;
+      font-size: 1.25rem;
     }
     .card-body {
       padding: 1rem;
       color: var(--text);
     }
 
-    /* ========== Form Controls ========== */
+    /* ===================== Form Controls ===================== */
     .form-control,
     .form-select {
       background: var(--accent) !important;
@@ -135,7 +165,7 @@
       border-color: var(--gold-dark) !important;
     }
 
-    /* ========== Tables ========== */
+    /* ===================== Tables ===================== */
     table {
       width: 100%;
       border-collapse: separate;
@@ -150,6 +180,7 @@
       position: sticky;
       top: 0;
       z-index: 2;
+      font-size: 0.9rem;
     }
     td {
       background: var(--accent);
@@ -157,12 +188,13 @@
       border-radius: 6px;
       text-align: center;
       color: var(--text);
+      font-size: 0.9rem;
     }
     .spinner-border {
       color: var(--gold);
     }
 
-    /* ========== Utility ========== */
+    /* ===================== Utility ===================== */
     .copy-btn {
       background: var(--gold);
       color: #000 !important;
@@ -181,6 +213,12 @@
       font-weight: 600;
       color: var(--gold);
       margin-bottom: 0.75rem;
+      display: flex;
+      align-items: center;
+    }
+    .section-title i {
+      margin-right: 0.5rem;
+      font-size: 1.25rem;
     }
     .toast-container {
       position: fixed;
@@ -188,17 +226,160 @@
       right: 1rem;
       z-index: 2000;
     }
+
+    /* ===================== Overview Cards ===================== */
+    .overview-cards {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 1rem;
+    }
+    .overview-card {
+      flex: 1 1 220px;
+      background: var(--glass);
+      border: 1px solid var(--gold-dark);
+      border-radius: 10px;
+      box-shadow: 0 2px 8px var(--shadow);
+      padding: 1rem;
+      text-align: center;
+      color: var(--text);
+      transition: transform 0.3s ease;
+    }
+    .overview-card:hover {
+      transform: translateY(-4px);
+    }
+    .overview-card .value {
+      font-size: 1.75rem;
+      font-weight: 700;
+      margin-top: 0.5rem;
+      color: var(--gold);
+    }
+    .overview-card .label {
+      font-size: 0.95rem;
+      font-weight: 500;
+      color: var(--text);
+    }
+
+    /* ===================== Canvas Chart Container ===================== */
+    .chart-container {
+      background: var(--glass);
+      border: 1px solid var(--gold-dark);
+      border-radius: 10px;
+      box-shadow: 0 2px 8px var(--shadow);
+      padding: 1rem;
+      margin-bottom: 1.5rem;
+    }
+    .chart-container canvas {
+      width: 100% !important;
+      max-height: 300px;
+    }
+
+    /* ===================== Leaderboard ===================== */
+    .leaderboard-list {
+      list-style: none;
+      padding: 0;
+      margin: 0;
+    }
+    .leaderboard-item {
+      display: flex;
+      justify-content: space-between;
+      padding: 0.75rem 1rem;
+      background: var(--accent);
+      border: 1px solid var(--gold-dark);
+      border-radius: 6px;
+      margin-bottom: 0.5rem;
+      align-items: center;
+      transition: background 0.3s ease, transform 0.3s ease;
+    }
+    .leaderboard-item:hover {
+      background: var(--glass);
+      transform: translateY(-2px);
+    }
+    .leader-name {
+      font-size: 0.95rem;
+      font-weight: 500;
+      color: var(--text);
+    }
+    .leader-count {
+      font-size: 0.95rem;
+      font-weight: 600;
+      color: var(--gold);
+    }
+
+    /* ===================== Withdrawals / Payout Requests ===================== */
+    .withdraw-card {
+      background: var(--glass);
+      border: 1px solid var(--gold-dark);
+      border-radius: 10px;
+      box-shadow: 0 2px 8px var(--shadow);
+      padding: 1rem;
+      margin-bottom: 1.5rem;
+      color: var(--text);
+    }
+    .withdraw-card label {
+      color: var(--text);
+    }
+    .withdraw-list {
+      list-style: none;
+      padding: 0;
+      margin: 0;
+    }
+    .withdraw-item {
+      display: flex;
+      justify-content: space-between;
+      padding: 0.75rem 1rem;
+      background: var(--accent);
+      border: 1px solid var(--gold-dark);
+      border-radius: 6px;
+      margin-bottom: 0.5rem;
+      align-items: center;
+      transition: background 0.3s ease, transform 0.3s ease;
+    }
+    .withdraw-item:hover {
+      background: var(--glass);
+      transform: translateY(-2px);
+    }
+    .withdraw-status {
+      font-size: 0.9rem;
+      font-weight: 500;
+    }
+
+    /* ===================== Dark/Light Toggle ===================== */
+    .theme-toggle-btn {
+      position: fixed;
+      bottom: 1rem;
+      left: calc(50% - 25px);
+      background: var(--glass);
+      border: 1px solid var(--gold-dark);
+      border-radius: 50%;
+      width: 50px;
+      height: 50px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      z-index: 2000;
+      transition: background 0.3s ease;
+    }
+    .theme-toggle-btn:hover {
+      background: var(--accent);
+    }
+    .theme-toggle-btn i {
+      color: var(--gold);
+      font-size: 1.25rem;
+    }
   </style>
 </head>
 <body>
-  <!-- AUTH GUARD: Redirect if not logged in -->
+  <!-- ===================== AUTH GUARD: Redirect if not logged in ===================== -->
   <script>
-    const SUPA_URL   = 'https://dapwpgvnfjcfqqhrpxla.supabase.co';
-    const SUPA_KEY   = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.'
-                     + 'eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImRhcHdwZ3Zu'
-                     + 'ZmpjZnFxaHJweGxhIiwicm9sZSI6ImFub24iLCJpYXQiOj'
-                     + 'E3NDcwNDA4ODgsImV4cCI6MjA2MjYxNjg4OH0.'
-                     + 'ICC0UsLlzJDNre7rFCeD3k6iVzo6jOJgn3PhABpEMsQ';
+    const SUPA_URL =
+      'https://dapwpgvnfjcfqqhrpxla.supabase.co';
+    const SUPA_KEY =
+      'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.' +
+      'eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImRhcHdwZ3Zu' +
+      'ZmpjZnFxaHJweGxhIiwicm9sZSI6ImFub24iLCJpYXQiOj' +
+      'E3NDcwNDA4ODgsImV4cCI6MjA2MjYxNjg4OH0.' +
+      'ICC0UsLlzJDNre7rFCeD3k6iVzo6jOJgn3PhABpEMsQ';
     const supabaseClient = window.supabase.createClient(SUPA_URL, SUPA_KEY);
 
     // Immediately check auth; if no user, redirect to login page
@@ -209,19 +390,24 @@
     });
   </script>
 
-  <!-- PAGE LAYOUT: Sidebar & Main Content -->
+  <!-- ===================== PAGE LAYOUT: Sidebar & Main Content ===================== -->
   <div class="row g-0">
     <!-- Sidebar -->
     <div class="col-12 col-md-3 sidebar d-flex flex-column">
       <div class="px-3 pb-3">
-        <h4 class="text-center">Affiliate Info</h4>
+        <h4 class="sidebar-title">Affiliate Dashboard</h4>
+        <!-- Referral Code Card -->
         <div id="referral-section" class="card">
-          <div class="card-header">Referral Code</div>
+          <div class="card-header">
+            <div><i class="bi bi-people-fill header-icon"></i>Referral Code</div>
+          </div>
           <div class="card-body text-center">
             <span id="referral-code" class="h5">Loading…</span>
-            <button id="copy-referral" class="copy-btn ms-2"><i class="bi bi-clipboard"></i></button>
+            <button id="copy-referral" class="copy-btn ms-2">
+              <i class="bi bi-clipboard"></i>
+            </button>
             <div class="mt-2">
-              <small style="color: var(--text);">Share this link:</small><br/>
+              <small>Share this link:</small><br />
               <input
                 type="text"
                 id="referral-link"
@@ -230,7 +416,7 @@
                 style="background: var(--accent); color: var(--text);"
               />
               <button id="copy-link" class="copy-btn mt-1">
-                <i class="bi bi-link-45deg"></i> Copy Link
+                <i class="bi bi-link-45deg"></i> Copy
               </button>
             </div>
           </div>
@@ -238,9 +424,13 @@
       </div>
 
       <nav class="nav flex-column px-3 pb-3">
-        <a class="nav-link active" href="#bank-accounts-section">🏦 Bank Accounts</a>
+        <a class="nav-link active" href="#overview-section">🏠 Overview</a>
+        <a class="nav-link" href="#referral-activity-section">📈 Referral Activity</a>
+        <a class="nav-link" href="#leaderboard-section">🏆 Leaderboard</a>
+        <a class="nav-link" href="#bank-accounts-section">🏦 Bank Accounts</a>
         <a class="nav-link" href="#crypto-wallets-section">💰 Crypto Wallets</a>
         <a class="nav-link" href="#currency-converter-section">💱 Converter</a>
+        <a class="nav-link" href="#withdrawals-section">💵 Payouts</a>
         <a class="nav-link" href="#profile-section">👤 Profile</a>
         <button id="logout-btn" class="btn btn-outline-danger mt-3 w-100">
           <i class="bi bi-box-arrow-right"></i> Logout
@@ -251,16 +441,70 @@
     <!-- Main Content -->
     <div class="col-12 col-md-9 main-content">
       <div class="container-fluid">
-        <!-- Bank Accounts Section -->
+
+        <!-- ===================== Overview Section ===================== -->
+        <section id="overview-section" class="mb-5">
+          <div class="section-title">
+            <i class="bi bi-speedometer2"></i> Overview
+          </div>
+          <div class="overview-cards">
+            <!-- Total Referrals -->
+            <div class="overview-card" id="card-total-referrals">
+              <div class="label">Total Referrals</div>
+              <div class="value" id="overview-total-referrals">0</div>
+            </div>
+            <!-- Total Commissions ($) -->
+            <div class="overview-card" id="card-total-commissions">
+              <div class="label">Total Commissions (USD)</div>
+              <div class="value" id="overview-total-commissions">$0.00</div>
+            </div>
+            <!-- Pending Payouts -->
+            <div class="overview-card" id="card-pending-payouts">
+              <div class="label">Pending Payouts</div>
+              <div class="value" id="overview-pending-payouts">$0.00</div>
+            </div>
+            <!-- Conversion Rate -->
+            <div class="overview-card" id="card-conversion-rate">
+              <div class="label">Conversion Rate</div>
+              <div class="value" id="overview-conversion-rate">0%</div>
+            </div>
+          </div>
+        </section>
+
+        <!-- ===================== Referral Activity (Chart) ===================== -->
+        <section id="referral-activity-section" class="mb-5">
+          <div class="section-title">
+            <i class="bi bi-graph-up"></i> Referral Activity Over Time
+          </div>
+          <div class="chart-container">
+            <canvas id="referralChart" height="100"></canvas>
+          </div>
+        </section>
+
+        <!-- ===================== Leaderboard Section ===================== -->
+        <section id="leaderboard-section" class="mb-5">
+          <div class="section-title">
+            <i class="bi bi-trophy-fill"></i> Leaderboard: Top Affiliates
+          </div>
+          <ul class="leaderboard-list" id="leaderboard-list">
+            <li class="text-center text-muted">Loading leaderboard…</li>
+          </ul>
+        </section>
+
+        <!-- ===================== Bank Accounts Section ===================== -->
         <section id="bank-accounts-section" class="mb-5">
-          <div class="section-title">🏦 Manage Bank Accounts</div>
+          <div class="section-title">
+            <i class="bi bi-bank2"></i> Manage Bank Accounts
+          </div>
           <!-- Add Bank Account Card -->
           <div class="card mb-3">
-            <div class="card-header">Add New Bank Account</div>
+            <div class="card-header">
+              <div><i class="bi bi-plus-circle header-icon"></i>Add New Bank Account</div>
+            </div>
             <div class="card-body">
               <form id="bank-form" class="row g-3">
                 <div class="col-md-6">
-                  <label for="bank-name" class="form-label" style="color: var(--text);">Bank Name</label>
+                  <label for="bank-name" class="form-label">Bank Name</label>
                   <input
                     type="text"
                     id="bank-name"
@@ -270,7 +514,7 @@
                   />
                 </div>
                 <div class="col-md-6">
-                  <label for="bank-code" class="form-label" style="color: var(--text);">Bank Code/Branch</label>
+                  <label for="bank-code" class="form-label">Bank Code/Branch</label>
                   <input
                     type="text"
                     id="bank-code"
@@ -280,7 +524,7 @@
                   />
                 </div>
                 <div class="col-md-6">
-                  <label for="account-number" class="form-label" style="color: var(--text);">Account Number</label>
+                  <label for="account-number" class="form-label">Account Number</label>
                   <input
                     type="text"
                     id="account-number"
@@ -290,7 +534,7 @@
                   />
                 </div>
                 <div class="col-md-6">
-                  <label for="account-name" class="form-label" style="color: var(--text);">Account Name</label>
+                  <label for="account-name" class="form-label">Account Name</label>
                   <input
                     type="text"
                     id="account-name"
@@ -311,7 +555,9 @@
 
           <!-- Existing Bank Accounts Table -->
           <div class="card">
-            <div class="card-header">Your Saved Bank Accounts</div>
+            <div class="card-header">
+              <div><i class="bi bi-file-earmark-text header-icon"></i>Your Saved Bank Accounts</div>
+            </div>
             <div class="card-body">
               <div class="table-responsive">
                 <table class="table align-middle text-center mb-0">
@@ -337,16 +583,20 @@
           </div>
         </section>
 
-        <!-- Crypto Wallets Section -->
+        <!-- ===================== Crypto Wallets Section ===================== -->
         <section id="crypto-wallets-section" class="mb-5">
-          <div class="section-title">💰 Manage Crypto Wallets</div>
+          <div class="section-title">
+            <i class="bi bi-currency-bitcoin"></i> Manage Crypto Wallets
+          </div>
           <!-- Add Crypto Wallet Card -->
           <div class="card mb-3">
-            <div class="card-header">Add New Crypto Wallet</div>
+            <div class="card-header">
+              <div><i class="bi bi-plus-circle header-icon"></i>Add New Crypto Wallet</div>
+            </div>
             <div class="card-body">
               <form id="wallet-form" class="row g-3">
                 <div class="col-md-6">
-                  <label for="crypto-currency" class="form-label" style="color: var(--text);">Currency</label>
+                  <label for="crypto-currency" class="form-label">Currency</label>
                   <select id="crypto-currency" class="form-select" required>
                     <option value="">Select Currency</option>
                     <option value="BTC">Bitcoin (BTC)</option>
@@ -357,7 +607,7 @@
                   </select>
                 </div>
                 <div class="col-md-6">
-                  <label for="crypto-address" class="form-label" style="color: var(--text);">Wallet Address</label>
+                  <label for="crypto-address" class="form-label">Wallet Address</label>
                   <input
                     type="text"
                     id="crypto-address"
@@ -378,7 +628,9 @@
 
           <!-- Existing Crypto Wallets Table -->
           <div class="card">
-            <div class="card-header">Your Saved Crypto Wallets</div>
+            <div class="card-header">
+              <div><i class="bi bi-wallet-fill header-icon"></i>Your Saved Crypto Wallets</div>
+            </div>
             <div class="card-body">
               <div class="table-responsive">
                 <table class="table align-middle text-center mb-0">
@@ -402,15 +654,19 @@
           </div>
         </section>
 
-        <!-- Currency Converter Section -->
+        <!-- ===================== Currency Converter Section ===================== -->
         <section id="currency-converter-section" class="mb-5">
-          <div class="section-title">💱 Currency Converter</div>
+          <div class="section-title">
+            <i class="bi bi-currency-exchange"></i> Currency Converter
+          </div>
           <div class="card">
-            <div class="card-header">Convert Between Currencies</div>
+            <div class="card-header">
+              <div><i class="bi bi-arrow-left-right header-icon"></i>Convert Between Currencies</div>
+            </div>
             <div class="card-body">
               <form id="converter-form" class="row g-3 align-items-end">
                 <div class="col-md-3">
-                  <label for="convert-from" class="form-label" style="color: var(--text);">From</label>
+                  <label for="convert-from" class="form-label">From</label>
                   <select id="convert-from" class="form-select">
                     <option value="USD" selected>USD</option>
                     <option value="EUR">EUR</option>
@@ -420,7 +676,7 @@
                   </select>
                 </div>
                 <div class="col-md-3">
-                  <label for="convert-to" class="form-label" style="color: var(--text);">To</label>
+                  <label for="convert-to" class="form-label">To</label>
                   <select id="convert-to" class="form-select">
                     <option value="NGN" selected>NGN</option>
                     <option value="USD">USD</option>
@@ -430,7 +686,7 @@
                   </select>
                 </div>
                 <div class="col-md-3">
-                  <label for="convert-amount" class="form-label" style="color: var(--text);">Amount</label>
+                  <label for="convert-amount" class="form-label">Amount</label>
                   <input type="number" id="convert-amount" class="form-control" value="1" min="0" />
                 </div>
                 <div class="col-md-3 text-end">
@@ -440,24 +696,68 @@
                   </button>
                 </div>
                 <div class="col-12 text-center mt-3">
-                  <h5 id="convert-result" style="color: var(--text);">--</h5>
+                  <h5 id="convert-result">--</h5>
                 </div>
               </form>
             </div>
           </div>
         </section>
 
-        <!-- Profile Section -->
+        <!-- ===================== Withdrawals / Payout Requests ===================== -->
+        <section id="withdrawals-section" class="mb-5">
+          <div class="section-title">
+            <i class="bi bi-cash-stack"></i> Payout Requests
+          </div>
+          <!-- Request Payout Card -->
+          <div class="withdraw-card mb-3">
+            <div class="row g-3">
+              <div class="col-md-4">
+                <label for="withdraw-amount" class="form-label">Request Amount (USD)</label>
+                <input
+                  type="number"
+                  id="withdraw-amount"
+                  class="form-control"
+                  placeholder="e.g. 100.00"
+                  min="1"
+                  step="0.01"
+                />
+              </div>
+              <div class="col-md-4">
+                <label for="withdraw-method" class="form-label">Payout Method</label>
+                <select id="withdraw-method" class="form-select">
+                  <option value="">Select Method</option>
+                  <option value="bank">Bank Transfer</option>
+                  <option value="crypto">Crypto Wallet</option>
+                </select>
+              </div>
+              <div class="col-md-4 align-self-end text-end">
+                <button id="request-withdraw-btn" class="btn btn-primary">
+                  <span id="withdraw-btn-text">Request Payout</span>
+                  <span id="withdraw-spinner" class="spinner-border spinner-border-sm ms-2" role="status" style="display: none;"></span>
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <!-- Past Payouts List -->
+          <div class="withdraw-card">
+            <div class="section-title"><i class="bi bi-list-check"></i> Past Payouts</div>
+            <ul class="withdraw-list" id="withdrawals-list">
+              <li class="text-center text-muted">Loading payout history…</li>
+            </ul>
+          </div>
+        </section>
+
+        <!-- ===================== Profile Section ===================== -->
         <section id="profile-section" class="mb-5">
-          <div class="section-title">👤 Your Profile</div>
+          <div class="section-title">
+            <i class="bi bi-person-circle"></i> Your Profile
+          </div>
           <div class="card">
             <div class="card-body">
-              <p><strong style="color: var(--text);">Email:</strong> <span id="user-email" style="color: var(--text);">Loading…</span></p>
-              <p><strong style="color: var(--text);">Joined On:</strong> <span id="joined-date" style="color: var(--text);">--</span></p>
-              <p>
-                <strong style="color: var(--text);">Total Referrals:</strong>
-                <span id="total-referrals" style="color: var(--text);">0</span>
-              </p>
+              <p><strong>Email:</strong> <span id="user-email">Loading…</span></p>
+              <p><strong>Joined On:</strong> <span id="joined-date">--</span></p>
+              <p><strong>Total Referrals:</strong> <span id="total-referrals">0</span></p>
             </div>
           </div>
         </section>
@@ -465,7 +765,7 @@
     </div>
   </div>
 
-  <!-- Toast Container -->
+  <!-- ===================== Toast Container ===================== -->
   <div class="toast-container position-fixed top-0 end-0 p-3">
     <div
       id="liveToast"
@@ -475,7 +775,7 @@
       aria-atomic="true"
     >
       <div class="d-flex">
-        <div class="toast-body" id="toast-body" style="color: var(--text);">Hello, world! This is a toast message.</div>
+        <div class="toast-body" id="toast-body" style="color: var(--text);"></div>
         <button
           type="button"
           class="btn-close btn-close-white me-2 m-auto"
@@ -486,7 +786,12 @@
     </div>
   </div>
 
-  <!-- Bootstrap JS Bundle -->
+  <!-- ===================== Dark/Light Toggle Button ===================== -->
+  <div class="theme-toggle-btn" id="theme-toggle-btn">
+    <i class="bi bi-sun-fill" id="theme-icon"></i>
+  </div>
+
+  <!-- ===================== Bootstrap JS Bundle ===================== -->
   <script
     src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"
     integrity="sha384-YvpcrYf0tY3lHB60NNkmXc5s9fDVZLESaAA55NDzOxhy9GkcIdslK1eN7N6jIeHz"
@@ -494,7 +799,9 @@
   ></script>
 
   <script>
+    // -----------------------------------------
     // GLOBAL VARIABLES & UTILITY FUNCTIONS
+    // -----------------------------------------
     let currentUser = null;
     let currentUserId = null;
     const supabase = supabaseClient;
@@ -523,6 +830,14 @@
       return code;
     }
 
+    // Convert a number to USD currency string
+    function toUSD(value) {
+      return parseFloat(value).toLocaleString(undefined, {
+        style: 'currency',
+        currency: 'USD',
+      });
+    }
+
     // ON DOM CONTENT LOADED: Fetch user, then initialize all sections
     document.addEventListener('DOMContentLoaded', async () => {
       // FETCH CURRENT USER & IDs
@@ -542,8 +857,11 @@
       // FETCH & DISPLAY REFERRAL CODE + LINK
       await fetchReferralCode();
 
-      // FETCH & DISPLAY TOTAL REFERRALS
+      // FETCH & DISPLAY TOTAL REFERRALS (for overview card & profile)
       await fetchTotalReferrals();
+
+      // FETCH & DISPLAY TOTAL COMMISSIONS & PENDING PAYOUTS (overview)
+      await fetchCommissionData();
 
       // SETUP LOGOUT BUTTON
       document.getElementById('logout-btn').addEventListener('click', async () => {
@@ -567,7 +885,7 @@
       // LOAD CRYPTO WALLETS
       await loadWallets();
 
-      // SETUP ADD BANK ACCOUNT FORM HANDLER
+      // SETUP ADD BANK ACCOUNT Form Handler
       document.getElementById('bank-form').addEventListener('submit', async (e) => {
         e.preventDefault();
         const bankName = document.getElementById('bank-name').value.trim();
@@ -608,7 +926,7 @@
         }
       });
 
-      // SETUP ADD WALLET FORM HANDLER
+      // SETUP ADD WALLET Form Handler
       document.getElementById('wallet-form').addEventListener('submit', async (e) => {
         e.preventDefault();
         const currency = document.getElementById('crypto-currency').value;
@@ -645,13 +963,12 @@
         }
       });
 
-      // SETUP CONVERTER FORM HANDLER
+      // SETUP CONVERTER Form Handler
       document.getElementById('converter-form').addEventListener('submit', async (e) => {
         e.preventDefault();
         const from = document.getElementById('convert-from').value;
         const to = document.getElementById('convert-to').value;
         const amount = parseFloat(document.getElementById('convert-amount').value) || 0;
-        const convertBtn = document.getElementById('convert-btn');
         const convertText = document.getElementById('convert-text');
         const convertSpinner = document.getElementById('convert-spinner');
         convertText.textContent = 'Converting…';
@@ -662,7 +979,7 @@
           if (data.result !== 'success') throw new Error('Failed to fetch rates');
           const rate = data.conversion_rates[to];
           if (!rate) {
-            showToast(`Conversion rate ${from}→${to} not available.`);
+            showToast(`Rate ${from}→${to} not available.`);
             document.getElementById('convert-result').textContent = '--';
           } else {
             const converted = (amount * rate).toLocaleString(undefined, {
@@ -680,9 +997,64 @@
           convertSpinner.style.display = 'none';
         }
       });
+
+      // SETUP REQUEST WITHDRAWAL Handler
+      document.getElementById('request-withdraw-btn').addEventListener('click', async () => {
+        const amount = parseFloat(document.getElementById('withdraw-amount').value);
+        const method = document.getElementById('withdraw-method').value;
+        if (!amount || amount <= 0) {
+          showToast('Enter a valid withdrawal amount.');
+          return;
+        }
+        if (!method) {
+          showToast('Select payout method.');
+          return;
+        }
+        const btnText = document.getElementById('withdraw-btn-text');
+        const spinner = document.getElementById('withdraw-spinner');
+        btnText.textContent = 'Requesting…';
+        spinner.style.display = 'inline-block';
+        try {
+          // Insert into a new table affiliate_payouts (assumes it exists):
+          const { error } = await supabase
+            .from('affiliate_payouts')
+            .insert([{
+              user_id: currentUserId,
+              amount: amount,
+              method: method,
+              status: 'pending',
+              requested_at: new Date()
+            }]);
+          if (error) throw error;
+          showToast('Payout requested successfully.');
+          document.getElementById('withdraw-amount').value = '';
+          document.getElementById('withdraw-method').value = '';
+          await loadPayouts();
+          // Also refresh overview pending payouts count
+          await fetchCommissionData();
+        } catch (err) {
+          console.error('Payout request error:', err);
+          showToast('Failed to request payout.');
+        } finally {
+          btnText.textContent = 'Request Payout';
+          spinner.style.display = 'none';
+        }
+      });
+
+      // LOAD INITIAL SECTIONS
+      await loadBankAccounts();
+      await loadWallets();
+      await loadPayouts();
+      await renderReferralChart();
+      await loadLeaderboard();
+
+      // SETUP DARK/LIGHT TOGGLE
+      setupThemeToggle();
     });
 
-    // ─── FETCH OR GENERATE REFERRAL CODE & SET LINK ─────────────────────────────────────
+    // -----------------------------------------
+    // FETCH OR GENERATE REFERRAL CODE & SET LINK
+    // -----------------------------------------
     async function fetchReferralCode() {
       const refSpan = document.getElementById('referral-code');
       const linkInput = document.getElementById('referral-link');
@@ -726,25 +1098,86 @@
 
       // 3) Show code + link after ensuring we have a valid code
       refSpan.textContent = code;
-      linkInput.value = `${window.location.origin}/apply.html?ref=${code}`;
+      linkInput.value = `${window.location.origin}/CBE_apply.html?ref=${code}`;
     }
 
-    // ─── FETCH TOTAL REFERRALS ──────────────────────────────────────────────────────────
+    // -----------------------------------------
+    // FETCH TOTAL REFERRALS (for overview + profile)
+    // -----------------------------------------
     async function fetchTotalReferrals() {
-      const { data, error, count } = await supabase
+      const { count, error } = await supabase
         .from('users')
-        .select('*', { count: 'exact' })
+        .select('*', { count: 'exact', head: true })
         .eq('referred_by', currentUserId);
 
       if (error) {
         console.error('Failed to fetch total referrals:', error);
         document.getElementById('total-referrals').textContent = '—';
+        document.getElementById('overview-total-referrals').textContent = '—';
       } else {
-        document.getElementById('total-referrals').textContent = count || 0;
+        const total = count || 0;
+        document.getElementById('total-referrals').textContent = total;
+        document.getElementById('overview-total-referrals').textContent = total;
       }
     }
 
-    // ─── LOAD BANK ACCOUNTS: Fetch & Render ───────────────────────────────────────────
+    // -----------------------------------------
+    // FETCH COMMISSION DATA & PENDING PAYOUTS (overview)
+    // -----------------------------------------
+    async function fetchCommissionData() {
+      // Assumes there's a table 'affiliate_commissions' and 'affiliate_payouts'
+      // affiliate_commissions has columns: user_id, amount, created_at
+      // affiliate_payouts has columns: user_id, amount, status
+      // 1. Total commissions (sum of all amounts)
+      const { data: commissionsData, error: commErr } = await supabase
+        .from('affiliate_commissions')
+        .select('amount', { aggregate: 'sum' })
+        .eq('user_id', currentUserId);
+
+      let totalCommission = 0;
+      if (!commErr && commissionsData && commissionsData.length > 0) {
+        totalCommission = commissionsData[0].sum || 0;
+      }
+
+      // 2. Pending payouts (sum of amounts where status = 'pending')
+      const { data: pendingData, error: pendErr } = await supabase
+        .from('affiliate_payouts')
+        .select('amount', { aggregate: 'sum' })
+        .eq('user_id', currentUserId)
+        .eq('status', 'pending');
+
+      let pendingPayout = 0;
+      if (!pendErr && pendingData && pendingData.length > 0) {
+        pendingPayout = pendingData[0].sum || 0;
+      }
+
+      // 3. Conversion rate = (total referrals who converted) / total referrals
+      //    Assumes 'users' table has a boolean 'converted' column (true if they converted to paid user)
+      const { data: convertedData, count: convertedCount, error: convErr } = await supabase
+        .from('users')
+        .select('converted', { count: 'exact', head: true })
+        .eq('referred_by', currentUserId)
+        .eq('converted', true);
+
+      const { count: totalRefCount, error: totErr } = await supabase
+        .from('users')
+        .select('*', { count: 'exact', head: true })
+        .eq('referred_by', currentUserId);
+
+      let conversionRate = 0;
+      if (!convErr && !totErr && totalRefCount > 0) {
+        conversionRate = ((convertedCount / totalRefCount) * 100).toFixed(2);
+      }
+
+      // Update overview cards
+      document.getElementById('overview-total-commissions').textContent = toUSD(totalCommission);
+      document.getElementById('overview-pending-payouts').textContent = toUSD(pendingPayout);
+      document.getElementById('overview-conversion-rate').textContent = `${conversionRate}%`;
+    }
+
+    // -----------------------------------------
+    // LOAD BANK ACCOUNTS: Fetch & Render
+    // -----------------------------------------
     async function loadBankAccounts() {
       const tbody = document.getElementById('bank-accounts-body');
       tbody.innerHTML = `<tr><td colspan="5"><div class="text-center spinner-border"></div></td></tr>`;
@@ -783,7 +1216,9 @@
       });
     }
 
-    // ─── DELETE BANK ACCOUNT ───────────────────────────────────────────────────────────
+    // -----------------------------------------
+    // DELETE BANK ACCOUNT
+    // -----------------------------------------
     async function deleteBankAccount(id) {
       if (!confirm('Delete this bank account?')) return;
       const { error } = await supabase
@@ -799,7 +1234,9 @@
       }
     }
 
-    // ─── LOAD CRYPTO WALLETS: Fetch & Render ──────────────────────────────────────────
+    // -----------------------------------------
+    // LOAD CRYPTO WALLETS: Fetch & Render
+    // -----------------------------------------
     async function loadWallets() {
       const tbody = document.getElementById('wallets-body');
       tbody.innerHTML = `<tr><td colspan="3"><div class="text-center spinner-border"></div></td></tr>`;
@@ -836,7 +1273,9 @@
       });
     }
 
-    // ─── DELETE WALLET ─────────────────────────────────────────────────────────────────
+    // -----------------------------------------
+    // DELETE WALLET
+    // -----------------------------------------
     async function deleteWallet(id) {
       if (!confirm('Delete this wallet?')) return;
       const { error } = await supabase
@@ -850,6 +1289,225 @@
         showToast('Wallet deleted.');
         await loadWallets();
       }
+    }
+
+    // -----------------------------------------
+    // LOAD PAYOUTS: Fetch & Render
+    // -----------------------------------------
+    async function loadPayouts() {
+      const listEl = document.getElementById('withdrawals-list');
+      listEl.innerHTML = `<li class="text-center"><div class="spinner-border"></div></li>`;
+
+      const { data, error } = await supabase
+        .from('affiliate_payouts')
+        .select('*')
+        .eq('user_id', currentUserId)
+        .order('requested_at', { ascending: false });
+
+      if (error) {
+        console.error('Fetch payouts error:', error);
+        listEl.innerHTML = `<li style="color: var(--gold);">Failed to load payouts.</li>`;
+        return;
+      }
+      if (!data || data.length === 0) {
+        listEl.innerHTML = `<li style="color: var(--text);">No payout history.</li>`;
+        return;
+      }
+
+      listEl.innerHTML = '';
+      data.forEach((p) => {
+        const li = document.createElement('li');
+        const date = new Date(p.requested_at).toLocaleDateString();
+        li.className = 'withdraw-item';
+        li.innerHTML = `
+          <div>
+            <strong>${toUSD(p.amount)}</strong> via <em>${p.method.toUpperCase()}</em><br/>
+            <small>${date}</small>
+          </div>
+          <div class="withdraw-status ${
+            p.status === 'completed' ? 'text-success' : 'text-warning'
+          }">${p.status.charAt(0).toUpperCase() + p.status.slice(1)}</div>
+        `;
+        listEl.appendChild(li);
+      });
+    }
+
+    // -----------------------------------------
+    // RENDER REFERRAL CHART
+    // -----------------------------------------
+    async function renderReferralChart() {
+      // Fetch referral counts grouped by date, last 30 days
+      const { data, error } = await supabase.rpc('referrals_by_date', {
+        p_user_id: currentUserId,
+        p_days: 30
+      });
+      // Assumes a stored procedure 'referrals_by_date' that returns [{ date, count }]
+      // If no such RPC, fallback to client grouping:
+
+      let labels = [];
+      let counts = [];
+
+      if (error || !data) {
+        // Fallback: fetch raw users and manually group
+        const { data: raw, error: rawErr } = await supabase
+          .from('users')
+          .select('created_at')
+          .eq('referred_by', currentUserId);
+        if (rawErr) {
+          console.error('Fallback referrals fetch error:', rawErr);
+          labels = [];
+          counts = [];
+        } else {
+          // Build a date → count map for last 30 days
+          const map = {};
+          const now = new Date();
+          for (let i = 29; i >= 0; i--) {
+            const d = new Date(now);
+            d.setDate(now.getDate() - i);
+            const key = d.toISOString().split('T')[0];
+            map[key] = 0;
+          }
+          raw.forEach((u) => {
+            const dKey = new Date(u.created_at).toISOString().split('T')[0];
+            if (map[dKey] !== undefined) map[dKey]++;
+          });
+          labels = Object.keys(map);
+          counts = Object.values(map);
+        }
+      } else {
+        // Use RPC data directly
+        data.sort((a, b) => new Date(a.date) - new Date(b.date));
+        labels = data.map((row) => row.date);
+        counts = data.map((row) => row.count);
+      }
+
+      const ctx = document.getElementById('referralChart').getContext('2d');
+      new Chart(ctx, {
+        type: 'line',
+        data: {
+          labels: labels,
+          datasets: [
+            {
+              label: 'New Referrals',
+              data: counts,
+              backgroundColor: 'rgba(255, 215, 0, 0.3)',
+              borderColor: 'rgba(255, 215, 0, 1)',
+              borderWidth: 2,
+              fill: true,
+              tension: 0.3,
+            },
+          ],
+        },
+        options: {
+          scales: {
+            x: {
+              ticks: { color: varGet('--text') },
+              grid: { color: varGet('--shadow') },
+            },
+            y: {
+              ticks: { color: varGet('--text') },
+              grid: { color: varGet('--shadow') },
+            },
+          },
+          plugins: {
+            legend: {
+              labels: { color: varGet('--text') },
+            },
+          },
+          maintainAspectRatio: false,
+        },
+      });
+    }
+
+    // Helper to get CSS variable value
+    function varGet(name) {
+      return getComputedStyle(document.documentElement).getPropertyValue(name);
+    }
+
+    // -----------------------------------------
+    // LOAD LEADERBOARD: Top Affiliates by Referrals
+    // -----------------------------------------
+    async function loadLeaderboard() {
+      // Query top 5 affiliates by count of referrals in last 30 days
+      // Assume there's a view or table 'affiliates' with fields (user_id, referral_code)
+      // and 'users' table has referred_by. We'll join and group.
+
+      const { data, error } = await supabase
+        .from('users')
+        .select('referred_by ( referral_code ), id', { count: 'exact' })
+        .neq('referred_by', null);
+
+      // Simplify client grouping if no direct SQL
+      if (error) {
+        console.error('Leaderboard fetch error:', error);
+        document.getElementById('leaderboard-list').innerHTML =
+          `<li style="color: var(--gold);">Failed to load leaderboard.</li>`;
+        return;
+      }
+
+      // Build map: affiliate_user_id → count
+      const map = {};
+      data.forEach((u) => {
+        const affId = u.referred_by;
+        if (!map[affId]) map[affId] = 0;
+        map[affId]++;
+      });
+
+      // Convert map to array of { user_id, count }, sort descending
+      const arr = Object.entries(map).map(([userId, cnt]) => ({ userId, cnt }));
+      arr.sort((a, b) => b.cnt - a.cnt);
+
+      // Take top 5
+      const top5 = arr.slice(0, 5);
+
+      // For each, fetch affiliate’s referral_code and email
+      const listEl = document.getElementById('leaderboard-list');
+      listEl.innerHTML = '';
+      if (top5.length === 0) {
+        listEl.innerHTML = `<li style="color: var(--text);">No referrals yet.</li>`;
+        return;
+      }
+      for (const item of top5) {
+        const { data: affiliateData, error: affErr } = await supabase
+          .from('affiliates')
+          .select('referral_code')
+          .eq('user_id', item.userId)
+          .single();
+        const { data: userData, error: userErr } = await supabase
+          .from('users')
+          .select('email')
+          .eq('id', item.userId)
+          .single();
+        const code = (!affErr && affiliateData) ? affiliateData.referral_code : '(unknown)';
+        const email = (!userErr && userData) ? userData.email : '(unknown)';
+        const li = document.createElement('li');
+        li.className = 'leaderboard-item';
+        li.innerHTML = `
+          <div class="leader-name">${email} <small style="color: var(--text-light);">(${code})</small></div>
+          <div class="leader-count">${item.cnt}</div>
+        `;
+        listEl.appendChild(li);
+      }
+    }
+
+    // -----------------------------------------
+    // THEME TOGGLE: Dark ↔ Light
+    // -----------------------------------------
+    function setupThemeToggle() {
+      const btn = document.getElementById('theme-toggle-btn');
+      const icon = document.getElementById('theme-icon');
+      // Initialize from localStorage (or default dark)
+      const saved = localStorage.getItem('dashboardTheme') || 'dark';
+      document.documentElement.setAttribute('data-theme', saved);
+      icon.className = saved === 'dark' ? 'bi bi-sun-fill' : 'bi bi-moon-stars-fill';
+
+      btn.addEventListener('click', () => {
+        const current = document.documentElement.getAttribute('data-theme');
+        const next = current === 'dark' ? 'light' : 'dark';
+        document.documentElement.setAttribute('data-theme', next);
+        localStorage.setItem('dashboardTheme', next);
+        icon.className = next === 'dark' ? 'bi bi-sun-fill' : 'bi bi-moon-stars-fill';
+      });
     }
   </script>
 </body>
