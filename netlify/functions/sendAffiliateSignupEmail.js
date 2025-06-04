@@ -1,9 +1,9 @@
 // netlify/functions/sendAffiliateSignupEmail.js
 
-import fetch from "node-fetch"; // If your Netlify runtime already has global fetch, you can remove this line.
+import fetch from "node-fetch"; // Remove if your environment already has global fetch
 
 exports.handler = async function(event, context) {
-  // Only accept POST requests
+  // Only allow POST
   if (event.httpMethod !== "POST") {
     return {
       statusCode: 405,
@@ -11,7 +11,7 @@ exports.handler = async function(event, context) {
     };
   }
 
-  // Parse the incoming JSON payload
+  // Parse JSON body
   let body;
   try {
     body = JSON.parse(event.body);
@@ -21,7 +21,6 @@ exports.handler = async function(event, context) {
       body: "Invalid JSON",
     };
   }
-
   const { email, firstName, token, referralCode } = body;
   if (!email || !firstName || !token || !referralCode) {
     return {
@@ -30,12 +29,15 @@ exports.handler = async function(event, context) {
     };
   }
 
-  // Build the Supabase confirmation URL from the token
+  // Build confirmation URL
   const confirmationUrl = `https://dapwpgvnfjcfqqhrpxla.supabase.co/auth/v1/verify?token=${token}`;
 
-  // Read Brevo credentials from environment
-  const BREVO_API    = process.env.BREVO_API;            // <-- this must match exactly
-  const TEMPLATE_ID  = process.env.BREVO_TEMPLATE_ID;    // <-- should be "10"
+  // Read environment variables (debugging)
+  const BREVO_API    = process.env.BREVO_API;
+  const TEMPLATE_ID  = process.env.BREVO_TEMPLATE_ID;
+
+  console.log("🛠️  [Debug] process.env.BREVO_API  = '" + BREVO_API + "'");
+  console.log("🛠️  [Debug] process.env.BREVO_TEMPLATE_ID = '" + TEMPLATE_ID + "'");
 
   if (!BREVO_API || typeof BREVO_API !== "string" || BREVO_API.trim() === "") {
     console.error("❌ Missing or empty BREVO_API environment variable");
@@ -52,21 +54,16 @@ exports.handler = async function(event, context) {
     };
   }
 
-  // Log the first few characters of the key to confirm it’s being read
-  console.log("Using BREVO_API:", BREVO_API.slice(0, 10) + "…");
+  // Truncate for logging
+  console.log("✅ BREVO_API looks like: '" + BREVO_API.slice(0, 8) + "…'");
 
-  // Prepare payload for Brevo SMTP API
+  // Build Brevo payload
   const payload = {
     sender: {
       name: "CBE Support",
       email: "noreply@apexincomeoptions.com.ng",
     },
-    to: [
-      {
-        email: email,
-        name: firstName,
-      },
-    ],
+    to: [{ email: email, name: firstName }],
     templateId: Number(TEMPLATE_ID),
     params: {
       firstName: firstName,
@@ -75,9 +72,9 @@ exports.handler = async function(event, context) {
     },
   };
 
-  // Call Brevo’s /smtp/email endpoint
+  // Call Brevo
   try {
-    const response = await fetch("https://api.brevo.com/v3/smtp/email", {
+    const resp = await fetch("https://api.brevo.com/v3/smtp/email", {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
@@ -86,22 +83,22 @@ exports.handler = async function(event, context) {
       body: JSON.stringify(payload),
     });
 
-    const data = await response.json();
-    if (!response.ok) {
-      console.error("Brevo API returned error:", response.status, data);
+    const data = await resp.json();
+    if (!resp.ok) {
+      console.error("❌ Brevo API responded with error:", resp.status, data);
       return {
-        statusCode: response.status,
+        statusCode: resp.status,
         body: JSON.stringify({ error: "Brevo send failed", details: data }),
       };
     }
 
-    // Email sent successfully
+    console.log("✅ Brevo email queued:", data);
     return {
       statusCode: 200,
       body: JSON.stringify({ message: "Email sent", brevo: data }),
     };
   } catch (err) {
-    console.error("Netlify Function error:", err);
+    console.error("❌ Netlify Function error:", err);
     return {
       statusCode: 500,
       body: "Internal Server Error",
