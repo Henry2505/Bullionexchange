@@ -32,10 +32,13 @@
 
   <!-- FONTS & ICONS -->
   <link
-    href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;500;700&family=Orbitron:wght@400;700&family=Montserrat:wght@400;600;700&display=swap"
+    href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&family=Orbitron:wght@400;700&display=swap"
     rel="stylesheet"
   />
   <script src="https://kit.fontawesome.com/your-kit-code.js" crossorigin="anonymous"></script>
+
+  <!-- CHART.JS (for custom gold chart) -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
   <!-- CSS RESET + VARIABLES + LAYOUT + COMPONENT STYLES -->
   <style>
@@ -62,9 +65,10 @@
     a {
       color: var(--gold);
       text-decoration: none;
+      position: relative;
     }
     a:hover {
-      text-decoration: underline;
+      text-decoration: none;
     }
     ul,
     ol {
@@ -184,23 +188,24 @@
       top: 0;
       left: 0;
       width: 100%;
-      height: 70px;
-      background: rgba(0, 0, 0, 0.95);
+      height: 60px;
+      /* Frosted-glass effect */
+      background: rgba(0, 0, 0, 0.6);
+      backdrop-filter: blur(10px);
       display: flex;
       align-items: center;
       justify-content: space-between;
       padding: 0 20px;
       box-shadow: 0 2px 8px var(--shadow);
-      z-index: 150;
-      backdrop-filter: blur(8px);
+      z-index: 1000; /* Increased to ensure visibility */
     }
     #nav-menu .logo {
       font-family: "Orbitron", sans-serif;
-      font-size: 1.6rem;
+      font-size: 1.4rem;
       font-weight: 700;
       background: linear-gradient(45deg, var(--gold), var(--gold-dark));
-      padding: 0.5rem 1rem;
-      border-radius: 10px;
+      padding: 0.4rem 0.9rem;
+      border-radius: 8px;
       box-shadow: 0 2px 6px var(--shadow);
       cursor: pointer;
       color: #000;
@@ -213,40 +218,52 @@
     /* Desktop Links */
     #desktop-links {
       display: flex;
-      flex-wrap: wrap; /* allow wrapping */
-      gap: 12px;
+      gap: 6px;
       list-style: none;
       justify-content: center;
-      white-space: normal; /* remove forced nowrap */
+      overflow-x: auto;
+      padding-bottom: 4px;
+      white-space: nowrap;
     }
     #desktop-links li {
       flex-shrink: 0;
     }
     #desktop-links li a {
-      font-family: "Montserrat", sans-serif;
-      font-size: 0.9rem; /* slightly increased for readability */
-      font-weight: 600;
+      font-family: "Poppins", sans-serif;
+      font-size: 0.85rem;
+      font-weight: 500;
       color: var(--gold);
-      padding: 6px 12px;
-      border-radius: 20px;
-      background: transparent;
-      border: 1px solid var(--gold);
-      transition: background 0.3s, color 0.3s, transform 0.3s, opacity 0.3s;
-      opacity: 0.95;
-      letter-spacing: 0.5px;
+      padding: 4px 10px;
+      border-radius: 4px;
+      background: rgba(0, 0, 0, 0.7);
+      transition: background 0.25s, transform 0.25s, opacity 0.25s;
+      opacity: 0.9;
       display: inline-block;
+      text-transform: uppercase;
+    }
+    /* Animated underline on hover */
+    #desktop-links li a::after {
+      content: "";
+      position: absolute;
+      bottom: -2px;
+      left: 0;
+      width: 0%;
+      height: 2px;
+      background: var(--gold);
+      transition: width 0.3s ease;
+    }
+    #desktop-links li a:hover::after {
+      width: 100%;
     }
     #desktop-links li a:hover {
-      background: var(--gold);
-      color: #000;
-      transform: scale(1.05);
+      background: rgba(0, 0, 0, 0.85);
+      transform: scale(1.03);
       opacity: 1;
     }
     #desktop-links li a.active {
       background: var(--gold-dark) !important;
       color: #000 !important;
       opacity: 1;
-      border-color: var(--gold-dark);
     }
 
     /* Hamburger Toggle (Mobile) */
@@ -256,27 +273,27 @@
       cursor: pointer;
       display: none;
       flex-direction: column;
-      gap: 5px;
-      width: 30px;
-      height: 25px;
+      gap: 4px;
+      width: 26px;
+      height: 22px;
       justify-content: center;
       align-items: center;
-      z-index: 155;
+      z-index: 1001; /* Above nav-menu */
     }
     #menu-toggle span {
-      width: 30px;
+      width: 26px;
       height: 3px;
       background: var(--gold);
       transition: all 0.3s;
     }
     #menu-toggle.active span:nth-child(1) {
-      transform: rotate(45deg) translate(5px, 5px);
+      transform: rotate(45deg) translate(4px, 4px);
     }
     #menu-toggle.active span:nth-child(2) {
       opacity: 0;
     }
     #menu-toggle.active span:nth-child(3) {
-      transform: rotate(-45deg) translate(5px, -5px);
+      transform: rotate(-45deg) translate(4px, -4px);
     }
 
     /* Side Menu (Mobile) */
@@ -295,23 +312,25 @@
       align-items: center;
       transition: transform 0.4s ease;
       transform: translateX(100%);
-      z-index: 150;
+      z-index: 1000;
       overflow-y: auto;
     }
     #menu-list.active {
       transform: translateX(0);
     }
     #menu-list li {
-      margin: 16px 0;
+      margin: 14px 0;
     }
     #menu-list a {
-      font-family: "Montserrat", sans-serif;
-      font-size: 1.3rem;
-      font-weight: 600;
+      font-family: "Poppins", sans-serif;
+      font-size: 1.1rem;
+      font-weight: 500;
       color: var(--gold);
-      transition: color 0.3s, opacity 0.3s;
+      padding: 6px 12px;
+      transition: color 0.25s, opacity 0.25s;
       opacity: 0.9;
-      letter-spacing: 0.8px;
+      display: inline-block;
+      text-transform: uppercase;
     }
     #menu-list a:hover {
       color: var(--gold-dark);
@@ -342,7 +361,7 @@
       text-align: center;
       position: relative;
       background: linear-gradient(to bottom, #000, var(--accent));
-      margin-top: 70px;
+      margin-top: 60px; /* matches nav height */
     }
     header.hero .logo-hero img {
       width: 160px;
@@ -659,47 +678,24 @@
     }
 
     /* ==========================================================================
-       LIVE GOLD CHART SECTION
+       LIVE GOLD CHART SECTION (30-day Sparkline + Fallback)
        ========================================================================== */
     #gold-chart-section {
       margin-top: 20px;
     }
     #chart-container {
       width: 100%;
-      height: 200vh; /* Doubled height for maximum impact */
-      position: relative;
+      height: 350px;  /* Explicit height to ensure visibility */
       background: var(--accent);
       border-radius: 10px;
       overflow: hidden;
       box-shadow: 0 4px 20px var(--shadow);
+      padding: 1rem;
     }
-    #tradingview_fullscreen {
+    /* Canvas container for Chart.js */
+    #gold-chart {
       width: 100%;
-      height: 100%;
-    }
-    .chart-toggle {
-      display: flex;
-      justify-content: center;
-      gap: 15px;
-      flex-wrap: wrap;
-      margin-bottom: 20px;
-    }
-    .chart-toggle button {
-      background: #000;
-      color: var(--gold);
-      border: 1px solid var(--gold);
-      border-radius: 30px;
-      font-weight: 600;
-      padding: 8px 20px;
-      transition: all 0.3s;
-      cursor: pointer;
-      white-space: nowrap;
-    }
-    .chart-toggle button.active,
-    .chart-toggle button:hover {
-      background: var(--gold);
-      color: #000;
-      transform: scale(1.05);
+      height: 100%; /* Fill parent */
     }
 
     /* ==========================================================================
@@ -730,6 +726,33 @@
     }
     #calendar-rotator p strong {
       color: var(--gold);
+    }
+
+    /* ==========================================================================
+       BACK TO TOP BUTTON
+       ========================================================================== */
+    #back-to-top {
+      position: fixed;
+      bottom: 30px;
+      right: 30px;
+      width: 42px;
+      height: 42px;
+      background: var(--gold);
+      color: #000;
+      border: none;
+      border-radius: 50%;
+      box-shadow: 0 2px 8px var(--shadow);
+      font-size: 1.2rem;
+      cursor: pointer;
+      display: none;
+      align-items: center;
+      justify-content: center;
+      z-index: 200;
+      transition: transform 0.3s, opacity 0.3s;
+    }
+    #back-to-top:hover {
+      transform: scale(1.1);
+      opacity: 0.9;
     }
 
     /* ==========================================================================
@@ -832,7 +855,10 @@
         flex-direction: column;
       }
       #chart-container {
-        height: 120vh; /* Adjusted for mobile */
+        padding: 0.5rem;
+      }
+      #chart-container {
+        height: 250px; /* slightly smaller on tablet */
       }
       #economic-calendar {
         padding: 0.5rem;
@@ -845,6 +871,13 @@
         padding: 6px 15px;
         font-size: 0.9rem;
       }
+      #back-to-top {
+        bottom: 20px;
+        right: 20px;
+        width: 36px;
+        height: 36px;
+        font-size: 1rem;
+      }
     }
     @media (max-width: 576px) {
       .btn-gold {
@@ -855,8 +888,8 @@
         font-size: 0.9rem;
         padding: 8px 12px;
       }
-      #tradingview_fullscreen {
-        height: 600px;
+      #chart-container {
+        height: 200px; /* smallest on phone */
       }
     }
   </style>
@@ -1021,15 +1054,9 @@
 
   <!-- LIVE GOLD CHART SECTION -->
   <section id="gold-chart-section" class="slide-in">
-    <h2><i class="fas fa-chart-line"></i> Live Gold Chart</h2>
+    <h2><i class="fas fa-chart-line"></i> 30-Day Gold Trend</h2>
     <div id="chart-container">
-      <div class="chart-toggle">
-        <button data-interval="60" class="active">1H</button>
-        <button data-interval="240">4H</button>
-        <button data-interval="D">1D</button>
-        <button data-interval="W">1W</button>
-      </div>
-      <div id="tradingview_fullscreen"></div>
+      <canvas id="gold-chart"></canvas>
     </div>
   </section>
 
@@ -1113,8 +1140,10 @@
     ><i class="fab fa-telegram-plane"></i><span>Telegram</span></a>
   </div>
 
+  <!-- BACK TO TOP BUTTON -->
+  <button id="back-to-top" aria-label="Back to top">↑</button>
+
   <!-- SCRIPTS & INTEGRATIONS -->
-  <script src="https://s3.tradingview.com/tv.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/particles.js@2.0.0/particles.min.js"></script>
 
   <!-- Smartsupp Live Chat script -->
@@ -1130,9 +1159,13 @@
   </script>
 
   <script>
+    // ──────────────────────────────────────────────────────────────────────────
+    // Replace these with your actual keys:
     const GOLDAPI_KEY = "goldapi-2449msmbh6lmp8-io";
+    const METALPRICE_API_KEY = "01b8a67f9ac08887dd3b33a93eeb5d66";
     const NEWS_API_KEY = "6de81d54e02e45f8a5546a827c70ab28";
     const EXCHANGE_RATE_API_KEY = "4e4307b2bf8daac15365a410";
+    // ──────────────────────────────────────────────────────────────────────────
 
     document.addEventListener("DOMContentLoaded", () => {
       // Slide-in animation setup
@@ -1162,7 +1195,7 @@
         menu.classList.toggle("active");
       });
 
-      // Initial fallback for news (so first load is immediate)
+      // Initialize news tickers
       const goldContainer = document.getElementById("gold-ticker-content");
       const econContainer = document.getElementById("econ-ticker-content");
       const goldFallback = [
@@ -1193,7 +1226,6 @@
         econContainer.appendChild(a);
       });
 
-      // Load news tickers (then overwrite fallback)
       loadGoldTicker();
       loadEconTicker();
       setInterval(loadGoldTicker, 60 * 1000);
@@ -1203,7 +1235,7 @@
       loadGoldPrice();
       setInterval(loadGoldPrice, 5000);
 
-      // Economic calendar
+      // Economic calendar rotator
       rotateEvents();
       setInterval(rotateEvents, 5000);
 
@@ -1211,44 +1243,44 @@
       updateLocalTime();
       setInterval(updateLocalTime, 1000);
 
-      // Initialize TradingView chart
-      initGoldChart();
-      document.querySelectorAll(".chart-toggle button").forEach((btn) => {
-        btn.addEventListener("click", () => {
-          document.querySelector(".chart-toggle button.active").classList.remove("active");
-          btn.classList.add("active");
-          initGoldChart(btn.dataset.interval);
-        });
-      });
+      // Render 30-day gold trend chart
+      renderGoldChart();
 
       // Currency converter
       document.getElementById("convert-btn").addEventListener("click", convertCurrency);
+
+      // Back-to-top button behavior
+      const backToTop = document.getElementById("back-to-top");
+      window.addEventListener("scroll", () => {
+        if (window.scrollY > window.innerHeight / 2) {
+          backToTop.style.display = "flex";
+        } else {
+          backToTop.style.display = "none";
+        }
+      });
+      backToTop.addEventListener("click", () => {
+        window.scrollTo({ top: 0, behavior: "smooth" });
+      });
+
+      // Theme toggle
+      const themeBtn = document.getElementById("theme-toggle");
+      themeBtn.addEventListener("click", () => {
+        const current = document.documentElement.getAttribute("data-theme");
+        const next = current === "dark" ? "light" : "dark";
+        document.documentElement.setAttribute("data-theme", next);
+        localStorage.setItem("theme", next);
+        themeBtn.textContent = next === "dark" ? "🌞" : "🌜";
+      });
+      (function () {
+        const saved = localStorage.getItem("theme") || "dark";
+        document.documentElement.setAttribute("data-theme", saved);
+        themeBtn.textContent = saved === "dark" ? "🌞" : "🌜";
+      })();
     });
 
-    window.addEventListener("scroll", () => {
-      const scrollTop = window.scrollY;
-      const docHeight = document.documentElement.scrollHeight - window.innerHeight;
-      const percent = docHeight > 0 ? (scrollTop / docHeight) * 100 : 0;
-      document.getElementById("scroll-progress").style.width = percent + "%";
-    });
-
-    // Theme toggle
-    const themeBtn = document.getElementById("theme-toggle");
-    themeBtn.addEventListener("click", () => {
-      const current = document.documentElement.getAttribute("data-theme");
-      const next = current === "dark" ? "light" : "dark";
-      document.documentElement.setAttribute("data-theme", next);
-      localStorage.setItem("theme", next);
-      themeBtn.textContent = next === "dark" ? "🌞" : "🌜";
-      initGoldChart();
-    });
-    (function () {
-      const saved = localStorage.getItem("theme") || "dark";
-      document.documentElement.setAttribute("data-theme", saved);
-      themeBtn.textContent = saved === "dark" ? "🌞" : "🌜";
-    })();
-
-    // Load gold news and overwrite fallback
+    // ──────────────────────────────────────────────────────────────────────────
+    // NEWS TICKERS (Gold & Economic)
+    // ──────────────────────────────────────────────────────────────────────────
     async function loadGoldTicker() {
       const container = document.getElementById("gold-ticker-content");
       try {
@@ -1267,7 +1299,7 @@
         });
       } catch (err) {
         console.error("Gold news error:", err);
-        // fallback is already in place
+        // fallback already in place
       }
     }
 
@@ -1289,22 +1321,21 @@
         });
       } catch (err) {
         console.error("Economic news error:", err);
-        // fallback is already in place
+        // fallback already in place
       }
     }
 
-    // Live gold price using GoldAPI.io
+    // ──────────────────────────────────────────────────────────────────────────
+    // LIVE GOLD PRICE (MetalpriceAPI)
+    // ──────────────────────────────────────────────────────────────────────────
     let prevGoldPrice = null;
     async function loadGoldPrice() {
       try {
-        const res = await fetch("https://www.goldapi.io/api/XAU/USD", {
-          headers: {
-            "x-access-token": GOLDAPI_KEY,
-            "Content-Type": "application/json",
-          },
-        });
+        const res = await fetch(
+          `https://api.metalpriceapi.com/v1/latest?api_key=${METALPRICE_API_KEY}&base=XAU&currencies=USD`
+        );
         const data = await res.json();
-        const price = data.price ? parseFloat(data.price) : null;
+        const price = data.rates && data.rates.USD ? parseFloat(data.rates.USD) : null;
         const goldEl = document.getElementById("gold-price");
         const changeEl = document.getElementById("price-change");
         if (price !== null) {
@@ -1342,7 +1373,9 @@
       }
     }
 
-    // Economic calendar rotator
+    // ──────────────────────────────────────────────────────────────────────────
+    // ECONOMIC CALENDAR ROTATOR
+    // ──────────────────────────────────────────────────────────────────────────
     const economicEvents = [
       { date: "06-03-2025", time: "08:30", currency: "USD", event: "Non-Farm Payrolls", impact: "High" },
       { date: "06-03-2025", time: "10:00", currency: "EUR", event: "CPI Flash Estimate", impact: "Medium" },
@@ -1371,7 +1404,9 @@
       currentEventIndex = (currentEventIndex + 1) % economicEvents.length;
     }
 
-    // Local time next to logo
+    // ──────────────────────────────────────────────────────────────────────────
+    // LOCAL TIME NEXT TO LOGO
+    // ──────────────────────────────────────────────────────────────────────────
     function updateLocalTime() {
       const now = new Date();
       const formatted = now.toLocaleString("en-US", {
@@ -1396,29 +1431,98 @@
       timeEl.textContent = formatted;
     }
 
-    // Initialize TradingView gold chart
-    function initGoldChart(interval = "60") {
-      const theme = document.documentElement.getAttribute("data-theme");
-      document.getElementById("tradingview_fullscreen").innerHTML = "";
-      new TradingView.widget({
-        container_id: "tradingview_fullscreen",
-        autosize: true,
-        symbol: "OANDA:XAUUSD",
-        interval: interval,
-        timezone: "Etc/UTC",
-        theme: theme,
-        style: "1",
-        locale: "en",
-        toolbar_bg: "#1f1f1f",
-        allow_symbol_change: true,
-        hide_side_toolbar: false,
-        withdateranges: true,
-        details: true,
-        studies: ["MACD@tv-basicstudies", "RSI@tv-basicstudies"],
+    // ──────────────────────────────────────────────────────────────────────────
+    // GOLD CHART (LAST 30 DAYS) USING GOLDAPI.io + CHART.JS
+    // ──────────────────────────────────────────────────────────────────────────
+    async function renderGoldChart() {
+      const ctx = document.getElementById("gold-chart").getContext("2d");
+      // Compute dates: today and 30 days ago (YYYY-MM-DD)
+      const today = new Date();
+      const endDate = today.toISOString().slice(0, 10);
+      const past = new Date();
+      past.setDate(past.getDate() - 30);
+      const startDate = past.toISOString().slice(0, 10);
+
+      // Attempt to fetch 30-day history from GoldAPI.io
+      let labels = [];
+      let dataPoints = [];
+      try {
+        const url = `https://www.goldapi.io/api/XAU/USD/history?start_date=${startDate}&end_date=${endDate}`;
+        const res = await fetch(url, {
+          method: "GET",
+          headers: {
+            "x-access-token": GOLDAPI_KEY,
+          },
+        });
+        if (!res.ok) throw new Error(`GoldAPI history error: ${res.status}`);
+        const allHistory = await res.json();
+        allHistory.sort((a, b) => new Date(a.timestamp) - new Date(b.timestamp));
+        labels = allHistory.map((pt) => pt.timestamp.slice(0, 10));
+        dataPoints = allHistory.map((pt) => pt.price);
+        if (labels.length === 0) throw new Error("No history data");
+      } catch (err) {
+        console.error("Error fetching 30-day history:", err);
+        // Fallback: fetch only latest price once and plot a flat line
+        try {
+          const res2 = await fetch("https://www.goldapi.io/api/XAU/USD", {
+            method: "GET",
+            headers: { "x-access-token": GOLDAPI_KEY },
+          });
+          if (!res2.ok) throw new Error(`GoldAPI latest error: ${res2.status}`);
+          const latest = await res2.json();
+          const todayLabel = today.toISOString().slice(0, 10);
+          labels = [todayLabel];
+          dataPoints = [latest.price];
+        } catch (err2) {
+          console.error("Fallback latest price also failed:", err2);
+          labels = [""];
+          dataPoints = [0];
+        }
+      }
+
+      // Create Chart.js line chart
+      new Chart(ctx, {
+        type: "line",
+        data: {
+          labels,
+          datasets: [
+            {
+              label: "Gold Price (USD/oz)",
+              data: dataPoints,
+              borderColor: getComputedStyle(document.documentElement).getPropertyValue("--gold").trim(),
+              backgroundColor: "rgba(255, 215, 0, 0.2)",
+              borderWidth: 2,
+              tension: 0.3,
+              pointRadius: 0,
+            },
+          ],
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          scales: {
+            x: {
+              display: false, // hide x-axis labels
+            },
+            y: {
+              display: false, // hide y-axis labels
+            },
+          },
+          plugins: {
+            legend: {
+              display: false,
+            },
+            tooltip: {
+              enabled: true,
+            },
+          },
+        },
       });
     }
 
-    // Currency converter
+    // ──────────────────────────────────────────────────────────────────────────
+    // CURRENCY CONVERTER
+    // ──────────────────────────────────────────────────────────────────────────
     const apiCache = new Map();
     async function convertCurrency() {
       const from = document.getElementById("converter-from").value;
