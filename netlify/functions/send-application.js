@@ -4,13 +4,12 @@
  * 1) Validates POST payload
  * 2) Checks “users” table for existing email
  * 3) Verifies referral_code (if provided) by looking up affiliates → gets affiliate.user_id
- * 4) Hashes password (optional) or stores raw
- * 5) Inserts new row into Supabase `users` with status="pending" and referred_by=affiliate_id
+ * 4) Creates Supabase Auth user (admin role) with email/password
+ * 5) Inserts new row into public.users (auth_id, name, email, password, phone, experience, referred_by, status)
  * 6) Sends a confirmation email via Brevo
  */
 
 const { createClient } = require('@supabase/supabase-js');
-const crypto = require('crypto');
 
 // ─── Environment variables (set these in Netlify’s Settings → Build & Deploy → Environment) ───
 const SUPABASE_URL = process.env.SUPABASE_URL;
@@ -48,7 +47,7 @@ exports.handler = async (event, context) => {
     };
   }
 
-  const { name, email, password, phone, experience, referral_code } = payload;
+  const { name, email, password, phone, experience, referred_by } = payload;
 
   // ─── 1) Basic server-side validation ───────────────────────────────────────────────
   if (!name || !email || !password || !phone || !experience) {
@@ -77,7 +76,7 @@ exports.handler = async (event, context) => {
     };
   }
 
-  // ─── 2) Check if email already exists in "users" ──────────────────────────────────
+  // ─── 2) Check if email already exists in "public.users" ─────────────────────────────
   try {
     const { data: existingUser, error: checkError } = await supabase
       .from('users')
@@ -106,25 +105,25 @@ exports.handler = async (event, context) => {
     };
   }
 
-  // ─── 3) If referral_code provided, verify it in "affiliates" ───────────────────────
-  let referredByUserId = null;
-  if (referral_code) {
+  // ─── 3) If referred_by (UUID) was passed, verify it’s a valid affiliate user_id ────────
+  let validReferredBy = null;
+  if (referred_by) {
     try {
       const { data: affRow, error: checkErr } = await supabase
         .from('affiliates')
         .select('user_id')
-        .eq('referral_code', referral_code)
+        .eq('user_id', referred_by)
         .single();
 
       if (checkErr || !affRow) {
         return {
           statusCode: 400,
-          body: JSON.stringify({ error: 'Invalid referral code.' }),
+          body: JSON.stringify({ error: 'Invalid referral code or affiliate.' }),
         };
       }
-      referredByUserId = affRow.user_id;
+      validReferredBy = affRow.user_id;
     } catch (err) {
-      console.error('Error validating referral code:', err);
+      console.error('Error validating referral code as user_id:', err);
       return {
         statusCode: 500,
         body: JSON.stringify({ error: 'Failed to validate referral code.' }),
@@ -132,60 +131,66 @@ exports.handler = async (event, context) => {
     }
   }
 
-  // ─── 4) Hash the password (optional) ────────────────────────────────────────────────
-  // Uncomment the below lines if you want to store a hashed password:
-  //
-  // let pwToStore = password;
-  // try {
-  //   const hash = crypto.createHash('sha256');
-  //   hash.update(password);
-  //   pwToStore = hash.digest('base64');
-  // } catch (hashErr) {
-  //   console.error('Password hashing error:', hashErr);
-  //   return {
-  //     statusCode: 500,
-  //     body: JSON.stringify({ error: 'Error hashing password.' }),
-  //   };
-  // }
-  //
-  // Or just store the raw password if that’s your preference:
-  const pwToStore = password;
-
-  // ─── 5) Insert new user into `users` table ─────────────────────────────────────────
-  let newUser;
+  // ─── 4) Create a Supabase Auth user (admin) so they can log in later ─────────────────
+  let newAuthUser = null;
   try {
-    const { data, error: insertErr } = await supabase
+    const { data: authData, error: authErr } = await supabase.auth.admin.createUser({
+      email: email,
+      password: password,
+      email_confirm: true,  // mark email as confirmed so they can log in immediately
+      user_metadata: { name: name },
+    });
+
+    if (authErr) {
+      console.error('Error creating Auth user:', authErr);
+      return {
+        statusCode: 500,
+        body: JSON.stringify({ error: 'Failed to create authentication user.' }),
+      };
+    }
+    newAuthUser = authData;
+  } catch (err) {
+    console.error('Unexpected error creating Auth user:', err);
+    return {
+      statusCode: 500,
+      body: JSON.stringify({ error: 'Authentication creation failed.' }),
+    };
+  }
+
+  // ─── 5) Insert new row into public.users (auth_id = Auth UUID, plus other fields) ─────
+  try {
+    const { data: insertedUser, error: insertErr } = await supabase
       .from('users')
       .insert([
         {
-          name,
-          email,
-          password: pwToStore,
-          phone,
-          experience,
-          referred_by: referredByUserId, // ← store affiliate’s user_id here
-          status: 'pending',             // ensure `users` table has a "status" column
+          auth_id: newAuthUser.id,          // UUID from Auth
+          name: name,
+          email: email,
+          password: password,               // store raw or hashed as you prefer
+          phone: phone,
+          experience: experience,
+          referred_by: validReferredBy,     // may be null
+          status: 'pending',
         },
       ])
       .single();
 
     if (insertErr) {
-      console.error('Supabase insert error:', insertErr);
+      console.error('Error inserting into public.users:', insertErr);
       return {
         statusCode: 500,
-        body: JSON.stringify({ error: insertErr.message || 'Failed to submit application.' }),
+        body: JSON.stringify({ error: 'Failed to insert user details.' }),
       };
     }
-    newUser = data;
   } catch (err) {
-    console.error('Unexpected error during insert:', err);
+    console.error('Unexpected error inserting into users:', err);
     return {
       statusCode: 500,
       body: JSON.stringify({ error: 'Database insertion failed.' }),
     };
   }
 
-  // ─── 6) Send confirmation email via Brevo ────────────────────────────────────────
+  // ─── 6) Send confirmation email via Brevo ──────────────────────────────────────────
   if (!BREVO_API_KEY) {
     console.error('Missing BREVO_API_KEY');
     return {
