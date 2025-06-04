@@ -16,6 +16,7 @@
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js/dist/umd/supabase.min.js"></script>
 
   <style>
+    /* Dark / Light theme variables */
     :root[data-theme="dark"] {
       --bg: #121212;
       --text: #f0f0f0;
@@ -326,11 +327,12 @@
   </div>
 
   <script>
-    // ─── Supabase client for referral-code lookup ─────────────────────────────────
-    // We only need anon key here to verify referral codes.
+    // ─── Supabase client for referral‑code lookup ─────────────────────────────────
+    // We only need the ANON key here to verify referral codes; no full auth on this page.
     const SUPA_URL = "https://dapwpgvnfjcfqqhrpxla.supabase.co";
     const SUPA_ANON_KEY =
-      "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImRhcHdwZ3ZuZmpjZnFxaHJweGxhIiwicm9sZSI6IkFub24iLCJpYXQiOjE3NDcwNDA4ODgsImV4cCI6MjA2MjYxNjg4OH0.ICC0UsLlzJDNre7rFCeD3k6iVzo6jOJgn3PhABpEMsQ";
+      "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImRhcHdwZ3ZuZmpjZnFxa<hr xmlns="http://www.w3.org/1999/xhtml"/>" +
+      "qxrweGxhIiwicm9sZSI6IkFub24iLCJpYXQiOjE3NDcwNDA4ODgsImV4cCI6MjA2MjYxNjg4OH0.ICC0UsLlzJDNre7rFCeD3k6iVzo6jOJgn3PhABpEMsQ";
     const supabaseClient = supabase.createClient(SUPA_URL, SUPA_ANON_KEY);
 
     // ─── Helper: read “ref” param from URL ─────────────────────────────────────────────
@@ -378,8 +380,9 @@
 
     // Enable “Submit” only when terms are checked
     agree.addEventListener("change", () => {
-      submitBtn.disabled = !agree.checked;
-      submitBtn.classList.toggle("enabled", agree.checked);
+      const canSubmit = agree.checked;
+      submitBtn.disabled = !canSubmit;
+      submitBtn.classList.toggle("enabled", canSubmit);
     });
 
     form.addEventListener("submit", async (evt) => {
@@ -387,6 +390,7 @@
       alertDiv.textContent = "";
       alertDiv.style.color = "";
 
+      // Gather form values:
       const name = document.getElementById("apply-name").value.trim();
       const email = document.getElementById("apply-email").value.trim().toLowerCase();
       const password = document.getElementById("apply-password").value;
@@ -397,7 +401,7 @@
       // ─── Basic validation ────────────────────────────────────────────────────────────
       if (!name || !email || !password || !phone || !experience) {
         alertDiv.style.color = "var(--error-color)";
-        alertDiv.textContent = "Please complete all fields.";
+        alertDiv.textContent = "Please complete all required fields.";
         return;
       }
       if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
@@ -411,15 +415,16 @@
         return;
       }
 
+      // Disable button while submitting:
       submitBtn.disabled = true;
       submitBtn.textContent = "Submitting…";
 
       try {
-        // 1) Determine referral code: manual takes priority, else URL param, else null
+        // 1) Determine referral code: manual input takes priority, else URL param, else null
         const urlRef = getReferralFromURL();
         const referralCodeToUse = manualRef || urlRef || null;
 
-        // 2) If a code exists, validate it by looking up affiliates → user_id
+        // 2) If a code exists, validate it against `affiliates.referral_code` → get `user_id`
         let referredByUserId = null;
         if (referralCodeToUse) {
           const { data: affiliateRow, error: checkErr } = await supabaseClient
@@ -439,6 +444,7 @@
         }
 
         // 3) Package payload for Netlify function
+        //    (this function should handle creating the Auth user and inserting into your `users` table)
         const payload = {
           name,
           email,
@@ -449,7 +455,7 @@
           referred_by: referredByUserId, // pass the UUID if any
         };
 
-        // 4) Invoke Netlify function to create Auth user + insert into your `users` table
+        // 4) Invoke Netlify function to create Auth user + insert into your `users` table
         const fnResponse = await fetch("/.netlify/functions/send-application", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
@@ -464,16 +470,16 @@
         }
 
         if (!fnResponse.ok) {
-          // Show the full JSON error from the function
+          // Show the full JSON error from the function if available
           const errorMsg = fnResult?.error || JSON.stringify(fnResult) || "Unknown server error.";
           alertDiv.style.color = "var(--error-color)";
           alertDiv.textContent = `Error: ${errorMsg}`;
           throw new Error(errorMsg);
         }
 
-        // 5) Success: show confirmation
+        // 5) Success: show confirmation, reset form
         alertDiv.style.color = "var(--success-color)";
-        alertDiv.textContent = fnResult.message;
+        alertDiv.textContent = fnResult.message || "Application submitted successfully!";
         form.reset();
         agree.checked = false;
         submitBtn.classList.remove("enabled");
