@@ -5,7 +5,8 @@
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Affiliate Dashboard • CBE Global</title>
 
-  <!-- DEPENDENCIES: Bootstrap CSS & Icons, Supabase JS, Chart.js -->
+  <!-- ===================== DEPENDENCIES ===================== -->
+  <!-- Bootstrap 5.3 CSS & Icons -->
   <link
     href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css"
     rel="stylesheet"
@@ -16,44 +17,47 @@
     href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css"
     rel="stylesheet"
   />
+  <!-- Supabase JavaScript client -->
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>
-  <!-- Chart.js for graphs -->
+  <!-- Chart.js -->
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.3.0/dist/chart.umd.min.js"></script>
 
+  <!-- ===================== CUSTOM STYLES ===================== -->
   <style>
-    /* ===================== Dark Theme Variables ===================== */
+    /* Dark / Light theme variables */
     :root[data-theme="dark"] {
       --bg: #121212;
       --text: #e0e0e0;
+      --text-light: #bbbbbb;
       --accent: #1e1e1e;
       --gold: #ffd700;
       --gold-dark: #cca300;
       --glass: rgba(30, 30, 30, 0.7);
       --shadow: rgba(0, 0, 0, 0.5);
     }
-
-    html {
-      scroll-behavior: smooth;
+    :root[data-theme="light"] {
+      --bg: #f5f5f5;
+      --text: #333;
+      --text-light: #666666;
+      --accent: #ffffff;
+      --gold: #cca300;
+      --gold-dark: #b58900;
+      --glass: rgba(255, 255, 255, 0.7);
+      --shadow: rgba(0, 0, 0, 0.2);
     }
+    html { scroll-behavior: smooth; }
     body {
-      margin: 0;
-      padding: 0;
-      box-sizing: border-box;
+      margin: 0; padding: 0; box-sizing: border-box;
       background: var(--bg);
       color: var(--text);
       height: 100%;
       font-family: 'Poppins', sans-serif;
       overflow-x: hidden;
     }
-    a {
-      color: var(--gold);
-      text-decoration: none;
-    }
-    a:hover {
-      color: var(--gold-dark);
-    }
+    a { color: var(--gold); text-decoration: none; }
+    a:hover { color: var(--gold-dark); }
 
-    /* ===================== Sidebar ===================== */
+    /* ===================== COLLAPSIBLE SIDEBAR ===================== */
     .sidebar {
       background: var(--accent);
       min-height: 100vh;
@@ -61,10 +65,13 @@
       border-right: 1px solid var(--gold-dark);
       color: var(--text);
       position: fixed;
-      width: 100%;
-      max-width: 280px;
+      top: 0; left: 0;
+      width: 260px;
+      transform: translateX(-260px);
+      transition: transform 0.3s ease;
       z-index: 1000;
     }
+    .sidebar.expanded { transform: translateX(0); }
     .sidebar .nav-link {
       color: var(--text) !important;
       margin-bottom: 0.5rem;
@@ -84,25 +91,35 @@
       color: var(--gold);
     }
 
-    /* ===================== Main Content ===================== */
-    .main-content {
-      margin-left: 280px; /* leaves room for fixed sidebar */
-      padding: 1rem 1.5rem;
-      overflow-y: auto;
-      height: 100vh;
-      transition: margin-left 0.3s ease;
+    /* ===================== SIDEBAR TOGGLE BUTTON ===================== */
+    #sidebar-toggle {
+      position: fixed; top: 15px; left: 15px;
+      background: var(--accent);
+      border: 1px solid var(--gold-dark);
+      border-radius: 6px;
+      width: 40px; height: 40px;
+      display: flex; align-items: center; justify-content: center;
+      cursor: pointer; z-index: 1100;
+      transition: background 0.3s ease;
     }
+    #sidebar-toggle:hover { background: var(--glass); }
+    #sidebar-toggle i { color: var(--gold); font-size: 1.25rem; }
+
+    /* ===================== MAIN CONTENT ===================== */
+    .main-content {
+      margin-left: 0; /* shifts right when sidebar expands */
+      transition: margin-left 0.3s ease;
+      padding: 1rem 1.5rem;
+      overflow-y: auto; height: 100vh;
+    }
+    .sidebar.expanded ~ .main-content { margin-left: 260px; }
     @media (max-width: 992px) {
-      .sidebar {
-        position: static;
-        width: 100%;
-      }
-      .main-content {
-        margin-left: 0;
-      }
+      .sidebar { left: -260px; }
+      .sidebar.expanded { transform: translateX(0); }
+      .sidebar.expanded ~ .main-content { margin-left: 260px; }
     }
 
-    /* ===================== Cards & Sections ===================== */
+    /* ===================== CARDS & SECTIONS ===================== */
     .card {
       background: var(--glass);
       border: 1px solid var(--gold-dark);
@@ -116,29 +133,21 @@
       border-bottom: 1px solid var(--gold-dark);
       font-weight: 600;
       color: var(--gold);
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
+      display: flex; align-items: center; justify-content: space-between;
     }
     .card-header .header-icon {
-      margin-right: 0.5rem;
-      font-size: 1.25rem;
+      margin-right: 0.5rem; font-size: 1.25rem;
     }
-    .card-body {
-      padding: 1rem;
-      color: var(--text);
-    }
+    .card-body { padding: 1rem; color: var(--text); }
 
-    /* ===================== Form Controls ===================== */
+    /* ===================== FORM CONTROLS ===================== */
     .form-control,
     .form-select {
       background: var(--accent) !important;
       color: var(--text) !important;
       border: 1px solid var(--gold-dark) !important;
     }
-    .form-control::placeholder {
-      color: #bbbbbb !important;
-    }
+    .form-control::placeholder { color: var(--text-light) !important; }
     .form-control:focus,
     .form-select:focus {
       background: var(--accent) !important;
@@ -148,9 +157,7 @@
     }
     .btn-primary {
       background: linear-gradient(45deg, var(--gold), var(--gold-dark));
-      border: none;
-      transition: background 0.3s ease;
-      color: #000;
+      border: none; transition: background 0.3s ease; color: #000;
     }
     .btn-primary:hover {
       background: linear-gradient(45deg, var(--gold-dark), var(--gold));
@@ -165,7 +172,7 @@
       border-color: var(--gold-dark) !important;
     }
 
-    /* ===================== Tables ===================== */
+    /* ===================== TABLES ===================== */
     table {
       width: 100%;
       border-collapse: separate;
@@ -178,8 +185,7 @@
       padding: 0.8rem;
       border-radius: 6px;
       position: sticky;
-      top: 0;
-      z-index: 2;
+      top: 0; z-index: 2;
       font-size: 0.9rem;
     }
     td {
@@ -190,48 +196,32 @@
       color: var(--text);
       font-size: 0.9rem;
     }
-    .spinner-border {
-      color: var(--gold);
-    }
+    .spinner-border { color: var(--gold); }
 
-    /* ===================== Utility ===================== */
+    /* ===================== UTILITY ===================== */
     .copy-btn {
-      background: var(--gold);
-      color: #000 !important;
-      border: none;
-      font-size: 0.9rem;
-      padding: 0.25rem 0.5rem;
-      border-radius: 4px;
+      background: var(--gold); color: #000 !important;
+      border: none; font-size: 0.9rem;
+      padding: 0.25rem 0.5rem; border-radius: 4px;
       transition: background 0.3s ease;
     }
     .copy-btn:hover {
-      background: var(--gold-dark);
-      color: #000 !important;
+      background: var(--gold-dark); color: #000 !important;
     }
     .section-title {
-      font-size: 1.25rem;
-      font-weight: 600;
-      color: var(--gold);
-      margin-bottom: 0.75rem;
-      display: flex;
-      align-items: center;
+      font-size: 1.25rem; font-weight: 600;
+      color: var(--gold); margin-bottom: 0.75rem;
+      display: flex; align-items: center;
     }
-    .section-title i {
-      margin-right: 0.5rem;
-      font-size: 1.25rem;
-    }
+    .section-title i { margin-right: 0.5rem; font-size: 1.25rem; }
     .toast-container {
-      position: fixed;
-      top: 1rem;
-      right: 1rem;
+      position: fixed; top: 1rem; right: 1rem;
       z-index: 2000;
     }
 
-    /* ===================== Overview Cards ===================== */
+    /* ===================== OVERVIEW CARDS ===================== */
     .overview-cards {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 1rem;
+      display: flex; flex-wrap: wrap; gap: 1rem;
     }
     .overview-card {
       flex: 1 1 220px;
@@ -239,111 +229,73 @@
       border: 1px solid var(--gold-dark);
       border-radius: 10px;
       box-shadow: 0 2px 8px var(--shadow);
-      padding: 1rem;
-      text-align: center;
-      color: var(--text);
-      transition: transform 0.3s ease;
+      padding: 1rem; text-align: center;
+      color: var(--text); transition: transform 0.3s ease;
     }
-    .overview-card:hover {
-      transform: translateY(-4px);
+    .overview-card:hover { transform: translateY(-4px); }
+    .overview-card .title {
+      font-size: 0.95rem; font-weight: 500; color: var(--text-light);
     }
     .overview-card .value {
-      font-size: 1.75rem;
-      font-weight: 700;
-      margin-top: 0.5rem;
+      font-size: 1.75rem; font-weight: 700; margin-top: 0.5rem;
       color: var(--gold);
     }
-    .overview-card .label {
-      font-size: 0.95rem;
-      font-weight: 500;
-      color: var(--text);
-    }
 
-    /* ===================== Canvas Chart Container ===================== */
+    /* ===================== CHART CONTAINER ===================== */
     .chart-container {
       background: var(--glass);
       border: 1px solid var(--gold-dark);
       border-radius: 10px;
       box-shadow: 0 2px 8px var(--shadow);
-      padding: 1rem;
-      margin-bottom: 1.5rem;
+      padding: 1rem; margin-bottom: 1.5rem;
     }
     .chart-container canvas {
-      width: 100% !important;
-      max-height: 300px;
+      width: 100% !important; max-height: 300px;
     }
 
-    /* ===================== Leaderboard ===================== */
-    .leaderboard-list {
-      list-style: none;
-      padding: 0;
-      margin: 0;
-    }
+    /* ===================== LEADERBOARD ===================== */
+    .leaderboard-list { list-style: none; padding: 0; margin: 0; }
     .leaderboard-item {
-      display: flex;
-      justify-content: space-between;
-      padding: 0.75rem 1rem;
-      background: var(--accent);
-      border: 1px solid var(--gold-dark);
-      border-radius: 6px;
-      margin-bottom: 0.5rem;
-      align-items: center;
+      display: flex; justify-content: space-between;
+      padding: 0.75rem 1rem; background: var(--accent);
+      border: 1px solid var(--gold-dark); border-radius: 6px;
+      margin-bottom: 0.5rem; align-items: center;
       transition: background 0.3s ease, transform 0.3s ease;
     }
     .leaderboard-item:hover {
-      background: var(--glass);
-      transform: translateY(-2px);
+      background: var(--glass); transform: translateY(-2px);
     }
     .leader-name {
-      font-size: 0.95rem;
-      font-weight: 500;
-      color: var(--text);
+      font-size: 0.95rem; font-weight: 500; color: var(--text);
     }
     .leader-count {
-      font-size: 0.95rem;
-      font-weight: 600;
-      color: var(--gold);
+      font-size: 0.95rem; font-weight: 600; color: var(--gold);
     }
 
-    /* ===================== Withdrawals / Payout Requests ===================== */
+    /* ===================== WITHDRAWALS / PAYOUTS ===================== */
     .withdraw-card {
       background: var(--glass);
       border: 1px solid var(--gold-dark);
       border-radius: 10px;
       box-shadow: 0 2px 8px var(--shadow);
-      padding: 1rem;
-      margin-bottom: 1.5rem;
+      padding: 1rem; margin-bottom: 1.5rem;
       color: var(--text);
     }
-    .withdraw-card label {
-      color: var(--text);
-    }
-    .withdraw-list {
-      list-style: none;
-      padding: 0;
-      margin: 0;
-    }
+    .withdraw-card label { color: var(--text); }
+    .withdraw-list { list-style: none; padding: 0; margin: 0; }
     .withdraw-item {
-      display: flex;
-      justify-content: space-between;
-      padding: 0.75rem 1rem;
-      background: var(--accent);
-      border: 1px solid var(--gold-dark);
-      border-radius: 6px;
-      margin-bottom: 0.5rem;
-      align-items: center;
+      display: flex; justify-content: space-between;
+      padding: 0.75rem 1rem; background: var(--accent);
+      border: 1px solid var(--gold-dark); border-radius: 6px;
+      margin-bottom: 0.5rem; align-items: center;
       transition: background 0.3s ease, transform 0.3s ease;
     }
-    .withdraw-item:hover {
-      background: var(--glass);
-      transform: translateY(-2px);
-    }
+    .withdraw-item:hover { background: var(--glass); transform: translateY(-2px); }
     .withdraw-status {
-      font-size: 0.9rem;
-      font-weight: 500;
+      font-size: 0.9rem; font-weight: 500;
     }
 
-    /* ===================== Dark/Light Toggle ===================== */
+    /* ===================== THEME TOGGLE BUTTON ===================== */
     .theme-toggle-btn {
       position: fixed;
       bottom: 1rem;
@@ -360,20 +312,36 @@
       z-index: 2000;
       transition: background 0.3s ease;
     }
-    .theme-toggle-btn:hover {
-      background: var(--accent);
+    .theme-toggle-btn:hover { background: var(--accent); }
+    .theme-toggle-btn i { color: var(--gold); font-size: 1.25rem; }
+
+    /* ===================== “Earn $5 per Referral” BANNER ===================== */
+    .earn-banner {
+      background: var(--gold-dark);
+      color: #000;
+      text-align: center;
+      padding: 0.5rem;
+      border-radius: 6px;
+      margin-top: 0.5rem;
+      font-weight: 500;
+      font-size: 0.95rem;
     }
-    .theme-toggle-btn i {
-      color: var(--gold);
-      font-size: 1.25rem;
+
+    /* ===================== REFERRAL QR CODE ===================== */
+    .qr-code {
+      margin-top: 0.75rem; text-align: center;
+    }
+    .qr-code img {
+      width: 120px; height: 120px;
+      border: 2px solid var(--gold-dark);
+      border-radius: 8px;
     }
   </style>
 </head>
 <body>
   <!-- ===================== AUTH GUARD: Redirect if not logged in ===================== -->
   <script>
-    const SUPA_URL =
-      'https://dapwpgvnfjcfqqhrpxla.supabase.co';
+    const SUPA_URL = 'https://dapwpgvnfjcfqqhrpxla.supabase.co';
     const SUPA_KEY =
       'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.' +
       'eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImRhcHdwZ3Zu' +
@@ -382,7 +350,6 @@
       'ICC0UsLlzJDNre7rFCeD3k6iVzo6jOJgn3PhABpEMsQ';
     const supabaseClient = window.supabase.createClient(SUPA_URL, SUPA_KEY);
 
-    // Immediately check auth; if no user, redirect to login page
     supabaseClient.auth.getUser().then(({ data: { user }, error }) => {
       if (error || !user) {
         window.location.replace('affiliate_login.html');
@@ -390,382 +357,496 @@
     });
   </script>
 
-  <!-- ===================== PAGE LAYOUT: Sidebar & Main Content ===================== -->
-  <div class="row g-0">
-    <!-- Sidebar -->
-    <div class="col-12 col-md-3 sidebar d-flex flex-column">
-      <div class="px-3 pb-3">
-        <h4 class="sidebar-title">Affiliate Dashboard</h4>
-        <!-- Referral Code Card -->
-        <div id="referral-section" class="card">
-          <div class="card-header">
-            <div><i class="bi bi-people-fill header-icon"></i>Referral Code</div>
-          </div>
-          <div class="card-body text-center">
-            <span id="referral-code" class="h5">Loading…</span>
-            <button id="copy-referral" class="copy-btn ms-2">
-              <i class="bi bi-clipboard"></i>
+  <!-- ===================== SIDEBAR TOGGLE BUTTON ===================== -->
+  <div id="sidebar-toggle" title="Toggle Menu">
+    <i class="bi bi-list"></i>
+  </div>
+
+  <!-- ===================== SIDEBAR ===================== -->
+  <div class="sidebar" id="sidebar">
+    <div class="px-3 pb-3">
+      <h4 class="sidebar-title">Affiliate Dashboard</h4>
+
+      <!-- Referral Code (if sidebar is open on mobile) -->
+      <div id="referral-section-sidebar" class="card mb-3">
+        <div class="card-header">
+          <div><i class="bi bi-people-fill header-icon"></i>Referral Code</div>
+        </div>
+        <div class="card-body text-center">
+          <span id="referral-code-sidebar" class="h5">Loading…</span>
+          <button id="copy-referral-sidebar" class="copy-btn ms-2">
+            <i class="bi bi-clipboard"></i>
+          </button>
+          <div class="mt-2">
+            <small>Share your link:</small><br />
+            <input
+              type="text"
+              id="referral-link-sidebar"
+              readonly
+              class="form-control form-control-sm text-center"
+              style="background: var(--accent); color: var(--text);"
+            />
+            <button id="copy-link-sidebar" class="copy-btn mt-1">
+              <i class="bi bi-link-45deg"></i> Copy
             </button>
-            <div class="mt-2">
-              <small>Share this link:</small><br />
+          </div>
+          <div class="earn-banner">
+            🎉 Earn <strong>$5</strong> for each successful referral!
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <nav class="nav flex-column px-3 pb-3">
+      <a class="nav-link active" href="#overview-section">🏠 Overview</a>
+      <a class="nav-link" href="#referral-section-main">🗂️ Referral Dashboard</a>
+      <a class="nav-link" href="#referral-activity-section">📈 Referral Activity</a>
+      <a class="nav-link" href="#leaderboard-section">🏆 Leaderboard</a>
+      <a class="nav-link" href="#bank-accounts-section">🏦 Bank Accounts</a>
+      <a class="nav-link" href="#crypto-wallets-section">💰 Crypto Wallets</a>
+      <a class="nav-link" href="#currency-converter-section">💱 Converter</a>
+      <a class="nav-link" href="#withdrawals-section">💵 Payouts</a>
+      <a class="nav-link" href="#profile-section">👤 Profile</a>
+      <button id="logout-btn" class="btn btn-outline-danger mt-3 w-100">
+        <i class="bi bi-box-arrow-right"></i> Logout
+      </button>
+    </nav>
+  </div>
+
+  <!-- ===================== MAIN CONTENT ===================== -->
+  <div class="main-content" id="main-content">
+    <div class="container-fluid">
+
+      <!-- ===================== REFERRAL SECTION (TOP) ===================== -->
+      <section id="referral-section-main" class="mb-5">
+        <div class="section-title">
+          <i class="bi bi-people-fill"></i> Your Referral Dashboard
+        </div>
+        <div class="row g-3">
+          <!-- Referral Code Card -->
+          <div class="col-lg-4 col-md-6">
+            <div class="card text-center">
+              <div class="card-header">
+                <div><i class="bi bi-people-fill header-icon"></i>Referral Code</div>
+              </div>
+              <div class="card-body">
+                <h5 id="referral-code" class="mb-2">Loading…</h5>
+                <button id="copy-referral" class="copy-btn mb-2">
+                  <i class="bi bi-clipboard"></i> Copy Code
+                </button>
+                <div class="mt-2">
+                  <small>Share your link:</small><br />
+                  <input
+                    type="text"
+                    id="referral-link"
+                    readonly
+                    class="form-control form-control-sm text-center"
+                    style="background: var(--accent); color: var(--text);"
+                  />
+                  <button id="copy-link" class="copy-btn mt-1">
+                    <i class="bi bi-link-45deg"></i> Copy Link
+                  </button>
+                </div>
+                <div class="earn-banner mt-3">
+                  🎉 Earn <strong>$5</strong> for each successful referral!
+                </div>
+                <div class="qr-code mt-3" id="qr-code-container">
+                  <!-- QR injected via JS -->
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Earnings Summary Card -->
+          <div class="col-lg-4 col-md-6">
+            <div class="card">
+              <div class="card-header">
+                <div><i class="bi bi-cash-stack header-icon"></i>Earnings Summary</div>
+              </div>
+              <div class="card-body">
+                <div class="mb-3">
+                  <div class="title">Weekly Earnings</div>
+                  <div class="value" id="weekly-earnings">$0.00</div>
+                </div>
+                <div class="mb-3">
+                  <div class="title">Monthly Earnings</div>
+                  <div class="value" id="monthly-earnings">$0.00</div>
+                </div>
+                <div class="mb-3">
+                  <div class="title">All‑Time Earnings</div>
+                  <div class="value" id="alltime-earnings">$0.00</div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Conversion Widget (USD → Other) -->
+          <div class="col-lg-4 col-md-12">
+            <div class="card text-center">
+              <div class="card-header">
+                <div><i class="bi bi-arrow-repeat header-icon"></i>Convert Earnings</div>
+              </div>
+              <div class="card-body">
+                <div class="mb-2">
+                  <select id="convert-target-currency" class="form-select form-select-sm">
+                    <option value="NGN" selected>NGN</option>
+                    <option value="EUR">EUR</option>
+                    <option value="GBP">GBP</option>
+                    <option value="BTC">BTC</option>
+                    <option value="USD">USD</option>
+                  </select>
+                </div>
+                <button id="convert-earn-btn" class="btn btn-primary btn-sm mb-2">
+                  Convert
+                </button>
+                <div>
+                  <span id="convert-earn-result" class="text-light">--</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ===================== OVERVIEW SECTION ===================== -->
+      <section id="overview-section" class="mb-5">
+        <div class="section-title">
+          <i class="bi bi-speedometer2"></i> Overview
+        </div>
+        <div class="overview-cards">
+          <!-- Total Referrals -->
+          <div class="overview-card" id="card-total-referrals">
+            <div class="title">Total Referrals</div>
+            <div class="value" id="overview-total-referrals">0</div>
+          </div>
+          <!-- Est. Earnings (USD) -->
+          <div class="overview-card" id="card-estimated-earnings-usd">
+            <div class="title">Est. Earnings (USD)</div>
+            <div class="value" id="overview-est-earn-usd">$0.00</div>
+          </div>
+          <!-- Conversion Rate -->
+          <div class="overview-card" id="card-conversion-rate">
+            <div class="title">Conversion Rate</div>
+            <div class="value" id="overview-conversion-rate">0%</div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ===================== REFERRAL ACTIVITY SECTION ===================== -->
+      <section id="referral-activity-section" class="mb-5">
+        <div class="d-flex justify-content-between align-items-center mb-3">
+          <div class="section-title">
+            <i class="bi bi-graph-up"></i> Referral Activity
+          </div>
+          <!-- Toggle between “Last 30 Days” and “All Time” -->
+          <div>
+            <button id="toggle-referral-range" class="btn btn-outline-secondary btn-sm">
+              Show All Time
+            </button>
+          </div>
+        </div>
+        <div class="chart-container">
+          <canvas id="referralChart" height="100"></canvas>
+        </div>
+      </section>
+
+      <!-- ===================== LEADERBOARD SECTION ===================== -->
+      <section id="leaderboard-section" class="mb-5">
+        <div class="section-title">
+          <i class="bi bi-trophy-fill"></i> Leaderboard: Top Affiliates
+        </div>
+        <ul class="leaderboard-list" id="leaderboard-list">
+          <li class="text-center text-muted">Loading leaderboard…</li>
+        </ul>
+      </section>
+
+      <!-- ===================== BANK ACCOUNTS SECTION ===================== -->
+      <section id="bank-accounts-section" class="mb-5">
+        <div class="section-title">
+          <i class="bi bi-bank2"></i> Manage Bank Accounts
+        </div>
+        <!-- Add Bank Account Card -->
+        <div class="card mb-3">
+          <div class="card-header">
+            <div><i class="bi bi-plus-circle header-icon"></i>Add New Bank Account</div>
+          </div>
+          <div class="card-body">
+            <form id="bank-form" class="row g-3">
+              <div class="col-md-6">
+                <label for="bank-name" class="form-label">Bank Name</label>
+                <input
+                  type="text"
+                  id="bank-name"
+                  class="form-control"
+                  placeholder="e.g. First Bank"
+                  required
+                />
+              </div>
+              <div class="col-md-6">
+                <label for="bank-code" class="form-label">Bank Code/Branch</label>
+                <input
+                  type="text"
+                  id="bank-code"
+                  class="form-control"
+                  placeholder="e.g. 011"
+                  required
+                />
+              </div>
+              <div class="col-md-6">
+                <label for="account-number" class="form-label">Account Number</label>
+                <input
+                  type="text"
+                  id="account-number"
+                  class="form-control"
+                  placeholder="e.g. 0123456789"
+                  required
+                />
+              </div>
+              <div class="col-md-6">
+                <label for="account-name" class="form-label">Account Name</label>
+                <input
+                  type="text"
+                  id="account-name"
+                  class="form-control"
+                  placeholder="e.g. John Doe"
+                  required
+                />
+              </div>
+              <div class="col-12 text-end">
+                <button type="submit" class="btn btn-primary" id="add-bank-btn">
+                  <span id="bank-btn-text">Add Account</span>
+                  <span id="bank-spinner" class="spinner-border spinner-border-sm ms-2" role="status" style="display: none;"></span>
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+
+        <!-- Existing Bank Accounts Table -->
+        <div class="card">
+          <div class="card-header">
+            <div><i class="bi bi-file-earmark-text header-icon"></i>Your Saved Bank Accounts</div>
+          </div>
+          <div class="card-body">
+            <div class="table-responsive">
+              <table class="table align-middle text-center mb-0">
+                <thead>
+                  <tr>
+                    <th>Bank Name</th>
+                    <th>Bank Code</th>
+                    <th>Account Number</th>
+                    <th>Account Name</th>
+                    <th>Action</th>
+                  </tr>
+                </thead>
+                <tbody id="bank-accounts-body">
+                  <tr>
+                    <td colspan="5">
+                      <div class="text-center spinner-border"></div>
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ===================== CRYPTO WALLETS SECTION ===================== -->
+      <section id="crypto-wallets-section" class="mb-5">
+        <div class="section-title">
+          <i class="bi bi-currency-bitcoin"></i> Manage Crypto Wallets
+        </div>
+        <!-- Add Crypto Wallet Card -->
+        <div class="card mb-3">
+          <div class="card-header">
+            <div><i class="bi bi-plus-circle header-icon"></i>Add New Crypto Wallet</div>
+          </div>
+          <div class="card-body">
+            <form id="wallet-form" class="row g-3">
+              <div class="col-md-6">
+                <label for="crypto-currency" class="form-label">Currency</label>
+                <select id="crypto-currency" class="form-select" required>
+                  <option value="">Select Currency</option>
+                  <option value="BTC">Bitcoin (BTC)</option>
+                  <option value="ETH">Ethereum (ETH)</option>
+                  <option value="USDT">Tether (USDT)</option>
+                  <option value="BCH">Bitcoin Cash (BCH)</option>
+                  <option value="LTC">Litecoin (LTC)</option>
+                </select>
+              </div>
+              <div class="col-md-6">
+                <label for="crypto-address" class="form-label">Wallet Address</label>
+                <input
+                  type="text"
+                  id="crypto-address"
+                  class="form-control"
+                  placeholder="e.g. 1BoatSLRHtKNngkdXEeobR76b53LETtpyT"
+                  required
+                />
+              </div>
+              <div class="col-12 text-end">
+                <button type="submit" class="btn btn-primary" id="add-wallet-btn">
+                  <span id="wallet-btn-text">Add Wallet</span>
+                  <span id="wallet-spinner" class="spinner-border spinner-border-sm ms-2" role="status" style="display: none;"></span>
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+
+        <!-- Existing Crypto Wallets Table -->
+        <div class="card">
+          <div class="card-header">
+            <div><i class="bi bi-wallet-fill header-icon"></i>Your Saved Crypto Wallets</div>
+          </div>
+          <div class="card-body">
+            <div class="table-responsive">
+              <table class="table align-middle text-center mb-0">
+                <thead>
+                  <tr>
+                    <th>Currency</th>
+                    <th>Wallet Address</th>
+                    <th>Action</th>
+                  </tr>
+                </thead>
+                <tbody id="wallets-body">
+                  <tr>
+                    <td colspan="3">
+                      <div class="text-center spinner-border"></div>
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ===================== CURRENCY CONVERTER SECTION ===================== -->
+      <section id="currency-converter-section" class="mb-5">
+        <div class="section-title">
+          <i class="bi bi-currency-exchange"></i> Currency Converter
+        </div>
+        <div class="card">
+          <div class="card-header">
+            <div><i class="bi bi-arrow-left-right header-icon"></i>Convert Between Currencies</div>
+          </div>
+          <div class="card-body">
+            <form id="converter-form" class="row g-3 align-items-end">
+              <div class="col-md-3">
+                <label for="convert-from" class="form-label">From</label>
+                <select id="convert-from" class="form-select">
+                  <option value="USD" selected>USD</option>
+                  <option value="EUR">EUR</option>
+                  <option value="GBP">GBP</option>
+                  <option value="NGN">NGN</option>
+                  <option value="BTC">BTC</option>
+                </select>
+              </div>
+              <div class="col-md-3">
+                <label for="convert-to" class="form-label">To</label>
+                <select id="convert-to" class="form-select">
+                  <option value="NGN" selected>NGN</option>
+                  <option value="USD">USD</option>
+                  <option value="EUR">EUR</option>
+                  <option value="GBP">GBP</option>
+                  <option value="BTC">BTC</option>
+                </select>
+              </div>
+              <div class="col-md-3">
+                <label for="convert-amount" class="form-label">Amount</label>
+                <input type="number" id="convert-amount" class="form-control" value="1" min="0" />
+              </div>
+              <div class="col-md-3 text-end">
+                <button type="submit" class="btn btn-primary" id="convert-btn">
+                  <span id="convert-text">Convert</span>
+                  <span id="convert-spinner" class="spinner-border spinner-border-sm ms-2" role="status" style="display: none;"></span>
+                </button>
+              </div>
+              <div class="col-12 text-center mt-3">
+                <h5 id="convert-result">--</h5>
+              </div>
+            </form>
+          </div>
+        </div>
+      </section>
+
+      <!-- ===================== WITHDRAWALS / PAYOUT REQUESTS SECTION ===================== -->
+      <section id="withdrawals-section" class="mb-5">
+        <div class="section-title">
+          <i class="bi bi-cash-stack"></i> Payout Requests
+        </div>
+        <!-- Request Payout Card -->
+        <div class="withdraw-card mb-3">
+          <div class="mb-2" style="font-size: 0.95rem; color: var(--text-light);">
+            You earn <strong>$5</strong> per referral. Request in USD, NGN or receive via crypto.
+          </div>
+          <div class="row g-3">
+            <div class="col-md-4">
+              <label for="withdraw-amount" class="form-label">Request Amount (USD)</label>
               <input
-                type="text"
-                id="referral-link"
-                readonly
-                class="form-control form-control-sm text-center"
-                style="background: var(--accent); color: var(--text);"
+                type="number"
+                id="withdraw-amount"
+                class="form-control"
+                placeholder="e.g. 100.00"
+                min="1"
+                step="0.01"
               />
-              <button id="copy-link" class="copy-btn mt-1">
-                <i class="bi bi-link-45deg"></i> Copy
+            </div>
+            <div class="col-md-4">
+              <label for="withdraw-method" class="form-label">Payout Method</label>
+              <select id="withdraw-method" class="form-select">
+                <option value="">Select Method</option>
+                <option value="bank">Bank Transfer</option>
+                <option value="crypto">Crypto Wallet</option>
+                <option value="ngn">Naira (NGN Bank)</option>
+              </select>
+            </div>
+            <div class="col-md-4 align-self-end text-end">
+              <button id="request-withdraw-btn" class="btn btn-primary">
+                <span id="withdraw-btn-text">Request Payout</span>
+                <span id="withdraw-spinner" class="spinner-border spinner-border-sm ms-2" role="status" style="display: none;"></span>
               </button>
             </div>
           </div>
         </div>
-      </div>
 
-      <nav class="nav flex-column px-3 pb-3">
-        <a class="nav-link active" href="#overview-section">🏠 Overview</a>
-        <a class="nav-link" href="#referral-activity-section">📈 Referral Activity</a>
-        <a class="nav-link" href="#leaderboard-section">🏆 Leaderboard</a>
-        <a class="nav-link" href="#bank-accounts-section">🏦 Bank Accounts</a>
-        <a class="nav-link" href="#crypto-wallets-section">💰 Crypto Wallets</a>
-        <a class="nav-link" href="#currency-converter-section">💱 Converter</a>
-        <a class="nav-link" href="#withdrawals-section">💵 Payouts</a>
-        <a class="nav-link" href="#profile-section">👤 Profile</a>
-        <button id="logout-btn" class="btn btn-outline-danger mt-3 w-100">
-          <i class="bi bi-box-arrow-right"></i> Logout
-        </button>
-      </nav>
-    </div>
-
-    <!-- Main Content -->
-    <div class="col-12 col-md-9 main-content">
-      <div class="container-fluid">
-
-        <!-- ===================== Overview Section ===================== -->
-        <section id="overview-section" class="mb-5">
-          <div class="section-title">
-            <i class="bi bi-speedometer2"></i> Overview
-          </div>
-          <div class="overview-cards">
-            <!-- Total Referrals -->
-            <div class="overview-card" id="card-total-referrals">
-              <div class="label">Total Referrals</div>
-              <div class="value" id="overview-total-referrals">0</div>
-            </div>
-            <!-- Total Commissions ($) -->
-            <div class="overview-card" id="card-total-commissions">
-              <div class="label">Total Commissions (USD)</div>
-              <div class="value" id="overview-total-commissions">$0.00</div>
-            </div>
-            <!-- Pending Payouts -->
-            <div class="overview-card" id="card-pending-payouts">
-              <div class="label">Pending Payouts</div>
-              <div class="value" id="overview-pending-payouts">$0.00</div>
-            </div>
-            <!-- Conversion Rate -->
-            <div class="overview-card" id="card-conversion-rate">
-              <div class="label">Conversion Rate</div>
-              <div class="value" id="overview-conversion-rate">0%</div>
-            </div>
-          </div>
-        </section>
-
-        <!-- ===================== Referral Activity (Chart) ===================== -->
-        <section id="referral-activity-section" class="mb-5">
-          <div class="section-title">
-            <i class="bi bi-graph-up"></i> Referral Activity Over Time
-          </div>
-          <div class="chart-container">
-            <canvas id="referralChart" height="100"></canvas>
-          </div>
-        </section>
-
-        <!-- ===================== Leaderboard Section ===================== -->
-        <section id="leaderboard-section" class="mb-5">
-          <div class="section-title">
-            <i class="bi bi-trophy-fill"></i> Leaderboard: Top Affiliates
-          </div>
-          <ul class="leaderboard-list" id="leaderboard-list">
-            <li class="text-center text-muted">Loading leaderboard…</li>
+        <!-- Past Payouts List -->
+        <div class="withdraw-card">
+          <div class="section-title"><i class="bi bi-list-check"></i> Past Payouts</div>
+          <ul class="withdraw-list" id="withdrawals-list">
+            <li class="text-center text-muted">Loading payout history…</li>
           </ul>
-        </section>
+        </div>
+      </section>
 
-        <!-- ===================== Bank Accounts Section ===================== -->
-        <section id="bank-accounts-section" class="mb-5">
-          <div class="section-title">
-            <i class="bi bi-bank2"></i> Manage Bank Accounts
+      <!-- ===================== PROFILE SECTION ===================== -->
+      <section id="profile-section" class="mb-5">
+        <div class="section-title">
+          <i class="bi bi-person-circle"></i> Your Profile
+        </div>
+        <div class="card">
+          <div class="card-body">
+            <p><strong>Email:</strong> <span id="user-email">Loading…</span></p>
+            <p><strong>Joined On:</strong> <span id="joined-date">--</span></p>
+            <p><strong>Total Referrals:</strong> <span id="total-referrals">0</span></p>
+            <p>
+              <strong>Est. Earnings (USD):</strong>
+              <span id="overview-est-earn-usd-inline">$0.00</span>
+            </p>
+            <p>
+              <strong>Conversion Rate:</strong>
+              <span id="overview-conversion-rate-inline">0%</span>
+            </p>
           </div>
-          <!-- Add Bank Account Card -->
-          <div class="card mb-3">
-            <div class="card-header">
-              <div><i class="bi bi-plus-circle header-icon"></i>Add New Bank Account</div>
-            </div>
-            <div class="card-body">
-              <form id="bank-form" class="row g-3">
-                <div class="col-md-6">
-                  <label for="bank-name" class="form-label">Bank Name</label>
-                  <input
-                    type="text"
-                    id="bank-name"
-                    class="form-control"
-                    placeholder="e.g. First Bank"
-                    required
-                  />
-                </div>
-                <div class="col-md-6">
-                  <label for="bank-code" class="form-label">Bank Code/Branch</label>
-                  <input
-                    type="text"
-                    id="bank-code"
-                    class="form-control"
-                    placeholder="e.g. 011"
-                    required
-                  />
-                </div>
-                <div class="col-md-6">
-                  <label for="account-number" class="form-label">Account Number</label>
-                  <input
-                    type="text"
-                    id="account-number"
-                    class="form-control"
-                    placeholder="e.g. 0123456789"
-                    required
-                  />
-                </div>
-                <div class="col-md-6">
-                  <label for="account-name" class="form-label">Account Name</label>
-                  <input
-                    type="text"
-                    id="account-name"
-                    class="form-control"
-                    placeholder="e.g. John Doe"
-                    required
-                  />
-                </div>
-                <div class="col-12 text-end">
-                  <button type="submit" class="btn btn-primary" id="add-bank-btn">
-                    <span id="bank-btn-text">Add Account</span>
-                    <span id="bank-spinner" class="spinner-border spinner-border-sm ms-2" role="status" style="display: none;"></span>
-                  </button>
-                </div>
-              </form>
-            </div>
-          </div>
+        </div>
+      </section>
 
-          <!-- Existing Bank Accounts Table -->
-          <div class="card">
-            <div class="card-header">
-              <div><i class="bi bi-file-earmark-text header-icon"></i>Your Saved Bank Accounts</div>
-            </div>
-            <div class="card-body">
-              <div class="table-responsive">
-                <table class="table align-middle text-center mb-0">
-                  <thead>
-                    <tr>
-                      <th>Bank Name</th>
-                      <th>Bank Code</th>
-                      <th>Account Number</th>
-                      <th>Account Name</th>
-                      <th>Action</th>
-                    </tr>
-                  </thead>
-                  <tbody id="bank-accounts-body">
-                    <tr>
-                      <td colspan="5">
-                        <div class="text-center spinner-border"></div>
-                      </td>
-                    </tr>
-                  </tbody>
-                </table>
-              </div>
-            </div>
-          </div>
-        </section>
-
-        <!-- ===================== Crypto Wallets Section ===================== -->
-        <section id="crypto-wallets-section" class="mb-5">
-          <div class="section-title">
-            <i class="bi bi-currency-bitcoin"></i> Manage Crypto Wallets
-          </div>
-          <!-- Add Crypto Wallet Card -->
-          <div class="card mb-3">
-            <div class="card-header">
-              <div><i class="bi bi-plus-circle header-icon"></i>Add New Crypto Wallet</div>
-            </div>
-            <div class="card-body">
-              <form id="wallet-form" class="row g-3">
-                <div class="col-md-6">
-                  <label for="crypto-currency" class="form-label">Currency</label>
-                  <select id="crypto-currency" class="form-select" required>
-                    <option value="">Select Currency</option>
-                    <option value="BTC">Bitcoin (BTC)</option>
-                    <option value="ETH">Ethereum (ETH)</option>
-                    <option value="USDT">Tether (USDT)</option>
-                    <option value="BCH">Bitcoin Cash (BCH)</option>
-                    <option value="LTC">Litecoin (LTC)</option>
-                  </select>
-                </div>
-                <div class="col-md-6">
-                  <label for="crypto-address" class="form-label">Wallet Address</label>
-                  <input
-                    type="text"
-                    id="crypto-address"
-                    class="form-control"
-                    placeholder="e.g. 1BoatSLRHtKNngkdXEeobR76b53LETtpyT"
-                    required
-                  />
-                </div>
-                <div class="col-12 text-end">
-                  <button type="submit" class="btn btn-primary" id="add-wallet-btn">
-                    <span id="wallet-btn-text">Add Wallet</span>
-                    <span id="wallet-spinner" class="spinner-border spinner-border-sm ms-2" role="status" style="display: none;"></span>
-                  </button>
-                </div>
-              </form>
-            </div>
-          </div>
-
-          <!-- Existing Crypto Wallets Table -->
-          <div class="card">
-            <div class="card-header">
-              <div><i class="bi bi-wallet-fill header-icon"></i>Your Saved Crypto Wallets</div>
-            </div>
-            <div class="card-body">
-              <div class="table-responsive">
-                <table class="table align-middle text-center mb-0">
-                  <thead>
-                    <tr>
-                      <th>Currency</th>
-                      <th>Wallet Address</th>
-                      <th>Action</th>
-                    </tr>
-                  </thead>
-                  <tbody id="wallets-body">
-                    <tr>
-                      <td colspan="3">
-                        <div class="text-center spinner-border"></div>
-                      </td>
-                    </tr>
-                  </tbody>
-                </table>
-              </div>
-            </div>
-          </div>
-        </section>
-
-        <!-- ===================== Currency Converter Section ===================== -->
-        <section id="currency-converter-section" class="mb-5">
-          <div class="section-title">
-            <i class="bi bi-currency-exchange"></i> Currency Converter
-          </div>
-          <div class="card">
-            <div class="card-header">
-              <div><i class="bi bi-arrow-left-right header-icon"></i>Convert Between Currencies</div>
-            </div>
-            <div class="card-body">
-              <form id="converter-form" class="row g-3 align-items-end">
-                <div class="col-md-3">
-                  <label for="convert-from" class="form-label">From</label>
-                  <select id="convert-from" class="form-select">
-                    <option value="USD" selected>USD</option>
-                    <option value="EUR">EUR</option>
-                    <option value="GBP">GBP</option>
-                    <option value="NGN">NGN</option>
-                    <option value="BTC">BTC</option>
-                  </select>
-                </div>
-                <div class="col-md-3">
-                  <label for="convert-to" class="form-label">To</label>
-                  <select id="convert-to" class="form-select">
-                    <option value="NGN" selected>NGN</option>
-                    <option value="USD">USD</option>
-                    <option value="EUR">EUR</option>
-                    <option value="GBP">GBP</option>
-                    <option value="BTC">BTC</option>
-                  </select>
-                </div>
-                <div class="col-md-3">
-                  <label for="convert-amount" class="form-label">Amount</label>
-                  <input type="number" id="convert-amount" class="form-control" value="1" min="0" />
-                </div>
-                <div class="col-md-3 text-end">
-                  <button type="submit" class="btn btn-primary" id="convert-btn">
-                    <span id="convert-text">Convert</span>
-                    <span id="convert-spinner" class="spinner-border spinner-border-sm ms-2" role="status" style="display: none;"></span>
-                  </button>
-                </div>
-                <div class="col-12 text-center mt-3">
-                  <h5 id="convert-result">--</h5>
-                </div>
-              </form>
-            </div>
-          </div>
-        </section>
-
-        <!-- ===================== Withdrawals / Payout Requests ===================== -->
-        <section id="withdrawals-section" class="mb-5">
-          <div class="section-title">
-            <i class="bi bi-cash-stack"></i> Payout Requests
-          </div>
-          <!-- Request Payout Card -->
-          <div class="withdraw-card mb-3">
-            <div class="row g-3">
-              <div class="col-md-4">
-                <label for="withdraw-amount" class="form-label">Request Amount (USD)</label>
-                <input
-                  type="number"
-                  id="withdraw-amount"
-                  class="form-control"
-                  placeholder="e.g. 100.00"
-                  min="1"
-                  step="0.01"
-                />
-              </div>
-              <div class="col-md-4">
-                <label for="withdraw-method" class="form-label">Payout Method</label>
-                <select id="withdraw-method" class="form-select">
-                  <option value="">Select Method</option>
-                  <option value="bank">Bank Transfer</option>
-                  <option value="crypto">Crypto Wallet</option>
-                </select>
-              </div>
-              <div class="col-md-4 align-self-end text-end">
-                <button id="request-withdraw-btn" class="btn btn-primary">
-                  <span id="withdraw-btn-text">Request Payout</span>
-                  <span id="withdraw-spinner" class="spinner-border spinner-border-sm ms-2" role="status" style="display: none;"></span>
-                </button>
-              </div>
-            </div>
-          </div>
-
-          <!-- Past Payouts List -->
-          <div class="withdraw-card">
-            <div class="section-title"><i class="bi bi-list-check"></i> Past Payouts</div>
-            <ul class="withdraw-list" id="withdrawals-list">
-              <li class="text-center text-muted">Loading payout history…</li>
-            </ul>
-          </div>
-        </section>
-
-        <!-- ===================== Profile Section ===================== -->
-        <section id="profile-section" class="mb-5">
-          <div class="section-title">
-            <i class="bi bi-person-circle"></i> Your Profile
-          </div>
-          <div class="card">
-            <div class="card-body">
-              <p><strong>Email:</strong> <span id="user-email">Loading…</span></p>
-              <p><strong>Joined On:</strong> <span id="joined-date">--</span></p>
-              <p><strong>Total Referrals:</strong> <span id="total-referrals">0</span></p>
-            </div>
-          </div>
-        </section>
-      </div>
     </div>
   </div>
 
-  <!-- ===================== Toast Container ===================== -->
+  <!-- ===================== TOAST CONTAINER ===================== -->
   <div class="toast-container position-fixed top-0 end-0 p-3">
     <div
       id="liveToast"
@@ -786,24 +867,29 @@
     </div>
   </div>
 
-  <!-- ===================== Dark/Light Toggle Button ===================== -->
+  <!-- ===================== THEME TOGGLE BUTTON ===================== -->
   <div class="theme-toggle-btn" id="theme-toggle-btn">
     <i class="bi bi-sun-fill" id="theme-icon"></i>
   </div>
 
-  <!-- ===================== Bootstrap JS Bundle ===================== -->
+  <!-- ===================== BOOTSTRAP JS BUNDLE ===================== -->
   <script
     src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"
     integrity="sha384-YvpcrYf0tY3lHB60NNkmXc5s9fDVZLESaAA55NDzOxhy9GkcIdslK1eN7N6jIeHz"
     crossorigin="anonymous"
   ></script>
 
+  <!-- ===================== DASHBOARD JAVASCRIPT ===================== -->
   <script>
     // -----------------------------------------
     // GLOBAL VARIABLES & UTILITY FUNCTIONS
     // -----------------------------------------
     let currentUser = null;
     let currentUserId = null;
+    let referralChart = null; // Chart.js instance
+    let chartDataAllTime = { labels: [], counts: [] };
+    let chartData30Days = { labels: [], counts: [] };
+
     const supabase = supabaseClient;
 
     // Show a Bootstrap Toast message
@@ -820,7 +906,7 @@
         .catch(() => showToast('Copy failed'));
     }
 
-    // Generate a random 8-character alphanumeric referral code
+    // Generate a random 8-character alphanumeric referral code (fallback)
     function generateReferralCode() {
       const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
       let code = '';
@@ -838,9 +924,42 @@
       });
     }
 
-    // ON DOM CONTENT LOADED: Fetch user, then initialize all sections
+    // Format number as NGN currency string
+    function toNGN(value) {
+      return parseFloat(value).toLocaleString('en-NG', {
+        style: 'currency',
+        currency: 'NGN',
+      });
+    }
+
+    // Format number for EUR, GBP, BTC
+    function toCurrency(value, curr) {
+      if (curr === 'BTC') {
+        return parseFloat(value).toFixed(8) + ' BTC';
+      }
+      return parseFloat(value).toLocaleString(undefined, {
+        style: 'currency',
+        currency: curr,
+      });
+    }
+
+    // Helper to get CSS variable value
+    function varGet(name) {
+      return getComputedStyle(document.documentElement).getPropertyValue(name);
+    }
+
+    // Calculate date N days ago
+    function getDateNDaysAgo(n) {
+      const d = new Date();
+      d.setDate(d.getDate() - n);
+      return d;
+    }
+
+    // -----------------------------------------
+    // ON DOM CONTENT LOADED: Initialize everything
+    // -----------------------------------------
     document.addEventListener('DOMContentLoaded', async () => {
-      // FETCH CURRENT USER & IDs
+      // 1) FETCH CURRENT USER
       const { data: { user }, error: userErr } = await supabase.auth.getUser();
       if (userErr || !user) {
         window.location.replace('affiliate_login.html');
@@ -854,22 +973,23 @@
       document.getElementById('joined-date').textContent =
         new Date(user.created_at).toLocaleDateString();
 
-      // FETCH & DISPLAY REFERRAL CODE + LINK
+      // 2) FETCH & DISPLAY REFERRAL CODE + LINK (for both main & sidebar)
       await fetchReferralCode();
 
-      // FETCH & DISPLAY TOTAL REFERRALS (for overview card & profile)
+      // 3) FETCH & DISPLAY TOTAL REFERRALS (for overview & profile)
       await fetchTotalReferrals();
 
-      // FETCH & DISPLAY TOTAL COMMISSIONS & PENDING PAYOUTS (overview)
-      await fetchCommissionData();
+      // 4) CALCULATE & DISPLAY ESTIMATED & PERIODIC EARNINGS (USD & weekly/monthly)
+      await calculateAndDisplayEarnings();
 
-      // SETUP LOGOUT BUTTON
+      // 5) FETCH & DISPLAY CONVERSION RATE (overview & inline)
+      await fetchConversionRate();
+
+      // 6) SETUP AUTH ACTIONS (logout, copy buttons)
       document.getElementById('logout-btn').addEventListener('click', async () => {
         await supabase.auth.signOut();
         window.location.href = 'affiliate_login.html';
       });
-
-      // COPY REFERRAL CODE & LINK
       document.getElementById('copy-referral').addEventListener('click', () => {
         const code = document.getElementById('referral-code').textContent;
         if (code && code !== '—') copyTextToClipboard(code);
@@ -878,14 +998,20 @@
         const link = document.getElementById('referral-link').value;
         if (link) copyTextToClipboard(link);
       });
+      document.getElementById('copy-referral-sidebar').addEventListener('click', () => {
+        const code = document.getElementById('referral-code-sidebar').textContent;
+        if (code && code !== '—') copyTextToClipboard(code);
+      });
+      document.getElementById('copy-link-sidebar').addEventListener('click', () => {
+        const link = document.getElementById('referral-link-sidebar').value;
+        if (link) copyTextToClipboard(link);
+      });
 
-      // LOAD BANK ACCOUNTS
+      // 7) LOAD BANK ACCOUNTS & CRYPTO WALLETS
       await loadBankAccounts();
-
-      // LOAD CRYPTO WALLETS
       await loadWallets();
 
-      // SETUP ADD BANK ACCOUNT Form Handler
+      // 8) SETUP ADD BANK ACCOUNT Handler
       document.getElementById('bank-form').addEventListener('submit', async (e) => {
         e.preventDefault();
         const bankName = document.getElementById('bank-name').value.trim();
@@ -926,7 +1052,7 @@
         }
       });
 
-      // SETUP ADD WALLET Form Handler
+      // 9) SETUP ADD WALLET Handler
       document.getElementById('wallet-form').addEventListener('submit', async (e) => {
         e.preventDefault();
         const currency = document.getElementById('crypto-currency').value;
@@ -963,7 +1089,7 @@
         }
       });
 
-      // SETUP CONVERTER Form Handler
+      // 10) SETUP CONVERTER Handler (USD→Other)
       document.getElementById('converter-form').addEventListener('submit', async (e) => {
         e.preventDefault();
         const from = document.getElementById('convert-from').value;
@@ -998,7 +1124,7 @@
         }
       });
 
-      // SETUP REQUEST WITHDRAWAL Handler
+      // 11) SETUP REQUEST WITHDRAWAL Handler
       document.getElementById('request-withdraw-btn').addEventListener('click', async () => {
         const amount = parseFloat(document.getElementById('withdraw-amount').value);
         const method = document.getElementById('withdraw-method').value;
@@ -1015,7 +1141,6 @@
         btnText.textContent = 'Requesting…';
         spinner.style.display = 'inline-block';
         try {
-          // Insert into a new table affiliate_payouts (assumes it exists):
           const { error } = await supabase
             .from('affiliate_payouts')
             .insert([{
@@ -1030,8 +1155,6 @@
           document.getElementById('withdraw-amount').value = '';
           document.getElementById('withdraw-method').value = '';
           await loadPayouts();
-          // Also refresh overview pending payouts count
-          await fetchCommissionData();
         } catch (err) {
           console.error('Payout request error:', err);
           showToast('Failed to request payout.');
@@ -1041,68 +1164,138 @@
         }
       });
 
-      // LOAD INITIAL SECTIONS
+      // 12) LOAD INITIAL SECTIONS: Bank, Wallets, Payouts, Chart, Leaderboard
       await loadBankAccounts();
       await loadWallets();
       await loadPayouts();
-      await renderReferralChart();
-      await loadLeaderboard();
+      await loadReferralChartData(); // fill chartDataAllTime & chartData30Days
+      await renderReferralChart('30days'); // default to last 30 days
+      await loadLeaderboard(); // populates the leaderboard
 
-      // SETUP DARK/LIGHT TOGGLE
+      // 13) SETUP REFERRAL RANGE TOGGLE
+      document.getElementById('toggle-referral-range').addEventListener('click', () => {
+        const btn = document.getElementById('toggle-referral-range');
+        if (btn.textContent.includes('All Time')) {
+          renderReferralChart('alltime');
+          btn.textContent = 'Show Last 30 Days';
+        } else {
+          renderReferralChart('30days');
+          btn.textContent = 'Show All Time';
+        }
+      });
+
+      // 14) SETUP THEME TOGGLE
       setupThemeToggle();
+
+      // 15) SETUP SIDEBAR TOGGLE
+      setupSidebarToggle();
+
+      // 16) SETUP “Convert Earnings” Button (USD→Target)
+      document.addEventListener('click', async (e) => {
+        if (e.target && e.target.id === 'convert-earn-btn') {
+          const targetCurr = document.getElementById('convert-target-currency').value;
+          const usdAmount = window.currentEarningsUSD || 0;
+          if (usdAmount <= 0) {
+            showToast('You have no earnings to convert.');
+            return;
+          }
+          const resultEl = document.getElementById('convert-earn-result');
+          resultEl.textContent = 'Converting…';
+          try {
+            if (targetCurr === 'USD') {
+              resultEl.textContent = toUSD(usdAmount);
+              return;
+            }
+            const response = await fetch(`https://v6.exchangerate-api.com/v6/4e4307b2bf8daac15365a410/latest/USD`);
+            const data = await response.json();
+            if (data.result !== 'success') throw new Error('Failed to fetch rates');
+            const rate = data.conversion_rates[targetCurr];
+            if (!rate) {
+              showToast(`Rate USD→${targetCurr} not available.`);
+              resultEl.textContent = '--';
+            } else {
+              const converted = usdAmount * rate;
+              resultEl.textContent = toCurrency(converted, targetCurr);
+            }
+          } catch (err) {
+            console.error('Convert earnings error:', err);
+            showToast('Conversion failed.');
+            resultEl.textContent = '--';
+          }
+        }
+      });
     });
 
     // -----------------------------------------
-    // FETCH OR GENERATE REFERRAL CODE & SET LINK
+    // FETCH OR GENERATE REFERRAL CODE & SET LINK + QR
     // -----------------------------------------
     async function fetchReferralCode() {
-      const refSpan = document.getElementById('referral-code');
-      const linkInput = document.getElementById('referral-link');
-      refSpan.textContent = 'Loading…';
+      const refSpanMain = document.getElementById('referral-code');
+      const linkInputMain = document.getElementById('referral-link');
+      const refSpanSide = document.getElementById('referral-code-sidebar');
+      const linkInputSide = document.getElementById('referral-link-sidebar');
 
-      // 1) Try to load existing code
+      refSpanMain.textContent = 'Loading…';
+      refSpanSide.textContent = 'Loading…';
+
+      // 1) Try to load existing code from public.affiliates
       const { data, error } = await supabase
         .from('affiliates')
         .select('referral_code')
         .eq('user_id', currentUserId)
         .single();
 
-      if (error && error.code !== 'PGRST116') {
+      if (error) {
         console.error('Failed to load affiliate data:', error);
-        refSpan.textContent = '—';
-        linkInput.value = '';
+        refSpanMain.textContent = '—';
+        linkInputMain.value = '';
+        refSpanSide.textContent = '—';
+        linkInputSide.value = '';
         return;
       }
 
-      let code;
-      if (!data) {
-        // 2) No existing affiliate row → generate a new code
-        code = generateReferralCode();
+      let code = data ? data.referral_code : null;
+
+      // If for some reason there is no row, generate one (fallback)
+      if (!code) {
         try {
+          const generated = generateReferralCode();
           const { data: inserted, error: insertErr } = await supabase
             .from('affiliates')
-            .insert([{ user_id: currentUserId, referral_code: code }])
+            .insert([{ user_id: currentUserId, referral_code: generated }])
             .select('referral_code')
             .single();
           if (insertErr) throw insertErr;
           code = inserted.referral_code;
         } catch (err) {
-          console.error('Error creating new affiliate row:', err);
-          refSpan.textContent = '—';
-          linkInput.value = '';
+          console.error('Error creating new affiliate row (fallback):', err);
+          refSpanMain.textContent = '—';
+          linkInputMain.value = '';
+          refSpanSide.textContent = '—';
+          linkInputSide.value = '';
           return;
         }
-      } else {
-        code = data.referral_code;
       }
 
-      // 3) Show code + link after ensuring we have a valid code
-      refSpan.textContent = code;
-      linkInput.value = `${window.location.origin}/CBE_apply.html?ref=${code}`;
+      // 2) Display code + link + QR
+      refSpanMain.textContent = code;
+      const fullLink = `${window.location.origin}/CBE_apply.html?ref=${code}`;
+      linkInputMain.value = fullLink;
+
+      refSpanSide.textContent = code;
+      linkInputSide.value = fullLink;
+
+      // Generate QR code using Google Chart API
+      const qrContainer = document.getElementById('qr-code-container');
+      qrContainer.innerHTML = ''; // clear previous
+      const qrImg = document.createElement('img');
+      qrImg.src = `https://chart.googleapis.com/chart?chs=150x150&cht=qr&chl=${encodeURIComponent(fullLink)}`;
+      qrImg.alt = 'Referral QR Code';
+      qrContainer.appendChild(qrImg);
     }
 
     // -----------------------------------------
-    // FETCH TOTAL REFERRALS (for overview + profile)
+    // FETCH TOTAL REFERRALS (for overview & profile)
     // -----------------------------------------
     async function fetchTotalReferrals() {
       const { count, error } = await supabase
@@ -1122,57 +1315,65 @@
     }
 
     // -----------------------------------------
-    // FETCH COMMISSION DATA & PENDING PAYOUTS (overview)
+    // CALCULATE & DISPLAY ESTIMATED & PERIODIC EARNINGS (USD)
     // -----------------------------------------
-    async function fetchCommissionData() {
-      // Assumes there's a table 'affiliate_commissions' and 'affiliate_payouts'
-      // affiliate_commissions has columns: user_id, amount, created_at
-      // affiliate_payouts has columns: user_id, amount, status
-      // 1. Total commissions (sum of all amounts)
-      const { data: commissionsData, error: commErr } = await supabase
-        .from('affiliate_commissions')
-        .select('amount', { aggregate: 'sum' })
-        .eq('user_id', currentUserId);
+    async function calculateAndDisplayEarnings() {
+      // 1) TOTAL referrals → all‐time earnings
+      const totalRefs = parseInt(document.getElementById('overview-total-referrals').textContent) || 0;
+      const usdEarnings = totalRefs * 5;
+      document.getElementById('overview-est-earn-usd').textContent = toUSD(usdEarnings);
+      document.getElementById('overview-est-earn-usd-inline').textContent = toUSD(usdEarnings);
+      window.currentEarningsUSD = usdEarnings;
+      document.getElementById('alltime-earnings').textContent = toUSD(usdEarnings);
 
-      let totalCommission = 0;
-      if (!commErr && commissionsData && commissionsData.length > 0) {
-        totalCommission = commissionsData[0].sum || 0;
+      // 2) Weekly & Monthly earnings: count referrals in last 7 & 30 days
+      try {
+        // LAST 7 DAYS
+        const { count: wCount, error: wErr } = await supabase
+          .from('users')
+          .select('*', { count: 'exact', head: true })
+          .eq('referred_by', currentUserId)
+          .gt('created_at', getDateNDaysAgo(7).toISOString());
+        const wEarn = (!wErr ? (wCount || 0) * 5 : 0);
+        document.getElementById('weekly-earnings').textContent = toUSD(wEarn);
+
+        // LAST 30 DAYS
+        const { count: mCount, error: mErr } = await supabase
+          .from('users')
+          .select('*', { count: 'exact', head: true })
+          .eq('referred_by', currentUserId)
+          .gt('created_at', getDateNDaysAgo(30).toISOString());
+        const mEarn = (!mErr ? (mCount || 0) * 5 : 0);
+        document.getElementById('monthly-earnings').textContent = toUSD(mEarn);
+      } catch (err) {
+        console.error('Periodic earnings calculation error:', err);
+        document.getElementById('weekly-earnings').textContent = toUSD(0);
+        document.getElementById('monthly-earnings').textContent = toUSD(0);
       }
+    }
 
-      // 2. Pending payouts (sum of amounts where status = 'pending')
-      const { data: pendingData, error: pendErr } = await supabase
-        .from('affiliate_payouts')
-        .select('amount', { aggregate: 'sum' })
-        .eq('user_id', currentUserId)
-        .eq('status', 'pending');
-
-      let pendingPayout = 0;
-      if (!pendErr && pendingData && pendingData.length > 0) {
-        pendingPayout = pendingData[0].sum || 0;
-      }
-
-      // 3. Conversion rate = (total referrals who converted) / total referrals
-      //    Assumes 'users' table has a boolean 'converted' column (true if they converted to paid user)
-      const { data: convertedData, count: convertedCount, error: convErr } = await supabase
-        .from('users')
-        .select('converted', { count: 'exact', head: true })
-        .eq('referred_by', currentUserId)
-        .eq('converted', true);
-
+    // -----------------------------------------
+    // FETCH CONVERSION RATE & DISPLAY (overview & inline)
+    // -----------------------------------------
+    async function fetchConversionRate() {
       const { count: totalRefCount, error: totErr } = await supabase
         .from('users')
         .select('*', { count: 'exact', head: true })
         .eq('referred_by', currentUserId);
 
-      let conversionRate = 0;
-      if (!convErr && !totErr && totalRefCount > 0) {
-        conversionRate = ((convertedCount / totalRefCount) * 100).toFixed(2);
-      }
+      const { count: convertedCount, error: convErr } = await supabase
+        .from('users')
+        .select('converted', { count: 'exact', head: true })
+        .eq('referred_by', currentUserId)
+        .eq('converted', true);
 
-      // Update overview cards
-      document.getElementById('overview-total-commissions').textContent = toUSD(totalCommission);
-      document.getElementById('overview-pending-payouts').textContent = toUSD(pendingPayout);
-      document.getElementById('overview-conversion-rate').textContent = `${conversionRate}%`;
+      let rateText = '0%';
+      if (!totErr && !convErr && totalRefCount > 0) {
+        const conversionRate = ((convertedCount / totalRefCount) * 100).toFixed(2);
+        rateText = `${conversionRate}%`;
+      }
+      document.getElementById('overview-conversion-rate').textContent = rateText;
+      document.getElementById('overview-conversion-rate-inline').textContent = rateText;
     }
 
     // -----------------------------------------
@@ -1207,7 +1408,7 @@
           <td>${acct.account_number}</td>
           <td>${acct.account_name}</td>
           <td>
-            <button class="btn btn-outline-danger btn-sm" onclick="deleteBankAccount('${acct.id}')">
+            <button class="btn btn-outline-danger btn-sm" onclick="deleteBankAccount(${acct.id})">
               <i class="bi bi-trash"></i>
             </button>
           </td>
@@ -1264,7 +1465,7 @@
           <td>${w.currency}</td>
           <td>${w.address}</td>
           <td>
-            <button class="btn btn-outline-danger btn-sm" onclick="deleteWallet('${w.id}')">
+            <button class="btn btn-outline-danger btn-sm" onclick="deleteWallet(${w.id})">
               <i class="bi bi-trash"></i>
             </button>
           </td>
@@ -1333,63 +1534,71 @@
     }
 
     // -----------------------------------------
-    // RENDER REFERRAL CHART
+    // LOAD REFERRAL CHART DATA (ALL TIME & LAST 30 DAYS)
     // -----------------------------------------
-    async function renderReferralChart() {
-      // Fetch referral counts grouped by date, last 30 days
-      const { data, error } = await supabase.rpc('referrals_by_date', {
-        p_user_id: currentUserId,
-        p_days: 30
-      });
-      // Assumes a stored procedure 'referrals_by_date' that returns [{ date, count }]
-      // If no such RPC, fallback to client grouping:
+    async function loadReferralChartData() {
+      // Fetch all users referred by currentUser
+      const { data: rawUsers, error: rawErr } = await supabase
+        .from('users')
+        .select('created_at')
+        .eq('referred_by', currentUserId);
 
-      let labels = [];
-      let counts = [];
-
-      if (error || !data) {
-        // Fallback: fetch raw users and manually group
-        const { data: raw, error: rawErr } = await supabase
-          .from('users')
-          .select('created_at')
-          .eq('referred_by', currentUserId);
-        if (rawErr) {
-          console.error('Fallback referrals fetch error:', rawErr);
-          labels = [];
-          counts = [];
-        } else {
-          // Build a date → count map for last 30 days
-          const map = {};
-          const now = new Date();
-          for (let i = 29; i >= 0; i--) {
-            const d = new Date(now);
-            d.setDate(now.getDate() - i);
-            const key = d.toISOString().split('T')[0];
-            map[key] = 0;
-          }
-          raw.forEach((u) => {
-            const dKey = new Date(u.created_at).toISOString().split('T')[0];
-            if (map[dKey] !== undefined) map[dKey]++;
-          });
-          labels = Object.keys(map);
-          counts = Object.values(map);
-        }
-      } else {
-        // Use RPC data directly
-        data.sort((a, b) => new Date(a.date) - new Date(b.date));
-        labels = data.map((row) => row.date);
-        counts = data.map((row) => row.count);
+      if (rawErr) {
+        console.error('Referral chart fetch error:', rawErr);
+        return;
       }
 
+      // Build maps for all‑time and last‑30‑days
+      const allMap = {};
+      const last30Map = {};
+      rawUsers.forEach(u => {
+        const dKey = new Date(u.created_at).toISOString().split('T')[0];
+        // All‑time grouping
+        allMap[dKey] = (allMap[dKey] || 0) + 1;
+        // Last 30 days grouping
+        const createdDate = new Date(u.created_at);
+        if (createdDate >= getDateNDaysAgo(30)) {
+          last30Map[dKey] = (last30Map[dKey] || 0) + 1;
+        }
+      });
+
+      // Prepare sorted arrays for all‑time
+      const sortedAllDates = Object.keys(allMap).sort((a, b) => new Date(a) - new Date(b));
+      chartDataAllTime.labels = sortedAllDates;
+      chartDataAllTime.counts = sortedAllDates.map(d => allMap[d]);
+
+      // Prepare arrays for last 30 days (fill zeros)
+      const last30Labels = [];
+      const last30Counts = [];
+      const now = new Date();
+      for (let i = 29; i >= 0; i--) {
+        const d = new Date(now);
+        d.setDate(now.getDate() - i);
+        const key = d.toISOString().split('T')[0];
+        last30Labels.push(key);
+        last30Counts.push(last30Map[key] || 0);
+      }
+      chartData30Days.labels = last30Labels;
+      chartData30Days.counts = last30Counts;
+    }
+
+    // -----------------------------------------
+    // RENDER REFERRAL CHART (either “30days” or “alltime”)
+    // -----------------------------------------
+    async function renderReferralChart(range) {
       const ctx = document.getElementById('referralChart').getContext('2d');
-      new Chart(ctx, {
+      if (referralChart) {
+        referralChart.destroy();
+      }
+      const dataSource = (range === 'alltime') ? chartDataAllTime : chartData30Days;
+      referralChart = new Chart(ctx, {
         type: 'line',
         data: {
-          labels: labels,
+          labels: dataSource.labels,
           datasets: [
             {
               label: 'New Referrals',
-              data: counts,
+              data: dataSource.counts,
               backgroundColor: 'rgba(255, 215, 0, 0.3)',
               borderColor: 'rgba(255, 215, 0, 1)',
               borderWidth: 2,
@@ -1419,67 +1628,52 @@
       });
     }
 
-    // Helper to get CSS variable value
-    function varGet(name) {
-      return getComputedStyle(document.documentElement).getPropertyValue(name);
-    }
-
     // -----------------------------------------
-    // LOAD LEADERBOARD: Top Affiliates by Referrals
+    // LOAD LEADERBOARD: Top 5 Affiliates by Referrals
     // -----------------------------------------
     async function loadLeaderboard() {
-      // Query top 5 affiliates by count of referrals in last 30 days
-      // Assume there's a view or table 'affiliates' with fields (user_id, referral_code)
-      // and 'users' table has referred_by. We'll join and group.
+      const listEl = document.getElementById('leaderboard-list');
+      listEl.innerHTML = `<li class="text-center text-muted">Loading leaderboard…</li>`;
 
-      const { data, error } = await supabase
+      // Fetch all users with referred_by not null
+      const { data: allReferred, error: refErr } = await supabase
         .from('users')
-        .select('referred_by ( referral_code ), id', { count: 'exact' })
-        .neq('referred_by', null);
+        .select('referred_by');
 
-      // Simplify client grouping if no direct SQL
-      if (error) {
-        console.error('Leaderboard fetch error:', error);
-        document.getElementById('leaderboard-list').innerHTML =
-          `<li style="color: var(--gold);">Failed to load leaderboard.</li>`;
+      if (refErr) {
+        console.error('Leaderboard grouping error:', refErr);
+        listEl.innerHTML = `<li style="color: var(--gold);">Failed to load leaderboard.</li>`;
         return;
       }
 
       // Build map: affiliate_user_id → count
       const map = {};
-      data.forEach((u) => {
+      allReferred.forEach((u) => {
         const affId = u.referred_by;
-        if (!map[affId]) map[affId] = 0;
-        map[affId]++;
+        if (affId) {
+          map[affId] = (map[affId] || 0) + 1;
+        }
       });
 
-      // Convert map to array of { user_id, count }, sort descending
-      const arr = Object.entries(map).map(([userId, cnt]) => ({ userId, cnt }));
+      // Convert to array, sort desc, take top 5
+      const arr = Object.keys(map).map(userId => ({ userId, cnt: map[userId] }));
       arr.sort((a, b) => b.cnt - a.cnt);
-
-      // Take top 5
       const top5 = arr.slice(0, 5);
 
-      // For each, fetch affiliate’s referral_code and email
-      const listEl = document.getElementById('leaderboard-list');
-      listEl.innerHTML = '';
       if (top5.length === 0) {
         listEl.innerHTML = `<li style="color: var(--text);">No referrals yet.</li>`;
         return;
       }
+
+      listEl.innerHTML = '';
+      // Fetch email & referral_code for each top affiliate in parallel
       for (const item of top5) {
-        const { data: affiliateData, error: affErr } = await supabase
-          .from('affiliates')
-          .select('referral_code')
-          .eq('user_id', item.userId)
-          .single();
-        const { data: userData, error: userErr } = await supabase
-          .from('users')
-          .select('email')
-          .eq('id', item.userId)
-          .single();
-        const code = (!affErr && affiliateData) ? affiliateData.referral_code : '(unknown)';
-        const email = (!userErr && userData) ? userData.email : '(unknown)';
+        const [ { data: userData, error: userErr2 }, { data: affiliateData, error: affErr2 } ] = await Promise.all([
+          supabase.from('users').select('email').eq('id', item.userId).single(),
+          supabase.from('affiliates').select('referral_code').eq('user_id', item.userId).single()
+        ]);
+        const email = (!userErr2 && userData) ? userData.email : '(unknown)';
+        const code = (!affErr2 && affiliateData) ? affiliateData.referral_code : '(unknown)';
         const li = document.createElement('li');
         li.className = 'leaderboard-item';
         li.innerHTML = `
@@ -1496,7 +1690,6 @@
     function setupThemeToggle() {
       const btn = document.getElementById('theme-toggle-btn');
       const icon = document.getElementById('theme-icon');
-      // Initialize from localStorage (or default dark)
       const saved = localStorage.getItem('dashboardTheme') || 'dark';
       document.documentElement.setAttribute('data-theme', saved);
       icon.className = saved === 'dark' ? 'bi bi-sun-fill' : 'bi bi-moon-stars-fill';
@@ -1507,6 +1700,17 @@
         document.documentElement.setAttribute('data-theme', next);
         localStorage.setItem('dashboardTheme', next);
         icon.className = next === 'dark' ? 'bi bi-sun-fill' : 'bi bi-moon-stars-fill';
+      });
+    }
+
+    // -----------------------------------------
+    // SIDEBAR TOGGLE
+    // -----------------------------------------
+    function setupSidebarToggle() {
+      const toggleBtn = document.getElementById('sidebar-toggle');
+      const sidebar = document.getElementById('sidebar');
+      toggleBtn.addEventListener('click', () => {
+        sidebar.classList.toggle('expanded');
       });
     }
   </script>
