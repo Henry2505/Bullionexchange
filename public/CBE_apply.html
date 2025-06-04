@@ -12,7 +12,7 @@
     rel="stylesheet"
   />
 
-  <!-- Supabase JS (UMD) -->
+  <!-- Supabase JS (for referral‑code lookup) -->
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js/dist/umd/supabase.min.js"></script>
 
   <style>
@@ -326,10 +326,11 @@
   </div>
 
   <script>
-    // ─── Supabase client for referral-code validation ─────────────────────────────────
+    // ─── Supabase client for referral-code lookup ─────────────────────────────────
+    // We only need anon key here to verify referral codes.
     const SUPA_URL = "https://dapwpgvnfjcfqqhrpxla.supabase.co";
     const SUPA_ANON_KEY =
-      "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImRhcHdwZ3ZuZmpjZnFxaHJweGxhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDcwNDA4ODgsImV4cCI6MjA2MjYxNjg4OH0.ICC0UsLlzJDNre7rFCeD3k6iVzo6jOJgn3PhABpEMsQ";
+      "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImRhcHdwZ3ZuZmpjZnFxaHJweGxhIiwicm9sZSI6IkFub24iLCJpYXQiOjE3NDcwNDA4ODgsImV4cCI6MjA2MjYxNjg4OH0.ICC0UsLlzJDNre7rFCeD3k6iVzo6jOJgn3PhABpEMsQ";
     const supabaseClient = supabase.createClient(SUPA_URL, SUPA_ANON_KEY);
 
     // ─── Helper: read “ref” param from URL ─────────────────────────────────────────────
@@ -418,7 +419,7 @@
         const urlRef = getReferralFromURL();
         const referralCodeToUse = manualRef || urlRef || null;
 
-        // 2) If a code exists, validate it against Supabase `affiliates`
+        // 2) If a code exists, validate it by looking up affiliates → user_id
         let referredByUserId = null;
         if (referralCodeToUse) {
           const { data: affiliateRow, error: checkErr } = await supabaseClient
@@ -434,10 +435,10 @@
             submitBtn.textContent = "Submit Application";
             return;
           }
-          referredByUserId = affiliateRow.user_id;
+          referredByUserId = affiliateRow.user_id; // UUID of the affiliate
         }
 
-        // 3) Prepare payload for Netlify function
+        // 3) Package payload for Netlify function
         const payload = {
           name,
           email,
@@ -445,9 +446,10 @@
           phone,
           experience,
           referral_code: referralCodeToUse,
+          referred_by: referredByUserId, // pass the UUID if any
         };
 
-        // 4) Call the Netlify function endpoint (send-application.js)
+        // 4) Invoke Netlify function to create Auth user + insert into your `users` table
         const fnResponse = await fetch("/.netlify/functions/send-application", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
@@ -477,7 +479,6 @@
         submitBtn.classList.remove("enabled");
       } catch (err) {
         console.error("Submission error:", err);
-        // If err.message already shown above, no need to override again
       } finally {
         submitBtn.disabled = true;
         submitBtn.textContent = "Submit Application";
