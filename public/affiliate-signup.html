@@ -97,17 +97,15 @@
       color: #000;
       font-weight: 600;
       width: 100%;
-      opacity: 0.6;
-      pointer-events: none;
       transition: opacity 0.3s ease;
     }
-    .btn-primary.enabled {
-      opacity: 1;
-      pointer-events: auto;
+    .btn-primary:disabled {
+      opacity: 0.5;
     }
-    .btn-primary:hover {
+    .btn-primary:hover:enabled {
       background: linear-gradient(45deg, var(--gold-dark), var(--gold));
     }
+
     .toggle-theme {
       position: absolute;
       top: 0.75rem;
@@ -189,7 +187,7 @@
   <script>
     // ─── Supabase client setup ───────────────────────────────────────────────────────
     const SUPA_URL = 'https://dapwpgvnfjcfqqhrpxla.supabase.co';
-    const SUPA_KEY = 
+    const SUPA_KEY =
       'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.' +
       'eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImRhcHdwZ3ZuZmpjZnFxaHJweGxhIiwicm9sZSI6IkFub24iLCJpYXQiOjE3NDcwNDA4ODgsImV4cCI6MjA2MjYxNjg4OH0.' +
       'ICC0UsLlzJDNre7rFCeD3k6iVzo6jOJgn3PhABpEMsQ';
@@ -216,19 +214,12 @@
       const isValidEmail = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
       const isValidPwd = pwd.length >= 8;
       const isMatch = pwd === confirm;
-      if (isValidEmail && isValidPwd && isMatch) {
-        signupBtn.classList.add('enabled');
-        signupBtn.disabled = false;
-      } else {
-        signupBtn.classList.remove('enabled');
-        signupBtn.disabled = true;
-      }
+      signupBtn.disabled = !(isValidEmail && isValidPwd && isMatch);
     }
 
     emailInput.addEventListener('input', validateForm);
     pwdInput.addEventListener('input', validateForm);
     pwdConfirm.addEventListener('input', validateForm);
-
     document.addEventListener('DOMContentLoaded', validateForm);
 
     // ─── Generate random 8‑character referral code ───────────────────────────────────
@@ -258,7 +249,6 @@
           email,
           password
         });
-
         if (signUpError) {
           throw signUpError;
         }
@@ -272,7 +262,6 @@
         const { error: insertError } = await supabase
           .from('affiliates')
           .insert([{ user_id: user.id, referral_code: newCode }]);
-
         if (insertError) {
           // Roll back newly created Auth user on failure
           await supabase.auth.admin.deleteUser(user.id);
