@@ -150,14 +150,25 @@
     // ─── 1) SUPABASE INIT ────────────────────────────────────────────────────
     const SUPA_URL = 'https://dapwpgvnfjcfqqhrpxla.supabase.co';
     const SUPA_KEY =
-      'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.'
-      + 'eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImRhcHdwZ3Zu'
-      + 'ZmpjZnFxaHJweGxhIiwicm9sZSI6ImFub24iLCJpYXQiOj'
-      + 'E3NDcwNDA4ODgsImV4cCI6MjA2MjYxNjg4OH0.'
-      + 'ICC0UsLlzJDNre7rFCeD3k6iVzo6jOJgn3PhABpEMsQ';
+      'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.' +
+      'eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImRhcHdwZ3ZuZmpjZnFxaHJweGxhIiwicm9sZSI6IkFub24iLCJpYXQiOjE3NDcwNDA4ODgsImV4cCI6MjA2MjYxNjg4OH0.' +
+      'ICC0UsLlzJDNre7rFCeD3k6iVzo6jOJgn3PhABpEMsQ';
     const supabase = window.supabase.createClient(SUPA_URL, SUPA_KEY);
 
-    // ─── 2) SELECT DOM ELEMENTS ─────────────────────────────────────────────
+    // ─── 2) ON LOAD: Redirect if already authenticated ─────────────────────────
+    document.addEventListener('DOMContentLoaded', async () => {
+      const {
+        data: { user },
+        error
+      } = await supabase.auth.getUser();
+
+      if (user) {
+        // Already logged in → go to dashboard
+        window.location.href = 'affiliate_dashboard.html';
+      }
+    });
+
+    // ─── 3) SELECT DOM ELEMENTS ─────────────────────────────────────────────
     const form = document.getElementById('login-form');
     const emailInput = document.getElementById('email');
     const passwordInput = document.getElementById('password');
@@ -165,10 +176,10 @@
     const loginText = document.getElementById('login-text');
     const loginSpinner = document.getElementById('login-spinner');
 
-    // ─── 3) HANDLE FORM VALIDATION & LOGIN ─────────────────────────────────
+    // ─── 4) HANDLE FORM VALIDATION & LOGIN ─────────────────────────────────
     form.addEventListener('submit', async (e) => {
       e.preventDefault();
-      // clear validation states
+      // clear any previous validation
       emailInput.classList.remove('is-invalid');
       passwordInput.classList.remove('is-invalid');
 
@@ -193,7 +204,7 @@
       loginSpinner.style.display = 'inline-block';
 
       try {
-        // 1) Log in with Supabase Auth
+        // 1) Sign in with Supabase Auth
         const { data, error } = await supabase.auth.signInWithPassword({
           email,
           password,
@@ -205,7 +216,7 @@
       } catch (err) {
         console.error('Login error:', err);
         let message = 'Login failed. Please try again.';
-        if (err.status === 400 || err.message.includes('Invalid login credentials')) {
+        if (err.status === 400 || err.status === 401) {
           message = 'Invalid email or password.';
         }
         alert(message);
