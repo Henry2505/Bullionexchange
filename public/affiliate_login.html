@@ -12,7 +12,7 @@
     integrity="sha384-QWTKZyjpPEjISv5WaRU9OFeRpok6YctnYmDr5pNlyT2bRjXh0JMhjY6hW+ALEwIH"
     crossorigin="anonymous"
   />
-  <!-- Supabase UMD -->
+  <!-- Supabase UMD (creates global `supabase`) -->
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>
 
   <style>
@@ -148,10 +148,9 @@
 
   <script>
     // ────────────────────────────────────────────────────────────────────────────
-    // 1) Initialize Supabase client
-    //    (REPLACE with your own Supabase project’s URL & anon key)
-    const SUPA_URL = 'YOUR_SUPA_URL';
-    const SUPA_KEY = 'YOUR_SUPA_ANON_KEY';
+    // 1) Initialize Supabase client using your project’s URL & anon key
+    const SUPA_URL = 'https://dapwpgvnfjcfqqhrpxla.supabase.co';
+    const SUPA_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImRhcHdwZ3ZuZmpjZnFxaHJweGxhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDcwNDA4ODgsImV4cCI6MjA2MjYxNjg4OH0.ICC0UsLlzJDNre7rFCeD3k6iVzo6jOJgn3PhABpEMsQ';
     const supabaseClient = supabase.createClient(SUPA_URL, SUPA_KEY);
 
     // ────────────────────────────────────────────────────────────────────────────
@@ -193,8 +192,9 @@
           if (error) {
             console.error('Login error:', error);
             let msg = error.message;
-            if (error.status === 400 && error.message.includes('invalid login')) {
-              msg = 'Invalid email or password.';
+            // If email not confirmed, adjust message
+            if (error.message.includes('confirmation')) {
+              msg = 'Please confirm your email before logging in.';
             }
             showAlert(msg, 'danger');
             submitBtn.removeAttribute('disabled');
@@ -204,11 +204,11 @@
           }
           console.log('Logged in user:', data.user);
 
-          // 3B) On success, redirect to your dashboard page
+          // 3B) On success, redirect to the dashboard page
           window.location.href = 'affiliate_dashboard.html';
         } catch (err) {
           console.error('Unexpected error during login:', err);
-          showAlert('An unexpected error occurred. See console.', 'danger');
+          showAlert('An unexpected error occurred. Check console for details.', 'danger');
           submitBtn.removeAttribute('disabled');
           btnText.textContent = 'Log In';
           btnSpinner.style.display = 'none';
