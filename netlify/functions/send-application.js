@@ -12,18 +12,16 @@ if (!SUPABASE_URL || !SUPABASE_SERVICE_KEY) {
   console.error('❌ Missing SUPABASE_URL or SUPABASE_SERVICE_KEY');
   return {
     statusCode: 500,
-    body: JSON.stringify({ error: 'Server configuration error' }),
+    body: JSON.stringify({ error: 'Server configuration error: Missing Supabase credentials' }),
   };
 }
 if (!BREVO_API_KEY) {
   console.error('❌ Missing BREVO_API_KEY');
 }
 
-// Initialize Supabase client with Service Role key
 const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_KEY);
 
 exports.handler = async (event, context) => {
-  // Only allow POST
   if (event.httpMethod !== 'POST') {
     return {
       statusCode: 405,
@@ -32,47 +30,44 @@ exports.handler = async (event, context) => {
     };
   }
 
-  // Parse JSON payload
   let payload;
   try {
     payload = JSON.parse(event.body);
   } catch (err) {
     return {
       statusCode: 400,
-      body: JSON.stringify({ error: 'Invalid JSON payload.' }),
+      body: JSON.stringify({ error: 'Invalid JSON payload' }),
     };
   }
 
-  const { name, email, password, phone, experience, referral_code, referred_by } = payload;
+  const { name, email, password, phone, experience, referral_code } = payload;
 
-  // 1) Basic server-side validation
+  // 1) Basic validation
   if (!name || !email || !password || !phone || !experience) {
     return {
       statusCode: 400,
       body: JSON.stringify({
-        error: 'Please provide name, email, password, phone, and experience.',
+        error: 'Please provide name, email, password, phone, and experience',
       }),
     };
   }
 
-  // Email format check
   const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
   if (!emailRegex.test(email)) {
     return {
       statusCode: 400,
-      body: JSON.stringify({ error: 'Please supply a valid email address.' }),
+      body: JSON.stringify({ error: 'Please supply a valid email address' }),
     };
   }
 
-  // Password length check
   if (password.length < 8) {
     return {
       statusCode: 400,
-      body: JSON.stringify({ error: 'Password must be at least 8 characters long.' }),
+      body: JSON.stringify({ error: 'Password must be at least 8 characters long' }),
     };
   }
 
-  // 2) Check if email already exists in "public.users"
+  // 2) Check if email exists in public.users
   try {
     const { data: existingUser, error: checkError } = await supabase
       .from('users')
@@ -80,28 +75,28 @@ exports.handler = async (event, context) => {
       .eq('email', email)
       .single();
 
-    if (checkError && checkError.code !== 'PGRST116') { // PGRST116 = no rows found
+    if (checkError && checkError.code !== 'PGRST116') {
       console.error('Error checking existing user:', checkError);
       return {
         statusCode: 500,
-        body: JSON.stringify({ error: 'Failed to verify email availability.' }),
+        body: JSON.stringify({ error: `Failed to verify email availability: ${checkError.message}` }),
       };
     }
     if (existingUser) {
       return {
         statusCode: 409,
-        body: JSON.stringify({ error: 'This email is already registered.' }),
+        body: JSON.stringify({ error: 'This email is already registered' }),
       };
     }
   } catch (err) {
     console.error('Unexpected error while checking existing user:', err);
     return {
       statusCode: 500,
-      body: JSON.stringify({ error: 'Database check failed.' }),
+      body: JSON.stringify({ error: `Database check failed: ${err.message}` }),
     };
   }
 
-  // 3) If referral_code is provided, verify it and get user_id
+  // 3) Validate referral_code
   let validReferredBy = null;
   if (referral_code) {
     try {
@@ -114,7 +109,7 @@ exports.handler = async (event, context) => {
       if (checkErr || !affRow) {
         return {
           statusCode: 400,
-          body: JSON.stringify({ error: 'Invalid referral code.' }),
+          body: JSON.stringify({ error: 'Invalid referral code' }),
         };
       }
       validReferredBy = affRow.user_id;
@@ -122,14 +117,29 @@ exports.handler = async (event, context) => {
       console.error('Error validating referral code:', err);
       return {
         statusCode: 500,
-        body: JSON.stringify({ error: 'Failed to validate referral code.' }),
+        body: JSON.stringify({ error: `Failed to validate referral code: ${err.message}` }),
       };
     }
   }
 
-  // 4) Create a Supabase Auth user
+  // 4) Create Supabase Auth user
   let newAuthUser = null;
   try {
+    const { data: existingAuthUser, error: authCheckError } = await supabase.auth.admin.getUserByEmail(email);
+    if (existingAuthUser?.user) {
+      return {
+        statusCode: 409,
+        body: JSON.stringify({ error: 'This email is already registered in authentication' }),
+      };
+    }
+    if (authCheckError && authCheckError.code !== 'user_not_found') {
+      console.error('Error checking auth user:', authCheckError);
+      return {
+        statusCode: 500,
+        body: JSON.stringify({ error: `Failed to verify auth user: ${authCheckError.message}` }),
+      };
+    }
+
     const { data: authData, error: authErr } = await supabase.auth.admin.createUser({
       email: email,
       password: password,
@@ -153,13 +163,13 @@ exports.handler = async (event, context) => {
     };
   }
 
-  // 5) Insert new row into public.users
+  // 5) Insert into public.users
   try {
     const { error: insertErr } = await supabase
       .from('users')
       .insert([
         {
-          id: newAuthUser.id, // Use auth user ID
+          id: newAuthUser.id,
           name: name,
           email: email,
           phone: phone,
@@ -172,7 +182,6 @@ exports.handler = async (event, context) => {
 
     if (insertErr) {
       console.error('Error inserting into public.users:', insertErr);
-      // Optionally delete the auth user to avoid orphaned accounts
       await supabase.auth.admin.deleteUser(newAuthUser.id);
       return {
         statusCode: 500,
@@ -200,7 +209,7 @@ exports.handler = async (event, context) => {
         name: name,
       },
     ],
-    templateId: 1, // Adjust to your actual Brevo template ID
+    templateId: 1, // Verify this ID in Brevo
     params: {
       NAME: name,
       EMAIL: email,
@@ -231,7 +240,7 @@ exports.handler = async (event, context) => {
     console.error('Unexpected error sending Brevo email:', err);
     return {
       statusCode: 502,
-      body: JSON.stringify({ error: 'Failed to send confirmation email.' }),
+      body: JSON.stringify({ error: 'Failed to send confirmation email' }),
     };
   }
 
