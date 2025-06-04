@@ -148,14 +148,14 @@
           throw new Error('Password must be at least 6 characters');
         }
 
-        // Step 1: Test auth signup
+        // Test auth signup
         console.log('Attempting auth signup...');
         const { data: authData, error: authError } = await sb.auth.signUp({
           email,
           password,
           options: { data: { name } }
         });
-        console.log('Auth signup response:', authData, authError);
+        console.log('Auth signup response:', { data: authData, error: authError });
 
         if (authError) {
           throw new Error(`Auth error: ${authError.message}`);
@@ -166,11 +166,15 @@
 
         // Note: Affiliate table insert is commented out to isolate auth issue
         /*
+        function generateReferralCode(name) {
+          const base = name.trim().toLowerCase().replace(/\s+/g, '');
+          const rand = Math.floor(Math.random() * 1000);
+          return `${base}${rand}`;
+        }
         const referral_code = generateReferralCode(name);
         const urlParams = new URLSearchParams(window.location.search);
         const referred_by = urlParams.get('ref') || null;
 
-        // Validate referral code if provided
         if (referred_by) {
           console.log('Validating referral code:', referred_by);
           const { data: refData, error: refError } = await sb
@@ -185,7 +189,6 @@
           }
         }
 
-        // Check for unique referral code
         console.log('Checking referral code uniqueness:', referral_code);
         const { data: existingCode, error: codeError } = await sb
           .from('affiliate')
@@ -198,7 +201,6 @@
           throw new Error('Referral code already exists. Please try again.');
         }
 
-        // Insert into affiliate table
         console.log('Inserting into affiliate table...');
         const { error: dbError } = await sb.from('affiliate').insert({
           id: authData.user.id,
@@ -213,7 +215,7 @@
         }
         */
 
-        status.innerText = 'Application submitted! Check your email for confirmation.';
+        status.innerText = 'Signup successful! Check your email for confirmation.';
         status.style.color = '#2ecc71';
         form.reset();
       } catch (err) {
