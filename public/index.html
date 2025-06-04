@@ -218,13 +218,18 @@
       display: flex;
       gap: 15px;
       list-style: none;
+      overflow-x: auto;
+      white-space: nowrap;
+    }
+    #desktop-links li {
+      flex-shrink: 0;
     }
     #desktop-links li a {
       font-weight: 500;
-      padding: 6px 10px; /* Adjusted for more links to fit */
+      padding: 8px 12px;
       border-radius: 4px;
       transition: background 0.3s, transform 0.3s;
-      font-size: 0.95rem; /* Slightly smaller */
+      white-space: nowrap;
     }
     #desktop-links li a:hover {
       background: rgba(255, 215, 0, 0.2);
@@ -264,7 +269,7 @@
       border-radius: 8px;
       box-shadow: 0 2px 8px var(--shadow);
       list-style: none;
-      min-width: 200px;
+      min-width: 220px;
       z-index: 160;
     }
     #more-menu li {
@@ -279,6 +284,7 @@
       color: var(--text);
       font-weight: 500;
       transition: background 0.2s;
+      white-space: nowrap;
     }
     #more-menu li a:hover {
       background: rgba(255, 215, 0, 0.2);
@@ -341,6 +347,7 @@
       color: var(--text);
       font-weight: 500;
       transition: color 0.3s, padding-left 0.3s;
+      white-space: nowrap;
     }
     #menu-list a:hover {
       color: var(--gold);
@@ -657,15 +664,16 @@
       justify-content: center;
       align-items: center;
       gap: 10px;
+      flex-wrap: wrap;
     }
     #gold-price {
-      font-size: 2rem;
+      font-size: 2.2rem;
       font-weight: 700;
       color: var(--text);
       transition: color 0.5s;
     }
     .price-change {
-      font-size: 1rem;
+      font-size: 1.1rem;
       font-weight: 500;
       color: var(--text);
       transition: color 0.5s;
@@ -706,7 +714,7 @@
        ========================================================================== */
     #gold-chart {
       width: 100%;
-      height: 100vh; /* Increased from 90vh */
+      height: 100vh; /* Fully expanded for maximum visibility */
       margin: 20px auto;
       position: relative;
       background: var(--accent);
@@ -734,6 +742,7 @@
       padding: 8px 20px;
       transition: all 0.3s;
       cursor: pointer;
+      white-space: nowrap;
     }
     .chart-toggle button.active,
     .chart-toggle button:hover {
@@ -846,15 +855,26 @@
       transition: transform 0.3s, background 0.3s;
       text-decoration: none;
       box-shadow: 0 2px 8px var(--shadow);
+      /* Enhanced styling for more elegance */
+      border: 1px solid var(--gold-dark);
     }
     .chat-btns a:hover {
       transform: scale(1.05);
+      background: var(--gold-dark);
     }
     .chat-btns .whatsapp {
       background: var(--chat-whatsapp);
+      border: 1px solid #128c7e;
     }
     .chat-btns .telegram {
       background: var(--chat-telegram);
+      border: 1px solid #005f99;
+    }
+    .chat-btns i {
+      font-size: 1.3rem;
+    }
+    .chat-btns span {
+      font-size: 1rem;
     }
 
     /* ==========================================================================
@@ -884,7 +904,7 @@
         flex-direction: column;
       }
       #gold-chart {
-        height: 70vh; /* Adjusted from 60vh */
+        height: 60vh;
       }
       #economic-calendar {
         padding: 0.5rem;
@@ -915,9 +935,10 @@
         padding: 8px 12px;
       }
       #tradingview_fullscreen {
-        height: 400px; /* Increased from 300px */
+        height: 300px;
       }
     }
+
   </style>
 </head>
 <body id="top">
@@ -1219,13 +1240,27 @@
   <!-- Particles.js -->
   <script src="https://cdn.jsdelivr.net/npm/particles.js@2.0.0/particles.min.js"></script>
 
+  <!-- Smartsupp Live Chat script -->
+  <script type="text/javascript">
+    var _smartsupp = _smartsupp || {};
+    _smartsupp.key = '018a8bbd868518221e725341a7b2601231ec7ce8';
+    window.smartsupp || (function(d) {
+      var s, c, o = smartsupp = function() { o._.push(arguments) }; o._ = [];
+      s = d.getElementsByTagName('script')[0]; c = d.createElement('script');
+      c.type = 'text/javascript'; c.charset = 'utf-8'; c.async = true;
+      c.src = 'https://www.smartsuppchat.com/loader.js?'; s.parentNode.insertBefore(c, s);
+    })(document);
+  </script>
+
   <script>
     /**********************************************************
      * API KEYS (⚠️ Move these server-side in production!)
+     * Using GoldAPI.io for Live Gold Price
      **********************************************************/
-    const EXCHANGE_RATE_API_KEY = "4e4307b2bf8daac15365a410";
+    const GOLDAPI_KEY = "goldapi-2449msmbh6lmp8-io";
     const NEWS_API_KEY = "6de81d54e02e45f8a5546a827c70ab28";
-    const ALPHA_KEY = "9TLZDSNS2GN22EQV"; // Alpha Vantage
+    // Exchange rate API still used for currency converter
+    const EXCHANGE_RATE_API_KEY = "4e4307b2bf8daac15365a410";
 
     /**********************************************************
      * INTERSECTION OBSERVER FOR SLIDE-IN ANIMATIONS
@@ -1505,18 +1540,19 @@
     }
 
     /**********************************************************
-     * LIVE GOLD PRICE (Replacing Crypto)
+     * LIVE GOLD PRICE (Using GoldAPI.io)
      **********************************************************/
     let prevGoldPrice = null;
     async function loadGoldPrice() {
       try {
-        const res = await fetch(
-          `https://v6.exchangerate-api.com/v6/${EXCHANGE_RATE_API_KEY}/pair/XAU/USD`
-        );
+        const res = await fetch("https://www.goldapi.io/api/XAU/USD", {
+          headers: {
+            "x-access-token": GOLDAPI_KEY,
+            "Content-Type": "application/json",
+          },
+        });
         const data = await res.json();
-        const price = data.conversion_rate
-          ? parseFloat(data.conversion_rate.toFixed(2))
-          : null;
+        const price = data.price ? parseFloat(data.price) : null;
         const goldEl = document.getElementById("gold-price");
         const changeEl = document.getElementById("price-change");
         if (price !== null) {
@@ -1541,7 +1577,7 @@
               changeEl.classList.remove("price-up", "price-down");
             }
           }
-          goldEl.textContent = `$${price}`;
+          goldEl.textContent = `$${price.toFixed(2)}`;
           prevGoldPrice = price;
         } else {
           goldEl.textContent = "N/A";
@@ -1593,7 +1629,7 @@
         time: "09:00",
         currency: "AUD",
         event: "Employment Change",
-        impact: "Medium",
+        impact: "Medium",  
       },
     ];
     let currentEventIndex = 0;
@@ -1684,16 +1720,23 @@
     });
   </script>
 
-  <!-- Smartsupp Live Chat script -->
-  <script type="text/javascript">
-  var _smartsupp = _smartsupp || {};
-  _smartsupp.key = '018a8bbd868518221e725341a7b2601231ec7ce8';
-  window.smartsupp||(function(d) {
-    var s,c,o=smartsupp=function(){ o._.push(arguments)};o._=[];
-    s=d.getElementsByTagName('script')[0];c=d.createElement('script');
-    c.type='text/javascript';c.charset='utf-8';c.async=true;
-    c.src='https://www.smartsuppchat.com/loader.js?';s.parentNode.insertBefore(c,s);
-  })(document);
-  </script>
+  <!-- ==========================================================================
+       NAVIGATION LIST (FOR REFERENCE - DO NOT DELETE)
+       =============================================================================
+       Home                → index.html
+       About               → about.html
+       Services            → services.html
+       Trade Insights      → CBE_trade_insights_public.html
+       FAQ                 → FAQ.html
+       Apex Income Options → apex-income-options.html
+       VIP Subscription    → vip-subscription.html
+       Apply               → CBE_apply.html
+       Capital Accelerator → capital-support.html
+       Contact             → CBE_contact.html
+       Testimonials        → testimonials.html
+       Affiliate Signup    → affiliate_signup.html
+       Affiliate Login     → affiliate_login.html
+       User Login          → login.html
+     ============================================================================ -->
 </body>
 </html>
