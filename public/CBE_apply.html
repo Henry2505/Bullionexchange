@@ -12,7 +12,7 @@
     rel="stylesheet"
   />
 
-  <!-- Supabase JS (for referral‑code lookup) -->
+  <!-- Supabase JS (for referral‐code lookup only) -->
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js/dist/umd/supabase.min.js"></script>
 
   <style>
@@ -89,6 +89,7 @@
       top: 0;
       left: 0;
       z-index: 1000;
+      background: var(--bg);
     }
 
     .logo img {
@@ -326,22 +327,19 @@
   </div>
 
   <script>
-    // ─── Supabase client for referral‑code lookup ─────────────────────────────────
-    // Only the ANON key is needed here to validate a referral code.
+    // ─── Supabase client for referral‑code lookup only ────────────────────────────
     const SUPA_URL = "https://dapwpgvnfjcfqqhrpxla.supabase.co";
     const SUPA_ANON_KEY =
       "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9." +
-      "eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImRhcHdwZ3ZuZmpjZnFxaHJweGxhIiwicm9sZSI6IkFub24iLCJpYXQiOjE3NDcwNDA4ODgsImV4cCI6MjA2MjYxNjg4OH0." +
+      "eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6IkFub24iLCJpYXQiOjE3NDcwNDA4ODgsImV4cCI6IkFub24iLCJpZXQiOjIwNjI2MTY4ODh9." +
       "ICC0UsLlzJDNre7rFCeD3k6iVzo6jOJgn3PhABpEMsQ";
     const supabaseClient = supabase.createClient(SUPA_URL, SUPA_ANON_KEY);
 
-    // ─── Helper: read “ref” param from URL ─────────────────────────────────────────────
     function getReferralFromURL() {
       const params = new URLSearchParams(window.location.search);
       return params.get("ref") || null;
     }
 
-    // ─── Theme & card animation ──────────────────────────────────────────────────────
     document.addEventListener("DOMContentLoaded", () => {
       // 1) Set saved theme (dark or light)
       const savedTheme = localStorage.getItem("theme") || "dark";
@@ -349,11 +347,11 @@
       document.getElementById("theme-toggle").textContent =
         savedTheme === "dark" ? "🌞" : "🌜";
 
-      // 2) Fade-in the card
+      // 2) Show the card
       const card = document.getElementById("apply-card");
       card.classList.add("visible");
 
-      // 3) If URL includes “?ref=CODE”, auto-fill referral field & show a note
+      // 3) If URL has “?ref=CODE”, autofill referral & show note
       const refCodeURL = getReferralFromURL();
       if (refCodeURL) {
         document.getElementById("referral-note").textContent =
@@ -362,7 +360,6 @@
       }
     });
 
-    // ─── Theme toggle button ──────────────────────────────────────────────────────────
     const toggleBtn = document.getElementById("theme-toggle");
     toggleBtn.addEventListener("click", () => {
       const current = document.documentElement.getAttribute("data-theme");
@@ -372,13 +369,12 @@
       toggleBtn.textContent = next === "dark" ? "🌞" : "🌜";
     });
 
-    // ─── Form handling ─────────────────────────────────────────────────────────────────
     const form = document.getElementById("apply-form");
     const agree = document.getElementById("agree-terms");
     const submitBtn = document.getElementById("submit-btn");
     const alertDiv = document.getElementById("apply-alert");
 
-    // Enable “Submit” only when terms are checked
+    // Enable “Submit” only once terms are checked
     agree.addEventListener("change", () => {
       const canSubmit = agree.checked;
       submitBtn.disabled = !canSubmit;
@@ -390,7 +386,7 @@
       alertDiv.textContent = "";
       alertDiv.style.color = "";
 
-      // Gather form values:
+      // Collect form fields
       const name       = document.getElementById("apply-name").value.trim();
       const email      = document.getElementById("apply-email").value.trim().toLowerCase();
       const password   = document.getElementById("apply-password").value;
@@ -398,7 +394,7 @@
       const experience = document.getElementById("apply-message").value.trim();
       const manualRef  = document.getElementById("apply-referral").value.trim();
 
-      // ─── Basic validation ────────────────────────────────────────────────────────────
+      // 1) Basic validation
       if (!name || !email || !password || !phone || !experience) {
         alertDiv.style.color = "var(--error-color)";
         alertDiv.textContent = "Please complete all required fields.";
@@ -415,16 +411,16 @@
         return;
       }
 
-      // Disable button while submitting:
+      // 2) Disable button while submitting
       submitBtn.disabled = true;
       submitBtn.textContent = "Submitting…";
 
       try {
-        // 1) Determine referral code: manual input first, else URL param, else null
+        // Determine referral code priority: manual input first, else URL param
         const urlRef = getReferralFromURL();
         const referralCodeToUse = manualRef || urlRef || null;
 
-        // 2) If a code exists, validate it → get `user_id`
+        // If referral code exists, validate it → fetch user_id
         let referredByUserId = null;
         if (referralCodeToUse) {
           const { data: affiliateRow, error: checkErr } = await supabaseClient
@@ -469,6 +465,7 @@
         }
 
         if (!fnResponse.ok) {
+          // Show the detailed error if returned
           const errorMsg = fnResult?.error || JSON.stringify(fnResult) || "Unknown server error.";
           alertDiv.style.color = "var(--error-color)";
           alertDiv.textContent = `Error: ${errorMsg}`;
@@ -481,6 +478,7 @@
         form.reset();
         agree.checked = false;
         submitBtn.classList.remove("enabled");
+
       } catch (err) {
         console.error("Submission error:", err);
       } finally {
