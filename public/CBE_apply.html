@@ -331,7 +331,7 @@
     const SUPA_URL = "https://dapwpgvnfjcfqqhrpxla.supabase.co";
     const SUPA_ANON_KEY =
       "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9." +
-      "eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6IkFub24iLCJpYXQiOjE3NDcwNDA4ODgsImV4cCI6IkFub24iLCJpZXQiOjIwNjI2MTY4ODh9." +
+      "eyJpc3MiOiJzdXBhYmFzZSIsInJlYiI6IkFub24iLCJpYXQiOjE3NDcwNDA4ODgsIlN1cGFiYXNlIn0." +
       "ICC0UsLlzJDNre7rFCeD3k6iVzo6jOJgn3PhABpEMsQ";
     const supabaseClient = supabase.createClient(SUPA_URL, SUPA_ANON_KEY);
 
@@ -341,32 +341,29 @@
     }
 
     document.addEventListener("DOMContentLoaded", () => {
-      // 1) Set saved theme (dark or light)
+      // 1) Apply saved theme (dark/light)
       const savedTheme = localStorage.getItem("theme") || "dark";
       document.documentElement.setAttribute("data-theme", savedTheme);
-      document.getElementById("theme-toggle").textContent =
-        savedTheme === "dark" ? "🌞" : "🌜";
+      document.getElementById("theme-toggle").textContent = savedTheme === "dark" ? "🌞" : "🌜";
 
-      // 2) Show the card
+      // 2) Fade-in the card
       const card = document.getElementById("apply-card");
       card.classList.add("visible");
 
-      // 3) If URL has “?ref=CODE”, autofill referral & show note
+      // 3) If “?ref=CODE” in URL, show it and autofill “apply-referral”
       const refCodeURL = getReferralFromURL();
       if (refCodeURL) {
-        document.getElementById("referral-note").textContent =
-          "You were referred by: " + refCodeURL;
+        document.getElementById("referral-note").textContent = "You were referred by: " + refCodeURL;
         document.getElementById("apply-referral").value = refCodeURL;
       }
     });
 
-    const toggleBtn = document.getElementById("theme-toggle");
-    toggleBtn.addEventListener("click", () => {
+    document.getElementById("theme-toggle").addEventListener("click", () => {
       const current = document.documentElement.getAttribute("data-theme");
       const next = current === "dark" ? "light" : "dark";
       document.documentElement.setAttribute("data-theme", next);
       localStorage.setItem("theme", next);
-      toggleBtn.textContent = next === "dark" ? "🌞" : "🌜";
+      document.getElementById("theme-toggle").textContent = next === "dark" ? "🌞" : "🌜";
     });
 
     const form = document.getElementById("apply-form");
@@ -374,7 +371,7 @@
     const submitBtn = document.getElementById("submit-btn");
     const alertDiv = document.getElementById("apply-alert");
 
-    // Enable “Submit” only once terms are checked
+    // Enable the “Submit” button only when terms are checked
     agree.addEventListener("change", () => {
       const canSubmit = agree.checked;
       submitBtn.disabled = !canSubmit;
@@ -386,15 +383,15 @@
       alertDiv.textContent = "";
       alertDiv.style.color = "";
 
-      // Collect form fields
-      const name       = document.getElementById("apply-name").value.trim();
-      const email      = document.getElementById("apply-email").value.trim().toLowerCase();
-      const password   = document.getElementById("apply-password").value;
-      const phone      = document.getElementById("apply-phone").value.trim();
+      // Gather form values
+      const name = document.getElementById("apply-name").value.trim();
+      const email = document.getElementById("apply-email").value.trim().toLowerCase();
+      const password = document.getElementById("apply-password").value;
+      const phone = document.getElementById("apply-phone").value.trim();
       const experience = document.getElementById("apply-message").value.trim();
-      const manualRef  = document.getElementById("apply-referral").value.trim();
+      const manualRef = document.getElementById("apply-referral").value.trim();
 
-      // 1) Basic validation
+      // ─── Basic validation ────────────────────────────────────────────────────
       if (!name || !email || !password || !phone || !experience) {
         alertDiv.style.color = "var(--error-color)";
         alertDiv.textContent = "Please complete all required fields.";
@@ -411,16 +408,16 @@
         return;
       }
 
-      // 2) Disable button while submitting
+      // Disable the button while we submit
       submitBtn.disabled = true;
       submitBtn.textContent = "Submitting…";
 
       try {
-        // Determine referral code priority: manual input first, else URL param
+        // 1) Determine which referral code to use
         const urlRef = getReferralFromURL();
         const referralCodeToUse = manualRef || urlRef || null;
 
-        // If referral code exists, validate it → fetch user_id
+        // 2) If referralCodeToUse exists, look up its affiliate’s user_id
         let referredByUserId = null;
         if (referralCodeToUse) {
           const { data: affiliateRow, error: checkErr } = await supabaseClient
@@ -436,7 +433,7 @@
             submitBtn.textContent = "Submit Application";
             return;
           }
-          referredByUserId = affiliateRow.user_id; // UUID of the affiliate
+          referredByUserId = affiliateRow.user_id; // this is a UUID
         }
 
         // 3) Build payload for Netlify function
@@ -447,10 +444,10 @@
           phone: phone,
           experience: experience,
           referral_code: referralCodeToUse,
-          referred_by: referredByUserId
+          referred_by: referredByUserId,
         };
 
-        // 4) Call Netlify function
+        // 4) Call Netlify function:
         const fnResponse = await fetch("/.netlify/functions/send-application", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
@@ -465,20 +462,19 @@
         }
 
         if (!fnResponse.ok) {
-          // Show the detailed error if returned
+          // Show the error returned by our function
           const errorMsg = fnResult?.error || JSON.stringify(fnResult) || "Unknown server error.";
           alertDiv.style.color = "var(--error-color)";
           alertDiv.textContent = `Error: ${errorMsg}`;
           throw new Error(errorMsg);
         }
 
-        // 5) Success
+        // 5) Success!
         alertDiv.style.color = "var(--success-color)";
         alertDiv.textContent = fnResult.message || "Application submitted successfully!";
         form.reset();
         agree.checked = false;
         submitBtn.classList.remove("enabled");
-
       } catch (err) {
         console.error("Submission error:", err);
       } finally {
