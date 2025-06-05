@@ -464,7 +464,7 @@
     /* ==========================================================================
        VIDEO SECTION (replacing About CBE)
        ========================================================================== */
-    /* No additional styles needed beyond the container and video inline styles */
+    /* No additional CSS needed beyond container and video inline styles */
 
     /* ==========================================================================
        VIP PLANS SECTION
@@ -709,15 +709,23 @@
     #gold-chart-section {
       margin-top: 20px;
     }
+    /* Wrapped container styling for black & gold frame */
+    #gold-chart-wrapper {
+      max-width: 1000px;
+      margin: 0 auto;
+      background: #000;
+      padding: 10px;
+      border: 2px solid var(--gold);
+      border-radius: 8px;
+      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.5);
+    }
     #chart-container {
       width: 100%;
-      /* Reduced from 200vh to 90vh */
-      height: 90vh;
+      height: 400px; /* Reduced height to align better */
       position: relative;
       background: var(--accent);
-      border-radius: 10px;
+      border-radius: 6px;
       overflow: hidden;
-      box-shadow: 0 4px 20px var(--shadow);
     }
     #tradingview_fullscreen {
       width: 100%;
@@ -905,7 +913,7 @@
         flex-direction: column;
       }
       #chart-container {
-        height: 80vh; /* Adjusted slightly for mobile */
+        height: 300px; /* Adjusted for mobile */
       }
       #economic-calendar {
         padding: 0.5rem;
@@ -1041,14 +1049,13 @@
       ">
       <video
         id="cbe-intro-video"
-        src="https://<YOUR_PROJECT_REF>.supabase.co/storage/v1/object/public/public-videos/intro.mov"
         controls
         autoplay
         muted
         loop
         style="width:100%; display:block; border-radius:6px; background:#000;"
       >
-        <source src="https://<YOUR_PROJECT_REF>.supabase.co/storage/v1/object/public/public-videos/intro.mov" type="video/quicktime" />
+        <source src="https://dapwpgvnfjcfqqhrpxla.supabase.co/storage/v1/object/public/public-videos/intro.mov" type="video/quicktime" />
         Your browser doesn’t support the video tag.
       </video>
     </div>
@@ -1127,21 +1134,22 @@
       <span id="gold-price">--</span>
       <span id="price-change" class="price-change">--</span>
     </div>
-    <!-- New “Last updated” line -->
     <div id="gold-last-updated">Last updated: --</div>
   </section>
 
   <!-- LIVE GOLD CHART SECTION -->
   <section id="gold-chart-section" class="slide-in">
     <h2><i class="fas fa-chart-line"></i> Live Gold Chart</h2>
-    <div id="chart-container">
+    <div id="gold-chart-wrapper">
       <div class="chart-toggle">
         <button data-interval="60" class="active">1H</button>
         <button data-interval="240">4H</button>
         <button data-interval="D">1D</button>
         <button data-interval="W">1W</button>
       </div>
-      <div id="tradingview_fullscreen"></div>
+      <div id="chart-container">
+        <div id="tradingview_fullscreen"></div>
+      </div>
     </div>
   </section>
 
@@ -1245,13 +1253,12 @@
   </script>
 
   <script>
-    // ← Only this line was changed previously (new API key)
     const GOLDAPI_KEY = "goldapi-b1asmbhbrz5g-io";
     const NEWS_API_KEY = "6de81d54e02e45f8a5546a827c70ab28";
     const EXCHANGE_RATE_API_KEY = "4e4307b2bf8daac15365a410";
 
     document.addEventListener("DOMContentLoaded", () => {
-      // Slide-in animation setup
+      // Slide‑in animation
       const slideEls = document.querySelectorAll(".slide-in");
       slideEls.forEach((el) => {
         const io = new IntersectionObserver(
@@ -1268,7 +1275,7 @@
         io.observe(el);
       });
 
-      // Navigation toggle (mobile)
+      // Mobile nav toggle
       const toggle = document.getElementById("menu-toggle");
       const menu = document.getElementById("menu-list");
       toggle.addEventListener("click", () => {
@@ -1277,16 +1284,14 @@
         toggle.classList.toggle("active");
         menu.classList.toggle("active");
       });
-      // Mobile dropdown for Affiliates
       document.querySelectorAll("#menu-list .dropdown-mobile > a").forEach((btn) => {
         btn.addEventListener("click", (e) => {
           e.preventDefault();
-          const parentLi = btn.parentElement;
-          parentLi.classList.toggle("expanded");
+          btn.parentElement.classList.toggle("expanded");
         });
       });
 
-      // Initial fallback for news (so first load is immediate)
+      // Fallback for news tickers
       const goldContainer = document.getElementById("gold-ticker-content");
       const econContainer = document.getElementById("econ-ticker-content");
       const goldFallback = [
@@ -1301,7 +1306,6 @@
         "China manufacturing PMI drops slightly",
         "UK inflation data surprises economists",
       ];
-      // Populate fallback immediately
       goldContainer.innerHTML = "";
       goldFallback.forEach((text) => {
         const a = document.createElement("a");
@@ -1317,13 +1321,13 @@
         econContainer.appendChild(a);
       });
 
-      // Load news tickers (then overwrite fallback)
+      // Load news tickers
       loadGoldTicker();
       loadEconTicker();
       setInterval(loadGoldTicker, 60 * 1000);
       setInterval(loadEconTicker, 60 * 1000);
 
-      // Live Gold Price
+      // Live gold price
       loadGoldPrice();
       setInterval(loadGoldPrice, 5000);
 
@@ -1331,11 +1335,11 @@
       rotateEvents();
       setInterval(rotateEvents, 5000);
 
-      // Local time display
+      // Local time
       updateLocalTime();
       setInterval(updateLocalTime, 1000);
 
-      // Initialize TradingView chart
+      // TradingView chart
       initGoldChart();
       document.querySelectorAll(".chart-toggle button").forEach((btn) => {
         btn.addEventListener("click", () => {
@@ -1348,7 +1352,7 @@
       // Currency converter
       document.getElementById("convert-btn").addEventListener("click", convertCurrency);
 
-      // Back-to-top button behavior
+      // Back‑to‑top
       const backToTop = document.getElementById("back-to-top");
       window.addEventListener("scroll", () => {
         if (window.scrollY > window.innerHeight / 2) {
@@ -1385,7 +1389,7 @@
       themeBtn.textContent = saved === "dark" ? "🌞" : "🌜";
     })();
 
-    // Load gold news and overwrite fallback
+    // Load gold news
     async function loadGoldTicker() {
       const container = document.getElementById("gold-ticker-content");
       try {
@@ -1404,10 +1408,10 @@
         });
       } catch (err) {
         console.error("Gold news error:", err);
-        // fallback remains visible
       }
     }
 
+    // Load economic news
     async function loadEconTicker() {
       const container = document.getElementById("econ-ticker-content");
       try {
@@ -1426,18 +1430,16 @@
         });
       } catch (err) {
         console.error("Economic news error:", err);
-        // fallback remains visible
       }
     }
 
-    // Live gold price using GoldAPI.io
+    // Live gold price
     let prevGoldPrice = null;
     async function loadGoldPrice() {
       const goldEl = document.getElementById("gold-price");
       const changeEl = document.getElementById("price-change");
       const updatedEl = document.getElementById("gold-last-updated");
 
-      // 2. Show last known price from localStorage before fetch completes
       const cached = localStorage.getItem("cachedGoldPrice");
       if (cached) {
         goldEl.textContent = `$${parseFloat(cached).toFixed(2)}`;
@@ -1453,7 +1455,6 @@
         const data = await res.json();
         const price = data.price ? parseFloat(data.price) : null;
         if (price !== null) {
-          // Store new price into localStorage
           localStorage.setItem("cachedGoldPrice", price);
           if (prevGoldPrice !== null) {
             const diff = price - prevGoldPrice;
@@ -1476,7 +1477,6 @@
           }
           goldEl.textContent = `$${price.toFixed(2)}`;
           prevGoldPrice = price;
-          // Update “Last updated” to local time
           const now = new Date();
           updatedEl.textContent = `Last updated: ${now.toLocaleTimeString("en-US", {
             hour: "numeric",
@@ -1549,7 +1549,7 @@
       timeEl.textContent = formatted;
     }
 
-    // Initialize TradingView gold chart
+    // Initialize TradingView gold chart (without RSI/MACD)
     function initGoldChart(interval = "60") {
       const theme = document.documentElement.getAttribute("data-theme");
       document.getElementById("tradingview_fullscreen").innerHTML = "";
@@ -1566,8 +1566,8 @@
         allow_symbol_change: true,
         hide_side_toolbar: false,
         withdateranges: true,
-        details: true,
-        studies: ["MACD@tv-basicstudies", "RSI@tv-basicstudies"],
+        details: true
+        // Removed studies array to show only the gold chart
       });
     }
 
