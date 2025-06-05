@@ -1,201 +1,136 @@
 // netlify/functions/send-application.js
 
-/**
- * This function expects a POST with JSON fields:
- *   {
- *     name: string,
- *     email: string,
- *     password: string,
- *     phone: string,
- *     experience: string,
- *     referral_code: string | null,
- *     referred_by: string (UUID) | null
- *   }
- *
- * It will:
- *   1) Create a Supabase Auth user (so they can log in later)
- *   2) Insert the same information into public.users (so your referrals + earnings jump‐trigger works)
- *   3) Optionally queue a Brevo email (templateId=10, using BREVO_API key)
- *   4) Return 200 if everything succeeded, or 4xx/5xx otherwise.
- */
-
-const fetch = require("node-fetch");
-
 exports.handler = async function (event, context) {
+  // Only allow POST
+  if (event.httpMethod !== "POST") {
+    return { statusCode: 405, body: JSON.stringify({ error: "Method not allowed" }) };
+  }
+
+  // Parse the incoming JSON payload
+  let payload;
   try {
-    // Only POST is allowed
-    if (event.httpMethod !== "POST") {
-      return { statusCode: 405, body: "Method Not Allowed" };
-    }
+    payload = JSON.parse(event.body);
+  } catch (err) {
+    return { statusCode: 400, body: JSON.stringify({ error: "Invalid JSON payload." }) };
+  }
 
-    // Parse JSON body
-    let body;
-    try {
-      body = JSON.parse(event.body);
-    } catch (err) {
-      return {
-        statusCode: 400,
-        body: JSON.stringify({ error: "Invalid JSON" }),
-      };
-    }
+  const {
+    name,
+    email,
+    password,
+    phone,
+    experience,
+    referral_code = null,
+    referred_by = null,
+  } = payload;
 
-    const {
-      name,
-      email,
-      password,
-      phone,
-      experience,
-      referral_code,
-      referred_by,
-    } = body;
+  // Basic server‑side validation
+  if (!name || !email || !password || !phone || !experience) {
+    return {
+      statusCode: 400,
+      body: JSON.stringify({ error: "Missing required fields." }),
+    };
+  }
 
-    // Validate required fields
-    if (!name || !email || !password || !phone || !experience) {
-      return {
-        statusCode: 400,
-        body: JSON.stringify({ error: "Missing required fields." }),
-      };
-    }
+  // Initialize Supabase client using Service Role Key (has full insert/delete rights)
+  const SUPABASE_URL = process.env.SUPABASE_URL;
+  const SUPABASE_SERVICE_KEY = process.env.SUPABASE_SERVICE_KEY;
+  if (!SUPABASE_URL || !SUPABASE_SERVICE_KEY) {
+    return {
+      statusCode: 500,
+      body: JSON.stringify({ error: "Supabase credentials not configured." }),
+    };
+  }
 
-    // Load environment variables
-    const SUPA_URL = "https://dapwpgvnfjcfqqhrpxla.supabase.co";
-    const SUPA_KEY = process.env.SUPA_KEY; // This must be your Supabase service‐role key
-    const BREVO_API = process.env.BREVO_API; // your Brevo API key
-    const BREVO_TEMPLATE_ID = process.env.BREVO_TEMPLATE_ID; // e.g. "10"
+  const { createClient } = require("@supabase/supabase-js");
+  const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_KEY);
 
-    if (!SUPA_KEY) {
-      console.error("❌ Missing SUPA_KEY env var");
-      return {
-        statusCode: 500,
-        body: JSON.stringify({ error: "Server configuration error" }),
-      };
-    }
+  try {
+    // 1) Insert into public.users
+    const { data: insertedUser, error: insertErr } = await supabase
+      .from("users")
+      .insert([
+        {
+          name,
+          email,
+          password,
+          phone,
+          experience,
+          referral_code,
+          referred_by,
+          status: "active", // default, but we explicitly set it
+        },
+      ])
+      .select("id") // return only the new id
+      .single();
 
-    // ----------------------------------------------------
-    // 1) Create a Supabase Auth user
-    // ----------------------------------------------------
-    // We do this via Supabase’s Admin (service‐role) REST endpoint:
-    const signUpResp = await fetch(`${SUPA_URL}/auth/v1/admin/users`, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        apikey: SUPA_KEY,
-        Authorization: `Bearer ${SUPA_KEY}`,
-      },
-      body: JSON.stringify({
-        email: email.toLowerCase(),
-        password: password,
-        email_confirm: true, // auto‐confirm to avoid email confirmations
-      }),
-    });
-
-    const signUpJson = await signUpResp.json();
-    if (!signUpResp.ok) {
-      console.error("❌ Supabase Auth error:", signUpJson);
-      return {
-        statusCode: 400,
-        body: JSON.stringify({
-          error: "Failed to create authentication user.",
-          details: signUpJson,
-        }),
-      };
-    }
-
-    // We now have a new Auth user.  Grab their “id” (UUID).
-    const newAuthUserId = signUpJson.id;
-    console.log("✅ Auth user created with id:", newAuthUserId);
-
-    // ----------------------------------------------------
-    // 2) Insert into public.users (profile table)
-    // ----------------------------------------------------
-    const insertResp = await fetch(`${SUPA_URL}/rest/v1/users`, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        apikey: SUPA_KEY,
-        Authorization: `Bearer ${SUPA_KEY}`,
-        Prefer: "return=representation", // returns the inserted row
-      },
-      body: JSON.stringify({
-        id: newAuthUserId,           // use the same UUID as Auth
-        full_name: name,
-        email: email.toLowerCase(),
-        password: password,
-        phone: phone,
-        experience: experience,
-        referral_code: referral_code || null,
-        referred_by: referred_by || null,
-        // created_at will be filled automatically by DEFAULT NOW()
-      }),
-    });
-
-    const insertJson = await insertResp.json();
-    if (!insertResp.ok) {
-      console.error("❌ Supabase insert error:", insertJson);
+    if (insertErr) {
+      console.error("Insert user error:", insertErr);
       return {
         statusCode: 500,
-        body: JSON.stringify({
-          error: "Database error saving application",
-          details: insertJson,
-        }),
+        body: JSON.stringify({ error: insertErr.message }),
       };
     }
 
-    console.log("✅ Inserted into public.users:", insertJson);
+    const newUserId = insertedUser.id;
 
-    // ----------------------------------------------------
-    // 3) Optionally queue a Brevo email (if creds provided)
-    // ----------------------------------------------------
-    if (BREVO_API && BREVO_TEMPLATE_ID) {
-      try {
-        const brevoPayload = {
-          sender: {
-            name: "CBE Global – Applications",
-            email: "noreply@apexincomeoptions.com.ng",
-          },
-          to: [{ email: email.toLowerCase(), name: name }],
-          templateId: Number(BREVO_TEMPLATE_ID),
-          params: {
-            fullname: name,
-            applicationId: insertJson[0]?.id || "",
-            referral_code: referral_code || "",
-            // any other dynamic params your Brevo template needs
-          },
-        };
-        const brevoRes = await fetch("https://api.brevo.com/v3/smtp/email", {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            "api-key": BREVO_API.trim(),
-          },
-          body: JSON.stringify(brevoPayload),
-        });
-        const brevoJson = await brevoRes.json();
-        if (!brevoRes.ok) {
-          console.error("❌ Brevo error response:", brevoJson);
-        } else {
-          console.log("✅ Brevo email queued:", brevoJson);
-        }
-      } catch (brevoErr) {
-        console.error("❌ Error calling Brevo:", brevoErr);
+    // 2) Optionally: If this new user should also become an affiliate themselves
+    //    (uncomment below if you want every new user to also get an entry in public.affiliates)
+    // const { error: affErr } = await supabase
+    //   .from("affiliates")
+    //   .insert([{ user_id: newUserId, referral_code: generateRandomCode() }]);
+    // if (affErr) console.error("Failed to auto‑create affiliate row:", affErr);
+
+    // 3) Send a welcome / confirmation email via Brevo
+    const BREVO_API = process.env.BREVO_API;
+    if (!BREVO_API) {
+      console.warn("BREVO_API not configured; skipping email send.");
+    } else {
+      // Build the Brevo “send‐template” request
+      const brevoPayload = {
+        templateId: 10,
+        to: [{ email: email, name: name }],
+        params: {
+          FIRSTNAME: name.split(" ")[0] || name,
+          /* you can add more template parameters here if needed */
+        },
+      };
+
+      const brevoRes = await fetch("https://api.sendinblue.com/v3/smtp/email", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "api-key": BREVO_API.trim(),
+        },
+        body: JSON.stringify(brevoPayload),
+      });
+      if (!brevoRes.ok) {
+        const brevoBody = await brevoRes.text();
+        console.error("Brevo send error:", brevoBody);
+        // We will not block the main flow if email fails; just log and continue.
       }
     }
 
-    // ----------------------------------------------------
-    // 4) Everything succeeded → return success message
-    // ----------------------------------------------------
+    // 4) Return success
     return {
       statusCode: 200,
-      body: JSON.stringify({
-        message: "Application saved successfully.",
-        data: insertJson,
-      }),
+      body: JSON.stringify({ message: "Application submitted successfully!" }),
     };
-  } catch (unhandledErr) {
-    console.error("❌ Unhandled error in send-application:", unhandledErr);
+  } catch (err) {
+    console.error("Unexpected error in send-application:", err);
     return {
       statusCode: 500,
-      body: JSON.stringify({ error: "Internal server error" }),
+      body: JSON.stringify({ error: "Unexpected server error." }),
     };
   }
 };
+
+// (Optional) Helper to generate a referral code for new affiliates
+// function generateRandomCode() {
+//   const chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
+//   let code = "";
+//   for (let i = 0; i < 8; i++) {
+//     code += chars.charAt(Math.floor(Math.random() * chars.length));
+//   }
+//   return code;
+// }
