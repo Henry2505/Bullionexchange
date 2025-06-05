@@ -10,7 +10,7 @@ exports.handler = async function(event, context) {
       };
     }
 
-    // 2) Parse request body
+    // 2) Parse JSON body
     let body;
     try {
       body = JSON.parse(event.body);
@@ -20,7 +20,18 @@ exports.handler = async function(event, context) {
         body: JSON.stringify({ error: "Invalid JSON" }),
       };
     }
-    const { name, email, password, phone, experience, referral_code, referred_by } = body;
+
+    const {
+      name,
+      email,
+      password,
+      phone,
+      experience,
+      referral_code,
+      referred_by
+    } = body;
+
+    // 3) Required fields
     if (!name || !email || !password || !phone || !experience) {
       return {
         statusCode: 400,
@@ -28,27 +39,27 @@ exports.handler = async function(event, context) {
       };
     }
 
-    // 3) Ensure SUPA_KEY is set
+    // 4) Check SUPA_KEY
     const SUPA_URL = "https://dapwpgvnfjcfqqhrpxla.supabase.co";
     const SUPA_KEY = process.env.SUPA_KEY;
     if (!SUPA_KEY) {
-      console.error("Missing SUPA_KEY env var");
+      console.error("❌ Missing SUPA_KEY env var");
       return {
         statusCode: 500,
         body: JSON.stringify({ error: "Server configuration error" }),
       };
     }
 
-    // 4) Insert into our custom 'users' table (or whatever your apply table is).
-    //    We assume you have a table called "users" with columns matching these fields.
-    //    If you instead use "@supabase/supabase-js", swap this out accordingly.
-    const insertResponse = await fetch(
-      `${SUPA_URL}/rest/v1/users`, {
+    // 5) Attempt to insert into public.users via REST
+    const insertResp = await fetch(
+      `${SUPA_URL}/rest/v1/users`, 
+      {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
           "apikey": SUPA_KEY,
           "Authorization": `Bearer ${SUPA_KEY}`,
+          // “Prefer: return=representation” returns the new row if successful
           "Prefer": "return=representation"
         },
         body: JSON.stringify({
@@ -62,21 +73,28 @@ exports.handler = async function(event, context) {
         })
       }
     );
-    const insertData = await insertResponse.json();
-    if (!insertResponse.ok) {
-      console.error("Supabase insert error:", insertData);
+
+    const insertData = await insertResp.json();
+
+    if (!insertResp.ok) {
+      // Log the exact Supabase error so you can see why it failed
+      console.error("❌ Supabase insert error:", insertData);
       return {
         statusCode: 500,
-        body: JSON.stringify({ error: "Database error saving application" }),
+        body: JSON.stringify({
+          error: "Database error saving application",
+          details: insertData
+        }),
       };
     }
 
-    // 5) Optionally send a confirmation email via Brevo
-    const BREVO_API   = process.env.BREVO_API;
-    const TEMPLATE_ID = process.env.BREVO_TEMPLATE_ID;
+    // 6) If we want, send a Brevo email (optional)
+    const BREVO_API    = process.env.BREVO_API;
+    const TEMPLATE_ID  = process.env.BREVO_TEMPLATE_ID;
     if (BREVO_API && TEMPLATE_ID) {
+      // Build the Brevo payload—adjust “params” to what your template expects
       const emailPayload = {
-        sender: {
+        sender: { 
           name: "CBE Global – Applications",
           email: "noreply@apexincomeoptions.com.ng"
         },
@@ -90,7 +108,7 @@ exports.handler = async function(event, context) {
       };
 
       try {
-        const brevoResp = await fetch("https://api.brevo.com/v3/smtp/email", {
+        const brevoRes = await fetch("https://api.brevo.com/v3/smtp/email", {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
@@ -98,25 +116,28 @@ exports.handler = async function(event, context) {
           },
           body: JSON.stringify(emailPayload)
         });
-        const brevoJson = await brevoResp.json();
-        if (!brevoResp.ok) {
-          console.error("Brevo send error:", brevoJson);
+        const brevoJson = await brevoRes.json();
+        if (!brevoRes.ok) {
+          console.error("❌ Brevo error:", brevoJson);
         } else {
-          console.log("✅ Brevo email queued:", brevoJson);
+          console.log("✅ Brevo email queued:", brevoJson);
         }
       } catch (brevoErr) {
-        console.error("Error calling Brevo:", brevoErr);
+        console.error("❌ Error calling Brevo:", brevoErr);
       }
     }
 
-    // 6) Return success to client
+    // 7) Return success
     return {
       statusCode: 200,
-      body: JSON.stringify({ message: "Application saved successfully", data: insertData }),
+      body: JSON.stringify({
+        message: "Application saved successfully",
+        data: insertData
+      }),
     };
 
   } catch (err) {
-    console.error("Unhandled error in send-application:", err);
+    console.error("❌ Unhandled error in send-application:", err);
     return {
       statusCode: 500,
       body: JSON.stringify({ error: "Internal server error" }),
