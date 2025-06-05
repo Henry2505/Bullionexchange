@@ -1,21 +1,11 @@
 // netlify/functions/send-affiliate-signup.js
 
-/**
- * - Creates a new Supabase Auth user (Service Role key).
- * - Generates an 8‑character referral_code.
- * - Inserts into public.affiliates (user_id, referral_code, created_at).
- * - Sends a Brevo email using templateId 10.
- *
- * Expects POST JSON: { email: string, password: string }
- * Returns 200 { message: "Signup successful! Check your inbox." }
- * or an error JSON { error: "<description>" } with appropriate status code.
- */
+// (1) No need to import 'node-fetch'—Netlify’s Node 18 runtime provides a global fetch.
+// const fetch = require('node-fetch');
 
-const fetch = require('node-fetch');
 const { createClient } = require('@supabase/supabase-js');
 
 exports.handler = async function (event, context) {
-  // Only allow POST
   if (event.httpMethod !== 'POST') {
     return {
       statusCode: 405,
@@ -23,7 +13,6 @@ exports.handler = async function (event, context) {
     };
   }
 
-  // 1) Parse JSON body
   let body;
   try {
     body = JSON.parse(event.body);
@@ -42,7 +31,6 @@ exports.handler = async function (event, context) {
     };
   }
 
-  // 2) Read environment variables
   const SUPA_URL = process.env.SUPABASE_URL;
   const SUPA_SERVICE_ROLE = process.env.SUPABASE_SERVICE_KEY;
   const BREVO_KEY = process.env.BREVO_API_KEY || process.env.BREVO_API;
@@ -60,12 +48,10 @@ exports.handler = async function (event, context) {
     };
   }
 
-  // 3) Initialize Supabase admin client
   const supabaseAdmin = createClient(SUPA_URL, SUPA_SERVICE_ROLE);
 
   let newUserId;
   try {
-    // 4) Create the Auth user
     const {
       data: { user: createdUser },
       error: authError,
@@ -77,7 +63,6 @@ exports.handler = async function (event, context) {
     });
 
     if (authError) {
-      console.error('Supabase auth error:', authError);
       return {
         statusCode: 400,
         body: JSON.stringify({
@@ -87,14 +72,12 @@ exports.handler = async function (event, context) {
     }
     newUserId = createdUser.id;
   } catch (err) {
-    console.error('Unexpected Supabase auth exception:', err);
     return {
       statusCode: 500,
       body: JSON.stringify({ error: 'Error while creating Auth user.' }),
     };
   }
 
-  // 5) Generate a random referral code (8 alphanumeric chars)
   function generateReferralCode() {
     const chars =
       'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
@@ -106,18 +89,17 @@ exports.handler = async function (event, context) {
   }
   const referralCode = generateReferralCode();
 
-  // 6) Insert into public.affiliates
   try {
-    const { error: insertError } = await supabaseAdmin.from('affiliates').insert([
-      {
-        user_id: newUserId,
-        referral_code: referralCode,
-      },
-    ]);
+    const { error: insertError } = await supabaseAdmin
+      .from('affiliates')
+      .insert([
+        {
+          user_id: newUserId,
+          referral_code: referralCode,
+        },
+      ]);
 
     if (insertError) {
-      console.error('Supabase insert error (affiliates):', insertError);
-      // Roll back the Auth user if insert fails
       await supabaseAdmin.auth.admin.deleteUser(newUserId);
       return {
         statusCode: 500,
@@ -127,8 +109,6 @@ exports.handler = async function (event, context) {
       };
     }
   } catch (err) {
-    console.error('Unexpected insert exception (affiliates):', err);
-    // Roll back the Auth user
     await supabaseAdmin.auth.admin.deleteUser(newUserId);
     return {
       statusCode: 500,
@@ -136,7 +116,6 @@ exports.handler = async function (event, context) {
     };
   }
 
-  // 7) Send a Brevo email using templateId 10
   const brevoPayload = {
     email: email.trim().toLowerCase(),
     templateId: 10,
@@ -147,6 +126,7 @@ exports.handler = async function (event, context) {
   };
 
   try {
+    // Use the global `fetch`—no need for node-fetch
     const brevoResponse = await fetch(
       'https://api.brevo.com/v3/smtp/email',
       {
@@ -160,16 +140,14 @@ exports.handler = async function (event, context) {
     );
     const brevoJson = await brevoResponse.json();
     if (!brevoResponse.ok) {
-      console.error('Brevo API error:', brevoJson);
       return {
         statusCode: 502,
         body: JSON.stringify({
-          error: brevoJson.message || 'Affiliate created, but email sending failed.',
+          error: brevoJson.message || 'Email sending failed.',
         }),
       };
     }
   } catch (err) {
-    console.error('Brevo fetch exception:', err);
     return {
       statusCode: 502,
       body: JSON.stringify({
@@ -178,7 +156,6 @@ exports.handler = async function (event, context) {
     };
   }
 
-  // 8) All done successfully
   return {
     statusCode: 200,
     body: JSON.stringify({
