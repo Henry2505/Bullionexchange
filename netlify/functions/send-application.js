@@ -1,108 +1,111 @@
-// netlify/functions/sendAffiliateSignupEmail.js
-
-import fetch from "node-fetch"; 
-// If your Netlify runtime already has a global fetch, you can remove the above import line.
+// netlify/functions/send-application.js
 
 exports.handler = async function(event, context) {
-  // Only accept POST requests
-  if (event.httpMethod !== "POST") {
-    return {
-      statusCode: 405,
-      body: "Method Not Allowed",
-    };
-  }
-
-  // 1) Parse the incoming JSON payload
-  let body;
   try {
-    body = JSON.parse(event.body);
-  } catch (err) {
-    return {
-      statusCode: 400,
-      body: "Invalid JSON",
-    };
-  }
-
-  const { email, firstName, token, referralCode } = body;
-  if (!email || !firstName || !token || !referralCode) {
-    return {
-      statusCode: 400,
-      body: "Missing one of: email, firstName, token, referralCode",
-    };
-  }
-
-  // 2) Build the Supabase confirmation URL from the token
-  const confirmationUrl = `https://dapwpgvnfjcfqqhrpxla.supabase.co/auth/v1/verify?token=${token}`;
-
-  // 3) Read Brevo credentials from environment (set in Netlify dashboard)
-  const BREVO_API    = process.env.BREVO_API;           // must match exactly
-  const TEMPLATE_ID  = process.env.BREVO_TEMPLATE_ID;   // should be "10"
-
-  if (!BREVO_API || typeof BREVO_API !== "string" || BREVO_API.trim() === "") {
-    console.error("❌ Missing or empty BREVO_API environment variable");
-    return {
-      statusCode: 500,
-      body: "Server configuration error: missing BREVO_API",
-    };
-  }
-  if (!TEMPLATE_ID || isNaN(Number(TEMPLATE_ID))) {
-    console.error("❌ Missing or invalid BREVO_TEMPLATE_ID environment variable");
-    return {
-      statusCode: 500,
-      body: "Server configuration error: missing BREVO_TEMPLATE_ID",
-    };
-  }
-
-  // 4) Prepare payload for Brevo’s SMTP API
-  const payload = {
-    sender: {
-      name: "CBE Support",
-      email: "noreply@apexincomeoptions.com.ng", // Must be a verified sender in Brevo
-    },
-    to: [
-      {
-        email: email,
-        name: firstName,
-      },
-    ],
-    templateId: Number(TEMPLATE_ID),
-    params: {
-      firstName: firstName,
-      confirmationUrl: confirmationUrl,
-      referralCode: referralCode,
-    },
-  };
-
-  // 5) Call Brevo endpoint
-  try {
-    const resp = await fetch("https://api.brevo.com/v3/smtp/email", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        "api-key": BREVO_API.trim(),
-      },
-      body: JSON.stringify(payload),
-    });
-
-    const data = await resp.json();
-    if (!resp.ok) {
-      console.error("❌ Brevo API returned error:", resp.status, data);
+    // 1) Only accept POST
+    if (event.httpMethod !== "POST") {
       return {
-        statusCode: resp.status,
-        body: JSON.stringify({ error: "Brevo send failed", details: data }),
+        statusCode: 405,
+        body: "Method Not Allowed",
       };
     }
 
-    console.log("✅ Brevo email queued:", data);
+    // 2) Parse the incoming form data
+    const body = JSON.parse(event.body);
+    const { email, fullname, phone, message } = body || {};
+
+    if (!email || !fullname) {
+      return {
+        statusCode: 400,
+        body: JSON.stringify({ error: "Missing required fields" }),
+      };
+    }
+
+    // 3) Example: Insert application data into a Supabase table
+    //    (If you want to use @supabase/supabase-js in a function, you can:
+    //     const { createClient } = require("@supabase/supabase-js");
+    //     const supabase = createClient(SUPA_URL, SUPA_SERVICE_ROLE_KEY);
+    //    But if you’re just using fetch against Supabase REST, you can call:
+    //     fetch(`${SUPA_URL}/rest/v1/applications`, { ... })
+    //    For now, here’s a pseudo‐example of doing a REST call:
+
+    const SUPA_URL     = "https://dapwpgvnfjcfqqhrpxla.supabase.co";
+    const SUPA_KEY     = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+                        + "eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImFhb24iLCJpYXQiOj..."
+                        + "…rest_of_your_anon_or_service_key";
+    // If you’re inserting into a “applications” table via REST:
+    const insertResponse = await fetch(
+      `${SUPA_URL}/rest/v1/applications`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          // Use your anon key if you just want public insert, or service-role key if you need
+          "apikey": SUPA_KEY,
+          "Authorization": `Bearer ${SUPA_KEY}`
+        },
+        body: JSON.stringify({ email, fullname, phone, message })
+      }
+    );
+    const insertData = await insertResponse.json();
+    if (!insertResponse.ok) {
+      console.error("Supabase insert error:", insertData);
+      return {
+        statusCode: 500,
+        body: JSON.stringify({ error: "Database error saving application" }),
+      };
+    }
+
+    // 4) (Optional) Send a confirmation email via Brevo (using global fetch)
+    //    Example payload – adapt to your template/params:
+    const BREVO_API   = process.env.BREVO_API;           // e.g. xkeysib-…
+    const TEMPLATE_ID = process.env.BREVO_TEMPLATE_ID;   // e.g. "10"
+
+    if (BREVO_API && TEMPLATE_ID) {
+      const emailPayload = {
+        sender: {
+          name: "CBE Global – Applications",
+          email: "noreply@apexincomeoptions.com.ng"
+        },
+        to: [
+          { email, name: fullname }
+        ],
+        templateId: Number(TEMPLATE_ID),
+        params: {
+          fullname: fullname,
+          message: message || "",
+          applicationId: insertData[0]?.id || ""
+        }
+      };
+
+      // Call Brevo’s SMTP API using global fetch
+      const brevoResp = await fetch("https://api.brevo.com/v3/smtp/email", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "api-key": BREVO_API.trim()
+        },
+        body: JSON.stringify(emailPayload)
+      });
+      const brevoJson = await brevoResp.json();
+      if (!brevoResp.ok) {
+        console.error("Brevo send error:", brevoJson);
+        // We don’t block user if email fails—just log it.
+      } else {
+        console.log("Brevo queued:", brevoJson);
+      }
+    }
+
+    // 5) Return success
     return {
       statusCode: 200,
-      body: JSON.stringify({ message: "Email sent", brevo: data }),
+      body: JSON.stringify({ message: "Application received", data: insertData }),
     };
+
   } catch (err) {
-    console.error("❌ Netlify Function error:", err);
+    console.error("Unhandled error in send-application:", err);
     return {
       statusCode: 500,
-      body: "Internal Server Error",
+      body: JSON.stringify({ error: "Internal server error" }),
     };
   }
 };
