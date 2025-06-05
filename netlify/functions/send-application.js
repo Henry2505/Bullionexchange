@@ -20,18 +20,17 @@ exports.handler = async function(event, context) {
         body: JSON.stringify({ error: "Invalid JSON" }),
       };
     }
-    const { email, fullname, phone, message } = body;
-    if (!email || !fullname || !phone) {
+    const { name, email, password, phone, experience, referral_code, referred_by } = body;
+    if (!name || !email || !password || !phone || !experience) {
       return {
         statusCode: 400,
         body: JSON.stringify({ error: "Missing required fields" }),
       };
     }
 
-    // 3) Insert into Supabase via REST
+    // 3) Ensure SUPA_KEY is set
     const SUPA_URL = "https://dapwpgvnfjcfqqhrpxla.supabase.co";
-    const SUPA_KEY = process.env.SUPA_KEY; 
-    // Make sure you’ve set SUPA_KEY in Netlify (either anon or service‐role key)
+    const SUPA_KEY = process.env.SUPA_KEY;
     if (!SUPA_KEY) {
       console.error("Missing SUPA_KEY env var");
       return {
@@ -40,8 +39,11 @@ exports.handler = async function(event, context) {
       };
     }
 
+    // 4) Insert into our custom 'users' table (or whatever your apply table is).
+    //    We assume you have a table called "users" with columns matching these fields.
+    //    If you instead use "@supabase/supabase-js", swap this out accordingly.
     const insertResponse = await fetch(
-      `${SUPA_URL}/rest/v1/applications`, {
+      `${SUPA_URL}/rest/v1/users`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -49,7 +51,15 @@ exports.handler = async function(event, context) {
           "Authorization": `Bearer ${SUPA_KEY}`,
           "Prefer": "return=representation"
         },
-        body: JSON.stringify({ email, fullname, phone, message })
+        body: JSON.stringify({
+          full_name: name,
+          email: email.toLowerCase(),
+          password: password,
+          phone: phone,
+          experience: experience,
+          referral_code: referral_code || null,
+          referred_by: referred_by || null
+        })
       }
     );
     const insertData = await insertResponse.json();
@@ -61,23 +71,21 @@ exports.handler = async function(event, context) {
       };
     }
 
-    // 4) Send confirmation email via Brevo (optional)
-    const BREVO_API    = process.env.BREVO_API;          
-    const TEMPLATE_ID  = process.env.BREVO_TEMPLATE_ID;
+    // 5) Optionally send a confirmation email via Brevo
+    const BREVO_API   = process.env.BREVO_API;
+    const TEMPLATE_ID = process.env.BREVO_TEMPLATE_ID;
     if (BREVO_API && TEMPLATE_ID) {
       const emailPayload = {
         sender: {
           name: "CBE Global – Applications",
           email: "noreply@apexincomeoptions.com.ng"
         },
-        to: [
-          { email: email, name: fullname }
-        ],
+        to: [{ email: email.toLowerCase(), name: name }],
         templateId: Number(TEMPLATE_ID),
         params: {
-          fullname: fullname,
-          message: message || "",
-          applicationId: insertData[0]?.id || ""
+          fullname: name,
+          applicationId: insertData[0]?.id || "",
+          referral_code: referral_code || ""
         }
       };
 
@@ -93,19 +101,18 @@ exports.handler = async function(event, context) {
         const brevoJson = await brevoResp.json();
         if (!brevoResp.ok) {
           console.error("Brevo send error:", brevoJson);
-          // Don’t block the user—just log if email fails
         } else {
-          console.log("✅ Brevo queued:", brevoJson);
+          console.log("✅ Brevo email queued:", brevoJson);
         }
       } catch (brevoErr) {
-        console.error("Brevo fetch error:", brevoErr);
+        console.error("Error calling Brevo:", brevoErr);
       }
     }
 
-    // 5) Return success
+    // 6) Return success to client
     return {
       statusCode: 200,
-      body: JSON.stringify({ message: "Application received", data: insertData }),
+      body: JSON.stringify({ message: "Application saved successfully", data: insertData }),
     };
 
   } catch (err) {
