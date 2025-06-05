@@ -2,493 +2,240 @@
 <html lang="en" data-theme="dark">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <meta name="description" content="Join the Chukwuemeka Bullion Exchange VIP trading community." />
-  <title>Apply • Chukwuemeka Bullion Exchange</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Apply • CBE Global</title>
 
-  <!-- Google Fonts -->
+  <!-- Bootstrap 5.3 CSS -->
   <link
-    href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700&family=Roboto:wght@300;400;700&display=swap"
+    href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css"
     rel="stylesheet"
+    integrity="sha384-QWTKZyjpPEjISv5WaRU9OFeRpok6YctnYmDr5pNlyT2bRjXh0JMhjY6hW+ALEwIH"
+    crossorigin="anonymous"
   />
 
-  <!-- Supabase JS (for referral‑code lookup) -->
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js/dist/umd/supabase.min.js"></script>
-
   <style>
-    /* Dark / Light theme variables */
     :root[data-theme="dark"] {
       --bg: #121212;
-      --text: #f0f0f0;
-      --gold: #d4af37;
-      --gold-dark: #b3932b;
-      --glass-bg: rgba(30, 30, 30, 0.6);
-      --text-light: #bbbbbb;
-      --text-muted: #888888;
-      --error-color: #e74c3c;
-      --success-color: #2ecc71;
-      --warning-color: #f39c12;
-      --border-color: #333333;
+      --text: #e0e0e0;
+      --accent: #1e1e1e;
+      --gold: #ffd700;
+      --gold-dark: #cca300;
+      --glass: rgba(30, 30, 30, 0.7);
+      --shadow: rgba(0, 0, 0, 0.5);
     }
     :root[data-theme="light"] {
-      --bg: #fafafa;
-      --text: #222222;
-      --gold: #d4af37;
-      --gold-dark: #b3932b;
-      --glass-bg: rgba(255, 255, 255, 0.6);
-      --text-light: #555555;
-      --text-muted: #666666;
-      --error-color: #e74c3c;
-      --success-color: #2ecc71;
-      --warning-color: #f39c12;
-      --border-color: #dddddd;
+      --bg: #f5f5f5;
+      --text: #333;
+      --accent: #ffffff;
+      --gold: #cca300;
+      --gold-dark: #b58900;
+      --glass: rgba(255, 255, 255, 0.7);
+      --shadow: rgba(0, 0, 0, 0.2);
     }
-
-    * {
-      margin: 0;
-      padding: 0;
-      box-sizing: border-box;
-    }
-
+    html { scroll-behavior: smooth; }
     body {
-      font-family: "Roboto", sans-serif;
+      margin: 0; padding: 0; box-sizing: border-box;
       background: var(--bg);
       color: var(--text);
+      font-family: 'Poppins', sans-serif;
       min-height: 100vh;
       display: flex;
-      flex-direction: column;
       align-items: center;
       justify-content: center;
-      padding: 20px;
     }
-
-    a {
+    .container {
+      max-width: 500px;
+      width: 100%;
+      background: var(--glass);
+      border: 1px solid var(--gold-dark);
+      border-radius: 8px;
+      padding: 2rem;
+      box-shadow: 0 2px 8px var(--shadow);
+    }
+    .form-control, .form-select {
+      background: var(--accent) !important;
+      color: var(--text) !important;
+      border: 1px solid var(--gold-dark) !important;
+    }
+    .form-control::placeholder { color: #bbbbbb !important; }
+    .form-control:focus, .form-select:focus {
+      background: var(--accent) !important;
+      color: var(--text) !important;
+      border: 1px solid var(--gold) !important;
+      box-shadow: 0 0 0 0.25rem rgba(255, 215, 0, 0.25) !important;
+    }
+    .btn-primary {
+      background: linear-gradient(45deg, var(--gold), var(--gold-dark));
+      border: none;
+      color: #000;
+      font-weight: 600;
+      width: 100%;
+      margin-top: 1rem;
+    }
+    .btn-primary:hover {
+      background: linear-gradient(45deg, var(--gold-dark), var(--gold));
+    }
+    .alert {
+      background: var(--accent);
+      color: var(--text);
+      border: 1px solid var(--gold-dark);
+    }
+    .text-center a {
       color: var(--gold);
-      text-decoration: none;
     }
-    a:hover {
+    .text-center a:hover {
       color: var(--gold-dark);
       text-decoration: underline;
     }
-
-    .container {
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      width: 100%;
-      max-width: 1200px;
-      margin: 0 auto;
-    }
-
-    .header {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      width: 100%;
-      padding: 20px;
-      position: fixed;
-      top: 0;
-      left: 0;
-      z-index: 1000;
-    }
-
-    .logo img {
-      width: 120px;
-      height: auto;
-    }
-
-    #theme-toggle {
-      background: none;
-      border: none;
-      font-size: 1.5rem;
-      color: var(--text);
-      cursor: pointer;
-      transition: transform 0.3s ease;
-    }
-    #theme-toggle:hover {
-      transform: scale(1.2);
-    }
-
-    .apply-card {
-      max-width: 450px;
-      width: 100%;
-      background: var(--glass-bg);
-      backdrop-filter: blur(10px);
-      padding: 30px;
-      border-radius: 12px;
-      box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
-      opacity: 0;
-      transform: translateY(20px);
-      transition: opacity 0.6s ease-out, transform 0.6s ease-out;
-      margin-top: 80px;
-    }
-    .apply-card.visible {
-      opacity: 1;
-      transform: translateY(0);
-    }
-
-    .apply-card h1 {
-      font-family: "Playfair Display", serif;
-      font-size: 2rem;
-      color: var(--gold);
-      text-align: center;
-      margin-bottom: 25px;
-    }
-
-    form {
-      display: flex;
-      flex-direction: column;
-      gap: 20px;
-    }
-
-    .form-group {
-      display: flex;
-      flex-direction: column;
-    }
-
-    label {
-      font-size: 0.95rem;
-      color: var(--text-light);
-      margin-bottom: 8px;
-      font-weight: 500;
-    }
-
-    input,
-    textarea {
-      padding: 12px;
-      border: 1px solid var(--gold);
-      border-radius: 8px;
-      background: rgba(28, 28, 28, 0.8);
-      color: var(--text);
-      font-size: 1rem;
-      transition: box-shadow 0.3s ease;
-    }
-    input:focus,
-    textarea:focus {
-      outline: none;
-      box-shadow: 0 0 8px var(--gold);
-    }
-
-    textarea {
-      resize: vertical;
-      min-height: 100px;
-    }
-
-    .form-group.optional {
-      margin-top: 10px;
-    }
-
-    .terms-container {
-      display: flex;
-      align-items: center;
-      gap: 10px;
-      font-size: 0.9rem;
-      color: var(--text-light);
-      padding: 12px;
-      background: rgba(255, 255, 255, 0.05);
-      border: 1px solid var(--gold);
-      border-radius: 8px;
-    }
-
-    .terms-container input {
-      width: 20px;
-      height: 20px;
-      accent-color: var(--gold);
-    }
-
-    button {
-      padding: 14px;
-      border: none;
-      border-radius: 8px;
-      background: var(--gold);
-      color: #000;
-      font-size: 1rem;
-      font-weight: 700;
-      cursor: pointer;
-      opacity: 0.6;
-      pointer-events: none;
-      transition: background 0.3s ease, opacity 0.3s ease, box-shadow 0.3s ease;
-    }
-    button.enabled {
-      opacity: 1;
-      pointer-events: auto;
-      box-shadow: 0 0 10px var(--gold);
-    }
-    button.enabled:hover {
-      background: var(--gold-dark);
-    }
-
-    #apply-alert {
-      margin-top: 15px;
-      text-align: center;
-      font-size: 0.9rem;
-      font-weight: 600;
-      min-height: 24px;
-      color: var(--success-color);
-      white-space: pre-wrap;
-    }
-
-    footer {
-      margin-top: 30px;
-      color: var(--text-muted);
-      font-size: 0.85rem;
-      text-align: center;
-      padding: 20px;
-    }
-
-    @media (max-width: 600px) {
-      .apply-card {
-        padding: 20px;
-        margin-top: 100px;
-      }
-      .header {
-        padding: 15px;
-      }
-      .logo img {
-        width: 100px;
-      }
-      .apply-card h1 {
-        font-size: 1.6rem;
-      }
-    }
   </style>
 </head>
+
 <body>
   <div class="container">
-    <header class="header">
-      <div class="logo">
-        <a href="index.html"><img src="CBE_logo.PNG" alt="Chukwuemeka Bullion Exchange Logo" /></a>
+    <h3 class="text-center mb-4">Apply for CBE Services</h3>
+
+    <!-- Alert placeholder -->
+    <div id="alert-container"></div>
+
+    <form id="apply-form" novalidate>
+      <div class="mb-3">
+        <label for="fullname" class="form-label">Full Name</label>
+        <input
+          type="text"
+          class="form-control"
+          id="fullname"
+          placeholder="Your full name"
+          required
+        />
       </div>
-      <button id="theme-toggle" aria-label="Toggle theme">🌞</button>
-    </header>
 
-    <main>
-      <section class="apply-card" id="apply-card">
-        <h1>Apply to Join CBE</h1>
+      <div class="mb-3">
+        <label for="email" class="form-label">Email Address</label>
+        <input
+          type="email"
+          class="form-control"
+          id="email"
+          placeholder="you@example.com"
+          required
+        />
+      </div>
 
-        <!-- Optional “Referred by” notice (from URL) -->
-        <p class="referral-note" id="referral-note"></p>
+      <div class="mb-3">
+        <label for="phone" class="form-label">Phone Number</label>
+        <input
+          type="tel"
+          class="form-control"
+          id="phone"
+          placeholder="+1234567890"
+          required
+        />
+      </div>
 
-        <form id="apply-form" novalidate>
-          <div class="form-group">
-            <label for="apply-name">Full Name</label>
-            <input type="text" id="apply-name" placeholder="Full Name" required aria-required="true" />
-          </div>
+      <div class="mb-3">
+        <label for="message" class="form-label">Message / Notes</label>
+        <textarea
+          class="form-control"
+          id="message"
+          rows="4"
+          placeholder="Any additional info…"
+        ></textarea>
+      </div>
 
-          <div class="form-group">
-            <label for="apply-email">Email Address</label>
-            <input type="email" id="apply-email" placeholder="Email Address" required aria-required="true" />
-          </div>
-
-          <div class="form-group">
-            <label for="apply-password">Password</label>
-            <input type="password" id="apply-password" placeholder="Password" required aria-required="true" />
-          </div>
-
-          <div class="form-group">
-            <label for="apply-phone">Contact Number</label>
-            <input type="tel" id="apply-phone" placeholder="Contact Number" required aria-required="true" />
-          </div>
-
-          <div class="form-group">
-            <label for="apply-message">Trading Experience</label>
-            <textarea
-              id="apply-message"
-              placeholder="Tell us about your trading experience"
-              rows="4"
-              required
-              aria-required="true"
-            ></textarea>
-          </div>
-
-          <!-- Optional “Referral Code” input -->
-          <div class="form-group optional">
-            <label for="apply-referral">Referral Code (auto or manual)</label>
-            <input type="text" id="apply-referral" placeholder="Enter code if you have one" />
-          </div>
-
-          <div class="terms-container">
-            <input type="checkbox" id="agree-terms" aria-label="Agree to Privacy Policy and Terms & Conditions" />
-            <label for="agree-terms">
-              I agree to the
-              <a href="https://apexincomeoptions.com.ng/privacy" target="_blank" rel="noopener">Privacy Policy</a>
-              and
-              <a href="https://apexincomeoptions.com.ng/terms" target="_blank" rel="noopener">Terms & Conditions</a>
-            </label>
-          </div>
-
-          <button type="submit" id="submit-btn" disabled>Submit Application</button>
-          <div id="apply-alert" role="alert"></div>
-        </form>
-      </section>
-    </main>
-
-    <footer>© 2025 Chukwuemeka Bullion Exchange. All rights reserved.</footer>
+      <button type="submit" class="btn btn-primary" id="submit-btn">
+        <span id="btn-text">Submit Application</span>
+        <span
+          id="btn-spinner"
+          class="spinner-border spinner-border-sm ms-2"
+          role="status"
+          style="display: none;"
+        ></span>
+      </button>
+    </form>
   </div>
 
-  <script>
-    // ─── Supabase client for referral‑code lookup ─────────────────────────────────
-    // We only need the ANON key here to verify referral codes; no full auth on this page.
-    const SUPA_URL = "https://dapwpgvnfjcfqqhrpxla.supabase.co";
-    const SUPA_ANON_KEY =
-      "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9." +
-      "eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImRhcHdwZ3ZuZmpjZnFxaHJweGxhIiwicm9sZSI6IkFub24iLCJpYXQiOjE3NDcwNDA4ODgsImV4cCI6MjA2MjYxNjg4OH0." +
-      "ICC0UsLlzJDNre7rFCeD3k6iVzo6jOJgn3PhABpEMsQ";
-    const supabaseClient = supabase.createClient(SUPA_URL, SUPA_ANON_KEY);
+  <!-- Bootstrap JS bundle -->
+  <script
+    src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"
+    integrity="sha384-YvpcrYf0tY3lHB60NNkmXc5s9fDVZLESaAA55NDzOxhy9GkcIdslK1eN7N6jIeHz"
+    crossorigin="anonymous"
+  ></script>
 
-    // ─── Helper: read “ref” param from URL ─────────────────────────────────────────────
-    function getReferralFromURL() {
-      const params = new URLSearchParams(window.location.search);
-      return params.get("ref") || null;
+  <script>
+    // Helper to show alert
+    function showAlert(message, type = 'danger') {
+      const container = document.getElementById('alert-container');
+      container.innerHTML = `
+        <div class="alert alert-${type} alert-dismissible fade show" role="alert">
+          ${message}
+          <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>`;
     }
 
-    // ─── Theme & card animation ──────────────────────────────────────────────────────
-    document.addEventListener("DOMContentLoaded", () => {
-      // 1) Set saved theme (dark or light)
-      const savedTheme = localStorage.getItem("theme") || "dark";
-      document.documentElement.setAttribute("data-theme", savedTheme);
-      document.getElementById("theme-toggle").textContent =
-        savedTheme === "dark" ? "🌞" : "🌜";
+    document.addEventListener('DOMContentLoaded', () => {
+      const form = document.getElementById('apply-form');
+      form.addEventListener('submit', async (evt) => {
+        evt.preventDefault();
 
-      // 2) Fade-in the card
-      const card = document.getElementById("apply-card");
-      card.classList.add("visible");
+        const fullnameEl = document.getElementById('fullname');
+        const emailEl    = document.getElementById('email');
+        const phoneEl    = document.getElementById('phone');
+        const messageEl  = document.getElementById('message');
+        const btnText    = document.getElementById('btn-text');
+        const btnSpinner = document.getElementById('btn-spinner');
+        const submitBtn  = document.getElementById('submit-btn');
 
-      // 3) If URL includes “?ref=CODE”, auto-fill the referral field & show a note
-      const refCodeURL = getReferralFromURL();
-      if (refCodeURL) {
-        document.getElementById("referral-note").textContent =
-          "You were referred by: " + refCodeURL;
-        document.getElementById("apply-referral").value = refCodeURL;
-      }
-    });
-
-    // ─── Theme toggle button ──────────────────────────────────────────────────────────
-    const toggleBtn = document.getElementById("theme-toggle");
-    toggleBtn.addEventListener("click", () => {
-      const current = document.documentElement.getAttribute("data-theme");
-      const next = current === "dark" ? "light" : "dark";
-      document.documentElement.setAttribute("data-theme", next);
-      localStorage.setItem("theme", next);
-      toggleBtn.textContent = next === "dark" ? "🌞" : "🌜";
-    });
-
-    // ─── Form handling ─────────────────────────────────────────────────────────────────
-    const form = document.getElementById("apply-form");
-    const agree = document.getElementById("agree-terms");
-    const submitBtn = document.getElementById("submit-btn");
-    const alertDiv = document.getElementById("apply-alert");
-
-    // Enable “Submit” only when terms are checked
-    agree.addEventListener("change", () => {
-      const canSubmit = agree.checked;
-      submitBtn.disabled = !canSubmit;
-      submitBtn.classList.toggle("enabled", canSubmit);
-    });
-
-    form.addEventListener("submit", async (evt) => {
-      evt.preventDefault();
-      alertDiv.textContent = "";
-      alertDiv.style.color = "";
-
-      // Gather form values:
-      const name = document.getElementById("apply-name").value.trim();
-      const email = document.getElementById("apply-email").value.trim().toLowerCase();
-      const password = document.getElementById("apply-password").value;
-      const phone = document.getElementById("apply-phone").value.trim();
-      const experience = document.getElementById("apply-message").value.trim();
-      const manualRef = document.getElementById("apply-referral").value.trim();
-
-      // ─── Basic validation ────────────────────────────────────────────────────────────
-      if (!name || !email || !password || !phone || !experience) {
-        alertDiv.style.color = "var(--error-color)";
-        alertDiv.textContent = "Please complete all required fields.";
-        return;
-      }
-      if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
-        alertDiv.style.color = "var(--error-color)";
-        alertDiv.textContent = "Please enter a valid email address.";
-        return;
-      }
-      if (password.length < 8) {
-        alertDiv.style.color = "var(--error-color)";
-        alertDiv.textContent = "Password must be at least 8 characters long.";
-        return;
-      }
-
-      // Disable button while submitting:
-      submitBtn.disabled = true;
-      submitBtn.textContent = "Submitting…";
-
-      try {
-        // 1) Determine referral code: manual input takes priority, else URL param, else null
-        const urlRef = getReferralFromURL();
-        const referralCodeToUse = manualRef || urlRef || null;
-
-        // 2) If a code exists, validate it against `affiliates.referral_code` → get `user_id`
-        let referredByUserId = null;
-        if (referralCodeToUse) {
-          const { data: affiliateRow, error: checkErr } = await supabaseClient
-            .from("affiliates")
-            .select("user_id")
-            .eq("referral_code", referralCodeToUse)
-            .single();
-
-          if (checkErr || !affiliateRow) {
-            alertDiv.style.color = "var(--error-color)";
-            alertDiv.textContent = "Invalid referral code. Please double-check.";
-            submitBtn.disabled = false;
-            submitBtn.textContent = "Submit Application";
-            return;
-          }
-          referredByUserId = affiliateRow.user_id; // UUID of the affiliate
+        // 1) Basic validation
+        if (!fullnameEl.value.trim() || !emailEl.value.trim() || !phoneEl.value.trim()) {
+          showAlert('⚠️ Please fill in Full Name, Email, and Phone.', 'warning');
+          return;
         }
 
-        // 3) Package payload for Netlify function
+        // Disable button & show spinner
+        submitBtn.setAttribute('disabled', 'true');
+        btnText.textContent = 'Submitting…';
+        btnSpinner.style.display = 'inline-block';
+
+        // 2) Build payload
         const payload = {
-          name,
-          email,
-          password,
-          phone,
-          experience,
-          referral_code: referralCodeToUse,
-          referred_by: referredByUserId, // pass the UUID if any
+          email: emailEl.value.trim(),
+          fullname: fullnameEl.value.trim(),
+          phone: phoneEl.value.trim(),
+          message: messageEl.value.trim()
         };
 
-        // 4) Invoke Netlify function to create Auth user + insert into your `users` table
-        const fnResponse = await fetch("/.netlify/functions/send-application", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(payload),
-        });
-
-        let fnResult = null;
+        // 3) Call Netlify Function
         try {
-          fnResult = await fnResponse.json();
-        } catch (parseErr) {
-          console.error("Could not parse JSON:", parseErr);
-        }
+          const resp = await fetch("/.netlify/functions/send-application", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(payload)
+          });
+          const data = await resp.json();
 
-        if (!fnResponse.ok) {
-          // Show the full JSON error from the function if available
-          const errorMsg = fnResult?.error || JSON.stringify(fnResult) || "Unknown server error.";
-          alertDiv.style.color = "var(--error-color)";
-          alertDiv.textContent = `Error: ${errorMsg}`;
-          throw new Error(errorMsg);
-        }
+          if (!resp.ok) {
+            console.error("Application error:", data);
+            showAlert(`❌ ${data.error || 'Server error'}`, 'danger');
+            submitBtn.removeAttribute('disabled');
+            btnText.textContent = 'Submit Application';
+            btnSpinner.style.display = 'none';
+            return;
+          }
 
-        // 5) Success: show confirmation, reset form
-        alertDiv.style.color = "var(--success-color)";
-        alertDiv.textContent = fnResult.message || "Application submitted successfully!";
-        form.reset();
-        agree.checked = false;
-        submitBtn.classList.remove("enabled");
-      } catch (err) {
-        console.error("Submission error:", err);
-      } finally {
-        submitBtn.disabled = true;
-        submitBtn.textContent = "Submit Application";
-      }
+          // 4) Success
+          showAlert('✅ Application submitted successfully!', 'success');
+          form.reset();
+          submitBtn.removeAttribute('disabled');
+          btnText.textContent = 'Submit Application';
+          btnSpinner.style.display = 'none';
+
+        } catch (err) {
+          console.error("Unexpected error:", err);
+          showAlert('❌ Unexpected error occurred. Check console.', 'danger');
+          submitBtn.removeAttribute('disabled');
+          btnText.textContent = 'Submit Application';
+          btnSpinner.style.display = 'none';
+        }
+      });
     });
   </script>
 </body>
