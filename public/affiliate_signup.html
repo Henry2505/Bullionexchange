@@ -180,7 +180,7 @@
       + 'ZmpjZnFxaHJweGxhIiwicm9sZSI6ImFub24iLCJpYXQiOj'
       + 'E3NDcwNDA4ODgsImV4cCI6MjA2MjYxNjg4OH0.'
       + 'ICC0UsLlzJDNre7rFCeD3k6iVzo6jOJgn3PhABpEMsQ';
-    // ↑ This is exactly your anon public key from Supabase. (No changes needed.)
+    // ↑ This must match your Supabase “anon public” key exactly.
     const supabaseClient = supabase.createClient(SUPA_URL, SUPA_KEY);
 
     // ────────────────────────────────────────────────────────────────────────────
@@ -211,7 +211,7 @@
 
         // 3A) Validate passwords match
         if (pwEl.value !== cpwEl.value) {
-          showAlert('Passwords do not match.', 'warning');
+          showAlert('⚠️ Passwords do not match.', 'warning');
           return;
         }
 
@@ -226,20 +226,21 @@
             email: emailEl.value,
             password: pwEl.value,
             options: {
-              data: { first_name: firstNameEl.value } // store first name in user metadata
+              data: { first_name: firstNameEl.value }
             }
           });
 
           if (error) {
             console.error('Sign up error:', error);
-            showAlert(error.message, 'danger');
+            showAlert(`❌ ${error.message}`, 'danger');
             submitBtn.removeAttribute('disabled');
             btnText.textContent = 'Sign Up';
             btnSpinner.style.display = 'none';
             return;
           }
 
-          // 3C) Supabase automatically created the user in auth.users. Now fetch the referral code:
+          // 3C) Supabase sent its confirmation email automatically.
+          //      Now fetch the auto‑generated referral_code from `affiliates`.
           let referralCode = 'UNKNOWN';
           try {
             const { data: affiliateRow, error: fetchErr } = await supabaseClient
@@ -257,13 +258,11 @@
             console.error('Unexpected error fetching referral code:', innerErr);
           }
 
-          // 3D) Supabase v2 does not return the confirmation token in data. Supabase automatically
-          //      sends its own confirmation email via the built‑in SMTP. For our Brevo email, we pass
-          //      an empty token. (If you want to skip Supabase’s auto‑email, you can disable it in
-          //      Auth → Settings → Email templates, but that’s optional.)
+          // 3D) Supabase v2 does not return the confirmation token.
+          //      For our custom Brevo email, we pass an empty token.
           const confirmationToken = '';
 
-          // 3E) Call Netlify Function to send the Brevo email
+          // 3E) Fire the Netlify Function to send our Brevo email
           try {
             await fetch("/.netlify/functions/sendAffiliateSignupEmail", {
               method: "POST",
@@ -290,7 +289,7 @@
 
         } catch (err) {
           console.error('Unexpected error during signUp:', err);
-          showAlert('An unexpected error occurred. Check console.', 'danger');
+          showAlert('❌ An unexpected error occurred. Check console.', 'danger');
           submitBtn.removeAttribute('disabled');
           btnText.textContent = 'Sign Up';
           btnSpinner.style.display = 'none';
