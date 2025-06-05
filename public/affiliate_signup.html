@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Affiliate Signup • CBE Global</title>
+  <title>Apply as Affiliate • CBE Global</title>
 
   <!-- Bootstrap 5.3 CSS (for styling + alerts) -->
   <link
@@ -33,7 +33,9 @@
       --glass: rgba(255, 255, 255, 0.7);
       --shadow: rgba(0, 0, 0, 0.2);
     }
-    html { scroll-behavior: smooth; }
+    html {
+      scroll-behavior: smooth;
+    }
     body {
       margin: 0;
       padding: 0;
@@ -55,13 +57,17 @@
       padding: 2rem;
       box-shadow: 0 2px 8px var(--shadow);
     }
-    .form-control, .form-select {
+    .form-control,
+    .form-select {
       background: var(--accent) !important;
       color: var(--text) !important;
       border: 1px solid var(--gold-dark) !important;
     }
-    .form-control::placeholder { color: #bbbbbb !important; }
-    .form-control:focus, .form-select:focus {
+    .form-control::placeholder {
+      color: #bbbbbb !important;
+    }
+    .form-control:focus,
+    .form-select:focus {
       background: var(--accent) !important;
       color: var(--text) !important;
       border: 1px solid var(--gold) !important;
@@ -95,12 +101,12 @@
 
 <body>
   <div class="container">
-    <h3 class="text-center mb-4">Affiliate Signup</h3>
+    <h3 class="text-center mb-4">Apply as Affiliate</h3>
 
     <!-- Alert placeholder -->
     <div id="alert-container"></div>
 
-    <form id="signup-form">
+    <form id="apply-form">
       <div class="mb-3">
         <label for="email" class="form-label">Email address</label>
         <input
@@ -135,7 +141,7 @@
       </div>
 
       <button type="submit" class="btn btn-primary" id="submit-btn">
-        <span id="btn-text">Sign Up</span>
+        <span id="btn-text">Apply</span>
         <span
           id="btn-spinner"
           class="spinner-border spinner-border-sm ms-2"
@@ -146,7 +152,7 @@
     </form>
 
     <p class="text-center mt-3">
-      Already an affiliate?
+      Already applied? 
       <a href="affiliate_login.html">Log in here</a>
     </p>
   </div>
@@ -159,20 +165,7 @@
   ></script>
 
   <script>
-    // ────────────────────────────────────────────────────────────────────────────
-    // 1) Initialize Supabase client (for retrieving any needed data—though
-    //    we don’t use it here, since full signup is handled server‐side).
-    const SUPA_URL = 'https://dapwpgvnfjcfqqhrpxla.supabase.co';
-    const SUPA_KEY =
-      'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.' +
-      'eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImRhcHdwZ3Zu' +
-      'ZmpjZnFxaHJweGxhIiwicm9sIjoiYW5vbiIsImlhdCI6' +
-      'MTc0NzA0MDQ4OCwiZXhwIjoxNzA2NzEzMDg4fQ.' +
-      'ICC0UsLlzJDNre7rFCeD3k6iVzo6jOJgn3PhABpEMsQ';
-    const supabaseClient = supabase.createClient(SUPA_URL, SUPA_KEY);
-
-    // ────────────────────────────────────────────────────────────────────────────
-    // 2) Helper to show a Bootstrap alert
+    // Helper: display a Bootstrap‐style alert
     function showAlert(message, type = 'danger') {
       const container = document.getElementById('alert-container');
       container.innerHTML = `
@@ -182,10 +175,9 @@
         </div>`;
     }
 
-    // ────────────────────────────────────────────────────────────────────────────
-    // 3) On DOMContentLoaded: attach listener to the signup form
+    // On DOMContentLoaded: attach listener to the apply form
     document.addEventListener('DOMContentLoaded', () => {
-      const form = document.getElementById('signup-form');
+      const form = document.getElementById('apply-form');
       form.addEventListener('submit', async (evt) => {
         evt.preventDefault();
 
@@ -196,7 +188,7 @@
         const btnSpinner = document.getElementById('btn-spinner');
         const submitBtn = document.getElementById('submit-btn');
 
-        // 3A) Passwords must match
+        // Ensure passwords match
         if (pwEl.value !== cpwEl.value) {
           showAlert('Passwords do not match.', 'warning');
           return;
@@ -204,46 +196,46 @@
 
         // Disable button & show spinner
         submitBtn.setAttribute('disabled', 'true');
-        btnText.textContent = 'Signing Up…';
+        btnText.textContent = 'Applying…';
         btnSpinner.style.display = 'inline-block';
 
-        // 3B) Call Netlify function
+        // Call Netlify function
         try {
           const response = await fetch('/.netlify/functions/send-affiliate-signup', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
               email: emailEl.value.trim().toLowerCase(),
-              password: pwEl.value
+              password: pwEl.value,
             }),
           });
 
           let result = {};
           try {
             result = await response.json();
-          } catch (_) {
+          } catch {
             result.error = 'Unexpected server response.';
           }
 
           if (!response.ok) {
-            const msg = result.error || 'Signup failed.';
+            const msg = result.error || 'Application failed.';
             showAlert(msg, 'danger');
             submitBtn.removeAttribute('disabled');
-            btnText.textContent = 'Sign Up';
+            btnText.textContent = 'Apply';
             btnSpinner.style.display = 'none';
             return;
           }
 
-          // 3C) On success:
-          showAlert(result.message || 'Signup successful! Check your email.', 'success');
+          // On success:
+          showAlert(result.message || 'Application successful! Check your email.', 'success');
           setTimeout(() => {
             window.location.href = 'affiliate_login.html';
           }, 2000);
         } catch (err) {
-          console.error('Signup exception:', err);
-          showAlert('An unexpected error occurred. Try again.', 'danger');
+          console.error('Application exception:', err);
+          showAlert('An unexpected error occurred. Please try again.', 'danger');
           submitBtn.removeAttribute('disabled');
-          btnText.textContent = 'Sign Up';
+          btnText.textContent = 'Apply';
           btnSpinner.style.display = 'none';
         }
       });
