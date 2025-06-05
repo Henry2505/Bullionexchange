@@ -1,11 +1,9 @@
 // netlify/functions/send-affiliate-signup.js
 
-// (1) No need to import 'node-fetch'—Netlify’s Node 18 runtime provides a global fetch.
-// const fetch = require('node-fetch');
-
 const { createClient } = require('@supabase/supabase-js');
 
-exports.handler = async function (event, context) {
+// Handler
+exports.handler = async (event, context) => {
   if (event.httpMethod !== 'POST') {
     return {
       statusCode: 405,
@@ -16,7 +14,7 @@ exports.handler = async function (event, context) {
   let body;
   try {
     body = JSON.parse(event.body);
-  } catch (err) {
+  } catch (parseErr) {
     return {
       statusCode: 400,
       body: JSON.stringify({ error: 'Invalid JSON body.' }),
@@ -33,23 +31,25 @@ exports.handler = async function (event, context) {
 
   const SUPA_URL = process.env.SUPABASE_URL;
   const SUPA_SERVICE_ROLE = process.env.SUPABASE_SERVICE_KEY;
-  const BREVO_KEY = process.env.BREVO_API_KEY || process.env.BREVO_API;
+  const BREVO_KEY = process.env.BREVO_API_KEY;
 
   if (!SUPA_URL || !SUPA_SERVICE_ROLE) {
     return {
       statusCode: 500,
-      body: JSON.stringify({ error: 'Missing Supabase URL or Service Role Key.' }),
+      body: JSON.stringify({ error: 'Missing SUPABASE_URL or SUPABASE_SERVICE_KEY.' }),
     };
   }
   if (!BREVO_KEY) {
     return {
       statusCode: 500,
-      body: JSON.stringify({ error: 'Missing Brevo API Key.' }),
+      body: JSON.stringify({ error: 'Missing BREVO_API_KEY.' }),
     };
   }
 
+  // Initialize Supabase as admin
   const supabaseAdmin = createClient(SUPA_URL, SUPA_SERVICE_ROLE);
 
+  // 1) Create Auth user
   let newUserId;
   try {
     const {
@@ -63,21 +63,22 @@ exports.handler = async function (event, context) {
     });
 
     if (authError) {
+      console.error('❌ Supabase createUser error:', authError);
       return {
         statusCode: 400,
-        body: JSON.stringify({
-          error: authError.message || 'Failed to create auth user.',
-        }),
+        body: JSON.stringify({ error: authError.message }),
       };
     }
     newUserId = createdUser.id;
   } catch (err) {
+    console.error('❌ Exception in createUser:', err);
     return {
       statusCode: 500,
-      body: JSON.stringify({ error: 'Error while creating Auth user.' }),
+      body: JSON.stringify({ error: 'Error while creating Auth user.', detail: err.message }),
     };
   }
 
+  // 2) Generate a referral code
   function generateReferralCode() {
     const chars =
       'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
@@ -89,33 +90,31 @@ exports.handler = async function (event, context) {
   }
   const referralCode = generateReferralCode();
 
+  // 3) Insert into "affiliates"
   try {
     const { error: insertError } = await supabaseAdmin
       .from('affiliates')
-      .insert([
-        {
-          user_id: newUserId,
-          referral_code: referralCode,
-        },
-      ]);
+      .insert([{ user_id: newUserId, referral_code: referralCode }]);
 
     if (insertError) {
+      console.error('❌ Supabase insert affiliates error:', insertError);
+      // Roll back the auth user since affiliate record failed
       await supabaseAdmin.auth.admin.deleteUser(newUserId);
       return {
         statusCode: 500,
-        body: JSON.stringify({
-          error: insertError.message || 'Failed to save affiliate record.',
-        }),
+        body: JSON.stringify({ error: 'Failed to save affiliate record.', detail: insertError.message }),
       };
     }
   } catch (err) {
+    console.error('❌ Exception in affiliates insert:', err);
     await supabaseAdmin.auth.admin.deleteUser(newUserId);
     return {
       statusCode: 500,
-      body: JSON.stringify({ error: 'Error while saving affiliate data.' }),
+      body: JSON.stringify({ error: 'Error while saving affiliate data.', detail: err.message }),
     };
   }
 
+  // 4) Send Brevo email (using global fetch in Node 18)
   const brevoPayload = {
     email: email.trim().toLowerCase(),
     templateId: 10,
@@ -126,36 +125,31 @@ exports.handler = async function (event, context) {
   };
 
   try {
-    // Use the global `fetch`—no need for node-fetch
-    const brevoResponse = await fetch(
-      'https://api.brevo.com/v3/smtp/email',
-      {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'api-key': BREVO_KEY,
-        },
-        body: JSON.stringify(brevoPayload),
-      }
-    );
-    const brevoJson = await brevoResponse.json();
-    if (!brevoResponse.ok) {
+    const response = await fetch('https://api.brevo.com/v3/smtp/email', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'api-key': BREVO_KEY,
+      },
+      body: JSON.stringify(brevoPayload),
+    });
+    const brevoJson = await response.json();
+    if (!response.ok) {
+      console.error('❌ Brevo email API error:', brevoJson);
       return {
         statusCode: 502,
-        body: JSON.stringify({
-          error: brevoJson.message || 'Email sending failed.',
-        }),
+        body: JSON.stringify({ error: brevoJson.message || 'Email sending failed.' }),
       };
     }
   } catch (err) {
+    console.error('❌ Exception sending email:', err);
     return {
       statusCode: 502,
-      body: JSON.stringify({
-        error: 'Affiliate created, but email sending failed (network).',
-      }),
+      body: JSON.stringify({ error: 'Affiliate created, but email sending failed.', detail: err.message }),
     };
   }
 
+  // 5) All done
   return {
     statusCode: 200,
     body: JSON.stringify({
