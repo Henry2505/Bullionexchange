@@ -3,17 +3,36 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
 // Deno.serve is built into Supabase’s Edge runtime.
-Deno.serve(async (_req) => {
-  // 1) Read GOLDAPI_KEY from environment
+Deno.serve(async (req) => {
+  const CORS_HEADERS = {
+    "Access-Control-Allow-Origin": "*",
+    "Access-Control-Allow-Headers": "Authorization, Content-Type",
+    "Access-Control-Allow-Methods": "GET, POST, OPTIONS",
+  };
+
+  // Handle OPTIONS preflight
+  if (req.method === "OPTIONS") {
+    return new Response(null, {
+      status: 204,
+      headers: CORS_HEADERS,
+    });
+  }
+
+  // Now handle the real request (any method, but usually POST from GitHub Actions)
   const GOLDAPI_KEY = Deno.env.get("GOLDAPI_KEY");
   if (!GOLDAPI_KEY) {
     return new Response(
       JSON.stringify({ error: "Missing GOLDAPI_KEY in environment" }),
-      { status: 500, headers: { "Content-Type": "application/json" } }
+      {
+        status: 500,
+        headers: {
+          ...CORS_HEADERS,
+          "Content-Type": "application/json",
+        },
+      }
     );
   }
 
-  // 2) Fetch XAU/USD from GoldAPI
   let price: number;
   try {
     const goldRes = await fetch("https://www.goldapi.io/api/XAU/USD", {
@@ -27,7 +46,13 @@ Deno.serve(async (_req) => {
       console.error("GoldAPI error:", goldRes.status, body);
       return new Response(
         JSON.stringify({ error: "GoldAPI fetch failed" }),
-        { status: 502, headers: { "Content-Type": "application/json" } }
+        {
+          status: 502,
+          headers: {
+            ...CORS_HEADERS,
+            "Content-Type": "application/json",
+          },
+        }
       );
     }
     const goldJson = await goldRes.json();
@@ -37,11 +62,17 @@ Deno.serve(async (_req) => {
     console.error("Fetch gold price exception:", err);
     return new Response(
       JSON.stringify({ error: "Failed to fetch gold price" }),
-      { status: 502, headers: { "Content-Type": "application/json" } }
+      {
+        status: 502,
+        headers: {
+          ...CORS_HEADERS,
+          "Content-Type": "application/json",
+        },
+      }
     );
   }
 
-  // 3) Insert into Supabase table `gold_prices`:
+  // Insert into Supabase table `gold_prices`
   const DB_URL = Deno.env.get("DB_URL")!;
   const SERVICE_ROLE_KEY = Deno.env.get("SERVICE_ROLE_KEY")!;
   const supabase = createClient(DB_URL, SERVICE_ROLE_KEY);
@@ -54,12 +85,24 @@ Deno.serve(async (_req) => {
     console.error("Supabase insert error:", error);
     return new Response(
       JSON.stringify({ error: "DB insert failed" }),
-      { status: 500, headers: { "Content-Type": "application/json" } }
+      {
+        status: 500,
+        headers: {
+          ...CORS_HEADERS,
+          "Content-Type": "application/json",
+        },
+      }
     );
   }
 
   return new Response(
     JSON.stringify({ success: true, price_usd: price }),
-    { status: 200, headers: { "Content-Type": "application/json" } }
+    {
+      status: 200,
+      headers: {
+        ...CORS_HEADERS,
+        "Content-Type": "application/json",
+      },
+    }
   );
 });
