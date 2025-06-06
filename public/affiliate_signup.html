@@ -103,9 +103,16 @@
       border: none;
       color: #000;
       font-weight: 600;
+      display: flex;
+      align-items: center;
+      justify-content: center;
     }
     .btn-primary:hover {
       background: linear-gradient(45deg, var(--gold-dark), var(--gold));
+    }
+    .btn-loading {
+      opacity: 0.7;
+      pointer-events: none;
     }
 
     /* ─── FEEDBACK MESSAGE ───────────────────────────────────────────────────────── */
@@ -157,23 +164,20 @@
         id="signup-username"
         class="form-control"
         placeholder="Username (must match your main site username)"
-        required
       />
       <input
         type="email"
         id="signup-email"
         class="form-control"
         placeholder="Email address"
-        required
       />
       <input
         type="password"
         id="signup-password"
         class="form-control"
         placeholder="Password (min 8 chars)"
-        required
       />
-      <!-- Button is always enabled, so it’s always clickable -->
+      <!-- Button is always enabled -->
       <button type="button" id="signup-btn" class="btn btn-primary">
         Sign Up
       </button>
@@ -190,7 +194,7 @@
 
   <script>
     // ─── SUPABASE CLIENT SETUP ──────────────────────────────────────────────────────
-    // (Replace with your actual Supabase URL + anon key)
+    // (Replace with your actual SupaBase URL + anon key)
     const SUPA_URL = 'https://dapwpgvnfjcfqqhrpxla.supabase.co';
     const SUPA_KEY =
       'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.' +
@@ -220,14 +224,18 @@
     // ─── SHOW FEEDBACK MESSAGE (green or red) ──────────────────────────────────────
     function showAlert(message, isError = false) {
       signupAlert.textContent = message;
-      signupAlert.style.color = isError
-        ? getComputedStyle(document.documentElement).getPropertyValue('--error-color')
-        : getComputedStyle(document.documentElement).getPropertyValue('--success-color');
+      if (isError) {
+        signupAlert.style.color = getComputedStyle(document.documentElement).getPropertyValue('--error-color');
+      } else {
+        signupAlert.style.color = getComputedStyle(document.documentElement).getPropertyValue('--success-color');
+      }
     }
 
     // ─── HANDLE SIGN‑UP BUTTON CLICK ─────────────────────────────────────────────────
     signupBtn.addEventListener('click', async () => {
-      // Clear any previous message
+      console.log('Sign Up button clicked'); // DEBUG
+
+      // Clear previous message
       showAlert('');
 
       const username = usernameInput.value.trim();
@@ -252,9 +260,11 @@
 
       // 2) Generate referral code
       const newCode = generateReferralCode();
+      console.log('Generated code:', newCode); // DEBUG
 
       // 3) Attempt to insert into public.affiliates
       signupBtn.disabled = true;
+      signupBtn.classList.add('btn-loading');
       signupBtn.textContent = 'Signing Up…';
 
       try {
@@ -267,6 +277,8 @@
             referral_code: newCode
           }]);
 
+        console.log('Supabase response:', { data, error }); // DEBUG
+
         if (error) {
           throw new Error(error.message);
         }
@@ -278,8 +290,9 @@
       } catch (err) {
         // 5) Error → show error message (e.g. “email already exists”)
         console.error('Insert error:', err);
-        showAlert(err.message || 'Unexpected error. Please try again.', true);
+        showAlert(err.message || 'Unexpected error. Check console.', true);
         signupBtn.disabled = false;
+        signupBtn.classList.remove('btn-loading');
         signupBtn.textContent = 'Sign Up';
       }
     });
