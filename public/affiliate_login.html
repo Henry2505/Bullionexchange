@@ -6,7 +6,7 @@
   <title>Affiliate Login • CBE Global</title>
 
   <style>
-    /* Dark / Light theme variables (same as main site) */
+    /* Dark / Light theme variables */
     :root[data-theme="dark"] {
       --bg: #121212; 
       --text: #f0f0f0; 
@@ -146,9 +146,8 @@
 
   <footer>© 2025 Chukwuemeka Bullion Exchange. All rights reserved.</footer>
 
-  <!-- Supabase UMD (v2.45.4) -->
+  <!-- Supabase UMD (v2.45.4) - do NOT change these two lines: -->
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>
-
   <script>
     // ─── 1) Fade‑in + theme toggle ────────────────────────────────────────────────
     const loginCard = document.getElementById('login-card');
@@ -171,15 +170,15 @@
     });
 
     // ─── 2) Supabase client for affiliates ─────────────────────────────────────────
-    const SUPA_URL    = 'https://dapwpgvnfjcfqqhrpxla.supabase.co';
-    const SUPA_ANON   = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImRhcHdwZ3ZuZmpjZnFxaHJweGxhIiwicm9sIjoiYW5vbiIsImlhdCI6MTc0NzA0MDQ4OCwiZXhwIjoyMDYyNjE2ODg4fQ.ICC0UsLlzJDNre7rFCeD3k6iVzo6jOJgn3PhABpEMsQ';
+    const SUPA_URL  = 'https://dapwpgvnfjcfqqhrpxla.supabase.co';
+    const SUPA_ANON = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImRhcHdwZ3ZuZmpjZnFxaHJweGxhIiwicm9sIjoiYW5vbiIsImlhdCI6MTc0NzA0MDQ4OCwiZXhwIjoyMDYyNjE2ODg4fQ.ICC0UsLlzJDNre7rFCeD3k6iVzo6jOJgn3PhABpEMsQ';
 
-    // ← Use the UMD namespace `supabase`:
+    // This uses the global `supabase` from the UMD script above:
     const sb = supabase.createClient(SUPA_URL, SUPA_ANON);
 
     // ─── 3) LOGIN FORM SUBMIT HANDLER ──────────────────────────────────────────────
     document.getElementById('login-form').addEventListener('submit', async (evt) => {
-      evt.preventDefault();  // ← Prevent form from doing a full page reload
+      evt.preventDefault();  // ← Prevent page reload
       const alertDiv = document.getElementById('login-alert');
       alertDiv.textContent = '';
 
@@ -192,16 +191,16 @@
         return;
       }
 
-      // Disable button while we check:
+      // Disable button while checking
       const loginBtn = document.getElementById('login-btn');
       loginBtn.disabled = true;
       loginBtn.textContent = 'Logging in…';
 
       try {
-        // Attempt to find the row where (username = identifier OR email = identifier) AND password matches
-        // Note: We store password IN PLAINTEXT in this example, just like your signup flow.
+        // Build an OR filter: username matches OR email matches
         const orFilter = `username.eq.${identifier},email.eq.${identifier}`;
 
+        // Query the `affiliates` table for a row whose password matches
         const { data: affiliate, error } = await sb
           .from('affiliates')
           .select('*')
@@ -210,14 +209,13 @@
           .single();
 
         if (error) {
-          // Could be “No rows returned” or another DB error
-          throw error;
+          throw error; 
         }
         if (!affiliate) {
           throw new Error('No matching affiliate found.');
         }
 
-        // Success: store affiliate in localStorage and redirect
+        // Successful login → store affiliate data & redirect
         localStorage.setItem('affiliate_user', JSON.stringify(affiliate));
         window.location.assign('affiliate-dashboard.html');
 
@@ -225,8 +223,8 @@
         console.error('Login error:', err);
         alertDiv.style.color = 'var(--error-color)';
         alertDiv.textContent = err.message || 'Login failed. Please try again.';
-        document.getElementById('login-btn').disabled = false;
-        document.getElementById('login-btn').textContent = 'Log In';
+        loginBtn.disabled = false;
+        loginBtn.textContent = 'Log In';
       }
     });
   </script>
