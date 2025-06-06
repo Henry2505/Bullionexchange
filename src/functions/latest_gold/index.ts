@@ -1,12 +1,12 @@
 // src/functions/latest_gold/index.ts
 
-import { serve } from "https://deno.land/x/sift@0.3.2/mod.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
 Deno.serve(async (_req) => {
-  const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!;
-  const SUPABASE_ANON_KEY = Deno.env.get("SUPABASE_ANON_KEY")!;
-  const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+  // Read the database URL and anon key:
+  const DB_URL = Deno.env.get("DB_URL")!;
+  const PUBLIC_ANON_KEY = Deno.env.get("PUBLIC_ANON_KEY")!;
+  const supabase = createClient(DB_URL, PUBLIC_ANON_KEY);
 
   // Query the most recent entry in gold_prices
   const { data, error } = await supabase
