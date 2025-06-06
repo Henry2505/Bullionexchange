@@ -1183,7 +1183,7 @@
           <h3><i class="fas fa-chart-bar"></i> Economic News</h3>
           <div class="ticker-container">
             <div class="ticker-content" id="econ-ticker-content"></div>
-          </div}
+          </div>
         </div>
       </div>
     </section>
@@ -1285,7 +1285,7 @@
   <script>
     // ───────────────────────────────────────────────────────────────────────────
     // 1) Insert your actual keys here:
-    const GOLDAPI_KEY             = "goldapi-b1asmbhbrz5g-io";
+    const GOLDAPI_KEY             = "goldapi-22qsmbkdhkkq-io";
     const NEWS_API_KEY            = "6de81d54e02e45f8a5546a827c70ab28";
     const EXCHANGE_RATE_API_KEY   = "4e4307b2bf8daac15365a410";
     // ───────────────────────────────────────────────────────────────────────────
@@ -1396,6 +1396,7 @@
           });
 
           console.log("GoldAPI fetch status:", response.status, response.statusText);
+
           let data;
           try {
             data = await response.json();
@@ -1405,11 +1406,18 @@
             changeEl.textContent = "–";
             return;
           }
+
           console.log("GoldAPI returned JSON:", data);
 
+          if (response.status === 403) {
+            // Friendly UI message for Forbidden
+            goldEl.textContent   = "Gold data not permitted";
+            changeEl.textContent = "Check GoldAPI CORS/origin settings";
+            return;
+          }
           if (!response.ok) {
             console.error("GoldAPI responded with error:", data);
-            goldEl.textContent   = "Error (" + response.status + ")";
+            goldEl.textContent   = `Error (${response.status})`;
             changeEl.textContent = "–";
             return;
           }
@@ -1425,8 +1433,8 @@
 
             if (prevGoldPrice !== null) {
               const diff = price - prevGoldPrice;
-              const diffPercent = ((diff / prevGoldPrice) * 100).toFixed(2);
-              changeEl.textContent = `${diff > 0 ? "+" : ""}${diff.toFixed(2)} (${diffPercent}%)`;
+              const diffPct = ((diff / prevGoldPrice) * 100).toFixed(2);
+              changeEl.textContent = `${diff > 0 ? "+" : ""}${diff.toFixed(2)} (${diffPct}%)`;
               goldEl.classList.toggle("price-up", diff > 0);
               goldEl.classList.toggle("price-down", diff < 0);
               changeEl.classList.toggle("price-up", diff > 0);
@@ -1467,10 +1475,8 @@
             `Last updated (cached): ${new Date(ts).toLocaleString()}`;
 
           const delay = FETCH_INTERVAL_MS - (now - lastFetch);
-          console.log(`Gold: Using cached value. Next fetch in ${Math.round(delay/1000/60)} minutes.`);
           setTimeout(loadAndDisplayGoldPrice, delay);
         } else {
-          console.log("Gold: Cache expired or missing → fetching new price now");
           await loadAndDisplayGoldPrice();
           setTimeout(loadAndDisplayGoldPrice, FETCH_INTERVAL_MS);
         }
