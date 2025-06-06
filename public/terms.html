@@ -9,7 +9,7 @@
 
   <!-- Playfair & Roboto -->
   <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700&family=Roboto:wght@300;400;700&display=swap" rel="stylesheet">
-  <!-- FontAwesome -->
+  <!-- FontAwesome (for pause icon) -->
   <script src="https://kit.fontawesome.com/your-kit-code.js" crossorigin="anonymous"></script>
 
   <style>
@@ -66,18 +66,32 @@
     #audio-toggle {
       position: fixed; top: 20px; right: 20px; z-index: 20;
       background: #000; border: 2px solid var(--gold); color: var(--gold);
-      border-radius: 50%; width: 45px; height: 45px;
+      border-radius: 50%; width: 50px; height: 50px;
       display: flex; align-items: center; justify-content: center;
-      cursor: pointer; animation: pulse 2s infinite;
+      cursor: pointer; animation: blink 1.5s infinite;
+      font-size: 1.5rem;
       transition: background .3s, color .3s;
     }
     #audio-toggle:hover {
       background: var(--gold); color: #000;
     }
-    @keyframes pulse {
-      0%   { box-shadow: 0 0 0 0 rgba(212,175,55, 0.7); }
-      50%  { box-shadow: 0 0 10px 5px rgba(212,175,55, 0); }
-      100% { box-shadow: 0 0 0 0 rgba(212,175,55, 0.7); }
+    @keyframes blink {
+      0%, 100% { opacity: 1; }
+      50%      { opacity: 0.6; }
+    }
+
+    /* Tooltip text */
+    #audio-toggle::after {
+      content: 'Click ▶️ to hear this page';
+      position: absolute; top: 60px; right: 0;
+      background: var(--glass-bg); color: var(--text-light);
+      padding: 6px 10px; border-radius: 6px;
+      font-size: 0.9rem; white-space: nowrap;
+      opacity: 0; transition: opacity .3s;
+      pointer-events: none;
+    }
+    #audio-toggle:hover::after {
+      opacity: 1;
     }
 
     /* ----- SLIDE-IN ANIMATION ----- */
@@ -154,7 +168,7 @@
       h1 { font-size: 2.4rem; }
       section { padding: 25px 15px; }
       .logo img { width: 120px; }
-      #audio-toggle { width: 40px; height: 40px; }
+      #audio-toggle { width: 45px; height: 45px; font-size: 1.3rem; }
     }
   </style>
 </head>
@@ -169,9 +183,7 @@
   </div>
 
   <!-- Audio Toggle Button (Top Right) -->
-  <button id="audio-toggle" aria-label="Play terms audio">
-    <i class="fas fa-play-circle"></i>
-  </button>
+  <button id="audio-toggle" aria-label="Play terms audio">▶️</button>
 
   <!-- Hidden Audio Element (uses public/terms-voice.mp3) -->
   <audio id="terms-audio" src="public/terms-voice.mp3" preload="auto"></audio>
@@ -303,14 +315,14 @@
     audioToggle.addEventListener('click', () => {
       if (termsAudio.paused) {
         termsAudio.play();
-        audioToggle.innerHTML = '<i class="fas fa-pause-circle"></i>';
+        audioToggle.textContent = '⏸️';
       } else {
         termsAudio.pause();
-        audioToggle.innerHTML = '<i class="fas fa-play-circle"></i>';
+        audioToggle.textContent = '▶️';
       }
     });
     termsAudio.addEventListener('ended', () => {
-      audioToggle.innerHTML = '<i class="fas fa-play-circle"></i>';
+      audioToggle.textContent = '▶️';
     });
   </script>
 
