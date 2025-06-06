@@ -1,245 +1,115 @@
-<!DOCTYPE html>
-<html lang="en" data-theme="dark">
-<head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Apply as Affiliate • CBE Global</title>
+<!-- …everything above stays the same… -->
+<script>
+  // ─── SUPABASE CLIENT SETUP ──────────────────────────────────────────────────────
+  const SUPA_URL = 'https://dapwpgvnfjcfqqhrpxla.supabase.co';
+  const SUPA_KEY =
+    'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.' +
+    'eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImRhcHdwZ3ZuZmpjZnFxaHJweGxhIiwicm9sZSI6IkFub24iLCJpYXQiOjE3NDcwNDA4ODgsImV4cCI6MjA2MjYxNjg4OH0.' +
+    'ICC0UsLlzJDNre7rFCeD3k6iVzo6jOJgn3PhABpEMsQ';
+  const supabase = supabase.createClient(SUPA_URL, SUPA_KEY);
 
-  <!-- Bootstrap 5.3 CSS (for styling + alerts) -->
-  <link
-    href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css"
-    rel="stylesheet"
-    integrity="sha384-QWTKZyjpPEjISv5WaRU9OFeRpok6YctnYmDr5pNlyT2bRjXh0JMhjY6hW+ALEwIH"
-    crossorigin="anonymous"
-  />
+  // ─── ELEMENT REFERENCES ────────────────────────────────────────────────────────
+  const emailInput  = document.getElementById('signup-email');
+  const pwdInput    = document.getElementById('signup-password');
+  const signupBtn   = document.getElementById('signup-btn');
+  const signupAlert = document.getElementById('signup-alert');
+  const themeBtn    = document.getElementById('toggle-theme');
+  const themeIcon   = document.getElementById('theme-icon');
 
-  <style>
-    /* Dark / Light theme variables */
-    :root[data-theme="dark"] {
-      --bg: #121212;
-      --text: #e0e0e0;
-      --accent: #1e1e1e;
-      --gold: #ffd700;
-      --gold-dark: #cca300;
-      --glass: rgba(30, 30, 30, 0.7);
-      --shadow: rgba(0, 0, 0, 0.5);
+  // ─── ENABLE “SIGN UP” BUTTON WHEN FORM IS VALID ────────────────────────────────
+  function validateForm() {
+    const email = emailInput.value.trim();
+    const pwd   = pwdInput.value;
+    const isValidEmail = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
+    const isValidPwd   = pwd.length >= 8;
+    signupBtn.disabled = !(isValidEmail && isValidPwd);
+  }
+  emailInput.addEventListener('input', validateForm);
+  pwdInput.addEventListener('input', validateForm);
+  document.addEventListener('DOMContentLoaded', validateForm);
+
+  // ─── GENERATE AN 8‑CHAR REFERRAL CODE ───────────────────────────────────────────
+  function generateReferralCode() {
+    const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
+    let code = '';
+    for (let i = 0; i < 8; i++) {
+      code += chars.charAt(Math.floor(Math.random() * chars.length));
     }
-    :root[data-theme="light"] {
-      --bg: #f5f5f5;
-      --text: #333;
-      --accent: #ffffff;
-      --gold: #cca300;
-      --gold-dark: #b58900;
-      --glass: rgba(255, 255, 255, 0.7);
-      --shadow: rgba(0, 0, 0, 0.2);
-    }
-    html {
-      scroll-behavior: smooth;
-    }
-    body {
-      margin: 0;
-      padding: 0;
-      box-sizing: border-box;
-      background: var(--bg);
-      color: var(--text);
-      font-family: 'Poppins', sans-serif;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      min-height: 100vh;
-    }
-    .container {
-      max-width: 400px;
-      width: 100%;
-      background: var(--glass);
-      border: 1px solid var(--gold-dark);
-      border-radius: 8px;
-      padding: 2rem;
-      box-shadow: 0 2px 8px var(--shadow);
-    }
-    .form-control,
-    .form-select {
-      background: var(--accent) !important;
-      color: var(--text) !important;
-      border: 1px solid var(--gold-dark) !important;
-    }
-    .form-control::placeholder {
-      color: #bbbbbb !important;
-    }
-    .form-control:focus,
-    .form-select:focus {
-      background: var(--accent) !important;
-      color: var(--text) !important;
-      border: 1px solid var(--gold) !important;
-      box-shadow: 0 0 0 0.25rem rgba(255, 215, 0, 0.25) !important;
-    }
-    .btn-primary {
-      background: linear-gradient(45deg, var(--gold), var(--gold-dark));
-      border: none;
-      color: #000;
-      font-weight: 600;
-      width: 100%;
-      margin-top: 1rem;
-    }
-    .btn-primary:hover {
-      background: linear-gradient(45deg, var(--gold-dark), var(--gold));
-    }
-    .alert {
-      background: var(--accent);
-      color: var(--text);
-      border: 1px solid var(--gold-dark);
-    }
-    .text-center a {
-      color: var(--gold);
-    }
-    .text-center a:hover {
-      color: var(--gold-dark);
-      text-decoration: underline;
-    }
-  </style>
-</head>
+    return code;
+  }
 
-<body>
-  <div class="container">
-    <h3 class="text-center mb-4">Apply as Affiliate</h3>
+  // ─── SHOW FEEDBACK MESSAGE ───────────────────────────────────────────────────────
+  function showAlert(message, isError = false) {
+    signupAlert.textContent = message;
+    signupAlert.style.color = isError ? 'var(--error-color)' : 'var(--success-color)';
+  }
 
-    <!-- Alert placeholder -->
-    <div id="alert-container"></div>
+  // ─── HANDLE FORM SUBMISSION ─────────────────────────────────────────────────────
+  document.getElementById('signup-form').addEventListener('submit', async (evt) => {
+    evt.preventDefault();
+    showAlert(''); // clear any previous message
 
-    <form id="apply-form">
-      <div class="mb-3">
-        <label for="email" class="form-label">Email address</label>
-        <input
-          type="email"
-          class="form-control"
-          id="email"
-          placeholder="you@example.com"
-          required
-        />
-      </div>
+    const email    = emailInput.value.trim().toLowerCase();
+    const password = pwdInput.value;
 
-      <div class="mb-3">
-        <label for="password" class="form-label">Password</label>
-        <input
-          type="password"
-          class="form-control"
-          id="password"
-          placeholder="••••••••"
-          required
-        />
-      </div>
+    signupBtn.disabled = true;
+    signupBtn.textContent = 'Signing Up…';
 
-      <div class="mb-3">
-        <label for="confirm-password" class="form-label">Confirm Password</label>
-        <input
-          type="password"
-          class="form-control"
-          id="confirm-password"
-          placeholder="••••••••"
-          required
-        />
-      </div>
-
-      <button type="submit" class="btn btn-primary" id="submit-btn">
-        <span id="btn-text">Apply</span>
-        <span
-          id="btn-spinner"
-          class="spinner-border spinner-border-sm ms-2"
-          role="status"
-          style="display: none;"
-        ></span>
-      </button>
-    </form>
-
-    <p class="text-center mt-3">
-      Already applied? 
-      <a href="affiliate_login.html">Log in here</a>
-    </p>
-  </div>
-
-  <!-- Bootstrap JS bundle (for alert dismissal, etc.) -->
-  <script
-    src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"
-    integrity="sha384-YvpcrYf0tY3lHB60NNkmXc5s9fDVZLESaAA55NDzOxhy9GkcIdslK1eN7N6jIeHz"
-    crossorigin="anonymous"
-  ></script>
-
-  <script>
-    // Helper: display a Bootstrap‐style alert
-    function showAlert(message, type = 'danger') {
-      const container = document.getElementById('alert-container');
-      container.innerHTML = `
-        <div class="alert alert-${type} alert-dismissible fade show" role="alert">
-          ${message}
-          <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-        </div>`;
-    }
-
-    // On DOMContentLoaded: attach listener to the apply form
-    document.addEventListener('DOMContentLoaded', () => {
-      const form = document.getElementById('apply-form');
-      form.addEventListener('submit', async (evt) => {
-        evt.preventDefault();
-
-        const emailEl = document.getElementById('email');
-        const pwEl = document.getElementById('password');
-        const cpwEl = document.getElementById('confirm-password');
-        const btnText = document.getElementById('btn-text');
-        const btnSpinner = document.getElementById('btn-spinner');
-        const submitBtn = document.getElementById('submit-btn');
-
-        // Ensure passwords match
-        if (pwEl.value !== cpwEl.value) {
-          showAlert('Passwords do not match.', 'warning');
-          return;
-        }
-
-        // Disable button & show spinner
-        submitBtn.setAttribute('disabled', 'true');
-        btnText.textContent = 'Applying…';
-        btnSpinner.style.display = 'inline-block';
-
-        // Call Netlify function
-        try {
-          const response = await fetch('/.netlify/functions/send-affiliate-signup', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-              email: emailEl.value.trim().toLowerCase(),
-              password: pwEl.value,
-            }),
-          });
-
-          let result = {};
-          try {
-            result = await response.json();
-          } catch {
-            result.error = 'Unexpected server response.';
-          }
-
-          if (!response.ok) {
-            const msg = result.error || 'Application failed.';
-            showAlert(msg, 'danger');
-            submitBtn.removeAttribute('disabled');
-            btnText.textContent = 'Apply';
-            btnSpinner.style.display = 'none';
-            return;
-          }
-
-          // On success:
-          showAlert(result.message || 'Application successful! Check your email.', 'success');
-          setTimeout(() => {
-            window.location.href = 'affiliate_login.html';
-          }, 2000);
-        } catch (err) {
-          console.error('Application exception:', err);
-          showAlert('An unexpected error occurred. Please try again.', 'danger');
-          submitBtn.removeAttribute('disabled');
-          btnText.textContent = 'Apply';
-          btnSpinner.style.display = 'none';
-        }
+    try {
+      // 1) Create Supabase Auth user
+      const { data: signUpData, error: signUpError } = await supabase.auth.signUp({
+        email,
+        password
       });
-    });
-  </script>
-</body>
-</html>
+
+      if (signUpError) {
+        // Log full error to console, show user‐friendly text
+        console.error('Supabase signUp error:', signUpError);
+        throw new Error(signUpError.message);
+      }
+
+      const user = signUpData.user;
+      if (!user) {
+        throw new Error('No user object returned from signUp.');
+      }
+
+      // 2) Insert affiliate row with new referral code (RLS is disabled)
+      const newCode = generateReferralCode();
+      const { error: insertError } = await supabase
+        .from('affiliates')
+        .insert([{ user_id: user.id, referral_code: newCode }]);
+
+      if (insertError) {
+        // Log full error before throwing
+        console.error('Supabase insert into affiliates error:', insertError);
+        throw new Error(insertError.message);
+      }
+
+      // 3) Success! Inform & redirect
+      showAlert('Sign‑up successful! Redirecting…');
+      setTimeout(() => {
+        window.location.href = 'affiliate_dashboard.html';
+      }, 1000);
+
+    } catch (error) {
+      console.error('Sign‑up caught exception:', error);
+      showAlert(error.message || 'Unknown error – see console', true);
+      signupBtn.disabled = false;
+      signupBtn.textContent = 'Sign Up';
+    }
+  });
+
+  // ─── THEME TOGGLE (OPTIONAL) ────────────────────────────────────────────────────
+  document.addEventListener('DOMContentLoaded', () => {
+    const saved = localStorage.getItem('dashboardTheme') || 'dark';
+    document.documentElement.setAttribute('data-theme', saved);
+    themeIcon.className = saved === 'dark' ? 'bi bi-sun-fill' : 'bi bi-moon-stars-fill';
+  });
+  themeBtn.addEventListener('click', () => {
+    const current = document.documentElement.getAttribute('data-theme');
+    const next    = current === 'dark' ? 'light' : 'dark';
+    document.documentElement.setAttribute('data-theme', next);
+    localStorage.setItem('dashboardTheme', next);
+    themeIcon.className = next === 'dark' ? 'bi bi-sun-fill' : 'bi bi-moon-stars-fill';
+  });
+</script>
