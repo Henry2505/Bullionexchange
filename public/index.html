@@ -734,7 +734,7 @@
     }
     #chart-container {
       width: 100%;
-      height: 400px; /* Reduced height to align better */
+      height: 400px; /* Ensure a fixed height so the chart is visible */
       position: relative;
       background: var(--accent);
       border-radius: 6px;
@@ -742,7 +742,7 @@
     }
     #tradingview_fullscreen {
       width: 100%;
-      height: 100%;
+      height: 100%; /* Fill the container */
     }
     .chart-toggle {
       display: flex;
@@ -1264,9 +1264,11 @@
   <!-- BACK TO TOP BUTTON -->
   <button id="back-to-top" aria-label="Back to top">↑</button>
 
-  <!-- SCRIPTS & INTEGRATIONS -->
-  <script src="https://s3.tradingview.com/tv.js" async></script>
-  <script src="https://cdn.jsdelivr.net/npm/particles.js@2.0.0/particles.min.js" async></script>
+  <!-- TRADINGVIEW SCRIPT (loaded before initialization) -->
+  <script src="https://s3.tradingview.com/tv.js"></script>
+
+  <!-- PARTICLES JS -->
+  <script src="https://cdn.jsdelivr.net/npm/particles.js@2.0.0/particles.min.js"></script>
 
   <!-- Smartsupp Live Chat script -->
   <script type="text/javascript">
@@ -1386,8 +1388,20 @@
       updateLocalTime();
       setInterval(updateLocalTime, 1000);
 
-      // TradingView chart
-      initGoldChart();
+      // Ensure TradingView is ready before initializing
+      if (window.TradingView && typeof window.TradingView.widget === "function") {
+        initGoldChart();
+      } else {
+        // Poll until TradingView is available
+        const tvInterval = setInterval(() => {
+          if (window.TradingView && typeof window.TradingView.widget === "function") {
+            clearInterval(tvInterval);
+            initGoldChart();
+          }
+        }, 100);
+      }
+
+      // Handle chart toggle buttons
       document.querySelectorAll(".chart-toggle button").forEach((btn) => {
         btn.addEventListener("click", () => {
           document.querySelector(".chart-toggle button.active").classList.remove("active");
