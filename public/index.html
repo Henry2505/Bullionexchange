@@ -13,7 +13,7 @@
   />
   <!-- Open Graph / Social Preview -->
   <meta property="og:type" content="website" />
-  <meta property="og:title" content="CBE – Precision Forex, Simplified" />
+  <meta property="og:title" content="CBE – Precision Forex, Simplified" />
   <meta property="og:description" content="Daily signals, mentorship, capital support." />
   <meta property="og:image" content="https://apexincomeoptions.com.ng/og-image.png" />
   <meta property="og:url" content="https://apexincomeoptions.com.ng" />
@@ -51,7 +51,7 @@
     gtag("config", "G-5J4ED746BT");
   </script>
 
-  <!-- Structured Data (JSON‑LD) -->
+  <!-- Structured Data (JSON-LD) -->
   <script type="application/ld+json">
   {
     "@context": "https://schema.org",
@@ -656,7 +656,7 @@
     }
 
     /* ==========================================================================
-       LIVE GOLD PRICE SECTION
+       LIVE GOLD PRICE SECTION (TRADINGVIEW WIDGET)
        ========================================================================== */
     #live-gold {
       background: var(--glass-bg);
@@ -672,48 +672,11 @@
       color: var(--gold);
       text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.5);
     }
-    #live-gold .gold-price-container {
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      gap: 10px;
-      flex-wrap: wrap;
-    }
-    #gold-price {
-      font-size: 2.2rem;
-      font-weight: 700;
-      color: var(--text);
-      transition: color 0.5s;
-    }
-    .price-change {
-      font-size: 1.1rem;
-      font-weight: 500;
-      color: var(--text);
-      transition: color 0.5s;
-    }
-    .price-up {
-      color: var(--rise-color);
-      animation: blink-up 1s infinite;
-    }
-    .price-down {
-      color: var(--fall-color);
-      animation: blink-down 1s infinite;
-    }
-    @keyframes blink-up {
-      0% { opacity: 1; }
-      50% { opacity: 0.2; }
-      100% { opacity: 1; }
-    }
-    @keyframes blink-down {
-      0% { opacity: 1; }
-      50% { opacity: 0.2; }
-      100% { opacity: 1; }
-    }
-    /* New: “Last updated” text under live price */
-    #gold-last-updated {
-      margin-top: 4px;
-      font-size: 0.9rem;
-      color: var(--text-light);
+    /* Container for TradingView single-quote widget */
+    #tradingview-gold-quote {
+      width: 100%;
+      max-width: 400px;
+      margin: 0 auto;
     }
 
     /* ==========================================================================
@@ -943,9 +906,6 @@
       }
       #converter-widget {
         padding: 1rem;
-      }
-      #live-gold .gold-price-container {
-        flex-direction: column;
       }
       #chart-container {
         height: 300px; /* Adjusted for mobile */
@@ -1188,14 +1148,10 @@
       </div>
     </section>
 
-    <!-- LIVE GOLD PRICE SECTION -->
+    <!-- LIVE GOLD PRICE SECTION (TRADINGVIEW SINGLE-QUOTE WIDGET) -->
     <section id="live-gold" class="slide-in" aria-labelledby="live-gold-heading">
       <h2 id="live-gold-heading"><i class="fas fa-coins"></i> Live Gold Price</h2>
-      <div class="gold-price-container">
-        <span id="gold-price">--</span>
-        <span id="price-change" class="price-change">--</span>
-      </div>
-      <div id="gold-last-updated">Last updated: --</div>
+      <div id="tradingview-gold-quote"></div>
     </section>
 
     <!-- LIVE GOLD CHART SECTION -->
@@ -1224,8 +1180,8 @@
 
     <!-- TRUST INDICATOR STRIP -->
     <section class="trust-strip" aria-label="Trust Indicators">
-      <span><i class="fas fa-star"></i><strong>5‑Star Rating on Trustpilot</strong></span>
-      <span><i class="fas fa-shield-alt"></i><strong>ISO‑Certified Training</strong></span>
+      <span><i class="fas fa-star"></i><strong>5-Star Rating on Trustpilot</strong></span>
+      <span><i class="fas fa-shield-alt"></i><strong>ISO-Certified Training</strong></span>
       <span><i class="fas fa-user-tie"></i><strong>Expert Mentors</strong></span>
     </section>
   </main>
@@ -1264,7 +1220,7 @@
   <!-- BACK TO TOP BUTTON -->
   <button id="back-to-top" aria-label="Back to top">↑</button>
 
-  <!-- TRADINGVIEW SCRIPT (loaded before initialization) -->
+  <!-- TRADINGVIEW SCRIPT (for chart) -->
   <script src="https://s3.tradingview.com/tv.js"></script>
 
   <!-- PARTICLES JS -->
@@ -1285,13 +1241,9 @@
   <script>
     // ───────────────────────────────────────────────────────────────────────────
     // 1) Insert your actual keys here:
-    const GOLDAPI_KEY             = "goldapi-22qsmbkdhkkq-io";
     const NEWS_API_KEY            = "6de81d54e02e45f8a5546a827c70ab28";
     const EXCHANGE_RATE_API_KEY   = "4e4307b2bf8daac15365a410";
     // ───────────────────────────────────────────────────────────────────────────
-
-    // Fetch interval: 8 hours (3× per day)
-    const FETCH_INTERVAL_MS = 8 * 60 * 60 * 1000; // 8 h
 
     document.addEventListener("DOMContentLoaded", () => {
       // ─────────────────────────────────────────────────────────────────────────
@@ -1304,7 +1256,7 @@
         }
       });
 
-      // Slide‑in animation
+      // Slide-in animation
       const slideEls = document.querySelectorAll(".slide-in");
       slideEls.forEach(el => {
         const io = new IntersectionObserver(
@@ -1376,113 +1328,41 @@
       setInterval(updateLocalTime, 1000);
 
       // ─────────────────────────────────────────────────────────────────────────
-      // LIVE GOLD PRICE (cached for 8 hours)
-      async function loadAndDisplayGoldPrice() {
-        const goldEl    = document.getElementById("gold-price");
-        const changeEl  = document.getElementById("price-change");
-        const updatedEl = document.getElementById("gold-last-updated");
+      // RENDER TRADINGVIEW SINGLE-QUOTE WIDGET (Live Gold Price)
+      function renderGoldQuote() {
+        const container = document.getElementById("tradingview-gold-quote");
+        container.innerHTML = "";
 
-        let prevGoldPrice = Number(localStorage.getItem("cbe_cachedGoldPrice")) || null;
+        const widgetDiv = document.createElement("div");
+        widgetDiv.className = "tradingview-widget-container";
 
-        goldEl.textContent   = "Loading…";
-        changeEl.textContent = "…";
+        const innerDiv = document.createElement("div");
+        innerDiv.className = "tradingview-widget-container__widget";
+        widgetDiv.appendChild(innerDiv);
 
-        try {
-          const response = await fetch("https://www.goldapi.io/api/XAU/USD", {
-            headers: {
-              "x-access-token": GOLDAPI_KEY,
-              "Content-Type": "application/json"
-            },
-          });
+        const script = document.createElement("script");
+        script.src = "https://s3.tradingview.com/external-embedding/embed-widget-single-quote.js";
+        script.async = true;
 
-          console.log("GoldAPI fetch status:", response.status, response.statusText);
+        const theme = document.documentElement.getAttribute("data-theme");
+        const colorTheme = theme === "dark" ? "dark" : "light";
 
-          let data;
-          try {
-            data = await response.json();
-          } catch (parseErr) {
-            console.error("Failed to parse JSON from GoldAPI:", parseErr);
-            goldEl.textContent   = "Error (Invalid JSON)";
-            changeEl.textContent = "–";
-            return;
-          }
+        const config = {
+          "symbol": "FOREXCOM:XAUUSD",
+          "width": "100%",
+          "height": "60",
+          "locale": "en",
+          "colorTheme": colorTheme,
+          "isTransparent": true,
+          "symbolLogo": false
+        };
 
-          console.log("GoldAPI returned JSON:", data);
-
-          if (response.status === 403) {
-            // Friendly UI message for Forbidden
-            goldEl.textContent   = "Gold data not permitted";
-            changeEl.textContent = "Check GoldAPI CORS/origin settings";
-            return;
-          }
-          if (!response.ok) {
-            console.error("GoldAPI responded with error:", data);
-            goldEl.textContent   = `Error (${response.status})`;
-            changeEl.textContent = "–";
-            return;
-          }
-
-          const price = data.price ? parseFloat(data.price) : null;
-          if (price !== null) {
-            const nowTs = Date.now();
-            localStorage.setItem("cbe_cachedGoldPrice", price);
-            localStorage.setItem("cbe_lastGoldFetch", nowTs);
-            localStorage.setItem("cbe_cachedGoldTimestamp", nowTs);
-
-            goldEl.textContent = `$${price.toFixed(2)}`;
-
-            if (prevGoldPrice !== null) {
-              const diff = price - prevGoldPrice;
-              const diffPct = ((diff / prevGoldPrice) * 100).toFixed(2);
-              changeEl.textContent = `${diff > 0 ? "+" : ""}${diff.toFixed(2)} (${diffPct}%)`;
-              goldEl.classList.toggle("price-up", diff > 0);
-              goldEl.classList.toggle("price-down", diff < 0);
-              changeEl.classList.toggle("price-up", diff > 0);
-              changeEl.classList.toggle("price-down", diff < 0);
-            } else {
-              changeEl.textContent = "–";
-            }
-
-            updatedEl.textContent = `Last updated: ${new Date().toLocaleString("en-US", {
-              hour:   "numeric",
-              minute: "numeric",
-              second: "numeric",
-              hour12: true,
-              month:  "short",
-              day:    "2-digit",
-              year:   "numeric"
-            })}`;
-          } else {
-            goldEl.textContent   = "N/A";
-            changeEl.textContent = "–";
-          }
-        } catch (err) {
-          console.error("GoldAPI fetch threw exception:", err);
-          goldEl.textContent   = "Error (Network/CORS)";
-          changeEl.textContent = "–";
-        }
+        script.text = JSON.stringify(config);
+        widgetDiv.appendChild(script);
+        container.appendChild(widgetDiv);
       }
 
-      async function maybeLoadGoldPrice() {
-        const now       = Date.now();
-        const lastFetch = Number(localStorage.getItem("cbe_lastGoldFetch")) || 0;
-        const cached    = localStorage.getItem("cbe_cachedGoldPrice");
-        const ts        = Number(localStorage.getItem("cbe_cachedGoldTimestamp")) || 0;
-
-        if (cached && now - lastFetch < FETCH_INTERVAL_MS) {
-          document.getElementById("gold-price").textContent = `$${parseFloat(cached).toFixed(2)}`;
-          document.getElementById("gold-last-updated").textContent =
-            `Last updated (cached): ${new Date(ts).toLocaleString()}`;
-
-          const delay = FETCH_INTERVAL_MS - (now - lastFetch);
-          setTimeout(loadAndDisplayGoldPrice, delay);
-        } else {
-          await loadAndDisplayGoldPrice();
-          setTimeout(loadAndDisplayGoldPrice, FETCH_INTERVAL_MS);
-        }
-      }
-
-      maybeLoadGoldPrice();
+      renderGoldQuote();
 
       // ─────────────────────────────────────────────────────────────────────────
       // CURRENCY CONVERTER
@@ -1511,7 +1391,7 @@
           console.log("ExchangeRate response:", data);
 
           if (data.result !== "success") {
-            console.error("ExchangeRate returned non‑success:", data);
+            console.error("ExchangeRate returned non-success:", data);
             resultEl.textContent = "Conversion failed";
             return;
           }
@@ -1685,7 +1565,7 @@
       });
 
       // ─────────────────────────────────────────────────────────────────────────
-      // BACK‑TO‑TOP BUTTON
+      // BACK-TO-TOP BUTTON
       const backToTop = document.getElementById("back-to-top");
       window.addEventListener("scroll", () => {
         if (window.scrollY > window.innerHeight / 2) {
@@ -1697,6 +1577,25 @@
       backToTop.addEventListener("click", () => {
         window.scrollTo({ top: 0, behavior: "smooth" });
       });
+
+      // ─────────────────────────────────────────────────────────────────────────
+      // THEME TOGGLE & RE-RENDER GOLD QUOTE
+      const themeBtn = document.getElementById("theme-toggle");
+      themeBtn.addEventListener("click", () => {
+        const current = document.documentElement.getAttribute("data-theme");
+        const next = current === "dark" ? "light" : "dark";
+        document.documentElement.setAttribute("data-theme", next);
+        localStorage.setItem("theme", next);
+        themeBtn.textContent = next === "dark" ? "🌞" : "🌜";
+
+        renderGoldQuote();
+        initGoldChart();
+      });
+      (function () {
+        const saved = localStorage.getItem("theme") || "dark";
+        document.documentElement.setAttribute("data-theme", saved);
+        themeBtn.textContent = saved === "dark" ? "🌞" : "🌜";
+      })();
     });
 
     window.addEventListener("scroll", () => {
@@ -1705,22 +1604,6 @@
       const percent = docHeight > 0 ? (scrollTop / docHeight) * 100 : 0;
       document.getElementById("scroll-progress").style.width = percent + "%";
     });
-
-    // Theme toggle
-    const themeBtn = document.getElementById("theme-toggle");
-    themeBtn.addEventListener("click", () => {
-      const current = document.documentElement.getAttribute("data-theme");
-      const next = current === "dark" ? "light" : "dark";
-      document.documentElement.setAttribute("data-theme", next);
-      localStorage.setItem("theme", next);
-      themeBtn.textContent = next === "dark" ? "🌞" : "🌜";
-      initGoldChart();
-    });
-    (function () {
-      const saved = localStorage.getItem("theme") || "dark";
-      document.documentElement.setAttribute("data-theme", saved);
-      themeBtn.textContent = saved === "dark" ? "🌞" : "🌜";
-    })();
   </script>
 </body>
 </html>
