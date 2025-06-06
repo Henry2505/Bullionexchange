@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Affiliate Sign Up • CBE Global</title>
 
-  <!-- ─── Bootstrap 5.3 CSS (for styling) ──────────────────────────────────────── -->
+  <!-- ─── Bootstrap 5.3 CSS (basic styling) ──────────────────────────────────────── -->
   <link
     href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css"
     rel="stylesheet"
@@ -13,7 +13,7 @@
     crossorigin="anonymous"
   />
 
-  <!-- ─── Bootstrap Icons (for toggle icon) ────────────────────────────────────── -->
+  <!-- ─── Bootstrap Icons (for theme toggle) ────────────────────────────────────── -->
   <link
     href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css"
     rel="stylesheet"
@@ -34,6 +34,7 @@
       --success-color: #2ecc71;
       --shadow: rgba(0, 0, 0, 0.5);
       --border-color: #333;
+      --text-light: #bbbbbb;
     }
     :root[data-theme="light"] {
       --bg: #f5f5f5;
@@ -45,6 +46,7 @@
       --success-color: #2ecc71;
       --shadow: rgba(0, 0, 0, 0.2);
       --border-color: #ddd;
+      --text-light: #666;
     }
 
     html {
@@ -71,7 +73,7 @@
       border-radius: 8px;
       box-shadow: 0 4px 12px var(--shadow);
       width: 100%;
-      max-width: 400px;
+      max-width: 420px;
       padding: 2rem;
       position: relative;
     }
@@ -153,9 +155,16 @@
       <i class="bi bi-sun-fill" id="theme-icon"></i>
     </button>
 
-    <h1>Affiliate Sign Up</h1>
+    <h1>Affiliate Sign Up</h1>
 
     <form id="signup-form" novalidate>
+      <input
+        type="text"
+        id="signup-username"
+        class="form-control"
+        placeholder="Username (use your main site username)"
+        required
+      />
       <input
         type="email"
         id="signup-email"
@@ -171,13 +180,13 @@
         required
       />
       <button type="submit" id="signup-btn" class="btn btn-primary" disabled>
-        Sign Up
+        Sign Up
       </button>
       <div id="signup-alert"></div>
     </form>
   </div>
 
-  <!-- ─── Bootstrap JS (optional) ───────────────────────────────────────────────── -->
+  <!-- ─── Bootstrap JS Bundle (optional) ──────────────────────────────────────────── -->
   <script
     src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"
     integrity="sha384-YvpcrYf0tY3lHB60NNkmXc5s9fDVZLESaAA55NDzOxhy9GkcIdslK1eN7N6jIeHz"
@@ -194,21 +203,24 @@
     const supabase = supabase.createClient(SUPA_URL, SUPA_KEY);
 
     // ─── ELEMENT REFERENCES ────────────────────────────────────────────────────────
-    const emailInput  = document.getElementById('signup-email');
-    const pwdInput    = document.getElementById('signup-password');
-    const signupBtn   = document.getElementById('signup-btn');
-    const signupAlert = document.getElementById('signup-alert');
-    const themeBtn    = document.getElementById('toggle-theme');
-    const themeIcon   = document.getElementById('theme-icon');
+    const usernameInput = document.getElementById('signup-username');
+    const emailInput    = document.getElementById('signup-email');
+    const pwdInput      = document.getElementById('signup-password');
+    const signupBtn     = document.getElementById('signup-btn');
+    const signupAlert   = document.getElementById('signup-alert');
+    const themeBtn      = document.getElementById('toggle-theme');
+    const themeIcon     = document.getElementById('theme-icon');
 
     // ─── ENABLE “SIGN UP” BUTTON WHEN FORM IS VALID ────────────────────────────────
     function validateForm() {
-      const email = emailInput.value.trim();
-      const pwd   = pwdInput.value;
+      const username = usernameInput.value.trim();
+      const email    = emailInput.value.trim();
+      const pwd      = pwdInput.value;
       const isValidEmail = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
       const isValidPwd   = pwd.length >= 8;
-      signupBtn.disabled = !(isValidEmail && isValidPwd);
+      signupBtn.disabled = !(username && isValidEmail && isValidPwd);
     }
+    usernameInput.addEventListener('input', validateForm);
     emailInput.addEventListener('input', validateForm);
     pwdInput.addEventListener('input', validateForm);
     document.addEventListener('DOMContentLoaded', validateForm);
@@ -223,7 +235,7 @@
       return code;
     }
 
-    // ─── SHOW FEEDBACK MESSAGE ───────────────────────────────────────────────────────
+    // ─── SHOW FEEDBACK MESSAGE (green for success, red for error) ───────────────────
     function showAlert(message, isError = false) {
       signupAlert.textContent = message;
       signupAlert.style.color = isError ? 'var(--error-color)' : 'var(--success-color)';
@@ -232,57 +244,48 @@
     // ─── HANDLE FORM SUBMISSION ─────────────────────────────────────────────────────
     document.getElementById('signup-form').addEventListener('submit', async (evt) => {
       evt.preventDefault();
-      showAlert(''); // clear any previous message
+      showAlert(''); // clear previous
 
+      const username = usernameInput.value.trim();
       const email    = emailInput.value.trim().toLowerCase();
       const password = pwdInput.value;
 
       signupBtn.disabled = true;
-      signupBtn.textContent = 'Signing Up…';
+      signupBtn.textContent = 'Signing Up…';
 
       try {
-        // 1) Create Supabase Auth user
-        const { data: signUpData, error: signUpError } = await supabase.auth.signUp({
-          email,
-          password
-        });
-
-        if (signUpError) {
-          console.error('Supabase signUp error:', signUpError);
-          throw new Error(signUpError.message);
-        }
-
-        const user = signUpData.user;
-        if (!user) {
-          throw new Error('No user object returned from signUp.');
-        }
-
-        // 2) Insert affiliate row with new referral code (RLS is disabled)
+        // 1) Generate referral code
         const newCode = generateReferralCode();
-        const { error: insertError } = await supabase
-          .from('affiliates')
-          .insert([{ user_id: user.id, referral_code: newCode }]);
 
-        if (insertError) {
-          console.error('Supabase insert into affiliates error:', insertError);
-          throw new Error(insertError.message);
+        // 2) Insert into public.affiliates (no Auth, just a plain row)
+        const { data, error } = await supabase
+          .from('affiliates')
+          .insert([{
+            username,
+            email,
+            password,
+            referral_code: newCode
+          }]);
+
+        if (error) {
+          console.error('Insert into affiliates error:', error);
+          throw new Error(error.message);
         }
 
-        // 3) Success! Inform & redirect
-        showAlert('Sign‑up successful! Redirecting…');
-        setTimeout(() => {
-          window.location.href = 'affiliate_dashboard.html';
-        }, 1000);
+        // 3) Success: show code to user
+        showAlert(`Registration successful! Your referral code: ${newCode}`);
+        signupBtn.textContent = 'Signed Up';
+        signupBtn.disabled = true;
 
       } catch (error) {
-        console.error('Sign‑up caught exception:', error);
-        showAlert(error.message || 'Unknown error – see console', true);
+        console.error('Registration error:', error);
+        showAlert(error.message || 'Unknown error. Please try again.', true);
         signupBtn.disabled = false;
-        signupBtn.textContent = 'Sign Up';
+        signupBtn.textContent = 'Sign Up';
       }
     });
 
-    // ─── THEME TOGGLE (OPTIONAL) ────────────────────────────────────────────────────
+    // ─── THEME TOGGLE ───────────────────────────────────────────────────────────────
     document.addEventListener('DOMContentLoaded', () => {
       const saved = localStorage.getItem('dashboardTheme') || 'dark';
       document.documentElement.setAttribute('data-theme', saved);
