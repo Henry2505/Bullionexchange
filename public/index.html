@@ -1283,9 +1283,102 @@
   </script>
 
   <script>
-    const GOLDAPI_KEY = "goldapi-b1asmbhbrz5g-io";
-    const NEWS_API_KEY = "6de81d54e02e45f8a5546a827c70ab28";
-    const EXCHANGE_RATE_API_KEY = "4e4307b2bf8daac15365a410";
+    // ───────────────────────────────────────────────────────────────────────────
+    // Your GoldAPI key (as provided):
+    const GOLDAPI_KEY = "This is the key";
+    // ───────────────────────────────────────────────────────────────────────────
+
+    // Time interval: 8 hours = 3 times per day
+    const FETCH_INTERVAL_MS = 8 * 60 * 60 * 1000; // 8h
+
+    /**
+     * Fetches a fresh gold price if needed, or uses cached if within 8h.
+     */
+    async function maybeLoadGoldPrice() {
+      const now = Date.now();
+      const lastFetch = Number(localStorage.getItem("cbe_lastGoldFetch")) || 0;
+      const cachedPrice = localStorage.getItem("cbe_cachedGoldPrice");
+      const cachedTimestamp = Number(localStorage.getItem("cbe_cachedGoldTimestamp")) || 0;
+
+      // If we have a cached price and it’s still within 8 hours
+      if (cachedPrice && (now - lastFetch < FETCH_INTERVAL_MS)) {
+        // Display cached price immediately
+        document.getElementById("gold-price").textContent = `$${parseFloat(cachedPrice).toFixed(2)}`;
+        document.getElementById("gold-last-updated").textContent =
+          `Last updated (cached): ${new Date(cachedTimestamp).toLocaleString()}`;
+
+        // Schedule next actual fetch at exactly (lastFetch + 8h)
+        const delay = FETCH_INTERVAL_MS - (now - lastFetch);
+        setTimeout(loadAndDisplayGoldPrice, delay);
+      } else {
+        // Otherwise, fetch now
+        await loadAndDisplayGoldPrice();
+        // Then schedule next fetch in 8h
+        setTimeout(loadAndDisplayGoldPrice, FETCH_INTERVAL_MS);
+      }
+    }
+
+    /**
+     * Fetches current gold price from GoldAPI, updates DOM and localStorage.
+     */
+    async function loadAndDisplayGoldPrice() {
+      const goldEl = document.getElementById("gold-price");
+      const changeEl = document.getElementById("price-change");
+      const updatedEl = document.getElementById("gold-last-updated");
+
+      // Retrieve previous cached price to compute diff
+      let prevGoldPrice = Number(localStorage.getItem("cbe_cachedGoldPrice")) || null;
+
+      goldEl.textContent = "Loading…";
+
+      try {
+        const res = await fetch("https://www.goldapi.io/api/XAU/USD", {
+          headers: {
+            "x-access-token": GOLDAPI_KEY,
+            "Content-Type": "application/json",
+          },
+        });
+        const data = await res.json();
+        const price = data.price ? parseFloat(data.price) : null;
+
+        if (price !== null) {
+          // Cache results
+          localStorage.setItem("cbe_cachedGoldPrice", price);
+          localStorage.setItem("cbe_lastGoldFetch", Date.now());
+          localStorage.setItem("cbe_cachedGoldTimestamp", Date.now());
+
+          // Update displayed price
+          goldEl.textContent = `$${price.toFixed(2)}`;
+
+          // Compute and display change if previous exists
+          if (prevGoldPrice !== null) {
+            const diff = price - prevGoldPrice;
+            const diffPercent = ((diff / prevGoldPrice) * 100).toFixed(2);
+            changeEl.textContent = `${diff > 0 ? "+" : ""}${diff.toFixed(2)} (${diffPercent}%)`;
+            goldEl.classList.toggle("price-up", diff > 0);
+            goldEl.classList.toggle("price-down", diff < 0);
+            changeEl.classList.toggle("price-up", diff > 0);
+            changeEl.classList.toggle("price-down", diff < 0);
+          } else {
+            changeEl.textContent = "–";
+          }
+
+          // Update “Last updated” text
+          updatedEl.textContent =
+            `Last updated: ${new Date().toLocaleString("en-US", {
+              hour: "numeric", minute: "numeric", second: "numeric", hour12: true,
+              month: "short", day: "2-digit", year: "numeric"
+            })}`;
+        } else {
+          goldEl.textContent = "N/A";
+          changeEl.textContent = "–";
+        }
+      } catch (err) {
+        console.error("Gold price error:", err);
+        goldEl.textContent = "N/A";
+        changeEl.textContent = "–";
+      }
+    }
 
     document.addEventListener("DOMContentLoaded", () => {
       // Highlight current nav link
@@ -1376,9 +1469,8 @@
       setInterval(loadGoldTicker, 60 * 1000);
       setInterval(loadEconTicker, 60 * 1000);
 
-      // Live gold price
-      loadGoldPrice();
-      setInterval(loadGoldPrice, 5000);
+      // Live gold price: triggers once on load (or from cache) and then every 8h
+      maybeLoadGoldPrice();
 
       // Economic calendar
       rotateEvents();
@@ -1491,68 +1583,6 @@
         });
       } catch (err) {
         console.error("Economic news error:", err);
-      }
-    }
-
-    // Live gold price
-    let prevGoldPrice = null;
-    async function loadGoldPrice() {
-      const goldEl = document.getElementById("gold-price");
-      const changeEl = document.getElementById("price-change");
-      const updatedEl = document.getElementById("gold-last-updated");
-
-      const cached = localStorage.getItem("cachedGoldPrice");
-      if (cached) {
-        goldEl.textContent = `$${parseFloat(cached).toFixed(2)}`;
-      }
-
-      try {
-        const res = await fetch("https://www.goldapi.io/api/XAU/USD", {
-          headers: {
-            "x-access-token": GOLDAPI_KEY,
-            "Content-Type": "application/json",
-          },
-        });
-        const data = await res.json();
-        const price = data.price ? parseFloat(data.price) : null;
-        if (price !== null) {
-          localStorage.setItem("cachedGoldPrice", price);
-          if (prevGoldPrice !== null) {
-            const diff = price - prevGoldPrice;
-            const diffPercent = ((diff / prevGoldPrice) * 100).toFixed(2);
-            changeEl.textContent = `${diff > 0 ? "+" : ""}${diff.toFixed(2)} (${diffPercent}%)`;
-            if (diff > 0) {
-              goldEl.classList.remove("price-down");
-              goldEl.classList.add("price-up");
-              changeEl.classList.remove("price-down");
-              changeEl.classList.add("price-up");
-            } else if (diff < 0) {
-              goldEl.classList.remove("price-up");
-              goldEl.classList.add("price-down");
-              changeEl.classList.remove("price-up");
-              changeEl.classList.add("price-down");
-            } else {
-              goldEl.classList.remove("price-up", "price-down");
-              changeEl.classList.remove("price-up", "price-down");
-            }
-          }
-          goldEl.textContent = `$${price.toFixed(2)}`;
-          prevGoldPrice = price;
-          const now = new Date();
-          updatedEl.textContent = `Last updated: ${now.toLocaleTimeString("en-US", {
-            hour: "numeric",
-            minute: "numeric",
-            second: "numeric",
-            hour12: true,
-          })}`;
-        } else {
-          goldEl.textContent = "N/A";
-          changeEl.textContent = "-";
-        }
-      } catch (err) {
-        console.error("Gold price error:", err);
-        goldEl.textContent = "N/A";
-        changeEl.textContent = "-";
       }
     }
 
