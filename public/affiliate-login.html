@@ -4,100 +4,139 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Affiliate Login</title>
+
   <style>
-    body { font-family: Arial, sans-serif; background: #f9f9f9; padding: 2rem; }
-    .container { max-width: 400px; margin: auto; background: white; padding: 2rem; border-radius: 8px; box-shadow: 0 0 12px rgba(0,0,0,0.1); }
-    input, button { width: 100%; margin: 0.5rem 0; padding: 0.75rem; font-size: 1rem; }
-    button { background: #0070f3; color: white; border: none; cursor: pointer; }
-    button:disabled { background: #bbb; cursor: not-allowed; }
-    #status { margin-top: 1rem; font-weight: bold; color: red; white-space: pre-wrap; }
+    body {
+      font-family: Arial, sans-serif;
+      background: #f9f9f9;
+      padding: 2rem;
+    }
+    .container {
+      max-width: 400px;
+      margin: auto;
+      background: white;
+      padding: 2rem;
+      border-radius: 8px;
+      box-shadow: 0 0 12px rgba(0,0,0,0.1);
+    }
+    input, button {
+      width: 100%;
+      margin: 0.5rem 0;
+      padding: 0.75rem;
+      font-size: 1rem;
+      border-radius: 4px;
+      border: 1px solid #ccc;
+      box-sizing: border-box;
+    }
+    button {
+      background: #0070f3;
+      color: white;
+      border: none;
+      cursor: pointer;
+    }
+    button:disabled {
+      background: #bbb;
+      cursor: not-allowed;
+    }
+    #status {
+      margin-top: 1rem;
+      font-weight: bold;
+      color: red;
+      white-space: pre-wrap;
+    }
   </style>
 </head>
 <body>
   <div class="container">
     <h2>Affiliate Login</h2>
     <form id="login-form">
-      <input type="email" id="email" placeholder="Email" required />
+      <!-- Allow either username or email -->
+      <input type="text" id="identifier" placeholder="Username or Email" required />
       <input type="password" id="password" placeholder="Password" required />
       <button type="submit" id="login-btn">Login</button>
     </form>
     <p id="status"></p>
   </div>
 
-  <script type="module">
-    import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm';
-
-    // Your Supabase credentials
+  <!-- Use the UMD build from jsDelivr so you can reference window.supabase -->
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js/dist/umd/supabase.min.js"></script>
+  <script>
+    // ─── Supabase credentials ─────────────────────────────────────────────────────
     const SUPABASE_URL = 'https://dapwpgvnfjcfqqhrpxla.supabase.co';
-    const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImRhcHdwZ3ZuZmpjZnFxaHJweGxhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDcwNDA4ODgsImV4cCI6MjA2MjYxNjg4OH0.ICC0UsLlzJDNre7rFCeD3k6iVzo6jOJgn3PhABpEMsQ';
+    const SUPABASE_ANON_KEY = 
+      'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.'
+      + 'eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImRhcHdwZ3ZuZmpjZnFxaHJweGxhIiwicm9sIjoiYW5vbiIsImlhdCI6MTc0NzA0MDQ4OCwiZXhwIjoyMDYyNjE2ODg4fQ.'
+      + 'ICC0UsLlzJDNre7rFCeD3k6iVzo6jOJgn3PhABpEMsQ';
 
-    const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+    // Create the Supabase client
+    const supabase = supabaseJs.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
+    // ─── DOM References ─────────────────────────────────────────────────────────────
     const form = document.getElementById('login-form');
     const statusEl = document.getElementById('status');
     const loginBtn = document.getElementById('login-btn');
+    const identifierInput = document.getElementById('identifier');
+    const passwordInput = document.getElementById('password');
 
+    // ─── Form Submission ────────────────────────────────────────────────────────────
     form.addEventListener('submit', async (e) => {
-      e.preventDefault();              // Prevent page refresh
+      e.preventDefault();
       statusEl.textContent = '';
       loginBtn.disabled = true;
       loginBtn.textContent = 'Logging in...';
 
-      const email = document.getElementById('email').value.trim();
-      const password = document.getElementById('password').value;
+      const identifier = identifierInput.value.trim();
+      const password = passwordInput.value;
 
-      if (!email || !password) {
-        statusEl.textContent = 'Please enter both email and password.';
+      if (!identifier || !password) {
+        statusEl.textContent = 'Please enter both username/email and password.';
         loginBtn.disabled = false;
         loginBtn.textContent = 'Login';
         return;
       }
 
-      // Hash the password using SHA-256 (same as signup)
-      let password_hash;
       try {
-        const encoder = new TextEncoder();
-        const data = encoder.encode(password);
-        const hashBuffer = await crypto.subtle.digest('SHA-256', data);
-        password_hash = btoa(String.fromCharCode(...new Uint8Array(hashBuffer)));
-      } catch (hashErr) {
-        statusEl.textContent = 'Error hashing password:\n' + hashErr.message;
-        loginBtn.disabled = false;
-        loginBtn.textContent = 'Login';
-        return;
-      }
+        // We will search for a row where (email == identifier OR username == identifier) AND password == password
+        // NOTE: this assumes you stored `password` in plaintext on sign‑up. If you hashed it, you must hash here too.
 
-      // Query affiliate_user table
-      let query;
-      try {
-        query = await supabase
-          .from('affiliate_user')
+        // Build the “or” filter: 
+        //   email.eq.{identifier},username.eq.{identifier}
+        const orFilter = `email.eq.${identifier},username.eq.${identifier}`;
+
+        // Query a single matching row
+        const { data, error } = await supabase
+          .from('affiliates')
           .select('*')
-          .eq('email', email)
-          .eq('password_hash', password_hash)
+          .or(orFilter)
+          .eq('password', password)
           .single();
-      } catch (networkErr) {
-        statusEl.textContent = 'Network or Supabase client error:\n' + networkErr.message;
+
+        if (error) {
+          // Could be “Not found” or some other DB error
+          statusEl.textContent = 'Login failed:\n' + error.message;
+          loginBtn.disabled = false;
+          loginBtn.textContent = 'Login';
+          return;
+        }
+        if (!data) {
+          statusEl.textContent = 'No matching user found. Check your credentials.';
+          loginBtn.disabled = false;
+          loginBtn.textContent = 'Login';
+          return;
+        }
+
+        // At this point, we have a valid affiliate record in `data`.
+        // Store it in localStorage so the dashboard can read it:
+        localStorage.setItem('affiliate_user', JSON.stringify(data));
+
+        // Redirect immediately to the dashboard:
+        window.location.href = 'affiliate-dashboard.html';
+
+      } catch (fetchError) {
+        statusEl.textContent = 'Unexpected error:\n' + fetchError.message;
         loginBtn.disabled = false;
         loginBtn.textContent = 'Login';
         return;
-      }
-
-      const { data, error } = query;
-
-      if (error) {
-        // Display explicit Supabase error message
-        statusEl.textContent = 'Login failed:\n' + error.message;
-        loginBtn.disabled = false;
-        loginBtn.textContent = 'Login';
-      } else if (!data) {
-        statusEl.textContent = 'No user found with those credentials.';
-        loginBtn.disabled = false;
-        loginBtn.textContent = 'Login';
-      } else {
-        // Save affiliate data and immediately redirect to dashboard
-        localStorage.setItem('affiliate_user', JSON.stringify(data));
-        window.location.href = 'affiliate-dashboard.html';
       }
     });
   </script>
