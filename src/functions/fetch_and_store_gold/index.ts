@@ -4,7 +4,7 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
 // Deno.serve is built into Supabase’s Edge runtime.
 Deno.serve(async (_req) => {
-  // 1) Read GOLDAPI_KEY from environment:
+  // 1) Read GOLDAPI_KEY from environment
   const GOLDAPI_KEY = Deno.env.get("GOLDAPI_KEY");
   if (!GOLDAPI_KEY) {
     return new Response(
@@ -13,7 +13,7 @@ Deno.serve(async (_req) => {
     );
   }
 
-  // 2) Fetch XAU/USD from GoldAPI:
+  // 2) Fetch XAU/USD from GoldAPI
   let price: number;
   try {
     const goldRes = await fetch("https://www.goldapi.io/api/XAU/USD", {
@@ -42,9 +42,9 @@ Deno.serve(async (_req) => {
   }
 
   // 3) Insert into Supabase table `gold_prices`:
-  const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!;
-  const SUPABASE_SERVICE_ROLE = Deno.env.get("SUPABASE_SERVICE_ROLE")!;
-  const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE);
+  const DB_URL = Deno.env.get("DB_URL")!;
+  const SERVICE_ROLE_KEY = Deno.env.get("SERVICE_ROLE_KEY")!;
+  const supabase = createClient(DB_URL, SERVICE_ROLE_KEY);
 
   const { error } = await supabase
     .from("gold_prices")
