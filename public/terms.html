@@ -23,6 +23,15 @@
       --glass-bg: rgba(255, 255, 255, 0.1);
       --footer-bg: #111;
     }
+    [data-theme="light"] {
+      --gold: #b8860b;
+      --gold-dark: #d4af37;
+      --text: #111;
+      --text-light: #444;
+      --bg: #fafafa;
+      --glass-bg: rgba(255, 255, 255, 0.9);
+      --footer-bg: #f1f1f1;
+    }
 
     /* ----- RESET & BASE ----- */
     * { margin: 0; padding: 0; box-sizing: border-box; }
@@ -37,21 +46,21 @@
     a { color: var(--gold); text-decoration: none; }
     a:hover { text-decoration: underline; }
 
-    /* ----- LOGO & THEME TOGGLE ----- */
-    .logo {
+    /* ----- LOGO, AUDIO & THEME TOGGLE ----- */
+    .header-controls {
       position: fixed; top: 20px; left: 20px; z-index: 10;
+      display: flex; align-items: center; gap: 15px;
     }
     .logo img {
-      width: 160px; cursor: pointer; transition: transform .3s;
+      width: 140px; cursor: pointer; transition: transform .3s;
     }
     .logo img:hover { transform: scale(1.05); }
 
-    #theme-toggle {
-      position: fixed; top: 20px; right: 20px; z-index: 10;
+    #audio-toggle, #theme-toggle {
       background: none; border: none; font-size: 1.5rem;
       color: var(--text); cursor: pointer; transition: transform .3s;
     }
-    #theme-toggle:hover { transform: scale(1.2); }
+    #audio-toggle:hover, #theme-toggle:hover { transform: scale(1.2); }
 
     /* ----- SLIDE-IN ANIMATION ----- */
     .slide-in {
@@ -65,7 +74,7 @@
     /* ----- MAIN WRAPPER ----- */
     main {
       max-width: 900px; margin: 0 auto;
-      padding: 140px 20px 60px; /* allow for header */
+      padding: 140px 20px 60px; /* allow for fixed header */
     }
     h1 {
       font-family: 'Playfair Display', serif;
@@ -132,13 +141,21 @@
 </head>
 <body>
 
-  <!-- Logo -->
-  <div class="logo">
-    <a href="Index.html"><img src="CBE_logo.PNG" alt="CBE Logo"></a>
+  <!-- Header: Logo + Audio + Theme Toggle -->
+  <div class="header-controls">
+    <div class="logo">
+      <a href="Index.html"><img src="CBE_logo.PNG" alt="CBE Logo"></a>
+    </div>
+    <button id="audio-toggle" aria-label="Play terms audio">
+      <i class="fas fa-play-circle"></i>
+    </button>
+    <button id="theme-toggle" aria-label="Toggle light/dark">
+      🌞
+    </button>
   </div>
 
-  <!-- Theme Toggle -->
-  <button id="theme-toggle" aria-label="Toggle light/dark">🌞</button>
+  <!-- Hidden Audio Element -->
+  <audio id="terms-audio" src="terms.mp3" preload="auto"></audio>
 
   <!-- Content -->
   <main>
@@ -246,19 +263,36 @@
     });
 
     // Theme toggle logic
-    const toggle = document.getElementById('theme-toggle');
-    toggle.addEventListener('click', () => {
+    const themeToggle = document.getElementById('theme-toggle');
+    themeToggle.addEventListener('click', () => {
       const curr = document.documentElement.getAttribute('data-theme');
       const next = curr === 'dark' ? 'light' : 'dark';
       document.documentElement.setAttribute('data-theme', next);
       localStorage.setItem('theme', next);
-      toggle.textContent = next === 'dark' ? '🌞' : '🌜';
+      themeToggle.textContent = next === 'dark' ? '🌞' : '🌜';
     });
     // initialize icon
-    (()=>{
-      const theme = document.documentElement.getAttribute('data-theme');
-      document.getElementById('theme-toggle').textContent = theme==='dark'?'🌞':'🌜';
+    (() => {
+      const theme = localStorage.getItem('theme') || 'dark';
+      document.documentElement.setAttribute('data-theme', theme);
+      themeToggle.textContent = theme === 'dark' ? '🌞' : '🌜';
     })();
+
+    // Audio play logic
+    const audioToggle = document.getElementById('audio-toggle');
+    const termsAudio = document.getElementById('terms-audio');
+    audioToggle.addEventListener('click', () => {
+      if (termsAudio.paused) {
+        termsAudio.play();
+        audioToggle.innerHTML = '<i class="fas fa-pause-circle"></i>';
+      } else {
+        termsAudio.pause();
+        audioToggle.innerHTML = '<i class="fas fa-play-circle"></i>';
+      }
+    });
+    termsAudio.addEventListener('ended', () => {
+      audioToggle.innerHTML = '<i class="fas fa-play-circle"></i>';
+    });
   </script>
 
   <!-- Smartsupp Live Chat script -->
