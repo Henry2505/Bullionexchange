@@ -6,30 +6,21 @@
   <title>Affiliate Login • CBE Global</title>
 
   <style>
-    /* Dark / Light theme variables */
     :root[data-theme="dark"] {
       --bg: #121212; 
       --text: #f0f0f0; 
       --gold: #d4af37; 
-      --gold-dark: #b3932b;
       --glass-bg: rgba(30,30,30,0.6); 
       --text-light: #bbbbbb; 
-      --text-muted: #888888;
       --error-color: #e74c3c;
-      --success-color: #2ecc71;
-      --warning-color: #f39c12;
     }
     :root[data-theme="light"] {
       --bg: #fafafa; 
       --text: #222222; 
       --gold: #d4af37; 
-      --gold-dark: #b3932b;
       --glass-bg: rgba(255,255,255,0.6); 
       --text-light: #555555; 
-      --text-muted: #666666;
       --error-color: #e74c3c;
-      --success-color: #2ecc71;
-      --warning-color: #f39c12;
     }
     * { margin: 0; padding: 0; box-sizing: border-box; }
     body {
@@ -46,7 +37,7 @@
       max-width: 400px;
       background: var(--glass-bg);
       backdrop-filter: blur(8px);
-      padding: 30px 25px;
+      padding: 30px;
       border-radius: 10px;
       box-shadow: 0 4px 30px rgba(0,0,0,0.5);
       opacity: 0; 
@@ -58,7 +49,6 @@
       transform: translateY(0);
     }
     .login-card h1 {
-      font-family: 'Playfair Display', serif;
       font-size: 1.8rem; 
       color: var(--gold);
       text-align: center; 
@@ -89,13 +79,22 @@
       transition: background .3s, box-shadow .3s;
     }
     button:hover {
-      background: var(--gold-dark);
+      background: #b3932b;
       box-shadow: 0 0 12px var(--gold);
     }
     #login-alert {
       margin-top: 12px; 
       text-align: center; 
       font-weight: 600;
+      color: var(--error-color);
+    }
+    footer {
+      position: fixed; 
+      bottom: 20px; 
+      width: 100%; 
+      text-align: center;
+      color: var(--text-light); 
+      font-size: .85rem;
     }
     .logo { position: fixed; top: 20px; left: 20px; }
     .logo img { width: 130px; }
@@ -109,18 +108,10 @@
       color: var(--text); 
       cursor: pointer;
     }
-    footer {
-      position: fixed; 
-      bottom: 20px; 
-      width: 100%; 
-      text-align: center;
-      color: var(--text-muted); 
-      font-size: .85rem;
-    }
   </style>
 
   <link
-    href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700&family=Roboto:wght@300;400;700&display=swap"
+    href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;700&display=swap"
     rel="stylesheet"
   />
 </head>
@@ -146,17 +137,14 @@
 
   <footer>© 2025 Chukwuemeka Bullion Exchange. All rights reserved.</footer>
 
-  <!-- Supabase UMD (v2.45.4) - do NOT change these two lines: -->
+  <!-- Supabase UMD (v2.45.4) – do NOT alter these two lines: -->
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>
   <script>
-    // ─── 1) Fade‑in + theme toggle ────────────────────────────────────────────────
+    // ─── Fade‑in + theme toggle ───────────────────────────────────────────────────
     const loginCard = document.getElementById('login-card');
     const themeToggleBtn = document.getElementById('theme-toggle');
     window.addEventListener('DOMContentLoaded', () => {
-      // fade‑in card
       loginCard.classList.add('visible');
-
-      // set stored theme
       const saved = localStorage.getItem('theme') || 'dark';
       document.documentElement.setAttribute('data-theme', saved);
       themeToggleBtn.textContent = saved === 'dark' ? '🌞' : '🌜';
@@ -169,16 +157,14 @@
       themeToggleBtn.textContent = nxt === 'dark' ? '🌞' : '🌜';
     });
 
-    // ─── 2) Supabase client for affiliates ─────────────────────────────────────────
+    // ─── Supabase client ───────────────────────────────────────────────────────────
     const SUPA_URL  = 'https://dapwpgvnfjcfqqhrpxla.supabase.co';
     const SUPA_ANON = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImRhcHdwZ3ZuZmpjZnFxaHJweGxhIiwicm9sIjoiYW5vbiIsImlhdCI6MTc0NzA0MDQ4OCwiZXhwIjoyMDYyNjE2ODg4fQ.ICC0UsLlzJDNre7rFCeD3k6iVzo6jOJgn3PhABpEMsQ';
-
-    // This uses the global `supabase` from the UMD script above:
     const sb = supabase.createClient(SUPA_URL, SUPA_ANON);
 
-    // ─── 3) LOGIN FORM SUBMIT HANDLER ──────────────────────────────────────────────
+    // ─── LOGIN FORM SUBMIT ─────────────────────────────────────────────────────────
     document.getElementById('login-form').addEventListener('submit', async (evt) => {
-      evt.preventDefault();  // ← Prevent page reload
+      evt.preventDefault();
       const alertDiv = document.getElementById('login-alert');
       alertDiv.textContent = '';
 
@@ -186,7 +172,6 @@
       const password   = document.getElementById('password').value;
 
       if (!identifier || !password) {
-        alertDiv.style.color = 'var(--error-color)';
         alertDiv.textContent = 'Please enter both username (or email) and password.';
         return;
       }
@@ -197,10 +182,10 @@
       loginBtn.textContent = 'Logging in…';
 
       try {
-        // Build an OR filter: username matches OR email matches
+        // Build OR filter: username = … OR email = …
         const orFilter = `username.eq.${identifier},email.eq.${identifier}`;
 
-        // Query the `affiliates` table for a row whose password matches
+        // Query the `affiliates` table
         const { data: affiliate, error } = await sb
           .from('affiliates')
           .select('*')
@@ -208,21 +193,15 @@
           .eq('password', password)
           .single();
 
-        if (error) {
-          throw error; 
-        }
-        if (!affiliate) {
-          throw new Error('No matching affiliate found.');
-        }
+        if (error) throw error;
+        if (!affiliate) throw new Error('No matching affiliate found.');
 
-        // Successful login → store affiliate data & redirect
+        // On success: store affiliate row and redirect
         localStorage.setItem('affiliate_user', JSON.stringify(affiliate));
         window.location.assign('affiliate-dashboard.html');
-
       } catch (err) {
         console.error('Login error:', err);
-        alertDiv.style.color = 'var(--error-color)';
-        alertDiv.textContent = err.message || 'Login failed. Please try again.';
+        alertDiv.textContent = err.message || 'Login failed–please try again.';
         loginBtn.disabled = false;
         loginBtn.textContent = 'Log In';
       }
