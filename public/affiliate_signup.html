@@ -2,10 +2,10 @@
 <html lang="en" data-theme="dark">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
   <title>Affiliate Sign Up • CBE Global</title>
 
-  <!-- ─── Bootstrap 5.3 CSS ──────────────────────────────────────────────────────── -->
+  <!-- ─── Bootstrap 5.3 CSS ─────────────────────────────────────────────────────── -->
   <link
     href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css"
     rel="stylesheet"
@@ -13,7 +13,7 @@
     crossorigin="anonymous"
   />
 
-  <!-- ─── Bootstrap Icons ────────────────────────────────────────────────────────── -->
+  <!-- ─── Bootstrap Icons ───────────────────────────────────────────────────────── -->
   <link
     href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css"
     rel="stylesheet"
@@ -32,9 +32,9 @@
       --gold-dark: #cca300;
       --error-color: #e74c3c;
       --success-color: #2ecc71;
-      --shadow: rgba(0, 0, 0, 0.5);
       --border-color: #333;
       --text-light: #bbbbbb;
+      --shadow: rgba(0, 0, 0, 0.5);
     }
     :root[data-theme="light"] {
       --bg: #f5f5f5;
@@ -44,9 +44,9 @@
       --gold-dark: #b58900;
       --error-color: #e74c3c;
       --success-color: #2ecc71;
-      --shadow: rgba(0, 0, 0, 0.2);
       --border-color: #ddd;
       --text-light: #666;
+      --shadow: rgba(0, 0, 0, 0.2);
     }
 
     html {
@@ -103,13 +103,8 @@
       border: none;
       color: #000;
       font-weight: 600;
-      transition: opacity 0.3s ease;
     }
-    .btn-primary:disabled {
-      opacity: 0.5;
-      cursor: not-allowed;
-    }
-    .btn-primary:hover:enabled {
+    .btn-primary:hover {
       background: linear-gradient(45deg, var(--gold-dark), var(--gold));
     }
 
@@ -161,7 +156,7 @@
         type="text"
         id="signup-username"
         class="form-control"
-        placeholder="Username (use your main site username)"
+        placeholder="Username (must match your main site username)"
         required
       />
       <input
@@ -175,10 +170,11 @@
         type="password"
         id="signup-password"
         class="form-control"
-        placeholder="Password (min 8 chars)"
+        placeholder="Password (min 8 chars)"
         required
       />
-      <button type="submit" id="signup-btn" class="btn btn-primary" disabled>
+      <!-- Button is always enabled, so it’s always clickable -->
+      <button type="button" id="signup-btn" class="btn btn-primary">
         Sign Up
       </button>
       <div id="signup-alert"></div>
@@ -194,6 +190,7 @@
 
   <script>
     // ─── SUPABASE CLIENT SETUP ──────────────────────────────────────────────────────
+    // (Replace with your actual Supabase URL + anon key)
     const SUPA_URL = 'https://dapwpgvnfjcfqqhrpxla.supabase.co';
     const SUPA_KEY =
       'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.' +
@@ -210,21 +207,7 @@
     const themeBtn      = document.getElementById('toggle-theme');
     const themeIcon     = document.getElementById('theme-icon');
 
-    // ─── ENABLE “SIGN UP” BUTTON WHEN FORM IS VALID ────────────────────────────────
-    function validateForm() {
-      const username = usernameInput.value.trim();
-      const email    = emailInput.value.trim();
-      const pwd      = pwdInput.value;
-      const isValidEmail = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
-      const isValidPwd   = pwd.length >= 8;
-      signupBtn.disabled = !(username && isValidEmail && isValidPwd);
-    }
-    usernameInput.addEventListener('input', validateForm);
-    emailInput.addEventListener('input', validateForm);
-    pwdInput.addEventListener('input', validateForm);
-    document.addEventListener('DOMContentLoaded', validateForm);
-
-    // ─── GENERATE AN 8‑CHAR REFERRAL CODE ───────────────────────────────────────────
+    // ─── GENERATE A RANDOM 8‑CHARACTER REFERRAL CODE ──────────────────────────────
     function generateReferralCode() {
       const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
       let code = '';
@@ -237,32 +220,44 @@
     // ─── SHOW FEEDBACK MESSAGE (green or red) ──────────────────────────────────────
     function showAlert(message, isError = false) {
       signupAlert.textContent = message;
-      signupAlert.style.color = isError ? 'var(--error-color)' : 'var(--success-color)';
+      signupAlert.style.color = isError
+        ? getComputedStyle(document.documentElement).getPropertyValue('--error-color')
+        : getComputedStyle(document.documentElement).getPropertyValue('--success-color');
     }
 
-    // ─── HANDLE FORM SUBMISSION ─────────────────────────────────────────────────────
-    document.getElementById('signup-form').addEventListener('submit', async (evt) => {
-      evt.preventDefault();
-      showAlert(''); // clear any previous message
+    // ─── HANDLE SIGN‑UP BUTTON CLICK ─────────────────────────────────────────────────
+    signupBtn.addEventListener('click', async () => {
+      // Clear any previous message
+      showAlert('');
 
       const username = usernameInput.value.trim();
       const email    = emailInput.value.trim().toLowerCase();
       const password = pwdInput.value;
 
-      // Double-check validation before proceeding
-      if (!username || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email) || password.length < 8) {
-        showAlert('Please fill all fields correctly.', true);
+      // 1) Basic validation
+      if (!username || !email || !password) {
+        showAlert('All fields are required.', true);
+        return;
+      }
+      // Simple email format check
+      if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+        showAlert('Please enter a valid email address.', true);
+        return;
+      }
+      // Password length check
+      if (password.length < 8) {
+        showAlert('Password must be at least 8 characters.', true);
         return;
       }
 
+      // 2) Generate referral code
+      const newCode = generateReferralCode();
+
+      // 3) Attempt to insert into public.affiliates
       signupBtn.disabled = true;
       signupBtn.textContent = 'Signing Up…';
 
       try {
-        // 1) Generate a unique referral code
-        const newCode = generateReferralCode();
-
-        // 2) Insert into public.affiliates
         const { data, error } = await supabase
           .from('affiliates')
           .insert([{
@@ -273,18 +268,17 @@
           }]);
 
         if (error) {
-          console.error('Insert into affiliates error:', error);
           throw new Error(error.message);
         }
 
-        // 3) Success: show the new referral code
+        // 4) Success → show referral code
         showAlert(`Registration successful! Your referral code: ${newCode}`);
         signupBtn.textContent = 'Signed Up';
-        signupBtn.disabled = true;
 
-      } catch (error) {
-        console.error('Registration error:', error);
-        showAlert(error.message || 'Unknown error. Please try again.', true);
+      } catch (err) {
+        // 5) Error → show error message (e.g. “email already exists”)
+        console.error('Insert error:', err);
+        showAlert(err.message || 'Unexpected error. Please try again.', true);
         signupBtn.disabled = false;
         signupBtn.textContent = 'Sign Up';
       }
