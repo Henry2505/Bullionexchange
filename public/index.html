@@ -1283,11 +1283,18 @@
   </script>
 
   <script>
-    const GOLDAPI_KEY = "goldapi-b1asmbhbrz5g-io";
-    const NEWS_API_KEY = "6de81d54e02e45f8a5546a827c70ab28";
-    const EXCHANGE_RATE_API_KEY = "4e4307b2bf8daac15365a410";
+    // ───────────────────────────────────────────────────────────────────────────
+    // 1) Insert your actual keys here:
+    const GOLDAPI_KEY             = "goldapi-b1asmbhbrz5g-io";
+    const NEWS_API_KEY            = "6de81d54e02e45f8a5546a827c70ab28";
+    const EXCHANGE_RATE_API_KEY   = "4e4307b2bf8daac15365a410";
+    // ───────────────────────────────────────────────────────────────────────────
+
+    // Fetch interval: 8 hours (3× per day)
+    const FETCH_INTERVAL_MS = 8 * 60 * 60 * 1000; // 8 h
 
     document.addEventListener("DOMContentLoaded", () => {
+      // ─────────────────────────────────────────────────────────────────────────
       // Highlight current nav link
       const navLinks = document.querySelectorAll("#desktop-links .nav-link, #menu-list a");
       const currentURL = window.location.href;
@@ -1299,10 +1306,10 @@
 
       // Slide‑in animation
       const slideEls = document.querySelectorAll(".slide-in");
-      slideEls.forEach((el) => {
+      slideEls.forEach(el => {
         const io = new IntersectionObserver(
           (entries, obs) => {
-            entries.forEach((entry) => {
+            entries.forEach(entry => {
               if (entry.isIntersecting) {
                 entry.target.classList.add("visible");
                 obs.unobserve(entry.target);
@@ -1316,22 +1323,22 @@
 
       // Mobile nav toggle
       const toggle = document.getElementById("menu-toggle");
-      const menu = document.getElementById("menu-list");
+      const menu   = document.getElementById("menu-list");
       toggle.addEventListener("click", () => {
         const expanded = toggle.getAttribute("aria-expanded") === "true";
         toggle.setAttribute("aria-expanded", String(!expanded));
         toggle.classList.toggle("active");
         menu.classList.toggle("active");
       });
-      document.querySelectorAll("#menu-list .dropdown-mobile > a").forEach((btn) => {
-        btn.addEventListener("click", (e) => {
+      document.querySelectorAll("#menu-list .dropdown-mobile > a").forEach(btn => {
+        btn.addEventListener("click", e => {
           e.preventDefault();
           const expanded = btn.parentElement.classList.toggle("expanded");
           btn.setAttribute("aria-expanded", expanded);
         });
       });
-      document.querySelectorAll("#desktop-links .dropdown > a").forEach((btn) => {
-        btn.addEventListener("click", (e) => {
+      document.querySelectorAll("#desktop-links .dropdown > a").forEach(btn => {
+        btn.addEventListener("click", e => {
           e.preventDefault();
           const dropdown = btn.parentElement.querySelector("ul");
           const isVisible = dropdown.style.display === "block";
@@ -1340,55 +1347,317 @@
         });
       });
 
-      // Fallback for news tickers
-      const goldContainer = document.getElementById("gold-ticker-content");
-      const econContainer = document.getElementById("econ-ticker-content");
-      const goldFallback = [
-        "Gold price rises as inflation fears intensify",
-        "Analysts predict higher gold demand ahead",
-        "XAU/USD ticks up on safe-haven flows",
-        "Central banks continue to buy gold amid uncertainty",
-      ];
-      const econFallback = [
-        "US GDP growth exceeds expectations",
-        "ECB holds interest rates steady",
-        "China manufacturing PMI drops slightly",
-        "UK inflation data surprises economists",
-      ];
-      goldContainer.innerHTML = "";
-      goldFallback.forEach((text) => {
-        const a = document.createElement("a");
-        a.href = "#";
-        a.textContent = text;
-        goldContainer.appendChild(a);
-      });
-      econContainer.innerHTML = "";
-      econFallback.forEach((text) => {
-        const a = document.createElement("a");
-        a.href = "#";
-        a.textContent = text;
-        econContainer.appendChild(a);
-      });
+      // ─────────────────────────────────────────────────────────────────────────
+      // TRUST: update local time next to logo
+      function updateLocalTime() {
+        const now = new Date();
+        const formatted = now.toLocaleString("en-US", {
+          hour:   "numeric",
+          minute: "numeric",
+          second: "numeric",
+          hour12: true,
+          month:  "short",
+          day:    "2-digit",
+          year:   "numeric",
+        });
+        let timeEl = document.getElementById("local-time");
+        if (!timeEl) {
+          timeEl = document.createElement("span");
+          timeEl.id = "local-time";
+          timeEl.style.color = "var(--text-light)";
+          timeEl.style.fontSize = "0.9rem";
+          timeEl.style.marginLeft = "15px";
+          const navLogo = document.querySelector("#nav-menu .logo");
+          if (navLogo) navLogo.insertAdjacentElement("afterend", timeEl);
+        }
+        timeEl.textContent = formatted;
+      }
+      updateLocalTime();
+      setInterval(updateLocalTime, 1000);
 
-      // Load news tickers
+      // ─────────────────────────────────────────────────────────────────────────
+      // LIVE GOLD PRICE (cached for 8 hours)
+      async function loadAndDisplayGoldPrice() {
+        const goldEl    = document.getElementById("gold-price");
+        const changeEl  = document.getElementById("price-change");
+        const updatedEl = document.getElementById("gold-last-updated");
+
+        // Previous stored price for diff
+        let prevGoldPrice = Number(localStorage.getItem("cbe_cachedGoldPrice")) || null;
+
+        goldEl.textContent   = "Loading…";
+        changeEl.textContent = "…";
+
+        try {
+          const response = await fetch("https://www.goldapi.io/api/XAU/USD", {
+            headers: {
+              "x-access-token": GOLDAPI_KEY,
+              "Content-Type": "application/json",
+            },
+          });
+
+          if (!response.ok) {
+            console.error("GoldAPI HTTP error:", response.status, response.statusText);
+            const errJson = await response.json().catch(() => ({}));
+            console.error("GoldAPI response JSON on error:", errJson);
+            goldEl.textContent   = "Error";
+            changeEl.textContent = "–";
+            return;
+          }
+
+          const data = await response.json();
+          console.log("GoldAPI response data:", data);
+
+          const price = data.price ? parseFloat(data.price) : null;
+          if (price !== null) {
+            const nowTs = Date.now();
+            localStorage.setItem("cbe_cachedGoldPrice", price);
+            localStorage.setItem("cbe_lastGoldFetch", nowTs);
+            localStorage.setItem("cbe_cachedGoldTimestamp", nowTs);
+
+            goldEl.textContent = `$${price.toFixed(2)}`;
+
+            if (prevGoldPrice !== null) {
+              const diff = price - prevGoldPrice;
+              const diffPercent = ((diff / prevGoldPrice) * 100).toFixed(2);
+              changeEl.textContent = `${diff > 0 ? "+" : ""}${diff.toFixed(2)} (${diffPercent}%)`;
+              goldEl.classList.toggle("price-up", diff > 0);
+              goldEl.classList.toggle("price-down", diff < 0);
+              changeEl.classList.toggle("price-up", diff > 0);
+              changeEl.classList.toggle("price-down", diff < 0);
+            } else {
+              changeEl.textContent = "–";
+            }
+
+            updatedEl.textContent = `Last updated: ${new Date().toLocaleString("en-US", {
+              hour:   "numeric",
+              minute: "numeric",
+              second: "numeric",
+              hour12: true,
+              month:  "short",
+              day:    "2-digit",
+              year:   "numeric"
+            })}`;
+          } else {
+            goldEl.textContent   = "N/A";
+            changeEl.textContent = "–";
+          }
+        } catch (err) {
+          console.error("GoldAPI fetch threw exception:", err);
+          goldEl.textContent   = "Error";
+          changeEl.textContent = "–";
+        }
+      }
+
+      async function maybeLoadGoldPrice() {
+        const now       = Date.now();
+        const lastFetch = Number(localStorage.getItem("cbe_lastGoldFetch")) || 0;
+        const cached    = localStorage.getItem("cbe_cachedGoldPrice");
+        const ts        = Number(localStorage.getItem("cbe_cachedGoldTimestamp")) || 0;
+
+        if (cached && now - lastFetch < FETCH_INTERVAL_MS) {
+          // Use cached
+          document.getElementById("gold-price").textContent = `$${parseFloat(cached).toFixed(2)}`;
+          document.getElementById("gold-last-updated").textContent =
+            `Last updated (cached): ${new Date(ts).toLocaleString()}`;
+
+          const delay = FETCH_INTERVAL_MS - (now - lastFetch);
+          console.log(`Gold: Using cache. Next fetch in ${Math.round(delay / 1000 / 60)} minutes.`);
+          setTimeout(loadAndDisplayGoldPrice, delay);
+        } else {
+          // Fetch now
+          console.log("Gold: Cache expired or missing → fetching now");
+          await loadAndDisplayGoldPrice();
+          setTimeout(loadAndDisplayGoldPrice, FETCH_INTERVAL_MS);
+        }
+      }
+
+      maybeLoadGoldPrice();
+
+      // ─────────────────────────────────────────────────────────────────────────
+      // CURRENCY CONVERTER
+      async function convertCurrency() {
+        const from    = document.getElementById("converter-from").value;
+        const to      = document.getElementById("converter-to").value;
+        const amount  = parseFloat(document.getElementById("converter-amount").value) || 1;
+        const resultEl = document.getElementById("converter-result");
+
+        resultEl.innerHTML = '<span style="opacity:0.7;">Converting…</span>';
+        console.log(`Converting ${amount} ${from} → ${to}…`);
+
+        try {
+          const res = await fetch(
+            `https://v6.exchangerate-api.com/v6/${EXCHANGE_RATE_API_KEY}/latest/${from}`
+          );
+          if (!res.ok) {
+            console.error("ExchangeRate API HTTP error:", res.status, res.statusText);
+            const errJson = await res.json().catch(() => ({}));
+            console.error("ExchangeRate API error JSON:", errJson);
+            resultEl.textContent = "Error";
+            return;
+          }
+
+          const data = await res.json();
+          console.log("ExchangeRate response:", data);
+
+          if (data.result !== "success") {
+            console.error("ExchangeRate returned non‑success:", data);
+            resultEl.textContent = "Conversion failed";
+            return;
+          }
+
+          const rate = data.conversion_rates[to];
+          if (typeof rate !== "number") {
+            console.error("No conversion rate for", to, "in response:", data.conversion_rates);
+            resultEl.textContent = "Rate unavailable";
+            return;
+          }
+
+          resultEl.textContent = `${amount} ${from} = ${(amount * rate).toFixed(2)} ${to}`;
+        } catch (err) {
+          console.error("Currency conversion exception:", err);
+          resultEl.innerHTML = '<span style="color: var(--error)">Failed to convert</span>';
+        }
+      }
+
+      document.getElementById("convert-btn").addEventListener("click", convertCurrency);
+
+      // ─────────────────────────────────────────────────────────────────────────
+      // ECONOMIC CALENDAR ROTATOR
+      const economicEvents = [
+        { date: "06-03-2025", time: "08:30", currency: "USD", event: "Non-Farm Payrolls", impact: "High" },
+        { date: "06-03-2025", time: "10:00", currency: "EUR", event: "CPI Flash Estimate", impact: "Medium" },
+        { date: "06-04-2025", time: "04:30", currency: "GBP", event: "Services PMI", impact: "Low" },
+        { date: "06-05-2025", time: "12:00", currency: "CAD", event: "Interest Rate Decision", impact: "High" },
+        { date: "06-06-2025", time: "09:00", currency: "AUD", event: "Employment Change", impact: "Medium" },
+      ];
+      let currentEventIndex = 0;
+      function displayEvent(index) {
+        const event = economicEvents[index];
+        const rotator = document.getElementById("calendar-rotator");
+        rotator.classList.add("fade");
+        setTimeout(() => {
+          rotator.innerHTML = `
+            <p><strong>Date:</strong> ${event.date}</p>
+            <p><strong>Time:</strong> ${event.time}</p>
+            <p><strong>Currency:</strong> ${event.currency}</p>
+            <p><strong>Event:</strong> ${event.event}</p>
+            <p><strong>Impact:</strong> ${event.impact}</p>
+          `;
+          rotator.classList.remove("fade");
+        }, 500);
+      }
+      function rotateEvents() {
+        displayEvent(currentEventIndex);
+        currentEventIndex = (currentEventIndex + 1) % economicEvents.length;
+      }
+      rotateEvents();
+      setInterval(rotateEvents, 5000);
+
+      // ─────────────────────────────────────────────────────────────────────────
+      // NEWS TICKERS
+      async function loadGoldTicker() {
+        const container = document.getElementById("gold-ticker-content");
+        try {
+          const res = await fetch(
+            `https://newsapi.org/v2/everything?q=gold+market&apiKey=${NEWS_API_KEY}&pageSize=10`
+          );
+          const data = await res.json();
+          if (data.status !== "ok") throw new Error("News API error");
+          container.innerHTML = "";
+          data.articles.forEach(article => {
+            const a = document.createElement("a");
+            a.href = article.url;
+            a.target = "_blank";
+            a.textContent = article.title;
+            container.appendChild(a);
+          });
+        } catch (err) {
+          console.error("Gold news error:", err);
+          // Fallback in case of error
+          const fallback = [
+            "Gold price rises as inflation fears intensify",
+            "Analysts predict higher gold demand ahead",
+            "XAU/USD ticks up on safe-haven flows",
+            "Central banks continue to buy gold amid uncertainty",
+          ];
+          container.innerHTML = "";
+          fallback.forEach(text => {
+            const a = document.createElement("a");
+            a.href = "#";
+            a.textContent = text;
+            container.appendChild(a);
+          });
+        }
+      }
+
+      async function loadEconTicker() {
+        const container = document.getElementById("econ-ticker-content");
+        try {
+          const res = await fetch(
+            `https://newsapi.org/v2/everything?q=economic+news+forex&apiKey=${NEWS_API_KEY}&pageSize=10`
+          );
+          const data = await res.json();
+          if (data.status !== "ok") throw new Error("News API error");
+          container.innerHTML = "";
+          data.articles.forEach(article => {
+            const a = document.createElement("a");
+            a.href = article.url;
+            a.target = "_blank";
+            a.textContent = article.title;
+            container.appendChild(a);
+          });
+        } catch (err) {
+          console.error("Economic news error:", err);
+          // Fallback in case of error
+          const fallback = [
+            "US GDP growth exceeds expectations",
+            "ECB holds interest rates steady",
+            "China manufacturing PMI drops slightly",
+            "UK inflation data surprises economists",
+          ];
+          container.innerHTML = "";
+          fallback.forEach(text => {
+            const a = document.createElement("a");
+            a.href = "#";
+            a.textContent = text;
+            container.appendChild(a);
+          });
+        }
+      }
+
       loadGoldTicker();
       loadEconTicker();
       setInterval(loadGoldTicker, 60 * 1000);
       setInterval(loadEconTicker, 60 * 1000);
 
-      // Economic calendar
-      rotateEvents();
-      setInterval(rotateEvents, 5000);
+      // ─────────────────────────────────────────────────────────────────────────
+      // TRADINGVIEW CHART INIT
+      function initGoldChart(interval = "60") {
+        const theme = document.documentElement.getAttribute("data-theme");
+        const container = document.getElementById("tradingview_fullscreen");
+        container.innerHTML = "";
 
-      // Local time
-      updateLocalTime();
-      setInterval(updateLocalTime, 1000);
+        new TradingView.widget({
+          container_id: "tradingview_fullscreen",
+          autosize: true,
+          symbol: "OANDA:XAUUSD",
+          interval: interval,
+          timezone: "Etc/UTC",
+          theme: theme,
+          style: "1",
+          locale: "en",
+          toolbar_bg: "#1f1f1f",
+          allow_symbol_change: true,
+          hide_side_toolbar: false,
+          withdateranges: true,
+          details: true
+        });
+      }
 
-      // Ensure TradingView is ready before initializing
       if (window.TradingView && typeof window.TradingView.widget === "function") {
         initGoldChart();
       } else {
-        // Poll until TradingView is available
         const tvInterval = setInterval(() => {
           if (window.TradingView && typeof window.TradingView.widget === "function") {
             clearInterval(tvInterval);
@@ -1397,8 +1666,7 @@
         }, 100);
       }
 
-      // Handle chart toggle buttons
-      document.querySelectorAll(".chart-toggle button").forEach((btn) => {
+      document.querySelectorAll(".chart-toggle button").forEach(btn => {
         btn.addEventListener("click", () => {
           document.querySelector(".chart-toggle button.active").classList.remove("active");
           btn.classList.add("active");
@@ -1406,10 +1674,8 @@
         });
       });
 
-      // Currency converter
-      document.getElementById("convert-btn").addEventListener("click", convertCurrency);
-
-      // Back‑to‑top
+      // ─────────────────────────────────────────────────────────────────────────
+      // BACK‑TO‑TOP BUTTON
       const backToTop = document.getElementById("back-to-top");
       window.addEventListener("scroll", () => {
         if (window.scrollY > window.innerHeight / 2) {
@@ -1445,229 +1711,6 @@
       document.documentElement.setAttribute("data-theme", saved);
       themeBtn.textContent = saved === "dark" ? "🌞" : "🌜";
     })();
-
-    // Load gold news
-    async function loadGoldTicker() {
-      const container = document.getElementById("gold-ticker-content");
-      try {
-        const res = await fetch(
-          `https://newsapi.org/v2/everything?q=gold+market&apiKey=${NEWS_API_KEY}&pageSize=10`
-        );
-        const data = await res.json();
-        if (data.status !== "ok") throw new Error("News API error");
-        container.innerHTML = "";
-        data.articles.forEach((article) => {
-          const a = document.createElement("a");
-          a.href = article.url;
-          a.target = "_blank";
-          a.textContent = article.title;
-          container.appendChild(a);
-        });
-      } catch (err) {
-        console.error("Gold news error:", err);
-      }
-    }
-
-    // Load economic news
-    async function loadEconTicker() {
-      const container = document.getElementById("econ-ticker-content");
-      try {
-        const res = await fetch(
-          `https://newsapi.org/v2/everything?q=economic+news+forex&apiKey=${NEWS_API_KEY}&pageSize=10`
-        );
-        const data = await res.json();
-        if (data.status !== "ok") throw new Error("News API error");
-        container.innerHTML = "";
-        data.articles.forEach((article) => {
-          const a = document.createElement("a");
-          a.href = article.url;
-          a.target = "_blank";
-          a.textContent = article.title;
-          container.appendChild(a);
-        });
-      } catch (err) {
-        console.error("Economic news error:", err);
-      }
-    }
-
-    // ==== NEW: “Live gold price” via our Supabase function ====
-    let prevGoldPrice = null;
-    async function loadGoldPrice() {
-      const goldEl = document.getElementById("gold-price");
-      const changeEl = document.getElementById("price-change");
-      const updatedEl = document.getElementById("gold-last-updated");
-
-      // 1) Show last‑cached if available so there’s no “--”
-      const cached = localStorage.getItem("cachedGoldPrice");
-      if (cached) {
-        goldEl.textContent = `$${parseFloat(cached).toFixed(2)}`;
-      }
-
-      // 2) Fetch the current price from our “latest_gold” function
-      try {
-        const res = await fetch(
-          "https://dapwpgvnfjcfqqhrpxla.supabase.co/functions/v1/latest_gold"
-        );
-        if (!res.ok) throw new Error("Network response not OK");
-        const json = await res.json();
-        const price = parseFloat(json.price_usd);
-        const fetchedAt = new Date(json.fetched_at);
-
-        if (!Number.isNaN(price)) {
-          localStorage.setItem("cachedGoldPrice", price);
-
-          // Show the change since previous
-          if (prevGoldPrice !== null) {
-            const diff = price - prevGoldPrice;
-            const diffPercent = ((diff / prevGoldPrice) * 100).toFixed(2);
-            changeEl.textContent = `${diff > 0 ? "+" : ""}${diff.toFixed(2)} (${diffPercent}%)`;
-            if (diff > 0) {
-              goldEl.classList.remove("price-down");
-              goldEl.classList.add("price-up");
-              changeEl.classList.remove("price-down");
-              changeEl.classList.add("price-up");
-            } else if (diff < 0) {
-              goldEl.classList.remove("price-up");
-              goldEl.classList.add("price-down");
-              changeEl.classList.remove("price-up");
-              changeEl.classList.add("price-down");
-            } else {
-              goldEl.classList.remove("price-up", "price-down");
-              changeEl.classList.remove("price-up", "price-down");
-            }
-          }
-
-          goldEl.textContent = `$${price.toFixed(2)}`;
-          prevGoldPrice = price;
-
-          updatedEl.textContent = `Last updated: ${fetchedAt.toLocaleTimeString("en-US", {
-            hour: "numeric",
-            minute: "numeric",
-            second: "numeric",
-            hour12: true,
-          })}`;
-        } else {
-          goldEl.textContent = "N/A";
-          changeEl.textContent = "-";
-        }
-      } catch (err) {
-        console.error("Latest‑gold fetch error:", err);
-        goldEl.textContent = "N/A";
-        changeEl.textContent = "-";
-      }
-    }
-
-    // Run once on page load
-    loadGoldPrice();
-
-    // OPTIONAL: Refresh every hour (commented out)
-    // setInterval(loadGoldPrice, 60 * 60 * 1000);
-
-    // Economic calendar rotator
-    const economicEvents = [
-      { date: "06-03-2025", time: "08:30", currency: "USD", event: "Non-Farm Payrolls", impact: "High" },
-      { date: "06-03-2025", time: "10:00", currency: "EUR", event: "CPI Flash Estimate", impact: "Medium" },
-      { date: "06-04-2025", time: "04:30", currency: "GBP", event: "Services PMI", impact: "Low" },
-      { date: "06-05-2025", time: "12:00", currency: "CAD", event: "Interest Rate Decision", impact: "High" },
-      { date: "06-06-2025", time: "09:00", currency: "AUD", event: "Employment Change", impact: "Medium" },
-    ];
-    let currentEventIndex = 0;
-    function displayEvent(index) {
-      const event = economicEvents[index];
-      const rotator = document.getElementById("calendar-rotator");
-      rotator.classList.add("fade");
-      setTimeout(() => {
-        rotator.innerHTML = `
-          <p><strong>Date:</strong> ${event.date}</p>
-          <p><strong>Time:</strong> ${event.time}</p>
-          <p><strong>Currency:</strong> ${event.currency}</p>
-          <p><strong>Event:</strong> ${event.event}</p>
-          <p><strong>Impact:</strong> ${event.impact}</p>
-        `;
-        rotator.classList.remove("fade");
-      }, 500);
-    }
-    function rotateEvents() {
-      displayEvent(currentEventIndex);
-      currentEventIndex = (currentEventIndex + 1) % economicEvents.length;
-    }
-
-    // Local time next to logo
-    function updateLocalTime() {
-      const now = new Date();
-      const formatted = now.toLocaleString("en-US", {
-        hour: "numeric",
-        minute: "numeric",
-        second: "numeric",
-        hour12: true,
-        month: "short",
-        day: "2-digit",
-        year: "numeric",
-      });
-      let timeEl = document.getElementById("local-time");
-      if (!timeEl) {
-        timeEl = document.createElement("span");
-        timeEl.id = "local-time";
-        timeEl.style.color = "var(--text-light)";
-        timeEl.style.fontSize = "0.9rem";
-        timeEl.style.marginLeft = "15px";
-        const navLogo = document.querySelector("#nav-menu .logo");
-        navLogo.insertAdjacentElement("afterend", timeEl);
-      }
-      timeEl.textContent = formatted;
-    }
-
-    // Initialize TradingView gold chart (without RSI/MACD)
-    function initGoldChart(interval = "60") {
-      const theme = document.documentElement.getAttribute("data-theme");
-      document.getElementById("tradingview_fullscreen").innerHTML = "";
-      new TradingView.widget({
-        container_id: "tradingview_fullscreen",
-        autosize: true,
-        symbol: "OANDA:XAUUSD",
-        interval: interval,
-        timezone: "Etc/UTC",
-        theme: theme,
-        style: "1",
-        locale: "en",
-        toolbar_bg: "#1f1f1f",
-        allow_symbol_change: true,
-        hide_side_toolbar: false,
-        withdateranges: true,
-        details: true
-      });
-    }
-
-    // Currency converter
-    const apiCache = new Map();
-    async function convertCurrency() {
-      const from = document.getElementById("converter-from").value;
-      const to = document.getElementById("converter-to").value;
-      const amount = parseFloat(document.getElementById("converter-amount").value) || 1;
-      const resultEl = document.getElementById("converter-result");
-      resultEl.innerHTML = '<span style="opacity:0.7;">Converting…</span>';
-
-      const cacheKey = `${from}_${to}`;
-      if (apiCache.has(cacheKey)) {
-        const rate = apiCache.get(cacheKey);
-        resultEl.textContent = `${amount} ${from} = ${(amount * rate).toFixed(2)} ${to}`;
-        return;
-      }
-
-      try {
-        const res = await fetch(
-          `https://v6.exchangerate-api.com/v6/${EXCHANGE_RATE_API_KEY}/latest/${from}`
-        );
-        const data = await res.json();
-        if (data.result !== "success") throw new Error("API error");
-        const rate = data.conversion_rates[to];
-        apiCache.set(cacheKey, rate);
-        resultEl.textContent = `${amount} ${from} = ${(amount * rate).toFixed(2)} ${to}`;
-      } catch (err) {
-        console.error("Conversion error:", err);
-        resultEl.innerHTML = '<span style="color: var(--error)">Failed to convert currency</span>';
-      }
-    }
   </script>
 </body>
 </html>
