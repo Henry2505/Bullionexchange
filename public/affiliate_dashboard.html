@@ -339,46 +339,6 @@
   </style>
 </head>
 <body>
-  <!-- ===================== AUTH GUARD: Redirect if not logged in ===================== -->
-  <script>
-    const SUPA_URL = 'https://dapwpgvnfjcfqqhrpxla.supabase.co';
-    const SUPA_KEY =
-      'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.' +
-      'eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImRhcHdwZ3Zu' +
-      'ZmpjZnFxaHJweGxhIiwicm9sZSI6ImFub24iLCJpYXQiOj' +
-      'E3NDcwNDA4ODgsImV4cCI6MjA2MjYxNjg4OH0.' +
-      'ICC0UsLlzJDNre7rFCeD3k6iVzo6jOJgn3PhABpEMsQ';
-    const supabaseClient = window.supabase.createClient(SUPA_URL, SUPA_KEY);
-
-    // 1) Check for affiliate_id in localStorage
-    const affiliateId = localStorage.getItem('affiliate_id');
-    if (!affiliateId) {
-      // Not logged in → redirect
-      window.location.replace('affiliate_login.html');
-    } else {
-      // 2) Verify that this affiliateId actually exists in “affiliates”
-      supabaseClient
-        .from('affiliates')
-        .select('email, created_at')
-        .eq('id', affiliateId)
-        .single()
-        .then(({ data, error }) => {
-          if (error || !data) {
-            // Invalid or deleted affiliate → clear & redirect
-            localStorage.removeItem('affiliate_id');
-            window.location.replace('affiliate_login.html');
-          } else {
-            // Store for later use
-            window.currentAffiliate = {
-              id: affiliateId,
-              email: data.email,
-              created_at: data.created_at
-            };
-          }
-        });
-    }
-  </script>
-
   <!-- ===================== SIDEBAR TOGGLE BUTTON ===================== -->
   <div id="sidebar-toggle" title="Toggle Menu">
     <i class="bi bi-list"></i>
@@ -850,6 +810,7 @@
         </div>
         <div class="card">
           <div class="card-body">
+            <p><strong>Username:</strong> <span id="user-username">Loading…</span></p>
             <p><strong>Email:</strong> <span id="user-email">Loading…</span></p>
             <p><strong>Joined On:</strong> <span id="joined-date">--</span></p>
             <p><strong>Total Referrals:</strong> <span id="total-referrals">0</span></p>
@@ -912,7 +873,14 @@
     let chartDataAllTime = { labels: [], counts: [] };
     let chartData30Days = { labels: [], counts: [] };
 
-    const supabase = supabaseClient;
+    const SUPA_URL = 'https://dapwpgvnfjcfqqhrpxla.supabase.co';
+    const SUPA_KEY =
+      'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.' +
+      'eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImRhcHdwZ3Zu' +
+      'ZmpjZnFxaHJweGxhIiwicm9sZSI6ImFub24iLCJpYXQiOj' +
+      'E3NDcwNDA4ODgsImV4cCI6MjA2MjYxNjg4OH0.' +
+      'ICC0UsLlzJDNre7rFCeD3k6iVzo6jOJgn3PhABpEMsQ';
+    const supabaseClient = supabase.createClient(SUPA_URL, SUPA_KEY);
 
     // Show a Bootstrap Toast message
     function showToast(message) {
@@ -978,42 +946,55 @@
     }
 
     // -----------------------------------------
-    // ON DOM CONTENT LOADED: Initialize everything
+    // ON DOM CONTENT LOADED: Authenticate & Initialize
     // -----------------------------------------
     document.addEventListener('DOMContentLoaded', async () => {
-      // Wait until currentAffiliate is set by the AUTH GUARD above
-      if (!window.currentAffiliate) {
-        // In case it hasn’t resolved yet, delay briefly then check again
-        await new Promise(res => setTimeout(res, 200));
-      }
-      if (!window.currentAffiliate) {
-        // Still not set → redirect
+      // 1) Check for affiliate_id in localStorage
+      const affiliateId = localStorage.getItem('affiliate_id');
+      if (!affiliateId) {
         window.location.replace('affiliate_login.html');
         return;
       }
 
-      // 1) SET currentAffiliate & currentUserId
-      currentAffiliate = window.currentAffiliate;
-      currentUserId = currentAffiliate.id;
+      // 2) Fetch affiliate row to get email, username & created_at
+      try {
+        const { data: affiliate, error } = await supabaseClient
+          .from('affiliates')
+          .select('id, username, email, created_at, referral_code')
+          .eq('id', affiliateId)
+          .single();
+        if (error || !affiliate) {
+          localStorage.removeItem('affiliate_id');
+          window.location.replace('affiliate_login.html');
+          return;
+        }
+        currentAffiliate = affiliate;
+        currentUserId = affiliate.id;
 
-      // DISPLAY USER PROFILE (email, joined date) using affiliate table data
-      document.getElementById('user-email').textContent = currentAffiliate.email;
-      document.getElementById('joined-date').textContent =
-        new Date(currentAffiliate.created_at).toLocaleDateString();
+        // Display username & email & joined date
+        document.getElementById('user-username').textContent = affiliate.username;
+        document.getElementById('user-email').textContent = affiliate.email;
+        document.getElementById('joined-date').textContent = new Date(affiliate.created_at).toLocaleDateString();
+      } catch (err) {
+        console.error('Error fetching affiliate:', err);
+        localStorage.removeItem('affiliate_id');
+        window.location.replace('affiliate_login.html');
+        return;
+      }
 
-      // 2) FETCH & DISPLAY REFERRAL CODE + LINK (for both main & sidebar)
+      // 3) FETCH & DISPLAY REFERRAL CODE + LINK (for both main & sidebar)
       await fetchReferralCode();
 
-      // 3) FETCH & DISPLAY TOTAL REFERRALS (for overview & profile)
+      // 4) FETCH & DISPLAY TOTAL REFERRALS (for overview & profile)
       await fetchTotalReferrals();
 
-      // 4) CALCULATE & DISPLAY ESTIMATED & PERIODIC EARNINGS (USD & weekly/monthly)
+      // 5) CALCULATE & DISPLAY ESTIMATED & PERIODIC EARNINGS (USD & weekly/monthly)
       await calculateAndDisplayEarnings();
 
-      // 5) FETCH & DISPLAY CONVERSION RATE (overview & inline)
+      // 6) FETCH & DISPLAY CONVERSION RATE (overview & inline)
       await fetchConversionRate();
 
-      // 6) SETUP AUTH ACTIONS (logout, copy buttons)
+      // 7) SETUP AUTH ACTIONS (logout, copy buttons)
       document.getElementById('logout-btn').addEventListener('click', () => {
         localStorage.removeItem('affiliate_id');
         window.location.href = 'affiliate_login.html';
@@ -1035,11 +1016,11 @@
         if (link) copyTextToClipboard(link);
       });
 
-      // 7) LOAD BANK ACCOUNTS & CRYPTO WALLETS
+      // 8) LOAD BANK ACCOUNTS & CRYPTO WALLETS
       await loadBankAccounts();
       await loadWallets();
 
-      // 8) SETUP ADD BANK ACCOUNT Handler
+      // 9) SETUP ADD BANK ACCOUNT Handler
       document.getElementById('bank-form').addEventListener('submit', async (e) => {
         e.preventDefault();
         const bankName = document.getElementById('bank-name').value.trim();
@@ -1057,7 +1038,7 @@
         bankText.textContent = 'Adding…';
         bankSpinner.style.display = 'inline-block';
         try {
-          const { error } = await supabase
+          const { error } = await supabaseClient
             .from('affiliate_bank_accounts')
             .insert([{
               user_id: currentUserId,
@@ -1080,7 +1061,7 @@
         }
       });
 
-      // 9) SETUP ADD WALLET Handler
+      // 10) SETUP ADD WALLET Handler
       document.getElementById('wallet-form').addEventListener('submit', async (e) => {
         e.preventDefault();
         const currency = document.getElementById('crypto-currency').value;
@@ -1096,7 +1077,7 @@
         walletText.textContent = 'Adding…';
         walletSpinner.style.display = 'inline-block';
         try {
-          const { error } = await supabase
+          const { error } = await supabaseClient
             .from('affiliate_wallets')
             .insert([{
               user_id: currentUserId,
@@ -1117,7 +1098,7 @@
         }
       });
 
-      // 10) SETUP CONVERTER Handler (USD→Other)
+      // 11) SETUP CONVERTER Handler (USD→Other)
       document.getElementById('converter-form').addEventListener('submit', async (e) => {
         e.preventDefault();
         const from = document.getElementById('convert-from').value;
@@ -1152,7 +1133,7 @@
         }
       });
 
-      // 11) SETUP REQUEST WITHDRAWAL Handler
+      // 12) SETUP REQUEST WITHDRAWAL Handler
       document.getElementById('request-withdraw-btn').addEventListener('click', async () => {
         const amount = parseFloat(document.getElementById('withdraw-amount').value);
         const method = document.getElementById('withdraw-method').value;
@@ -1169,7 +1150,7 @@
         btnText.textContent = 'Requesting…';
         spinner.style.display = 'inline-block';
         try {
-          const { error } = await supabase
+          const { error } = await supabaseClient
             .from('affiliate_payouts')
             .insert([{
               user_id: currentUserId,
@@ -1192,7 +1173,7 @@
         }
       });
 
-      // 12) LOAD INITIAL SECTIONS: Bank, Wallets, Payouts, Chart, Leaderboard
+      // 13) LOAD INITIAL SECTIONS: Bank, Wallets, Payouts, Chart, Leaderboard
       await loadBankAccounts();
       await loadWallets();
       await loadPayouts();
@@ -1200,7 +1181,7 @@
       await renderReferralChart('30days'); // default to last 30 days
       await loadLeaderboard(); // populates the leaderboard
 
-      // 13) SETUP REFERRAL RANGE TOGGLE
+      // 14) SETUP REFERRAL RANGE TOGGLE
       document.getElementById('toggle-referral-range').addEventListener('click', () => {
         const btn = document.getElementById('toggle-referral-range');
         if (btn.textContent.includes('All Time')) {
@@ -1212,13 +1193,13 @@
         }
       });
 
-      // 14) SETUP THEME TOGGLE
+      // 15) SETUP THEME TOGGLE
       setupThemeToggle();
 
-      // 15) SETUP SIDEBAR TOGGLE
+      // 16) SETUP SIDEBAR TOGGLE
       setupSidebarToggle();
 
-      // 16) SETUP “Convert Earnings” Button (USD→Target)
+      // 17) SETUP “Convert Earnings” Button (USD→Target)
       document.addEventListener('click', async (e) => {
         if (e.target && e.target.id === 'convert-earn-btn') {
           const targetCurr = document.getElementById('convert-target-currency').value;
@@ -1267,7 +1248,7 @@
       refSpanSide.textContent = 'Loading…';
 
       // 1) Load existing code from public.affiliates
-      const { data, error } = await supabase
+      const { data, error } = await supabaseClient
         .from('affiliates')
         .select('referral_code')
         .eq('id', currentUserId)
@@ -1284,11 +1265,11 @@
 
       let code = data ? data.referral_code : null;
 
-      // If for some reason there is no row, generate one (fallback)
+      // If for some reason no code, generate one as fallback
       if (!code) {
         try {
           const generated = generateReferralCode();
-          const { data: inserted, error: insertErr } = await supabase
+          const { data: inserted, error: insertErr } = await supabaseClient
             .from('affiliates')
             .update({ referral_code: generated })
             .eq('id', currentUserId)
@@ -1327,7 +1308,7 @@
     // FETCH TOTAL REFERRALS (for overview & profile)
     // -----------------------------------------
     async function fetchTotalReferrals() {
-      const { count, error } = await supabase
+      const { count, error } = await supabaseClient
         .from('users')
         .select('*', { count: 'exact', head: true })
         .eq('referred_by', currentUserId);
@@ -1358,7 +1339,7 @@
       // 2) Weekly & Monthly earnings: count referrals in last 7 & 30 days
       try {
         // LAST 7 DAYS
-        const { count: wCount, error: wErr } = await supabase
+        const { count: wCount, error: wErr } = await supabaseClient
           .from('users')
           .select('*', { count: 'exact', head: true })
           .eq('referred_by', currentUserId)
@@ -1367,7 +1348,7 @@
         document.getElementById('weekly-earnings').textContent = toUSD(wEarn);
 
         // LAST 30 DAYS
-        const { count: mCount, error: mErr } = await supabase
+        const { count: mCount, error: mErr } = await supabaseClient
           .from('users')
           .select('*', { count: 'exact', head: true })
           .eq('referred_by', currentUserId)
@@ -1385,12 +1366,12 @@
     // FETCH CONVERSION RATE & DISPLAY (overview & inline)
     // -----------------------------------------
     async function fetchConversionRate() {
-      const { count: totalRefCount, error: totErr } = await supabase
+      const { count: totalRefCount, error: totErr } = await supabaseClient
         .from('users')
         .select('*', { count: 'exact', head: true })
         .eq('referred_by', currentUserId);
 
-      const { count: convertedCount, error: convErr } = await supabase
+      const { count: convertedCount, error: convErr } = await supabaseClient
         .from('users')
         .select('converted', { count: 'exact', head: true })
         .eq('referred_by', currentUserId)
@@ -1412,7 +1393,7 @@
       const tbody = document.getElementById('bank-accounts-body');
       tbody.innerHTML = `<tr><td colspan="5"><div class="text-center spinner-border"></div></td></tr>`;
 
-      const { data, error } = await supabase
+      const { data, error } = await supabaseClient
         .from('affiliate_bank_accounts')
         .select('*')
         .eq('user_id', currentUserId)
@@ -1437,7 +1418,7 @@
           <td>${acct.account_number}</td>
           <td>${acct.account_name}</td>
           <td>
-            <button class="btn btn-outline-danger btn-sm" onclick="deleteBankAccount(${acct.id})">
+            <button class="btn btn-outline-danger btn-sm" onclick="deleteBankAccount('${acct.id}')">
               <i class="bi bi-trash"></i>
             </button>
           </td>
@@ -1448,10 +1429,11 @@
 
     // -----------------------------------------
     // DELETE BANK ACCOUNT
+    # via user pressing Delete
     // -----------------------------------------
     async function deleteBankAccount(id) {
       if (!confirm('Delete this bank account?')) return;
-      const { error } = await supabase
+      const { error } = await supabaseClient
         .from('affiliate_bank_accounts')
         .delete()
         .eq('id', id);
@@ -1471,7 +1453,7 @@
       const tbody = document.getElementById('wallets-body');
       tbody.innerHTML = `<tr><td colspan="3"><div class="text-center spinner-border"></div></td></tr>`;
 
-      const { data, error } = await supabase
+      const { data, error } = await supabaseClient
         .from('affiliate_wallets')
         .select('*')
         .eq('user_id', currentUserId)
@@ -1494,7 +1476,7 @@
           <td>${w.currency}</td>
           <td>${w.address}</td>
           <td>
-            <button class="btn btn-outline-danger btn-sm" onclick="deleteWallet(${w.id})">
+            <button class="btn btn-outline-danger btn-sm" onclick="deleteWallet('${w.id}')">
               <i class="bi bi-trash"></i>
             </button>
           </td>
@@ -1508,7 +1490,7 @@
     // -----------------------------------------
     async function deleteWallet(id) {
       if (!confirm('Delete this wallet?')) return;
-      const { error } = await supabase
+      const { error } = await supabaseClient
         .from('affiliate_wallets')
         .delete()
         .eq('id', id);
@@ -1528,7 +1510,7 @@
       const listEl = document.getElementById('withdrawals-list');
       listEl.innerHTML = `<li class="text-center"><div class="spinner-border"></div></li>`;
 
-      const { data, error } = await supabase
+      const { data, error } = await supabaseClient
         .from('affiliate_payouts')
         .select('*')
         .eq('user_id', currentUserId)
@@ -1567,7 +1549,7 @@
     // -----------------------------------------
     async function loadReferralChartData() {
       // Fetch all users referred by currentUser
-      const { data: rawUsers, error: rawErr } = await supabase
+      const { data: rawUsers, error: rawErr } = await supabaseClient
         .from('users')
         .select('created_at')
         .eq('referred_by', currentUserId);
@@ -1665,7 +1647,7 @@
       listEl.innerHTML = `<li class="text-center text-muted">Loading leaderboard…</li>`;
 
       // Fetch all users with referred_by not null
-      const { data: allReferred, error: refErr } = await supabase
+      const { data: allReferred, error: refErr } = await supabaseClient
         .from('users')
         .select('referred_by');
 
@@ -1698,8 +1680,8 @@
       // Fetch email & referral_code for each top affiliate in parallel
       for (const item of top5) {
         const [ { data: userData, error: userErr2 }, { data: affiliateData, error: affErr2 } ] = await Promise.all([
-          supabase.from('users').select('email').eq('id', item.userId).single(),
-          supabase.from('affiliates').select('referral_code').eq('id', item.userId).single()
+          supabaseClient.from('users').select('email').eq('id', item.userId).single(),
+          supabaseClient.from('affiliates').select('referral_code').eq('id', item.userId).single()
         ]);
         const email = (!userErr2 && userData) ? userData.email : '(unknown)';
         const code = (!affErr2 && affiliateData) ? affiliateData.referral_code : '(unknown)';
