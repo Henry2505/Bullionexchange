@@ -4,7 +4,6 @@
   <meta charset="UTF-8"/>
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Affiliate Login • CBE Global</title>
-
   <style>
     :root[data-theme="dark"] {
       --bg: #121212; 
@@ -87,6 +86,7 @@
       text-align: center; 
       font-weight: 600;
       color: var(--error-color);
+      white-space: pre-wrap;
     }
     footer {
       position: fixed; 
@@ -137,12 +137,13 @@
 
   <footer>© 2025 Chukwuemeka Bullion Exchange. All rights reserved.</footer>
 
-  <!-- Supabase UMD (v2.45.4) – do NOT alter these two lines: -->
+  <!-- Supabase UMD (v2.45.4) – do NOT alter this line: -->
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>
   <script>
-    // ─── Fade‑in + theme toggle ───────────────────────────────────────────────────
-    const loginCard = document.getElementById('login-card');
+    // 1) Fade‑in + theme toggle
+    const loginCard     = document.getElementById('login-card');
     const themeToggleBtn = document.getElementById('theme-toggle');
+
     window.addEventListener('DOMContentLoaded', () => {
       loginCard.classList.add('visible');
       const saved = localStorage.getItem('theme') || 'dark';
@@ -157,15 +158,16 @@
       themeToggleBtn.textContent = nxt === 'dark' ? '🌞' : '🌜';
     });
 
-    // ─── Supabase client ───────────────────────────────────────────────────────────
+    // 2) Supabase client (make sure this matches exactly)
     const SUPA_URL  = 'https://dapwpgvnfjcfqqhrpxla.supabase.co';
     const SUPA_ANON = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImRhcHdwZ3ZuZmpjZnFxaHJweGxhIiwicm9sIjoiYW5vbiIsImlhdCI6MTc0NzA0MDQ4OCwiZXhwIjoyMDYyNjE2ODg4fQ.ICC0UsLlzJDNre7rFCeD3k6iVzo6jOJgn3PhABpEMsQ';
     const sb = supabase.createClient(SUPA_URL, SUPA_ANON);
 
-    // ─── LOGIN FORM SUBMIT ─────────────────────────────────────────────────────────
+    // 3) LOGIN FORM SUBMISSION
     document.getElementById('login-form').addEventListener('submit', async (evt) => {
       evt.preventDefault();
-      const alertDiv = document.getElementById('login-alert');
+      const alertDiv   = document.getElementById('login-alert');
+      const loginBtn   = document.getElementById('login-btn');
       alertDiv.textContent = '';
 
       const identifier = document.getElementById('identifier').value.trim();
@@ -177,15 +179,14 @@
       }
 
       // Disable button while checking
-      const loginBtn = document.getElementById('login-btn');
-      loginBtn.disabled = true;
-      loginBtn.textContent = 'Logging in…';
+      loginBtn.disabled      = true;
+      loginBtn.textContent   = 'Logging in…';
 
       try {
-        // Build OR filter: username = … OR email = …
+        // Build an OR filter: match username or email
         const orFilter = `username.eq.${identifier},email.eq.${identifier}`;
 
-        // Query the `affiliates` table
+        // Query your “affiliates” table
         const { data: affiliate, error } = await sb
           .from('affiliates')
           .select('*')
@@ -196,13 +197,13 @@
         if (error) throw error;
         if (!affiliate) throw new Error('No matching affiliate found.');
 
-        // On success: store affiliate row and redirect
+        // On success: store affiliate record and redirect
         localStorage.setItem('affiliate_user', JSON.stringify(affiliate));
         window.location.assign('affiliate-dashboard.html');
       } catch (err) {
         console.error('Login error:', err);
-        alertDiv.textContent = err.message || 'Login failed–please try again.';
-        loginBtn.disabled = false;
+        alertDiv.textContent = err.message || 'Login failed—please try again.';
+        loginBtn.disabled    = false;
         loginBtn.textContent = 'Log In';
       }
     });
