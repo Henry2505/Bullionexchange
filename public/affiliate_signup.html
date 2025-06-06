@@ -24,7 +24,7 @@
     rel="stylesheet"
   />
 
-  <!-- Supabase JS (for direct table insert) -->
+  <!-- Supabase JS (provides a global `supabase` object) -->
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js/dist/umd/supabase.min.js"></script>
 
   <style>
@@ -187,7 +187,7 @@
       <!-- Password -->
       <div class="form-group">
         <label for="aff-password">Password</label>
-        <input type="password" id="aff-password" placeholder="Create a password (min 8 chars)" required />
+        <input type="password" id="aff-password" placeholder="Create a password (min 8 chars)" required />
       </div>
 
       <!-- Confirm Password -->
@@ -201,7 +201,7 @@
         <input type="checkbox" id="agree-terms" />
         <label for="agree-terms">
           I agree to the
-          <a href="https://apexincomeoptions.com.ng/terms" target="_blank" rel="noopener">Terms & Conditions</a>
+          <a href="https://apexincomeoptions.com.ng/terms" target="_blank" rel="noopener">Terms &amp; Conditions</a>
           and
           <a href="https://apexincomeoptions.com.ng/privacy" target="_blank" rel="noopener">Privacy Policy</a>.
         </label>
@@ -212,15 +212,18 @@
     </form>
   </div>
 
-  <footer>© 2025 Chukwuemeka Bullion Exchange</footer>
+  <footer>© 2025 Chukwuemeka Bullion Exchange</footer>
 
   <script>
     // ─── Supabase client (anon key) ────────────────────────────────────────────────
+    // Make sure this anon key matches the project where you just created `affiliates`.
     const SUPA_URL = "https://dapwpgvnfjcfqqhrpxla.supabase.co";
     const SUPA_ANON_KEY =
       "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9." +
       "eyJpc3MiOiJzdXBhYmFzZWlzIiwicm9sIjoiYW5vbiIsImlhdCI6MTc0NzA0MDQ4OCwiZXhwIjoyMDYyNjE2ODg4fQ." +
       "ICC0UsLlzJDNre7rFCeD3k6iVzo6jOJgn3PhABpEMsQ";
+
+    //  (Check your Supabase Dashboard → Project Settings → API → "anon API key")
     const supabaseClient = supabase.createClient(SUPA_URL, SUPA_ANON_KEY);
 
     // ─── Utility: Generate 8‑char alphanumeric referral code ───────────────────────
@@ -246,7 +249,7 @@
       const agree = document.getElementById("agree-terms");
       const signupBtn = document.getElementById("signup-button");
 
-      // Enable the Sign Up button only when Terms are checked
+      // Enable the Sign Up button only when Terms are checked
       agree.addEventListener("change", () => {
         const ok = agree.checked;
         signupBtn.disabled = !ok;
@@ -295,26 +298,30 @@
         // 1) Generate a referral code
         const newReferralCode = generateReferralCode();
 
-        // 2) Insert into public.affiliates
+        // 2) Attempt to insert into public.affiliates
         try {
           const { data, error } = await supabaseClient
             .from("affiliates")
             .insert([{
               username: username,
               email: email,
-              password: password,            // NOTE: for production, you’d hash this server‐side!
+              password: password,            // In production, hash this server‑side!
               referral_code: newReferralCode
             }]);
 
           if (error) {
             console.error("Signup insert error:", error);
             alertDiv.style.color = "var(--error-color)";
-            // If email or referral_code conflicts, show a friendly message
+
+            // Show the actual Postgres/Supabase error message so you can debug:
+            alertDiv.textContent = "Database error: " + (error.message || JSON.stringify(error));
+
+            // If it's a unique‐constraint violation on email or referral_code, mention that:
             if (error.code === "23505") {
-              alertDiv.textContent = "Email already registered (or referral code collision). Please try again.";
-            } else {
-              alertDiv.textContent = "Database error. Please try again.";
+              // 23505 is "unique_violation" in Postgres
+              alertDiv.textContent += "\n(This may be because the email is already registered.)";
             }
+
             signupBtn.disabled = false;
             signupBtn.textContent = "Sign Up";
             return;
@@ -324,14 +331,14 @@
           alertDiv.style.color = "var(--success-color)";
           alertDiv.textContent = "Signup successful! Your referral code is: " + newReferralCode;
 
-          // Clear form and re‐lock button
+          // Clear form and re‑lock button
           document.getElementById("signup-form").reset();
           agree.checked = false;
           signupBtn.classList.remove("enabled");
         } catch (err) {
           console.error("Unexpected error:", err);
           alertDiv.style.color = "var(--error-color)";
-          alertDiv.textContent = "An unexpected error occurred.";
+          alertDiv.textContent = "Unexpected error: " + err.message;
         } finally {
           signupBtn.disabled = true;
           signupBtn.textContent = "Sign Up";
