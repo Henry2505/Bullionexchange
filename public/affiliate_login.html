@@ -1,110 +1,208 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" data-theme="dark">
 <head>
-  <meta charset="UTF-8" />
+  <meta charset="UTF-8"/>
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Affiliate Login</title>
+  <title>Affiliate Login • CBE Global</title>
 
   <style>
+    /* Dark / Light theme variables (same as main site) */
+    :root[data-theme="dark"] {
+      --bg: #121212; 
+      --text: #f0f0f0; 
+      --gold: #d4af37; 
+      --gold-dark: #b3932b;
+      --glass-bg: rgba(30,30,30,0.6); 
+      --text-light: #bbbbbb; 
+      --text-muted: #888888;
+      --error-color: #e74c3c;
+      --success-color: #2ecc71;
+      --warning-color: #f39c12;
+    }
+    :root[data-theme="light"] {
+      --bg: #fafafa; 
+      --text: #222222; 
+      --gold: #d4af37; 
+      --gold-dark: #b3932b;
+      --glass-bg: rgba(255,255,255,0.6); 
+      --text-light: #555555; 
+      --text-muted: #666666;
+      --error-color: #e74c3c;
+      --success-color: #2ecc71;
+      --warning-color: #f39c12;
+    }
+    * { margin: 0; padding: 0; box-sizing: border-box; }
     body {
-      font-family: Arial, sans-serif;
-      background: #f9f9f9;
-      padding: 2rem;
+      font-family: 'Roboto', sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      display: flex; 
+      align-items: center; 
+      justify-content: center;
+      min-height: 100vh;
     }
-    .container {
+    .login-card {
+      width: 100%; 
       max-width: 400px;
-      margin: auto;
-      background: white;
-      padding: 2rem;
-      border-radius: 8px;
-      box-shadow: 0 0 12px rgba(0,0,0,0.1);
+      background: var(--glass-bg);
+      backdrop-filter: blur(8px);
+      padding: 30px 25px;
+      border-radius: 10px;
+      box-shadow: 0 4px 30px rgba(0,0,0,0.5);
+      opacity: 0; 
+      transform: translateY(20px);
+      transition: opacity .6s ease-out, transform .6s ease-out;
     }
-    input, button {
-      width: 100%;
-      margin: 0.5rem 0;
-      padding: 0.75rem;
+    .login-card.visible {
+      opacity: 1; 
+      transform: translateY(0);
+    }
+    .login-card h1 {
+      font-family: 'Playfair Display', serif;
+      font-size: 1.8rem; 
+      color: var(--gold);
+      text-align: center; 
+      margin-bottom: 20px;
+    }
+    form { display: flex; flex-direction: column; gap: 15px; }
+    label { font-size: .95rem; color: var(--text-light); }
+    input {
+      padding: 10px; 
+      border: none; 
+      border-radius: 6px;
+      background: #1c1c1c; 
+      color: var(--text);
       font-size: 1rem;
-      border-radius: 4px;
-      border: 1px solid #ccc;
-      box-sizing: border-box;
+    }
+    input:focus {
+      outline: none; 
+      box-shadow: 0 0 6px var(--gold);
     }
     button {
-      background: #0070f3;
-      color: white;
-      border: none;
+      padding: 12px; 
+      border: none; 
+      border-radius: 6px;
+      background: var(--gold); 
+      color: #000;
+      font-weight: 700; 
+      cursor: pointer;
+      transition: background .3s, box-shadow .3s;
+    }
+    button:hover {
+      background: var(--gold-dark);
+      box-shadow: 0 0 12px var(--gold);
+    }
+    #login-alert {
+      margin-top: 12px; 
+      text-align: center; 
+      font-weight: 600;
+    }
+    .logo { position: fixed; top: 20px; left: 20px; }
+    .logo img { width: 130px; }
+    #theme-toggle {
+      position: fixed; 
+      top: 20px; 
+      right: 20px;
+      background: none; 
+      border: none; 
+      font-size: 1.4rem; 
+      color: var(--text); 
       cursor: pointer;
     }
-    button:disabled {
-      background: #bbb;
-      cursor: not-allowed;
-    }
-    #status {
-      margin-top: 1rem;
-      font-weight: bold;
-      color: red;
-      white-space: pre-wrap;
+    footer {
+      position: fixed; 
+      bottom: 20px; 
+      width: 100%; 
+      text-align: center;
+      color: var(--text-muted); 
+      font-size: .85rem;
     }
   </style>
+
+  <link
+    href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700&family=Roboto:wght@300;400;700&display=swap"
+    rel="stylesheet"
+  />
 </head>
 <body>
-  <div class="container">
-    <h2>Affiliate Login</h2>
+  <div class="logo">
+    <a href="index.html"><img src="CBE_logo.PNG" alt="CBE Logo"/></a>
+  </div>
+  <button id="theme-toggle" aria-label="Toggle theme">🌞</button>
+
+  <div class="login-card" id="login-card">
+    <h1>Affiliate Login</h1>
     <form id="login-form">
-      <!-- Allow either username or email -->
-      <input type="text" id="identifier" placeholder="Username or Email" required />
-      <input type="password" id="password" placeholder="Password" required />
-      <button type="submit" id="login-btn">Login</button>
+      <label for="identifier">Username or Email</label>
+      <input type="text" id="identifier" placeholder="username or email" required/>
+
+      <label for="password">Password</label>
+      <input type="password" id="password" placeholder="your password" required/>
+
+      <button type="submit" id="login-btn">Log In</button>
     </form>
-    <p id="status"></p>
+    <div id="login-alert"></div>
   </div>
 
-  <!-- Use the UMD build from jsDelivr so you can reference window.supabase -->
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js/dist/umd/supabase.min.js"></script>
+  <footer>© 2025 Chukwuemeka Bullion Exchange. All rights reserved.</footer>
+
+  <!-- Supabase UMD (v2.45.4) -->
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>
+
   <script>
-    // ─── Supabase credentials ─────────────────────────────────────────────────────
-    const SUPABASE_URL = 'https://dapwpgvnfjcfqqhrpxla.supabase.co';
-    const SUPABASE_ANON_KEY = 
-      'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.'
-      + 'eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImRhcHdwZ3ZuZmpjZnFxaHJweGxhIiwicm9sIjoiYW5vbiIsImlhdCI6MTc0NzA0MDQ4OCwiZXhwIjoyMDYyNjE2ODg4fQ.'
-      + 'ICC0UsLlzJDNre7rFCeD3k6iVzo6jOJgn3PhABpEMsQ';
+    // ─── 1) Fade‑in + theme toggle ────────────────────────────────────────────────
+    const loginCard = document.getElementById('login-card');
+    const themeToggleBtn = document.getElementById('theme-toggle');
+    window.addEventListener('DOMContentLoaded', () => {
+      // fade‑in card
+      loginCard.classList.add('visible');
 
-    // Create the Supabase client
-    const supabase = supabaseJs.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+      // set stored theme
+      const saved = localStorage.getItem('theme') || 'dark';
+      document.documentElement.setAttribute('data-theme', saved);
+      themeToggleBtn.textContent = saved === 'dark' ? '🌞' : '🌜';
+    });
+    themeToggleBtn.addEventListener('click', () => {
+      const cur = document.documentElement.getAttribute('data-theme');
+      const nxt = cur === 'dark' ? 'light' : 'dark';
+      document.documentElement.setAttribute('data-theme', nxt);
+      localStorage.setItem('theme', nxt);
+      themeToggleBtn.textContent = nxt === 'dark' ? '🌞' : '🌜';
+    });
 
-    // ─── DOM References ─────────────────────────────────────────────────────────────
-    const form = document.getElementById('login-form');
-    const statusEl = document.getElementById('status');
-    const loginBtn = document.getElementById('login-btn');
-    const identifierInput = document.getElementById('identifier');
-    const passwordInput = document.getElementById('password');
+    // ─── 2) Supabase client for affiliates ─────────────────────────────────────────
+    const SUPA_URL    = 'https://dapwpgvnfjcfqqhrpxla.supabase.co';
+    const SUPA_ANON   = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImRhcHdwZ3ZuZmpjZnFxaHJweGxhIiwicm9sIjoiYW5vbiIsImlhdCI6MTc0NzA0MDQ4OCwiZXhwIjoyMDYyNjE2ODg4fQ.ICC0UsLlzJDNre7rFCeD3k6iVzo6jOJgn3PhABpEMsQ';
 
-    // ─── Form Submission ────────────────────────────────────────────────────────────
-    form.addEventListener('submit', async (e) => {
-      e.preventDefault();
-      statusEl.textContent = '';
-      loginBtn.disabled = true;
-      loginBtn.textContent = 'Logging in...';
+    // ← Use the UMD namespace `supabase`:
+    const sb = supabase.createClient(SUPA_URL, SUPA_ANON);
 
-      const identifier = identifierInput.value.trim();
-      const password = passwordInput.value;
+    // ─── 3) LOGIN FORM SUBMIT HANDLER ──────────────────────────────────────────────
+    document.getElementById('login-form').addEventListener('submit', async (evt) => {
+      evt.preventDefault();  // ← Prevent form from doing a full page reload
+      const alertDiv = document.getElementById('login-alert');
+      alertDiv.textContent = '';
+
+      const identifier = document.getElementById('identifier').value.trim();
+      const password   = document.getElementById('password').value;
 
       if (!identifier || !password) {
-        statusEl.textContent = 'Please enter both username/email and password.';
-        loginBtn.disabled = false;
-        loginBtn.textContent = 'Login';
+        alertDiv.style.color = 'var(--error-color)';
+        alertDiv.textContent = 'Please enter both username (or email) and password.';
         return;
       }
 
+      // Disable button while we check:
+      const loginBtn = document.getElementById('login-btn');
+      loginBtn.disabled = true;
+      loginBtn.textContent = 'Logging in…';
+
       try {
-        // We will search for a row where (email == identifier OR username == identifier) AND password == password
-        // NOTE: this assumes you stored `password` in plaintext on sign‑up. If you hashed it, you must hash here too.
+        // Attempt to find the row where (username = identifier OR email = identifier) AND password matches
+        // Note: We store password IN PLAINTEXT in this example, just like your signup flow.
+        const orFilter = `username.eq.${identifier},email.eq.${identifier}`;
 
-        // Build the “or” filter: 
-        //   email.eq.{identifier},username.eq.{identifier}
-        const orFilter = `email.eq.${identifier},username.eq.${identifier}`;
-
-        // Query a single matching row
-        const { data, error } = await supabase
+        const { data: affiliate, error } = await sb
           .from('affiliates')
           .select('*')
           .or(orFilter)
@@ -112,31 +210,23 @@
           .single();
 
         if (error) {
-          // Could be “Not found” or some other DB error
-          statusEl.textContent = 'Login failed:\n' + error.message;
-          loginBtn.disabled = false;
-          loginBtn.textContent = 'Login';
-          return;
+          // Could be “No rows returned” or another DB error
+          throw error;
         }
-        if (!data) {
-          statusEl.textContent = 'No matching user found. Check your credentials.';
-          loginBtn.disabled = false;
-          loginBtn.textContent = 'Login';
-          return;
+        if (!affiliate) {
+          throw new Error('No matching affiliate found.');
         }
 
-        // At this point, we have a valid affiliate record in `data`.
-        // Store it in localStorage so the dashboard can read it:
-        localStorage.setItem('affiliate_user', JSON.stringify(data));
+        // Success: store affiliate in localStorage and redirect
+        localStorage.setItem('affiliate_user', JSON.stringify(affiliate));
+        window.location.assign('affiliate-dashboard.html');
 
-        // Redirect immediately to the dashboard:
-        window.location.href = 'affiliate-dashboard.html';
-
-      } catch (fetchError) {
-        statusEl.textContent = 'Unexpected error:\n' + fetchError.message;
-        loginBtn.disabled = false;
-        loginBtn.textContent = 'Login';
-        return;
+      } catch (err) {
+        console.error('Login error:', err);
+        alertDiv.style.color = 'var(--error-color)';
+        alertDiv.textContent = err.message || 'Login failed. Please try again.';
+        document.getElementById('login-btn').disabled = false;
+        document.getElementById('login-btn').textContent = 'Log In';
       }
     });
   </script>
