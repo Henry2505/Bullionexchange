@@ -1183,7 +1183,7 @@
           <h3><i class="fas fa-chart-bar"></i> Economic News</h3>
           <div class="ticker-container">
             <div class="ticker-content" id="econ-ticker-content"></div>
-          </div>
+          </div}
         </div>
       </div>
     </section>
@@ -1382,7 +1382,6 @@
         const changeEl  = document.getElementById("price-change");
         const updatedEl = document.getElementById("gold-last-updated");
 
-        // Previous stored price for diff
         let prevGoldPrice = Number(localStorage.getItem("cbe_cachedGoldPrice")) || null;
 
         goldEl.textContent   = "Loading…";
@@ -1392,21 +1391,28 @@
           const response = await fetch("https://www.goldapi.io/api/XAU/USD", {
             headers: {
               "x-access-token": GOLDAPI_KEY,
-              "Content-Type": "application/json",
+              "Content-Type": "application/json"
             },
           });
 
-          if (!response.ok) {
-            console.error("GoldAPI HTTP error:", response.status, response.statusText);
-            const errJson = await response.json().catch(() => ({}));
-            console.error("GoldAPI response JSON on error:", errJson);
-            goldEl.textContent   = "Error";
+          console.log("GoldAPI fetch status:", response.status, response.statusText);
+          let data;
+          try {
+            data = await response.json();
+          } catch (parseErr) {
+            console.error("Failed to parse JSON from GoldAPI:", parseErr);
+            goldEl.textContent   = "Error (Invalid JSON)";
             changeEl.textContent = "–";
             return;
           }
+          console.log("GoldAPI returned JSON:", data);
 
-          const data = await response.json();
-          console.log("GoldAPI response data:", data);
+          if (!response.ok) {
+            console.error("GoldAPI responded with error:", data);
+            goldEl.textContent   = "Error (" + response.status + ")";
+            changeEl.textContent = "–";
+            return;
+          }
 
           const price = data.price ? parseFloat(data.price) : null;
           if (price !== null) {
@@ -1444,7 +1450,7 @@
           }
         } catch (err) {
           console.error("GoldAPI fetch threw exception:", err);
-          goldEl.textContent   = "Error";
+          goldEl.textContent   = "Error (Network/CORS)";
           changeEl.textContent = "–";
         }
       }
@@ -1456,17 +1462,15 @@
         const ts        = Number(localStorage.getItem("cbe_cachedGoldTimestamp")) || 0;
 
         if (cached && now - lastFetch < FETCH_INTERVAL_MS) {
-          // Use cached
           document.getElementById("gold-price").textContent = `$${parseFloat(cached).toFixed(2)}`;
           document.getElementById("gold-last-updated").textContent =
             `Last updated (cached): ${new Date(ts).toLocaleString()}`;
 
           const delay = FETCH_INTERVAL_MS - (now - lastFetch);
-          console.log(`Gold: Using cache. Next fetch in ${Math.round(delay / 1000 / 60)} minutes.`);
+          console.log(`Gold: Using cached value. Next fetch in ${Math.round(delay/1000/60)} minutes.`);
           setTimeout(loadAndDisplayGoldPrice, delay);
         } else {
-          // Fetch now
-          console.log("Gold: Cache expired or missing → fetching now");
+          console.log("Gold: Cache expired or missing → fetching new price now");
           await loadAndDisplayGoldPrice();
           setTimeout(loadAndDisplayGoldPrice, FETCH_INTERVAL_MS);
         }
