@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8"/>
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Affiliate Login • CBE Global</title>
+  <title>Affiliate Login • CBE Global</title>
   <meta name="description" content="Login to your Affiliate Dashboard"/>
 
   <!-- ─── FONTS & ICONS ──────────────────────────────────────────────────────────── -->
@@ -156,9 +156,9 @@
     <h1>Affiliate Login</h1>
     <form id="login-form">
       <label for="email">Email Address</label>
-      <input type="email" id="email" required />
+      <input type="email" id="email" placeholder="you@example.com" required />
       <label for="password">Password</label>
-      <input type="password" id="password" required />
+      <input type="password" id="password" placeholder="Enter your password" required />
       <button type="submit">Log In</button>
     </form>
     <div id="login-alert"></div>
@@ -171,7 +171,7 @@
 
   <!-- ─── LOGIN SCRIPT ─────────────────────────────────────────────────────────────── -->
   <script>
-    // 1) Fade-in animation & theme toggle
+    // 1) Fade‐in animation & theme toggle
     const loginCard = document.getElementById('login-card');
     const toggleBtn  = document.getElementById('theme-toggle');
 
@@ -192,8 +192,9 @@
     });
 
     // 2) Initialize Supabase
+    //    → Exact values you provided:
     const SUPA_URL      = 'https://dapwpgvnfjcfqqhrpxla.supabase.co';
-    const SUPA_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImRhcHdwZ3ZuZmpjZnFxaHJweGxhIiwicm9sIjoiYW5vbiIsImlhdCI6MTc0NzA0MDQ4OCwiZXhwIjoxOTAwMDAwMDAwfQ.ICC0UsLlzJDNre7rFCeD3k6iVzo6jOJgn3PhABpEMsQ';
+    const SUPA_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhZmFzZSIsInJlZiI6ImRhcHdwZ3ZuZmpjZnFxaHJweGxhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDcwNDA4ODgsImV4cCI6MjA2MjYxNjg4OH0.ICC0UsLlzJDNre7rFCeD3k6iVzo6jOJgn3PhABpEMsQ';
 
     const supabaseClient = supabase.createClient(SUPA_URL, SUPA_ANON_KEY);
 
@@ -204,10 +205,8 @@
       alertDiv.textContent = '';
       alertDiv.style.color = 'var(--error-color)';
 
-      const emailField    = document.getElementById('email');
-      const passwordField = document.getElementById('password');
-      const email         = emailField.value.trim().toLowerCase();
-      const password      = passwordField.value;
+      const email    = document.getElementById('email').value.trim().toLowerCase();
+      const password = document.getElementById('password').value;
 
       if (!email || !password) {
         alertDiv.textContent = 'Please enter both email and password.';
@@ -215,7 +214,7 @@
       }
 
       try {
-        // Fetch user row
+        // 3.1) Fetch user by email
         const { data: user, error: fetchError } = await supabaseClient
           .from('users')
           .select('id, name, email, password, status')
@@ -225,17 +224,17 @@
         if (fetchError) throw fetchError;
         if (!user) throw new Error('No account found for that email.');
 
-        // Check password (plaintext—server-side hashing recommended for production)
+        // 3.2) Check password (plaintext; in production, hash server‑side)
         if (user.password !== password) {
           throw new Error('Invalid login credentials.');
         }
 
-        // Check approval status
+        // 3.3) Approval check
         if (String(user.status).toLowerCase() !== 'approved') {
           throw new Error('Your account is not approved yet. Please wait for approval.');
         }
 
-        // Optional device fingerprint
+        // 3.4) (Optional) Device fingerprint
         const deviceKey     = `cbeDevice_${email}`;
         const savedDevice   = localStorage.getItem(deviceKey);
         const currentDevice = navigator.userAgent;
@@ -243,6 +242,7 @@
           localStorage.setItem(deviceKey, currentDevice);
         } else if (savedDevice !== currentDevice) {
           localStorage.setItem(deviceKey, currentDevice);
+          // Fire login‐alert via Netlify Function if you use it
           const payload = {
             email:  user.email,
             name:   user.name,
@@ -256,11 +256,12 @@
           });
         }
 
-        // Mark logged in and redirect
+        // 3.5) Mark “logged in” locally and redirect
         localStorage.setItem('isLoggedIn', 'true');
         sessionStorage.setItem('affiliateUserId', user.id);
         sessionStorage.setItem('affiliateName', user.name);
         window.location.assign('affiliate-dashboard.html');
+
       } catch (err) {
         console.error("Login error:", err);
         alertDiv.textContent = err.message || "An unexpected error occurred.";
