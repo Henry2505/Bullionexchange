@@ -1,0 +1,21 @@
+name: Fetch Gold Price 3×/day
+
+# Run at 08:00 UTC, 14:00 UTC, and 20:00 UTC daily:
+on:
+  schedule:
+    - cron: '0 8 * * *'
+    - cron: '0 14 * * *'
+    - cron: '0 20 * * *'
+
+jobs:
+  fetch_gold:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: “POST to fetch_and_store_gold”
+        env:
+          SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE }}
+        run: |
+          curl -X POST "https://dapwpgvnfjcfqqhrpxla.supabase.co/functions/v1/fetch_and_store_gold" \
+            -H "Content-Type: application/json" \
+            -H "Authorization: Bearer $SERVICE_ROLE_KEY"
