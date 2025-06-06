@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <meta name="description" content="Affiliate Login – enter your credentials to retrieve your referral code." />
+  <meta name="description" content="Affiliate Login – enter your credentials to access your dashboard." />
   <title>Affiliate Login • CBE Global</title>
 
   <!-- Google Fonts (optional) -->
@@ -250,7 +250,7 @@
         try {
           const { data, error } = await supabaseClient
             .from("affiliates")
-            .select("id, referral_code")
+            .select("id")
             .eq("email", email)
             .eq("password", password)
             .single();
@@ -265,19 +265,15 @@
             return;
           }
 
-          // ─── 5) Success! show referral code ─────────────────────────────
-          alertDiv.style.color = "var(--success-color)";
-          alertDiv.textContent = "Login successful! Your referral code is: " + data.referral_code;
-
-          // Clear form
-          document.getElementById("login-form").reset();
-          toggleButton();
+          // ─── 5) Success! store affiliate ID & redirect ───────────────────
+          localStorage.setItem("affiliate_id", data.id);
+          // Redirect to dashboard
+          window.location.href = "affiliate_dashboard.html";
         } catch (err) {
           console.error("Unexpected error:", err);
           alertDiv.style.color = "var(--error-color)";
           alertDiv.textContent = "An unexpected error occurred. Please try again.";
-        } finally {
-          loginBtn.disabled = true;
+          loginBtn.disabled = false;
           loginBtn.textContent = "Log In";
         }
       });
