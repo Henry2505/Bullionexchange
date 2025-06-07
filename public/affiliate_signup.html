@@ -14,7 +14,7 @@
   <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" rel="stylesheet" />
 
   <!-- Supabase JS -->
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js/dist/umd/supabase.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
 
   <style>
     :root[data-theme="dark"] {
@@ -175,9 +175,7 @@
           .select("referral_code")
           .eq("referral_code", code)
           .maybeSingle();
-        if (error && error.code === "PGRST116") { // No rows returned
-          isUnique = true;
-        } else if (!data) {
+        if (error && error.code === "PGRST116" || !data) {
           isUnique = true;
         }
         attempts++;
@@ -250,7 +248,8 @@
             if (authError.message.includes("already registered")) {
               throw new Error("This email is already registered.");
             }
-            throw authError;
+            console.error("Auth error:", authError);
+            throw new Error(`Authentication error: ${authError.message}`);
           }
 
           // Step 2: Get user ID
@@ -267,24 +266,33 @@
             .from("affiliates")
             .insert([{ user_id: userId, username, referral_code: referralCode }]);
           if (insertError) {
-            console.error("Insert error details:", insertError);
+            console.error("Insert error:", JSON.stringify(insertError, null, 2));
+            // Attempt to delete the auth user to avoid orphaned records
+            await supabaseClient.auth.admin.deleteUser(userId).catch((deleteError) => {
+              console.error("Failed to delete orphaned user:", deleteError);
+            });
             if (insertError.code === "23505") {
               if (insertError.message.includes("username")) {
                 throw new Error("Username already taken.");
               } else if (insertError.message.includes("referral_code")) {
                 throw new Error("Generated referral code is not unique. Please try again.");
               }
+            } else if (insertError.code === "42501") {
+              throw new Error("Insufficient permissions to insert into affiliates table.");
+            } else if (insertError.code === "23503") {
+              throw new Error("Invalid user_id: User not found in auth.users.");
             }
             throw new Error(`Database error: ${insertError.message}`);
           }
 
           // Step 5: Success
           alertDiv.style.color = "var(--success-color)";
-          alertDiv.textContent = `Signup successful! Your referral code is: ${referralCode}\nPlease check your email to verify your account and log in.`;
-          document.getElementById("signup-form").reset();
-          confirmAgeTerms.checked = false;
+          alertDiv.textContent = `Signup successful! Your referral code is: ${referralCode}\nRedirecting to login...`;
+          setTimeout(() => {
+            window.location.href = "affiliate_login.html";
+          }, 2000);
         } catch (err) {
-          console.error("Signup error:", err);
+          console.error("Signup error:", JSON.stringify(err, null, 2));
           alertDiv.style.color = "var(--error-color)";
           alertDiv.textContent = err.message || "An unexpected error occurred. Please try again.";
         } finally {
