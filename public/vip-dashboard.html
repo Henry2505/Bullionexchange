@@ -1,5 +1,3 @@
-Below is your unchanged VIP dashboard with only the free, client‑side Text‑to‑Speech feature added. Everything else is exactly as you provided. The TTS widget is inserted right below the Watchlist, and the minimal JS to populate voices and handle Play/Stop is added just before the existing DOMContentLoaded handler.
-
 <!DOCTYPE html>
 <html lang="en" data-theme="dark">
 <head>
@@ -9,8 +7,7 @@ Below is your unchanged VIP dashboard with only the free, client‑side Text‑t
 
   <!-- Simple Auth Guard -->
   <script>
-    if (localStorage.getItem('isLoggedIn') !== 'true' ||
-        !sessionStorage.getItem('cbeUserId')) {
+    if (localStorage.getItem('isLoggedIn') !== 'true' || !sessionStorage.getItem('cbeUserId')) {
       window.location.replace('login.html');
     }
   </script>
@@ -21,7 +18,9 @@ Below is your unchanged VIP dashboard with only the free, client‑side Text‑t
   <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;700&family=Orbitron:wght@400;700&display=swap" rel="stylesheet">
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>
   <script src="https://s3.tradingview.com/tv.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/particles.js@2.0.0/particles.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/intro.js@4.3.0/intro.min.js"></script>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/intro.js@4.3.0/introjs.min.css">
   <script>
     var _smartsupp = _smartsupp || {};
     _smartsupp.key = '018a8bbd868518221e725341a7b2601231ec7ce8';
@@ -34,9 +33,9 @@ Below is your unchanged VIP dashboard with only the free, client‑side Text‑t
   </script>
 
   <style>
-    /* Styles remain unchanged */
+    /* Core Styles */
     :root[data-theme="dark"] {
-      --bg: #121212;
+      --bg: linear-gradient(135deg, #121212, #1a1a1a);
       --text: #e0e0e0;
       --gold: #ffd700;
       --gold-dark: #cca300;
@@ -49,7 +48,7 @@ Below is your unchanged VIP dashboard with only the free, client‑side Text‑t
       --accent: #1e1e1e;
     }
     :root[data-theme="light"] {
-      --bg: #f5f5f5;
+      --bg: linear-gradient(135deg, #f5f5f5, #e0e0e0);
       --text: #333333;
       --gold: #cca300;
       --gold-dark: #b58900;
@@ -75,15 +74,8 @@ Below is your unchanged VIP dashboard with only the free, client‑side Text‑t
       color: var(--text) !important;
     }
     a:hover { color: var(--gold-dark) !important; }
-    #particles-js {
-      position: fixed;
-      top: 0;
-      left: 0;
-      width: 100%;
-      height: 100%;
-      z-index: -10;
-      opacity: 0.2;
-    }
+
+    /* Animations */
     .slide-in {
       opacity: 0;
       transform: translateY(20px);
@@ -93,6 +85,8 @@ Below is your unchanged VIP dashboard with only the free, client‑side Text‑t
       opacity: 1;
       transform: translateY(0);
     }
+
+    /* Header */
     header {
       position: sticky;
       top: 0;
@@ -151,6 +145,8 @@ Below is your unchanged VIP dashboard with only the free, client‑side Text‑t
       font-size: 1.5rem;
       padding: 0.5rem;
     }
+
+    /* Sidebar */
     .offcanvas {
       background: var(--glass);
       backdrop-filter: blur(10px);
@@ -167,28 +163,30 @@ Below is your unchanged VIP dashboard with only the free, client‑side Text‑t
       background: var(--gold-dark);
       color: #000 !important;
     }
-    .container-fluid { padding: 0 2rem; }
-    .welcome-banner {
-      font-family: 'Orbitron', sans-serif;
-      font-size: 2rem;
-      text-align: center;
-      padding: 1.5rem;
-      background: var(--glass);
-      backdrop-filter: blur(10px);
-      border-radius: 10px;
-      box-shadow: 0 2px 8px var(--shadow);
-      margin: 1.5rem 0;
+
+    /* Layout */
+    .container-fluid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+      gap: 1.5rem;
+      padding: 0 2rem;
     }
     .card {
       background: var(--glass);
-      backdrop-filter: blur(10px);
-      border: 1px solid var(--gold-dark);
+      backdrop-filter: blur(12px) saturate(120%);
+      border: 1px solid rgba(255, 215, 0, 0.3);
       border-radius: 10px;
-      box-shadow: 0 2px 8px var(--shadow);
+      box-shadow: 0 4px 12px var(--shadow);
       padding: 1.5rem;
-      transition: transform 0.3s ease;
+      transition: transform 0.3s ease, box-shadow 0.3s ease;
     }
-    .card:hover { transform: translateY(-4px); }
+    .card:hover {
+      transform: translateY(-6px);
+      box-shadow: 0 6px 18px rgba(255, 215, 0, 0.2);
+    }
+    .chart-card { grid-column: 1 / -1; }
+
+    /* Buttons */
     .btn-gold {
       background: linear-gradient(45deg, var(--gold), var(--gold-dark));
       color: #000 !important;
@@ -199,6 +197,8 @@ Below is your unchanged VIP dashboard with only the free, client‑side Text‑t
       transition: transform 0.3s ease;
     }
     .btn-gold:hover { transform: scale(1.03); }
+
+    /* Chart */
     #tv_chart_4h {
       width: 100%;
       height: 450px;
@@ -223,7 +223,9 @@ Below is your unchanged VIP dashboard with only the free, client‑side Text‑t
       background: var(--gold-dark);
       color: #000 !important;
     }
-    #news-widget {
+
+    /* Widgets */
+    #news-widget, #calendar-widget {
       background: var(--glass);
       border: 1px solid var(--gold-dark);
       border-radius: 10px;
@@ -232,57 +234,11 @@ Below is your unchanged VIP dashboard with only the free, client‑side Text‑t
       height: 350px;
       overflow: hidden;
     }
-    #news-widget ul {
-      list-style: none;
-      margin: 0;
-      padding: 0;
+    #news-widget ul, #calendar-widget table {
       height: 100%;
       overflow-y: auto;
     }
-    #news-widget li {
-      padding: 1rem;
-      border-bottom: 1px solid var(--gold-dark);
-      transition: background 0.3s ease;
-    }
-    #news-widget li:hover { background: rgba(255, 215, 0, 0.1); }
-    #calendar-widget {
-      background: var(--glass);
-      border: 1px solid var(--gold-dark);
-      border-radius: 10px;
-      box-shadow: 0 2px 8px var(--shadow);
-      padding: 1rem;
-      height: 350px;
-      overflow: auto;
-    }
-    #calendar-widget table {
-      width: 100%;
-      border-collapse: separate;
-      border-spacing: 0 8px;
-    }
-    #calendar-widget th {
-      background: linear-gradient(45deg, var(--gold-dark), var(--gold));
-      color: #000 !important;
-      padding: 0.8rem;
-      text-align: center;
-      border-radius: 6px;
-      position: sticky;
-      top: 0;
-      z-index: 2;
-    }
-    #calendar-widget td {
-      padding: 0.8rem;
-      background: var(--accent);
-      border-radius: 6px;
-    }
-    #calendar-widget tbody tr.high-impact { background: rgba(255, 215, 0, 0.2); }
-    #converter-widget select,
-    #converter-widget input {
-      background: var(--accent);
-      border: 1px solid var(--gold-dark);
-      border-radius: 6px;
-      padding: 0.5rem;
-    }
-    #watch-list .list-group-item {
+    .list-group-item {
       background: var(--glass);
       border: 1px solid var(--gold-dark);
       border-radius: 6px;
@@ -291,19 +247,8 @@ Below is your unchanged VIP dashboard with only the free, client‑side Text‑t
     }
     .price-change.positive { color: var(--success) !important; }
     .price-change.negative { color: var(--error) !important; }
-    #notif-menu {
-      background: var(--glass);
-      backdrop-filter: blur(10px);
-      border: 1px solid var(--gold-dark);
-      width: 250px;
-      box-shadow: 0 2px 8px var(--shadow);
-    }
-    #notif-list li {
-      padding: 0.5rem 1rem;
-      border-bottom: 1px solid var(--gold-dark);
-    }
-    #notif-list .critical { background: rgba(255, 0, 0, 0.2); }
-    #notif-list .info { background: rgba(0, 255, 136, 0.2); }
+
+    /* Spinner */
     .spinner {
       border: 3px solid var(--glass);
       border-top: 3px solid var(--gold);
@@ -317,6 +262,8 @@ Below is your unchanged VIP dashboard with only the free, client‑side Text‑t
       0% { transform: rotate(0deg); }
       100% { transform: rotate(360deg); }
     }
+
+    /* Footer */
     footer {
       text-align: center;
       padding: 1rem 0;
@@ -326,41 +273,25 @@ Below is your unchanged VIP dashboard with only the free, client‑side Text‑t
       border-top: 1px solid var(--gold-dark);
       width: 100%;
     }
+
+    /* New Features */
+    .portfolio-tracker, .risk-calculator {
+      background: var(--glass);
+      border: 1px solid var(--gold-dark);
+      border-radius: 10px;
+      padding: 1.5rem;
+      box-shadow: 0 2px 8px var(--shadow);
+    }
+
+    /* Responsive Design */
     @media (max-width: 768px) {
-      .container-fluid { padding: 0 1rem; }
-      .welcome-banner { font-size: 1.5rem; padding: 1rem; }
-      .card { padding: 1rem; }
-      #tv_chart_4h,
-      #news-widget,
-      #calendar-widget { height: 300px; }
-      header { padding: 0.8rem 1rem; }
-      header .logo { font-size: 1.2rem; }
-      header .nav-links { gap: 0.5rem; }
-    }
-    @media (max-width: 576px) {
-      .welcome-banner { font-size: 1.2rem; }
-      .btn-gold { padding: 0.5rem 1rem; font-size: 0.9rem; }
-    }
-    :root {
-      --smartsupp-base-color: var(--gold);
-      --smartsupp-btn-color: var(--gold-dark);
-      --smartsupp-text-color: var(--text);
-      --smartsupp-bg: var(--glass);
-    }
-    #smartsupp .ss-widget-container {
-      background: var(--glass) !important;
-      backdrop-filter: blur(10px) !important;
-    }
-    #smartsupp .ss-widget-button {
-      background: linear-gradient(45deg, var(--gold), var(--gold-dark)) !important;
-      border-color: var(--gold-dark) !important;
-      color: #000 !important;
+      .container-fluid { grid-template-columns: 1fr; }
+      header { padding: 1rem; }
+      .nav-links { flex-wrap: wrap; }
     }
   </style>
 </head>
 <body>
-  <div id="particles-js"></div>
-
   <!-- Sidebar -->
   <div class="offcanvas offcanvas-start" id="sidebar">
     <div class="offcanvas-body">
@@ -434,6 +365,38 @@ Below is your unchanged VIP dashboard with only the free, client‑side Text‑t
       </div>
     </div>
 
+    <!-- Portfolio Tracker -->
+    <div class="card p-3 mb-4 slide-in portfolio-tracker">
+      <h3 class="mb-3">Portfolio Tracker</h3>
+      <input id="portfolio-input" class="form-control mb-2" placeholder="Add asset (e.g., XAUUSD, 100 oz)">
+      <button id="add-portfolio" class="btn btn-gold mb-2">Add</button>
+      <ul id="portfolio-list" class="list-group"></ul>
+    </div>
+
+    <!-- Risk Calculator -->
+    <div class="card p-3 mb-4 slide-in risk-calculator">
+      <h3 class="mb-3">Risk Calculator</h3>
+      <div class="row g-3">
+        <div class="col-md-4">
+          <label for="account-size" class="form-label">Account Size ($)</label>
+          <input id="account-size" type="number" class="form-control" placeholder="e.g., 10000">
+        </div>
+        <div class="col-md-4">
+          <label for="risk-percentage" class="form-label">Risk Percentage (%)</label>
+          <input id="risk-percentage" type="number" class="form-control" placeholder="e.g., 2">
+        </div>
+        <div class="col-md-4">
+          <label for="stop-loss" class="form-label">Stop Loss (pips)</label>
+          <input id="stop-loss" type="number" class="form-control" placeholder="e.g., 20">
+        </div>
+        <div class="col-12">
+          <button id="calculate-risk" class="btn btn-gold">Calculate Position Size</button>
+          <p id="risk-result" class="mt-2"></p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Converter Widget -->
     <div class="card p-3 mb-4 slide-in" id="converter-widget">
       <h3 class="mb-3">Currency Converter</h3>
       <div class="row g-3">
@@ -455,13 +418,14 @@ Below is your unchanged VIP dashboard with only the free, client‑side Text‑t
           </select>
         </div>
         <div class="col-12">
-          <button id="convert-btn" class="btn btn-gold">Convert</button>
+          <button id="convert-btn" class="btn btn-gold" aria-label="Convert currency">Convert</button>
           <p id="converter-result" class="mt-2"></p>
         </div>
       </div>
     </div>
 
-    <div class="card p-3 mb-4 slide-in">
+    <!-- Chart Widget -->
+    <div class="card p-3 mb-4 slide-in chart-card">
       <h3 class="mb-3">XAU/USD Chart</h3>
       <div class="chart-toggle">
         <button data-interval="240" class="active">4H</button>
@@ -471,14 +435,24 @@ Below is your unchanged VIP dashboard with only the free, client‑side Text‑t
       <div id="tv_chart_4h"></div>
     </div>
 
-    <div class="card p-3 mb-4 slide-in">
-      <h3 class="mb-1">Gold News <small class="text-muted">Updated every minute</small></h3>
-      <div id="news-widget"><ul id="news-list"></ul></div>
+    <!-- News Widget -->
+    <div class="card p-3 mb-4 slide-in" id="news-widget">
+      <div class="d-flex justify-content-between align-items-center mb-3">
+        <h3>Gold News <small class="text-muted">Updated every minute</small></h3>
+        <button class="btn btn-link" data-bs-toggle="collapse" data-bs-target="#news-collapse"><i class="bi-chevron-down"></i></button>
+      </div>
+      <div id="news-collapse" class="collapse show">
+        <ul id="news-list"></ul>
+      </div>
     </div>
 
-    <div class="card p-3 mb-4 slide-in">
-      <h3 class="mb-1">Economic Calendar <small class="text-muted">Updated daily</small></h3>
-      <div id="calendar-widget">
+    <!-- Calendar Widget -->
+    <div class="card p-3 mb-4 slide-in" id="calendar-widget">
+      <div class="d-flex justify-content-between align-items-center mb-3">
+        <h3>Economic Calendar <small class="text-muted">Updated daily</small></h3>
+        <button class="btn btn-link" data-bs-toggle="collapse" data-bs-target="#calendar-collapse"><i class="bi-chevron-down"></i></button>
+      </div>
+      <div id="calendar-collapse" class="collapse show">
         <table>
           <thead>
             <tr>
@@ -496,16 +470,18 @@ Below is your unchanged VIP dashboard with only the free, client‑side Text‑t
       </div>
     </div>
 
+    <!-- Watchlist Widget -->
     <div class="card p-3 mb-4 slide-in">
       <h3 class="mb-3">My Watchlist</h3>
       <div class="d-flex mb-2">
         <input id="watch-input" class="form-control me-2" placeholder="Add symbol (e.g., EURUSD)">
         <button id="add-watch" class="btn btn-gold"><i class="bi-plus"></i>Add</button>
+     izacja
+
       </div>
-      <ul id="watch-list" class="list-group"></ul>
     </div>
 
-    <!-- Text‑to‑Speech Widget -->
+    <!-- Text-to-Speech Widget -->
     <div class="card p-3 mb-4 slide-in" id="tts-widget">
       <h3 class="mb-3">Text to Speech (Free!)</h3>
       <textarea id="tts-text" class="form-control mb-2" rows="3" placeholder="Type something…"></textarea>
@@ -515,7 +491,6 @@ Below is your unchanged VIP dashboard with only the free, client‑side Text‑t
         <button id="tts-stop" class="btn btn-outline-light">Stop</button>
       </div>
     </div>
-
   </div>
 
   <footer class="slide-in">© 2025 CBE Global. All rights reserved.</footer>
@@ -665,6 +640,7 @@ Below is your unchanged VIP dashboard with only the free, client‑side Text‑t
           }
           li.innerHTML = `
             <span>${sym}</span>
+            <canvas id="sparkline-${sym}" width="100" height="30"></canvas>
             <span class="price-change ${priceClass}">${priceChange}</span>
             <button class="btn btn-sm btn-outline-danger">Remove</button>
           `;
@@ -673,6 +649,17 @@ Below is your unchanged VIP dashboard with only the free, client‑side Text‑t
             loadDashboard();
           };
           ul.appendChild(li);
+          // Render Sparkline
+          const priceData = Array(10).fill(0).map(() => Math.random() * 10 + 90); // Mock data
+          const ctx = document.getElementById(`sparkline-${sym}`).getContext('2d');
+          new Chart(ctx, {
+            type: 'line',
+            data: {
+              labels: priceData.map((_, i) => i),
+              datasets: [{ data: priceData, borderColor: priceChange.startsWith('+') ? 'var(--success)' : 'var(--error)', borderWidth: 1, pointRadius: 0 }]
+            },
+            options: { scales: { x: { display: false }, y: { display: false } }, plugins: { legend: { display: false }, tooltip: { enabled: false } } }
+          });
         }
         document.getElementById('add-watch').onclick = () => {
           const input = document.getElementById('watch-input');
@@ -710,7 +697,7 @@ Below is your unchanged VIP dashboard with only the free, client‑side Text‑t
             { id: "MASimple@tv-basicstudies", inputs: { length: 200 } }
           ],
           enable_publishing: false,
-          allow_symbol_change: false,
+          allow_symbol_change: true,
           save_image: false
         });
       } catch (err) {
@@ -719,7 +706,7 @@ Below is your unchanged VIP dashboard with only the free, client‑side Text‑t
       }
     }
 
-    // Gold News
+    // Gold News with TTS
     async function loadGoldNews() {
       const ul = document.getElementById('news-list');
       ul.innerHTML = '<li><div class="spinner"></div></li>';
@@ -730,7 +717,7 @@ Below is your unchanged VIP dashboard with only the free, client‑side Text‑t
         ul.innerHTML = '';
         data.articles.forEach(article => {
           const li = document.createElement('li');
-          li.innerHTML = `<a href="${article.url}" target="_blank">${article.title}</a>`;
+          li.innerHTML = `<a href="${article.url}" target="_blank">${article.title}</a> <button class="btn btn-sm btn-outline-light ms-2" onclick="readAloud('${article.title}')"><i class="bi-volume-up"></i></button>`;
           ul.appendChild(li);
         });
       } catch (err) {
@@ -744,7 +731,7 @@ Below is your unchanged VIP dashboard with only the free, client‑side Text‑t
         ];
         sample.forEach(article => {
           const li = document.createElement('li');
-          li.innerHTML = `<a href="${article.url}" target="_blank">${article.title}</a>`;
+          li.innerHTML = `<a href="${article.url}" target="_blank">${article.title}</a> <button class="btn btn-sm btn-outline-light ms-2" onclick="readAloud('${article.title}')"><i class="bi-volume-up"></i></button>`;
           ul.appendChild(li);
         });
       }
@@ -757,8 +744,8 @@ Below is your unchanged VIP dashboard with only the free, client‑side Text‑t
       try {
         const events = [
           { date: "06-02-2025", time: "08:30", currency: "USD", event: "Non-Farm Payrolls", impact: "High", actual: "", previous: "254K" },
-          { date: "06-02-2025", time: "10:00", currency: "EUR", event: "CPI Flash Estimate", impact: "Medium", actual: "", previous: "2.0%" },
-          { date: "06-03-2025", time: "04:30", currency: "GBP", event: "Services PMI", impact: "Low", actual: "", previous: "52.2" }
+          { date: "06-03-2025", time: "10:00", currency: "EUR", event: "CPI Flash Estimate", impact: "Medium", actual: "", previous: "2.0%" },
+          { date: "06-04-2025", time: "04:30", currency: "GBP", event: "Services PMI", impact: "Low", actual: "", previous: "52.2" }
         ];
         tbody.innerHTML = '';
         events.forEach(ev => {
@@ -796,7 +783,7 @@ Below is your unchanged VIP dashboard with only the free, client‑side Text‑t
       if (sound) sound.play().catch(() => console.error('Audio error'));
     }
 
-    // ——— Free Client‑Side TTS via Web Speech API ———
+    // TTS
     const synth = window.speechSynthesis;
     const voiceSelect = document.getElementById('tts-voice');
     function loadVoices() {
@@ -822,6 +809,37 @@ Below is your unchanged VIP dashboard with only the free, client‑side Text‑t
     });
     document.getElementById('tts-stop').addEventListener('click', () => {
       synth.cancel();
+    });
+
+    function readAloud(text) {
+      synth.cancel();
+      const utter = new SpeechSynthesisUtterance(text);
+      utter.voice = synth.getVoices().find(v => v.name === voiceSelect.value) || null;
+      synth.speak(utter);
+    }
+
+    // Portfolio Tracker
+    document.getElementById('add-portfolio').addEventListener('click', () => {
+      const input = document.getElementById('portfolio-input').value;
+      const list = document.getElementById('portfolio-list');
+      const li = document.createElement('li');
+      li.className = 'list-group-item';
+      li.textContent = `${input} - Value: ${(Math.random() * 1000).toFixed(2)} USD`;
+      list.appendChild(li);
+    });
+
+    // Risk Calculator
+    document.getElementById('calculate-risk').addEventListener('click', () => {
+      const accountSize = parseFloat(document.getElementById('account-size').value);
+      const riskPercentage = parseFloat(document.getElementById('risk-percentage').value);
+      const stopLoss = parseFloat(document.getElementById('stop-loss').value);
+      if (!accountSize || !riskPercentage || !stopLoss) {
+        document.getElementById('risk-result').textContent = 'Please fill all fields.';
+        return;
+      }
+      const riskAmount = (riskPercentage / 100) * accountSize;
+      const positionSize = riskAmount / stopLoss;
+      document.getElementById('risk-result').textContent = `Position Size: ${positionSize.toFixed(2)} units`;
     });
 
     // On Load
@@ -873,6 +891,17 @@ Below is your unchanged VIP dashboard with only the free, client‑side Text‑t
         loadGoldNews();
         loadEconCalendar();
       }, 120000);
+
+      // Guided Tour
+      if (!localStorage.getItem('tourCompleted')) {
+        introJs().setOptions({
+          steps: [
+            { element: '#welcomeName', intro: 'Welcome to your VIP Dashboard!' },
+            { element: '#tv_chart_4h', intro: 'Monitor XAU/USD with this live chart.' },
+            { element: '#news-widget', intro: 'Stay updated with gold market news.' }
+          ]
+        }).start().oncomplete(() => localStorage.setItem('tourCompleted', 'true'));
+      }
     });
   </script>
 </body>
