@@ -12,7 +12,7 @@
     crossorigin="anonymous"
   />
 
-  <!-- Supabase JS v2 -->
+  <!-- Supabase JS v2 UMD -->
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>
 
   <style>
@@ -21,7 +21,7 @@
       --gold: #ffd700; --gold-dark: #cca300; --error: #e74c3c; --success: #2ecc71;
     }
     body {
-      margin:0; min-height:100vh; display:flex;
+      margin:0; height:100vh; display:flex;
       align-items:center; justify-content:center;
       background:var(--bg); color:var(--text);
       font-family:Arial,sans-serif;
@@ -31,9 +31,7 @@
       border-radius:8px; width:90%; max-width:400px;
       box-shadow:0 4px 12px rgba(0,0,0,0.5);
     }
-    h1 {
-      margin-bottom:1.5rem; color:var(--gold); text-align:center;
-    }
+    h1 { margin-bottom:1.5rem; color:var(--gold); text-align:center; }
     .form-group { margin-bottom:1rem; }
     label { display:block; margin-bottom:.25rem; color:var(--text-light); }
     input {
@@ -62,9 +60,7 @@
 
   <div class="card">
     <h1>Affiliate Signup</h1>
-    <p id="ref-note" style="text-align:center;color:var(--text-light);margin-bottom:1rem;">
-      <!-- Will fill in “Referred by: CODE” if present -->
-    </p>
+    <p id="ref-note" style="text-align:center;color:var(--text-light);margin-bottom:1rem;"></p>
     <form id="signup-form" novalidate>
       <div class="form-group">
         <label for="name">Full Name</label>
@@ -88,32 +84,30 @@
           I agree to the <a href="#" target="_blank">Terms &amp; Conditions</a>
         </label>
       </div>
-      <button type="submit" id="btn">Sign Up</button>
+      <button type="submit" id="btn" disabled>Sign Up</button>
       <div id="alert"></div>
     </form>
   </div>
 
   <script>
-    // 1) Init Supabase client
-    const SUPA_URL     = 'https://dapwpgvnfjcfqqhrpxla.supabase.co';
-    const SUPA_ANON_KEY= 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImRhcHdwZ3ZuZmpjZnFxaHJweGxhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDcwNDA4ODgsImV4cCI6MjA2MjYxNjg4OH0.ICC0UsLlzJDNre7rFCeD3k6iVzo6jOJgn3PhABpEMsQ';
-    const supabase = Supabase.createClient(SUPA_URL, SUPA_ANON_KEY);
+    // Initialize Supabase using the correct global:
+    const SUPA_URL      = 'https://dapwpgvnfjcfqqhrpxla.supabase.co';
+    const SUPA_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhZ...';
+    const supabase      = Supabase.createClient(SUPA_URL, SUPA_ANON_KEY);
 
-    // 2) Helpers & DOM refs
+    // DOM refs
     const form    = document.getElementById('signup-form');
     const btn     = document.getElementById('btn');
     const agree   = document.getElementById('agree');
     const alertEl = document.getElementById('alert');
     const refNote = document.getElementById('ref-note');
 
-    // 3) Read referral code from URL
+    // 1) Read ?ref= code from URL and look up the referrer's user
+    let referrerId = null;
     const urlParams = new URLSearchParams(window.location.search);
     const refCode   = urlParams.get('ref');
-    let referrerId  = null;
-
     if (refCode) {
       refNote.textContent = `Referred by: ${refCode}`;
-      // Lookup the referrer’s user_id now
       supabase
         .from('users')
         .select('id')
@@ -124,27 +118,22 @@
         });
     }
 
-    // 4) Enable button only when terms are agreed
+    // 2) Enable button only when terms are agreed
     agree.addEventListener('change', () => {
-      if (agree.checked) {
-        btn.classList.add('enabled');
-        btn.disabled = false;
-      } else {
-        btn.classList.remove('enabled');
-        btn.disabled = true;
-      }
+      btn.disabled = !agree.checked;
+      btn.classList.toggle('enabled', agree.checked);
     });
 
-    // 5) Generate 8‑char code
+    // 3) Code generator
     function genCode() {
       const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
       return Array.from({length:8},()=>chars[Math.floor(Math.random()*chars.length)]).join('');
     }
 
-    // 6) Handle form submission
+    // 4) Form submit handler
     form.addEventListener('submit', async e => {
-      e.preventDefault();
-      alertEl.textContent = '';
+      e.preventDefault();                // prevent refresh
+      alertEl.textContent = '';         // clear
       alertEl.style.color = '';
 
       const name     = document.getElementById('name').value.trim();
@@ -152,9 +141,9 @@
       const password = document.getElementById('password').value;
       const confirm  = document.getElementById('confirm').value;
 
-      // Basic validation
-      if (!name||!email||!password||!confirm) {
-        alertEl.style.color = 'var(--error)'; 
+      // validation
+      if (!name || !email || !password || !confirm) {
+        alertEl.style.color = 'var(--error)';
         return alertEl.textContent = 'All fields are required.';
       }
       if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
@@ -163,18 +152,18 @@
       }
       if (password.length < 8) {
         alertEl.style.color = 'var(--error)';
-        return alertEl.textContent = 'Password must be ≥ 8 characters.';
+        return alertEl.textContent = 'Password must be at least 8 characters.';
       }
       if (password !== confirm) {
         alertEl.style.color = 'var(--error)';
         return alertEl.textContent = 'Passwords do not match.';
       }
 
-      // Disable UI
+      // disable while working
       btn.textContent = 'Signing up…';
-      btn.disabled = true;
+      btn.disabled    = true;
 
-      // Insert into public.users
+      // insert
       const newCode = genCode();
       const { error } = await supabase
         .from('users')
@@ -192,15 +181,13 @@
         alertEl.style.color = 'var(--error)';
         alertEl.textContent = error.message;
         btn.textContent = 'Sign Up';
-        btn.disabled = false;
+        btn.disabled    = false;
         return;
       }
 
-      // Success
+      // success
       alertEl.style.color = 'var(--success)';
       alertEl.textContent = `Welcome! Your referral code is ${newCode}`;
-
-      // Redirect to login after a moment
       setTimeout(() => {
         window.location.href = 'affiliate_login.html';
       }, 2000);
