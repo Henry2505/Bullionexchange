@@ -174,8 +174,10 @@
           .from("affiliates")
           .select("referral_code")
           .eq("referral_code", code)
-          .single();
+          .maybeSingle();
         if (error && error.code === "PGRST116") { // No rows returned
+          isUnique = true;
+        } else if (!data) {
           isUnique = true;
         }
         attempts++;
@@ -238,21 +240,45 @@
         signupBtn.textContent = "Registering…";
 
         try {
+          // Step 1: Register user with Supabase Auth
           const { data: authData, error: authError } = await supabaseClient.auth.signUp({
             email,
             password,
-            options: { data: { username } } // Store username as user metadata
+            options: { data: { username } }
           });
-          if (authError) throw authError;
+          if (authError) {
+            if (authError.message.includes("already registered")) {
+              throw new Error("This email is already registered.");
+            }
+            throw authError;
+          }
 
-          const userId = authData.user.id;
+          // Step 2: Get user ID
+          const userId = authData.user?.id;
+          if (!userId) {
+            throw new Error("User ID not retrieved after signup.");
+          }
+
+          // Step 3: Generate unique referral code
           const referralCode = await generateUniqueReferralCode();
 
+          // Step 4: Insert into affiliates table
           const { error: insertError } = await supabaseClient
             .from("affiliates")
             .insert([{ user_id: userId, username, referral_code: referralCode }]);
-          if (insertError) throw insertError;
+          if (insertError) {
+            console.error("Insert error details:", insertError);
+            if (insertError.code === "23505") {
+              if (insertError.message.includes("username")) {
+                throw new Error("Username already taken.");
+              } else if (insertError.message.includes("referral_code")) {
+                throw new Error("Generated referral code is not unique. Please try again.");
+              }
+            }
+            throw new Error(`Database error: ${insertError.message}`);
+          }
 
+          // Step 5: Success
           alertDiv.style.color = "var(--success-color)";
           alertDiv.textContent = `Signup successful! Your referral code is: ${referralCode}\nPlease check your email to verify your account and log in.`;
           document.getElementById("signup-form").reset();
@@ -260,15 +286,7 @@
         } catch (err) {
           console.error("Signup error:", err);
           alertDiv.style.color = "var(--error-color)";
-          if (err.message.includes("email already registered")) {
-            alertDiv.textContent = "This email is already registered.";
-          } else if (err.message.includes("duplicate key value violates unique constraint") && err.message.includes("username")) {
-            alertDiv.textContent = "Username already taken.";
-          } else if (err.message.includes("duplicate key value violates unique constraint") && err.message.includes("referral_code")) {
-            alertDiv.textContent = "An internal error occurred. Please try again.";
-          } else {
-            alertDiv.textContent = "An error occurred: " + err.message;
-          }
+          alertDiv.textContent = err.message || "An unexpected error occurred. Please try again.";
         } finally {
           signupBtn.disabled = false;
           signupBtn.textContent = "Sign Up";
