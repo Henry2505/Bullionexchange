@@ -1,3 +1,5 @@
+Below is your unchanged VIP dashboard with only the free, client‑side Text‑to‑Speech feature added. Everything else is exactly as you provided. The TTS widget is inserted right below the Watchlist, and the minimal JS to populate voices and handle Play/Stop is added just before the existing DOMContentLoaded handler.
+
 <!DOCTYPE html>
 <html lang="en" data-theme="dark">
 <head>
@@ -502,6 +504,18 @@
       </div>
       <ul id="watch-list" class="list-group"></ul>
     </div>
+
+    <!-- Text‑to‑Speech Widget -->
+    <div class="card p-3 mb-4 slide-in" id="tts-widget">
+      <h3 class="mb-3">Text to Speech (Free!)</h3>
+      <textarea id="tts-text" class="form-control mb-2" rows="3" placeholder="Type something…"></textarea>
+      <div class="d-flex align-items-center gap-2">
+        <select id="tts-voice" class="form-select w-auto"></select>
+        <button id="tts-play" class="btn btn-gold">Play</button>
+        <button id="tts-stop" class="btn btn-outline-light">Stop</button>
+      </div>
+    </div>
+
   </div>
 
   <footer class="slide-in">© 2025 CBE Global. All rights reserved.</footer>
@@ -781,6 +795,34 @@
       const sound = document.querySelector(type === 'critical' ? '#critical-notif-sound' : '#notif-sound');
       if (sound) sound.play().catch(() => console.error('Audio error'));
     }
+
+    // ——— Free Client‑Side TTS via Web Speech API ———
+    const synth = window.speechSynthesis;
+    const voiceSelect = document.getElementById('tts-voice');
+    function loadVoices() {
+      const voices = synth.getVoices();
+      voiceSelect.innerHTML = '';
+      voices.forEach(v => {
+        const opt = document.createElement('option');
+        opt.value = v.name;
+        opt.textContent = `${v.name} (${v.lang})`;
+        voiceSelect.appendChild(opt);
+      });
+    }
+    synth.onvoiceschanged = loadVoices;
+    loadVoices();
+
+    document.getElementById('tts-play').addEventListener('click', () => {
+      const text = document.getElementById('tts-text').value.trim();
+      if (!text) return alert('Please enter some text.');
+      synth.cancel();
+      const utter = new SpeechSynthesisUtterance(text);
+      utter.voice = synth.getVoices().find(v => v.name === voiceSelect.value) || null;
+      synth.speak(utter);
+    });
+    document.getElementById('tts-stop').addEventListener('click', () => {
+      synth.cancel();
+    });
 
     // On Load
     document.addEventListener('DOMContentLoaded', async () => {
