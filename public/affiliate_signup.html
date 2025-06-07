@@ -6,10 +6,10 @@
   <meta name="description" content="Register as an affiliate and get your unique referral code." />
   <title>Affiliate Signup • CBE Global</title>
 
-  <!-- Google Fonts (optional) -->
+  <!-- Google Fonts -->
   <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;700&display=swap" rel="stylesheet" />
 
-  <!-- Bootstrap 5.3 CSS & Icons (for basic styling) -->
+  <!-- Bootstrap 5.3 CSS & Icons -->
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-QWTKZyjpPEjISv5WaRU9OFeRpok6YctnYmDr5pNlyT2bRjXh0JMhjY6hW+ALEwIH" crossorigin="anonymous" />
   <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" rel="stylesheet" />
 
@@ -113,7 +113,6 @@
   <div class="signup-card" id="signup-card">
     <h1>Affiliate Signup</h1>
 
-    <!-- Data Collection Notice -->
     <p style="font-size: 0.9rem; color: var(--text-light); margin-bottom: 20px; text-align: center;">
       By signing up, you agree to our <a href="https://apexincomeoptions.com.ng/terms" target="_blank" rel="noopener">Terms & Conditions</a> and <a href="https://apexincomeoptions.com.ng/privacy" target="_blank" rel="noopener">Privacy Policy</a>. We collect your username, email, and password to create your account and provide affiliate services. Your data may be processed internationally.
     </p>
@@ -176,13 +175,13 @@
           .select("referral_code")
           .eq("referral_code", code)
           .single();
-        if (error || !data) {
+        if (error && error.code === "PGRST116") { // No rows returned
           isUnique = true;
         }
         attempts++;
       }
       if (!isUnique) {
-        throw new Error("Failed to generate unique referral code.");
+        throw new Error("Failed to generate a unique referral code after multiple attempts.");
       }
       return code;
     }
@@ -239,7 +238,11 @@
         signupBtn.textContent = "Registering…";
 
         try {
-          const { data: authData, error: authError } = await supabaseClient.auth.signUp({ email, password });
+          const { data: authData, error: authError } = await supabaseClient.auth.signUp({
+            email,
+            password,
+            options: { data: { username } } // Store username as user metadata
+          });
           if (authError) throw authError;
 
           const userId = authData.user.id;
@@ -248,29 +251,26 @@
           const { error: insertError } = await supabaseClient
             .from("affiliates")
             .insert([{ user_id: userId, username, referral_code: referralCode }]);
-
-          if (insertError) {
-            if (insertError.code === "23505") {
-              throw new Error("Username already taken.");
-            }
-            throw insertError;
-          }
+          if (insertError) throw insertError;
 
           alertDiv.style.color = "var(--success-color)";
-          alertDiv.textContent = `Signup successful! Your referral code is: ${referralCode}\nPlease log in with your new credentials.`;
+          alertDiv.textContent = `Signup successful! Your referral code is: ${referralCode}\nPlease check your email to verify your account and log in.`;
           document.getElementById("signup-form").reset();
           confirmAgeTerms.checked = false;
         } catch (err) {
+          console.error("Signup error:", err);
           alertDiv.style.color = "var(--error-color)";
-          if (err.message === "User already registered") {
+          if (err.message.includes("email already registered")) {
             alertDiv.textContent = "This email is already registered.";
-          } else if (err.message === "Username already taken.") {
+          } else if (err.message.includes("duplicate key value violates unique constraint") && err.message.includes("username")) {
             alertDiv.textContent = "Username already taken.";
+          } else if (err.message.includes("duplicate key value violates unique constraint") && err.message.includes("referral_code")) {
+            alertDiv.textContent = "An internal error occurred. Please try again.";
           } else {
             alertDiv.textContent = "An error occurred: " + err.message;
           }
         } finally {
-          signupBtn.disabled = true;
+          signupBtn.disabled = false;
           signupBtn.textContent = "Sign Up";
         }
       });
