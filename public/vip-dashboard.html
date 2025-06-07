@@ -21,16 +21,7 @@
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/intro.js@4.3.0/intro.min.js"></script>
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/intro.js@4.3.0/introjs.min.css">
-  <script>
-    var _smartsupp = _smartsupp || {};
-    _smartsupp.key = '018a8bbd868518221e725341a7b2601231ec7ce8';
-    window.smartsupp||(function(d) {
-      var s,c,o=smartsupp=function(){ o._.push(arguments)};o._=[];
-      s=d.getElementsByTagName('script')[0];c=d.createElement('script');
-      c.type='text/javascript';c.charset='utf-8';c.async=true;
-      c.src='https://www.smartsuppchat.com/loader.js?';s.parentNode.insertBefore(c,s);
-    })(document);
-  </script>
+  <script src="https://code.responsivevoice.org/responsivevoice.js?key=YOUR_RESPONSIVEVOICE_API_KEY"></script> <!-- Replace with your ResponsiveVoice API key -->
 
   <style>
     /* Core Styles */
@@ -39,7 +30,7 @@
       --text: #e0e0e0;
       --gold: #ffd700;
       --gold-dark: #cca300;
-      --glass: rgba(30, 30, 30, 0.7);
+      --glass: rgba(255, 215, 0, 0.1); /* Golden tint for dark theme */
       --shadow: rgba(0, 0, 0, 0.5);
       --text-light: #b0b0b0;
       --text-muted: #888888;
@@ -52,7 +43,7 @@
       --text: #333333;
       --gold: #cca300;
       --gold-dark: #b58900;
-      --glass: rgba(255, 255, 255, 0.7);
+      --glass: rgba(255, 215, 0, 0.3); /* Golden tint for light theme */
       --shadow: rgba(0, 0, 0, 0.2);
       --text-light: #666666;
       --text-muted: #888888;
@@ -225,19 +216,6 @@
     }
 
     /* Widgets */
-    #news-widget, #calendar-widget {
-      background: var(--glass);
-      border: 1px solid var(--gold-dark);
-      border-radius: 10px;
-      box-shadow: 0 2px 8px var(--shadow);
-      padding: 0;
-      height: 350px;
-      overflow: hidden;
-    }
-    #news-widget ul, #calendar-widget table {
-      height: 100%;
-      overflow-y: auto;
-    }
     .list-group-item {
       background: var(--glass);
       border: 1px solid var(--gold-dark);
@@ -307,7 +285,6 @@
         <li class="nav-item"><a class="nav-link" href="signals.html"><i class="bi-lightning me-2"></i>Signals</a></li>
         <li class="nav-item"><a class="nav-link" href="CBE_trade_history_vip.html"><i class="bi-clock-history me-2"></i>History</a></li>
         <li class="nav-item"><a class="nav-link" href="CBE_trade_insights_vip.html"><i class="bi-graph-up me-2"></i>Insights</a></li>
-        <li class="nav-item"><a class="nav-link" href="#" onclick="downloadActivityLog()"><i class="bi-download me-2"></i>Download Logs</a></li>
       </ul>
     </div>
   </div>
@@ -338,31 +315,11 @@
   <!-- Main Content -->
   <div class="container-fluid">
     <div class="welcome-banner slide-in">Welcome, <strong id="welcomeName">Trader</strong>!</div>
-    <div class="row g-4 mb-4 slide-in">
-      <div class="col-md-3">
-        <div class="card p-3 text-center">
-          <h6><i class="bi-lightning me-2"></i>Signals Today</h6>
-          <a href="signals.html" class="btn btn-gold">Access Signals</a>
-        </div>
-      </div>
-      <div class="col-md-3">
-        <div class="card p-3 text-center">
-          <h6><i class="bi-clock-history me-2"></i>Trade History</h6>
-          <a href="CBE_trade_history_vip.html" class="btn btn-gold">View History</a>
-        </div>
-      </div>
-      <div class="col-md-3">
-        <div class="card p-3 text-center">
-          <h6><i class="bi-graph-up me-2"></i>Trade Insights</h6>
-          <a href="CBE_trade_insights_vip.html" class="btn btn-gold">View Insights</a>
-        </div>
-      </div>
-      <div class="col-md-3">
-        <div class="card p-3 text-center">
-          <h6><i class="bi-currency-exchange me-2"></i>24h Gold Δ</h6>
-          <p id="stat-gold-change" class="fs-5 mb-0">--%</p>
-        </div>
-      </div>
+
+    <!-- Real-Time Gold Price Widget -->
+    <div class="card p-3 mb-4 slide-in">
+      <h3 class="mb-3">Real-Time Gold Price</h3>
+      <p id="gold-price" class="fs-4">--</p>
     </div>
 
     <!-- Portfolio Tracker -->
@@ -476,9 +433,8 @@
       <div class="d-flex mb-2">
         <input id="watch-input" class="form-control me-2" placeholder="Add symbol (e.g., EURUSD)">
         <button id="add-watch" class="btn btn-gold"><i class="bi-plus"></i>Add</button>
-     izacja
-
       </div>
+      <ul id="watch-list" class="list-group"></ul>
     </div>
 
     <!-- Text-to-Speech Widget -->
@@ -486,7 +442,6 @@
       <h3 class="mb-3">Text to Speech (Free!)</h3>
       <textarea id="tts-text" class="form-control mb-2" rows="3" placeholder="Type something…"></textarea>
       <div class="d-flex align-items-center gap-2">
-        <select id="tts-voice" class="form-select w-auto"></select>
         <button id="tts-play" class="btn btn-gold">Play</button>
         <button id="tts-stop" class="btn btn-outline-light">Stop</button>
       </div>
@@ -506,7 +461,7 @@
     const supabase = window.supabase.createClient(SUPA_URL, SUPA_KEY);
 
     // API Keys
-    const EXCHANGE_RATE_API_KEY = '4e4307b2bf8daac15365a410';
+    const ALPHA_VANTAGE_API_KEY = 'VEEIYMFJI5AV5FBS';  // Your Alpha Vantage API key for real-time gold prices
     const NEWS_API_KEY = '6de81d54e02e45f8a5546a827c70ab28';
     const apiCache = new Map();
 
@@ -539,35 +494,6 @@
       } catch (err) {
         console.error('Activity log error:', err);
         addNotification('Failed to log activity', 'critical');
-      }
-    }
-
-    // Download Activity Logs
-    async function downloadActivityLog() {
-      try {
-        const { data, error } = await supabase
-          .from('user_activity')
-          .select('*')
-          .order('timestamp', { ascending: false });
-        if (error) throw error;
-        const csv = [
-          'Timestamp,Action,IP Address,City,Country,Device',
-          ...data.map(row => {
-            const ts = row.timestamp ? new Date(row.timestamp).toLocaleString() : '';
-            return `${ts},${row.action},${row.ip_address},${row.city},${row.country},"${row.device}"`;
-          })
-        ].join('\n');
-        const blob = new Blob([csv], { type: 'text/csv' });
-        const url = URL.createObjectURL(blob);
-        const a = document.createElement('a');
-        a.href = url;
-        a.download = 'activity_logs.csv';
-        a.click();
-        URL.revokeObjectURL(url);
-        addNotification('Logs exported successfully', 'info');
-      } catch (err) {
-        console.error('Export error:', err);
-        addNotification('Failed to export logs', 'critical');
       }
     }
 
@@ -764,6 +690,24 @@
       }
     }
 
+    // Real-Time Gold Price
+    async function loadGoldPrice() {
+      const symbol = 'GC'; // Gold futures
+      try {
+        const res = await fetch(`https://www.alphavantage.co/query?function=GLOBAL_QUOTE&symbol=${symbol}&apikey=${ALPHA_VANTAGE_API_KEY}`);
+        const data = await res.json();
+        if (data['Global Quote']) {
+          const price = data['Global Quote']['05. price'];
+          document.getElementById('gold-price').textContent = `$${price}`;
+        } else {
+          throw new Error('No data');
+        }
+      } catch (err) {
+        console.error('Gold price error:', err);
+        document.getElementById('gold-price').textContent = 'Failed to load';
+      }
+    }
+
     // Theme Toggle
     function toggleTheme(theme) {
       document.documentElement.setAttribute('data-theme', theme);
@@ -783,39 +727,19 @@
       if (sound) sound.play().catch(() => console.error('Audio error'));
     }
 
-    // TTS
-    const synth = window.speechSynthesis;
-    const voiceSelect = document.getElementById('tts-voice');
-    function loadVoices() {
-      const voices = synth.getVoices();
-      voiceSelect.innerHTML = '';
-      voices.forEach(v => {
-        const opt = document.createElement('option');
-        opt.value = v.name;
-        opt.textContent = `${v.name} (${v.lang})`;
-        voiceSelect.appendChild(opt);
-      });
-    }
-    synth.onvoiceschanged = loadVoices;
-    loadVoices();
-
+    // TTS using ResponsiveVoice
     document.getElementById('tts-play').addEventListener('click', () => {
       const text = document.getElementById('tts-text').value.trim();
       if (!text) return alert('Please enter some text.');
-      synth.cancel();
-      const utter = new SpeechSynthesisUtterance(text);
-      utter.voice = synth.getVoices().find(v => v.name === voiceSelect.value) || null;
-      synth.speak(utter);
+      responsiveVoice.speak(text, "UK English Male");
     });
+
     document.getElementById('tts-stop').addEventListener('click', () => {
-      synth.cancel();
+      responsiveVoice.cancel();
     });
 
     function readAloud(text) {
-      synth.cancel();
-      const utter = new SpeechSynthesisUtterance(text);
-      utter.voice = synth.getVoices().find(v => v.name === voiceSelect.value) || null;
-      synth.speak(utter);
+      responsiveVoice.speak(text, "UK English Male");
     }
 
     // Portfolio Tracker
@@ -861,6 +785,7 @@
       initChart();
       loadGoldNews();
       loadEconCalendar();
+      loadGoldPrice();  // Load real-time gold price
 
       document.querySelectorAll('.chart-toggle button').forEach(btn => {
         btn.addEventListener('click', () => {
@@ -890,7 +815,8 @@
         loadDashboard();
         loadGoldNews();
         loadEconCalendar();
-      }, 120000);
+        loadGoldPrice();  // Update real-time gold price every minute
+      }, 60000);
 
       // Guided Tour
       if (!localStorage.getItem('tourCompleted')) {
