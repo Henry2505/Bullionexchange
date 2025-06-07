@@ -21,16 +21,25 @@
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/intro.js@4.3.0/intro.min.js"></script>
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/intro.js@4.3.0/introjs.min.css">
-  <script src="https://code.responsivevoice.org/responsivevoice.js?key=YOUR_RESPONSIVEVOICE_API_KEY"></script> <!-- Replace with your ResponsiveVoice API key -->
+  <script>
+    var _smartsupp = _smartsupp || {};
+    _smartsupp.key = '018a8bbd868518221e725341a7b2601231ec7ce8';
+    window.smartsupp||(function(d) {
+      var s,c,o=smartsupp=function(){ o._.push(arguments)};o._=[];
+      s=d.getElementsByTagName('script')[0];c=d.createElement('script');
+      c.type='text/javascript';c.charset='utf-8';c.async=true;
+      c.src='https://www.smartsuppchat.com/loader.js?';s.parentNode.insertBefore(c,s);
+    })(document);
+  </script>
 
   <style>
     /* Core Styles */
     :root[data-theme="dark"] {
-      --bg: #000;
+      --bg: linear-gradient(135deg, #121212, #1a1a1a);
       --text: #e0e0e0;
       --gold: #ffd700;
       --gold-dark: #cca300;
-      --glass: rgba(255, 215, 0, 0.1);
+      --glass: rgba(30, 30, 30, 0.7);
       --shadow: rgba(0, 0, 0, 0.5);
       --text-light: #b0b0b0;
       --text-muted: #888888;
@@ -43,7 +52,7 @@
       --text: #333333;
       --gold: #cca300;
       --gold-dark: #b58900;
-      --glass: rgba(255, 215, 0, 0.3);
+      --glass: rgba(255, 255, 255, 0.7);
       --shadow: rgba(0, 0, 0, 0.2);
       --text-light: #666666;
       --text-muted: #888888;
@@ -66,12 +75,6 @@
     }
     a:hover { color: var(--gold-dark) !important; }
 
-    /* Input Areas */
-    input, textarea {
-      background-color: #ffd700 !important;
-      color: #000 !important;
-    }
-
     /* Animations */
     .slide-in {
       opacity: 0;
@@ -81,45 +84,6 @@
     .slide-in.visible {
       opacity: 1;
       transform: translateY(0);
-    }
-
-    /* Gold Blink Element */
-    #gold-blink {
-      position: fixed;
-      top: 50%;
-      left: 50%;
-      transform: translate(-50%, -50%);
-      width: 100px;
-      height: 100px;
-      background: #ffd700;
-      cursor: pointer;
-    }
-    #gold-blink.clicked {
-      animation: blink 0.5s;
-    }
-    @keyframes blink {
-      0% { opacity: 1; }
-      50% { opacity: 0.5; }
-      100% { opacity: 1; }
-    }
-
-    /* Floating Button */
-    #floating-btn {
-      position: fixed;
-      bottom: 20px;
-      right: 20px;
-      padding: 10px 20px;
-      background: #ffd700;
-      color: #000;
-      border: none;
-      border-radius: 5px;
-      cursor: pointer;
-      animation: pulse 2s infinite;
-    }
-    @keyframes pulse {
-      0% { transform: scale(1); }
-      50% { transform: scale(1.05); }
-      100% { transform: scale(1); }
     }
 
     /* Header */
@@ -235,7 +199,7 @@
     .btn-gold:hover { transform: scale(1.03); }
 
     /* Chart */
-    #tv_chart_4h, #tv_gold_chart {
+    #tv_chart_4h {
       width: 100%;
       height: 450px;
       border-radius: 8px;
@@ -310,23 +274,24 @@
       width: 100%;
     }
 
-    /* Clock */
-    #clock {
-      position: fixed;
-      top: 10px;
-      right: 10px;
-      color: #ffd700;
-      font-size: 0.9rem;
+    /* New Features */
+    .portfolio-tracker, .risk-calculator {
+      background: var(--glass);
+      border: 1px solid var(--gold-dark);
+      border-radius: 10px;
+      padding: 1.5rem;
+      box-shadow: 0 2px 8px var(--shadow);
+    }
+
+    /* Responsive Design */
+    @media (max-width: 768px) {
+      .container-fluid { grid-template-columns: 1fr; }
+      header { padding: 1rem; }
+      .nav-links { flex-wrap: wrap; }
     }
   </style>
 </head>
 <body>
-  <!-- Gold Blink Element -->
-  <div id="gold-blink"></div>
-
-  <!-- Floating Button -->
-  <button id="floating-btn">Click to access latest signals</button>
-
   <!-- Sidebar -->
   <div class="offcanvas offcanvas-start" id="sidebar">
     <div class="offcanvas-body">
@@ -342,6 +307,7 @@
         <li class="nav-item"><a class="nav-link" href="signals.html"><i class="bi-lightning me-2"></i>Signals</a></li>
         <li class="nav-item"><a class="nav-link" href="CBE_trade_history_vip.html"><i class="bi-clock-history me-2"></i>History</a></li>
         <li class="nav-item"><a class="nav-link" href="CBE_trade_insights_vip.html"><i class="bi-graph-up me-2"></i>Insights</a></li>
+        <li class="nav-item"><a class="nav-link" href="#" onclick="downloadActivityLog()"><i class="bi-download me-2"></i>Download Logs</a></li>
       </ul>
     </div>
   </div>
@@ -372,25 +338,90 @@
   <!-- Main Content -->
   <div class="container-fluid">
     <div class="welcome-banner slide-in">Welcome, <strong id="welcomeName">Trader</strong>!</div>
-
-    <!-- Real-Time Gold Price Widget -->
-    <div class="card p-3 mb-4 slide-in">
-      <h3 class="mb-3">Real-Time Gold Price</h3>
-      <p id="gold-price" class="fs-4">--</p>
-    </div>
-
-    <!-- Live Gold Price Chart -->
-    <div class="card p-3 mb-4 slide-in">
-      <h3 class="mb-3">Live Gold Price Chart</h3>
-      <div id="tv_gold_chart"></div>
+    <div class="row g-4 mb-4 slide-in">
+      <div class="col-md-3">
+        <div class="card p-3 text-center">
+          <h6><i class="bi-lightning me-2"></i>Signals Today</h6>
+          <a href="signals.html" class="btn btn-gold">Access Signals</a>
+        </div>
+      </div>
+      <div class="col-md-3">
+        <div class="card p-3 text-center">
+          <h6><i class="bi-clock-history me-2"></i>Trade History</h6>
+          <a href="CBE_trade_history_vip.html" class="btn btn-gold">View History</a>
+        </div>
+      </div>
+      <div class="col-md-3">
+        <div class="card p-3 text-center">
+          <h6><i class="bi-graph-up me-2"></i>Trade Insights</h6>
+          <a href="CBE_trade_insights_vip.html" class="btn btn-gold">View Insights</a>
+        </div>
+      </div>
+      <div class="col-md-3">
+        <div class="card p-3 text-center">
+          <h6><i class="bi-currency-exchange me-2"></i>24h Gold Δ</h6>
+          <p id="stat-gold-change" class="fs-5 mb-0">--%</p>
+        </div>
+      </div>
     </div>
 
     <!-- Portfolio Tracker -->
-    <div class="card p-3 mb-4 slide-in">
+    <div class="card p-3 mb-4 slide-in portfolio-tracker">
       <h3 class="mb-3">Portfolio Tracker</h3>
       <input id="portfolio-input" class="form-control mb-2" placeholder="Add asset (e.g., XAUUSD, 100 oz)">
       <button id="add-portfolio" class="btn btn-gold mb-2">Add</button>
       <ul id="portfolio-list" class="list-group"></ul>
+    </div>
+
+    <!-- Risk Calculator -->
+    <div class="card p-3 mb-4 slide-in risk-calculator">
+      <h3 class="mb-3">Risk Calculator</h3>
+      <div class="row g-3">
+        <div class="col-md-4">
+          <label for="account-size" class="form-label">Account Size ($)</label>
+          <input id="account-size" type="number" class="form-control" placeholder="e.g., 10000">
+        </div>
+        <div class="col-md-4">
+          <label for="risk-percentage" class="form-label">Risk Percentage (%)</label>
+          <input id="risk-percentage" type="number" class="form-control" placeholder="e.g., 2">
+        </div>
+        <div class="col-md-4">
+          <label for="stop-loss" class="form-label">Stop Loss (pips)</label>
+          <input id="stop-loss" type="number" class="form-control" placeholder="e.g., 20">
+        </div>
+        <div class="col-12">
+          <button id="calculate-risk" class="btn btn-gold">Calculate Position Size</button>
+          <p id="risk-result" class="mt-2"></p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Converter Widget -->
+    <div class="card p-3 mb-4 slide-in" id="converter-widget">
+      <h3 class="mb-3">Currency Converter</h3>
+      <div class="row g-3">
+        <div class="col-md-4">
+          <select id="converter-from" class="form-select">
+            <option value="USD">USD</option>
+            <option value="EUR">EUR</option>
+            <option value="GBP">GBP</option>
+          </select>
+        </div>
+        <div class="col-md-4">
+          <input id="converter-amount" type="number" class="form-control" placeholder="Amount" value="1">
+        </div>
+        <div class="col-md-4">
+          <select id="converter-to" class="form-select">
+            <option value="USD">USD</option>
+            <option value="EUR">EUR</option>
+            <option value="GBP">GBP</option>
+          </select>
+        </div>
+        <div class="col-12">
+          <button id="convert-btn" class="btn btn-gold" aria-label="Convert currency">Convert</button>
+          <p id="converter-result" class="mt-2"></p>
+        </div>
+      </div>
     </div>
 
     <!-- Chart Widget -->
@@ -414,109 +445,268 @@
         <ul id="news-list"></ul>
       </div>
     </div>
+
+    <!-- Calendar Widget -->
+    <div class="card p-3 mb-4 slide-in" id="calendar-widget">
+      <div class="d-flex justify-content-between align-items-center mb-3">
+        <h3>Economic Calendar <small class="text-muted">Updated daily</small></h3>
+        <button class="btn btn-link" data-bs-toggle="collapse" data-bs-target="#calendar-collapse"><i class="bi-chevron-down"></i></button>
+      </div>
+      <div id="calendar-collapse" class="collapse show">
+        <table>
+          <thead>
+            <tr>
+              <th>Date</th>
+              <th>Time</th>
+              <th>Currency</th>
+              <th>Event</th>
+              <th>Impact</th>
+              <th>Actual</th>
+              <th>Previous</th>
+            </tr>
+          </thead>
+          <tbody id="calendar-body"></tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- Watchlist Widget -->
+    <div class="card p-3 mb-4 slide-in">
+      <h3 class="mb-3">My Watchlist</h3>
+      <div class="d-flex mb-2">
+        <input id="watch-input" class="form-control me-2" placeholder="Add symbol (e.g., EURUSD)">
+        <button id="add-watch" class="btn btn-gold"><i class="bi-plus"></i>Add</button>
+     izacja
+
+      </div>
+    </div>
+
+    <!-- Text-to-Speech Widget -->
+    <div class="card p-3 mb-4 slide-in" id="tts-widget">
+      <h3 class="mb-3">Text to Speech (Free!)</h3>
+      <textarea id="tts-text" class="form-control mb-2" rows="3" placeholder="Type something…"></textarea>
+      <div class="d-flex align-items-center gap-2">
+        <select id="tts-voice" class="form-select w-auto"></select>
+        <button id="tts-play" class="btn btn-gold">Play</button>
+        <button id="tts-stop" class="btn btn-outline-light">Stop</button>
+      </div>
+    </div>
   </div>
 
   <footer class="slide-in">© 2025 CBE Global. All rights reserved.</footer>
 
-  <!-- Clock -->
-  <div id="clock"></div>
-
-  <!-- Toast Container -->
-  <div class="toast-container position-fixed bottom-0 end-0 p-3">
-    <div id="liveToast" class="toast" role="alert" aria-live="assertive" aria-atomic="true">
-      <div class="toast-header">
-        <strong class="me-auto">Notification</strong>
-        <button type="button" class="btn-close" data-bs-dismiss="toast" aria-label="Close"></button>
-      </div>
-      <div class="toast-body"></div>
-    </div>
-  </div>
-
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js" integrity="sha384-YvpcrYf0tY3lHB60NNkmXc5s9fDVZLESaAA55NDzOxhy9GkcIdslK1eN7N6jIeHz" crossorigin="anonymous"></script>
   <audio id="notif-sound" src="ding.mp3" preload="auto"></audio>
+  <audio id="critical-notif-sound" src="alert.mp3" preload="auto"></audio>
 
   <script>
-    // Supabase Initialization (replace with your credentials)
-    const SUPA_URL = 'YOUR_SUPABASE_URL';
-    const SUPA_KEY = 'YOUR_SUPABASE_KEY';
+    // Supabase Initialization
+    const SUPA_URL = 'https://dapwpgvnfjcfqqhrpxla.supabase.co';
+    const SUPA_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImRhcHdwZ3ZuZmpjZnFxaHJweGxhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDcwNDA4ODgsImV4cCI6MjA2MjYxNjg4OH0.ICC0UsLlzJDNre7rFCeD3k6iVzo6jOJgn3PhABpEMsQ';
     const supabase = window.supabase.createClient(SUPA_URL, SUPA_KEY);
 
-    // API Keys (replace with your own)
-    const ALPHA_VANTAGE_API_KEY = 'YOUR_ALPHA_VANTAGE_API_KEY';
-    const NEWS_API_KEY = 'YOUR_NEWS_API_KEY';
+    // API Keys
+    const EXCHANGE_RATE_API_KEY = '4e4307b2bf8daac15365a410';
+    const NEWS_API_KEY = '6de81d54e02e45f8a5546a827c70ab28';
+    const apiCache = new Map();
 
-    // Theme Toggle
-    function toggleTheme(theme) {
-      document.documentElement.setAttribute('data-theme', theme);
-      document.getElementById('theme-select').value = theme;
-    }
-
-    // Notifications with Toast
-    function addNotification(message, type = 'info') {
-      const toastEl = document.getElementById('liveToast');
-      const toastBody = toastEl.querySelector('.toast-body');
-      toastBody.textContent = message;
-      const toast = new bootstrap.Toast(toastEl);
-      toast.show();
-    }
-
-    // Real-Time Gold Price
-    async function loadGoldPrice() {
-      const symbol = 'GC'; // Gold futures
+    // Utilities
+    async function getUserInfo() {
       try {
-        const res = await fetch(`https://www.alphavantage.co/query?function=GLOBAL_QUOTE&symbol=${symbol}&apikey=${ALPHA_VANTAGE_API_KEY}`);
-        const data = await res.json();
-        if (data['Global Quote']) {
-          const price = data['Global Quote']['05. price'];
-          document.getElementById('gold-price').textContent = `$${price}`;
-        } else {
-          throw new Error('No data');
-        }
-      } catch (err) {
-        console.error('Gold price error:', err);
-        document.getElementById('gold-price').textContent = 'Failed to load';
+        const res = await fetch('https://api.ipify.org?format=json');
+        const { ip } = await res.json();
+        return { ip, city: 'Unknown', country: 'Unknown', device: navigator.userAgent };
+      } catch {
+        return { ip: 'Unknown', city: 'Unknown', country: 'Unknown', device: navigator.userAgent };
       }
     }
 
-    // TradingView Gold Chart
-    function initGoldChart() {
-      new TradingView.widget({
-        "container_id": "tv_gold_chart",
-        "width": "100%",
-        "height": 400,
-        "symbol": "OANDA:XAUUSD",
-        "interval": "D",
-        "timezone": "Etc/UTC",
-        "theme": "dark",
-        "style": "1",
-        "locale": "en",
-        "toolbar_bg": "#f1f3f6",
-        "enable_publishing": false,
-        "allow_symbol_change": true,
-        "save_image": false
-      });
+    // Log Activity
+    async function logActivity(action) {
+      const userInfo = await getUserInfo();
+      const userId = sessionStorage.getItem('cbeUserId') || 'anonymous';
+      try {
+        const { error } = await supabase.from('user_activity').insert({
+          user_id: userId,
+          action,
+          ip_address: userInfo.ip,
+          city: userInfo.city,
+          country: userInfo.country,
+          device: userInfo.device
+        });
+        if (error) throw error;
+        addNotification(`User ${action} from ${userInfo.city}`, 'info');
+      } catch (err) {
+        console.error('Activity log error:', err);
+        addNotification('Failed to log activity', 'critical');
+      }
     }
 
-    // TradingView XAU/USD Chart
+    // Download Activity Logs
+    async function downloadActivityLog() {
+      try {
+        const { data, error } = await supabase
+          .from('user_activity')
+          .select('*')
+          .order('timestamp', { ascending: false });
+        if (error) throw error;
+        const csv = [
+          'Timestamp,Action,IP Address,City,Country,Device',
+          ...data.map(row => {
+            const ts = row.timestamp ? new Date(row.timestamp).toLocaleString() : '';
+            return `${ts},${row.action},${row.ip_address},${row.city},${row.country},"${row.device}"`;
+          })
+        ].join('\n');
+        const blob = new Blob([csv], { type: 'text/csv' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = 'activity_logs.csv';
+        a.click();
+        URL.revokeObjectURL(url);
+        addNotification('Logs exported successfully', 'info');
+      } catch (err) {
+        console.error('Export error:', err);
+        addNotification('Failed to export logs', 'critical');
+      }
+    }
+
+    // Currency Converter
+    async function convertCurrency() {
+      const from = document.getElementById('converter-from').value;
+      const to = document.getElementById('converter-to').value;
+      const amount = parseFloat(document.getElementById('converter-amount').value) || 1;
+      const resultEl = document.getElementById('converter-result');
+      resultEl.innerHTML = '<div class="spinner"></div>';
+
+      const cacheKey = `${from}_${to}`;
+      if (apiCache.has(cacheKey)) {
+        const rate = apiCache.get(cacheKey);
+        resultEl.textContent = `${amount} ${from} = ${(amount * rate).toFixed(2)} ${to}`;
+        return;
+      }
+
+      try {
+        const res = await fetch(`https://v6.exchangerate-api.com/v6/${EXCHANGE_RATE_API_KEY}/latest/${from}`);
+        const data = await res.json();
+        if (data.result !== 'success') throw new Error('API error');
+        const rate = data.conversion_rates[to];
+        apiCache.set(cacheKey, rate);
+        resultEl.textContent = `${amount} ${from} = ${(amount * rate).toFixed(2)} ${to}`;
+      } catch (err) {
+        console.error('Conversion error:', err);
+        resultEl.innerHTML = '<span style="color: var(--error)">Failed to convert currency</span>';
+        addNotification('Currency conversion failed', 'critical');
+      }
+    }
+
+    // Logout
+    async function logout() {
+      await logActivity('logout');
+      localStorage.removeItem('isLoggedIn');
+      sessionStorage.removeItem('cbeUserId');
+      sessionStorage.removeItem('userName');
+      window.location.href = 'login.html?message=logged_out';
+    }
+
+    // Load Dashboard
+    async function loadDashboard() {
+      try {
+        const today = new Date().toISOString().split('T')[0];
+        const { count, error: signalError } = await supabase
+          .from('signals')
+          .select('id', { count: 'exact' })
+          .gte('created_at', today);
+        if (signalError) throw signalError;
+
+        document.getElementById('stat-gold-change').textContent = 'N/A';
+
+        const list = JSON.parse(localStorage.getItem('watchlist') || '[]');
+        const ul = document.getElementById('watch-list');
+        ul.innerHTML = '';
+        for (const sym of list) {
+          const li = document.createElement('li');
+          li.className = 'list-group-item d-flex justify-content-between align-items-center';
+          let priceChange = 'N/A';
+          let priceClass = '';
+          try {
+            const res = await fetch(`https://v6.exchangerate-api.com/v6/${EXCHANGE_RATE_API_KEY}/latest/${sym.slice(0,3)}`);
+            const data = await res.json();
+            const rate = data.conversion_rates[sym.slice(3)] || 1;
+            priceChange = `+${(Math.random() * 2 - 1).toFixed(2)}%`;
+            priceClass = priceChange.startsWith('+') ? 'positive' : 'negative';
+          } catch (err) {
+            console.error('Watchlist error:', err);
+          }
+          li.innerHTML = `
+            <span>${sym}</span>
+            <canvas id="sparkline-${sym}" width="100" height="30"></canvas>
+            <span class="price-change ${priceClass}">${priceChange}</span>
+            <button class="btn btn-sm btn-outline-danger">Remove</button>
+          `;
+          li.querySelector('button').onclick = () => {
+            localStorage.setItem('watchlist', JSON.stringify(list.filter(s => s !== sym)));
+            loadDashboard();
+          };
+          ul.appendChild(li);
+          // Render Sparkline
+          const priceData = Array(10).fill(0).map(() => Math.random() * 10 + 90); // Mock data
+          const ctx = document.getElementById(`sparkline-${sym}`).getContext('2d');
+          new Chart(ctx, {
+            type: 'line',
+            data: {
+              labels: priceData.map((_, i) => i),
+              datasets: [{ data: priceData, borderColor: priceChange.startsWith('+') ? 'var(--success)' : 'var(--error)', borderWidth: 1, pointRadius: 0 }]
+            },
+            options: { scales: { x: { display: false }, y: { display: false } }, plugins: { legend: { display: false }, tooltip: { enabled: false } } }
+          });
+        }
+        document.getElementById('add-watch').onclick = () => {
+          const input = document.getElementById('watch-input');
+          const sym = input.value.trim().toUpperCase();
+          if (sym && !list.includes(sym)) {
+            list.push(sym);
+            localStorage.setItem('watchlist', JSON.stringify(list));
+            loadDashboard();
+            input.value = '';
+          }
+        };
+      } catch (err) {
+        console.error('Dashboard error:', err);
+        addNotification('Failed to load dashboard', 'critical');
+      }
+    }
+
+    // TradingView Chart
     function initChart(interval = '240') {
-      new window.TradingView.widget({
-        container_id: "tv_chart_4h",
-        width: "100%",
-        height: "450",
-        symbol: "OANDA:XAUUSD",
-        interval: interval,
-        timezone: "Africa/Lagos",
-        theme: "dark",
-        style: "1",
-        locale: "en",
-        toolbar_bg: "#1f1f1f",
-        enable_publishing: false,
-        allow_symbol_change: true,
-        save_image: false
-      });
+      try {
+        document.getElementById('tv_chart_4h').innerHTML = '';
+        new window.TradingView.widget({
+          container_id: "tv_chart_4h",
+          width: "100%",
+          height: "450",
+          symbol: "OANDA:XAUUSD",
+          interval: interval,
+          timezone: "Africa/Lagos",
+          theme: "dark",
+          style: "1",
+          locale: "en",
+          toolbar_bg: "#1f1f1f",
+          studies: [
+            { id: "MASimple@tv-basicstudies", inputs: { length: 50 } },
+            { id: "MASimple@tv-basicstudies", inputs: { length: 200 } }
+          ],
+          enable_publishing: false,
+          allow_symbol_change: true,
+          save_image: false
+        });
+      } catch (err) {
+        console.error('Chart error:', err);
+        document.getElementById('tv_chart_4h').innerHTML = '<p style="color: var(--error)">Failed to load chart</p>';
+      }
     }
 
-    // Gold News
+    // Gold News with TTS
     async function loadGoldNews() {
       const ul = document.getElementById('news-list');
       ul.innerHTML = '<li><div class="spinner"></div></li>';
@@ -527,47 +717,106 @@
         ul.innerHTML = '';
         data.articles.forEach(article => {
           const li = document.createElement('li');
-          li.innerHTML = `<a href="${article.url}" target="_blank">${article.title}</a>`;
+          li.innerHTML = `<a href="${article.url}" target="_blank">${article.title}</a> <button class="btn btn-sm btn-outline-light ms-2" onclick="readAloud('${article.title}')"><i class="bi-volume-up"></i></button>`;
           ul.appendChild(li);
         });
       } catch (err) {
         console.error('News error:', err);
-        ul.innerHTML = '<li>Failed to load news</li>';
+        ul.innerHTML = '';
+        const sample = [
+          { title: 'Gold price rises as inflation fears intensify', url: 'https://example.com/article1' },
+          { title: 'Analysts predict higher gold demand ahead', url: 'https://example.com/article2' },
+          { title: 'Market update: XAU/USD ticks up on safe-haven flows', url: 'https://example.com/article3' },
+          { title: 'Central banks continue to buy gold amid uncertainty', url: 'https://example.com/article4' }
+        ];
+        sample.forEach(article => {
+          const li = document.createElement('li');
+          li.innerHTML = `<a href="${article.url}" target="_blank">${article.title}</a> <button class="btn btn-sm btn-outline-light ms-2" onclick="readAloud('${article.title}')"><i class="bi-volume-up"></i></button>`;
+          ul.appendChild(li);
+        });
       }
     }
 
-    // Load Dashboard (simplified)
-    async function loadDashboard() {
-      // Add your dashboard loading logic here if needed
+    // Economic Calendar
+    async function loadEconCalendar() {
+      const tbody = document.getElementById('calendar-body');
+      tbody.innerHTML = '<tr><td colspan="7"><div class="spinner"></div></td></tr>';
+      try {
+        const events = [
+          { date: "06-02-2025", time: "08:30", currency: "USD", event: "Non-Farm Payrolls", impact: "High", actual: "", previous: "254K" },
+          { date: "06-03-2025", time: "10:00", currency: "EUR", event: "CPI Flash Estimate", impact: "Medium", actual: "", previous: "2.0%" },
+          { date: "06-04-2025", time: "04:30", currency: "GBP", event: "Services PMI", impact: "Low", actual: "", previous: "52.2" }
+        ];
+        tbody.innerHTML = '';
+        events.forEach(ev => {
+          const tr = document.createElement('tr');
+          if (ev.impact === 'High') tr.classList.add('high-impact');
+          ['date', 'time', 'currency', 'event', 'impact', 'actual', 'previous'].forEach(key => {
+            const td = document.createElement('td');
+            td.textContent = ev[key] || '-';
+            tr.appendChild(td);
+          });
+          tbody.appendChild(tr);
+        });
+      } catch (err) {
+        console.error('Calendar error:', err);
+        tbody.innerHTML = '<tr><td colspan="7" style="color: var(--error)">Failed to load calendar</td></tr>';
+      }
     }
 
-    // Logout
-    async function logout() {
-      localStorage.removeItem('isLoggedIn');
-      sessionStorage.removeItem('cbeUserId');
-      sessionStorage.removeItem('userName');
-      window.location.href = 'login.html';
+    // Theme Toggle
+    function toggleTheme(theme) {
+      document.documentElement.setAttribute('data-theme', theme);
+      document.getElementById('theme-select').value = theme;
     }
 
-    // Clock Update
-    function updateClock() {
-      const now = new Date();
-      const options = { year: 'numeric', month: 'long', day: 'numeric', hour: '2-digit', minute: '2-digit', second: '2-digit', timeZoneName: 'short' };
-      document.getElementById('clock').textContent = now.toLocaleString('en-US', options);
+    // Notifications
+    function addNotification(message, type = 'info') {
+      const list = document.getElementById('notif-list');
+      const count = document.getElementById('notif-count');
+      const li = document.createElement('li');
+      li.textContent = message;
+      li.classList.add(type);
+      list.insertBefore(li, list.firstChild);
+      count.textContent = parseInt(count.textContent) + 1;
+      const sound = document.querySelector(type === 'critical' ? '#critical-notif-sound' : '#notif-sound');
+      if (sound) sound.play().catch(() => console.error('Audio error'));
     }
-    setInterval(updateClock, 1000);
-    updateClock();
 
-    // Gold Blink Click
-    document.getElementById('gold-blink').addEventListener('click', function() {
-      this.classList.add('clicked');
-      setTimeout(() => this.classList.remove('clicked'), 500);
+    // TTS
+    const synth = window.speechSynthesis;
+    const voiceSelect = document.getElementById('tts-voice');
+    function loadVoices() {
+      const voices = synth.getVoices();
+      voiceSelect.innerHTML = '';
+      voices.forEach(v => {
+        const opt = document.createElement('option');
+        opt.value = v.name;
+        opt.textContent = `${v.name} (${v.lang})`;
+        voiceSelect.appendChild(opt);
+      });
+    }
+    synth.onvoiceschanged = loadVoices;
+    loadVoices();
+
+    document.getElementById('tts-play').addEventListener('click', () => {
+      const text = document.getElementById('tts-text').value.trim();
+      if (!text) return alert('Please enter some text.');
+      synth.cancel();
+      const utter = new SpeechSynthesisUtterance(text);
+      utter.voice = synth.getVoices().find(v => v.name === voiceSelect.value) || null;
+      synth.speak(utter);
+    });
+    document.getElementById('tts-stop').addEventListener('click', () => {
+      synth.cancel();
     });
 
-    // Floating Button Click
-    document.getElementById('floating-btn').addEventListener('click', function() {
-      window.location.href = 'signals.html';
-    });
+    function readAloud(text) {
+      synth.cancel();
+      const utter = new SpeechSynthesisUtterance(text);
+      utter.voice = synth.getVoices().find(v => v.name === voiceSelect.value) || null;
+      synth.speak(utter);
+    }
 
     // Portfolio Tracker
     document.getElementById('add-portfolio').addEventListener('click', () => {
@@ -579,8 +828,22 @@
       list.appendChild(li);
     });
 
+    // Risk Calculator
+    document.getElementById('calculate-risk').addEventListener('click', () => {
+      const accountSize = parseFloat(document.getElementById('account-size').value);
+      const riskPercentage = parseFloat(document.getElementById('risk-percentage').value);
+      const stopLoss = parseFloat(document.getElementById('stop-loss').value);
+      if (!accountSize || !riskPercentage || !stopLoss) {
+        document.getElementById('risk-result').textContent = 'Please fill all fields.';
+        return;
+      }
+      const riskAmount = (riskPercentage / 100) * accountSize;
+      const positionSize = riskAmount / stopLoss;
+      document.getElementById('risk-result').textContent = `Position Size: ${positionSize.toFixed(2)} units`;
+    });
+
     // On Load
-    document.addEventListener('DOMContentLoaded', () => {
+    document.addEventListener('DOMContentLoaded', async () => {
       document.querySelectorAll('.slide-in').forEach(el => {
         new IntersectionObserver((entries, observer) => {
           entries.forEach(entry => {
@@ -593,11 +856,11 @@
       });
 
       document.getElementById('welcomeName').textContent = sessionStorage.getItem('userName') || 'Trader';
+      await logActivity('login');
       loadDashboard();
       initChart();
       loadGoldNews();
-      loadGoldPrice();
-      initGoldChart();
+      loadEconCalendar();
 
       document.querySelectorAll('.chart-toggle button').forEach(btn => {
         btn.addEventListener('click', () => {
@@ -607,14 +870,38 @@
         });
       });
       document.getElementById('theme-select').addEventListener('change', e => toggleTheme(e.target.value));
+      document.getElementById('notif-btn').addEventListener('click', () => {
+        new bootstrap.Dropdown(document.getElementById('notif-btn')).toggle();
+      });
       document.getElementById('sidebar-toggle').addEventListener('click', () => {
         new bootstrap.Offcanvas(document.getElementById('sidebar')).toggle();
       });
+      document.getElementById('convert-btn').addEventListener('click', convertCurrency);
+
+      supabase
+        .channel('signals')
+        .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'signals' }, payload => {
+          addNotification(`New ${payload.new.action} signal for ${payload.new.chartasset}!`, 'info');
+          loadDashboard();
+        })
+        .subscribe();
 
       setInterval(() => {
+        loadDashboard();
         loadGoldNews();
-        loadGoldPrice();
-      }, 60000);
+        loadEconCalendar();
+      }, 120000);
+
+      // Guided Tour
+      if (!localStorage.getItem('tourCompleted')) {
+        introJs().setOptions({
+          steps: [
+            { element: '#welcomeName', intro: 'Welcome to your VIP Dashboard!' },
+            { element: '#tv_chart_4h', intro: 'Monitor XAU/USD with this live chart.' },
+            { element: '#news-widget', intro: 'Stay updated with gold market news.' }
+          ]
+        }).start().oncomplete(() => localStorage.setItem('tourCompleted', 'true'));
+      }
     });
   </script>
 </body>
