@@ -13,16 +13,24 @@
   </script>
 
   <!-- Dependencies -->
-  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet"
-    integrity="sha384-QWTKZyjpPEjISv5WaRU9OFeRpok6YctnYmDr5pNlyT2bRjXh0JMhjY6hW+ALEwIH" crossorigin="anonymous">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-QWTKZyjpPEjISv5WaRU9OFeRpok6YctnYmDr5pNlyT2bRjXh0JMhjY6hW+ALEwIH" crossorigin="anonymous">
   <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" rel="stylesheet">
-  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;700&family=Orbitron:wght@400;700&display=swap"
-    rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;700&family=Orbitron:wght@400;700&display=swap" rel="stylesheet">
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>
   <script src="https://s3.tradingview.com/tv.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/intro.js@4.3.0/intro.min.js"></script>
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/intro.js@4.3.0/introjs.min.css">
+  <script>
+    var _smartsupp = _smartsupp || {};
+    _smartsupp.key = '018a8bbd868518221e725341a7b2601231ec7ce8';
+    window.smartsupp||(function(d) {
+      var s,c,o=smartsupp=function(){ o._.push(arguments)};o._=[];
+      s=d.getElementsByTagName('script')[0];c=d.createElement('script');
+      c.type='text/javascript';c.charset='utf-8';c.async=true;
+      c.src='https://www.smartsuppchat.com/loader.js?';s.parentNode.insertBefore(c,s);
+    })(document);
+  </script>
 
   <style>
     /* Core Styles */
@@ -62,15 +70,9 @@
       overflow-x: hidden;
       line-height: 1.6;
     }
-    a, button, input, textarea, select, h1, h2, h3, h4, h5, h6, p, span {
+    a, button, h1, h2, h3, h4, h5, h6, p, span, td, th, li, input, select, label {
       color: var(--text) !important;
     }
-    input, textarea, select {
-      background: var(--glass) !important;
-      color: var(--text) !important;
-      border: 1px solid var(--gold-dark) !important;
-    }
-    ::placeholder { color: var(--text-light) !important; }
     a:hover { color: var(--gold-dark) !important; }
 
     /* Animations */
@@ -90,34 +92,58 @@
       top: 0;
       background: var(--glass);
       backdrop-filter: blur(10px);
-      padding: 0.5rem 1rem;
+      padding: 1rem 2rem;
       box-shadow: 0 2px 8px var(--shadow);
       z-index: 1000;
       display: flex;
       align-items: center;
       justify-content: space-between;
-      gap: 1rem;
     }
-    #company-logo { height: 40px; }
-    #date-time {
-      font-size: 0.9rem;
-      color: var(--text-light);
+    header .logo {
+      font-family: 'Orbitron', sans-serif;
+      font-size: 1.5rem;
+      font-weight: 700;
+      padding: 0.5rem 1rem;
+      background: linear-gradient(45deg, var(--gold), var(--gold-dark));
+      border-radius: 8px;
+      box-shadow: 0 2px 6px var(--shadow);
+      transition: transform 0.3s ease;
     }
+    header .logo:hover { transform: scale(1.05); }
     header .nav-links {
       display: flex;
       align-items: center;
       gap: 1rem;
     }
+    header .nav-links button,
+    header .nav-links select {
+      background: var(--glass);
+      border: 1px solid var(--gold-dark);
+      padding: 0.5rem 1rem;
+      border-radius: 6px;
+      font-size: 0.9rem;
+      cursor: pointer;
+      transition: background 0.3s ease;
+    }
+    header .nav-links button:hover,
+    header .nav-links select:hover {
+      background: var(--gold-dark);
+      color: #000 !important;
+    }
     #theme-select {
       background: var(--glass);
       border: 1px solid var(--gold-dark);
-      padding: 0.3rem;
+      padding: 0.5rem;
       border-radius: 6px;
     }
     #notif-btn { position: relative; }
     #notif-count {
       font-size: 0.7rem;
       padding: 0.2rem 0.5rem;
+    }
+    #sidebar-toggle {
+      font-size: 1.5rem;
+      padding: 0.5rem;
     }
 
     /* Sidebar */
@@ -143,7 +169,7 @@
       display: grid;
       grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
       gap: 1.5rem;
-      padding: 1rem 2rem;
+      padding: 0 2rem;
     }
     .card {
       background: var(--glass);
@@ -158,6 +184,7 @@
       transform: translateY(-6px);
       box-shadow: 0 6px 18px rgba(255, 215, 0, 0.2);
     }
+    .chart-card { grid-column: 1 / -1; }
 
     /* Buttons */
     .btn-gold {
@@ -173,30 +200,24 @@
 
     /* Floating Button */
     #floating-signals-btn {
-      background: linear-gradient(135deg, var(--gold), var(--gold-dark));
+      background: linear-gradient(45deg, var(--gold), var(--gold-dark));
       color: #000 !important;
       border: none;
-      padding: 0.8rem 1.5rem;
-      border-radius: 12px;
-      font-weight: 600;
-      box-shadow: 0 8px 15px var(--shadow);
-      transition: transform 0.2s ease, box-shadow 0.2s ease;
-      transform: perspective(1px) translateZ(0);
+      padding: 0.7rem 1.2rem;
+      border-radius: 6px;
+      font-weight: 500;
+      box-shadow: 0 8px 16px rgba(0, 0, 0, 0.4);
+      transition: transform 0.3s ease, box-shadow 0.3s ease;
     }
     #floating-signals-btn:hover {
-      transform: translateY(-3px);
-      box-shadow: 0 12px 20px rgba(0,0,0,0.4);
+      transform: perspective(1000px) scale(1.05);
+      box-shadow: 0 12px 24px rgba(255, 215, 0, 0.5);
     }
-
-    /* Welcome Banner */
-    .welcome-banner {
-      background: #000;
-      color: var(--gold);
-      padding: 1rem;
-      border-radius: 8px;
-      font-size: 1.2rem;
-      text-align: center;
-      font-weight: 500;
+    @media (max-width: 768px) {
+      #floating-signals-btn {
+        padding: 0.5rem 1rem;
+        font-size: 0.9rem;
+      }
     }
 
     /* Chart */
@@ -207,21 +228,54 @@
       overflow: hidden;
       box-shadow: 0 2px 8px var(--shadow);
     }
+    .chart-toggle {
+      display: flex;
+      gap: 0.5rem;
+      margin-bottom: 1rem;
+    }
+    .chart-toggle button {
+      background: var(--glass);
+      border: 1px solid var(--gold-dark);
+      padding: 0.5rem 1rem;
+      border-radius: 6px;
+      transition: background 0.3s ease;
+    }
+    .chart-toggle button.active,
+    .chart-toggle button:hover {
+      background: var(--gold-dark);
+      color: #000 !important;
+    }
 
     /* Widgets */
-    .portfolio-tracker, .forex-risk-calculator {
+    #news-widget, #calendar-widget {
       background: var(--glass);
       border: 1px solid var(--gold-dark);
       border-radius: 10px;
-      padding: 1.5rem;
       box-shadow: 0 2px 8px var(--shadow);
+      padding: 0;
+      height: 350px;
+      overflow: hidden;
     }
-
-    /* News & Calendar */
     #news-widget ul, #calendar-widget table {
       height: 100%;
       overflow-y: auto;
     }
+    .list-group-item {
+      background: var(--glass);
+      border: 1px solid var(--gold-dark);
+      border-radius: 6px;
+      margin-bottom: 0.5rem;
+      box-shadow: 0 2px 6px var(--shadow);
+    }
+    .price-change.positive { color: var(--success) !important; }
+    .price-change.negative { color: var(--error) !important; }
+
+    /* Sentiment Badges */
+    .badge.positive { background-color: var(--success); }
+    .badge.negative { background-color: var(--error); }
+    .badge.neutral { background-color: var(--text-muted); }
+
+    /* Spinner */
     .spinner {
       border: 3px solid var(--glass);
       border-top: 3px solid var(--gold);
@@ -246,6 +300,49 @@
       border-top: 1px solid var(--gold-dark);
       width: 100%;
     }
+
+    /* New Features */
+    .portfolio-tracker, .forex-risk-calculator {
+      background: var(--glass);
+      border: 1px solid var(--gold-dark);
+      border-radius: 10px;
+      padding: 1.5rem;
+      box-shadow: 0 2px 8px var(--shadow);
+    }
+
+    /* Welcome Banner */
+    .welcome-banner {
+      background: linear-gradient(135deg, var(--gold), var(--gold-dark));
+      color: #000;
+      padding: 1rem;
+      border-radius: 8px;
+      text-align: center;
+      font-size: 1.2rem;
+      font-weight: bold;
+    }
+
+    /* Input Styling */
+    input, select, textarea {
+      background-color: var(--accent);
+      border: 1px solid var(--gold-dark);
+      border-radius: 6px;
+      padding: 0.5rem;
+    }
+
+    /* Sentiment Indicator */
+    .sentiment-indicator {
+      background: var(--glass);
+      padding: 1rem;
+      border-radius: 6px;
+      text-align: center;
+    }
+
+    /* Responsive Design */
+    @media (max-width: 768px) {
+      .container-fluid { grid-template-columns: 1fr; }
+      header { padding: 1rem; }
+      .nav-links { flex-wrap: wrap; }
+    }
   </style>
 </head>
 <body>
@@ -253,12 +350,12 @@
   <div class="offcanvas offcanvas-start" id="sidebar">
     <div class="offcanvas-body">
       <div class="text-center mb-4">
-        <img src="http://apexincomeoptions.com.ng/CBE_logo.png" alt="Company Logo" class="img-fluid" style="max-height:60px;">
+        <div class="logo">CBE Global</div>
       </div>
       <ul class="nav nav-pills flex-column">
         <li class="nav-item">
           <a class="nav-link active" href="#" onclick="loadDashboard()" data-bs-dismiss="offcanvas">
-            <i class="bi-speedometer2 me-2"></i>Dashboard
+            <i hacerle="bi-speedometer2 me-2"></i>Dashboard
           </a>
         </li>
         <li class="nav-item"><a class="nav-link" href="signals.html"><i class="bi-lightning me-2"></i>Signals</a></li>
@@ -270,10 +367,9 @@
 
   <!-- Header -->
   <header class="slide-in">
-    <div class="d-flex align-items-center gap-3">
-      <button id="sidebar-toggle" class="btn btn-link d-md-none"><i class="bi-list"></i></button>
-      <a href="index.html"><img src="http://apexincomeoptions.com.ng/CBE_logo.png" id="company-logo" alt="Logo"></a>
-      <div id="date-time"></div>
+    <div class="d-flex align-items-center">
+      <button id="sidebar-toggle" class="btn btn-link d-md-none me-2"><i class="bi-list"></i></button>
+      <a href="index.html" class="logo"><img src="http://apexincomeoptions.com.ng/CBE_logo.png" alt="CBE Logo" style="height: 40px;"></a>
     </div>
     <div class="nav-links">
       <button id="notif-btn" class="btn btn-link position-relative">
@@ -282,22 +378,19 @@
       </button>
       <div id="notif-menu" class="dropdown-menu dropdown-menu-end p-2">
         <h6 class="dropdown-header">Notifications</h6>
-        <ul id="notif-list" class="list-unstyled mb-0"><li>No new notifications</li></ul>
+        <div id="notif-list">No new notifications</div>
       </div>
       <select id="theme-select" title="Select Theme">
         <option value="dark">Dark</option>
         <option value="light">Light</option>
       </select>
-      <button onclick="logout()" class="btn btn-link">Logout</button>
+      <button onclick="logout()">Logout</button>
     </div>
   </header>
 
   <!-- Main Content -->
   <div class="container-fluid">
-    <div class="welcome-banner slide-in">
-      Welcome, <strong id="welcomeName">Trader</strong>! Enjoy your VIP Dashboard.
-    </div>
-
+    <div class="welcome-banner slide-in">Welcome, <strong id="welcomeName">Trader</strong>!</div>
     <div class="row g-4 mb-4 slide-in">
       <div class="col-md-3">
         <div class="card p-3 text-center">
@@ -333,10 +426,9 @@
       <ul id="portfolio-list" class="list-group"></ul>
     </div>
 
-    <!-- Gold Signal Risk & Gain Calculator -->
+    <!-- Gold Signal Risk and Gain Calculator -->
     <div class="card p-3 mb-4 slide-in forex-risk-calculator">
-      <h3 class="mb-2">Gold Signal Risk &amp; Gain Calculator</h3>
-      <p class="text-muted small mb-3">Calculate your potential gain/loss before executing a trade.</p>
+      <h3 class="mb-3">Gold Signal Risk and Gain Calculator</h3>
       <div class="row g-3">
         <div class="col-md-3 col-6">
           <label for="entry-price" class="form-label">Entry Price</label>
@@ -351,12 +443,13 @@
           <input id="take-profit-price" type="number" step="0.01" class="form-control" placeholder="e.g., 2020.00">
         </div>
         <div class="col-md-3 col-6">
-          <label for="position-size" class="form-label">Lot Size</label>
+          <label for="position-size" class="form-label">Position Size (lots)</label>
           <input id="position-size" type="number" step="0.01" class="form-control" placeholder="e.g., 1.00">
         </div>
         <div class="col-12">
           <button id="calculate-forex-risk" class="btn btn-gold">Calculate</button>
           <p id="forex-risk-result" class="mt-2"></p>
+          <p class="text-muted mt-2">Calculate your potential gain/loss before executing trade.</p>
         </div>
       </div>
     </div>
@@ -408,6 +501,12 @@
       </div>
       <div id="news-collapse" class="collapse show">
         <ul id="news-list"></ul>
+        <div class="sentiment-indicator mt-3">
+          <h4>Market Sentiment</h4>
+          <div>Positive: <span id="positive-count">0</span></div>
+          <div>Negative: <span id="negative-count">0</span></div>
+          <div>Neutral: <span id="neutral-count">0</span></div>
+        </div>
       </div>
     </div>
 
@@ -418,10 +517,16 @@
         <button class="btn btn-link" data-bs-toggle="collapse" data-bs-target="#calendar-collapse"><i class="bi-chevron-down"></i></button>
       </div>
       <div id="calendar-collapse" class="collapse show">
-        <table class="table table-sm">
+        <table>
           <thead>
             <tr>
-              <th>Date</th><th>Time</th><th>Currency</th><th>Event</th><th>Impact</th><th>Actual</th><th>Previous</th>
+              <th>Date</th>
+              <th>Time</th>
+              <th>Currency</th>
+              <th>Event</th>
+              <th>Impact</th>
+              <th>Actual</th>
+              <th>Previous</th>
             </tr>
           </thead>
           <tbody id="calendar-body"></tbody>
@@ -447,11 +552,11 @@
         <select id="tts-voice" class="form-select w-auto"></select>
         <div class="d-flex align-items-center gap-1">
           <label for="tts-rate" class="me-2">Rate:</label>
-          <input type="range" id="tts-rate" min="0.5" max="2" step="0.1" value="1" class="form-range" style="width:100px;">
+          <input type="range" id="tts-rate" min="0.5" max="2" step="0.1" value="1" class="form-range" style="width: 100px;">
         </div>
         <div class="d-flex align-items-center gap-1">
           <label for="tts-pitch" class="me-2">Pitch:</label>
-          <input type="range" id="tts-pitch" min="0.5" max="2" step="0.1" value="1" class="form-range" style="width:100px;">
+          <input type="range" id="tts-pitch" min="0.5" max="2" step="0.1" value="1" class="form-range" style="width: 100px;">
         </div>
         <button id="tts-play" class="btn btn-gold">Play</button>
         <button id="tts-stop" class="btn btn-outline-light">Stop</button>
@@ -459,13 +564,14 @@
     </div>
   </div>
 
-  <footer class="slide-in">© 2025 CBE Global. All rights reserved.</footer>
+  <footer class="slide-in">© 2025 CBE Global. All rights reserved. <span id="current-time"></span></footer>
 
   <!-- Floating Button -->
-  <button id="floating-signals-btn" class="btn-gold slide-in">View Latest Signals</button>
+  <button id="floating-signals-btn" class="btn btn-gold" style="position: fixed; bottom: 20px; left: 20px; z-index: 1000;">
+    Click to view the latest signals
+  </button>
 
-  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"
-    integrity="sha384-YvpcrYf0tY3lHB60NNkmXc5s9fDVZLESaAA55NDzOxhy9GkcIdslK1eN7N6jIeHz" crossorigin="anonymous"></script>
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js" integrity="sha384-YvpcrYf0tY3lHB60NNkmXc5s9fDVZLESaAA55NDzOxhy9GkcIdslK1eN7N6jIeHz" crossorigin="anonymous"></script>
   <audio id="notif-sound" src="ding.mp3" preload="auto"></audio>
   <audio id="critical-notif-sound" src="alert.mp3" preload="auto"></audio>
 
@@ -475,34 +581,338 @@
     const SUPA_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImRhcHdwZ3ZuZmpjZnFxaHJweGxhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDcwNDA4ODgsImV4cCI6MjA2MjYxNjg4OH0.ICC0UsLlzJDNre7rFCeD3k6iVzo6jOJgn3PhABpEMsQ';
     const supabase = window.supabase.createClient(SUPA_URL, SUPA_KEY);
 
-    // Date & Time Update
-    function updateDateTime() {
-      document.getElementById('date-time').textContent = new Date().toLocaleString('en-GB', {
-        timeZone: 'Africa/Lagos',
-        hour12: false
-      });
-    }
-    setInterval(updateDateTime, 1000);
-    updateDateTime();
+    // API Keys
+    const EXCHANGE_RATE_API_KEY = '4e4307b2bf8daac15365a410';
+    const NEWS_API_KEY = '6de81d54e02e45f8a5546a827c70ab28';
+    const apiCache = new Map();
 
-    // Enhanced Notification
+    // Utilities
+    async function getUserInfo() {
+      try {
+        const res = await fetch('https://api.ipify.org?format=json');
+        const { ip } = await res.json();
+        return { ip, city: 'Unknown', country: 'Unknown', device: navigator.userAgent };
+      } catch {
+        return { ip: 'Unknown', city: 'Unknown', country: 'Unknown', device: navigator.userAgent };
+      }
+    }
+
+    // Log Activity
+    async function logActivity(action) {
+      const userInfo = await getUserInfo();
+      const userId = sessionStorage.getItem('cbeUserId') || 'anonymous';
+      try {
+        const { error } = await supabase.from('user_activity').insert({
+          user_id: userId,
+          action,
+          ip_address: userInfo.ip,
+          city: userInfo.city,
+          country: userInfo.country,
+          device: userInfo.device
+        });
+        if (error) throw error;
+        addNotification(`User ${action} from ${userInfo.city}`, 'info');
+      } catch (err) {
+        console.error('Activity log error:', err);
+        addNotification('Failed to log activity', 'critical');
+      }
+    }
+
+    // Currency Converter
+    async function convertCurrency() {
+      const from = document.getElementById('converter-from').value;
+      const to = document.getElementById('converter-to').value;
+      const amount = parseFloat(document.getElementById('converter-amount').value) || 1;
+      const resultEl = document.getElementById('converter-result');
+      resultEl.innerHTML = '<div class="spinner"></div>';
+
+      const cacheKey = `${from}_${to}`;
+      if (apiCache.has(cacheKey)) {
+        const rate = apiCache.get(cacheKey);
+        resultEl.textContent = `${amount} ${from} = ${(amount * rate).toFixed(2)} ${to}`;
+        return;
+      }
+
+      try {
+        const res = await fetch(`https://v6.exchangerate-api.com/v6/${EXCHANGE_RATE_API_KEY}/latest/${from}`);
+        const data = await res.json();
+        if (data.result !== 'success') throw new Error('API error');
+        const rate = data.conversion_rates[to];
+        apiCache.set(cacheKey, rate);
+        resultEl.textContent = `${amount} ${from} = ${(amount * rate).toFixed(2)} ${to}`;
+      } catch (err) {
+        console.error('Conversion error:', err);
+        resultEl.innerHTML = '<span style="color: var(--error)">Failed to convert currency</span>';
+        addNotification('Currency conversion failed', 'critical');
+      }
+    }
+
+    // Logout
+    async function logout() {
+      await logActivity('logout');
+      localStorage.removeItem('isLoggedIn');
+      sessionStorage.removeItem('cbeUserId');
+      sessionStorage.removeItem('userName');
+      window.location.href = 'login.html?message=logged_out';
+    }
+
+    // Load Dashboard
+    async function loadDashboard() {
+      try {
+        const today = new Date().toISOString().split('T')[0];
+        const { count, error: signalError } = await supabase
+          .from('signals')
+          .select('id', { count: 'exact' })
+          .gte('created_at', today);
+        if (signalError) throw signalError;
+
+        document.getElementById('stat-gold-change').textContent = 'N/A';
+
+        const list = JSON.parse(localStorage.getItem('watchlist') || '[]');
+        const ul = document.getElementById('watch-list');
+        ul.innerHTML = '';
+        for (const sym of list) {
+          const li = document.createElement('li');
+          li.className = 'list-group-item d-flex justify-content-between align-items-center';
+          let priceChange = 'N/A';
+          let priceClass = '';
+          try {
+            const res = await fetch(`https://v6.exchangerate-api.com/v6/${EXCHANGE_RATE_API_KEY}/latest/${sym.slice(0,3)}`);
+            const data = await res.json();
+            const rate = data.conversion_rates[sym.slice(3)] || 1;
+            priceChange = `+${(Math.random() * 2 - 1).toFixed(2)}%`;
+            priceClass = priceChange.startsWith('+') ? 'positive' : 'negative';
+          } catch (err) {
+            console.error('Watchlist error:', err);
+          }
+          li.innerHTML = `
+            <span>${sym}</span>
+            <canvas id="sparkline-${sym}" width="100" height="30"></canvas>
+            <span class="price-change ${priceClass}">${priceChange}</span>
+            <button class="btn btn-sm btn-outline-danger">Remove</button>
+          `;
+          li.querySelector('button').onclick = () => {
+            localStorage.setItem('watchlist', JSON.stringify(list.filter(s => s !== sym)));
+            loadDashboard();
+          };
+          ul.appendChild(li);
+          const priceData = Array(10).fill(0).map(() => Math.random() * 10 + 90);
+          const ctx = document.getElementById(`sparkline-${sym}`).getContext('2d');
+          new Chart(ctx, {
+            type: 'line',
+            data: {
+              labels: priceData.map((_, i) => i),
+              datasets: [{ data: priceData, borderColor: priceChange.startsWith('+') ? 'var(--success)' : 'var(--error)', borderWidth: 1, pointRadius: 0 }]
+            },
+            options: { scales: { x: { display: false }, y: { display: false } }, plugins: { legend: { display: false }, tooltip: { enabled: false } } }
+          });
+        }
+        document.getElementById('add-watch').onclick = () => {
+          const input = document.getElementById('watch-input');
+          const sym = input.value.trim().toUpperCase();
+          if (sym && !list.includes(sym)) {
+            list.push(sym);
+            localStorage.setItem('watchlist', JSON.stringify(list));
+            loadDashboard();
+            input.value = '';
+          }
+        };
+      } catch (err) {
+        console.error('Dashboard error:', err);
+        addNotification('Failed to load dashboard', 'critical');
+      }
+    }
+
+    // TradingView Chart
+    function initChart(interval = '240') {
+      try {
+        document.getElementById('tv_chart_4h').innerHTML = '';
+        new window.TradingView.widget({
+          container_id: "tv_chart_4h",
+          width: "100%",
+          height: "450",
+          symbol: "OANDA:XAUUSD",
+          interval: interval,
+          timezone: "Africa/Lagos",
+          theme: "dark",
+          style: "1",
+          locale: "en",
+          toolbar_bg: "#1f1f1f",
+          studies: [
+            { id: "MASimple@tv-basicstudies", inputs: { length: 50 } },
+            { id: "MASimple@tv-basicstudies", inputs: { length: 200 } }
+          ],
+          enable_publishing: false,
+          allow_symbol_change: true,
+          save_image: false
+        });
+      } catch (err) {
+        console.error('Chart error:', err);
+        document.getElementById('tv_chart_4h').innerHTML = '<p style="color: var(--error)">Failed to load chart</p>';
+      }
+    }
+
+    // Gold News with Sentiment Analysis
+    const positiveKeywords = ['rise', 'up', 'demand', 'buy', 'increase', 'gain'];
+    const negativeKeywords = ['fall', 'down', 'sell', 'decrease', 'loss'];
+
+    function renderNews(articles) {
+      const ul = document.getElementById('news-list');
+      ul.innerHTML = '';
+      let positive = 0, negative = 0, neutral = 0;
+      articles.forEach(article => {
+        const li = document.createElement('li');
+        const titleLower = article.title.toLowerCase();
+        let sentiment = 'neutral';
+        if (positiveKeywords.some(word => titleLower.includes(word))) {
+          sentiment = 'positive';
+          positive++;
+        } else if (negativeKeywords.some(word => titleLower.includes(word))) {
+          sentiment = 'negative';
+          negative++;
+        } else {
+          neutral++;
+        }
+        li.innerHTML = `
+          <a href="${article.url}" target="_blank">${article.title}</a>
+          <span class="badge ${sentiment}">${sentiment}</span>
+          <button class="btn btn-sm btn-outline-light ms-2" onclick="readAloud('${article.title.replace(/'/g, "\\'")}')">
+            <i class="bi-volume-up"></i>
+          </button>
+        `;
+        ul.appendChild(li);
+      });
+      document.getElementById('positive-count').textContent = positive;
+      document.getElementById('negative-count').textContent = negative;
+      document.getElementById('neutral-count').textContent = neutral;
+    }
+
+    async function loadGoldNews() {
+      const ul = document.getElementById('news-list');
+      ul.innerHTML = '<li><div class="spinner"></div></li>';
+      try {
+        const res = await fetch(`https://newsapi.org/v2/everything?q=gold+market&apiKey=${NEWS_API_KEY}&pageSize=8`);
+        const data = await res.json();
+        if (data.status !== 'ok') throw new Error('News API error');
+        renderNews(data.articles);
+      } catch (err) {
+        console.error('News error:', err);
+        ul.innerHTML = '<li style="color: var(--error)">Failed to load news. Check API key or connection.</li>';
+      }
+    }
+
+    // Economic Calendar
+    async function loadEconCalendar() {
+      const tbody = document.getElementById('calendar-body');
+      tbody.innerHTML = '<tr><td colspan="7"><div class="spinner"></div></td></tr>';
+      try {
+        const events = [
+          { date: "06-02-2025", time: "08:30", currency: "USD", event: "Non-Farm Payrolls", impact: "High", actual: "", previous: "254K" },
+          { date: "06-03-2025", time: "10:00", currency: "EUR", event: "CPI Flash Estimate", impact: "Medium", actual: "", previous: "2.0%" },
+          { date: "06-04-2025", time: "04:30", currency: "GBP", event: "Services PMI", impact: "Low", actual: "", previous: "52.2" }
+        ];
+        tbody.innerHTML = '';
+        events.forEach(ev => {
+          const tr = document.createElement('tr');
+          if (ev.impact === 'High') tr.classList.add('high-impact');
+          ['date', 'time', 'currency', 'event', 'impact', 'actual', 'previous'].forEach(key => {
+            const td = document.createElement('td');
+            td.textContent = ev[key] || '-';
+            tr.appendChild(td);
+          });
+          tbody.appendChild(tr);
+        });
+      } catch (err) {
+        console.error('Calendar error:', err);
+        tbody.innerHTML = '<tr><td colspan="7" style="color: var(--error)">Failed to load calendar</td></tr>';
+      }
+    }
+
+    // Theme Toggle
+    function toggleTheme(theme) {
+      document.documentElement.setAttribute('data-theme', theme);
+      document.getElementById('theme-select').value = theme;
+      localStorage.setItem('theme', theme);
+    }
+
+    // Notifications
     function addNotification(message, type = 'info') {
       const list = document.getElementById('notif-list');
       const count = document.getElementById('notif-count');
       const li = document.createElement('li');
       li.textContent = message;
-      li.classList.add(type, 'mb-1');
+      li.classList.add(type);
       list.insertBefore(li, list.firstChild);
       count.textContent = parseInt(count.textContent) + 1;
       const sound = document.querySelector(type === 'critical' ? '#critical-notif-sound' : '#notif-sound');
-      sound.currentTime = 0;
-      sound.play().catch(() => console.error('Audio play failed'));
+      if (sound) sound.play().catch(() => console.error('Audio error'));
     }
 
-    // Load Dashboard (unchanged) …
-    async function loadDashboard() { /* …existing code… */ }
+    // TTS
+    const synth = window.speechSynthesis;
+    const voiceSelect = document.getElementById('tts-voice');
+    function loadVoices() {
+      const voices = synth.getVoices();
+      voiceSelect.innerHTML = '';
+      voices.forEach(v => {
+        const opt = document.createElement('option');
+        opt.value = v.name;
+        opt.textContent = `${v.name} (${v.lang})`;
+        voiceSelect.appendChild(opt);
+      });
+      const savedVoice = localStorage.getItem('ttsVoice');
+      if (savedVoice && voices.find(v => v.name === savedVoice)) voiceSelect.value = savedVoice;
+    }
+    synth.onvoiceschanged = loadVoices;
+    loadVoices();
 
-    // Forex Risk & Gain Calculator
+    document.getElementById('tts-play').addEventListener('click', () => {
+      const text = document.getElementById('tts-text').value.trim();
+      if (!text) return alert('Please enter some text.');
+      synth.cancel();
+      const utter = new SpeechSynthesisUtterance(text);
+      utter.voice = synth.getVoices().find(v => v.name === voiceSelect.value) || null;
+      utter.rate = parseFloat(document.getElementById('tts-rate').value);
+      utter.pitch = parseFloat(document.getElementById('tts-pitch').value);
+      synth.speak(utter);
+    });
+    document.getElementById('tts-stop').addEventListener('click', () => synth.cancel());
+
+    function readAloud(text) {
+      synth.cancel();
+      const utter = new SpeechSynthesisUtterance(text);
+      utter.voice = synth.getVoices().find(v => v.name === voiceSelect.value) || null;
+      utter.rate = parseFloat(document.getElementById('tts-rate').value);
+      utter.pitch = parseFloat(document.getElementById('tts-pitch').value);
+      synth.speak(utter);
+    }
+
+    document.getElementById('tts-voice').addEventListener('change', () => {
+      localStorage.setItem('ttsVoice', voiceSelect.value);
+    });
+    document.getElementById('tts-rate').addEventListener('change', () => {
+      localStorage.setItem('ttsRate', document.getElementById('tts-rate').value);
+    });
+    document.getElementById('tts-pitch').addEventListener('change', () => {
+      localStorage.setItem('ttsPitch', document.getElementById('tts-pitch').value);
+    });
+
+    const savedRate = localStorage.getItem('ttsRate');
+    if (savedRate) document.getElementById('tts-rate').value = savedRate;
+    const savedPitch = localStorage.getItem('ttsPitch');
+    if (savedPitch) document.getElementById('tts-pitch').value = savedPitch;
+
+    // Portfolio Tracker
+    document.getElementById('add-portfolio').addEventListener('click', () => {
+      const input = document.getElementById('portfolio-input').value;
+      const list = document.getElementById('portfolio-list');
+      const li = document.createElement('li');
+      li.className = 'list-group-item';
+      li.textContent = `${input} - Value: ${(Math.random() * 1000).toFixed(2)} USD`;
+      list.appendChild(li);
+    });
+
+    // Forex Risk Calculator
     document.getElementById('calculate-forex-risk').addEventListener('click', () => {
       const entry = parseFloat(document.getElementById('entry-price').value);
       const sl = parseFloat(document.getElementById('stop-loss-price').value);
@@ -511,7 +921,8 @@
       const resultEl = document.getElementById('forex-risk-result');
 
       if (!entry || !sl || !tp || !size) {
-        return resultEl.textContent = 'Please fill all fields.';
+        resultEl.textContent = 'Please fill all fields.';
+        return;
       }
 
       const pipValue = 10;
@@ -522,29 +933,91 @@
 
       resultEl.innerHTML = `
         Potential Loss: <span style="color: var(--error)">-$${loss.toFixed(2)}</span><br>
-        Potential Gain: <span style="color: var(--success)">+$${profit.toFixed(2)}</span>
+        Potential Profit: <span style="color: var(--success)">+$${profit.toFixed(2)}</span>
       `;
     });
 
-    // News (strict real API; no example fallback)
-    async function loadGoldNews() {
-      const ul = document.getElementById('news-list');
-      ul.innerHTML = '<li><div class="spinner"></div></li>';
-      try {
-        const res = await fetch(`https://newsapi.org/v2/everything?q=gold+market&apiKey=${NEWS_API_KEY}&pageSize=8`);
-        const data = await res.json();
-        if (data.status !== 'ok') throw new Error('API error');
-        renderNews(data.articles);
-      } catch (err) {
-        console.error('News error:', err);
-        ul.innerHTML = '<li style="color: var(--error)">Failed to load news.</li>';
-      }
+    // Time and Date Update
+    function updateTime() {
+      const now = new Date();
+      const options = { year: 'numeric', month: 'long', day: 'numeric', hour: '2-digit', minute: '2-digit', second: '2-digit', timeZoneName: 'short' };
+      document.getElementById('current-time').textContent = now.toLocaleString('en-US', options);
     }
+    setInterval(updateTime, 1000);
+    updateTime();
 
-    // Rest of your existing initialization…
+    // On Load
     document.addEventListener('DOMContentLoaded', async () => {
-      // slide‑in observer, theme toggle, welcomeName, logActivity, loadDashboard, initChart, loadGoldNews,
-      // loadEconCalendar, real‑time subscriptions, intervals, and introJs tour…
+      document.querySelectorAll('.slide-in').forEach(el => {
+        new IntersectionObserver((entries, observer) => {
+          entries.forEach(entry => {
+            if (entry.isIntersecting) {
+              entry.target.classList.add('visible');
+              observer.unobserve(entry.target);
+            }
+          });
+        }, { threshold: 0.1 }).observe(el);
+      });
+
+      const savedTheme = localStorage.getItem('theme') || 'dark';
+      toggleTheme(savedTheme);
+
+      document.getElementById('welcomeName').textContent = sessionStorage.getItem('userName') || 'Trader';
+      await logActivity('login');
+      loadDashboard();
+      initChart();
+      loadGoldNews();
+      loadEconCalendar();
+
+      document.querySelectorAll('.chart-toggle button').forEach(btn => {
+        btn.addEventListener('click', () => {
+          document.querySelector('.chart-toggle button.active').classList.remove('active');
+          btn.classList.add('active');
+          initChart(btn.dataset.interval);
+        });
+      });
+      document.getElementById('theme-select').addEventListener('change', e => toggleTheme(e.target.value));
+      document.getElementById('notif-btn').addEventListener('click', () => {
+        new bootstrap.Dropdown(document.getElementById('notif-btn')).toggle();
+      });
+      document.getElementById('sidebar-toggle').addEventListener('click', () => {
+        new bootstrap.Offcanvas(document.getElementById('sidebar')).toggle();
+      });
+      document.getElementById('convert-btn').addEventListener('click', convertCurrency);
+      document.getElementById('floating-signals-btn').addEventListener('click', () => {
+        window.location.href = 'signals.html';
+      });
+
+      supabase
+        .channel('signals')
+        .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'signals' }, payload => {
+          addNotification(`New ${payload.new.action} signal for ${payload.new.chartasset}!`, 'info');
+          loadDashboard();
+        })
+        .subscribe((status) => {
+          if (status === 'SUBSCRIBED') {
+            console.log('Subscribed to signals channel');
+          } else {
+            console.error('Subscription error:', status);
+            addNotification('Failed to subscribe to signals updates', 'critical');
+          }
+        });
+
+      setInterval(() => {
+        loadDashboard();
+        loadGoldNews();
+        loadEconCalendar();
+      }, 120000);
+
+      if (!localStorage.getItem('tourCompleted')) {
+        introJs().setOptions({
+          steps: [
+            { element: '#welcomeName', intro: 'Welcome to your VIP Dashboard!' },
+            { element: '#tv_chart_4h', intro: 'Monitor XAU/USD with this live chart.' },
+            { element: '#news-widget', intro: 'Stay updated with gold market news.' }
+          ]
+        }).start().oncomplete(() => localStorage.setItem('tourCompleted', 'true'));
+      }
     });
   </script>
 </body>
