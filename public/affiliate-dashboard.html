@@ -322,7 +322,7 @@
   </style>
 </head>
 <body>
-  <!-- ===================== AUTH GUARD ===================== -->
+  <!-- ===================== AUTH GUARD�ে===================== -->
   <script>
     const SUPA_URL = 'https://dapwpgvnfjcfqqhrpxla.supabase.co';
     const SUPA_KEY =
@@ -333,9 +333,26 @@
       'ICC0UsLlzJDNre7rFCeD3k6iVzo6jOJgn3PhABpEMsQ';
     const supabaseClient = window.supabase.createClient(SUPA_URL, SUPA_KEY);
 
-    supabaseClient.auth.getUser().then(({ data: { user }, error }) => {
-      if (error || !user) {
-        window.location.replace('affiliate_login.html');
+    async function checkUser() {
+      console.log('Checking user session...');
+      let attempts = 0;
+      while (attempts < 3) {
+        const { data: { user }, error } = await supabaseClient.auth.getUser();
+        console.log('Attempt', attempts + 1, ': user=', user, 'error=', error);
+        if (!error && user) {
+          console.log('User found:', user);
+          return user;
+        }
+        attempts++;
+        await new Promise(resolve => setTimeout(resolve, 500));
+      }
+      console.log('No user found after 3 attempts, redirecting to login.');
+      window.location.replace('affiliate_login.html');
+    }
+
+    checkUser().then(user => {
+      if (user) {
+        // User is logged in, proceed with loading the dashboard
       }
     });
   </script>
@@ -930,7 +947,7 @@
     // FETCH TOTAL REFERRALS
     async function fetchTotalReferrals() {
       const { count, error } = await supabase
-        .from('auth.users')
+        .from('users')  // Changed from 'auth.users' to 'users'
         .select('*', { count: 'exact', head: true })
         .eq('referred_by', currentUserId);
       if (error) {
@@ -955,14 +972,14 @@
 
       try {
         const { count: wCount } = await supabase
-          .from('auth.users')
+          .from('users')  // Changed from 'auth.users' to 'users'
           .select('*', { count: 'exact', head: true })
           .eq('referred_by', currentUserId)
           .gt('created_at', getDateNDaysAgo(7).toISOString());
         document.getElementById('weekly-earnings').textContent = toUSD((wCount||0)*5);
 
         const { count: mCount } = await supabase
-          .from('auth.users')
+          .from('users')  // Changed from 'auth.users' to 'users'
           .select('*', { count: 'exact', head: true })
           .eq('referred_by', currentUserId)
           .gt('created_at', getDateNDaysAgo(30).toISOString());
@@ -976,11 +993,11 @@
     // FETCH CONVERSION RATE
     async function fetchConversionRate() {
       const { count: totalRefCount } = await supabase
-        .from('auth.users')
+        .from('users')  // Changed from 'auth.users' to 'users'
         .select('*', { count: 'exact', head: true })
         .eq('referred_by', currentUserId);
       const { count: convertedCount } = await supabase
-        .from('auth.users')
+        .from('users')  // Changed from 'auth.users' to 'users'
         .select('converted', { count: 'exact', head: true })
         .eq('referred_by', currentUserId)
         .eq('converted', true);
@@ -990,6 +1007,90 @@
       }
       document.getElementById('overview-conversion-rate').textContent = rateText;
       document.getElementById('overview-conversion-rate-inline').textContent = rateText;
+    }
+
+    // LOAD REFERRAL CHART DATA
+    async function loadReferralChartData() {
+      const { data: rawUsers, error } = await supabase
+        .from('users')  // Changed from 'auth.users' to 'users'
+        .select('created_at')
+        .eq('referred_by', currentUserId);
+      if (error) return console.error('Referral chart fetch error:', error);
+
+      const allMap = {}, last30Map = {};
+      rawUsers.forEach(u => {
+        const key = new Date(u.created_at).toISOString().split('T')[0];
+        allMap[key] = (allMap[key]||0)+1;
+        if (new Date(u.created_at) >= getDateNDaysAgo(30)) {
+          last30Map[key] = (last30Map[key]||0)+1;
+        }
+      });
+      const allDates = Object.keys(allMap).sort((a,b)=>new Date(a)-new Date(b));
+      chartDataAllTime.labels = allDates;
+      chartDataAllTime.counts = allDates.map(d=>allMap[d]);
+      const last30Labels=[], last30Counts=[];
+      for (let i=29;i>=0;i--) {
+        const d=new Date(); d.setDate(d.getDate()-i);
+        const k=d.toISOString().split('T')[0];
+        last30Labels.push(k);
+        last30Counts.push(last30Map[k]||0);
+      }
+      chartData30Days.labels = last30Labels;
+      chartData30Days.counts = last30Counts;
+    }
+
+    // RENDER REFERRAL CHART
+    async function renderReferralChart(range) {
+      const ctx = document.getElementById('referralChart').getContext('2d');
+      if (referralChart) referralChart.destroy();
+      const src = range==='alltime'?chartDataAllTime:chartData30Days;
+      referralChart = new Chart(ctx, {
+        type:'line',
+        data:{ labels:src.labels, datasets:[{ label:'New Referrals', data:src.counts, backgroundColor:'rgba(255,215,0,0.3)', borderColor:'rgba(255,215,0,1)', borderWidth:2, fill:true, tension:0.3 }] },
+        options:{
+          scales:{ x:{ ticks:{ color:varGet('--text') }, grid:{ color:varGet('--shadow') } }, y:{ ticks:{ color:varGet('--text') }, grid:{ color:varGet('--shadow') } } },
+          plugins:{ legend:{ labels:{ color:varGet('--text') } } },
+          maintainAspectRatio:false
+        }
+      });
+    }
+
+    // LOAD LEADERBOARD
+    async function loadLeaderboard() {
+      const listEl = document.getElementById('leaderboard-list');
+      listEl.innerHTML = `<li class="text-center text-muted">Loading leaderboard…</li>`;
+      const { data: allReferred, error } = await supabase
+        .from('users')  // Changed from 'auth.users' to 'users'
+        .select('referred_by');
+      if (error) {
+        console.error('Leaderboard grouping error:', error);
+        listEl.innerHTML = `<li style="color: var(--gold);">Failed to load leaderboard.</li>`;
+        return;
+      }
+      const map = {};
+      allReferred.forEach(u => {
+        if (u.referred_by) map[u.referred_by] = (map[u.referred_by]||0)+1;
+      });
+      const arr = Object.entries(map).map(([userId,cnt])=>({ userId, cnt }));
+      arr.sort((a,b)=>b.cnt-a.cnt);
+      const top5 = arr.slice(0,5);
+      if (!top5.length) {
+        listEl.innerHTML = `<li style="color: var(--text);">No referrals yet.</li>`;
+        return;
+      }
+      listEl.innerHTML = '';
+      for (const item of top5) {
+        const [{ data: uData }, { data: aData }] = await Promise.all([
+          supabase.from('users').select('email').eq('id', item.userId).single(),  // Changed from 'auth.users' to 'users'
+          supabase.from('affiliates').select('referral_code').eq('user_id', item.userId).single()
+        ]);
+        const email = uData?.email||'(unknown)';
+        const code = aData?.referral_code||'(unknown)';
+        const li = document.createElement('li');
+        li.className = 'leaderboard-item';
+        li.innerHTML = `<div class="leader-name">${email} <small style="color: var(--text-light);">(${code})</small></div><div class="leader-count">${item.cnt}</div>`;
+        listEl.appendChild(li);
+      }
     }
 
     // LOAD BANK ACCOUNTS
@@ -1107,90 +1208,6 @@
         `;
         listEl.appendChild(li);
       });
-    }
-
-    // LOAD REFERRAL CHART DATA
-    async function loadReferralChartData() {
-      const { data: rawUsers, error } = await supabase
-        .from('auth.users')
-        .select('created_at')
-        .eq('referred_by', currentUserId);
-      if (error) return console.error('Referral chart fetch error:', error);
-
-      const allMap = {}, last30Map = {};
-      rawUsers.forEach(u => {
-        const key = new Date(u.created_at).toISOString().split('T')[0];
-        allMap[key] = (allMap[key]||0)+1;
-        if (new Date(u.created_at) >= getDateNDaysAgo(30)) {
-          last30Map[key] = (last30Map[key]||0)+1;
-        }
-      });
-      const allDates = Object.keys(allMap).sort((a,b)=>new Date(a)-new Date(b));
-      chartDataAllTime.labels = allDates;
-      chartDataAllTime.counts = allDates.map(d=>allMap[d]);
-      const last30Labels=[], last30Counts=[];
-      for (let i=29;i>=0;i--) {
-        const d=new Date(); d.setDate(d.getDate()-i);
-        const k=d.toISOString().split('T')[0];
-        last30Labels.push(k);
-        last30Counts.push(last30Map[k]||0);
-      }
-      chartData30Days.labels = last30Labels;
-      chartData30Days.counts = last30Counts;
-    }
-
-    // RENDER REFERRAL CHART
-    async function renderReferralChart(range) {
-      const ctx = document.getElementById('referralChart').getContext('2d');
-      if (referralChart) referralChart.destroy();
-      const src = range==='alltime'?chartDataAllTime:chartData30Days;
-      referralChart = new Chart(ctx, {
-        type:'line',
-        data:{ labels:src.labels, datasets:[{ label:'New Referrals', data:src.counts, backgroundColor:'rgba(255,215,0,0.3)', borderColor:'rgba(255,215,0,1)', borderWidth:2, fill:true, tension:0.3 }] },
-        options:{
-          scales:{ x:{ ticks:{ color:varGet('--text') }, grid:{ color:varGet('--shadow') } }, y:{ ticks:{ color:varGet('--text') }, grid:{ color:varGet('--shadow') } } },
-          plugins:{ legend:{ labels:{ color:varGet('--text') } } },
-          maintainAspectRatio:false
-        }
-      });
-    }
-
-    // LOAD LEADERBOARD
-    async function loadLeaderboard() {
-      const listEl = document.getElementById('leaderboard-list');
-      listEl.innerHTML = `<li class="text-center text-muted">Loading leaderboard…</li>`;
-      const { data: allReferred, error } = await supabase
-        .from('auth.users')
-        .select('referred_by');
-      if (error) {
-        console.error('Leaderboard grouping error:', error);
-        listEl.innerHTML = `<li style="color: var(--gold);">Failed to load leaderboard.</li>`;
-        return;
-      }
-      const map = {};
-      allReferred.forEach(u => {
-        if (u.referred_by) map[u.referred_by] = (map[u.referred_by]||0)+1;
-      });
-      const arr = Object.entries(map).map(([userId,cnt])=>({ userId, cnt }));
-      arr.sort((a,b)=>b.cnt-a.cnt);
-      const top5 = arr.slice(0,5);
-      if (!top5.length) {
-        listEl.innerHTML = `<li style="color: var(--text);">No referrals yet.</li>`;
-        return;
-      }
-      listEl.innerHTML = '';
-      for (const item of top5) {
-        const [{ data: uData }, { data: aData }] = await Promise.all([
-          supabase.from('auth.users').select('email').eq('id', item.userId).single(),
-          supabase.from('affiliates').select('referral_code').eq('user_id', item.userId).single()
-        ]);
-        const email = uData?.email||'(unknown)';
-        const code = aData?.referral_code||'(unknown)';
-        const li = document.createElement('li');
-        li.className = 'leaderboard-item';
-        li.innerHTML = `<div class="leader-name">${email} <small style="color: var(--text-light);">(${code})</small></div><div class="leader-count">${item.cnt}</div>`;
-        listEl.appendChild(li);
-      }
     }
 
     // THEME TOGGLE
