@@ -6,7 +6,7 @@
   <meta name="description" content="Affiliate Login – enter your credentials to access your dashboard." />
   <title>Affiliate Login • CBE Global</title>
 
-  <!-- Google Fonts (optional) -->
+  <!-- Google Fonts -->
   <link
     href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;700&display=swap"
     rel="stylesheet"
@@ -24,12 +24,12 @@
     rel="stylesheet"
   />
 
-  <!-- Supabase JS: exposes a global `supabase` object -->
+  <!-- Supabase JS -->
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js/dist/umd/supabase.min.js"></script>
 
   <style>
     :root[data-theme="dark"] {
-      --bg: #121212;
+      --bg: linear-gradient(to bottom, #0a0a2a, #000);
       --text: #e0e0e0;
       --accent-bg: rgba(30, 30, 30, 0.7);
       --gold: #ffd700;
@@ -51,7 +51,9 @@
       --border-color: #ddd;
     }
     * {
-      margin: 0; padding: 0; box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
     }
     body {
       font-family: "Roboto", sans-serif;
@@ -77,7 +79,7 @@
       background: var(--accent-bg);
       backdrop-filter: blur(10px);
       border-radius: 12px;
-      box-shadow: 0 8px 32px rgba(0,0,0,0.3);
+      box-shadow: 0 10px 20px rgba(0,0,0,0.5);
       padding: 30px;
       opacity: 0;
       transform: translateY(20px);
@@ -93,28 +95,18 @@
       text-align: center;
       margin-bottom: 20px;
     }
-    .form-group {
-      margin-bottom: 15px;
-    }
-    label {
-      font-size: 0.95rem;
-      margin-bottom: 5px;
+    .form-floating > label {
       color: var(--text-light);
-      font-weight: 500;
     }
-    input {
-      width: 100%;
-      padding: 10px 12px;
-      border: 1px solid var(--gold);
-      border-radius: 6px;
-      background: rgba(28,28,28,0.8);
+    .form-control {
+      background: #1e1e1e;
       color: var(--text);
-      font-size: 1rem;
-      transition: box-shadow 0.3s ease;
+      border: 1px solid var(--gold);
     }
-    input:focus {
-      outline: none;
-      box-shadow: 0 0 8px var(--gold);
+    :root[data-theme="light"] .form-control {
+      background: #fff;
+      color: #000;
+      border: 1px solid #ccc;
     }
     button {
       width: 100%;
@@ -155,23 +147,21 @@
   </style>
 </head>
 <body>
-
   <div class="login-card" id="login-card">
+    <div class="text-center mb-3">
+      <img src="logo.png" alt="CBE Global Logo" style="max-width: 150px;">
+    </div>
     <h1>Affiliate Login</h1>
 
     <form id="login-form" novalidate>
-      <!-- Email -->
-      <div class="form-group">
+      <div class="form-floating mb-3">
+        <input type="email" class="form-control" id="login-email" required />
         <label for="login-email">Email Address</label>
-        <input type="email" id="login-email" placeholder="you@example.com" required />
       </div>
-
-      <!-- Password -->
-      <div class="form-group">
+      <div class="form-floating mb-3">
+        <input type="password" class="form-control" id="login-password" required minlength="8" />
         <label for="login-password">Password</label>
-        <input type="password" id="login-password" placeholder="Enter your password" required minlength="8" />
       </div>
-
       <button type="submit" id="login-button" disabled>Log In</button>
       <div id="login-alert" role="alert"></div>
     </form>
@@ -182,21 +172,21 @@
     </div>
   </div>
 
-  <footer>© 2025 Chukwuemeka Bullion Exchange</footer>
+  <footer>© 2025 Chukwuemeka Bullion Exchange</footer>
 
   <script>
-    // ─── 1) Initialize Supabase (use the same values as your signup page) ───
+    // Initialize Supabase
     const SUPA_URL = "https://dapwpgvnfjcfqqhrpxla.supabase.co";
     const SUPA_ANON_KEY =
       "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImRhcHdwZ3ZuZmpjZnFxaHJweGxhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDcwNDA4ODgsImV4cCI6MjA2MjYxNjg4OH0.ICC0UsLlzJDNre7rFCeD3k6iVzo6jOJgn3PhABpEMsQ";
     const supabaseClient = supabase.createClient(SUPA_URL, SUPA_ANON_KEY);
 
-    // ─── 2) Simple email validator (same as signup) ─────────────────────────
+    // Simple email validator
     function isValidEmail(email) {
       return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
     }
 
-    // ─── 3) On DOM ready: fade‑in card and wire up form ─────────────────────
+    // On DOM ready: fade-in card and wire up form
     document.addEventListener("DOMContentLoaded", () => {
       const card = document.getElementById("login-card");
       setTimeout(() => card.classList.add("visible"), 100);
@@ -206,7 +196,7 @@
       const pwInput = document.getElementById("login-password");
       const alertDiv = document.getElementById("login-alert");
 
-      // Enable “Log In” button when both fields have some text
+      // Enable "Log In" button when both fields have text
       function toggleButton() {
         const ok = emailInput.value.trim() !== "" && pwInput.value !== "";
         loginBtn.disabled = !ok;
@@ -221,11 +211,10 @@
         alertDiv.textContent = "";
         alertDiv.style.color = "";
 
-        // Gather form values
         const email = emailInput.value.trim().toLowerCase();
         const password = pwInput.value;
 
-        // ─── Basic validation ──────────────────────────────────────────────
+        // Basic validation
         if (!email || !password) {
           alertDiv.style.color = "var(--error-color)";
           alertDiv.textContent = "Both fields are required.";
@@ -242,11 +231,10 @@
           return;
         }
 
-        // Disable button while querying
         loginBtn.disabled = true;
         loginBtn.textContent = "Logging in…";
 
-        // ─── 4) Query Supabase: match email & password against affiliates ───
+        // Query Supabase
         try {
           const { data, error } = await supabaseClient
             .from("affiliates")
@@ -256,7 +244,6 @@
             .single();
 
           if (error || !data) {
-            // If no match or some other DB error
             console.error("Login error:", error);
             alertDiv.style.color = "var(--error-color)";
             alertDiv.textContent = "Invalid email or password.";
@@ -265,9 +252,7 @@
             return;
           }
 
-          // ─── 5) Success! store affiliate ID & redirect ───────────────────
           localStorage.setItem("affiliate_id", data.id);
-          // Redirect to dashboard
           window.location.href = "affiliate_dashboard.html";
         } catch (err) {
           console.error("Unexpected error:", err);
