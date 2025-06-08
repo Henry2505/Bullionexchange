@@ -35,7 +35,7 @@
   <style>
     /* Core Styles */
     :root[data-theme="dark"] {
-      --bg: #000;
+      --bg: linear-gradient(135deg, #121212, #1a1a1a);
       --text: #e0e0e0;
       --gold: #ffd700;
       --gold-dark: #cca300;
@@ -52,7 +52,7 @@
       --calendar-text: #ffd700;
     }
     :root[data-theme="light"] {
-      --bg: #fff;
+      --bg: linear-gradient(135deg, #f5f5f5, #e0e0e0);
       --text: #333333;
       --gold: #cca300;
       --gold-dark: #b58900;
@@ -558,18 +558,18 @@
     .glow {
       text-shadow: 0 0 10px rgba(255, 215, 0, 0.7);
     }
-
-    /* Copy Button for Signal Values */
+    
+    /* Copy Button Styling */
     .copy-btn {
       background: #000;
-      color: var(--gold) !important;
+      color: var(--gold);
       border: 1px solid var(--gold);
-      padding: 0.2rem 0.5rem;
       border-radius: 4px;
+      padding: 2px 8px;
       font-size: 0.8rem;
       cursor: pointer;
+      margin-top: 4px;
       animation: pulse 2s infinite;
-      margin-left: 0.5rem;
     }
 
     /* Responsive Design */
@@ -890,6 +890,17 @@
     // API Keys
     const EXCHANGE_RATE_API_KEY = '4e4307b2bf8daac15365a410';
 
+    // Format Entry Function
+    function formatEntry(e) {
+      // if it’s a string containing a hyphen, just show it:
+      if (typeof e === 'string' && e.includes('-')) {
+        return e;
+      }
+      // otherwise, try to treat it as a number:
+      const n = parseFloat(e);
+      return Number.isFinite(n) ? n.toFixed(3) : 'N/A';
+    }
+
     // Utilities
     async function getUserInfo() {
       try {
@@ -952,7 +963,16 @@
       window.location.href = 'login.html?message=logged_out';
     }
 
-    // Load Latest Signal
+    // Copy Text Function
+    function copyText(text) {
+      navigator.clipboard.writeText(text).then(() => {
+        alert('Copied: ' + text);
+      }).catch(err => {
+        console.error('Failed to copy: ', err);
+      });
+    }
+
+    // Load Latest Signal - FIXED
     async function loadLatestSignal() {
       const signalEl = document.getElementById('latest-signal');
       try {
@@ -981,31 +1001,23 @@
           <div class="signal-details">
             <div class="signal-detail">
               <div>Entry</div>
-              <div>
-                <strong>${formatNumber(data.entry)}</strong>
-                ${typeof data.entry === 'number' ? `<button class="copy-btn" data-value="${formatNumber(data.entry)}">Copy</button>` : ''}
-              </div>
+              <div><strong>${formatEntry(data.entry)}</strong></div>
+              <button class="copy-btn" onclick="copyText('${data.entry}')">Copy</button>
             </div>
             <div class="signal-detail">
               <div>Stop Loss</div>
-              <div>
-                <strong>${formatNumber(data.sl)}</strong>
-                ${typeof data.sl === 'number' ? `<button class="copy-btn" data-value="${formatNumber(data.sl)}">Copy</button>` : ''}
-              </div>
+              <div><strong>${formatNumber(data.sl)}</strong></div>
+              <button class="copy-btn" onclick="copyText('${data.sl}')">Copy</button>
             </div>
             <div class="signal-detail">
               <div>Take Profit 1</div>
-              <div>
-                <strong>${formatNumber(data.tp1)}</strong>
-                ${typeof data.tp1 === 'number' ? `<button class="copy-btn" data-value="${formatNumber(data.tp1)}">Copy</button>` : ''}
-              </div>
+              <div><strong>${formatNumber(data.tp1)}</strong></div>
+              <button class="copy-btn" onclick="copyText('${data.tp1}')">Copy</button>
             </div>
             <div class="signal-detail">
               <div>Take Profit 2</div>
-              <div>
-                <strong>${data.tp2 ? formatNumber(data.tp2) : 'N/A'}</strong>
-                ${typeof data.tp2 === 'number' ? `<button class="copy-btn" data-value="${formatNumber(data.tp2)}">Copy</button>` : ''}
-              </div>
+              <div><strong>${data.tp2 ? formatNumber(data.tp2) : 'N/A'}</strong></div>
+              ${data.tp2 ? `<button class="copy-btn" onclick="copyText('${data.tp2}')">Copy</button>` : ''}
             </div>
           </div>
           <p class="text-muted mt-2">Signal issued at ${dt.toLocaleTimeString('en-GB')}</p>
@@ -1016,7 +1028,7 @@
       }
     }
 
-    // Load Dashboard2
+    // Load Dashboard
     async function loadDashboard() {
       try {
         const today = new Date().toISOString().split('T')[0];
@@ -1116,7 +1128,7 @@
       }
     }
 
-    // Gold News with Sentiment Analysis
+    // Gold News with Sentiment Analysis - FIXED
     const positiveKeywords = ['rise', 'up', 'demand', 'buy', 'increase', 'gain', 'bullish'];
     const negativeKeywords = ['fall', 'down', 'sell', 'decrease', 'loss', 'bearish'];
 
@@ -1134,7 +1146,7 @@
         ul.innerHTML = '';
         
         items.forEach(i => {
-          const link = i.querySelector('linkpiecemeal';
+          const link = i.querySelector('link').textContent;
           const title = i.querySelector('title').textContent;
           const titleLower = title.toLowerCase();
           
@@ -1171,7 +1183,7 @@
       }
     }
 
-    // Economic Calendar
+    // Economic Calendar - FIXED
     async function loadEconCalendar() {
       const tbody = document.getElementById('calendar-body');
       tbody.innerHTML = '<tr><td colspan="7"><div class="spinner"></div></td></tr>';
@@ -1412,7 +1424,7 @@
             entries.forEach(entry => {
               if (entry.isIntersecting) {
                 entry.target.classList.add('visible');
-                observer Thiunobserve(entry.target);
+                observer.unobserve(entry.target);
               }
             });
           }, { threshold: 0.1 }).observe(el);
@@ -1448,18 +1460,6 @@
         document.getElementById('convert-btn').addEventListener('click', convertCurrency);
         document.getElementById('floating-signals-btn').addEventListener('click', () => {
           window.location.href = 'https://apexincomeoptions.com.ng/signals';
-        });
-
-        // Add copy functionality for signal values
-        document.getElementById('latest-signal').addEventListener('click', (e) => {
-          if (e.target.classList.contains('copy-btn')) {
-            const value = e.target.getAttribute('data-value');
-            navigator.clipboard.writeText(value).then(() => {
-              alert('Copied to clipboard: ' + value);
-            }).catch(() => {
-              alert('Failed to copy');
-            });
-          }
         });
 
         supabase
