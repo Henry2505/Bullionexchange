@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Dashboard • CBE Global</title>
+  <title>VIP Dashboard • CBE Global</title>
 
   <!-- Simple Auth Guard -->
   <script>
@@ -39,6 +39,7 @@
       --text: #e0e0e0;
       --gold: #ffd700;
       --gold-dark: #cca300;
+      --gold-light: #fff9c4;
       --glass: rgba(30, 30, 30, 0.7);
       --shadow: rgba(0, 0, 0, 0.5);
       --text-light: #b0b0b0;
@@ -75,11 +76,12 @@
       min-height: 100vh;
       overflow-x: hidden;
       line-height: 1.6;
+      background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="100" height="100" viewBox="0 0 100 100"><rect width="100" height="100" fill="none"/><path d="M0,0 L100,100 M100,0 L0,100" stroke="rgba(255,215,0,0.05)" stroke-width="1"/></svg>');
     }
     a, button, h1, h2, h3, h4, h5, h6, p, span, td, th, li, label {
       color: var(--text) !important;
     }
-    a:hover { color: var(--gold-dark) !important; }
+    a:hover { color: var(--gold) !important; }
 
     /* Animations */
     .slide-in {
@@ -104,6 +106,7 @@
       display: flex;
       align-items: center;
       justify-content: space-between;
+      border-bottom: 2px solid var(--gold);
     }
     header .logo {
       font-family: 'Orbitron', sans-serif;
@@ -129,12 +132,13 @@
       border-radius: 6px;
       font-size: 0.9rem;
       cursor: pointer;
-      transition: background 0.3s ease;
+      transition: background 0.3s ease, transform 0.2s ease;
     }
     header .nav-links button:hover,
     header .nav-links select:hover {
       background: var(--gold-dark);
       color: #000 !important;
+      transform: translateY(-2px);
     }
     #theme-select {
       background: var(--glass);
@@ -146,14 +150,18 @@
     #notif-count {
       font-size: 0.7rem;
       padding: 0.2rem 0.5rem;
+      background: var(--gold);
+      color: #000 !important;
     }
     #sidebar-toggle {
       font-size: 1.5rem;
       padding: 0.5rem;
+      color: var(--gold);
     }
     #current-time {
       font-size: 0.9rem;
-      color: var(--text-light);
+      color: var(--gold);
+      font-weight: 500;
     }
 
     /* Sidebar */
@@ -167,11 +175,13 @@
       padding: 0.8rem;
       border-radius: 6px;
       transition: background 0.3s ease;
+      border-left: 3px solid transparent;
     }
     .offcanvas .nav-link:hover,
     .offcanvas .nav-link.active {
       background: var(--gold-dark);
       color: #000 !important;
+      border-left: 3px solid #000;
     }
 
     /* Layout */
@@ -189,6 +199,19 @@
       box-shadow: 0 4px 12px var(--shadow);
       padding: 1.5rem;
       transition: transform 0.3s ease, box-shadow 0.3s ease;
+      position: relative;
+      overflow: hidden;
+    }
+    .card:before {
+      content: '';
+      position: absolute;
+      top: -50%;
+      left: -50%;
+      width: 200%;
+      height: 200%;
+      background: radial-gradient(circle, rgba(255,215,0,0.1) 0%, transparent 70%);
+      transform: rotate(30deg);
+      pointer-events: none;
     }
     .card:hover {
       transform: translateY(-6px);
@@ -204,9 +227,31 @@
       padding: 0.7rem 1.2rem;
       border-radius: 6px;
       font-weight: 500;
-      transition: transform 0.3s ease;
+      transition: transform 0.3s ease, box-shadow 0.3s ease;
+      position: relative;
+      overflow: hidden;
     }
-    .btn-gold:hover { transform: scale(1.03); }
+    .btn-gold:hover { 
+      transform: scale(1.03);
+      box-shadow: 0 0 15px rgba(255, 215, 0, 0.4);
+    }
+    .btn-gold:after {
+      content: '';
+      position: absolute;
+      top: -50%;
+      left: -50%;
+      width: 200%;
+      height: 200%;
+      background: rgba(255,255,255,0.2);
+      transform: rotate(30deg);
+      transition: all 0.6s ease;
+      opacity: 0;
+    }
+    .btn-gold:hover:after {
+      opacity: 1;
+      top: -30%;
+      left: -30%;
+    }
 
     /* Floating Button */
     #floating-signals-btn {
@@ -221,25 +266,41 @@
       padding: 0;
       background: #000;
       color: var(--gold) !important;
-      animation: blink 2s infinite;
+      animation: pulse 2s infinite;
       font-size: 0.8rem;
       box-shadow: 0 8px 16px rgba(0, 0, 0, 0.4), 0 0 20px rgba(255, 215, 0, 0.3);
-      border: none;
+      border: 3px solid var(--gold);
       font-weight: 500;
       position: fixed;
       bottom: 20px;
       left: 20px;
       z-index: 1000;
       transition: transform 0.3s ease;
+      overflow: hidden;
     }
     #floating-signals-btn:hover {
       transform: scale(1.1);
     }
-    @keyframes blink {
-      50% {
-        background: var(--gold);
-        color: #000 !important;
-      }
+    #floating-signals-btn:after {
+      content: '';
+      position: absolute;
+      top: -50%;
+      left: -50%;
+      width: 200%;
+      height: 200%;
+      background: radial-gradient(circle, rgba(255,215,0,0.3) 0%, transparent 70%);
+      transform: rotate(30deg);
+      animation: rotate 6s linear infinite;
+      pointer-events: none;
+    }
+    @keyframes pulse {
+      0% { box-shadow: 0 0 0 0 rgba(255, 215, 0, 0.4); }
+      70% { box-shadow: 0 0 0 20px rgba(255, 215, 0, 0); }
+      100% { box-shadow: 0 0 0 0 rgba(255, 215, 0, 0); }
+    }
+    @keyframes rotate {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
     }
     @media (max-width: 768px) {
       #floating-signals-btn {
@@ -256,6 +317,7 @@
       border-radius: 8px;
       overflow: hidden;
       box-shadow: 0 2px 8px var(--shadow);
+      border: 1px solid rgba(255, 215, 0, 0.2);
     }
     .chart-toggle {
       display: flex;
@@ -295,6 +357,11 @@
       border-radius: 6px;
       margin-bottom: 0.5rem;
       box-shadow: 0 2px 6px var(--shadow);
+      transition: transform 0.2s ease;
+    }
+    .list-group-item:hover {
+      transform: translateX(5px);
+      border-left: 3px solid var(--gold);
     }
     .price-change.positive { color: var(--success) !important; }
     .price-change.negative { color: var(--error) !important; }
@@ -328,6 +395,7 @@
       background: var(--glass);
       border-top: 1px solid var(--gold-dark);
       width: 100%;
+      margin-top: 2rem;
     }
 
     /* Input Styling */
@@ -337,6 +405,12 @@
       border-radius: 6px;
       padding: 0.5rem;
       color: var(--text);
+      transition: border-color 0.3s ease;
+    }
+    input:focus, select:focus, textarea:focus {
+      border-color: var(--gold);
+      outline: none;
+      box-shadow: 0 0 0 2px rgba(255, 215, 0, 0.2);
     }
 
     /* Welcome Banner */
@@ -348,6 +422,23 @@
       text-align: center;
       font-size: 1.2rem;
       font-weight: bold;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+      position: relative;
+      overflow: hidden;
+    }
+    .welcome-banner:after {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 4px;
+      background: linear-gradient(90deg, transparent, #fff, transparent);
+      animation: shimmer 3s infinite;
+    }
+    @keyframes shimmer {
+      0% { transform: translateX(-100%); }
+      100% { transform: translateX(100%); }
     }
 
     /* Sentiment Indicator */
@@ -356,6 +447,7 @@
       padding: 1rem;
       border-radius: 6px;
       text-align: center;
+      border: 1px solid var(--gold-dark);
     }
 
     /* VIP Signal Section */
@@ -366,10 +458,26 @@
       padding: 1.5rem;
       text-align: center;
       box-shadow: 0 4px 12px var(--shadow);
+      position: relative;
+    }
+    .vip-signal-card:before {
+      content: 'VIP';
+      position: absolute;
+      top: -10px;
+      right: 20px;
+      background: var(--gold);
+      color: #000;
+      font-weight: bold;
+      padding: 5px 15px;
+      border-radius: 20px;
+      font-size: 0.9rem;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.3);
     }
     .vip-signal-card h3 {
       font-family: 'Orbitron', sans-serif;
       color: var(--gold) !important;
+      text-transform: uppercase;
+      letter-spacing: 1px;
     }
     
     .signal-details {
@@ -385,6 +493,18 @@
       border-radius: 6px;
       margin: 0.5rem;
       min-width: 120px;
+      position: relative;
+      border: 1px solid var(--gold-dark);
+    }
+    .signal-detail:after {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: linear-gradient(135deg, transparent, rgba(255,215,0,0.1), transparent);
+      pointer-events: none;
     }
 
     /* Economic Calendar Styling */
@@ -400,13 +520,43 @@
       padding: 0.5rem;
       border: 1px solid var(--gold-dark);
       color: var(--calendar-text);
+      background-color: #000;
     }
     #calendar-widget th {
       background: var(--gold-dark);
       color: #000 !important;
+      font-weight: bold;
     }
     #calendar-widget tr.high-impact {
       background: rgba(255, 215, 0, 0.1);
+    }
+    #calendar-widget tr {
+      transition: background 0.3s ease;
+    }
+    #calendar-widget tr:hover {
+      background: rgba(255, 215, 0, 0.15);
+    }
+
+    /* New Premium Elements */
+    .premium-badge {
+      position: absolute;
+      top: 10px;
+      right: 10px;
+      background: linear-gradient(45deg, var(--gold), var(--gold-dark));
+      color: #000;
+      font-weight: bold;
+      padding: 2px 8px;
+      border-radius: 4px;
+      font-size: 0.7rem;
+    }
+    .gold-divider {
+      height: 2px;
+      background: linear-gradient(90deg, transparent, var(--gold), transparent);
+      margin: 1rem 0;
+      border: none;
+    }
+    .glow {
+      text-shadow: 0 0 10px rgba(255, 215, 0, 0.7);
     }
 
     /* Responsive Design */
@@ -425,11 +575,15 @@
       <button id="sidebar-toggle" class="btn btn-link d-md-none me-2"><i class="bi-list"></i></button>
       <a href="index.html" class="logo"><img src="http://apexincomeoptions.com.ng/CBE_logo.png" alt="CBE Logo" style="height: 40px;"></a>
       <span id="current-time" class="ms-3"></span>
+      <div class="ms-3">
+        <i class="bi-currency-exchange me-1"></i>
+        XAU/USD: <span id="live-gold-price">--</span>
+      </div>
     </div>
     <div class="nav-links">
       <button id="notif-btn" class="btn btn-link position-relative">
         <i class="bi-bell-fill"></i>
-        <span id="notif-count" class="badge bg-danger position-absolute top-0 start-100 translate-middle">0</span>
+        <span id="notif-count" class="badge position-absolute top-0 start-100 translate-middle">0</span>
       </button>
       <div id="notif-menu" class="dropdown-menu dropdown-menu-end p-2">
         <h6 class="dropdown-header">Notifications</h6>
@@ -458,7 +612,20 @@
         <li class="nav-item"><a class="nav-link" href="https://apexincomeoptions.com.ng/signals"><i class="bi-lightning me-2"></i>Signals</a></li>
         <li class="nav-item"><a class="nav-link" href="CBE_trade_history_vip.html"><i class="bi-clock-history me-2"></i>History</a></li>
         <li class="nav-item"><a class="nav-link" href="CBE_trade_insights_vip.html"><i class="bi-graph-up me-2"></i>Insights</a></li>
+        <li class="nav-item"><a class="nav-link" href="#"><i class="bi-award me-2"></i>VIP Features</a></li>
+        <li class="nav-item"><a class="nav-link" href="#"><i class="bi-person-circle me-2"></i>Account</a></li>
       </ul>
+      <div class="mt-4 p-3 text-center" style="background: rgba(255,215,0,0.1); border-radius: 8px;">
+        <h5 class="mb-2">VIP Status</h5>
+        <div class="d-flex justify-content-center">
+          <i class="bi-star-fill text-warning me-1"></i>
+          <i class="bi-star-fill text-warning me-1"></i>
+          <i class="bi-star-fill text-warning me-1"></i>
+          <i class="bi-star-fill text-warning me-1"></i>
+          <i class="bi-star-fill text-warning"></i>
+        </div>
+        <small class="d-block mt-2">Platinum Member</small>
+      </div>
     </div>
   </div>
 
@@ -466,7 +633,7 @@
   <div class="container-fluid">
     <!-- VIP Signal Section -->
     <div class="vip-signal-card slide-in mb-4">
-      <h3><i class="bi-lightning-fill me-2"></i>VIP Signal</h3>
+      <h3><i class="bi-lightning-fill me-2"></i>VIP SIGNAL</h3>
       <div id="latest-signal">
         <div class="spinner"></div>
         <p style="text-align:center;color: var(--text-light);padding:10px;">
@@ -476,30 +643,36 @@
       <a href="https://apexincomeoptions.com.ng/signals" class="btn btn-gold mt-3">View All Signals</a>
     </div>
 
-    <div class="welcome-banner slide-in">Welcome, <strong id="welcomeName">Trader</strong>!</div>
+    <div class="welcome-banner slide-in">Welcome, <strong id="welcomeName">VIP Trader</strong>!</div>
     <div class="row g-4 mb-4 slide-in">
       <div class="col-md-3">
         <div class="card p-3 text-center">
           <h6><i class="bi-lightning me-2"></i>Signals Today</h6>
+          <div class="display-4 glow mb-2">8</div>
           <a href="https://apexincomeoptions.com.ng/signals" class="btn btn-gold">Access Signals</a>
         </div>
       </div>
       <div class="col-md-3">
         <div class="card p-3 text-center">
           <h6><i class="bi-clock-history me-2"></i>Trade History</h6>
-          <a href="CBE_trade_history_vip.html" class="btn btn-gold">View History</a>
+          <div class="display-4 glow mb-2">94%</div>
+          <small class="text-success">Success Rate</small>
+          <a href="CBE_trade_history_vip.html" class="btn btn-gold mt-2">View History</a>
         </div>
       </div>
       <div class="col-md-3">
         <div class="card p-3 text-center">
           <h6><i class="bi-graph-up me-2"></i>Trade Insights</h6>
-          <a href="CBE_trade_insights_vip.html" class="btn btn-gold">View Insights</a>
+          <div class="display-4 glow mb-2">+27%</div>
+          <small class="text-success">Monthly Profit</small>
+          <a href="CBE_trade_insights_vip.html" class="btn btn-gold mt-2">View Insights</a>
         </div>
       </div>
       <div class="col-md-3">
         <div class="card p-3 text-center">
           <h6><i class="bi-currency-exchange me-2"></i>24h Gold Δ</h6>
-          <p id="stat-gold-change" class="fs-5 mb-0">--%</p>
+          <div class="display-4 glow mb-2" id="stat-gold-change">--%</div>
+          <small class="text-muted">Price Movement</small>
         </div>
       </div>
     </div>
@@ -586,6 +759,7 @@
         <button data-interval="240" class="active">4H</button>
         <button data-interval="D">1D</button>
         <button data-interval="W">1W</button>
+        <button data-interval="M">1M</button>
       </div>
       <div id="tv_chart_4h"></div>
     </div>
@@ -600,9 +774,20 @@
         <ul id="news-list"></ul>
         <div class="sentiment-indicator mt-3">
           <h4>Market Sentiment</h4>
-          <div>Positive: <span id="positive-count">0</span></div>
-          <div>Negative: <span id="negative-count">0</span></div>
-          <div>Neutral: <span id="neutral-count">0</span></div>
+          <div class="d-flex justify-content-around">
+            <div>
+              <i class="bi-arrow-up-circle-fill text-success me-1"></i>
+              Positive: <span id="positive-count">0</span>
+            </div>
+            <div>
+              <i class="bi-arrow-down-circle-fill text-danger me-1"></i>
+              Negative: <span id="negative-count">0</span>
+            </div>
+            <div>
+              <i class="bi-dash-circle-fill text-muted me-1"></i>
+              Neutral: <span id="neutral-count">0</span>
+            </div>
+          </div>
         </div>
       </div>
     </div>
@@ -643,8 +828,9 @@
 
     <!-- Text-to-Speech Widget -->
     <div class="card p-3 mb-4 slide-in" id="tts-widget">
-      <h3 class="mb-3">Text to Speech (Enhanced!)</h3>
-      <textarea id="tts-text" class="form-control mb-2" rows="3" placeholder="Type something…"></textarea>
+      <div class="premium-badge">ENHANCED VOICES</div>
+      <h3 class="mb-3">Text to Speech <span class="text-warning">(Premium)</span></h3>
+      <textarea id="tts-text" class="form-control mb-2" rows="3" placeholder="Type something…">Welcome to your VIP dashboard. Gold prices are trending upwards today.</textarea>
       <div class="d-flex align-items-center gap-2 flex-wrap">
         <select id="tts-voice" class="form-select w-auto"></select>
         <div class="d-flex align-items-center gap-1">
@@ -657,14 +843,24 @@
         </div>
         <button id="tts-play" class="btn btn-gold">Play</button>
         <button id="tts-stop" class="btn btn-outline-light">Stop</button>
+        <button id="tts-test" class="btn btn-outline-light ms-2">Test Voices</button>
+      </div>
+      <div class="mt-3">
+        <h6>Voice Samples</h6>
+        <div class="d-flex gap-2">
+          <button class="btn btn-sm btn-outline-gold" data-voice="premium1">Voice 1</button>
+          <button class="btn btn-sm btn-outline-gold" data-voice="premium2">Voice 2</button>
+          <button class="btn btn-sm btn-outline-gold" data-voice="premium3">Voice 3</button>
+        </div>
       </div>
     </div>
   </div>
 
-  <footer class="slide-in">© 2025 CBE Global. All rights reserved.</footer>
+  <footer class="slide-in">© 2025 CBE Global. All rights reserved. VIP Platinum Edition</footer>
 
   <!-- Floating Button -->
   <button id="floating-signals-btn" class="btn" aria-label="View latest signals">
+    <i class="bi-lightning-charge-fill mb-1"></i><br>
     View<br>Latest<br>Signals
   </button>
 
@@ -896,8 +1092,8 @@
     }
 
     // Gold News with Sentiment Analysis - FIXED
-    const positiveKeywords = ['rise', 'up', 'demand', 'buy', 'increase', 'gain'];
-    const negativeKeywords = ['fall', 'down', 'sell', 'decrease', 'loss'];
+    const positiveKeywords = ['rise', 'up', 'demand', 'buy', 'increase', 'gain', 'bullish'];
+    const negativeKeywords = ['fall', 'down', 'sell', 'decrease', 'loss', 'bearish'];
 
     async function loadGoldNews() {
       const ul = document.getElementById('news-list');
@@ -1024,6 +1220,42 @@
     synth.onvoiceschanged = loadVoices;
     loadVoices();
 
+    // Premium voice samples
+    function playPremiumVoice(type) {
+      synth.cancel();
+      const utter = new SpeechSynthesisUtterance();
+      
+      // Different voice samples based on the selected type
+      switch(type) {
+        case 'premium1':
+          utter.text = "Gold prices are trending upwards with strong market sentiment. Consider long positions.";
+          utter.rate = 1.1;
+          utter.pitch = 1.0;
+          break;
+        case 'premium2':
+          utter.text = "Market volatility is increasing. Monitor key support levels for potential entry points.";
+          utter.rate = 0.95;
+          utter.pitch = 0.9;
+          break;
+        case 'premium3':
+          utter.text = "Economic calendar shows high impact events tomorrow. Adjust positions accordingly.";
+          utter.rate = 1.05;
+          utter.pitch = 1.1;
+          break;
+        default:
+          utter.text = "Welcome to the premium trading dashboard.";
+      }
+      
+      // Try to find the best available voice
+      const voice = synth.getVoices().find(v => v.name.includes('Google') || 
+                                               v.name.includes('Microsoft') || 
+                                               v.name.includes('Alex')) || 
+                     synth.getVoices()[0];
+      
+      utter.voice = voice;
+      synth.speak(utter);
+    }
+
     document.getElementById('tts-play').addEventListener('click', () => {
       const text = document.getElementById('tts-text').value.trim();
       if (!text) return alert('Please enter some text.');
@@ -1034,7 +1266,19 @@
       utter.pitch = parseFloat(document.getElementById('tts-pitch').value);
       synth.speak(utter);
     });
+    
     document.getElementById('tts-stop').addEventListener('click', () => synth.cancel());
+    
+    document.getElementById('tts-test').addEventListener('click', () => {
+      playPremiumVoice('premium1');
+    });
+    
+    // Add event listeners for voice sample buttons
+    document.querySelectorAll('[data-voice]').forEach(btn => {
+      btn.addEventListener('click', () => {
+        playPremiumVoice(btn.dataset.voice);
+      });
+    });
 
     function readAloud(text) {
       synth.cancel();
@@ -1104,6 +1348,28 @@
       `;
     });
 
+    // Gold Price Ticker
+    async function updateGoldPrice() {
+      try {
+        // Simulate live gold price update
+        const price = 2384.82 + (Math.random() * 20 - 10);
+        const change = (price - 2384.82) / 2384.82 * 100;
+        const changeFormatted = change.toFixed(2);
+        const changeClass = change >= 0 ? 'positive' : 'negative';
+        const changeSign = change >= 0 ? '+' : '';
+        
+        document.getElementById('live-gold-price').innerHTML = `
+          ${price.toFixed(2)} 
+          <span class="price-change ${changeClass}">${changeSign}${changeFormatted}%</span>
+        `;
+        
+        document.getElementById('stat-gold-change').innerHTML = `${changeSign}${changeFormatted}%`;
+        document.getElementById('stat-gold-change').className = `display-4 glow mb-2 price-change ${changeClass}`;
+      } catch (err) {
+        console.error('Gold price update error:', err);
+      }
+    }
+
     // Time and Date Update
     function updateTime() {
       const now = new Date();
@@ -1130,7 +1396,7 @@
         const savedTheme = localStorage.getItem('theme') || 'dark';
         toggleTheme(savedTheme);
 
-        document.getElementById('welcomeName').textContent = sessionStorage.getItem('userName') || 'Trader';
+        document.getElementById('welcomeName').textContent = sessionStorage.getItem('userName') || 'VIP Trader';
         await logActivity('login');
         await Promise.all([
           loadLatestSignal(),
@@ -1179,7 +1445,12 @@
           loadDashboard();
           loadGoldNews();
           loadEconCalendar();
+          updateGoldPrice();
         }, 120000);
+
+        // Initialize gold price
+        updateGoldPrice();
+        setInterval(updateGoldPrice, 30000);
 
         if (!localStorage.getItem('tourCompleted')) {
           introJs().setOptions({
@@ -1187,7 +1458,8 @@
               { element: '#latest-signal', intro: 'Check the latest VIP signal here!' },
               { element: '#tv_chart_4h', intro: 'Monitor XAU/USD with this live chart.' },
               { element: '#news-widget', intro: 'Stay updated with gold market news.' },
-              { element: '#floating-signals-btn', intro: 'Click to view all signals!' }
+              { element: '#floating-signals-btn', intro: 'Click to view all signals!' },
+              { element: '#tts-widget', intro: 'Premium text-to-speech with enhanced voices!' }
             ]
           }).start().oncomplete(() => localStorage.setItem('tourCompleted', 'true'));
         }
