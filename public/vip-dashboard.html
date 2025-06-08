@@ -85,7 +85,11 @@
 
     /* Animations */
     .slide-in {
-      /* FIX: Make all content visible by default */
+      opacity: 0;
+      transform: translateY(20px);
+      transition: opacity 0.8s ease-out, transform 0.8s ease-out;
+    }
+    .slide-in.visible {
       opacity: 1;
       transform: translateY(0);
     }
@@ -1571,8 +1575,16 @@
     // On Load
     document.addEventListener('DOMContentLoaded', async () => {
       try {
-        // FIX: Make all content visible immediately
-        document.querySelectorAll('.slide-in').forEach(el => el.classList.add('visible'));
+        document.querySelectorAll('.slide-in').forEach(el => {
+          new IntersectionObserver((entries, observer) => {
+            entries.forEach(entry => {
+              if (entry.isIntersecting) {
+                entry.target.classList.add('visible');
+                observer.unobserve(entry.target);
+              }
+            });
+          }, { threshold: 0.1 }).observe(el);
+        });
 
         const savedTheme = localStorage.getItem('theme') || 'dark';
         toggleTheme(savedTheme);
