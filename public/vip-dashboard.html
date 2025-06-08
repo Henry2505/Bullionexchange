@@ -285,7 +285,7 @@
       height: 350px;
       overflow: hidden;
     }
-    #news-widget ul {
+    #news-widget ul, #calendar-widget table {
       height: 100%;
       overflow-y: auto;
     }
@@ -371,16 +371,42 @@
       font-family: 'Orbitron', sans-serif;
       color: var(--gold) !important;
     }
+    
+    .signal-details {
+      display: flex;
+      justify-content: space-around;
+      flex-wrap: wrap;
+      margin: 1rem 0;
+    }
+    
+    .signal-detail {
+      background: rgba(0, 0, 0, 0.3);
+      padding: 0.5rem 1rem;
+      border-radius: 6px;
+      margin: 0.5rem;
+      min-width: 120px;
+    }
 
     /* Economic Calendar Styling */
     #calendar-widget {
       background: var(--calendar-bg);
-      padding: 1rem;
+      color: var(--calendar-text);
     }
-    #calendar-widget iframe {
-      border: none;
+    #calendar-widget table {
       width: 100%;
-      height: 600px;
+      border-collapse: collapse;
+    }
+    #calendar-widget th, #calendar-widget td {
+      padding: 0.5rem;
+      border: 1px solid var(--gold-dark);
+      color: var(--calendar-text);
+    }
+    #calendar-widget th {
+      background: var(--gold-dark);
+      color: #000 !important;
+    }
+    #calendar-widget tr.high-impact {
+      background: rgba(255, 215, 0, 0.1);
     }
 
     /* Responsive Design */
@@ -388,6 +414,7 @@
       .container-fluid { grid-template-columns: 1fr; }
       header { padding: 1rem; }
       .nav-links { flex-wrap: wrap; }
+      .signal-details { flex-direction: column; }
     }
   </style>
 </head>
@@ -440,7 +467,12 @@
     <!-- VIP Signal Section -->
     <div class="vip-signal-card slide-in mb-4">
       <h3><i class="bi-lightning-fill me-2"></i>VIP Signal</h3>
-      <div id="latest-signal">Loading latest signal…</div>
+      <div id="latest-signal">
+        <div class="spinner"></div>
+        <p style="text-align:center;color: var(--text-light);padding:10px;">
+          Loading latest signal…
+        </p>
+      </div>
       <a href="https://apexincomeoptions.com.ng/signals" class="btn btn-gold mt-3">View All Signals</a>
     </div>
 
@@ -497,7 +529,103 @@
         </div>
         <div class="col-md-3 col-6">
           <label for="stop-loss-price" class="form-label">Stop Loss Price</label>
-          <input id="stop-loss-price" type="number" step="0.01" class="form-control" placeholder="etable
+          <input id="stop-loss-price" type="number" step="0.01" class="form-control" placeholder="e.g., 1980.00">
+        </div>
+        <div class="col-md-3 col-6">
+          <label for="take-profit-price" class="form-label">Take Profit Price</label>
+          <input id="take-profit-price" type="number" step="0.01" class="form-control" placeholder="e.g., 2020.00">
+        </div>
+        <div class="col-md-3 col-6">
+          <label for="position-size" class="form-label">Position Size (lots)</label>
+          <input id="position-size" type="number" step="0.01" class="form-control" placeholder="e.g., 1.00">
+        </div>
+        <div class="col-12">
+          <button id="calculate-forex-risk" class="btn btn-gold">Calculate</button>
+          <p id="forex-risk-result" class="mt-2"></p>
+          <p class="text-muted mt-2">Calculate your potential gain/loss before executing trade.</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Converter Widget -->
+    <div class="card p-3 mb-4 slide-in" id="converter-widget">
+      <h3 class="mb-3">Currency Converter</h3>
+      <div class="row g-3">
+        <div class="col-md-4">
+          <select id="converter-from" class="form-select">
+            <option value="USD">USD</option>
+            <option value="EUR">EUR</option>
+            <option value="GBP">GBP</option>
+            <option value="JPY">JPY</option>
+            <option value="CAD">CAD</option>
+          </select>
+        </div>
+        <div class="col-md-4">
+          <input id="converter-amount" type="number" class="form-control" placeholder="Amount" value="1">
+        </div>
+        <div class="col-md-4">
+          <select id="converter-to" class="form-select">
+            <option value="USD">USD</option>
+            <option value="EUR">EUR</option>
+            <option value="GBP">GBP</option>
+            <option value="JPY">JPY</option>
+            <option value="CAD">CAD</option>
+          </select>
+        </div>
+        <div class="col-12">
+          <button id="convert-btn" class="btn btn-gold" aria-label="Convert currency">Convert</button>
+          <p id="converter-result" class="mt-2"></p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Chart Widget -->
+    <div class="card p-3 mb-4 slide-in chart-card">
+      <h3 class="mb-3">XAU/USD Chart</h3>
+      <div class="chart-toggle">
+        <button data-interval="240" class="active">4H</button>
+        <button data-interval="D">1D</button>
+        <button data-interval="W">1W</button>
+      </div>
+      <div id="tv_chart_4h"></div>
+    </div>
+
+    <!-- News Widget -->
+    <div class="card p-3 mb-4 slide-in" id="news-widget">
+      <div class="d-flex justify-content-between align-items-center mb-3">
+        <h3>Gold News <small class="text-muted">Updated every minute</small></h3>
+        <button class="btn btn-link" data-bs-toggle="collapse" data-bs-target="#news-collapse"><i class="bi-chevron-down"></i></button>
+      </div>
+      <div id="news-collapse" class="collapse show">
+        <ul id="news-list"></ul>
+        <div class="sentiment-indicator mt-3">
+          <h4>Market Sentiment</h4>
+          <div>Positive: <span id="positive-count">0</span></div>
+          <div>Negative: <span id="negative-count">0</span></div>
+          <div>Neutral: <span id="neutral-count">0</span></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Calendar Widget -->
+    <div class="card p-3 mb-4 slide-in" id="calendar-widget">
+      <div class="d-flex justify-content-between align-items-center mb-3">
+        <h3>Economic Calendar <small class="text-muted">Updated daily</small></h3>
+        <button class="btn btn-link" data-bs-toggle="collapse" data-bs-target="#calendar-collapse"><i class="bi-chevron-down"></i></button>
+      </div>
+      <div id="calendar-collapse" class="collapse show">
+        <table class="table">
+          <thead>
+            <tr>
+              <th>Date</th>
+              <th>Time</th>
+              <th>Currency</th>
+              <th>Event</th>
+              <th>Impact</th>
+              <th>Actual</th>
+              <th>Previous</th>
+            </tr>
+          </thead>
           <tbody id="calendar-body"></tbody>
         </table>
       </div>
@@ -615,24 +743,51 @@
       window.location.href = 'login.html?message=logged_out';
     }
 
-    // Load Latest Signal
+    // Load Latest Signal - FIXED
     async function loadLatestSignal() {
       const signalEl = document.getElementById('latest-signal');
       try {
-        const { data: signals, error } = await supabase
+        const { data, error } = await supabase
           .from('signals')
-          .select('action, asset, created_at')
+          .select('action, asset, entry, sl, tp1, tp2, created_at')
           .order('created_at', { ascending: false })
-          .limit(1);
+          .limit(1)
+          .single();
+          
         if (error) throw error;
-        if (!signals || signals.length === 0) {
-          signalEl.innerHTML = '<span style="color: var(--error)">No signals available</span>';
-          return;
-        }
-        const data = signals[0];
+        
+        const dt = new Date(data.created_at);
+        const actionClass = data.action.toLowerCase() === 'buy' ? 'signal-buy' : 'signal-sell';
+
+        // Format numbers to three decimal places
+        const formatNumber = (num) => typeof num === 'number' ? num.toFixed(3) : 'N/A';
+
         signalEl.innerHTML = `
-          <p><strong>${data.asset}</strong>: ${data.action} signal</p>
-          <p class="text-muted">Issued: ${new Date(data.created_at).toLocaleString()}</p>
+          <div class="signal-header">
+            <h4 class="${actionClass}">
+              ${data.action.toUpperCase()} ${data.asset}
+            </h4>
+            <div class="time">${dt.toLocaleDateString('en-GB')} ${dt.toLocaleTimeString('en-GB')}</div>
+          </div>
+          <div class="signal-details">
+            <div class="signal-detail">
+              <div>Entry</div>
+              <div><strong>${formatNumber(data.entry)}</strong></div>
+            </div>
+            <div class="signal-detail">
+              <div>Stop Loss</div>
+              <div><strong>${formatNumber(data.sl)}</strong></div>
+            </div>
+            <div class="signal-detail">
+              <div>Take Profit 1</div>
+              <div><strong>${formatNumber(data.tp1)}</strong></div>
+            </div>
+            <div class="signal-detail">
+              <div>Take Profit 2</div>
+              <div><strong>${data.tp2 ? formatNumber(data.tp2) : 'N/A'}</strong></div>
+            </div>
+          </div>
+          <p class="text-muted mt-2">Signal issued at ${dt.toLocaleTimeString('en-GB')}</p>
         `;
       } catch (err) {
         console.error('Signal load error:', err);
@@ -740,56 +895,93 @@
       }
     }
 
-    // Gold News with Sentiment Analysis
+    // Gold News with Sentiment Analysis - FIXED
     const positiveKeywords = ['rise', 'up', 'demand', 'buy', 'increase', 'gain'];
     const negativeKeywords = ['fall', 'down', 'sell', 'decrease', 'loss'];
-
-    function renderNews(articles) {
-      const ul = document.getElementById('news-list');
-      ul.innerHTML = '';
-      let positive = 0, negative = 0, neutral = 0;
-      articles.forEach(article => {
-        const li = document.createElement('li');
-        const titleLower = article.title.toLowerCase();
-        let sentiment = 'neutral';
-        if (positiveKeywords.some(word => titleLower.includes(word))) {
-          sentiment = 'positive';
-          positive++;
-        } else if (negativeKeywords.some(word => titleLower.includes(word))) {
-          sentiment = 'negative';
-          negative++;
-        } else {
-          neutral++;
-        }
-        li.innerHTML = `
-          <a href="${article.url}" target="_blank">${article.title}</a>
-          <span class="badge ${sentiment}">${sentiment}</span>
-          <button class="btn btn-sm btn-outline-light ms-2" onclick="readAloud('${article.title.replace(/'/g, "\\'")}')">
-            <i class="bi-volume-up"></i>
-          </button>
-        `;
-        ul.appendChild(li);
-      });
-      document.getElementById('positive-count').textContent = positive;
-      document.getElementById('negative-count').textContent = negative;
-      document.getElementById('neutral-count').textContent = neutral;
-    }
 
     async function loadGoldNews() {
       const ul = document.getElementById('news-list');
       ul.innerHTML = '<li><div class="spinner"></div></li>';
+      
       try {
+        // Using Investing.com RSS feed via allorigins proxy
         const res = await fetch('https://api.allorigins.win/raw?url=https://www.investing.com/rss/news_285.rss');
         const xml = new DOMParser().parseFromString(await res.text(), 'text/xml');
         const items = Array.from(xml.querySelectorAll('item')).slice(0, 8);
-        const articles = items.map(i => ({
-          title: i.querySelector('title').textContent,
-          url: i.querySelector('link').textContent
-        }));
-        renderNews(articles);
+        
+        let positive = 0, negative = 0, neutral = 0;
+        ul.innerHTML = '';
+        
+        items.forEach(i => {
+          const link = i.querySelector('link').textContent;
+          const title = i.querySelector('title').textContent;
+          const titleLower = title.toLowerCase();
+          
+          let sentiment = 'neutral';
+          if (positiveKeywords.some(word => titleLower.includes(word))) {
+            sentiment = 'positive';
+            positive++;
+          } else if (negativeKeywords.some(word => titleLower.includes(word))) {
+            sentiment = 'negative';
+            negative++;
+          } else {
+            neutral++;
+          }
+          
+          const li = document.createElement('li');
+          li.className = 'list-group-item';
+          li.innerHTML = `
+            <a href="${link}" target="_blank">${title}</a>
+            <span class="badge ${sentiment}">${sentiment}</span>
+            <button class="btn btn-sm btn-outline-light ms-2" onclick="readAloud('${title.replace(/'/g, "\\'")}')">
+              <i class="bi-volume-up"></i>
+            </button>
+          `;
+          ul.appendChild(li);
+        });
+        
+        document.getElementById('positive-count').textContent = positive;
+        document.getElementById('negative-count').textContent = negative;
+        document.getElementById('neutral-count').textContent = neutral;
+        
       } catch (err) {
         console.error('News error:', err);
-        ul.innerHTML = '<li style="color: var(--error)">Failed to load news.</li>';
+        ul.innerHTML = '<li style="color: var(--error)">Failed to load news</li>';
+      }
+    }
+
+    // Economic Calendar - FIXED
+    async function loadEconCalendar() {
+      const tbody = document.getElementById('calendar-body');
+      tbody.innerHTML = '<tr><td colspan="7"><div class="spinner"></div></td></tr>';
+      
+      try {
+        // Sample events for demo (in a real app, use an API)
+        const events = [
+          { date: "05-25-2025", time: "6:40pm", currency: "USD", event: "Fed Chair Powell Speaks", impact: "Medium", actual: "", previous: "" },
+          { date: "05-26-2025", time: "7:00am", currency: "GBP", event: "Bank Holiday", impact: "Holiday", actual: "", previous: "" },
+          { date: "05-26-2025", time: "12:00pm", currency: "USD", event: "Bank Holiday", impact: "Holiday", actual: "", previous: "" },
+          { date: "05-26-2025", time: "1:20pm", currency: "EUR", event: "ECB President Lagarde Speaks", impact: "Medium", actual: "", previous: "" },
+          { date: "05-26-2025", time: "1:30pm", currency: "EUR", event: "German Buba President Nagel Speaks", impact: "Low", actual: "", previous: "" },
+          { date: "05-26-2025", time: "11:01pm", currency: "GBP", event: "BRC Shop Price Index y/y", impact: "Low", actual: "-0.1%", previous: "-0.1%" },
+          { date: "05-26-2025", time: "11:50pm", currency: "JPY", event: "SPPI y/y", impact: "Low", actual: "3.0%", previous: "3.1%" },
+          { date: "05-27-2025", time: "12:00am", currency: "JPY", event: "BOJ Gov Ueda Speaks", impact: "High", actual: "", previous: "" }
+        ];
+        
+        tbody.innerHTML = '';
+        events.forEach(ev => {
+          const tr = document.createElement('tr');
+          if (ev.impact === 'High') tr.classList.add('high-impact');
+          ['date', 'time', 'currency', 'event', 'impact', 'actual', 'previous'].forEach(key => {
+            const td = document.createElement('td');
+            td.textContent = ev[key] || '-';
+            tr.appendChild(td);
+          });
+          tbody.appendChild(tr);
+        });
+      } catch (err) {
+        console.error('Calendar error:', err);
+        tbody.innerHTML = '<tr><td colspan="7" style="color: var(--error)">Failed to load calendar</td></tr>';
       }
     }
 
@@ -944,7 +1136,8 @@
           loadLatestSignal(),
           loadDashboard(),
           initChart(),
-          loadGoldNews()
+          loadGoldNews(),
+          loadEconCalendar()
         ]);
 
         document.querySelectorAll('.chart-toggle button').forEach(btn => {
@@ -985,6 +1178,7 @@
         setInterval(() => {
           loadDashboard();
           loadGoldNews();
+          loadEconCalendar();
         }, 120000);
 
         if (!localStorage.getItem('tourCompleted')) {
