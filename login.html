@@ -532,11 +532,21 @@
     
     // User-friendly error messages mapping
     const errorMessages = {
+      // Custom errors we throw
       'No account found for that email.': 'No account found with this email address.',
       'Invalid login credentials.': 'Incorrect password. Please try again.',
       'Your account is not yet approved—please check back soon.': 'Your account is pending approval. Please contact support for assistance.',
-      'JSON object requested multiple': 'Authentication error. Please try again later.',
+      
+      // Supabase-specific errors
+      'JSON object requested, multiple (or no) rows returned': 'Account not found. Please check your credentials.',
       'no rows returned': 'Account not found. Please check your credentials.',
+      'JSON object requested multiple': 'Account not found. Please check your credentials.',
+      'invalid login credentials': 'Incorrect email or password.',
+      'invalid password': 'Incorrect password. Please try again.',
+      
+      // Generic errors
+      'network error': 'Network error. Please check your connection.',
+      'fetch failed': 'Network error. Please check your connection.',
       'default': 'An unexpected error occurred. Please try again later.'
     };
     
@@ -561,17 +571,24 @@
           .limit(1)
           .maybeSingle();
 
+        // Handle Supabase errors
         if (error) {
-          // Handle known Supabase errors
-          if (error.message.includes('no rows')) {
-            throw new Error('no rows returned');
-          } else if (error.message.includes('multiple')) {
-            throw new Error('JSON object requested multiple');
-          } else {
-            throw new Error('default');
+          // Convert error to standard format for mapping
+          const errMsg = error.message.toLowerCase();
+          let mappedError = 'default';
+          
+          // Find the best matching error message
+          for (const [key, value] of Object.entries(errorMessages)) {
+            if (errMsg.includes(key.toLowerCase())) {
+              mappedError = value;
+              break;
+            }
           }
+          
+          throw new Error(mappedError);
         }
         
+        // No user found
         if (count === 0) {
           throw new Error('No account found for that email.');
         }
@@ -649,26 +666,46 @@
         sessionStorage.setItem('cbeUserId',   user.id);
         sessionStorage.setItem('cbeUserName', user.name);
         
-        // Simulate success for demo purposes
+        // Show success message before redirect
+        alertDiv.textContent = 'Login successful! Redirecting...';
+        alertDiv.classList.add('show');
+        alertDiv.style.color = 'var(--success-color)';
+        alertDiv.style.background = 'rgba(46, 204, 113, 0.1)';
+        alertDiv.style.borderColor = 'rgba(46, 204, 113, 0.3)';
+        
         setTimeout(() => {
           window.location.href = 'vip-dashboard.html';
-        }, 1000);
+        }, 1500);
       }
       catch (err) {
         console.error("Login error:", err);
         
-        // Get user-friendly error message
-        const friendlyMessage = errorMessages[err.message] || errorMessages['default'];
-        
         // Show error alert
-        alertDiv.textContent = friendlyMessage;
+        alertDiv.textContent = err.message;
         alertDiv.classList.add('show', 'error');
         
         // Hide loading state
         loginSpinner.style.display = 'none';
         loginButton.disabled = false;
+        
+        // Add shake animation to form
+        loginCard.style.animation = 'shake 0.5s';
+        setTimeout(() => {
+          loginCard.style.animation = '';
+        }, 500);
       }
     });
+
+    // Add shake animation for errors
+    const style = document.createElement('style');
+    style.textContent = `
+      @keyframes shake {
+        0%, 100% { transform: translateX(0); }
+        10%, 30%, 50%, 70%, 90% { transform: translateX(-5px); }
+        20%, 40%, 60%, 80% { transform: translateX(5px); }
+      }
+    `;
+    document.head.appendChild(style);
   </script>
 
   <!-- Smartsupp Live Chat (optional) -->
