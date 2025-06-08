@@ -380,6 +380,8 @@
     #calendar-widget table {
       width: 100%;
       border-collapse: collapse;
+      background: var(--calendar-bg);
+      color: var(--calendar-text);
     }
     #calendar-widget th, #calendar-widget td {
       padding: 0.5rem;
@@ -650,9 +652,10 @@
     const SUPA_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImRhcHdwZ3ZuZmpjZnFxaHJweGxhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDcwNDA4ODgsImV4cCI6MjA2MjYxNjg4OH0.ICC0UsLlzJDNre7rFCeD3k6iVzo6jOJgn3PhABpEMsQ';
     const supabase = window.supabase.createClient(SUPA_URL, SUPA_KEY);
 
-    // API Keys (Updated)
+    // API Keys
     const EXCHANGE_RATE_API_KEY = '4e4307b2bf8daac15365a410';
-    const NEWS_API_KEY = 'YOUR_WORKING_NEWS_API_KEY'; // Replace with a valid key
+    const NEWS_API_KEY = 'YOUR_WORKING_NEWS_API_KEY'; // Replace with your valid NewsAPI key
+    const RAPIDAPI_KEY = 'YOUR_RAPIDAPI_KEY'; // Replace with your RapidAPI key for Myfxbook Economic Calendar
 
     // Utilities
     async function getUserInfo() {
@@ -720,6 +723,7 @@
     async function loadLatestSignal() {
       const signalEl = document.getElementById('latest-signal');
       try {
+        console.log('Fetching latest signal...');
         const { data, error } = await supabase
           .from('signals')
           .select('action, chartasset, created_at')
@@ -727,6 +731,7 @@
           .limit(1)
           .single();
         if (error) throw error;
+        console.log('Latest signal data:', data);
         signalEl.innerHTML = `
           <p><strong>${data.chartasset}</strong>: ${data.action} signal</p>
           <p class="text-muted">Issued: ${new Date(data.created_at).toLocaleString()}</p>
@@ -876,24 +881,34 @@
       const ul = document.getElementById('news-list');
       ul.innerHTML = '<li><div class="spinner"></div></li>';
       try {
+        if (!NEWS_API_KEY || NEWS_API_KEY === 'YOUR_WORKING_NEWS_API_KEY') {
+          throw new Error('Invalid API key');
+        }
         const res = await fetch(`https://newsapi.org/v2/everything?q=gold+market&apiKey=${NEWS_API_KEY}&pageSize=8`);
         const data = await res.json();
         if (data.status !== 'ok') throw new Error('News API error');
         renderNews(data.articles);
       } catch (err) {
         console.error('News error:', err);
-        ul.innerHTML = '<li style="color: var(--error)">Failed to load news. Check API key or connection.</li>';
+        ul.innerHTML = `
+          <li style="color: var(--error)">Failed to load news. Please check your API key.</li>
+          <li><a href="https://www.reuters.com/markets/commodities/gold" target="_blank">View Gold News on Reuters</a></li>
+        `;
       }
     }
 
-    // Economic Calendar (Embedded from Investing.com)
+    // Economic Calendar
     async function loadEconCalendar() {
       const tbody = document.getElementById('calendar-body');
       tbody.innerHTML = '<tr><td colspan="7"><div class="spinner"></div></td></tr>';
       try {
-        // Mock API call to Investing.com (replace with actual API if available)
-        const res = await fetch('https://api.investing.com/economic-calendar'); // Placeholder URL
-        const events = await res.json(); // Adjust based on actual API response
+        const res = await fetch('https://myfxbook-economic-calendar.p.rapidapi.com/api/economic-calendar', {
+          headers: {
+            'X-RapidAPI-Key': RAPIDAPI_KEY,
+            'X-RapidAPI-Host': 'myfxbook-economic-calendar.p.rapidapi.com'
+          }
+        });
+        const events = await res.json();
         tbody.innerHTML = '';
         events.forEach(ev => {
           const tr = document.createElement('tr');
