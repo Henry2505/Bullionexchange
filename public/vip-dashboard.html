@@ -35,7 +35,7 @@
   <style>
     /* Core Styles */
     :root[data-theme="dark"] {
-      --bg: linear-gradient(135deg, #121212, #1a1a1a);
+      --bg: #000;
       --text: #e0e0e0;
       --gold: #ffd700;
       --gold-dark: #cca300;
@@ -52,7 +52,7 @@
       --calendar-text: #ffd700;
     }
     :root[data-theme="light"] {
-      --bg: linear-gradient(135deg, #f5f5f5, #e0e0e0);
+      --bg: #fff;
       --text: #333333;
       --gold: #cca300;
       --gold-dark: #b58900;
@@ -559,6 +559,19 @@
       text-shadow: 0 0 10px rgba(255, 215, 0, 0.7);
     }
 
+    /* Copy Button for Signal Values */
+    .copy-btn {
+      background: #000;
+      color: var(--gold) !important;
+      border: 1px solid var(--gold);
+      padding: 0.2rem 0.5rem;
+      border-radius: 4px;
+      font-size: 0.8rem;
+      cursor: pointer;
+      animation: pulse 2s infinite;
+      margin-left: 0.5rem;
+    }
+
     /* Responsive Design */
     @media (max-width: 768px) {
       .container-fluid { grid-template-columns: 1fr; }
@@ -865,7 +878,7 @@
   </button>
 
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js" integrity="sha384-YvpcrYf0tY3lHB60NNkmXc5s9fDVZLESaAA55NDzOxhy9GkcIdslK1eN7N6jIeHz" crossorigin="anonymous"></script>
-  <audio id="notif-sound" src="ding.mp3" preload="auto"></audio>
+  <audio id="notif-sound" src="notification.mp3" preload="auto"></audio>
   <audio id="critical-notif-sound" src="alert.mp3" preload="auto"></audio>
 
   <script>
@@ -939,7 +952,7 @@
       window.location.href = 'login.html?message=logged_out';
     }
 
-    // Load Latest Signal - FIXED
+    // Load Latest Signal
     async function loadLatestSignal() {
       const signalEl = document.getElementById('latest-signal');
       try {
@@ -968,19 +981,31 @@
           <div class="signal-details">
             <div class="signal-detail">
               <div>Entry</div>
-              <div><strong>${formatNumber(data.entry)}</strong></div>
+              <div>
+                <strong>${formatNumber(data.entry)}</strong>
+                ${typeof data.entry === 'number' ? `<button class="copy-btn" data-value="${formatNumber(data.entry)}">Copy</button>` : ''}
+              </div>
             </div>
             <div class="signal-detail">
               <div>Stop Loss</div>
-              <div><strong>${formatNumber(data.sl)}</strong></div>
+              <div>
+                <strong>${formatNumber(data.sl)}</strong>
+                ${typeof data.sl === 'number' ? `<button class="copy-btn" data-value="${formatNumber(data.sl)}">Copy</button>` : ''}
+              </div>
             </div>
             <div class="signal-detail">
               <div>Take Profit 1</div>
-              <div><strong>${formatNumber(data.tp1)}</strong></div>
+              <div>
+                <strong>${formatNumber(data.tp1)}</strong>
+                ${typeof data.tp1 === 'number' ? `<button class="copy-btn" data-value="${formatNumber(data.tp1)}">Copy</button>` : ''}
+              </div>
             </div>
             <div class="signal-detail">
               <div>Take Profit 2</div>
-              <div><strong>${data.tp2 ? formatNumber(data.tp2) : 'N/A'}</strong></div>
+              <div>
+                <strong>${data.tp2 ? formatNumber(data.tp2) : 'N/A'}</strong>
+                ${typeof data.tp2 === 'number' ? `<button class="copy-btn" data-value="${formatNumber(data.tp2)}">Copy</button>` : ''}
+              </div>
             </div>
           </div>
           <p class="text-muted mt-2">Signal issued at ${dt.toLocaleTimeString('en-GB')}</p>
@@ -991,7 +1016,7 @@
       }
     }
 
-    // Load Dashboard
+    // Load Dashboard2
     async function loadDashboard() {
       try {
         const today = new Date().toISOString().split('T')[0];
@@ -1091,7 +1116,7 @@
       }
     }
 
-    // Gold News with Sentiment Analysis - FIXED
+    // Gold News with Sentiment Analysis
     const positiveKeywords = ['rise', 'up', 'demand', 'buy', 'increase', 'gain', 'bullish'];
     const negativeKeywords = ['fall', 'down', 'sell', 'decrease', 'loss', 'bearish'];
 
@@ -1109,7 +1134,7 @@
         ul.innerHTML = '';
         
         items.forEach(i => {
-          const link = i.querySelector('link').textContent;
+          const link = i.querySelector('linkpiecemeal';
           const title = i.querySelector('title').textContent;
           const titleLower = title.toLowerCase();
           
@@ -1146,7 +1171,7 @@
       }
     }
 
-    // Economic Calendar - FIXED
+    // Economic Calendar
     async function loadEconCalendar() {
       const tbody = document.getElementById('calendar-body');
       tbody.innerHTML = '<tr><td colspan="7"><div class="spinner"></div></td></tr>';
@@ -1387,7 +1412,7 @@
             entries.forEach(entry => {
               if (entry.isIntersecting) {
                 entry.target.classList.add('visible');
-                observer.unobserve(entry.target);
+                observer Thiunobserve(entry.target);
               }
             });
           }, { threshold: 0.1 }).observe(el);
@@ -1423,6 +1448,18 @@
         document.getElementById('convert-btn').addEventListener('click', convertCurrency);
         document.getElementById('floating-signals-btn').addEventListener('click', () => {
           window.location.href = 'https://apexincomeoptions.com.ng/signals';
+        });
+
+        // Add copy functionality for signal values
+        document.getElementById('latest-signal').addEventListener('click', (e) => {
+          if (e.target.classList.contains('copy-btn')) {
+            const value = e.target.getAttribute('data-value');
+            navigator.clipboard.writeText(value).then(() => {
+              alert('Copied to clipboard: ' + value);
+            }).catch(() => {
+              alert('Failed to copy');
+            });
+          }
         });
 
         supabase
