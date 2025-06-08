@@ -4,21 +4,84 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Affiliate Signup • CBE Global</title>
+
+  <!-- Bootstrap CSS -->
   <link
     href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css"
     rel="stylesheet"
     crossorigin="anonymous"
   />
+
+  <!-- Supabase JS v2 UMD (must come before our script) -->
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>
+
   <style>
-    body { display: flex; align-items: center; justify-content: center; height: 100vh; background: #121212; color: #e0e0e0; font-family: sans-serif; }
-    .card { background: rgba(30,30,30,0.9); padding: 2rem; border-radius: 8px; width: 90%; max-width: 400px; }
-    .card h1 { color: #ffd700; text-align: center; margin-bottom: 1rem; }
-    .form-group { margin-bottom: 1rem; }
-    label { display: block; margin-bottom: .25rem; }
-    input { width: 100%; padding: .5rem; border: 1px solid #ffd700; border-radius: 4px; background: #1e1e1e; color: #e0e0e0; }
-    button { width: 100%; padding: .6rem; background: #ffd700; border: none; border-radius: 4px; font-weight: bold; cursor: pointer; }
-    #alert { margin-top: 1rem; text-align: center; min-height: 1.2em; }
+    :root[data-theme="dark"] {
+      --bg: #121212;
+      --text: #e0e0e0;
+      --accent-bg: rgba(30,30,30,0.9);
+      --gold: #ffd700;
+      --error: #e74c3c;
+      --success: #2ecc71;
+    }
+    body {
+      margin:0;
+      height:100vh;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      background:var(--bg);
+      color:var(--text);
+      font-family:Arial,sans-serif;
+    }
+    .card {
+      background:var(--accent-bg);
+      padding:2rem;
+      border-radius:8px;
+      width:90%;
+      max-width:400px;
+      box-shadow:0 4px 12px rgba(0,0,0,0.5);
+    }
+    .card h1 {
+      margin-bottom:1.5rem;
+      color:var(--gold);
+      text-align:center;
+    }
+    .form-group {
+      margin-bottom:1rem;
+    }
+    label {
+      display:block;
+      margin-bottom:.25rem;
+    }
+    input {
+      width:100%;
+      padding:.5rem;
+      border:1px solid var(--gold);
+      border-radius:4px;
+      background:#1e1e1e;
+      color:var(--text);
+    }
+    input:focus {
+      outline:none;
+      box-shadow:0 0 8px var(--gold);
+    }
+    #btn {
+      width:100%;
+      padding:.6rem;
+      background:var(--gold);
+      border:none;
+      border-radius:4px;
+      font-weight:bold;
+      cursor:pointer;
+      margin-top:1rem;
+    }
+    #alert {
+      margin-top:1rem;
+      text-align:center;
+      min-height:1.2em;
+      white-space:pre-wrap;
+    }
   </style>
 </head>
 <body>
@@ -46,45 +109,55 @@
   </div>
 
   <script>
-    // Initialize Supabase client
-    const supabase = supabase.createClient(
-      'https://dapwpgvnfjcfqqhrpxla.supabase.co',
-      'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBh....'
-    );
+    // 1) Init Supabase (using the correct global)
+    const SUPA_URL      = 'https://dapwpgvnfjcfqqhrpxla.supabase.co';
+    const SUPA_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImRhcHdwZ3ZuZmpjZnFxaHJweGxhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDcwNDA4ODgsImV4cCI6MjA2MjYxNjg4OH0.ICC0UsLlzJDNre7rFCeD3k6iVzo6jOJgn3PhABpEMsQ';
+    const supabase      = Supabase.createClient(SUPA_URL, SUPA_ANON_KEY);
+    console.log('Supabase client initialized:', supabase);
 
-    document.getElementById('btn').addEventListener('click', async () => {
-      const alertEl = document.getElementById('alert');
+    // 2) DOM references
+    const btn     = document.getElementById('btn');
+    const alertEl = document.getElementById('alert');
+
+    // 3) Generate random referral code
+    function genCode() {
+      const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
+      let code = '';
+      for (let i = 0; i < 8; i++) {
+        code += chars.charAt(Math.floor(Math.random() * chars.length));
+      }
+      return code;
+    }
+
+    // 4) Button click handler
+    btn.addEventListener('click', async () => {
       alertEl.textContent = '';
-      // Read values
+
       const name     = document.getElementById('name').value.trim();
       const email    = document.getElementById('email').value.trim().toLowerCase();
       const password = document.getElementById('password').value;
       const confirm  = document.getElementById('confirm').value;
 
-      // Validate
+      // Basic validation
       if (!name || !email || !password || !confirm) {
+        alertEl.style.color = 'var(--error)';
         return alertEl.textContent = 'All fields are required.';
       }
       if (password.length < 8) {
+        alertEl.style.color = 'var(--error)';
         return alertEl.textContent = 'Password must be at least 8 characters.';
       }
       if (password !== confirm) {
+        alertEl.style.color = 'var(--error)';
         return alertEl.textContent = 'Passwords do not match.';
       }
 
       // Disable button
-      const btn = document.getElementById('btn');
-      btn.disabled = true;
-      btn.textContent = 'Signing up…';
+      btn.disabled     = true;
+      btn.textContent  = 'Signing up…';
 
-      // Generate referral code
-      const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
-      let referral_code = '';
-      for (let i = 0; i < 8; i++) {
-        referral_code += chars.charAt(Math.floor(Math.random() * chars.length));
-      }
-
-      // Insert into public.users
+      // Insert
+      const referral_code = genCode();
       const { error } = await supabase
         .from('users')
         .insert([{
@@ -97,13 +170,17 @@
         }]);
 
       if (error) {
+        console.error('Insert error:', error);
+        alertEl.style.color = 'var(--error)';
         alertEl.textContent = error.message;
-        btn.disabled = false;
+        btn.disabled    = false;
         btn.textContent = 'Sign Up';
-      } else {
-        alertEl.style.color = '#2ecc71';
-        alertEl.textContent = `Success! Your code is ${referral_code}`;
+        return;
       }
+
+      // Success
+      alertEl.style.color = 'var(--success)';
+      alertEl.textContent = `Success! Your code is ${referral_code}`;
     });
   </script>
 </body>
