@@ -5,19 +5,21 @@
   <meta name="viewport" content="width=device-width,initial-scale=1"/>
   <title>CBE Admin – User & Subscription Management</title>
   
-  <!-- Fonts & Icons -->
+  <script>
+    if (localStorage.getItem('isLoggedIn') !== 'true') {
+      window.location.replace('admin-login.html?redirect=' + encodeURIComponent(window.location.pathname));
+    }
+  </script>
+  
   <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
   <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css" rel="stylesheet">
-  
-  <!-- Libraries -->
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet"/>
   <link href="https://cdn.datatables.net/1.13.4/css/dataTables.bootstrap5.min.css" rel="stylesheet"/>
   <link href="https://cdn.datatables.net/buttons/2.3.6/css/buttons.bootstrap5.min.css" rel="stylesheet"/>
   <link href="https://cdn.datatables.net/select/1.7.0/css/select.bootstrap5.min.css" rel="stylesheet"/>
   <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
-  
+
   <style>
-    /* Theme Variables */
     :root[data-theme="dark"] {
       --bg: #0f172a;
       --text: #f1f5f9;
@@ -49,19 +51,15 @@
       --highlight: rgba(251, 191, 36, 0.15);
     }
 
-    /* Reset & Base */
     * { margin: 0; padding: 0; box-sizing: border-box; }
     body, html {
-      width: 100%;
-      height: 100%;
+      width: 100%; height: 100%;
       font-family: 'Poppins', sans-serif;
-      background: var(--bg);
-      color: var(--text);
+      background: var(--bg); color: var(--text);
       overflow-x: hidden;
     }
     a { text-decoration: none; }
     
-    /* Buttons */
     .btn-gold {
       background: linear-gradient(135deg, var(--gold), var(--gold-dark));
       color: #fff;
@@ -79,7 +77,6 @@
     .btn-warning { background: linear-gradient(135deg, var(--warning), #e68a00); }
     .btn-danger { background: linear-gradient(135deg, var(--danger), #d43030); }
 
-    /* Header */
     header {
       display: flex;
       align-items: center;
@@ -129,7 +126,6 @@
       background: var(--highlight);
     }
 
-    /* Main Panel */
     main {
       padding: 2rem;
     }
@@ -154,7 +150,6 @@
       font-size: 1.3rem;
     }
 
-    /* Cards */
     .stats-card {
       background: var(--card-bg);
       border-radius: 12px;
@@ -162,8 +157,6 @@
       border: 1px solid var(--card-border);
       transition: transform 0.3s;
       height: 100%;
-      position: relative;
-      overflow: hidden;
     }
     .stats-card:hover {
       transform: translateY(-5px);
@@ -178,8 +171,6 @@
       justify-content: center;
       margin-bottom: 1rem;
       font-size: 1.8rem;
-      position: relative;
-      z-index: 2;
     }
     .stats-icon.gold { background: rgba(251, 191, 36, 0.15); color: var(--gold); }
     .stats-icon.green { background: rgba(16, 185, 129, 0.15); color: var(--success); }
@@ -189,35 +180,14 @@
       font-size: 2rem;
       font-weight: 700;
       margin-bottom: 0.2rem;
-      position: relative;
-      z-index: 2;
     }
     .stats-label {
       font-size: 0.9rem;
       color: #94a3b8;
       text-transform: uppercase;
       letter-spacing: 1px;
-      position: relative;
-      z-index: 2;
-    }
-    .live-badge {
-      position: absolute;
-      top: 10px;
-      right: 10px;
-      background: var(--danger);
-      color: white;
-      padding: 3px 8px;
-      border-radius: 20px;
-      font-size: 0.7rem;
-      animation: pulse 1.5s infinite;
-    }
-    @keyframes pulse {
-      0% { opacity: 0.7; }
-      50% { opacity: 1; }
-      100% { opacity: 0.7; }
     }
 
-    /* DataTable */
     .dataTables_wrapper {
       margin-top: 1.5rem;
     }
@@ -295,7 +265,6 @@
       flex-wrap: wrap;
     }
     
-    /* Status badges */
     .status-badge {
       padding: 0.35rem 0.8rem;
       border-radius: 50px;
@@ -308,7 +277,6 @@
     .status-rejected { background: rgba(239, 68, 68, 0.15); color: var(--danger); }
     .status-expired { background: rgba(107, 114, 128, 0.15); color: #6b7280; }
     
-    /* Subscription chips */
     .subscription-chip {
       padding: 0.4rem 0.8rem;
       border-radius: 50px;
@@ -316,27 +284,24 @@
       font-weight: 500;
       display: inline-block;
     }
-    .chip-weekly { background: rgba(59, 130, 246, 0.15); color: #3b82f6; }
-    .chip-monthly { background: rgba(139, 92, 246, 0.15); color: #8b5cf6; }
-    .chip-yearly { background: rgba(251, 191, 36, 0.2); color: var(--gold); }
+    .chip-basic { background: rgba(59, 130, 246, 0.15); color: #3b82f6; }
+    .chip-standard { background: rgba(139, 92, 246, 0.15); color: #8b5cf6; }
+    .chip-premium { background: rgba(251, 191, 36, 0.2); color: var(--gold); }
+    .chip-enterprise { background: rgba(236, 72, 153, 0.15); color: #ec4899; }
     
-    /* Progress bar */
-    .expiry-progress {
-      height: 8px;
-      border-radius: 4px;
-      background: var(--glass-light);
-      overflow: hidden;
-      margin-top: 0.5rem;
+    .expiry-countdown {
+      font-weight: 600;
+      font-size: 0.95rem;
+      min-width: 120px;
+      display: inline-block;
     }
-    .progress-bar {
-      height: 100%;
-      border-radius: 4px;
+    .countdown-expiring { color: var(--danger); animation: pulse 1.5s infinite; }
+    @keyframes pulse {
+      0% { opacity: 1; }
+      50% { opacity: 0.7; }
+      100% { opacity: 1; }
     }
-    .progress-green { background: linear-gradient(90deg, var(--success), #0d9e6c); }
-    .progress-yellow { background: linear-gradient(90deg, var(--warning), #e68a00); }
-    .progress-red { background: linear-gradient(90deg, var(--danger), #d43030); }
     
-    /* Footer */
     footer {
       text-align: center;
       padding: 1.5rem;
@@ -346,40 +311,6 @@
       margin-top: 2rem;
     }
     
-    /* Real-time counter */
-    .counter-container {
-      display: flex;
-      justify-content: space-around;
-      margin-top: 1.5rem;
-      padding: 1rem;
-      background: var(--card-bg);
-      border-radius: 12px;
-      border: 1px solid var(--card-border);
-    }
-    .counter-item {
-      text-align: center;
-    }
-    .counter-value {
-      font-size: 2.5rem;
-      font-weight: 700;
-      color: var(--gold);
-      margin-bottom: 0.5rem;
-    }
-    .counter-label {
-      font-size: 0.9rem;
-      color: #94a3b8;
-      text-transform: uppercase;
-      letter-spacing: 1px;
-    }
-    
-    /* Subscription chart */
-    .chart-container {
-      margin-top: 2rem;
-      height: 300px;
-      position: relative;
-    }
-    
-    /* Responsive */
     @media (max-width: 992px) {
       .stats-grid {
         grid-template-columns: repeat(2, 1fr);
@@ -392,10 +323,6 @@
       .stats-grid {
         grid-template-columns: 1fr;
       }
-      .counter-container {
-        flex-direction: column;
-        gap: 1.5rem;
-      }
     }
   </style>
 </head>
@@ -404,7 +331,7 @@
   <header>
     <div class="header-left">
       <a href="admin-dashboard.html">
-        <img src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='200' height='60' viewBox='0 0 200 60'%3E%3Crect width='200' height='60' fill='%231e293b' rx='5'/%3E%3Ctext x='100' y='35' font-family='Poppins' font-size='20' fill='%23fbbf24' text-anchor='middle' font-weight='bold'%3ECBE ADMIN%3C/text%3E%3C/svg%3E" alt="CBE Logo"/>
+        <img src="CBE_logo.PNG" alt="CBE Logo"/>
       </a>
       <h1>User & Subscription Management</h1>
     </div>
@@ -432,31 +359,10 @@
         </div>
       </div>
       
-      <!-- Real-time Subscription Counters -->
-      <div class="counter-container">
-        <div class="counter-item">
-          <div class="counter-value" id="weekly-counter">0</div>
-          <div class="counter-label">Weekly Subscriptions</div>
-        </div>
-        <div class="counter-item">
-          <div class="counter-value" id="monthly-counter">0</div>
-          <div class="counter-label">Monthly Subscriptions</div>
-        </div>
-        <div class="counter-item">
-          <div class="counter-value" id="yearly-counter">0</div>
-          <div class="counter-label">Yearly Subscriptions</div>
-        </div>
-        <div class="counter-item">
-          <div class="counter-value" id="total-counter">0</div>
-          <div class="counter-label">Total Active</div>
-        </div>
-      </div>
-      
       <!-- Stats Cards with Real Data -->
       <div class="row row-cols-1 row-cols-md-2 row-cols-lg-4 g-4 mb-5">
         <div class="col">
           <div class="stats-card">
-            <span class="live-badge">LIVE</span>
             <div class="stats-icon gold">
               <i class="bi bi-people"></i>
             </div>
@@ -466,7 +372,6 @@
         </div>
         <div class="col">
           <div class="stats-card">
-            <span class="live-badge">LIVE</span>
             <div class="stats-icon green">
               <i class="bi bi-credit-card"></i>
             </div>
@@ -476,7 +381,6 @@
         </div>
         <div class="col">
           <div class="stats-card">
-            <span class="live-badge">LIVE</span>
             <div class="stats-icon blue">
               <i class="bi bi-hourglass-split"></i>
             </div>
@@ -486,7 +390,6 @@
         </div>
         <div class="col">
           <div class="stats-card">
-            <span class="live-badge">LIVE</span>
             <div class="stats-icon purple">
               <i class="bi bi-exclamation-circle"></i>
             </div>
@@ -494,11 +397,6 @@
             <div class="stats-label">Expiring Soon</div>
           </div>
         </div>
-      </div>
-
-      <!-- Subscription Chart -->
-      <div class="chart-container">
-        <canvas id="subscriptionChart"></canvas>
       </div>
 
       <!-- Bulk Actions -->
@@ -536,7 +434,7 @@
 
   <footer>
     <div class="container">
-      <p class="mb-0">© 2025 CBE: Chukwuemeka Bullion Exchange. All rights reserved.</p>
+      <p class="mb-0">© 2023 Crypto Business Education. All rights reserved.</p>
     </div>
   </footer>
 
@@ -549,7 +447,8 @@
   <script src="https://cdn.datatables.net/buttons/2.3.6/js/buttons.bootstrap5.min.js"></script>
   <script src="https://cdn.datatables.net/buttons/2.3.6/js/buttons.html5.min.js"></script>
   <script src="https://cdn.datatables.net/select/1.7.0/js/dataTables.select.min.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>
+
   <script>
   (async () => {
     // Theme toggle logic
@@ -565,53 +464,10 @@
       btn.textContent = theme === 'dark' ? '🌞' : '🌜';
     };
 
-    // Initialize Chart.js
-    const ctx = document.getElementById('subscriptionChart').getContext('2d');
-    let subscriptionChart = new Chart(ctx, {
-      type: 'doughnut',
-      data: {
-        labels: ['Weekly', 'Monthly', 'Yearly'],
-        datasets: [{
-          label: 'Subscription Distribution',
-          data: [0, 0, 0],
-          backgroundColor: [
-            'rgba(59, 130, 246, 0.7)',
-            'rgba(139, 92, 246, 0.7)',
-            'rgba(251, 191, 36, 0.7)'
-          ],
-          borderColor: [
-            'rgba(59, 130, 246, 1)',
-            'rgba(139, 92, 246, 1)',
-            'rgba(251, 191, 36, 1)'
-          ],
-          borderWidth: 2
-        }]
-      },
-      options: {
-        responsive: true,
-        maintainAspectRatio: false,
-        plugins: {
-          legend: {
-            position: 'right',
-            labels: {
-              color: 'var(--text)',
-              font: {
-                family: "'Poppins', sans-serif"
-              }
-            }
-          },
-          title: {
-            display: true,
-            text: 'Subscription Distribution',
-            color: 'var(--gold)',
-            font: {
-              size: 16,
-              family: "'Poppins', sans-serif"
-            }
-          }
-        }
-      }
-    });
+    // Supabase client
+    const SUPABASE_URL = 'https://dapwpgvnfjcfqqhrpxla.supabase.co';
+    const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImRhcHdwZ3ZuZmpjZnFxaHJweGxhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDcwNDA4ODgsImV4cCI6MjA2MjYxNjg4OH0.ICC0UsLlzJDNre7rFCeD3k6iVzo6jOJgn3PhABpEMsQ';
+    const sb = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
     // Initialize DataTable
     const table = $('#users-table').DataTable({
@@ -655,48 +511,40 @@
       }
     });
 
-    // Helper to calculate expiry info
+    // Helper to calculate expiry info in minutes
     function getExpiryInfo(expiryDate) {
-      if (!expiryDate) return { text: '—', percent: 0, class: '' };
+      if (!expiryDate) return { text: '—', minutes: 0, class: '' };
       
-      const today = new Date();
+      const now = new Date();
       const expiry = new Date(expiryDate);
-      const diffTime = expiry - today;
-      const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+      const diffMs = expiry - now;
+      const diffMinutes = Math.floor(diffMs / (1000 * 60));
       
-      let progressClass = 'progress-green';
-      let progressWidth = 100;
-      
-      if (diffDays <= 0) {
-        return { 
-          text: 'Expired', 
-          percent: 100, 
-          class: 'progress-red' 
-        };
+      if (diffMinutes <= 0) {
+        return { text: 'Expired', minutes: 0, class: 'countdown-expired' };
       }
       
-      if (diffDays <= 7) {
-        progressClass = 'progress-red';
-        progressWidth = (diffDays / 7) * 100;
-      } else if (diffDays <= 30) {
-        progressClass = 'progress-yellow';
-        progressWidth = (diffDays / 30) * 100;
-      } else {
-        progressWidth = 100;
-      }
+      const hours = Math.floor(diffMinutes / 60);
+      const minutes = diffMinutes % 60;
+      const days = Math.floor(hours / 24);
+      const remainingHours = hours % 24;
       
       let displayText = '';
-      if (diffDays < 30) {
-        displayText = `${diffDays} days`;
+      if (days > 0) {
+        displayText = `${days}d ${remainingHours}h ${minutes}m`;
+      } else if (hours > 0) {
+        displayText = `${hours}h ${minutes}m`;
       } else {
-        const months = Math.floor(diffDays / 30);
-        displayText = `${months} month${months > 1 ? 's' : ''}`;
+        displayText = `${minutes}m`;
       }
+      
+      // Add warning class if less than 1 hour remaining
+      const warningClass = diffMinutes < 60 ? 'countdown-expiring' : '';
       
       return { 
         text: displayText, 
-        percent: progressWidth, 
-        class: progressClass 
+        minutes: diffMinutes,
+        class: warningClass
       };
     }
 
@@ -733,89 +581,54 @@
       return buttons;
     }
 
-    // Real-time subscription counters
-    let subscriptionCounts = {
-      weekly: 0,
-      monthly: 0,
-      yearly: 0,
-      total: 0
-    };
-
-    function updateCounters() {
-      document.getElementById('weekly-counter').textContent = subscriptionCounts.weekly;
-      document.getElementById('monthly-counter').textContent = subscriptionCounts.monthly;
-      document.getElementById('yearly-counter').textContent = subscriptionCounts.yearly;
-      document.getElementById('total-counter').textContent = subscriptionCounts.total;
+    // Real-time countdown updater
+    function updateCountdowns() {
+      table.rows().every(function() {
+        const row = this.node();
+        const expiryCell = $(row).find('.expiry-countdown');
+        const expiryDate = expiryCell.data('expiry');
+        
+        if (expiryDate) {
+          const expiryInfo = getExpiryInfo(expiryDate);
+          expiryCell.text(expiryInfo.text);
+          expiryCell.removeClass('countdown-expiring');
+          if (expiryInfo.class) {
+            expiryCell.addClass(expiryInfo.class);
+          }
+        }
+      });
     }
-
-    // Simulate real-time subscription growth
-    function simulateSubscriptionGrowth() {
-      // Weekly subscriptions
-      if (Math.random() > 0.7) {
-        subscriptionCounts.weekly++;
-        subscriptionCounts.total++;
-      }
-      
-      // Monthly subscriptions
-      if (Math.random() > 0.8) {
-        subscriptionCounts.monthly++;
-        subscriptionCounts.total++;
-      }
-      
-      // Yearly subscriptions
-      if (Math.random() > 0.9) {
-        subscriptionCounts.yearly++;
-        subscriptionCounts.total++;
-      }
-      
-      updateCounters();
-      
-      // Update chart data
-      subscriptionChart.data.datasets[0].data = [
-        subscriptionCounts.weekly,
-        subscriptionCounts.monthly,
-        subscriptionCounts.yearly
-      ];
-      subscriptionChart.update();
-    }
-    
-    // Start the simulation
-    setInterval(simulateSubscriptionGrowth, 1000);
 
     // Load users with their latest payment
     async function loadUsers() {
       try {
-        // Simulated user data
-        const users = [
-          { id: '1', name: 'John Doe', email: 'john@example.com', status: 'Approved', created_at: '2023-10-15' },
-          { id: '2', name: 'Jane Smith', email: 'jane@example.com', status: 'Pending', created_at: '2023-10-16' },
-          { id: '3', name: 'Robert Johnson', email: 'robert@example.com', status: 'Approved', created_at: '2023-10-10' },
-          { id: '4', name: 'Emily Davis', email: 'emily@example.com', status: 'Rejected', created_at: '2023-10-12' },
-          { id: '5', name: 'Michael Wilson', email: 'michael@example.com', status: 'Approved', created_at: '2023-10-14' },
-          { id: '6', name: 'Sarah Brown', email: 'sarah@example.com', status: 'Pending', created_at: '2023-10-17' },
-          { id: '7', name: 'David Miller', email: 'david@example.com', status: 'Approved', created_at: '2023-10-11' },
-          { id: '8', name: 'Lisa Taylor', email: 'lisa@example.com', status: 'Approved', created_at: '2023-10-13' }
-        ];
-
-        // Simulated payment data
-        const payments = [
-          { id: 'p1', user_id: '1', plan: 'Weekly', amount: 50, status: 'Paid', expiry_date: '2023-11-15' },
-          { id: 'p3', user_id: '3', plan: 'Monthly', amount: 150, status: 'Paid', expiry_date: '2023-11-10' },
-          { id: 'p5', user_id: '5', plan: 'Yearly', amount: 1500, status: 'Paid', expiry_date: '2024-10-14' },
-          { id: 'p7', user_id: '7', plan: 'Monthly', amount: 150, status: 'Paid', expiry_date: '2023-11-11' },
-          { id: 'p8', user_id: '8', plan: 'Weekly', amount: 50, status: 'Paid', expiry_date: '2023-10-20' }
-        ];
-
+        // Fetch users
+        const { data: users, error: usersError } = await sb
+          .from('users')
+          .select('*')
+          .order('created_at', { ascending: false });
+        
+        if (usersError) throw usersError;
+        
+        // Fetch payments
+        const { data: payments, error: paymentsError } = await sb
+          .from('payments')
+          .select('*');
+        
+        if (paymentsError) throw paymentsError;
+        
         // Calculate statistics
         const totalUsers = users.length;
-        const activeSubs = payments.filter(p => p.status === 'Paid' && 
+        const activeSubs = payments.filter(p => p.status === 'approved' && 
           new Date(p.expiry_date) > new Date()).length;
         const pendingApprovals = users.filter(u => u.status === 'Pending').length;
+        
+        // Calculate expiring soon (less than 60 minutes)
         const expiringSoon = payments.filter(p => {
           const expiry = new Date(p.expiry_date);
-          const today = new Date();
-          const diffDays = Math.ceil((expiry - today) / (1000 * 60 * 60 * 24));
-          return diffDays > 0 && diffDays <= 7 && p.status === 'Paid';
+          const now = new Date();
+          const diffMinutes = Math.floor((expiry - now) / (1000 * 60));
+          return diffMinutes > 0 && diffMinutes <= 60 && p.status === 'approved';
         }).length;
         
         // Update stats cards
@@ -827,14 +640,20 @@
         // Map users to their latest payment
         const userPayments = {};
         payments.forEach(payment => {
-          userPayments[payment.user_id] = payment;
+          const user = users.find(u => u.email === payment.email);
+          if (user) {
+            if (!userPayments[user.id] || 
+                new Date(payment.created_at) > new Date(userPayments[user.id].created_at)) {
+              userPayments[user.id] = payment;
+            }
+          }
         });
         
         // Clear and populate table
         table.clear();
         users.forEach((user, index) => {
           const payment = userPayments[user.id] || null;
-          const expiryInfo = payment ? getExpiryInfo(payment.expiry_date) : { text: '—', percent: 0, class: '' };
+          const expiryInfo = payment ? getExpiryInfo(payment.expiry_date) : { text: '—', minutes: 0, class: '' };
           
           table.row.add([
             `<input type="checkbox" class="row-select" data-id="${user.id}">`,
@@ -846,15 +665,12 @@
               `<span class="status-badge status-${payment.status.toLowerCase()}">${payment.status}</span>` : 
               `<span class="status-badge status-pending">N/A</span>`,
             payment ? 
-              `<span class="subscription-chip chip-${payment.plan.toLowerCase()}">${payment.plan}</span>` : 
+              `<span class="subscription-chip chip-${payment.plan.toLowerCase().split(' ')[0]}">${payment.plan}</span>` : 
               '—',
             `
-              <div class="d-flex flex-column">
-                <span>${expiryInfo.text}</span>
-                <div class="expiry-progress">
-                  <div class="progress-bar ${expiryInfo.class}" style="width: ${expiryInfo.percent}%"></div>
-                </div>
-              </div>
+              <span class="expiry-countdown ${expiryInfo.class}" data-expiry="${payment ? payment.expiry_date : ''}">
+                ${expiryInfo.text}
+              </span>
             `,
             getActionButtons(user.id, user.status, payment ? payment.status : 'N/A')
           ]);
@@ -869,11 +685,25 @@
     // User actions
     window.editUser = async (id) => {
       try {
-        const name = prompt('Edit name:', 'User ' + id);
-        const email = prompt('Edit email:', 'user' + id + '@example.com');
+        const { data: user, error } = await sb
+          .from('users')
+          .select('*')
+          .eq('id', id)
+          .single();
+          
+        if (error) throw error;
+        
+        const name = prompt('Edit name:', user.name);
+        const email = prompt('Edit email:', user.email);
         
         if (name && email) {
-          alert(`User ${id} updated successfully!`);
+          const { error: updateError } = await sb
+            .from('users')
+            .update({ name, email })
+            .eq('id', id);
+            
+          if (updateError) throw updateError;
+          alert('User updated successfully!');
           await loadUsers();
         }
       } catch (error) {
@@ -884,6 +714,12 @@
     
     window.approveUser = async (id) => {
       try {
+        const { error } = await sb
+          .from('users')
+          .update({ status: 'Approved' })
+          .eq('id', id);
+          
+        if (error) throw error;
         alert('User approved successfully!');
         await loadUsers();
       } catch (error) {
@@ -895,6 +731,12 @@
     window.deleteUser = async (id) => {
       if (confirm('Are you sure you want to delete this user?')) {
         try {
+          const { error } = await sb
+            .from('users')
+            .delete()
+            .eq('id', id);
+            
+          if (error) throw error;
           alert('User deleted successfully!');
           await loadUsers();
         } catch (error) {
@@ -935,6 +777,12 @@
       }
       
       try {
+        const { error } = await sb
+          .from('users')
+          .update({ status: 'Approved' })
+          .in('id', userIds);
+          
+        if (error) throw error;
         alert(`${userIds.length} users approved successfully!`);
         await loadUsers();
       } catch (error) {
@@ -951,6 +799,12 @@
       }
       
       try {
+        const { error } = await sb
+          .from('users')
+          .update({ status: 'Rejected' })
+          .in('id', userIds);
+          
+        if (error) throw error;
         alert(`${userIds.length} users rejected successfully!`);
         await loadUsers();
       } catch (error) {
@@ -969,6 +823,12 @@
       if (!confirm(`Are you sure you want to delete ${userIds.length} users?`)) return;
       
       try {
+        const { error } = await sb
+          .from('users')
+          .delete()
+          .in('id', userIds);
+          
+        if (error) throw error;
         alert(`${userIds.length} users deleted successfully!`);
         await loadUsers();
       } catch (error) {
@@ -985,6 +845,7 @@
       }
       
       alert(`Renewing subscriptions for ${userIds.length} users...`);
+      // In a real implementation, you would create new payment records here
     });
 
     document.getElementById('export-data').addEventListener('click', () => {
@@ -999,12 +860,21 @@
     // Initial load
     await loadUsers();
     
-    // Initialize subscription counts
-    subscriptionCounts.weekly = 24;
-    subscriptionCounts.monthly = 18;
-    subscriptionCounts.yearly = 12;
-    subscriptionCounts.total = 54;
-    updateCounters();
+    // Real-time updates
+    const channel = sb
+      .channel('schema-db-changes')
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'payments' },
+        () => {
+          loadUsers();
+        }
+      )
+      .subscribe();
+    
+    // Setup countdown timer
+    setInterval(updateCountdowns, 60000); // Update every minute
+    setInterval(updateCountdowns, 1000); // Update every second for testing
   })();
   </script>
 </body>
