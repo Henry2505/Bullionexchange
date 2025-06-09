@@ -209,7 +209,7 @@
       const alertDiv = document.getElementById('login-alert');
       const loginBtn = document.getElementById('login-btn');
 
-      // clear and show spinner
+      // clear any message & show spinner
       alertDiv.textContent = '';
       loginBtn.disabled = true;
       const spinner = document.createElement('div');
@@ -220,7 +220,7 @@
       const password = document.getElementById('password').value;
 
       try {
-        // 3.a) Fetch user by email
+        // a) Fetch user by email
         const { data: user, error, count } = await sb
           .from('users')
           .select('id, name, email, password, status', { count: 'exact' })
@@ -232,16 +232,16 @@
         if (count === 0) 
           throw new Error('No account found with that email.');
 
-        // 3.b) Password check
+        // b) Password check
         if (user.password !== password) 
           throw new Error('The password you entered is incorrect.');
 
-        // 3.c) Approved check
+        // c) Approved check
         if (String(user.status).toLowerCase() !== 'approved') {
           throw new Error('Your account is pending approval. Please try again later.');
         }
 
-        // 3.d) Device fingerprint & Brevo alert (unchanged)
+        // d) Device fingerprint & Brevo alert (unchanged)
         const deviceKey = `cbeDevice_${email}`;
         const savedDevice = localStorage.getItem(deviceKey);
         const currentDevice = navigator.userAgent;
@@ -268,7 +268,7 @@
           }).catch(() => {/* silent */});
         }
 
-        // 3.e) SUCCESS → redirect
+        // e) SUCCESS → redirect
         sessionStorage.setItem('cbeLoggedIn', 'true');
         sessionStorage.setItem('cbeUserId',   user.id);
         sessionStorage.setItem('cbeUserName', user.name);
@@ -276,14 +276,18 @@
       }
       catch (err) {
         console.error("Login error:", err);
-        alertDiv.innerHTML = '';        // remove spinner
-        const msg = err.message || 'An unexpected error occurred.';
-        // Map internal/fetch errors to clean message
-        if (msg.includes('JSON') || msg.includes('multiple')) {
-          alertDiv.textContent = 'Unable to process your login. Please try again.';
-        } else {
-          alertDiv.textContent = msg;
+        alertDiv.innerHTML = '';  // remove spinner
+        let msg = err.message || 'An unexpected error occurred.';
+
+        // Map Supabase’s “JSON object requested…” or row errors
+        if (msg.includes('JSON object requested')) {
+          msg = 'Invalid email or password.';
         }
+        else if (msg.toLowerCase().includes('multiple') || msg.toLowerCase().includes('no rows')) {
+          msg = 'Invalid email or password.';  
+        }
+
+        alertDiv.textContent = msg;
         alertDiv.style.color = "var(--error-color)";
       }
       finally {
