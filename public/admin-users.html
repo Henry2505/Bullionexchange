@@ -771,17 +771,22 @@
       });
     });
 
+    // Helper to get selected UUIDs
+    function getSelectedUserIds() {
+      const selectedRows = table.rows({ selected: true }).nodes().toArray();
+      const userIds = selectedRows.map(row => {
+        return $(row).find('.row-select').data('id');
+      });
+      return userIds;
+    }
+
     // Bulk actions
     document.getElementById('bulk-approve').addEventListener('click', async () => {
-      const selectedCheckboxes = $('#users-table tbody input.row-select:checked');
-      if (selectedCheckboxes.length === 0) {
+      const userIds = getSelectedUserIds();
+      if (userIds.length === 0) {
         alert('Please select at least one user to approve.');
         return;
       }
-      
-      const userIds = selectedCheckboxes.map(function() {
-        return $(this).data('id');
-      }).get();
       
       try {
         const { error } = await sb
@@ -799,15 +804,11 @@
     });
 
     document.getElementById('bulk-reject').addEventListener('click', async () => {
-      const selectedCheckboxes = $('#users-table tbody input.row-select:checked');
-      if (selectedCheckboxes.length === 0) {
+      const userIds = getSelectedUserIds();
+      if (userIds.length === 0) {
         alert('Please select at least one user to reject.');
         return;
       }
-      
-      const userIds = selectedCheckboxes.map(function() {
-        return $(this).data('id');
-      }).get();
       
       try {
         const { error } = await sb
@@ -825,17 +826,13 @@
     });
 
     document.getElementById('bulk-delete').addEventListener('click', async () => {
-      const selectedCheckboxes = $('#users-table tbody input.row-select:checked');
-      if (selectedCheckboxes.length === 0) {
+      const userIds = getSelectedUserIds();
+      if (userIds.length === 0) {
         alert('Please select at least one user to delete.');
         return;
       }
       
-      if (!confirm(`Are you sure you want to delete ${selectedCheckboxes.length} users?`)) return;
-      
-      const userIds = selectedCheckboxes.map(function() {
-        return $(this).data('id');
-      }).get();
+      if (!confirm(`Are you sure you want to delete ${userIds.length} users?`)) return;
       
       try {
         const { error } = await sb
@@ -853,15 +850,11 @@
     });
 
     document.getElementById('bulk-renew').addEventListener('click', async () => {
-      const selectedCheckboxes = $('#users-table tbody input.row-select:checked');
-      if (selectedCheckboxes.length === 0) {
+      const userIds = getSelectedUserIds();
+      if (userIds.length === 0) {
         alert('Please select at least one user to renew.');
         return;
       }
-      
-      const userIds = selectedCheckboxes.map(function() {
-        return $(this).data('id');
-      }).get();
       
       alert(`Renewing subscriptions for ${userIds.length} users...`);
       // In a real implementation, you would create new payment records here
