@@ -1,4 +1,4 @@
-<<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="en" data-theme="dark">
 <head>
   <meta charset="UTF-8">
@@ -19,8 +19,6 @@
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>
   <script src="https://s3.tradingview.com/tv.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/intro.js@4.3.0/intro.min.js"></script>
-  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/intro.js@4.3.0/introjs.min.css">
   <script>
     var _smartsupp = _smartsupp || {};
     _smartsupp.key = '018a8bbd868518221e725341a7b2601231ec7ce8';
@@ -35,11 +33,12 @@
   <style>
     /* Core Styles */
     :root[data-theme="dark"] {
-      --bg: linear-gradient(135deg, #121212, #1a1a1a);
+      --bg: linear-gradient(135deg, #0a0a0a 0%, #1a1a1a 100%);
       --text: #e0e0e0;
       --gold: #ffd700;
+      --gold-light: #e6c55c;
       --gold-dark: #cca300;
-      --gold-light: #fff9c4;
+      --gold-gradient: linear-gradient(135deg, #ffd700 0%, #cca300 100%);
       --glass: rgba(30, 30, 30, 0.7);
       --shadow: rgba(0, 0, 0, 0.5);
       --text-light: #b0b0b0;
@@ -50,13 +49,15 @@
       --input-bg: #333;
       --calendar-bg: #000000;
       --calendar-text: #ffd700;
-      --card-layer-bg: rgba(0, 0, 0, 0.5); /* NEW: Card layer background */
+      --card-layer-bg: rgba(0, 0, 0, 0.5);
     }
     :root[data-theme="light"] {
-      --bg: linear-gradient(135deg, #f5f5f5, #e0e0e0);
+      --bg: linear-gradient(135deg, #f5f5f5 0%, #e0e0e0 100%);
       --text: #333333;
       --gold: #cca300;
+      --gold-light: #b3932b;
       --gold-dark: #b58900;
+      --gold-gradient: linear-gradient(135deg, #cca300 0%, #b58900 100%);
       --glass: rgba(255, 255, 255, 0.7);
       --shadow: rgba(0, 0, 0, 0.2);
       --text-light: #666666;
@@ -67,7 +68,7 @@
       --input-bg: #f0f0f0;
       --calendar-bg: #ffffff;
       --calendar-text: #000000;
-      --card-layer-bg: rgba(255, 255, 255, 0.5); /* NEW: Card layer background */
+      --card-layer-bg: rgba(255, 255, 255, 0.5);
     }
     * { margin: 0; padding: 0; box-sizing: border-box; }
     html { scroll-behavior: smooth; }
@@ -79,14 +80,14 @@
       overflow-x: hidden;
       line-height: 1.6;
       background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="100" height="100" viewBox="0 0 100 100"><rect width="100" height="100" fill="none"/><path d="M0,0 L100,100 M100,0 L0,100" stroke="rgba(255,215,0,0.05)" stroke-width="1"/></svg>');
-      position: relative; /* NEW: For card layer positioning */
+      position: relative;
     }
     a, button, h1, h2, h3, h4, h5, h6, p, span, td, th, li, label {
       color: var(--text) !important;
     }
     a:hover { color: var(--gold) !important; }
 
-    /* NEW: Card layer container */
+    /* Card layer container */
     #card-layer-container {
       position: absolute;
       top: 0;
@@ -177,7 +178,7 @@
       font-size: 1.5rem;
       font-weight: 700;
       padding: 0.5rem 1rem;
-      background: linear-gradient(45deg, var(--gold), var(--gold-dark));
+      background: var(--gold-gradient);
       border-radius: 8px;
       box-shadow: 0 2px 6px var(--shadow);
       transition: transform 0.3s ease;
@@ -226,6 +227,15 @@
       font-size: 0.9rem;
       color: var(--gold);
       font-weight: 500;
+    }
+    #header-user {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      padding: 0.3rem 0.8rem;
+      background: rgba(255, 215, 0, 0.1);
+      border-radius: 20px;
+      border: 1px solid rgba(255, 215, 0, 0.3);
     }
 
     /* Sidebar */
@@ -285,7 +295,7 @@
 
     /* Buttons */
     .btn-gold {
-      background: linear-gradient(45deg, var(--gold), var(--gold-dark));
+      background: var(--gold-gradient);
       color: #000 !important;
       border: none;
       padding: 0.7rem 1.2rem;
@@ -485,16 +495,33 @@
 
     /* Welcome Banner */
     .welcome-banner {
-      background: linear-gradient(135deg, var(--gold), var(--gold-dark));
+      background: var(--gold-gradient);
       color: #000;
-      padding: 1rem;
+      padding: 1.5rem;
       border-radius: 8px;
       text-align: center;
-      font-size: 1.2rem;
+      font-size: 1.4rem;
       font-weight: bold;
       box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
       position: relative;
       overflow: hidden;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+    }
+    .welcome-banner .trader-name {
+      font-size: 2rem;
+      margin: 0.5rem 0;
+      text-shadow: 0 0 10px rgba(0, 0, 0, 0.3);
+    }
+    .welcome-banner .vip-badge {
+      background: #000;
+      color: var(--gold);
+      padding: 0.3rem 1rem;
+      border-radius: 20px;
+      font-size: 0.9rem;
+      margin-top: 0.5rem;
     }
     .welcome-banner:after {
       content: '';
@@ -607,12 +634,12 @@
       background: rgba(255, 215, 0, 0.15);
     }
 
-    /* New Premium Elements */
+    /* Premium Elements */
     .premium-badge {
       position: absolute;
       top: 10px;
       right: 10px;
-      background: linear-gradient(45deg, var(--gold), var(--gold-dark));
+      background: var(--gold-gradient);
       color: #000;
       font-weight: bold;
       padding: 2px 8px;
@@ -648,14 +675,17 @@
       header { padding: 1rem; }
       .nav-links { flex-wrap: wrap; }
       .signal-details { flex-direction: column; }
+      .welcome-banner .trader-name {
+        font-size: 1.6rem;
+      }
     }
   </style>
 </head>
 <body>
-  <!-- NEW: Card layer container -->
+  <!-- Card layer container -->
   <div id="card-layer-container"></div>
   
-  <!-- NEW: Card layer toggle button -->
+  <!-- Card layer toggle button -->
   <div id="card-layer-toggle" class="active" title="Toggle Card Layer">
     <i class="bi bi-layers-half"></i>
     <div class="tooltip">Card Layer: On</div>
@@ -673,6 +703,10 @@
       </div>
     </div>
     <div class="nav-links">
+      <div id="header-user">
+        <i class="bi-person-circle"></i>
+        <span id="header-username">VIP Trader</span>
+      </div>
       <button id="notif-btn" class="btn btn-link position-relative">
         <i class="bi-bell-fill"></i>
         <span id="notif-count" class="badge position-absolute top-0 start-100 translate-middle">0</span>
@@ -735,7 +769,11 @@
       <a href="https://apexincomeoptions.com.ng/signals" class="btn btn-gold mt-3">View All Signals</a>
     </div>
 
-    <div class="welcome-banner slide-in">Welcome, <strong id="welcomeName">VIP Trader</strong>!</div>
+    <div class="welcome-banner slide-in">
+      <div>Welcome, esteemed trader</div>
+      <div class="trader-name" id="welcomeName">VIP Trader</div>
+      <div class="vip-badge">Platinum VIP Member</div>
+    </div>
     <div class="row g-4 mb-4 slide-in">
       <div class="col-md-3">
         <div class="card p-3 text-center">
@@ -988,9 +1026,9 @@
     });
     
     // Supabase Initialization
-    const SUPA_URL = 'https://dapwpgvnfjcfqqhrpxla.supabase.co';
-    const SUPA_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImRhcHdwZ3ZuZmpjZnFxaHJweGxhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDcwNDA4ODgsImV4cCI6MjA2MjYxNjg4OH0.ICC0UsLlzJDNre7rFCeD3k6iVzo6jOJgn3PhABpEMsQ';
-    const supabase = window.supabase.createClient(SUPA_URL, SUPA_KEY);
+    const SUPABASE_URL = 'https://dapwpgvnfjcfqqhrpxla.supabase.co';
+    const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImRhcHdwZ3ZuZmpjZnFxaHJweGxhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDcwNDA4ODgsImV4cCI6MjA2MjYxNjg4OH0.ICC0UsLlzJDNre7rFCeD3k6iVzo6jOJgn3PhABpEMsQ';
+    const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
     // API Keys
     const EXCHANGE_RATE_API_KEY = '4e4307b2bf8daac15365a410';
@@ -1064,7 +1102,7 @@
       await logActivity('logout');
       localStorage.removeItem('isLoggedIn');
       sessionStorage.removeItem('cbeUserId');
-      sessionStorage.removeItem('userName');
+      sessionStorage.removeItem('cbeUserName');
       window.location.href = 'login.html?message=logged_out';
     }
 
@@ -1538,7 +1576,11 @@
         const savedTheme = localStorage.getItem('theme') || 'dark';
         toggleTheme(savedTheme);
 
-        document.getElementById('welcomeName').textContent = sessionStorage.getItem('userName') || 'VIP Trader';
+        // Set trader name from session storage
+        const traderName = sessionStorage.getItem('cbeUserName') || 'VIP Trader';
+        document.getElementById('welcomeName').textContent = traderName;
+        document.getElementById('header-username').textContent = traderName;
+        
         await logActivity('login');
         await Promise.all([
           loadLatestSignal(),
@@ -1594,18 +1636,6 @@
         updateGoldPrice();
         setInterval(updateGoldPrice, 30000);
 
-        if (!localStorage.getItem('tourCompleted')) {
-          introJs().setOptions({
-            steps: [
-              { element: '#latest-signal', intro: 'Check the latest VIP signal here!' },
-              { element: '#tv_chart_4h', intro: 'Monitor XAU/USD with this live chart.' },
-              { element: '#news-widget', intro: 'Stay updated with gold market news.' },
-              { element: '#floating-signals-btn', intro: 'Click to view all signals!' },
-              { element: '#tts-widget', intro: 'Premium text-to-speech with enhanced voices!' },
-              { element: '#card-layer-toggle', intro: 'Toggle the dark card layer background here' }
-            ]
-          }).start().oncomplete(() => localStorage.setItem('tourCompleted', 'true'));
-        }
       } catch (err) {
         console.error('Page load error:', err);
         addNotification('Failed to initialize dashboard', 'critical');
