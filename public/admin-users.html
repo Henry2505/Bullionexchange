@@ -294,8 +294,10 @@
       font-size: 0.95rem;
       min-width: 120px;
       display: inline-block;
+      transition: color 0.3s ease;
     }
     .countdown-expiring { color: var(--danger); animation: pulse 1.5s infinite; }
+    .countdown-expired { color: #6b7280; }
     @keyframes pulse {
       0% { opacity: 1; }
       50% { opacity: 0.7; }
@@ -511,39 +513,38 @@
       }
     });
 
-    // Helper to calculate expiry info in minutes
+    // Helper to calculate expiry info in hours/minutes/seconds
     function getExpiryInfo(expiryDate) {
-      if (!expiryDate) return { text: '—', minutes: 0, class: '' };
+      if (!expiryDate) return { text: '—', seconds: 0, class: '' };
       
       const now = new Date();
       const expiry = new Date(expiryDate);
       const diffMs = expiry - now;
-      const diffMinutes = Math.floor(diffMs / (1000 * 60));
+      const diffSeconds = Math.floor(diffMs / 1000);
       
-      if (diffMinutes <= 0) {
-        return { text: 'Expired', minutes: 0, class: 'countdown-expired' };
+      if (diffSeconds <= 0) {
+        return { text: 'Expired', seconds: 0, class: 'countdown-expired' };
       }
       
-      const hours = Math.floor(diffMinutes / 60);
-      const minutes = diffMinutes % 60;
-      const days = Math.floor(hours / 24);
-      const remainingHours = hours % 24;
+      const hours = Math.floor(diffSeconds / 3600);
+      const minutes = Math.floor((diffSeconds % 3600) / 60);
+      const seconds = diffSeconds % 60;
       
       let displayText = '';
-      if (days > 0) {
-        displayText = `${days}d ${remainingHours}h ${minutes}m`;
-      } else if (hours > 0) {
+      if (hours > 0) {
         displayText = `${hours}h ${minutes}m`;
+      } else if (minutes > 0) {
+        displayText = `${minutes}m ${seconds}s`;
       } else {
-        displayText = `${minutes}m`;
+        displayText = `${seconds}s`;
       }
       
       // Add warning class if less than 1 hour remaining
-      const warningClass = diffMinutes < 60 ? 'countdown-expiring' : '';
+      const warningClass = hours === 0 && minutes < 60 ? 'countdown-expiring' : '';
       
       return { 
         text: displayText, 
-        minutes: diffMinutes,
+        seconds: diffSeconds,
         class: warningClass
       };
     }
@@ -591,7 +592,7 @@
         if (expiryDate) {
           const expiryInfo = getExpiryInfo(expiryDate);
           expiryCell.text(expiryInfo.text);
-          expiryCell.removeClass('countdown-expiring');
+          expiryCell.removeClass('countdown-expiring countdown-expired');
           if (expiryInfo.class) {
             expiryCell.addClass(expiryInfo.class);
           }
@@ -623,12 +624,12 @@
           new Date(p.expiry_date) > new Date()).length;
         const pendingApprovals = users.filter(u => u.status === 'Pending').length;
         
-        // Calculate expiring soon (less than 60 minutes)
+        // Calculate expiring soon (less than 1 hour)
         const expiringSoon = payments.filter(p => {
           const expiry = new Date(p.expiry_date);
           const now = new Date();
-          const diffMinutes = Math.floor((expiry - now) / (1000 * 60));
-          return diffMinutes > 0 && diffMinutes <= 60 && p.status === 'approved';
+          const diffHours = (expiry - now) / (1000 * 60 * 60);
+          return diffHours > 0 && diffHours <= 1 && p.status === 'approved';
         }).length;
         
         // Update stats cards
@@ -653,7 +654,7 @@
         table.clear();
         users.forEach((user, index) => {
           const payment = userPayments[user.id] || null;
-          const expiryInfo = payment ? getExpiryInfo(payment.expiry_date) : { text: '—', minutes: 0, class: '' };
+          const expiryInfo = payment ? getExpiryInfo(payment.expiry_date) : { text: '—', class: '' };
           
           table.row.add([
             `<input type="checkbox" class="row-select" data-id="${user.id}">`,
@@ -873,8 +874,7 @@
       .subscribe();
     
     // Setup countdown timer
-    setInterval(updateCountdowns, 60000); // Update every minute
-    setInterval(updateCountdowns, 1000); // Update every second for testing
+    setInterval(updateCountdowns, 1000); // Update every second
   })();
   </script>
 </body>
