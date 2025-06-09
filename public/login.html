@@ -325,8 +325,190 @@
   <!-- Supabase UMD -->
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js/dist/umd/supabase.min.js"></script>
   <script>
-    // (JS unchanged from previous version)
-    // … your initialization, form handling, greeting/quote, particles, etc. …
+    // Setup & Theme Toggle
+    const loginCard = document.getElementById('login-card');
+    const toggleBtn = document.getElementById('theme-toggle');
+
+    window.addEventListener('DOMContentLoaded', () => {
+      loginCard.classList.add('visible');
+      const savedTheme = localStorage.getItem('theme') || 'dark';
+      document.documentElement.setAttribute('data-theme', savedTheme);
+      toggleBtn.textContent = savedTheme === 'dark' ? '🌞' : '🌜';
+      document.querySelectorAll('.gold-line, .gold-circle').forEach(el => {
+        el.style.borderColor = getComputedStyle(document.documentElement).getPropertyValue('--gold');
+      });
+      createParticles();
+    });
+
+    toggleBtn.addEventListener('click', () => {
+      const cur = document.documentElement.getAttribute('data-theme');
+      const next = cur === 'dark' ? 'light' : 'dark';
+      document.documentElement.setAttribute('data-theme', next);
+      localStorage.setItem('theme', next);
+      toggleBtn.textContent = next === 'dark' ? '🌞' : '🌜';
+    });
+
+    // Initialize Supabase
+    const SUPA_URL = 'https://dapwpgvnfjcfqqhrpxla.supabase.co';
+    const SUPA_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImRhcHdwZ3ZuZmpjZnFxaHJweGxhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDcwNDA4ODgsImV4cCI6MjA2MjYxNjg4OH0.ICC0UsLlzJDNre7rFCeD3k6iVzo6jOJgn3PhABpEMsQ';
+    const sb = supabase.createClient(SUPA_URL, SUPA_ANON_KEY);
+
+    // Login Form Handling
+    const loginForm = document.getElementById('login-form');
+    const loginButton = document.getElementById('login-button');
+    const loginSpinner = document.getElementById('login-spinner');
+    const alertDiv = document.getElementById('login-alert');
+    const rememberMeCheckbox = document.getElementById('remember-me');
+    const emailInput = document.getElementById('email');
+
+    const errorMessages = {
+      'No account found for that email.': 'No account found with this email address.',
+      'Invalid login credentials.': 'Incorrect password. Please try again.',
+      'Your account is not yet approved—please check back soon.': 'Your account is pending approval. Please contact support.',
+      'JSON object requested multiple': 'Authentication error. Please try again later.',
+      'no rows returned': 'Account not found. Please check your credentials.',
+      'default': 'An unexpected error occurred. Please try again later.'
+    };
+
+    const rememberedEmail = localStorage.getItem('rememberedEmail');
+    if (rememberedEmail) {
+      emailInput.value = rememberedEmail;
+      rememberMeCheckbox.checked = true;
+    }
+
+    loginForm.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      alertDiv.textContent = '';
+      alertDiv.className = '';
+
+      const email = emailInput.value.trim().toLowerCase();
+      const password = document.getElementById('password').value;
+
+      loginSpinner.style.display = 'block';
+      loginButton.disabled = true;
+
+      try {
+        const { data: user, error, count } = await sb
+          .from('users')
+          .select('id, name, email, password, status', { count: 'exact' })
+          .ilike('email', email)
+          .limit(1)
+          .maybeSingle();
+
+        if (error) {
+          if (error.message.includes('no rows')) throw new Error('no rows returned');
+          if (error.message.includes('multiple')) throw new Error('JSON object requested multiple');
+          throw new Error('default');
+        }
+        if (count === 0) throw new Error('No account found for that email.');
+        if (user.password !== password) throw new Error('Invalid login credentials.');
+        if (String(user.status).toLowerCase() !== 'approved') throw new Error('Your account is not yet approved—please check back soon.');
+
+        // Device tracking & Brevo alert
+        const deviceKey = `cbeDevice_${email}`;
+        const savedDevice = localStorage.getItem(deviceKey);
+        const currentDevice = navigator.userAgent;
+        if (!savedDevice || savedDevice !== currentDevice) {
+          localStorage.setItem(deviceKey, currentDevice);
+          const BREVO_API_KEY = "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";
+          const TEMPLATE_ID_LOGIN = 3;
+          const brevoPayload = {
+            sender: { name: "Chukwuemeka Bullion Exchange", email: "noreply@apexincomeoptions.com.ng" },
+            to: [{ email: user.email, name: user.name }],
+            templateId: TEMPLATE_ID_LOGIN,
+            params: {
+              contact: { FIRSTNAME: user.name, EMAIL: user.email },
+              DEVICE: currentDevice,
+              TIME: new Date().toLocaleString("en-US", { timeZone: "Africa/Lagos" })
+            }
+          };
+          fetch("https://api.brevo.com/v3/smtp/email", {
+            method: "POST",
+            headers: { "Content-Type": "application/json", "api-key": BREVO_API_KEY },
+            body: JSON.stringify(brevoPayload)
+          }).catch(console.error);
+        }
+
+        if (rememberMeCheckbox.checked) localStorage.setItem('rememberedEmail', email);
+        else localStorage.removeItem('rememberedEmail');
+
+        sessionStorage.setItem('cbeLoggedIn', 'true');
+        sessionStorage.setItem('cbeUserId', user.id);
+        sessionStorage.setItem('cbeUserName', user.name);
+        setTimeout(() => { window.location.href = 'vip-dashboard.html'; }, 1000);
+
+      } catch (err) {
+        console.error("Login error:", err);
+        const msg = errorMessages[err.message] || errorMessages['default'];
+        alertDiv.textContent = msg;
+        alertDiv.classList.add('show', 'error');
+        loginSpinner.style.display = 'none';
+        loginButton.disabled = false;
+      }
+    });
+
+    // Greeting & Quote
+    const greetingDiv = document.getElementById('greeting');
+    const hour = new Date().getHours();
+    let greeting = hour < 12 ? "Good morning" : hour < 17 ? "Good afternoon" : "Good evening";
+    greetingDiv.innerHTML = `<p>${greeting}, welcome back!</p>`;
+
+    const quotes = [
+      "Believe you can and you're halfway there.",
+      "The only way to do great work is to love what you do.",
+      "Success is not final, failure is not fatal: It is the courage to continue that counts.",
+      "Don’t watch the clock; do what it does. Keep going.",
+      "Keep your eyes on the stars and your feet on the ground.",
+      "The best way to predict the future is to create it.",
+      "You are never too old to set another goal or to dream a new dream."
+    ];
+    document.getElementById('quote').innerHTML = `<p>${quotes[Math.floor(Math.random() * quotes.length)]}</p>`;
+
+    // Show/Hide Password
+    const togglePassword = document.getElementById('toggle-password');
+    const passwordInput = document.getElementById('password');
+    togglePassword.addEventListener('click', () => {
+      if (passwordInput.type === 'password') {
+        passwordInput.type = 'text';
+        togglePassword.classList.replace('fa-eye', 'fa-eye-slash');
+      } else {
+        passwordInput.type = 'password';
+        togglePassword.classList.replace('fa-eye-slash', 'fa-eye');
+      }
+    });
+
+    // Parallax Circles
+    window.addEventListener('mousemove', e => {
+      const x = e.clientX / window.innerWidth;
+      const y = e.clientY / window.innerHeight;
+      document.querySelector('.circle-1').style.transform = `translate(${x*20}px, ${y*20}px)`;
+      document.querySelector('.circle-2').style.transform = `translate(${x*-20}px, ${y*-20}px)`;
+    });
+
+    // Particle Background
+    function createParticles() {
+      const container = document.getElementById('particles');
+      for (let i=0; i<20; i++) {
+        const p = document.createElement('div');
+        p.classList.add('particle');
+        p.style.width = `${Math.random()*5+2}px`;
+        p.style.height = p.style.width;
+        p.style.left = `${Math.random()*100}%`;
+        p.style.top = `${Math.random()*100}%`;
+        p.style.animationDelay = `${Math.random()*5}s`;
+        container.appendChild(p);
+      }
+    }
+
+    // Input Validation Feedback
+    emailInput.addEventListener('input', () => {
+      emailInput.style.borderColor = emailInput.validity.valid
+        ? 'var(--success-color)' : 'var(--error-color)';
+    });
+    passwordInput.addEventListener('input', () => {
+      passwordInput.style.borderColor = passwordInput.value.length >= 6
+        ? 'var(--success-color)' : 'var(--error-color)';
+    });
   </script>
 
   <!-- Smartsupp Live Chat (optional) -->
