@@ -1,9 +1,16 @@
 <!DOCTYPE html>
 <html lang="en" data-theme="dark">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Crypto Business Education - Admin Portal</title>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width,initial-scale=1"/>
+  <title>CBE Admin – User & Subscription Management</title>
+  
+  <script>
+    // Redirect to login if not authenticated
+    if (localStorage.getItem('isLoggedIn') !== 'true') {
+      window.location.replace('admin-login.html?redirect=' + encodeURIComponent(window.location.pathname));
+    }
+  </script>
   
   <!-- Fonts & Icons -->
   <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
@@ -15,9 +22,10 @@
   <link href="https://cdn.datatables.net/buttons/2.3.6/css/buttons.bootstrap5.min.css" rel="stylesheet"/>
   <link href="https://cdn.datatables.net/select/1.7.0/css/select.bootstrap5.min.css" rel="stylesheet"/>
   <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
-  
+
   <style>
-    :root {
+    /* Theme Variables */
+    :root[data-theme="dark"] {
       --bg: #0f172a;
       --text: #f1f5f9;
       --gold: #fbbf24;
@@ -32,7 +40,7 @@
       --shadow: rgba(0, 0, 0, 0.3);
       --highlight: rgba(251, 191, 36, 0.1);
     }
-    [data-theme="light"] {
+    :root[data-theme="light"] {
       --bg: #f8fafc;
       --text: #1e293b;
       --gold: #d97706;
@@ -48,6 +56,7 @@
       --highlight: rgba(251, 191, 36, 0.15);
     }
 
+    /* Reset & Base */
     * { margin: 0; padding: 0; box-sizing: border-box; }
     body, html {
       width: 100%;
@@ -57,64 +66,26 @@
       color: var(--text);
       overflow-x: hidden;
     }
-    a { text-decoration: none; color: var(--gold); }
+    a { text-decoration: none; }
     
-    /* Admin Navigation */
-    .admin-nav {
-      position: fixed;
-      top: 0;
-      left: 0;
-      height: 100%;
-      width: 250px;
-      background: var(--glass);
-      backdrop-filter: blur(10px);
-      border-right: 1px solid var(--card-border);
-      z-index: 1000;
-      padding: 1rem 0;
-      transition: transform 0.3s ease;
+    /* Buttons */
+    .btn-gold {
+      background: linear-gradient(135deg, var(--gold), var(--gold-dark));
+      color: #fff;
+      border: none;
+      transition: all 0.3s ease;
+      font-weight: 500;
+      border-radius: 8px;
     }
-    .admin-nav.hidden {
-      transform: translateX(-100%);
+    .btn-gold:hover {
+      background: linear-gradient(135deg, var(--gold-dark), var(--gold));
+      transform: translateY(-2px);
+      box-shadow: 0 4px 12px rgba(0,0,0,0.1);
     }
-    .admin-nav .nav-logo {
-      padding: 0 1.5rem 1.5rem;
-      border-bottom: 1px solid var(--card-border);
-      margin-bottom: 1rem;
-    }
-    .admin-nav .nav-logo img {
-      height: 45px;
-      display: block;
-      margin: 0 auto;
-    }
-    .admin-nav ul {
-      list-style: none;
-      padding: 0;
-    }
-    .admin-nav li a {
-      display: flex;
-      align-items: center;
-      padding: 0.8rem 1.5rem;
-      color: var(--text);
-      transition: all 0.3s;
-    }
-    .admin-nav li a i {
-      margin-right: 0.8rem;
-      font-size: 1.2rem;
-    }
-    .admin-nav li a:hover, .admin-nav li a.active {
-      background: var(--highlight);
-      color: var(--gold);
-    }
-    
-    /* Main Content */
-    .main-content {
-      margin-left: 250px;
-      transition: margin-left 0.3s;
-    }
-    .main-content.expanded {
-      margin-left: 0;
-    }
-    
+    .btn-success { background: linear-gradient(135deg, var(--success), #0d9e6c); }
+    .btn-warning { background: linear-gradient(135deg, var(--warning), #e68a00); }
+    .btn-danger { background: linear-gradient(135deg, var(--danger), #d43030); }
+
     /* Header */
     header {
       display: flex;
@@ -164,41 +135,11 @@
       transform: rotate(15deg);
       background: var(--highlight);
     }
-    
-    /* Tab Navigation */
-    .admin-tabs {
-      background: var(--glass);
-      padding: 0.5rem 2rem;
-      border-bottom: 1px solid var(--card-border);
-    }
-    .admin-tabs .nav {
-      display: flex;
-      gap: 1rem;
-    }
-    .admin-tabs .nav-link {
-      padding: 0.5rem 1rem;
-      color: var(--text);
-      border-radius: 6px;
-      transition: all 0.3s;
-    }
-    .admin-tabs .nav-link.active {
-      background: var(--gold);
-      color: #000;
-    }
-    .admin-tabs .nav-link:hover:not(.active) {
-      background: var(--glass-light);
-    }
-    
-    /* Tab Content */
-    .tab-content {
+
+    /* Main Panel */
+    main {
       padding: 2rem;
-      display: none;
     }
-    .tab-content.active {
-      display: block;
-    }
-    
-    /* Panel Styles */
     .glass {
       background: var(--glass);
       backdrop-filter: blur(12px);
@@ -219,8 +160,8 @@
     .panel-title i {
       font-size: 1.3rem;
     }
-    
-    /* Stats Cards */
+
+    /* Cards */
     .stats-card {
       background: var(--card-bg);
       border-radius: 12px;
@@ -258,7 +199,7 @@
       text-transform: uppercase;
       letter-spacing: 1px;
     }
-    
+
     /* DataTable */
     .dataTables_wrapper {
       margin-top: 1.5rem;
@@ -379,130 +320,6 @@
     .progress-yellow { background: linear-gradient(90deg, var(--warning), #e68a00); }
     .progress-red { background: linear-gradient(90deg, var(--danger), #d43030); }
     
-    /* Payment Page Styles */
-    .payment-container {
-      max-width: 700px;
-      margin: 120px auto 60px;
-      padding: 0 20px;
-    }
-    .payment-header {
-      text-align: center;
-      margin-bottom: 2rem;
-    }
-    .payment-header h1 {
-      font-size: 2.5rem;
-      color: var(--gold);
-      margin-bottom: 1rem;
-    }
-    .payment-divider {
-      width: 80px;
-      height: 3px;
-      background: var(--gold);
-      margin: 0 auto 30px;
-      box-shadow: 0 0 10px var(--gold-dark);
-    }
-    .payment-card {
-      background: var(--glass);
-      padding: 25px;
-      border-radius: 12px;
-      margin-bottom: 30px;
-      box-shadow: 0 4px 30px rgba(0,0,0,0.5);
-    }
-    .payment-details {
-      list-style: none;
-      padding: 0;
-    }
-    .payment-details li {
-      display: flex;
-      justify-content: space-between;
-      padding: 12px 0;
-      border-bottom: 1px solid rgba(255,255,255,0.1);
-    }
-    .payment-details li:last-child {
-      border-bottom: none;
-    }
-    .payment-btn {
-      display: block;
-      width: 100%;
-      padding: 14px;
-      margin: 15px 0;
-      border: none;
-      border-radius: 30px;
-      font-size: 1.1rem;
-      font-weight: 600;
-      cursor: pointer;
-      transition: all 0.3s;
-    }
-    .btn-card {
-      background: var(--gold);
-      color: #000;
-      box-shadow: 0 0 10px var(--gold);
-    }
-    .btn-card:hover {
-      background: #e6bd00;
-      transform: translateY(-3px);
-    }
-    .btn-crypto {
-      background: var(--glass);
-      color: var(--text);
-      border: 2px solid var(--gold);
-      box-shadow: 0 0 8px var(--gold);
-    }
-    .btn-crypto:hover {
-      background: var(--highlight);
-      transform: translateY(-3px);
-    }
-    .payment-form {
-      background: var(--glass);
-      padding: 25px;
-      border-radius: 12px;
-      margin-top: 30px;
-      box-shadow: 0 4px 30px rgba(0,0,0,0.5);
-      display: none;
-    }
-    .form-group {
-      margin-bottom: 20px;
-    }
-    .form-group label {
-      display: block;
-      margin-bottom: 8px;
-      font-weight: 500;
-    }
-    .form-group input {
-      width: 100%;
-      padding: 12px;
-      border: none;
-      border-radius: 8px;
-      background: rgba(255, 255, 255, 0.1);
-      color: var(--text);
-    }
-    .form-submit {
-      background: var(--gold);
-      color: #000;
-      border: none;
-      border-radius: 30px;
-      padding: 12px;
-      font-size: 1rem;
-      font-weight: 600;
-      cursor: pointer;
-      width: 100%;
-      transition: all 0.3s;
-    }
-    .form-submit:hover {
-      background: #e6bd00;
-      transform: translateY(-3px);
-    }
-    .success-message {
-      display: none;
-      text-align: center;
-      padding: 15px;
-      background: rgba(16, 185, 129, 0.2);
-      border-radius: 8px;
-      margin-top: 20px;
-      color: var(--success);
-      font-weight: 500;
-    }
-    
     /* Footer */
     footer {
       text-align: center;
@@ -520,395 +337,126 @@
       }
     }
     @media (max-width: 768px) {
-      .admin-nav {
-        transform: translateX(-100%);
-      }
-      .admin-nav.visible {
-        transform: translateX(0);
-      }
-      .main-content {
-        margin-left: 0;
-      }
       .header-left h1 { display: none; }
       .bulk-actions { flex-direction: column; }
       .bulk-actions button { width: 100%; }
       .stats-grid {
         grid-template-columns: 1fr;
       }
-      .payment-header h1 {
-        font-size: 2rem;
-      }
-    }
-    
-    /* Mobile Menu Toggle */
-    .mobile-menu-toggle {
-      display: none;
-      position: fixed;
-      top: 20px;
-      left: 20px;
-      z-index: 1100;
-      background: var(--glass);
-      width: 45px;
-      height: 45px;
-      border-radius: 8px;
-      justify-content: center;
-      align-items: center;
-      cursor: pointer;
-      box-shadow: 0 4px 15px rgba(0,0,0,0.2);
-    }
-    .mobile-menu-toggle i {
-      font-size: 1.5rem;
-      color: var(--gold);
-    }
-    @media (max-width: 768px) {
-      .mobile-menu-toggle {
-        display: flex;
-      }
     }
   </style>
 </head>
-<body>
-  <!-- Mobile Menu Toggle -->
-  <div class="mobile-menu-toggle">
-    <i class="bi bi-list"></i>
-  </div>
-  
-  <!-- Admin Navigation -->
-  <nav class="admin-nav">
-    <div class="nav-logo">
-      <img src="https://via.placeholder.com/150x50?text=CBE+Logo" alt="CBE Logo">
-    </div>
-    <ul>
-      <li><a href="#users" class="active"><i class="bi bi-people"></i> Users</a></li>
-      <li><a href="#payments"><i class="bi bi-credit-card"></i> Payments</a></li>
-      <li><a href="#payment-options"><i class="bi bi-cash-coin"></i> Payment Options</a></li>
-      <li><a href="#settings"><i class="bi bi-gear"></i> Settings</a></li>
-      <li><a href="#logout"><i class="bi bi-box-arrow-right"></i> Logout</a></li>
-    </ul>
-  </nav>
-  
-  <!-- Main Content -->
-  <div class="main-content">
-    <header>
-      <div class="header-left">
-        <h1>Admin Dashboard</h1>
-      </div>
-      <div class="d-flex align-items-center gap-3">
-        <div class="position-relative">
-          <i class="bi bi-bell fs-5"></i>
-          <span class="position-absolute top-0 start-100 translate-middle p-1 bg-danger border border-light rounded-circle">
-            <span class="visually-hidden">New alerts</span>
-          </span>
-        </div>
-        <button id="theme-toggle" aria-label="Toggle theme">🌞</button>
-      </div>
-    </header>
-    
-    <div class="admin-tabs">
-      <ul class="nav">
-        <li><a class="nav-link active" href="#users">User Management</a></li>
-        <li><a class="nav-link" href="#payments">Payment Approvals</a></li>
-        <li><a class="nav-link" href="#payment-options">Payment Page</a></li>
-      </ul>
-    </div>
-    
-    <!-- Users Tab -->
-    <div id="users" class="tab-content active">
-      <div class="glass">
-        <div class="d-flex justify-content-between align-items-center flex-wrap gap-3 mb-4">
-          <h3 class="panel-title"><i class="bi bi-people-fill"></i> User Applications & Subscriptions</h3>
-          <div class="d-flex gap-2">
-            <div class="input-group" style="max-width: 300px;">
-              <span class="input-group-text bg-transparent border-end-0"><i class="bi bi-search"></i></span>
-              <input type="text" id="search-input" class="form-control border-start-0" placeholder="Search users...">
-            </div>
-            <button class="btn btn-gold"><i class="bi bi-funnel me-1"></i> Filters</button>
-          </div>
-        </div>
-        
-        <!-- Stats Cards with Real Data -->
-        <div class="row row-cols-1 row-cols-md-2 row-cols-lg-4 g-4 mb-5">
-          <div class="col">
-            <div class="stats-card">
-              <div class="stats-icon gold">
-                <i class="bi bi-people"></i>
-              </div>
-              <div class="stats-value" id="total-users">42</div>
-              <div class="stats-label">Total Users</div>
-            </div>
-          </div>
-          <div class="col">
-            <div class="stats-card">
-              <div class="stats-icon green">
-                <i class="bi bi-credit-card"></i>
-              </div>
-              <div class="stats-value" id="active-subs">24</div>
-              <div class="stats-label">Active Subscriptions</div>
-            </div>
-          </div>
-          <div class="col">
-            <div class="stats-card">
-              <div class="stats-icon blue">
-                <i class="bi bi-hourglass-split"></i>
-              </div>
-              <div class="stats-value" id="pending-approvals">5</div>
-              <div class="stats-label">Pending Approvals</div>
-            </div>
-          </div>
-          <div class="col">
-            <div class="stats-card">
-              <div class="stats-icon purple">
-                <i class="bi bi-exclamation-circle"></i>
-              </div>
-              <div class="stats-value" id="expiring-soon">3</div>
-              <div class="stats-label">Expiring Soon</div>
-            </div>
-          </div>
-        </div>
 
-        <!-- Bulk Actions -->
-        <div class="bulk-actions">
-          <button class="btn btn-gold" id="bulk-approve"><i class="bi bi-check-circle me-1"></i> Approve Selected</button>
-          <button class="btn btn-gold" id="bulk-reject"><i class="bi bi-x-circle me-1"></i> Reject Selected</button>
-          <button class="btn btn-gold" id="bulk-delete"><i class="bi bi-trash me-1"></i> Delete Selected</button>
-          <button class="btn btn-gold" id="bulk-renew"><i class="bi bi-arrow-repeat me-1"></i> Renew Subscriptions</button>
-          <button class="btn btn-success" id="export-data"><i class="bi bi-file-earmark-spreadsheet me-1"></i> Export Data</button>
-        </div>
-        
-        <!-- User Table -->
-        <div class="table-responsive">
-          <table id="users-table" class="table table-hover" style="width:100%">
-            <thead>
-              <tr>
-                <th><input type="checkbox" id="select-all"></th>
-                <th class="col-index">#</th>
-                <th>Email</th>
-                <th>Name</th>
-                <th class="col-status">Status</th>
-                <th class="col-payment">Payment</th>
-                <th class="col-subscription">Subscription</th>
-                <th class="col-expiry">Expires In</th>
-                <th class="col-actions">Actions</th>
-              </tr>
-            </thead>
-            <tbody>
-              <tr>
-                <td><input type="checkbox" class="row-select"></td>
-                <td>1</td>
-                <td>user1@example.com</td>
-                <td>John Smith</td>
-                <td><span class="status-badge status-approved">Approved</span></td>
-                <td><span class="status-badge status-approved">Approved</span></td>
-                <td><span class="subscription-chip chip-premium">Premium</span></td>
-                <td>
-                  <div class="d-flex flex-column">
-                    <span>45 days</span>
-                    <div class="expiry-progress">
-                      <div class="progress-bar progress-green" style="width: 85%"></div>
-                    </div>
-                  </div>
-                </td>
-                <td>
-                  <button class="btn btn-sm btn-gold"><i class="bi bi-pencil"></i></button>
-                  <button class="btn btn-sm btn-danger"><i class="bi bi-trash"></i></button>
-                </td>
-              </tr>
-              <tr>
-                <td><input type="checkbox" class="row-select"></td>
-                <td>2</td>
-                <td>user2@example.com</td>
-                <td>Emma Johnson</td>
-                <td><span class="status-badge status-approved">Approved</span></td>
-                <td><span class="status-badge status-approved">Approved</span></td>
-                <td><span class="subscription-chip chip-standard">Standard</span></td>
-                <td>
-                  <div class="d-flex flex-column">
-                    <span>5 days</span>
-                    <div class="expiry-progress">
-                      <div class="progress-bar progress-red" style="width: 20%"></div>
-                    </div>
-                  </div>
-                </td>
-                <td>
-                  <button class="btn btn-sm btn-gold"><i class="bi bi-pencil"></i></button>
-                  <button class="btn btn-sm btn-warning"><i class="bi bi-bell"></i></button>
-                  <button class="btn btn-sm btn-danger"><i class="bi bi-trash"></i></button>
-                </td>
-              </tr>
-              <tr>
-                <td><input type="checkbox" class="row-select"></td>
-                <td>3</td>
-                <td>user3@example.com</td>
-                <td>Michael Brown</td>
-                <td><span class="status-badge status-pending">Pending</span></td>
-                <td><span class="status-badge status-pending">Pending</span></td>
-                <td><span class="subscription-chip chip-basic">Basic</span></td>
-                <td>
-                  <div class="d-flex flex-column">
-                    <span>—</span>
-                    <div class="expiry-progress">
-                      <div class="progress-bar" style="width: 0%"></div>
-                    </div>
-                  </div>
-                </td>
-                <td>
-                  <button class="btn btn-sm btn-gold"><i class="bi bi-pencil"></i></button>
-                  <button class="btn btn-sm btn-success"><i class="bi bi-check-lg"></i></button>
-                  <button class="btn btn-sm btn-danger"><i class="bi bi-trash"></i></button>
-                </td>
-              </tr>
-              <tr>
-                <td><input type="checkbox" class="row-select"></td>
-                <td>4</td>
-                <td>user4@example.com</td>
-                <td>Sarah Williams</td>
-                <td><span class="status-badge status-approved">Approved</span></td>
-                <td><span class="status-badge status-approved">Approved</span></td>
-                <td><span class="subscription-chip chip-enterprise">Enterprise</span></td>
-                <td>
-                  <div class="d-flex flex-column">
-                    <span>120 days</span>
-                    <div class="expiry-progress">
-                      <div class="progress-bar progress-green" style="width: 100%"></div>
-                    </div>
-                  </div>
-                </td>
-                <td>
-                  <button class="btn btn-sm btn-gold"><i class="bi bi-pencil"></i></button>
-                  <button class="btn btn-sm btn-danger"><i class="bi bi-trash"></i></button>
-                </td>
-              </tr>
-            </tbody>
-          </table>
+<body>
+  <header>
+    <div class="header-left">
+      <a href="admin-dashboard.html">
+        <img src="CBE_logo.PNG" alt="CBE Logo"/>
+      </a>
+      <h1>User & Subscription Management</h1>
+    </div>
+    <div class="d-flex align-items-center gap-3">
+      <div class="position-relative">
+        <i class="bi bi-bell fs-5"></i>
+        <span class="position-absolute top-0 start-100 translate-middle p-1 bg-danger border border-light rounded-circle">
+          <span class="visually-hidden">New alerts</span>
+        </span>
+      </div>
+      <button id="theme-toggle" aria-label="Toggle theme">🌞</button>
+    </div>
+  </header>
+
+  <main class="container">
+    <div class="glass">
+      <div class="d-flex justify-content-between align-items-center flex-wrap gap-3 mb-4">
+        <h3 class="panel-title"><i class="bi bi-people-fill"></i> User Applications & Subscriptions</h3>
+        <div class="d-flex gap-2">
+          <div class="input-group" style="max-width: 300px;">
+            <span class="input-group-text bg-transparent border-end-0"><i class="bi bi-search"></i></span>
+            <input type="text" id="search-input" class="form-control border-start-0" placeholder="Search users...">
+          </div>
+          <button class="btn btn-gold"><i class="bi bi-funnel me-1"></i> Filters</button>
         </div>
       </div>
-    </div>
-    
-    <!-- Payments Tab -->
-    <div id="payments" class="tab-content">
-      <div class="glass">
-        <h3 class="panel-title"><i class="bi bi-credit-card"></i> Payment Approvals</h3>
-        
-        <div class="table-responsive">
-          <table class="table table-hover">
-            <thead>
-              <tr>
-                <th>Email</th>
-                <th>Plan</th>
-                <th>Method</th>
-                <th>Proof</th>
-                <th>Date</th>
-                <th>Status</th>
-                <th>Actions</th>
-              </tr>
-            </thead>
-            <tbody>
-              <tr>
-                <td>user5@example.com</td>
-                <td>Premium</td>
-                <td>Bank Transfer</td>
-                <td><button class="btn btn-sm btn-info">View Proof</button></td>
-                <td>2023-06-15</td>
-                <td><span class="status-badge status-pending">Pending</span></td>
-                <td>
-                  <button class="btn btn-sm btn-success">Approve</button>
-                  <button class="btn btn-sm btn-danger">Reject</button>
-                </td>
-              </tr>
-              <tr>
-                <td>user6@example.com</td>
-                <td>Standard</td>
-                <td>Crypto</td>
-                <td><button class="btn btn-sm btn-info">View Proof</button></td>
-                <td>2023-06-14</td>
-                <td><span class="status-badge status-pending">Pending</span></td>
-                <td>
-                  <button class="btn btn-sm btn-success">Approve</button>
-                  <button class="btn btn-sm btn-danger">Reject</button>
-                </td>
-              </tr>
-              <tr>
-                <td>user7@example.com</td>
-                <td>Basic</td>
-                <td>Card</td>
-                <td><button class="btn btn-sm btn-info">View Proof</button></td>
-                <td>2023-06-13</td>
-                <td><span class="status-badge status-pending">Pending</span></td>
-                <td>
-                  <button class="btn btn-sm btn-success">Approve</button>
-                  <button class="btn btn-sm btn-danger">Reject</button>
-                </td>
-              </tr>
-              <tr>
-                <td>user8@example.com</td>
-                <td>Enterprise</td>
-                <td>Bank Transfer</td>
-                <td><button class="btn btn-sm btn-info">View Proof</button></td>
-                <td>2023-06-12</td>
-                <td><span class="status-badge status-approved">Approved</span></td>
-                <td>
-                  <button class="btn btn-sm btn-warning" disabled>Approved</button>
-                </td>
-              </tr>
-            </tbody>
-          </table>
-        </div>
-      </div>
-    </div>
-    
-    <!-- Payment Options Tab -->
-    <div id="payment-options" class="tab-content">
-      <div class="payment-container">
-        <div class="payment-header">
-          <h1>VIP Subscription Payment</h1>
-          <div class="payment-divider"></div>
-        </div>
-        
-        <div class="payment-card">
-          <ul class="payment-details">
-            <li><span>Plan:</span><span id="plan-name">Premium Plan</span></li>
-            <li><span>Price:</span><span id="plan-price">$250</span></li>
-            <li><span>You Save:</span><span id="plan-save">$50</span></li>
-          </ul>
-          
-          <button class="payment-btn btn-card">
-            <i class="bi bi-credit-card me-2"></i>Pay with Card/Bank
-          </button>
-          
-          <button class="payment-btn btn-crypto" id="crypto-toggle">
-            <i class="bi bi-currency-bitcoin me-2"></i>Pay with Crypto
-          </button>
-        </div>
-        
-        <div class="payment-form" id="crypto-form">
-          <div class="form-group">
-            <label for="email">Your Email (must match registration)</label>
-            <input type="email" id="email" placeholder="you@example.com" required>
-          </div>
-          
-          <div class="form-group">
-            <label for="proof">Proof of Payment (Screenshot)</label>
-            <input type="file" id="proof" accept="image/*" required>
-          </div>
-          
-          <button class="form-submit">Submit Payment</button>
-          <div class="success-message" id="success-message">
-            Your payment has been submitted and is pending approval!
+      
+      <!-- Stats Cards with Real Data -->
+      <div class="row row-cols-1 row-cols-md-2 row-cols-lg-4 g-4 mb-5">
+        <div class="col">
+          <div class="stats-card">
+            <div class="stats-icon gold">
+              <i class="bi bi-people"></i>
+            </div>
+            <div class="stats-value" id="total-users">0</div>
+            <div class="stats-label">Total Users</div>
           </div>
         </div>
-        
-        <div class="text-center mt-4">
-          <a href="#" class="back-link">← Change Plan</a>
+        <div class="col">
+          <div class="stats-card">
+            <div class="stats-icon green">
+              <i class="bi bi-credit-card"></i>
+            </div>
+            <div class="stats-value" id="active-subs">0</div>
+            <div class="stats-label">Active Subscriptions</div>
+          </div>
+        </div>
+        <div class="col">
+          <div class="stats-card">
+            <div class="stats-icon blue">
+              <i class="bi bi-hourglass-split"></i>
+            </div>
+            <div class="stats-value" id="pending-approvals">0</div>
+            <div class="stats-label">Pending Approvals</div>
+          </div>
+        </div>
+        <div class="col">
+          <div class="stats-card">
+            <div class="stats-icon purple">
+              <i class="bi bi-exclamation-circle"></i>
+            </div>
+            <div class="stats-value" id="expiring-soon">0</div>
+            <div class="stats-label">Expiring Soon</div>
+          </div>
         </div>
       </div>
-    </div>
-    
-    <footer>
-      <div class="container">
-        <p class="mb-0">© 2023 Crypto Business Education. All rights reserved.</p>
+
+      <!-- Bulk Actions -->
+      <div class="bulk-actions">
+        <button class="btn btn-gold" id="bulk-approve"><i class="bi bi-check-circle me-1"></i> Approve Selected</button>
+        <button class="btn btn-gold" id="bulk-reject"><i class="bi bi-x-circle me-1"></i> Reject Selected</button>
+        <button class="btn btn-gold" id="bulk-delete"><i class="bi bi-trash me-1"></i> Delete Selected</button>
+        <button class="btn btn-gold" id="bulk-renew"><i class="bi bi-arrow-repeat me-1"></i> Renew Subscriptions</button>
+        <button class="btn btn-success" id="export-data"><i class="bi bi-file-earmark-spreadsheet me-1"></i> Export Data</button>
       </div>
-    </footer>
-  </div>
+      
+      <!-- User Table -->
+      <div class="table-responsive">
+        <table id="users-table" class="table table-hover" style="width:100%">
+          <thead>
+            <tr>
+              <th><input type="checkbox" id="select-all"></th>
+              <th class="col-index">#</th>
+              <th>Email</th>
+              <th>Name</th>
+              <th class="col-status">Status</th>
+              <th class="col-payment">Payment</th>
+              <th class="col-subscription">Subscription</th>
+              <th class="col-expiry">Expires In</th>
+              <th class="col-actions">Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            <!-- Data will be populated by JavaScript -->
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </main>
+
+  <footer>
+    <div class="container">
+      <p class="mb-0">© 2023 Crypto Business Education. All rights reserved.</p>
+    </div>
+  </footer>
 
   <!-- JS Dependencies -->
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
@@ -922,185 +470,415 @@
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>
 
   <script>
-    document.addEventListener('DOMContentLoaded', function() {
-      // Theme toggle logic
-      const html = document.documentElement;
-      const themeBtn = document.getElementById('theme-toggle');
-      let theme = localStorage.getItem('theme') || 'dark';
+  (async () => {
+    // Theme toggle logic
+    const html = document.documentElement;
+    const btn = document.getElementById('theme-toggle');
+    let theme = localStorage.getItem('theme') || 'dark';
+    html.setAttribute('data-theme', theme);
+    btn.textContent = theme === 'dark' ? '🌞' : '🌜';
+    btn.onclick = () => {
+      theme = theme === 'dark' ? 'light' : 'dark';
       html.setAttribute('data-theme', theme);
-      themeBtn.textContent = theme === 'dark' ? '🌞' : '🌜';
-      themeBtn.onclick = () => {
-        theme = theme === 'dark' ? 'light' : 'dark';
-        html.setAttribute('data-theme', theme);
-        localStorage.setItem('theme', theme);
-        themeBtn.textContent = theme === 'dark' ? '🌞' : '🌜';
-      };
+      localStorage.setItem('theme', theme);
+      btn.textContent = theme === 'dark' ? '🌞' : '🌜';
+    };
 
-      // Mobile menu toggle
-      const mobileMenuToggle = document.querySelector('.mobile-menu-toggle');
-      const adminNav = document.querySelector('.admin-nav');
-      mobileMenuToggle.addEventListener('click', () => {
-        adminNav.classList.toggle('visible');
-      });
+    // Supabase client
+    const SUPABASE_URL = 'https://dapwpgvnfjcfqqhrpxla.supabase.co';
+    const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImRhcHdwZ3ZuZmpjZnFxaHJweGxhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDcwNDA4ODgsImV4cCI6MjA2MjYxNjg4OH0.ICC0UsLlzJDNre7rFCeD3k6iVzo6jOJgn3PhABpEMsQ';
+    const sb = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
-      // Tab navigation
-      const tabLinks = document.querySelectorAll('.admin-tabs .nav-link');
-      const tabContents = document.querySelectorAll('.tab-content');
-      
-      tabLinks.forEach(link => {
-        link.addEventListener('click', (e) => {
-          e.preventDefault();
-          
-          // Remove active class from all links and contents
-          tabLinks.forEach(l => l.classList.remove('active'));
-          tabContents.forEach(c => c.classList.remove('active'));
-          
-          // Add active class to clicked link
-          link.classList.add('active');
-          
-          // Show corresponding content
-          const targetId = link.getAttribute('href');
-          document.querySelector(targetId).classList.add('active');
-        });
-      });
-
-      // Nav links
-      const navLinks = document.querySelectorAll('.admin-nav a');
-      navLinks.forEach(link => {
-        link.addEventListener('click', (e) => {
-          e.preventDefault();
-          
-          // Remove active class from all links
-          navLinks.forEach(l => l.classList.remove('active'));
-          
-          // Add active class to clicked link
-          link.classList.add('active');
-          
-          // Hide mobile menu after selection
-          if (window.innerWidth < 768) {
-            adminNav.classList.remove('visible');
-          }
-        });
-      });
-
-      // Payment page functionality
-      const cryptoBtn = document.getElementById('crypto-toggle');
-      const cryptoForm = document.getElementById('crypto-form');
-      const paymentForm = document.querySelector('.payment-form');
-      const successMessage = document.getElementById('success-message');
-      
-      cryptoBtn.addEventListener('click', () => {
-        cryptoForm.style.display = 'block';
-      });
-      
-      paymentForm.addEventListener('submit', (e) => {
-        e.preventDefault();
-        successMessage.style.display = 'block';
-        
-        // Simulate payment submission
-        setTimeout(() => {
-          paymentForm.reset();
-          successMessage.textContent = 'Payment approved! Subscription activated.';
-          successMessage.style.background = 'rgba(16, 185, 129, 0.3)';
-          successMessage.style.color = 'var(--success)';
-        }, 2000);
-      });
-
-      // Initialize DataTable
-      $('#users-table').DataTable({
-        dom: `<"d-flex justify-content-between mb-3"
-                <"dt-buttons"B>
-                <"col-auto"f>
-              >rt<"d-flex justify-content-between mt-3"lip>`,
-        buttons: [
-          { 
-            extend: 'csvHtml5', 
-            text: '<i class="bi bi-file-earmark-spreadsheet me-1"></i> CSV',
-            className: 'btn-gold'
-          },
-          { 
-            extend: 'pdfHtml5', 
-            text: '<i class="bi bi-file-earmark-pdf me-1"></i> PDF',
-            className: 'btn-gold'
-          }
-        ],
-        paging: true,
-        pageLength: 10,
-        lengthMenu: [5, 10, 25, 50],
-        searching: true,
-        select: { style: 'multi', selector: 'td:first-child input' },
-        order: [[1, 'asc']],
-        columnDefs: [
-          { orderable: false, targets: [0, 8] },
-          { searchable: false, targets: 0 }
-        ],
-        language: {
-          search: "",
-          searchPlaceholder: "Search users...",
-          paginate: {
-            previous: '<i class="bi bi-chevron-left"></i>',
-            next: '<i class="bi bi-chevron-right"></i>'
-          }
+    // Initialize DataTable
+    const table = $('#users-table').DataTable({
+      dom: `<"d-flex justify-content-between mb-3"
+              <"dt-buttons"B>
+              <"col-auto"f>
+            >rt<"d-flex justify-content-between mt-3"lip>`,
+      buttons: [
+        { 
+          extend: 'csvHtml5', 
+          text: '<i class="bi bi-file-earmark-spreadsheet me-1"></i> CSV',
+          className: 'btn-gold'
         },
-        initComplete: function() {
-          $('.dataTables_filter input').addClass('form-control');
-          $('.dataTables_length select').addClass('form-select');
+        { 
+          extend: 'pdfHtml5', 
+          text: '<i class="bi bi-file-earmark-pdf me-1"></i> PDF',
+          className: 'btn-gold'
         }
-      });
+      ],
+      paging: true,
+      pageLength: 10,
+      lengthMenu: [5, 10, 25, 50],
+      searching: true,
+      select: { style: 'multi', selector: 'td:first-child input' },
+      order: [[1, 'asc']],
+      columnDefs: [
+        { orderable: false, targets: [0, 8] },
+        { searchable: false, targets: 0 }
+      ],
+      language: {
+        search: "",
+        searchPlaceholder: "Search users...",
+        paginate: {
+          previous: '<i class="bi bi-chevron-left"></i>',
+          next: '<i class="bi bi-chevron-right"></i>'
+        }
+      },
+      initComplete: function() {
+        $('.dataTables_filter input').addClass('form-control');
+        $('.dataTables_length select').addClass('form-select');
+      }
+    });
+
+    // Helper to calculate expiry info
+    function getExpiryInfo(expiryDate) {
+      if (!expiryDate) return { text: '—', percent: 0, class: '' };
       
-      // Search functionality
-      document.getElementById('search-input').addEventListener('input', function() {
-        const table = $('#users-table').DataTable();
-        table.search(this.value).draw();
-      });
+      const today = new Date();
+      const expiry = new Date(expiryDate);
+      const diffTime = expiry - today;
+      const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
       
-      // Select all checkbox
-      document.getElementById('select-all').addEventListener('change', (e) => {
-        const checked = e.target.checked;
-        const checkboxes = document.querySelectorAll('.row-select');
-        checkboxes.forEach(checkbox => {
-          checkbox.checked = checked;
+      let progressClass = 'progress-green';
+      let progressWidth = 100;
+      
+      if (diffDays <= 0) {
+        return { 
+          text: 'Expired', 
+          percent: 100, 
+          class: 'progress-red' 
+        };
+      }
+      
+      if (diffDays <= 7) {
+        progressClass = 'progress-red';
+        progressWidth = (diffDays / 7) * 100;
+      } else if (diffDays <= 30) {
+        progressClass = 'progress-yellow';
+        progressWidth = (diffDays / 30) * 100;
+      } else {
+        progressWidth = 100;
+      }
+      
+      let displayText = '';
+      if (diffDays < 30) {
+        displayText = `${diffDays} days`;
+      } else {
+        const months = Math.floor(diffDays / 30);
+        displayText = `${months} month${months > 1 ? 's' : ''}`;
+      }
+      
+      return { 
+        text: displayText, 
+        percent: progressWidth, 
+        class: progressClass 
+      };
+    }
+
+    // Helper to generate action buttons
+    function getActionButtons(id, status, paymentStatus) {
+      let buttons = `
+        <button class="btn btn-sm btn-gold" title="Edit" onclick="editUser('${id}')">
+          <i class="bi bi-pencil"></i>
+        </button>
+      `;
+      
+      if (status === 'Pending') {
+        buttons += `
+          <button class="btn btn-sm btn-success" title="Approve" onclick="approveUser('${id}')">
+            <i class="bi bi-check-lg"></i>
+          </button>
+        `;
+      }
+      
+      buttons += `
+        <button class="btn btn-sm btn-danger" title="Delete" onclick="deleteUser('${id}')">
+          <i class="bi bi-trash"></i>
+        </button>
+      `;
+      
+      if (status === 'Approved' && paymentStatus === 'Paid') {
+        buttons += `
+          <button class="btn btn-sm btn-warning" title="Notify" onclick="notifyUser('${id}')">
+            <i class="bi bi-bell"></i>
+          </button>
+        `;
+      }
+      
+      return buttons;
+    }
+
+    // Load users with their latest payment
+    async function loadUsers() {
+      try {
+        // Fetch users
+        const { data: users, error: usersError } = await sb
+          .from('users')
+          .select('*')
+          .order('created_at', { ascending: false });
+        
+        if (usersError) throw usersError;
+        
+        // Fetch payments
+        const { data: payments, error: paymentsError } = await sb
+          .from('payments')
+          .select('*');
+        
+        if (paymentsError) throw paymentsError;
+        
+        // Calculate statistics
+        const totalUsers = users.length;
+        const activeSubs = payments.filter(p => p.status === 'approved' && 
+          new Date(p.expiry_date) > new Date()).length;
+        const pendingApprovals = users.filter(u => u.status === 'Pending').length;
+        const expiringSoon = payments.filter(p => {
+          const expiry = new Date(p.expiry_date);
+          const today = new Date();
+          const diffDays = Math.ceil((expiry - today) / (1000 * 60 * 60 * 24));
+          return diffDays > 0 && diffDays <= 7 && p.status === 'approved';
+        }).length;
+        
+        // Update stats cards
+        document.getElementById('total-users').textContent = totalUsers;
+        document.getElementById('active-subs').textContent = activeSubs;
+        document.getElementById('pending-approvals').textContent = pendingApprovals;
+        document.getElementById('expiring-soon').textContent = expiringSoon;
+        
+        // Map users to their latest payment
+        const userPayments = {};
+        payments.forEach(payment => {
+          if (!userPayments[payment.user_id] || 
+              new Date(payment.created_at) > new Date(userPayments[payment.user_id].created_at)) {
+            userPayments[payment.user_id] = payment;
+          }
         });
-      });
-      
-      // Payment approval simulation
-      const approveButtons = document.querySelectorAll('.btn-success');
-      approveButtons.forEach(button => {
-        button.addEventListener('click', function() {
-          const row = this.closest('tr');
-          const statusCell = row.querySelector('td:nth-child(6)');
-          const badge = statusCell.querySelector('.status-badge');
+        
+        // Clear and populate table
+        table.clear();
+        users.forEach((user, index) => {
+          const payment = userPayments[user.id] || null;
+          const expiryInfo = payment ? getExpiryInfo(payment.expiry_date) : { text: '—', percent: 0, class: '' };
           
-          badge.classList.remove('status-pending');
-          badge.classList.add('status-approved');
-          badge.textContent = 'Approved';
-          
-          this.textContent = 'Approved';
-          this.classList.remove('btn-success');
-          this.classList.add('btn-warning');
-          this.disabled = true;
-          
-          // Show notification
-          const notification = document.createElement('div');
-          notification.className = 'toast align-items-center text-white bg-success border-0 position-fixed top-0 end-0 m-3';
-          notification.innerHTML = `
-            <div class="d-flex">
-              <div class="toast-body">Payment approved successfully!</div>
-              <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast"></button>
-            </div>`;
-          document.body.append(notification);
-          
-          setTimeout(() => {
-            notification.classList.add('show');
-          }, 100);
-          
-          setTimeout(() => {
-            notification.classList.remove('show');
-            setTimeout(() => notification.remove(), 300);
-          }, 3000);
+          table.row.add([
+            `<input type="checkbox" class="row-select" data-id="${user.id}">`,
+            index + 1,
+            user.email,
+            user.name,
+            `<span class="status-badge status-${user.status.toLowerCase()}">${user.status}</span>`,
+            payment ? 
+              `<span class="status-badge status-${payment.status.toLowerCase()}">${payment.status}</span>` : 
+              `<span class="status-badge status-pending">N/A</span>`,
+            payment ? 
+              `<span class="subscription-chip chip-${payment.plan.toLowerCase()}">${payment.plan}</span>` : 
+              '—',
+            `
+              <div class="d-flex flex-column">
+                <span>${expiryInfo.text}</span>
+                <div class="expiry-progress">
+                  <div class="progress-bar ${expiryInfo.class}" style="width: ${expiryInfo.percent}%"></div>
+                </div>
+              </div>
+            `,
+            getActionButtons(user.id, user.status, payment ? payment.status : 'N/A')
+          ]);
         });
+        table.draw();
+      } catch (error) {
+        console.error('Error loading users:', error);
+        alert('Failed to load users: ' + error.message);
+      }
+    }
+
+    // User actions
+    window.editUser = async (id) => {
+      try {
+        const { data: user, error } = await sb
+          .from('users')
+          .select('*')
+          .eq('id', id)
+          .single();
+          
+        if (error) throw error;
+        
+        const name = prompt('Edit name:', user.name);
+        const email = prompt('Edit email:', user.email);
+        
+        if (name && email) {
+          const { error: updateError } = await sb
+            .from('users')
+            .update({ name, email })
+            .eq('id', id);
+            
+          if (updateError) throw updateError;
+          alert('User updated successfully!');
+          await loadUsers();
+        }
+      } catch (error) {
+        console.error('Error editing user:', error);
+        alert('Failed to edit user: ' + error.message);
+      }
+    };
+    
+    window.approveUser = async (id) => {
+      try {
+        const { error } = await sb
+          .from('users')
+          .update({ status: 'Approved' })
+          .eq('id', id);
+          
+        if (error) throw error;
+        alert('User approved successfully!');
+        await loadUsers();
+      } catch (error) {
+        console.error('Error approving user:', error);
+        alert('Failed to approve user: ' + error.message);
+      }
+    };
+    
+    window.deleteUser = async (id) => {
+      if (confirm('Are you sure you want to delete this user?')) {
+        try {
+          const { error } = await sb
+            .from('users')
+            .delete()
+            .eq('id', id);
+            
+          if (error) throw error;
+          alert('User deleted successfully!');
+          await loadUsers();
+        } catch (error) {
+          console.error('Error deleting user:', error);
+          alert('Failed to delete user: ' + error.message);
+        }
+      }
+    };
+    
+    window.notifyUser = async (id) => {
+      alert(`Notification sent to user ${id}`);
+    };
+
+    // Select all checkbox
+    document.getElementById('select-all').addEventListener('change', (e) => {
+      const checked = e.target.checked;
+      table.rows().every(function () {
+        this.nodes().to$().find('input[type="checkbox"]').prop('checked', checked);
+        this.select(checked);
       });
     });
+
+    // Bulk actions
+    document.getElementById('bulk-approve').addEventListener('click', async () => {
+      const selectedRows = table.rows({ selected: true }).indexes().toArray();
+      if (selectedRows.length === 0) {
+        alert('Please select at least one user to approve.');
+        return;
+      }
+      
+      const userIds = selectedRows.map(rowIndex => {
+        const rowData = table.row(rowIndex).data();
+        return rowData[1]; // ID is in the first column after checkbox
+      });
+      
+      try {
+        const { error } = await sb
+          .from('users')
+          .update({ status: 'Approved' })
+          .in('id', userIds);
+          
+        if (error) throw error;
+        alert(`${userIds.length} users approved successfully!`);
+        await loadUsers();
+      } catch (error) {
+        console.error('Bulk approval error:', error);
+        alert('Failed to approve users: ' + error.message);
+      }
+    });
+
+    document.getElementById('bulk-reject').addEventListener('click', async () => {
+      const selectedRows = table.rows({ selected: true }).indexes().toArray();
+      if (selectedRows.length === 0) {
+        alert('Please select at least one user to reject.');
+        return;
+      }
+      
+      const userIds = selectedRows.map(rowIndex => {
+        const rowData = table.row(rowIndex).data();
+        return rowData[1]; // ID is in the first column after checkbox
+      });
+      
+      try {
+        const { error } = await sb
+          .from('users')
+          .update({ status: 'Rejected' })
+          .in('id', userIds);
+          
+        if (error) throw error;
+        alert(`${userIds.length} users rejected successfully!`);
+        await loadUsers();
+      } catch (error) {
+        console.error('Bulk rejection error:', error);
+        alert('Failed to reject users: ' + error.message);
+      }
+    });
+
+    document.getElementById('bulk-delete').addEventListener('click', async () => {
+      const selectedRows = table.rows({ selected: true }).indexes().toArray();
+      if (selectedRows.length === 0) {
+        alert('Please select at least one user to delete.');
+        return;
+      }
+      
+      if (!confirm(`Are you sure you want to delete ${selectedRows.length} users?`)) return;
+      
+      const userIds = selectedRows.map(rowIndex => {
+        const rowData = table.row(rowIndex).data();
+        return rowData[1]; // ID is in the first column after checkbox
+      });
+      
+      try {
+        const { error } = await sb
+          .from('users')
+          .delete()
+          .in('id', userIds);
+          
+        if (error) throw error;
+        alert(`${userIds.length} users deleted successfully!`);
+        await loadUsers();
+      } catch (error) {
+        console.error('Bulk deletion error:', error);
+        alert('Failed to delete users: ' + error.message);
+      }
+    });
+
+    document.getElementById('bulk-renew').addEventListener('click', async () => {
+      const selectedRows = table.rows({ selected: true }).indexes().toArray();
+      if (selectedRows.length === 0) {
+        alert('Please select at least one user to renew.');
+        return;
+      }
+      
+      const userIds = selectedRows.map(rowIndex => {
+        const rowData = table.row(rowIndex).data();
+        return rowData[1]; // ID is in the first column after checkbox
+      });
+      
+      alert(`Renewing subscriptions for ${userIds.length} users...`);
+      // In a real implementation, you would create new payment records here
+    });
+
+    document.getElementById('export-data').addEventListener('click', () => {
+      alert('Exporting user data...');
+    });
+
+    // Search functionality
+    document.getElementById('search-input').addEventListener('input', function() {
+      table.search(this.value).draw();
+    });
+
+    // Initial load
+    await loadUsers();
+  })();
   </script>
 </body>
 </html>
