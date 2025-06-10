@@ -691,94 +691,7 @@
                 <th class="col-actions">Actions</th>
               </tr>
             </thead>
-            <tbody>
-              <tr>
-                <td><input type="checkbox" class="row-select"></td>
-                <td>1</td>
-                <td>user1@example.com</td>
-                <td>John Smith</td>
-                <td><span class="status-badge status-approved">Approved</span></td>
-                <td><span class="status-badge status-approved">Approved</span></td>
-                <td><span class="subscription-chip chip-premium">Premium</span></td>
-                <td>
-                  <div class="d-flex flex-column">
-                    <span>45 days</span>
-                    <div class="expiry-progress">
-                      <div class="progress-bar progress-green" style="width: 85%"></div>
-                    </div>
-                  </div>
-                </td>
-                <td>
-                  <button class="btn btn-sm btn-gold"><i class="bi bi-pencil"></i></button>
-                  <button class="btn btn-sm btn-danger"><i class="bi bi-trash"></i></button>
-                </td>
-              </tr>
-              <tr>
-                <td><input type="checkbox" class="row-select"></td>
-                <td>2</td>
-                <td>user2@example.com</td>
-                <td>Emma Johnson</td>
-                <td><span class="status-badge status-approved">Approved</span></td>
-                <td><span class="status-badge status-approved">Approved</span></td>
-                <td><span class="subscription-chip chip-standard">Standard</span></td>
-                <td>
-                  <div class="d-flex flex-column">
-                    <span>5 days</span>
-                    <div class="expiry-progress">
-                      <div class="progress-bar progress-red" style="width: 20%"></div>
-                    </div>
-                  </div>
-                </td>
-                <td>
-                  <button class="btn btn-sm btn-gold"><i class="bi bi-pencil"></i></button>
-                  <button class="btn btn-sm btn-warning"><i class="bi bi-bell"></i></button>
-                  <button class="btn btn-sm btn-danger"><i class="bi bi-trash"></i></button>
-                </td>
-              </tr>
-              <tr>
-                <td><input type="checkbox" class="row-select"></td>
-                <td>3</td>
-                <td>user3@example.com</td>
-                <td>Michael Brown</td>
-                <td><span class="status-badge status-pending">Pending</span></td>
-                <td><span class="status-badge status-pending">Pending</span></td>
-                <td><span class="subscription-chip chip-basic">Basic</span></td>
-                <td>
-                  <div class="d-flex flex-column">
-                    <span>—</span>
-                    <div class="expiry-progress">
-                      <div class="progress-bar" style="width: 0%"></div>
-                    </div>
-                  </div>
-                </td>
-                <td>
-                  <button class="btn btn-sm btn-gold"><i class="bi bi-pencil"></i></button>
-                  <button class="btn btn-sm btn-success"><i class="bi bi-check-lg"></i></button>
-                  <button class="btn btn-sm btn-danger"><i class="bi bi-trash"></i></button>
-                </td>
-              </tr>
-              <tr>
-                <td><input type="checkbox" class="row-select"></td>
-                <td>4</td>
-                <td>user4@example.com</td>
-                <td>Sarah Williams</td>
-                <td><span class="status-badge status-approved">Approved</span></td>
-                <td><span class="status-badge status-approved">Approved</span></td>
-                <td><span class="subscription-chip chip-enterprise">Enterprise</span></td>
-                <td>
-                  <div class="d-flex flex-column">
-                    <span>120 days</span>
-                    <div class="expiry-progress">
-                      <div class="progress-bar progress-green" style="width: 100%"></div>
-                    </div>
-                  </div>
-                </td>
-                <td>
-                  <button class="btn btn-sm btn-gold"><i class="bi bi-pencil"></i></button>
-                  <button class="btn btn-sm btn-danger"><i class="bi bi-trash"></i></button>
-                </td>
-              </tr>
-            </tbody>
+            <tbody id="users-tbody"></tbody>
           </table>
         </div>
       </div>
@@ -923,6 +836,11 @@
 
   <script>
     document.addEventListener('DOMContentLoaded', function() {
+      // Supabase client initialization
+      const SUPABASE_URL = 'https://dapwpgvnfjcfqqhrpxla.supabase.co';
+      const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImRhcHdwZ3ZuZmpjZnFxaHJweGxhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDcwNDA4ODgsImV4cCI6MjA2MjYxNjg4OH0.ICC0UsLlzJDNre7rFCeD3k6iVzo6jOJgn3PhABpEMsQ';
+      const sb = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
       // Theme toggle logic
       const html = document.documentElement;
       const themeBtn = document.getElementById('theme-toggle');
@@ -1006,48 +924,144 @@
         }, 2000);
       });
 
-      // Initialize DataTable
-      $('#users-table').DataTable({
-        dom: `<"d-flex justify-content-between mb-3"
-                <"dt-buttons"B>
-                <"col-auto"f>
-              >rt<"d-flex justify-content-between mt-3"lip>`,
-        buttons: [
-          { 
-            extend: 'csvHtml5', 
-            text: '<i class="bi bi-file-earmark-spreadsheet me-1"></i> CSV',
-            className: 'btn-gold'
-          },
-          { 
-            extend: 'pdfHtml5', 
-            text: '<i class="bi bi-file-earmark-pdf me-1"></i> PDF',
-            className: 'btn-gold'
+      // Function to calculate "Expires In" with progress bar
+      function getExpiresInHtml(start, end) {
+        const startDate = new Date(start);
+        const endDate = new Date(end);
+        const now = new Date();
+        if (isNaN(startDate) || isNaN(endDate)) return '—';
+        if (now >= endDate) return 'Expired';
+        
+        const totalMs = endDate - startDate;
+        const remainingMs = endDate - now;
+        const percentage = Math.max(0, (remainingMs / totalMs) * 100);
+        const days = Math.floor(remainingMs / (1000 * 60 * 60 * 24));
+        const hours = Math.floor((remainingMs % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+        const progressClass = percentage > 30 ? 'progress-green' : percentage > 10 ? 'progress-yellow' : 'progress-red';
+        return `
+          <div class="d-flex flex-column">
+            <span id="expiry-text">${days} days ${hours} hours</span>
+            <div class="expiry-progress">
+              <div class="progress-bar ${progressClass}" style="width: ${percentage}%"></div>
+            </div>
+          </div>
+        `;
+      }
+
+      // Load users dynamically from Supabase
+      async function loadUsers() {
+        try {
+          // Fetch users
+          const { data: users, error: usersError } = await sb.from('users').select('*');
+          if (usersError) throw usersError;
+          
+          // Fetch payments
+          const { data: payments, error: paymentsError } = await sb.from('payments').select('*');
+          if (paymentsError) throw paymentsError;
+          
+          // Match payments to users by email
+          const userPayments = {};
+          payments.forEach(payment => {
+            const user = users.find(u => u.email === payment.email);
+            if (user) {
+              if (!userPayments[user.id] || 
+                  new Date(payment.created_at) > new Date(userPayments[user.id].created_at)) {
+                userPayments[user.id] = payment;
+              }
+            }
+          });
+          
+          // Populate table
+          const tbody = document.getElementById('users-tbody');
+          tbody.innerHTML = '';
+          users.forEach((user, index) => {
+            const payment = userPayments[user.id] || null;
+            const row = document.createElement('tr');
+            row.innerHTML = `
+              <td><input type="checkbox" class="row-select"></td>
+              <td>${index + 1}</td>
+              <td>${user.email}</td>
+              <td>${user.name}</td>
+              <td><span class="status-badge status-${user.status.toLowerCase()}">${user.status}</span></td>
+              <td>${payment ? `<span class="status-badge status-${payment.status.toLowerCase()}">${payment.status}</span>` : '—'}</td>
+              <td>${payment ? `<span class="subscription-chip chip-${payment.plan.toLowerCase().split(' ')[0]}">${payment.plan}</span>` : '—'}</td>
+              <td id="expiry-${user.id}" data-start="${payment ? payment.created_at : ''}" data-end="${payment ? payment.expiry_date : ''}">
+                ${payment && payment.expiry_date ? getExpiresInHtml(payment.created_at, payment.expiry_date) : '—'}
+              </td>
+              <td>
+                <button class="btn btn-sm btn-gold"><i class="bi bi-pencil"></i></button>
+                ${user.status === 'Pending' ? `<button class="btn btn-sm btn-success"><i class="bi bi-check-lg"></i></button>` : ''}
+                <button class="btn btn-sm btn-danger"><i class="bi bi-trash"></i></button>
+                ${user.status === 'Approved' && payment && payment.status === 'Approved' ? `<button class="btn btn-sm btn-warning"><i class="bi bi-bell"></i></button>` : ''}
+              </td>
+            `;
+            tbody.appendChild(row);
+          });
+          
+          // Initialize DataTable
+          if ($.fn.DataTable.isDataTable('#users-table')) {
+            $('#users-table').DataTable().destroy();
           }
-        ],
-        paging: true,
-        pageLength: 10,
-        lengthMenu: [5, 10, 25, 50],
-        searching: true,
-        select: { style: 'multi', selector: 'td:first-child input' },
-        order: [[1, 'asc']],
-        columnDefs: [
-          { orderable: false, targets: [0, 8] },
-          { searchable: false, targets: 0 }
-        ],
-        language: {
-          search: "",
-          searchPlaceholder: "Search users...",
-          paginate: {
-            previous: '<i class="bi bi-chevron-left"></i>',
-            next: '<i class="bi bi-chevron-right"></i>'
-          }
-        },
-        initComplete: function() {
-          $('.dataTables_filter input').addClass('form-control');
-          $('.dataTables_length select').addClass('form-select');
+          $('#users-table').DataTable({
+            dom: `<"d-flex justify-content-between mb-3"
+                    <"dt-buttons"B>
+                    <"col-auto"f>
+                  >rt<"d-flex justify-content-between mt-3"lip>`,
+            buttons: [
+              { 
+                extend: 'csvHtml5', 
+                text: '<i class="bi bi-file-earmark-spreadsheet me-1"></i> CSV',
+                className: 'btn-gold'
+              },
+              { 
+                extend: 'pdfHtml5', 
+                text: '<i class="bi bi-file-earmark-pdf me-1"></i> PDF',
+                className: 'btn-gold'
+              }
+            ],
+            paging: true,
+            pageLength: 10,
+            lengthMenu: [5, 10, 25, 50],
+            searching: true,
+            select: { style: 'multi', selector: 'td:first-child input' },
+            order: [[1, 'asc']],
+            columnDefs: [
+              { orderable: false, targets: [0, 8] },
+              { searchable: false, targets: 0 }
+            ],
+            language: {
+              search: "",
+              searchPlaceholder: "Search users...",
+              paginate: {
+                previous: '<i class="bi bi-chevron-left"></i>',
+                next: '<i class="bi bi-chevron-right"></i>'
+              }
+            },
+            initComplete: function() {
+              $('.dataTables_filter input').addClass('form-control');
+              $('.dataTables_length select').addClass('form-select');
+            }
+          });
+        } catch (error) {
+          console.error('Error loading users:', error);
+          alert('Failed to load users');
         }
-      });
-      
+      }
+
+      // Update "Expires In" every hour
+      setInterval(() => {
+        document.querySelectorAll('[id^=expiry-]').forEach(cell => {
+          const start = cell.dataset.start;
+          const end = cell.dataset.end;
+          if (start && end) {
+            cell.innerHTML = getExpiresInHtml(start, end);
+          }
+        });
+      }, 3600000); // 3600000 ms = 1 hour
+
+      // Load users on page load
+      loadUsers();
+
       // Search functionality
       document.getElementById('search-input').addEventListener('input', function() {
         const table = $('#users-table').DataTable();
