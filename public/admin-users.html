@@ -3,16 +3,20 @@
 <head>
   <meta charset="UTF-8"/>
   <meta name="viewport" content="width=device-width,initial-scale=1"/>
-  <title>CBE Admin – User & Subscription Management</title>
+  <title>CBE Admin – User Management</title>
   
   <script>
+    // Redirect to login if not authenticated
     if (localStorage.getItem('isLoggedIn') !== 'true') {
       window.location.replace('admin-login.html?redirect=' + encodeURIComponent(window.location.pathname));
     }
   </script>
   
+  <!-- Fonts & Icons -->
   <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
   <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css" rel="stylesheet">
+  
+  <!-- Libraries -->
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet"/>
   <link href="https://cdn.datatables.net/1.13.4/css/dataTables.bootstrap5.min.css" rel="stylesheet"/>
   <link href="https://cdn.datatables.net/buttons/2.3.6/css/buttons.bootstrap5.min.css" rel="stylesheet"/>
@@ -20,6 +24,7 @@
   <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
 
   <style>
+    /* Theme Variables */
     :root[data-theme="dark"] {
       --bg: #0f172a;
       --text: #f1f5f9;
@@ -51,15 +56,19 @@
       --highlight: rgba(251, 191, 36, 0.15);
     }
 
+    /* Reset & Base */
     * { margin: 0; padding: 0; box-sizing: border-box; }
     body, html {
-      width: 100%; height: 100%;
+      width: 100%;
+      height: 100%;
       font-family: 'Poppins', sans-serif;
-      background: var(--bg); color: var(--text);
+      background: var(--bg);
+      color: var(--text);
       overflow-x: hidden;
     }
     a { text-decoration: none; }
     
+    /* Buttons */
     .btn-gold {
       background: linear-gradient(135deg, var(--gold), var(--gold-dark));
       color: #fff;
@@ -77,6 +86,7 @@
     .btn-warning { background: linear-gradient(135deg, var(--warning), #e68a00); }
     .btn-danger { background: linear-gradient(135deg, var(--danger), #d43030); }
 
+    /* Header */
     header {
       display: flex;
       align-items: center;
@@ -126,6 +136,7 @@
       background: var(--highlight);
     }
 
+    /* Main Panel */
     main {
       padding: 2rem;
     }
@@ -150,6 +161,7 @@
       font-size: 1.3rem;
     }
 
+    /* Cards */
     .stats-card {
       background: var(--card-bg);
       border-radius: 12px;
@@ -188,6 +200,7 @@
       letter-spacing: 1px;
     }
 
+    /* DataTable */
     .dataTables_wrapper {
       margin-top: 1.5rem;
     }
@@ -265,6 +278,7 @@
       flex-wrap: wrap;
     }
     
+    /* Status badges */
     .status-badge {
       padding: 0.35rem 0.8rem;
       border-radius: 50px;
@@ -277,6 +291,7 @@
     .status-rejected { background: rgba(239, 68, 68, 0.15); color: var(--danger); }
     .status-expired { background: rgba(107, 114, 128, 0.15); color: #6b7280; }
     
+    /* Subscription chips */
     .subscription-chip {
       padding: 0.4rem 0.8rem;
       border-radius: 50px;
@@ -289,21 +304,23 @@
     .chip-premium { background: rgba(251, 191, 36, 0.2); color: var(--gold); }
     .chip-enterprise { background: rgba(236, 72, 153, 0.15); color: #ec4899; }
     
-    .expiry-countdown {
-      font-weight: 600;
-      font-size: 0.95rem;
-      min-width: 120px;
-      display: inline-block;
-      transition: color 0.3s ease;
+    /* Progress bar */
+    .expiry-progress {
+      height: 8px;
+      border-radius: 4px;
+      background: var(--glass-light);
+      overflow: hidden;
+      margin-top: 0.5rem;
     }
-    .countdown-expiring { color: var(--danger); animation: pulse 1.5s infinite; }
-    .countdown-expired { color: #6b7280; }
-    @keyframes pulse {
-      0% { opacity: 1; }
-      50% { opacity: 0.7; }
-      100% { opacity: 1; }
+    .progress-bar {
+      height: 100%;
+      border-radius: 4px;
     }
+    .progress-green { background: linear-gradient(90deg, var(--success), #0d9e6c); }
+    .progress-yellow { background: linear-gradient(90deg, var(--warning), #e68a00); }
+    .progress-red { background: linear-gradient(90deg, var(--danger), #d43030); }
     
+    /* Footer */
     footer {
       text-align: center;
       padding: 1.5rem;
@@ -313,6 +330,7 @@
       margin-top: 2rem;
     }
     
+    /* Responsive */
     @media (max-width: 992px) {
       .stats-grid {
         grid-template-columns: repeat(2, 1fr);
@@ -335,7 +353,7 @@
       <a href="admin-dashboard.html">
         <img src="CBE_logo.PNG" alt="CBE Logo"/>
       </a>
-      <h1>User & Subscription Management</h1>
+      <h1>User Management</h1>
     </div>
     <div class="d-flex align-items-center gap-3">
       <div class="position-relative">
@@ -351,24 +369,24 @@
   <main class="container">
     <div class="glass">
       <div class="d-flex justify-content-between align-items-center flex-wrap gap-3 mb-4">
-        <h3 class="panel-title"><i class="bi bi-people-fill"></i> User Applications & Subscriptions</h3>
+        <h3 class="panel-title"><i class="bi bi-people-fill"></i> User Applications</h3>
         <div class="d-flex gap-2">
           <div class="input-group" style="max-width: 300px;">
             <span class="input-group-text bg-transparent border-end-0"><i class="bi bi-search"></i></span>
-            <input type="text" id="search-input" class="form-control border-start-0" placeholder="Search users...">
+            <input type="text" class="form-control border-start-0" placeholder="Search users...">
           </div>
           <button class="btn btn-gold"><i class="bi bi-funnel me-1"></i> Filters</button>
         </div>
       </div>
       
-      <!-- Stats Cards with Real Data -->
+      <!-- Stats Cards -->
       <div class="row row-cols-1 row-cols-md-2 row-cols-lg-4 g-4 mb-5">
         <div class="col">
           <div class="stats-card">
             <div class="stats-icon gold">
               <i class="bi bi-people"></i>
             </div>
-            <div class="stats-value" id="total-users">0</div>
+            <div class="stats-value">1,254</div>
             <div class="stats-label">Total Users</div>
           </div>
         </div>
@@ -377,7 +395,7 @@
             <div class="stats-icon green">
               <i class="bi bi-credit-card"></i>
             </div>
-            <div class="stats-value" id="active-subs">0</div>
+            <div class="stats-value">942</div>
             <div class="stats-label">Active Subscriptions</div>
           </div>
         </div>
@@ -386,7 +404,7 @@
             <div class="stats-icon blue">
               <i class="bi bi-hourglass-split"></i>
             </div>
-            <div class="stats-value" id="pending-approvals">0</div>
+            <div class="stats-value">184</div>
             <div class="stats-label">Pending Approvals</div>
           </div>
         </div>
@@ -395,7 +413,7 @@
             <div class="stats-icon purple">
               <i class="bi bi-exclamation-circle"></i>
             </div>
-            <div class="stats-value" id="expiring-soon">0</div>
+            <div class="stats-value">37</div>
             <div class="stats-label">Expiring Soon</div>
           </div>
         </div>
@@ -428,6 +446,116 @@
           </thead>
           <tbody>
             <!-- Data will be populated by JavaScript -->
+            <tr>
+              <td><input type="checkbox" class="row-select"></td>
+              <td class="col-index">1</td>
+              <td>john.doe@example.com</td>
+              <td>John Doe</td>
+              <td class="col-status"><span class="status-badge status-approved">Approved</span></td>
+              <td class="col-payment"><span class="status-badge status-approved">Paid</span></td>
+              <td class="col-subscription"><span class="subscription-chip chip-premium">Premium</span></td>
+              <td class="col-expiry">
+                <div class="d-flex flex-column">
+                  <span>15 days</span>
+                  <div class="expiry-progress">
+                    <div class="progress-bar progress-yellow" style="width: 65%"></div>
+                  </div>
+                </div>
+              </td>
+              <td class="col-actions">
+                <button class="btn btn-sm btn-gold" title="Edit"><i class="bi bi-pencil"></i></button>
+                <button class="btn btn-sm btn-success" title="Renew"><i class="bi bi-arrow-repeat"></i></button>
+                <button class="btn btn-sm btn-danger" title="Delete"><i class="bi bi-trash"></i></button>
+              </td>
+            </tr>
+            <tr>
+              <td><input type="checkbox" class="row-select"></td>
+              <td class="col-index">2</td>
+              <td>sarah.smith@example.com</td>
+              <td>Sarah Smith</td>
+              <td class="col-status"><span class="status-badge status-pending">Pending</span></td>
+              <td class="col-payment"><span class="status-badge status-pending">Pending</span></td>
+              <td class="col-subscription"><span class="subscription-chip chip-basic">Basic</span></td>
+              <td class="col-expiry">
+                <div class="d-flex flex-column">
+                  <span>—</span>
+                  <div class="expiry-progress">
+                    <div class="progress-bar" style="width: 0%"></div>
+                  </div>
+                </div>
+              </td>
+              <td class="col-actions">
+                <button class="btn btn-sm btn-gold" title="Edit"><i class="bi bi-pencil"></i></button>
+                <button class="btn btn-sm btn-success" title="Approve"><i class="bi bi-check-lg"></i></button>
+                <button class="btn btn-sm btn-danger" title="Delete"><i class="bi bi-trash"></i></button>
+              </td>
+            </tr>
+            <tr>
+              <td><input type="checkbox" class="row-select"></td>
+              <td class="col-index">3</td>
+              <td>mike.johnson@example.com</td>
+              <td>Mike Johnson</td>
+              <td class="col-status"><span class="status-badge status-approved">Approved</span></td>
+              <td class="col-payment"><span class="status-badge status-approved">Paid</span></td>
+              <td class="col-subscription"><span class="subscription-chip chip-enterprise">Enterprise</span></td>
+              <td class="col-expiry">
+                <div class="d-flex flex-column">
+                  <span>2 months</span>
+                  <div class="expiry-progress">
+                    <div class="progress-bar progress-green" style="width: 80%"></div>
+                  </div>
+                </div>
+              </td>
+              <td class="col-actions">
+                <button class="btn btn-sm btn-gold" title="Edit"><i class="bi bi-pencil"></i></button>
+                <button class="btn btn-sm btn-warning" title="Notify"><i class="bi bi-bell"></i></button>
+                <button class="btn btn-sm btn-danger" title="Delete"><i class="bi bi-trash"></i></button>
+              </td>
+            </tr>
+            <tr>
+              <td><input type="checkbox" class="row-select"></td>
+              <td class="col-index">4</td>
+              <td>lisa.williams@example.com</td>
+              <td>Lisa Williams</td>
+              <td class="col-status"><span class="status-badge status-rejected">Rejected</span></td>
+              <td class="col-payment"><span class="status-badge status-rejected">Failed</span></td>
+              <td class="col-subscription"><span>—</span></td>
+              <td class="col-expiry">
+                <div class="d-flex flex-column">
+                  <span>Expired</span>
+                  <div class="expiry-progress">
+                    <div class="progress-bar progress-red" style="width: 100%"></div>
+                  </div>
+                </div>
+              </td>
+              <td class="col-actions">
+                <button class="btn btn-sm btn-gold" title="Edit"><i class="bi bi-pencil"></i></button>
+                <button class="btn btn-sm btn-success" title="Renew"><i class="bi bi-arrow-repeat"></i></button>
+                <button class="btn btn-sm btn-danger" title="Delete"><i class="bi bi-trash"></i></button>
+              </td>
+            </tr>
+            <tr>
+              <td><input type="checkbox" class="row-select"></td>
+              <td class="col-index">5</td>
+              <td>david.brown@example.com</td>
+              <td>David Brown</td>
+              <td class="col-status"><span class="status-badge status-approved">Approved</span></td>
+              <td class="col-payment"><span class="status-badge status-approved">Paid</span></td>
+              <td class="col-subscription"><span class="subscription-chip chip-standard">Standard</span></td>
+              <td class="col-expiry">
+                <div class="d-flex flex-column">
+                  <span>3 days</span>
+                  <div class="expiry-progress">
+                    <div class="progress-bar progress-red" style="width: 10%"></div>
+                  </div>
+                </div>
+              </td>
+              <td class="col-actions">
+                <button class="btn btn-sm btn-gold" title="Edit"><i class="bi bi-pencil"></i></button>
+                <button class="btn btn-sm btn-warning" title="Notify"><i class="bi bi-bell"></i></button>
+                <button class="btn btn-sm btn-danger" title="Delete"><i class="bi bi-trash"></i></button>
+              </td>
+            </tr>
           </tbody>
         </table>
       </div>
@@ -465,11 +593,6 @@
       localStorage.setItem('theme', theme);
       btn.textContent = theme === 'dark' ? '🌞' : '🌜';
     };
-
-    // Supabase client
-    const SUPABASE_URL = 'https://dapwpgvnfjcfqqhrpxla.supabase.co';
-    const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImRhcHdwZ3ZuZmpjZnFxaHJweGxhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDcwNDA4ODgsImV4cCI6MjA2MjYxNjg4OH0.ICC0UsLlzJDNre7rFCeD3k6iVzo6jOJgn3PhABpEMsQ';
-    const sb = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
     // Initialize DataTable
     const table = $('#users-table').DataTable({
@@ -513,49 +636,152 @@
       }
     });
 
-    // Helper to calculate expiry info in hours/minutes/seconds
+    // Select all checkbox
+    document.getElementById('select-all').addEventListener('change', (e) => {
+      const checked = e.target.checked;
+      table.rows().every(function () {
+        this.nodes().to$().find('input[type="checkbox"]').prop('checked', checked);
+        this.select(checked);
+      });
+    });
+
+    // Bulk actions
+    document.getElementById('bulk-approve').addEventListener('click', () => {
+      const selectedCount = table.rows({ selected: true }).count();
+      if (selectedCount === 0) {
+        alert('Please select at least one user to approve.');
+        return;
+      }
+      alert(`Approving ${selectedCount} selected users...`);
+      // In a real implementation, you would call your API here
+    });
+
+    document.getElementById('bulk-reject').addEventListener('click', () => {
+      const selectedCount = table.rows({ selected: true }).count();
+      if (selectedCount === 0) {
+        alert('Please select at least one user to reject.');
+        return;
+      }
+      alert(`Rejecting ${selectedCount} selected users...`);
+    });
+
+    document.getElementById('bulk-delete').addEventListener('click', () => {
+      const selectedCount = table.rows({ selected: true }).count();
+      if (selectedCount === 0) {
+        alert('Please select at least one user to delete.');
+        return;
+      }
+      if (confirm(`Are you sure you want to delete ${selectedCount} users?`)) {
+        alert(`Deleting ${selectedCount} selected users...`);
+      }
+    });
+
+    document.getElementById('bulk-renew').addEventListener('click', () => {
+      const selectedCount = table.rows({ selected: true }).count();
+      if (selectedCount === 0) {
+        alert('Please select at least one user to renew.');
+        return;
+      }
+      alert(`Renewing subscriptions for ${selectedCount} users...`);
+    });
+
+    document.getElementById('export-data').addEventListener('click', () => {
+      alert('Exporting user data...');
+    });
+
+    // Example of integrating with Supabase (commented out for demo)
+    /*
+    // Supabase client
+    const SUPABASE_URL = 'https://dapwpgvnfjcfqqhrpxla.supabase.co';
+    const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImRhcHdwZ3ZuZmpjZnFxaHJweGxhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDcwNDA4ODgsImV4cCI6MjA2MjYxNjg4OH0.ICC0UsLlzJDNre7rFCeD3k6iVzo6jOJgn3PhABpEMsQ';
+    const sb = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+    // Load users from Supabase
+    async function loadUsers() {
+      try {
+        const { data, error } = await sb
+          .from('users')
+          .select('id,email,name,status,payment_status,subscription_plan,expiry_date')
+          .order('created_at', { ascending: false });
+        
+        if (error) throw error;
+
+        table.clear();
+        data.forEach((user, index) => {
+          table.row.add([
+            `<input type="checkbox" class="row-select" data-id="${user.id}">`,
+            index + 1,
+            user.email,
+            user.name,
+            `<span class="status-badge status-${user.status.toLowerCase()}">${user.status}</span>`,
+            `<span class="status-badge status-${user.payment_status.toLowerCase()}">${user.payment_status}</span>`,
+            user.subscription_plan ? 
+              `<span class="subscription-chip chip-${user.subscription_plan.toLowerCase()}">${user.subscription_plan}</span>` : 
+              '—',
+            getExpiryInfo(user.expiry_date),
+            getActionButtons(user.id, user.status)
+          ]);
+        });
+        table.draw();
+      } catch (error) {
+        console.error('Error loading users:', error);
+        alert('Failed to load users: ' + error.message);
+      }
+    }
+
+    // Helper to calculate expiry info
     function getExpiryInfo(expiryDate) {
-      if (!expiryDate) return { text: '—', seconds: 0, class: '' };
+      if (!expiryDate) return '—';
       
+      const today = new Date();
       const expiry = new Date(expiryDate);
-      if (isNaN(expiry.getTime())) {
-        console.error('Invalid expiry date:', expiryDate);
-        return { text: 'Invalid Date', seconds: 0, class: 'countdown-expired' };
+      const diffTime = expiry - today;
+      const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+      
+      let progressClass = 'progress-green';
+      let progressWidth = 100;
+      
+      if (diffDays <= 0) {
+        return `
+          <div class="d-flex flex-column">
+            <span>Expired</span>
+            <div class="expiry-progress">
+              <div class="progress-bar progress-red" style="width: 100%"></div>
+            </div>
+          </div>
+        `;
       }
       
-      const now = new Date();
-      const diffMs = expiry - now;
-      const diffSeconds = Math.floor(diffMs / 1000);
-      
-      if (diffSeconds <= 0) {
-        return { text: 'Expired', seconds: 0, class: 'countdown-expired' };
+      if (diffDays <= 7) {
+        progressClass = 'progress-red';
+        progressWidth = (diffDays / 7) * 100;
+      } else if (diffDays <= 30) {
+        progressClass = 'progress-yellow';
+        progressWidth = (diffDays / 30) * 100;
+      } else {
+        progressWidth = 100;
       }
-      
-      const hours = Math.floor(diffSeconds / 3600);
-      const minutes = Math.floor((diffSeconds % 3600) / 60);
-      const seconds = diffSeconds % 60;
       
       let displayText = '';
-      if (hours > 0) {
-        displayText = `${hours}h ${minutes}m`;
-      } else if (minutes > 0) {
-        displayText = `${minutes}m ${seconds}s`;
+      if (diffDays < 30) {
+        displayText = `${diffDays} days`;
       } else {
-        displayText = `${seconds}s`;
+        const months = Math.floor(diffDays / 30);
+        displayText = `${months} month${months > 1 ? 's' : ''}`;
       }
       
-      // Add warning class if less than 1 hour remaining
-      const warningClass = hours === 0 && minutes < 60 ? 'countdown-expiring' : '';
-      
-      return { 
-        text: displayText, 
-        seconds: diffSeconds,
-        class: warningClass
-      };
+      return `
+        <div class="d-flex flex-column">
+          <span>${displayText}</span>
+          <div class="expiry-progress">
+            <div class="progress-bar ${progressClass}" style="width: ${progressWidth}%"></div>
+          </div>
+        </div>
+      `;
     }
 
     // Helper to generate action buttons
-    function getActionButtons(id, status, paymentStatus) {
+    function getActionButtons(id, status) {
       let buttons = `
         <button class="btn btn-sm btn-gold" title="Edit" onclick="editUser('${id}')">
           <i class="bi bi-pencil"></i>
@@ -576,7 +802,7 @@
         </button>
       `;
       
-      if (status === 'Approved' && paymentStatus === 'Paid') {
+      if (status === 'Approved') {
         buttons += `
           <button class="btn btn-sm btn-warning" title="Notify" onclick="notifyUser('${id}')">
             <i class="bi bi-bell"></i>
@@ -584,302 +810,12 @@
         `;
       }
       
-      return buttons;
+      return `<div class="col-actions">${buttons}</div>`;
     }
-
-    // Real-time countdown updater
-    function updateCountdowns() {
-      table.rows().every(function() {
-        const row = this.node();
-        const expiryCell = $(row).find('.expiry-countdown');
-        const expiryDate = expiryCell.data('expiry');
-        
-        if (expiryDate) {
-          const expiryInfo = getExpiryInfo(expiryDate);
-          expiryCell.text(expiryInfo.text);
-          expiryCell.removeClass('countdown-expiring countdown-expired');
-          if (expiryInfo.class) {
-            expiryCell.addClass(expiryInfo.class);
-          }
-        }
-      });
-    }
-
-    // Load users with their latest payment
-    async function loadUsers() {
-      try {
-        // Fetch users
-        const { data: users, error: usersError } = await sb
-          .from('users')
-          .select('*')
-          .order('created_at', { ascending: false });
-        
-        if (usersError) throw usersError;
-        
-        // Fetch payments
-        const { data: payments, error: paymentsError } = await sb
-          .from('payments')
-          .select('*');
-        
-        if (paymentsError) throw paymentsError;
-        
-        // Calculate statistics
-        const totalUsers = users.length;
-        const activeSubs = payments.filter(p => p.status === 'approved' && 
-          new Date(p.expiry_date) > new Date()).length;
-        const pendingApprovals = users.filter(u => u.status === 'Pending').length;
-        
-        // Calculate expiring soon (less than 1 hour)
-        const expiringSoon = payments.filter(p => {
-          const expiry = new Date(p.expiry_date);
-          const now = new Date();
-          const diffHours = (expiry - now) / (1000 * 60 * 60);
-          return diffHours > 0 && diffHours <= 1 && p.status === 'approved';
-        }).length;
-        
-        // Update stats cards
-        document.getElementById('total-users').textContent = totalUsers;
-        document.getElementById('active-subs').textContent = activeSubs;
-        document.getElementById('pending-approvals').textContent = pendingApprovals;
-        document.getElementById('expiring-soon').textContent = expiringSoon;
-        
-        // Map users to their latest payment
-        const userPayments = {};
-        payments.forEach(payment => {
-          const user = users.find(u => u.email === payment.email);
-          if (user) {
-            if (!userPayments[user.id] || 
-                new Date(payment.created_at) > new Date(userPayments[user.id].created_at)) {
-              userPayments[user.id] = payment;
-            }
-          }
-        });
-        
-        // Clear and populate table
-        table.clear();
-        users.forEach((user, index) => {
-          const payment = userPayments[user.id] || null;
-          const expiryInfo = payment ? getExpiryInfo(payment.expiry_date) : { text: '—', class: '' };
-          
-          table.row.add([
-            `<input type="checkbox" class="row-select" data-id="${user.id}">`,
-            index + 1,
-            user.email,
-            user.name,
-            `<span class="status-badge status-${user.status.toLowerCase()}">${user.status}</span>`,
-            payment ? 
-              `<span class="status-badge status-${payment.status.toLowerCase()}">${payment.status}</span>` : 
-              `<span class="status-badge status-pending">N/A</span>`,
-            payment ? 
-              `<span class="subscription-chip chip-${payment.plan.toLowerCase().split(' ')[0]}">${payment.plan}</span>` : 
-              '—',
-            `
-              <span class="expiry-countdown ${expiryInfo.class}" data-expiry="${payment ? payment.expiry_date : ''}">
-                ${expiryInfo.text}
-              </span>
-            `,
-            getActionButtons(user.id, user.status, payment ? payment.status : 'N/A')
-          ]);
-        });
-        table.draw();
-      } catch (error) {
-        console.error('Error loading users:', error);
-        alert('Failed to load users: ' + error.message);
-      }
-    }
-
-    // User actions
-    window.editUser = async (id) => {
-      try {
-        const { data: user, error } = await sb
-          .from('users')
-          .select('*')
-          .eq('id', id)
-          .single();
-          
-        if (error) throw error;
-        
-        const name = prompt('Edit name:', user.name);
-        const email = prompt('Edit email:', user.email);
-        
-        if (name && email) {
-          const { error: updateError } = await sb
-            .from('users')
-            .update({ name, email })
-            .eq('id', id);
-            
-          if (updateError) throw updateError;
-          alert('User updated successfully!');
-          await loadUsers();
-        }
-      } catch (error) {
-        console.error('Error editing user:', error);
-        alert('Failed to edit user: ' + error.message);
-      }
-    };
-    
-    window.approveUser = async (id) => {
-      try {
-        const { error } = await sb
-          .from('users')
-          .update({ status: 'Approved' })
-          .eq('id', id);
-          
-        if (error) throw error;
-        alert('User approved successfully!');
-        await loadUsers();
-      } catch (error) {
-        console.error('Error approving user:', error);
-        alert('Failed to approve user: ' + error.message);
-      }
-    };
-    
-    window.deleteUser = async (id) => {
-      if (confirm('Are you sure you want to delete this user?')) {
-        try {
-          const { error } = await sb
-            .from('users')
-            .delete()
-            .eq('id', id);
-            
-          if (error) throw error;
-          alert('User deleted successfully!');
-          await loadUsers();
-        } catch (error) {
-          console.error('Error deleting user:', error);
-          alert('Failed to delete user: ' + error.message);
-        }
-      }
-    };
-    
-    window.notifyUser = async (id) => {
-      alert(`Notification sent to user ${id}`);
-    };
-
-    // Select all checkbox
-    document.getElementById('select-all').addEventListener('change', (e) => {
-      const checked = e.target.checked;
-      table.rows().every(function () {
-        this.nodes().to$().find('input[type="checkbox"]').prop('checked', checked);
-        this.select(checked);
-      });
-    });
-
-    // Helper to get selected UUIDs
-    function getSelectedUserIds() {
-      const selectedRows = table.rows({ selected: true }).nodes().toArray();
-      const userIds = selectedRows.map(row => {
-        return $(row).find('.row-select').data('id');
-      });
-      return userIds;
-    }
-
-    // Bulk actions
-    document.getElementById('bulk-approve').addEventListener('click', async () => {
-      const userIds = getSelectedUserIds();
-      if (userIds.length === 0) {
-        alert('Please select at least one user to approve.');
-        return;
-      }
-      
-      try {
-        const { error } = await sb
-          .from('users')
-          .update({ status: 'Approved' })
-          .in('id', userIds);
-          
-        if (error) throw error;
-        alert(`${userIds.length} users approved successfully!`);
-        await loadUsers();
-      } catch (error) {
-        console.error('Bulk approval error:', error);
-        alert('Failed to approve users: ' + error.message);
-      }
-    });
-
-    document.getElementById('bulk-reject').addEventListener('click', async () => {
-      const userIds = getSelectedUserIds();
-      if (userIds.length === 0) {
-        alert('Please select at least one user to reject.');
-        return;
-      }
-      
-      try {
-        const { error } = await sb
-          .from('users')
-          .update({ status: 'Rejected' })
-          .in('id', userIds);
-          
-        if (error) throw error;
-        alert(`${userIds.length} users rejected successfully!`);
-        await loadUsers();
-      } catch (error) {
-        console.error('Bulk rejection error:', error);
-        alert('Failed to reject users: ' + error.message);
-      }
-    });
-
-    document.getElementById('bulk-delete').addEventListener('click', async () => {
-      const userIds = getSelectedUserIds();
-      if (userIds.length === 0) {
-        alert('Please select at least one user to delete.');
-        return;
-      }
-      
-      if (!confirm(`Are you sure you want to delete ${userIds.length} users?`)) return;
-      
-      try {
-        const { error } = await sb
-          .from('users')
-          .delete()
-          .in('id', userIds);
-          
-        if (error) throw error;
-        alert(`${userIds.length} users deleted successfully!`);
-        await loadUsers();
-      } catch (error) {
-        console.error('Bulk deletion error:', error);
-        alert('Failed to delete users: ' + error.message);
-      }
-    });
-
-    document.getElementById('bulk-renew').addEventListener('click', async () => {
-      const userIds = getSelectedUserIds();
-      if (userIds.length === 0) {
-        alert('Please select at least one user to renew.');
-        return;
-      }
-      
-      alert(`Renewing subscriptions for ${userIds.length} users...`);
-      // In a real implementation, you would create new payment records here
-    });
-
-    document.getElementById('export-data').addEventListener('click', () => {
-      alert('Exporting user data...');
-    });
-
-    // Search functionality
-    document.getElementById('search-input').addEventListener('input', function() {
-      table.search(this.value).draw();
-    });
 
     // Initial load
     await loadUsers();
-    
-    // Real-time updates
-    const channel = sb
-      .channel('schema-db-changes')
-      .on(
-        'postgres_changes',
-        { event: '*', schema: 'public', table: 'payments' },
-        () => {
-          loadUsers();
-        }
-      )
-      .subscribe();
-    
-    // Setup countdown timer
-    setInterval(updateCountdowns, 1000); // Update every second
+    */
   })();
   </script>
 </body>
