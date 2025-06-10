@@ -6,17 +6,13 @@
   <title>CBE Admin – User & Subscription Management</title>
   
   <script>
-    // Redirect to login if not authenticated
     if (localStorage.getItem('isLoggedIn') !== 'true') {
       window.location.replace('admin-login.html?redirect=' + encodeURIComponent(window.location.pathname));
     }
   </script>
   
-  <!-- Fonts & Icons -->
   <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
   <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css" rel="stylesheet">
-  
-  <!-- Libraries -->
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet"/>
   <link href="https://cdn.datatables.net/1.13.4/css/dataTables.bootstrap5.min.css" rel="stylesheet"/>
   <link href="https://cdn.datatables.net/buttons/2.3.6/css/buttons.bootstrap5.min.css" rel="stylesheet"/>
@@ -24,266 +20,143 @@
   <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
 
   <style>
-    /* Theme Variables */
     :root[data-theme="dark"] {
-      --bg: #0f172a;
-      --text: #f1f5f9;
-      --gold: #fbbf24;
-      --gold-dark: #d97706;
-      --glass: rgba(30, 41, 59, 0.7);
-      --glass-light: rgba(51, 65, 85, 0.5);
-      --success: #10b981;
-      --warning: #f59e0b;
-      --danger: #ef4444;
-      --card-bg: #1e293b;
-      --card-border: #334155;
-      --shadow: rgba(0, 0, 0, 0.3);
+      --bg: #0f172a; --text: #f1f5f9; --gold: #fbbf24; --gold-dark: #d97706;
+      --glass: rgba(30, 41, 59, 0.7); --glass-light: rgba(51, 65, 85, 0.5);
+      --success: #10b981; --warning: #f59e0b; --danger: #ef4444;
+      --card-bg: #1e293b; --card-border: #334155; --shadow: rgba(0, 0, 0, 0.3);
       --highlight: rgba(251, 191, 36, 0.1);
     }
     :root[data-theme="light"] {
-      --bg: #f8fafc;
-      --text: #1e293b;
-      --gold: #d97706;
-      --gold-dark: #b45309;
-      --glass: rgba(226, 232, 240, 0.7);
-      --glass-light: rgba(241, 245, 249, 0.5);
-      --success: #059669;
-      --warning: #d97706;
-      --danger: #dc2626;
-      --card-bg: #ffffff;
-      --card-border: #e2e8f0;
-      --shadow: rgba(0, 0, 0, 0.1);
+      --bg: #f8fafc; --text: #1e293b; --gold: #d97706; --gold-dark: #b45309;
+      --glass: rgba(226, 232, 240, 0.7); --glass-light: rgba(241, 245, 249, 0.5);
+      --success: #059669; --warning: #d97706; --danger: #dc2626;
+      --card-bg: #ffffff; --card-border: #e2e8f0; --shadow: rgba(0, 0, 0, 0.1);
       --highlight: rgba(251, 191, 36, 0.15);
     }
 
-    /* Reset & Base */
     * { margin: 0; padding: 0; box-sizing: border-box; }
     body, html {
-      width: 100%;
-      height: 100%;
-      font-family: 'Poppins', sans-serif;
-      background: var(--bg);
-      color: var(--text);
-      overflow-x: hidden;
+      width: 100%; height: 100%; font-family: 'Poppins', sans-serif;
+      background: var(--bg); color: var(--text); overflow-x: hidden;
     }
     a { text-decoration: none; }
     
-    /* Buttons */
     .btn-gold {
       background: linear-gradient(135deg, var(--gold), var(--gold-dark));
-      color: #fff;
-      border: none;
-      transition: all 0.3s ease;
-      font-weight: 500;
+      color: #fff; border: none; transition: all 0.3s ease; font-weight: 500;
       border-radius: 8px;
     }
     .btn-gold:hover {
       background: linear-gradient(135deg, var(--gold-dark), var(--gold));
-      transform: translateY(-2px);
-      box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+      transform: translateY(-2px); box-shadow: 0 4px 12px rgba(0,0,0,0.1);
     }
     .btn-success { background: linear-gradient(135deg, var(--success), #0d9e6c); }
     .btn-warning { background: linear-gradient(135deg, var(--warning), #e68a00); }
     .btn-danger { background: linear-gradient(135deg, var(--danger), #d43030); }
 
-    /* Header */
     header {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      background: var(--glass);
-      padding: 0.8rem 2rem;
-      box-shadow: 0 4px 6px var(--shadow);
-      position: sticky;
-      top: 0;
-      z-index: 100;
-      backdrop-filter: blur(10px);
+      display: flex; align-items: center; justify-content: space-between;
+      background: var(--glass); padding: 0.8rem 2rem; box-shadow: 0 4px 6px var(--shadow);
+      position: sticky; top: 0; z-index: 100; backdrop-filter: blur(10px);
       border-bottom: 1px solid rgba(251, 191, 36, 0.2);
     }
     .header-left {
-      display: flex;
-      align-items: center;
-      gap: 1.5rem;
+      display: flex; align-items: center; gap: 1.5rem;
     }
     .header-left img {
-      height: 45px;
-      transition: transform 0.3s;
+      height: 45px; transition: transform 0.3s;
     }
     .header-left img:hover { transform: scale(1.05); }
     header h1 {
-      font-size: 1.4rem;
-      font-weight: 600;
-      color: var(--gold);
-      letter-spacing: 0.5px;
+      font-size: 1.4rem; font-weight: 600; color: var(--gold); letter-spacing: 0.5px;
     }
     #theme-toggle {
-      background: none;
-      border: none;
-      font-size: 1.5rem;
-      cursor: pointer;
-      color: var(--text);
-      transition: transform 0.3s;
-      width: 40px;
-      height: 40px;
-      border-radius: 50%;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      background: var(--glass-light);
+      background: none; border: none; font-size: 1.5rem; cursor: pointer; color: var(--text);
+      transition: transform 0.3s; width: 40px; height: 40px; border-radius: 50%;
+      display: flex; align-items: center; justify-content: center; background: var(--glass-light);
     }
     #theme-toggle:hover { 
-      transform: rotate(15deg);
-      background: var(--highlight);
+      transform: rotate(15deg); background: var(--highlight);
     }
 
-    /* Main Panel */
-    main {
-      padding: 2rem;
-    }
+    main { padding: 2rem; }
     .glass {
-      background: var(--glass);
-      backdrop-filter: blur(12px);
-      border-radius: 12px;
-      padding: 2rem;
-      box-shadow: 0 10px 25px var(--shadow);
-      border: 1px solid var(--card-border);
+      background: var(--glass); backdrop-filter: blur(12px); border-radius: 12px;
+      padding: 2rem; box-shadow: 0 10px 25px var(--shadow); border: 1px solid var(--card-border);
     }
     .panel-title {
-      color: var(--gold);
-      margin-bottom: 1.8rem;
-      font-weight: 600;
-      font-size: 1.4rem;
-      display: flex;
-      align-items: center;
-      gap: 10px;
+      color: var(--gold); margin-bottom: 1.8rem; font-weight: 600; font-size: 1.4rem;
+      display: flex; align-items: center; gap: 10px;
     }
-    .panel-title i {
-      font-size: 1.3rem;
-    }
+    .panel-title i { font-size: 1.3rem; }
 
-    /* Cards */
     .stats-card {
-      background: var(--card-bg);
-      border-radius: 12px;
-      padding: 1.5rem;
-      border: 1px solid var(--card-border);
-      transition: transform 0.3s;
-      height: 100%;
+      background: var(--card-bg); border-radius: 12px; padding: 1.5rem;
+      border: 1px solid var(--card-border); transition: transform 0.3s; height: 100%;
     }
     .stats-card:hover {
-      transform: translateY(-5px);
-      box-shadow: 0 8px 20px rgba(0,0,0,0.1);
+      transform: translateY(-5px); box-shadow: 0 8px 20px rgba(0,0,0,0.1);
     }
     .stats-icon {
-      width: 60px;
-      height: 60px;
-      border-radius: 12px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      margin-bottom: 1rem;
-      font-size: 1.8rem;
+      width: 60px; height: 60px; border-radius: 12px; display: flex;
+      align-items: center; justify-content: center; margin-bottom: 1rem; font-size: 1.8rem;
     }
     .stats-icon.gold { background: rgba(251, 191, 36, 0.15); color: var(--gold); }
     .stats-icon.green { background: rgba(16, 185, 129, 0.15); color: var(--success); }
     .stats-icon.blue { background: rgba(59, 130, 246, 0.15); color: #3b82f6; }
     .stats-icon.purple { background: rgba(139, 92, 246, 0.15); color: #8b5cf6; }
     .stats-value {
-      font-size: 2rem;
-      font-weight: 700;
-      margin-bottom: 0.2rem;
+      font-size: 2rem; font-weight: 700; margin-bottom: 0.2rem;
     }
     .stats-label {
-      font-size: 0.9rem;
-      color: #94a3b8;
-      text-transform: uppercase;
-      letter-spacing: 1px;
+      font-size: 0.9rem; color: #94a3b8; text-transform: uppercase; letter-spacing: 1px;
     }
 
-    /* DataTable */
-    .dataTables_wrapper {
-      margin-top: 1.5rem;
-    }
+    .dataTables_wrapper { margin-top: 1.5rem; }
     .dt-buttons .btn {
-      margin-right: 0.5rem;
-      background: linear-gradient(135deg, var(--gold), var(--gold-dark));
-      border: none;
-      color: #fff;
-      border-radius: 8px;
-      transition: all 0.3s;
-      font-weight: 500;
+      margin-right: 0.5rem; background: linear-gradient(135deg, var(--gold), var(--gold-dark));
+      border: none; color: #fff; border-radius: 8px; transition: all 0.3s; font-weight: 500;
       padding: 0.5rem 1rem;
     }
     .dt-buttons .btn:hover {
-      transform: translateY(-2px);
-      box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+      transform: translateY(-2px); box-shadow: 0 4px 8px rgba(0,0,0,0.1);
     }
     table.dataTable {
-      color: var(--text) !important;
-      border-collapse: separate;
-      border-spacing: 0 8px;
+      color: var(--text) !important; border-collapse: separate; border-spacing: 0 8px;
       width: 100% !important;
     }
     table.dataTable thead th {
       background: linear-gradient(135deg, var(--gold), var(--gold-dark));
-      color: #fff;
-      padding: 1rem 1.2rem;
-      text-align: left;
-      font-weight: 500;
-      border: none;
+      color: #fff; padding: 1rem 1.2rem; text-align: left; font-weight: 500; border: none;
     }
-    table.dataTable thead th:first-child {
-      border-radius: 10px 0 0 10px;
-    }
-    table.dataTable thead th:last-child {
-      border-radius: 0 10px 10px 0;
-    }
+    table.dataTable thead th:first-child { border-radius: 10px 0 0 10px; }
+    table.dataTable thead th:last-child { border-radius: 0 10px 10px 0; }
     table.dataTable tbody td {
-      padding: 1.2rem;
-      background: var(--card-bg);
-      border: none;
-      vertical-align: middle;
+      padding: 1.2rem; background: var(--card-bg); border: none; vertical-align: middle;
     }
     table.dataTable tbody tr {
-      transition: all 0.3s ease;
-      border-radius: 10px;
-      overflow: hidden;
+      transition: all 0.3s ease; border-radius: 10px; overflow: hidden;
     }
     table.dataTable tbody tr:hover {
-      background: var(--highlight);
-      box-shadow: 0 4px 15px var(--shadow);
+      background: var(--highlight); box-shadow: 0 4px 15px var(--shadow);
       transform: translateY(-2px);
     }
-    table.dataTable tbody tr td:first-child {
-      border-radius: 10px 0 0 10px;
-    }
-    table.dataTable tbody tr td:last-child {
-      border-radius: 0 10px 10px 0;
-    }
+    table.dataTable tbody tr td:first-child { border-radius: 10px 0 0 10px; }
+    table.dataTable tbody tr td:last-child { border-radius: 0 10px 10px 0; }
     .col-index, .col-status, .col-payment, .col-subscription, .col-expiry, .col-actions { 
       text-align: center; 
     }
     .btn-sm {
-      padding: 0.4rem 0.8rem;
-      font-size: 0.85rem;
-      border-radius: 6px;
-      margin: 0 0.2rem;
-      font-weight: 500;
-      border: none;
+      padding: 0.4rem 0.8rem; font-size: 0.85rem; border-radius: 6px; margin: 0 0.2rem;
+      font-weight: 500; border: none;
     }
     .bulk-actions {
-      margin-bottom: 1.5rem;
-      display: flex;
-      gap: 0.8rem;
-      flex-wrap: wrap;
+      margin-bottom: 1.5rem; display: flex; gap: 0.8rem; flex-wrap: wrap;
     }
     
-    /* Status badges */
     .status-badge {
-      padding: 0.35rem 0.8rem;
-      border-radius: 50px;
-      font-size: 0.8rem;
-      font-weight: 500;
+      padding: 0.35rem 0.8rem; border-radius: 50px; font-size: 0.8rem; font-weight: 500;
       display: inline-block;
     }
     .status-pending { background: rgba(245, 158, 11, 0.15); color: var(--warning); }
@@ -291,58 +164,37 @@
     .status-rejected { background: rgba(239, 68, 68, 0.15); color: var(--danger); }
     .status-expired { background: rgba(107, 114, 128, 0.15); color: #6b7280; }
     
-    /* Subscription chips */
     .subscription-chip {
-      padding: 0.4rem 0.8rem;
-      border-radius: 50px;
-      font-size: 0.85rem;
-      font-weight: 500;
+      padding: 0.4rem 0.8rem; border-radius: 50px; font-size: 0.85rem; font-weight: 500;
       display: inline-block;
     }
-    .chip-basic { background: rgba(59, 130, 246, 0.15); color: #3b82f6; }
-    .chip-standard { background: rgba(139, 92, 246, 0.15); color: #8b5cf6; }
-    .chip-premium { background: rgba(251, 191, 36, 0.2); color: var(--gold); }
-    .chip-enterprise { background: rgba(236, 72, 153, 0.15); color: #ec4899; }
+    .chip-weekly { background: rgba(59, 130, 246, 0.15); color: #3b82f6; }
+    .chip-monthly { background: rgba(139, 92, 246, 0.15); color: #8b5cf6; }
+    .chip-yearly { background: rgba(251, 191, 36, 0.2); color: var(--gold); }
     
-    /* Expiry Countdown */
     .expiry-countdown {
-      font-weight: 600;
-      font-size: 0.95rem;
-      min-width: 120px;
-      display: inline-block;
+      font-weight: 600; font-size: 0.95rem; min-width: 120px; display: inline-block;
       transition: color 0.3s ease;
     }
     .countdown-expiring { color: var(--danger); animation: pulse 1.5s infinite; }
     .countdown-expired { color: #6b7280; }
     @keyframes pulse {
-      0% { opacity: 1; }
-      50% { opacity: 0.7; }
-      100% { opacity: 1; }
+      0% { opacity: 1; } 50% { opacity: 0.7; } 100% { opacity: 1; }
     }
     
-    /* Footer */
     footer {
-      text-align: center;
-      padding: 1.5rem;
-      color: #94a3b8;
-      font-size: 0.9rem;
-      border-top: 1px solid var(--card-border);
-      margin-top: 2rem;
+      text-align: center; padding: 1.5rem; color: #94a3b8; font-size: 0.9rem;
+      border-top: 1px solid var(--card-border); margin-top: 2rem;
     }
     
-    /* Responsive */
     @media (max-width: 992px) {
-      .stats-grid {
-        grid-template-columns: repeat(2, 1fr);
-      }
+      .stats-grid { grid-template-columns: repeat(2, 1fr); }
     }
     @media (max-width: 768px) {
       .header-left h1 { display: none; }
       .bulk-actions { flex-direction: column; }
       .bulk-actions button { width: 100%; }
-      .stats-grid {
-        grid-template-columns: 1fr;
-      }
+      .stats-grid { grid-template-columns: 1fr; }
     }
   </style>
 </head>
@@ -379,47 +231,37 @@
         </div>
       </div>
       
-      <!-- Stats Cards -->
       <div class="row row-cols-1 row-cols-md-2 row-cols-lg-4 g-4 mb-5">
         <div class="col">
           <div class="stats-card">
-            <div class="stats-icon gold">
-              <i class="bi bi-people"></i>
-            </div>
+            <div class="stats-icon gold"><i class="bi bi-people"></i></div>
             <div class="stats-value" id="total-users">0</div>
             <div class="stats-label">Total Users</div>
           </div>
         </div>
         <div class="col">
           <div class="stats-card">
-            <div class="stats-icon green">
-              <i class="bi bi-credit-card"></i>
-            </div>
+            <div class="stats-icon green"><i class="bi bi-credit-card"></i></div>
             <div class="stats-value" id="active-subs">0</div>
             <div class="stats-label">Active Subscriptions</div>
           </div>
         </div>
         <div class="col">
           <div class="stats-card">
-            <div class="stats-icon blue">
-              <i class="bi bi-hourglass-split"></i>
-            </div>
+            <div class="stats-icon blue"><i class="bi bi-hourglass-split"></i></div>
             <div class="stats-value" id="pending-approvals">0</div>
             <div class="stats-label">Pending Approvals</div>
           </div>
         </div>
         <div class="col">
           <div class="stats-card">
-            <div class="stats-icon purple">
-              <i class="bi bi-exclamation-circle"></i>
-            </div>
+            <div class="stats-icon purple"><i class="bi bi-exclamation-circle"></i></div>
             <div class="stats-value" id="expiring-soon">0</div>
             <div class="stats-label">Expiring Soon</div>
           </div>
         </div>
       </div>
 
-      <!-- Bulk Actions -->
       <div class="bulk-actions">
         <button class="btn btn-gold" id="bulk-approve"><i class="bi bi-check-circle me-1"></i> Approve Selected</button>
         <button class="btn btn-gold" id="bulk-reject"><i class="bi bi-x-circle me-1"></i> Reject Selected</button>
@@ -428,14 +270,12 @@
         <button class="btn btn-success" id="export-data"><i class="bi bi-file-earmark-spreadsheet me-1"></i> Export Data</button>
       </div>
       
-      <!-- User Table -->
       <div class="table-responsive">
         <table id="users-table" class="table table-hover" style="width:100%">
           <thead>
             <tr>
               <th><input type="checkbox" id="select-all"></th>
               <th class="col-index">#</th>
-              <th>ID</th> <!-- Hidden column for UUID -->
               <th>Email</th>
               <th>Name</th>
               <th class="col-status">Status</th>
@@ -445,9 +285,7 @@
               <th class="col-actions">Actions</th>
             </tr>
           </thead>
-          <tbody>
-            <!-- Data will be populated by JavaScript -->
-          </tbody>
+          <tbody></tbody>
         </table>
       </div>
     </div>
@@ -455,11 +293,10 @@
 
   <footer>
     <div class="container">
-      <p class="mb-0">© 2023 Crypto Business Education. All rights reserved.</p>
+      <p class="mb-0">© 2025 Chukwuemeka Bullion Exchange. All rights reserved.</p>
     </div>
   </footer>
 
-  <!-- JS Dependencies -->
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
   <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
   <script src="https://cdn.datatables.net/1.13.4/js/jquery.dataTables.min.js"></script>
@@ -472,7 +309,6 @@
 
   <script>
   (async () => {
-    // Theme toggle logic
     const html = document.documentElement;
     const btn = document.getElementById('theme-toggle');
     let theme = localStorage.getItem('theme') || 'dark';
@@ -485,28 +321,15 @@
       btn.textContent = theme === 'dark' ? '🌞' : '🌜';
     };
 
-    // Supabase client
     const SUPABASE_URL = 'https://dapwpgvnfjcfqqhrpxla.supabase.co';
     const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImRhcHdwZ3ZuZmpjZnFxaHJweGxhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDcwNDA4ODgsImV4cCI6MjA2MjYxNjg4OH0.ICC0UsLlzJDNre7rFCeD3k6iVzo6jOJgn3PhABpEMsQ';
     const sb = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
-    // Initialize DataTable
     const table = $('#users-table').DataTable({
-      dom: `<"d-flex justify-content-between mb-3"
-              <"dt-buttons"B>
-              <"col-auto"f>
-            >rt<"d-flex justify-content-between mt-3"lip>`,
+      dom: '<"d-flex justify-content-between mb-3"<"dt-buttons"B><"col-auto"f>>rt<"d-flex justify-content-between mt-3"lip>',
       buttons: [
-        { 
-          extend: 'csvHtml5', 
-          text: '<i class="bi bi-file-earmark-spreadsheet me-1"></i> CSV',
-          className: 'btn-gold'
-        },
-        { 
-          extend: 'pdfHtml5', 
-          text: '<i class="bi bi-file-earmark-pdf me-1"></i> PDF',
-          className: 'btn-gold'
-        }
+        { extend: 'csvHtml5', text: '<i class="bi bi-file-earmark-spreadsheet me-1"></i> CSV', className: 'btn-gold' },
+        { extend: 'pdfHtml5', text: '<i class="bi bi-file-earmark-pdf me-1"></i> PDF', className: 'btn-gold' }
       ],
       paging: true,
       pageLength: 10,
@@ -515,17 +338,13 @@
       select: { style: 'multi', selector: 'td:first-child input' },
       order: [[1, 'asc']],
       columnDefs: [
-        { orderable: false, targets: [0, 9] }, // Checkbox and Actions
-        { searchable: false, targets: [0, 2] }, // Checkbox and ID not searchable
-        { visible: false, targets: 2 } // Hide the ID column
+        { orderable: false, targets: [0, 8] },
+        { searchable: false, targets: 0 }
       ],
       language: {
         search: "",
         searchPlaceholder: "Search users...",
-        paginate: {
-          previous: '<i class="bi bi-chevron-left"></i>',
-          next: '<i class="bi bi-chevron-right"></i>'
-        }
+        paginate: { previous: '<i class="bi bi-chevron-left"></i>', next: '<i class="bi bi-chevron-right"></i>' }
       },
       initComplete: function() {
         $('.dataTables_filter input').addClass('form-control');
@@ -533,54 +352,61 @@
       }
     });
 
-    // Helper to calculate expiry info in hours/minutes/seconds
-    function getExpiryInfo(expiryDate) {
-      if (!expiryDate) return { text: '—', seconds: 0, class: '' };
+    function calculateExpiryDate(createdAt, plan) {
+      const start = new Date(createdAt);
+      if (isNaN(start.getTime())) return null;
+      if (plan.includes('Weekly')) {
+        start.setDate(start.getDate() + 7);
+      } else if (plan.includes('Monthly')) {
+        start.setDate(start.getDate() + 30);
+      } else if (plan.includes('Yearly')) {
+        start.setDate(start.getDate() + 365);
+      }
+      return start.toISOString();
+    }
+
+    function getExpiryInfo(expiryDate, createdAt) {
+      if (!expiryDate || !createdAt) return { text: '—', days: 0, class: '' };
       
       const expiry = new Date(expiryDate);
-      if (isNaN(expiry.getTime())) {
-        console.error('Invalid expiry date:', expiryDate);
-        return { text: 'Invalid Date', seconds: 0, class: 'countdown-expired' };
-      }
-      
+      const start = new Date(createdAt);
       const now = new Date();
+      
+      if (isNaN(expiry.getTime()) || isNaN(start.getTime())) {
+        console.error('Invalid date:', { expiryDate, createdAt });
+        return { text: 'Invalid Date', days: 0, class: 'countdown-expired' };
+      }
+      
       const diffMs = expiry - now;
-      const diffSeconds = Math.floor(diffMs / 1000);
+      const daysRemaining = Math.ceil(diffMs / (1000 * 60 * 60 * 24));
       
-      if (diffSeconds <= 0) {
-        return { text: 'Expired', seconds: 0, class: 'countdown-expired' };
+      if (daysRemaining <= 0) {
+        return { text: 'Expired', days: 0, class: 'countdown-expired' };
       }
       
-      const days = Math.floor(diffSeconds / (3600 * 24));
-      const hours = Math.floor((diffSeconds % (3600 * 24)) / 3600);
-      const minutes = Math.floor((diffSeconds % 3600) / 60);
+      const warningClass = daysRemaining <= 7 ? 'countdown-expiring' : '';
       
-      let displayText = '';
-      if (days > 0) {
-        displayText = `${days}d ${hours}h`;
-      } else if (hours > 0) {
-        displayText = `${hours}h ${minutes}m`;
-      } else {
-        displayText = `${minutes}m`;
-      }
-      
-      const warningClass = days === 0 && hours < 24 ? 'countdown-expiring' : '';
-      
-      return { 
-        text: displayText, 
-        seconds: diffSeconds,
+      return {
+        text: `${daysRemaining} day${daysRemaining > 1 ? 's' : ''}`,
+        days: daysRemaining,
         class: warningClass
       };
     }
 
-    // Helper to generate action buttons
+    function getSubscriptionPeriod(plan) {
+      if (!plan) return '—';
+      if (plan.includes('Weekly')) return 'weekly';
+      if (plan.includes('Monthly')) return 'monthly';
+      if (plan.includes('Yearly')) return 'yearly';
+      return '—';
+    }
+
     function getActionButtons(id, status, paymentStatus) {
       let buttons = `
         <button class="btn btn-sm btn-gold" title="Edit" onclick="editUser('${id}')">
           <i class="bi bi-pencil"></i>
         </button>
       `;
-      
       if (status === 'Pending') {
         buttons += `
           <button class="btn btn-sm btn-success" title="Approve" onclick="approveUser('${id}')">
@@ -588,144 +414,135 @@
           </button>
         `;
       }
-      
       buttons += `
         <button class="btn btn-sm btn-danger" title="Delete" onclick="deleteUser('${id}')">
           <i class="bi bi-trash"></i>
         </button>
       `;
-      
-      if (status === 'Approved' && paymentStatus === 'Paid') {
+      if (status === 'Approved' && paymentStatus === 'approved') {
         buttons += `
           <button class="btn btn-sm btn-warning" title="Notify" onclick="notifyUser('${id}')">
             <i class="bi bi-bell"></i>
           </button>
         `;
       }
-      
       return buttons;
     }
 
-    // Real-time countdown updater
     function updateCountdowns() {
       table.rows().every(function() {
         const row = this.node();
-        const expiryCell = $(row).find('.expiry-countdown');
+        const expiryCell = $(row).find('.expiry-count');
         const expiryDate = expiryCell.data('expiry');
+        const startDate = expiryCell.data('start');
         
-        if (expiryDate) {
-          const expiryInfo = getExpiryInfo(expiryDate);
+        if (expiryDate && startDate) {
+          const expiryInfo = getExpiryInfo(expiryDate, startDate);
           expiryCell.text(expiryInfo.text);
           expiryCell.removeClass('countdown-expiring countdown-expired');
-          if (expiryInfo.class) {
-            expiryCell.addClass(expiryInfo.class);
-          }
+          if (expiryInfo.class) expiryCell.addClass(expiryInfo.class);
         }
       });
     }
 
-    // Load users with their latest payment
     async function loadUsers() {
       try {
-        // Fetch users
         const { data: users, error: usersError } = await sb
           .from('users')
           .select('*')
           .order('created_at', { ascending: false });
-        
         if (usersError) throw usersError;
         
-        // Fetch payments with user_id
         const { data: payments, error: paymentsError } = await sb
           .from('payments')
-          .select('*')
+          .select('*, payment_methods(name)')
           .order('created_at', { ascending: false });
-        
         if (paymentsError) throw paymentsError;
         
-        // Calculate statistics
-        const totalUsers = users.length;
-        const activeSubs = payments.filter(p => p.status === 'Paid' && 
-          new Date(p.expiry_date) > new Date()).length;
-        const pendingApprovals = users.filter(u => u.status === 'Pending').length;
-        const expiringSoon = payments.filter(p => {
-          const expiry = new Date(p.expiry_date);
-          const now = new Date();
-          const diffHours = (expiry - now) / (1000 * 60 * 60);
-          return diffHours > 0 && diffHours <= 24 && p.status === 'Paid';
-        }).length;
+        const userPayments = {};
+        payments.forEach(payment => {
+          if (!userPayments[payment.email] || 
+              new Date(payment.created_at) > new Date(userPayments[payment.email].created_at)) {
+            userPayments[payment.email] = payment;
+          }
+        });
         
-        // Update stats cards
+        const totalUsers = users.length;
+        let activeSubs = 0;
+        let expiringSoon = 0;
+        const pendingApprovals = users.filter(u => u.status === 'Pending').length;
+        
+        table.clear();
+        users.forEach((user, index) => {
+          const payment = userPayments[user.email] || null;
+          let expiryDate = null;
+          if (payment && payment.status === 'approved') {
+            expiryDate = calculateExpiryDate(payment.created_at, payment.plan);
+            const expiryInfo = getExpiryInfo(expiryDate, payment.created_at);
+            if (expiryInfo.days > 0) activeSubs++;
+            if (expiryInfo.days > 0 && expiryInfo.days <= 7) expiringSoon++;
+            
+            const subscriptionPeriod = getSubscriptionPeriod(payment.plan);
+            
+            table.row.add([
+              `<input type="checkbox" class="row-select" data-id="${user.id}">`,
+              index + 1,
+              user.email,
+              user.name || '—',
+              `<span class="status-badge status-${user.status.toLowerCase()}">${user.status}</span>`,
+              payment ? 
+                `<span class="status-badge status-${payment.status.toLowerCase()}">${payment.status}</span>` : 
+                `<span class="status-badge status-pending">N/A</span>`,
+              payment && payment.status === 'approved' ? 
+                `<span class="subscription-chip chip-${subscriptionPeriod}">${payment.plan}</span>` : 
+                '—',
+              payment && payment.status === 'approved' ? 
+                `<span class="expiry-countdown expiry-count ${expiryInfo.class}" 
+                      data-expiry="${expiryDate}" 
+                      data-start="${payment.created_at}">
+                  ${expiryInfo.text}
+                </span>` : 
+                '—',
+              getActionButtons(user.id, user.status, payment ? payment.status : 'N/A')
+            ]);
+          } else {
+            table.row.add([
+              `<input type="checkbox" class="row-select" data-id="${user.id}">`,
+              index + 1,
+              user.email,
+              user.name || '—',
+              `<span class="status-badge status-${user.status.toLowerCase()}">${user.status}</span>`,
+              payment ? 
+                `<span class="status-badge status-${payment.status.toLowerCase()}">${payment.status}</span>` : 
+                `<span class="status-badge status-pending">N/A</span>`,
+              '—',
+              '—',
+              getActionButtons(user.id, user.status, payment ? payment.status : 'N/A')
+            ]);
+          }
+        });
+        table.draw();
+        
         document.getElementById('total-users').textContent = totalUsers;
         document.getElementById('active-subs').textContent = activeSubs;
         document.getElementById('pending-approvals').textContent = pendingApprovals;
         document.getElementById('expiring-soon').textContent = expiringSoon;
-        
-        // Map users to their latest payment using user_id
-        const userPayments = {};
-        payments.forEach(payment => {
-          if (payment.user_id) {
-            if (!userPayments[payment.user_id] || 
-                new Date(payment.created_at) > new Date(userPayments[payment.user_id].created_at)) {
-              userPayments[payment.user_id] = payment;
-            }
-          }
-        });
-        
-        // Clear and populate table
-        table.clear();
-        users.forEach((user, index) => {
-          const payment = userPayments[user.id] || null;
-          const expiryInfo = payment ? getExpiryInfo(payment.expiry_date) : { text: '—', class: '' };
-          
-          table.row.add([
-            `<input type="checkbox" class="row-select">`,
-            index + 1,
-            user.id, // Hidden UUID column
-            user.email,
-            user.name,
-            `<span class="status-badge status-${user.status.toLowerCase()}">${user.status}</span>`,
-            payment ? 
-              `<span class="status-badge status-${payment.status.toLowerCase()}">${payment.status}</span>` : 
-              `<span class="status-badge status-pending">N/A</span>`,
-            payment ? 
-              `<span class="subscription-chip chip-${payment.plan.toLowerCase().split(' ')[0]}">${payment.plan}</span>` : 
-              '—',
-            `
-              <span class="expiry-countdown ${expiryInfo.class}" data-expiry="${payment ? payment.expiry_date : ''}">
-                ${expiryInfo.text}
-              </span>
-            `,
-            getActionButtons(user.id, user.status, payment ? payment.status : 'N/A')
-          ]);
-        });
-        table.draw();
       } catch (error) {
         console.error('Error loading users:', error);
         alert('Failed to load users: ' + error.message);
       }
     }
 
-    // User actions
     window.editUser = async (id) => {
       try {
-        const { data: user, error } = await sb
-          .from('users')
-          .select('*')
-          .eq('id', id)
-          .single();
-          
+        const { data: user, error } = await sb.from('users').select('*').eq('id', id).single();
         if (error) throw error;
         
-        const name = prompt('Edit name:', user.name);
+        const name = prompt('Edit name:', user.name || '');
         const email = prompt('Edit email:', user.email);
         
         if (name && email) {
-          const { error: updateError } = await sb
-            .from('users')
-            .update({ name, email })
-            .eq('id', id);
-            
+          const { error: updateError } = await sb.from('users').update({ name, email }).eq('id', id);
           if (updateError) throw updateError;
           alert('User updated successfully!');
           await loadUsers();
@@ -738,11 +555,7 @@
     
     window.approveUser = async (id) => {
       try {
-        const { error } = await sb
-          .from('users')
-          .update({ status: 'Approved' })
-          .eq('id', id);
-          
+        const { error } = await sb.from('users').update({ status: 'Approved' }).eq('id', id);
         if (error) throw error;
         alert('User approved successfully!');
         await loadUsers();
@@ -755,11 +568,7 @@
     window.deleteUser = async (id) => {
       if (confirm('Are you sure you want to delete this user?')) {
         try {
-          const { error } = await sb
-            .from('users')
-            .delete()
-            .eq('id', id);
-            
+          const { error } = await sb.from('users').delete().eq('id', id);
           if (error) throw error;
           alert('User deleted successfully!');
           await loadUsers();
@@ -772,10 +581,8 @@
     
     window.notifyUser = async (id) => {
       alert(`Notification sent to user ${id}`);
-      // Add actual notification logic here if needed
     };
 
-    // Select all checkbox
     document.getElementById('select-all').addEventListener('change', (e) => {
       const checked = e.target.checked;
       table.rows().every(function () {
@@ -784,27 +591,17 @@
       });
     });
 
-    // Helper to get selected UUIDs
     function getSelectedUserIds() {
-      const selectedRows = table.rows({ selected: true }).data().toArray();
-      const userIds = selectedRows.map(rowData => rowData[2]); // ID is in column 2 (hidden)
-      return userIds;
+      const selectedRows = table.rows({ selected: true }).nodes().toArray();
+      return selectedRows.map(row => $(row).find('.row-select').data('id'));
     }
 
-    // Bulk actions
     document.getElementById('bulk-approve').addEventListener('click', async () => {
       const userIds = getSelectedUserIds();
-      if (userIds.length === 0) {
-        alert('Please select at least one user to approve.');
-        return;
-      }
+      if (userIds.length === 0) return alert('Please select at least one user to approve.');
       
       try {
-        const { error } = await sb
-          .from('users')
-          .update({ status: 'Approved' })
-          .in('id', userIds);
-          
+        const { error } = await sb.from('users').update({ status: 'Approved' }).in('id', userIds);
         if (error) throw error;
         alert(`${userIds.length} users approved successfully!`);
         await loadUsers();
@@ -816,17 +613,10 @@
 
     document.getElementById('bulk-reject').addEventListener('click', async () => {
       const userIds = getSelectedUserIds();
-      if (userIds.length === 0) {
-        alert('Please select at least one user to reject.');
-        return;
-      }
+      if (userIds.length === 0) return alert('Please select at least one user to reject.');
       
       try {
-        const { error } = await sb
-          .from('users')
-          .update({ status: 'Rejected' })
-          .in('id', userIds);
-          
+        const { error } = await sb.from('users').update({ status: 'Rejected' }).in('id', userIds);
         if (error) throw error;
         alert(`${userIds.length} users rejected successfully!`);
         await loadUsers();
@@ -838,19 +628,11 @@
 
     document.getElementById('bulk-delete').addEventListener('click', async () => {
       const userIds = getSelectedUserIds();
-      if (userIds.length === 0) {
-        alert('Please select at least one user to delete.');
-        return;
-      }
-      
+      if (userIds.length === 0) return alert('Please select at least one user to delete.');
       if (!confirm(`Are you sure you want to delete ${userIds.length} users?`)) return;
       
       try {
-        const { error } = await sb
-          .from('users')
-          .delete()
-          .in('id', userIds);
-          
+        const { error } = await sb.from('users').delete().in('id', userIds);
         if (error) throw error;
         alert(`${userIds.length} users deleted successfully!`);
         await loadUsers();
@@ -862,26 +644,27 @@
 
     document.getElementById('bulk-renew').addEventListener('click', async () => {
       const userIds = getSelectedUserIds();
-      if (userIds.length === 0) {
-        alert('Please select at least one user to renew.');
-        return;
-      }
+      if (userIds.length === 0) return alert('Please select at least one user to renew.');
       
       try {
-        const newExpiryDate = new Date();
-        newExpiryDate.setMonth(newExpiryDate.getMonth() + 1); // Renew for 1 month
+        const { data: users, error: usersError } = await sb.from('users').select('id,email').in('id', userIds);
+        if (usersError) throw usersError;
         
-        const { error } = await sb
-          .from('payments')
-          .upsert(userIds.map(id => ({
-            user_id: id,
-            status: 'Paid',
-            plan: 'Standard', // Adjust plan as needed
-            expiry_date: newExpiryDate.toISOString(),
-            created_at: new Date().toISOString()
-          })), { onConflict: 'user_id' });
-          
-        if (error) throw error;
+        const newPayments = users.map(user => {
+          const newExpiryDate = new Date();
+          newExpiryDate.setDate(newExpiryDate.getDate() + 30);
+          return {
+            email: user.email,
+            plan: 'Monthly Plan',
+            status: 'approved',
+            method_id: 1,
+            created_at: new Date().toISOString(),
+            proof_url: null
+          };
+        });
+        
+        const { error: insertError } = await sb.from('payments').insert(newPayments);
+        if (insertError) throw insertError;
         alert(`Subscriptions renewed for ${userIds.length} users!`);
         await loadUsers();
       } catch (error) {
@@ -894,35 +677,21 @@
       table.button('.buttons-csv').trigger();
     });
 
-    // Search functionality
     document.getElementById('search-input').addEventListener('input', function() {
       table.search(this.value).draw();
     });
 
-    // Initial load
     await loadUsers();
     
-    // Real-time updates
-    const userChannel = sb
-      .channel('users-changes')
-      .on(
-        'postgres_changes',
-        { event: '*', schema: 'public', table: 'users' },
-        () => loadUsers()
-      )
+    const userChannel = sb.channel('users-changes')
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'users' }, () => loadUsers())
       .subscribe();
     
-    const paymentChannel = sb
-      .channel('payments-changes')
-      .on(
-        'postgres_changes',
-        { event: '*', schema: 'public', table: 'payments' },
-        () => loadUsers()
-      )
+    const paymentChannel = sb.channel('payments-changes')
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'payments' }, () => loadUsers())
       .subscribe();
     
-    // Setup countdown timer
-    setInterval(updateCountdowns, 1000); // Update every second
+    setInterval(updateCountdowns, 60000);
   })();
   </script>
 </body>
