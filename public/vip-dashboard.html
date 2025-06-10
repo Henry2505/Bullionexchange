@@ -1,891 +1,1918 @@
 <!DOCTYPE html>
 <html lang="en" data-theme="dark">
 <head>
-  <meta charset="UTF-8"/>
-  <meta name="viewport" content="width=device-width,initial-scale=1"/>
-  <title>CBE Admin – User & Subscription Management</title>
-  
-  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-  <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css" rel="stylesheet">
-  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet"/>
-  <link href="https://cdn.datatables.net/1.13.4/css/dataTables.bootstrap5.min.css" rel="stylesheet"/>
-  <link href="https://cdn.datatables.net/buttons/2.3.6/css/buttons.bootstrap5.min.css" rel="stylesheet"/>
-  <link href="https://cdn.datatables.net/select/1.7.0/css/select.bootstrap5.min.css" rel="stylesheet"/>
-  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>VIP Dashboard • CBE Global</title>
+
+  <!-- Simple Auth Guard -->
+  <script>
+    if (localStorage.getItem('isLoggedIn') !== 'true' || !sessionStorage.getItem('cbeUserId')) {
+      window.location.replace('login.html');
+    }
+  </script>
+
+  <!-- Dependencies -->
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-QWTKZyjpPEjISv5WaRU9OFeRpok6YctnYmDr5pNlyT2bRjXh0JMhjY6hW+ALEwIH" crossorigin="anonymous">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;700&family=Orbitron:wght@400;700&display=swap" rel="stylesheet">
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>
+  <script src="https://s3.tradingview.com/tv.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <script>
+    var _smartsupp = _smartsupp || {};
+    _smartsupp.key = '018a8bbd868518221e725341a7b2601231ec7ce8';
+    window.smartsupp||(function(d) {
+      var s,c,o=smartsupp=function(){ o._.push(arguments)};o._=[];
+      s=d.getElementsByTagName('script')[0];c=d.createElement('script');
+      c.type='text/javascript';c.charset='utf-8';c.async=true;
+      c.src='https://www.smartsuppchat.com/loader.js?';s.parentNode.insertBefore(c,s);
+    })(document);
+  </script>
 
   <style>
+    /* Core Styles */
     :root[data-theme="dark"] {
-      --bg: #0f172a;
-      --text: #f1f5f9;
-      --gold: #fbbf24;
-      --gold-dark: #d97706;
-      --glass: rgba(30, 41, 59, 0.7);
-      --glass-light: rgba(51, 65, 85, 0.5);
-      --success: #10b981;
-      --warning: #f59e0b;
-      --danger: #ef4444;
-      --card-bg: #1e293b;
-      --card-border: #334155;
-      --shadow: rgba(0, 0, 0, 0.3);
-      --highlight: rgba(251, 191, 36, 0.1);
+      --bg: linear-gradient(135deg, #0a0a0a 0%, #1a1a1a 100%);
+      --text: #e0e0e0;
+      --gold: #ffd700;
+      --gold-light: #e6c55c;
+      --gold-dark: #cca300;
+      --gold-gradient: linear-gradient(135deg, #ffd700 0%, #cca300 100%);
+      --glass: rgba(30, 30, 30, 0.7);
+      --shadow: rgba(0, 0, 0, 0.5);
+      --text-light: #b0b0b0;
+      --text-muted: #888888;
+      --success: #00ff88;
+      --error: #ff4d4d;
+      --accent: #1e1e1e;
+      --input-bg: #333;
+      --calendar-bg: #000000;
+      --calendar-text: #ffd700;
+      --card-layer-bg: rgba(0, 0, 0, 0.5);
     }
     :root[data-theme="light"] {
-      --bg: #f8fafc;
-      --text: #1e293b;
-      --gold: #d97706;
-      --gold-dark: #b45309;
-      --glass: rgba(226, 232, 240, 0.7);
-      --glass-light: rgba(241, 245, 249, 0.5);
-      --success: #059669;
-      --warning: #d97706;
-      --danger: #dc2626;
-      --card-bg: #ffffff;
-      --card-border: #e2e8f0;
-      --shadow: rgba(0, 0, 0, 0.1);
-      --highlight: rgba(251, 191, 36, 0.15);
+      --bg: linear-gradient(135deg, #f5f5f5 0%, #e0e0e0 100%);
+      --text: #333333;
+      --gold: #cca300;
+      --gold-light: #b3932b;
+      --gold-dark: #b58900;
+      --gold-gradient: linear-gradient(135deg, #cca300 0%, #b58900 100%);
+      --glass: rgba(255, 255, 255, 0.7);
+      --shadow: rgba(0, 0, 0, 0.2);
+      --text-light: #666666;
+      --text-muted: #888888;
+      --success: #28a745;
+      --error: #dc3545;
+      --accent: #ffffff;
+      --input-bg: #f0f0f0;
+      --calendar-bg: #ffffff;
+      --calendar-text: #000000;
+      --card-layer-bg: rgba(255, 255, 255, 0.5);
     }
-
     * { margin: 0; padding: 0; box-sizing: border-box; }
-    body, html {
-      width: 100%; height: 100%;
+    html { scroll-behavior: smooth; }
+    body {
       font-family: 'Poppins', sans-serif;
-      background: var(--bg); color: var(--text);
-      overflow-x: hidden;
-    }
-    a { text-decoration: none; }
-    
-    .btn-gold {
-      background: linear-gradient(135deg, var(--gold), var(--gold-dark));
-      color: #fff;
-      border: none;
-      transition: all 0.3s ease;
-      font-weight: 500;
-      border-radius: 8px;
-    }
-    .btn-gold:hover {
-      background: linear-gradient(135deg, var(--gold-dark), var(--gold));
-      transform: translateY(-2px);
-      box-shadow: 0 4px 12px rgba(0,0,0,0.1);
-    }
-    .btn-success { background: linear-gradient(135deg, var(--success), #0d9e6c); }
-    .btn-warning { background: linear-gradient(135deg, var(--warning), #e68a00); }
-    .btn-danger { background: linear-gradient(135deg, var(--danger), #d43030); }
-
-    header {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      background: var(--glass);
-      padding: 0.8rem 2rem;
-      box-shadow: 0 4px 6px var(--shadow);
-      position: sticky;
-      top: 0;
-      z-index: 100;
-      backdrop-filter: blur(10px);
-      border-bottom: 1px solid rgba(251, 191, 36, 0.2);
-    }
-    .header-left {
-      display: flex;
-      align-items: center;
-      gap: 1.5rem;
-    }
-    .header-left img {
-      height: 45px;
-      transition: transform 0.3s;
-    }
-    .header-left img:hover { transform: scale(1.05); }
-    header h1 {
-      font-size: 1.4rem;
-      font-weight: 600;
-      color: var(--gold);
-      letter-spacing: 0.5px;
-    }
-    #theme-toggle {
-      background: none;
-      border: none;
-      font-size: 1.5rem;
-      cursor: pointer;
+      background: var(--bg);
       color: var(--text);
-      transition: transform 0.3s;
-      width: 40px;
-      height: 40px;
+      min-height: 100vh;
+      overflow-x: hidden;
+      line-height: 1.6;
+      background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="100" height="100" viewBox="0 0 100 100"><rect width="100" height="100" fill="none"/><path d="M0,0 L100,100 M100,0 L0,100" stroke="rgba(255,215,0,0.05)" stroke-width="1"/></svg>');
+      position: relative;
+    }
+    a, button, h1, h2, h3, h4, h5, h6, p, span, td, th, li, label {
+      color: var(--text) !important;
+    }
+    a:hover { color: var(--gold) !important; }
+
+    /* Card layer container */
+    #card-layer-container {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: var(--card-layer-bg);
+      z-index: -1;
+      transition: background 0.3s ease;
+    }
+    
+    /* Card layer toggle button */
+    #card-layer-toggle {
+      position: fixed;
+      bottom: 180px;
+      right: 20px;
+      width: 50px;
+      height: 50px;
+      background: var(--gold);
+      color: #000;
       border-radius: 50%;
       display: flex;
       align-items: center;
       justify-content: center;
-      background: var(--glass-light);
+      cursor: pointer;
+      z-index: 1000;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+      transition: all 0.3s ease;
     }
-    #theme-toggle:hover { 
-      transform: rotate(15deg);
-      background: var(--highlight);
+    
+    #card-layer-toggle:hover {
+      transform: scale(1.1);
+      box-shadow: 0 0 15px rgba(255, 215, 0, 0.6);
+    }
+    
+    #card-layer-toggle.active {
+      background: #000;
+      color: var(--gold);
+      border: 2px solid var(--gold);
+    }
+    
+    #card-layer-toggle .tooltip {
+      position: absolute;
+      bottom: 60px;
+      right: 0;
+      background: rgba(0, 0, 0, 0.8);
+      color: white;
+      padding: 8px 12px;
+      border-radius: 4px;
+      font-size: 0.8rem;
+      white-space: nowrap;
+      opacity: 0;
+      transition: opacity 0.3s ease;
+      pointer-events: none;
+    }
+    
+    #card-layer-toggle:hover .tooltip {
+      opacity: 1;
     }
 
-    main {
-      padding: 2rem;
+    /* Animations */
+    .slide-in {
+      opacity: 0;
+      transform: translateY(20px);
+      transition: opacity 0.8s ease-out, transform 0.8s ease-out;
     }
-    .glass {
+    .slide-in.visible {
+      opacity: 1;
+      transform: translateY(0);
+    }
+
+    /* Header */
+    header {
+      position: sticky;
+      top: 0;
       background: var(--glass);
-      backdrop-filter: blur(12px);
-      border-radius: 12px;
-      padding: 2rem;
-      box-shadow: 0 10px 25px var(--shadow);
-      border: 1px solid var(--card-border);
-    }
-    .panel-title {
-      color: var(--gold);
-      margin-bottom: 1.8rem;
-      font-weight: 600;
-      font-size: 1.4rem;
+      backdrop-filter: blur(10px);
+      padding: 1rem 2rem;
+      box-shadow: 0 2px 8px var(--shadow);
+      z-index: 1000;
       display: flex;
       align-items: center;
-      gap: 10px;
+      justify-content: space-between;
+      border-bottom: 2px solid var(--gold);
     }
-    .panel-title i {
-      font-size: 1.3rem;
+    header .logo {
+      font-family: 'Orbitron', sans-serif;
+      font-size: 1.5rem;
+      font-weight: 700;
+      padding: 0.5rem 1rem;
+      background: var(--gold-gradient);
+      border-radius: 8px;
+      box-shadow: 0 2px 6px var(--shadow);
+      transition: transform 0.3s ease;
+    }
+    header .logo:hover { transform: scale(1.05); }
+    header .nav-links {
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+    }
+    header .nav-links button,
+    header .nav-links select {
+      background: var(--glass);
+      border: 1px solid var(--gold-dark);
+      padding: 0.5rem 1rem;
+      border-radius: 6px;
+      font-size: 0.9rem;
+      cursor: pointer;
+      transition: background 0.3s ease, transform 0.2s ease;
+    }
+    header .nav-links button:hover,
+    header .nav-links select:hover {
+      background: var(--gold-dark);
+      color: #000 !important;
+      transform: translateY(-2px);
+    }
+    #theme-select {
+      background: var(--glass);
+      border: 1px solid var(--gold-dark);
+      padding: 0.5rem;
+      border-radius: 6px;
+    }
+    #notif-btn { position: relative; }
+    #notif-count {
+      font-size: 0.7rem;
+      padding: 0.2rem 0.5rem;
+      background: var(--gold);
+      color: #000 !important;
+    }
+    #sidebar-toggle {
+      font-size: 1.5rem;
+      padding: 0.5rem;
+      color: var(--gold);
+    }
+    #current-time {
+      font-size: 0.9rem;
+      color: var(--gold);
+      font-weight: 500;
+    }
+    #header-user {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      padding: 0.3rem 0.8rem;
+      background: rgba(255, 215, 0, 0.1);
+      border-radius: 20px;
+      border: 1px solid rgba(255, 215, 0, 0.3);
     }
 
-    .stats-card {
-      background: var(--card-bg);
-      border-radius: 12px;
+    /* Sidebar -->
+    <div class="offcanvas offcanvas-start" id="sidebar">
+      <div class="offcanvas-body">
+        <div class="text-center mb-4">
+          <div class="logo">CBE Global</div>
+        </div>
+        <ul class="nav nav-pills flex-column">
+          <li class="nav-item">
+            <a class="nav-link active" href="#" onclick="loadDashboard()" data-bs-dismiss="offcanvas">
+              <i class="bi-speedometer2 me-2"></i>Dashboard
+            </a>
+          </li>
+          <li class="nav-item"><a class="nav-link" href="https://apexincomeoptions.com.ng/signals"><i class="bi-lightning me-2"></i>Signals</a></li>
+          <li class="nav-item"><a class="nav-link" href="CBE_trade_history_vip.html"><i class="bi-clock-history me-2"></i>History</a></li>
+          <li class="nav-item"><a class="nav-link" href="CBE_trade_insights_vip.html"><i class="bi-graph-up me-2"></i>Insights</a></li>
+          <li class="nav-item"><a class="nav-link" href="#"><i class="bi-award me-2"></i>VIP Features</a></li>
+          <li class="nav-item"><a class="nav-link" href="#"><i class="bi-person-circle me-2"></i>Account</a></li>
+        </ul>
+        <div class="mt-4 p-3 text-center" style="background: rgba(255,215,0,0.1); border-radius: 8px;">
+          <h5 class="mb-2">VIP Status</h5>
+          <div class="d-flex justify-content-center">
+            <i class="bi-star-fill text-warning me-1"></i>
+            <i class="bi-star-fill text-warning me-1"></i>
+            <i class="bi-star-fill text-warning me-1"></i>
+            <i class="bi-star-fill text-warning me-1"></i>
+            <i class="bi-star-fill text-warning"></i>
+          </div>
+          <small class="d-block mt-2">Platinum Member</small>
+        </div>
+      </div>
+    </div>
+
+    /* Layout */
+    .container-fluid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+      gap: 1.5rem;
+      padding: 0 2rem;
+    }
+    .card {
+      background: var(--glass);
+      backdrop-filter: blur(12px) saturate(120%);
+      border: 1px solid rgba(255, 215, 0, 0.3);
+      border-radius: 10px;
+      box-shadow: 0 4px 12px var(--shadow);
       padding: 1.5rem;
-      border: 1px solid var(--card-border);
-      transition: transform 0.3s;
-      height: 100%;
+      transition: transform 0.3s ease, box-shadow 0.3s ease;
+      position: relative;
+      overflow: hidden;
     }
-    .stats-card:hover {
-      transform: translateY(-5px);
-      box-shadow: 0 8px 20px rgba(0,0,0,0.1);
+    .card:before {
+      content: '';
+      position: absolute;
+      top: -50%;
+      left: -50%;
+      width: 200%;
+      height: 200%;
+      background: radial-gradient(circle, rgba(255,215,0,0.1) 0%, transparent 70%);
+      transform: rotate(30deg);
+      pointer-events: none;
     }
-    .stats-icon {
-      width: 60px;
-      height: 60px;
-      border-radius: 12px;
+    .card:hover {
+      transform: translateY(-6px);
+      box-shadow: 0 6px 18px rgba(255, 215, 0, 0.2);
+    }
+    .chart-card { grid-column: 1 / -1; }
+
+    /* Buttons */
+    .btn-gold {
+      background: var(--gold-gradient);
+      color: #000 !important;
+      border: none;
+      padding: 0.7rem 1.2rem;
+      border-radius: 6px;
+      font-weight: 500;
+      transition: transform 0.3s ease, box-shadow 0.3s ease;
+      position: relative;
+      overflow: hidden;
+    }
+    .btn-gold:hover { 
+      transform: scale(1.03);
+      box-shadow: 0 0 15px rgba(255, 215, 0, 0.4);
+    }
+    .btn-gold:after {
+      content: '';
+      position: absolute;
+      top: -50%;
+      left: -50%;
+      width: 200%;
+      height: 200%;
+      background: rgba(255,255,255,0.2);
+      transform: rotate(30deg);
+      transition: all 0.6s ease;
+      opacity: 0;
+    }
+    .btn-gold:hover:after {
+      opacity: 1;
+      top: -30%;
+      left: -30%;
+    }
+
+    /* Floating Button */
+    #floating-signals-btn {
+      width: 150px;
+      height: 150px;
+      border-radius: 50%;
       display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      text-align: center;
+      padding: 0;
+      background: #000;
+      color: var(--gold) !important;
+      animation: pulse 2s infinite;
+      font-size: 0.8rem;
+      box-shadow: 0 8px 16px rgba(0, 0, 0, 0.4), 0 0 20px rgba(255, 215, 0, 0.3);
+      border: 3px solid var(--gold);
+      font-weight: 500;
+      position: fixed;
+      bottom: 20px;
+      left: 20px;
+      z-index: 1000;
+      transition: transform 0.3s ease;
+      overflow: hidden;
+    }
+    #floating-signals-btn:hover {
+      transform: scale(1.1);
+    }
+    #floating-signals-btn:after {
+      content: '';
+      position: absolute;
+      top: -50%;
+      left: -50%;
+      width: 200%;
+      height: 200%;
+      background: radial-gradient(circle, rgba(255,215,0,0.3) 0%, transparent 70%);
+      transform: rotate(30deg);
+      animation: rotate 6s linear infinite;
+      pointer-events: none;
+    }
+    @keyframes pulse {
+      0% { box-shadow: 0 0 0 0 rgba(255, 215, 0, 0.4); }
+      70% { box-shadow: 0 0 0 20px rgba(255, 215, 0, 0); }
+      100% { box-shadow: 0 0 0 0 rgba(255, 215, 0, 0); }
+    }
+    @keyframes rotate {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
+    }
+    @media (max-width: 768px) {
+      #floating-signals-btn {
+        width: 100px;
+        height: 100px;
+        font-size: 0.7rem;
+      }
+      #card-layer-toggle {
+        bottom: 150px;
+        right: 15px;
+        width: 40px;
+        height: 40px;
+      }
+    }
+
+    /* Chart */
+    #tv_chart_4h {
+      width: 100%;
+      height: 450px;
+      border-radius: 8px;
+      overflow: hidden;
+      box-shadow: 0 2px 8px var(--shadow);
+      border: 1px solid rgba(255, 215, 0, 0.2);
+    }
+    .chart-toggle {
+      display: flex;
+      gap: 0.5rem;
+      margin-bottom: 1rem;
+    }
+    .chart-toggle button {
+      background: var(--glass);
+      border: 1px solid var(--gold-dark);
+      padding: 0.5rem 1rem;
+      border-radius: 6px;
+      transition: background 0.3s ease;
+    }
+    .chart-toggle button.active,
+    .chart-toggle button:hover {
+      background: var(--gold-dark);
+      color: #000 !important;
+    }
+
+    /* Widgets */
+    #news-widget, #calendar-widget {
+      background: var(--glass);
+      border: 1px solid var(--gold-dark);
+      border-radius: 10px;
+      box-shadow: 0 2px 8px var(--shadow);
+      padding: 0;
+      height: 350px;
+      overflow: hidden;
+    }
+    #news-widget ul, #calendar-widget table {
+      height: 100%;
+      overflow-y: auto;
+    }
+    .list-group-item {
+      background: var(--glass);
+      border: 1px solid var(--gold-dark);
+      border-radius: 6px;
+      margin-bottom: 0.5rem;
+      box-shadow: 0 2px 6px var(--shadow);
+      transition: transform 0.2s ease;
+    }
+    .list-group-item:hover {
+      transform: translateX(5px);
+      border-left: 3px solid var(--gold);
+    }
+    .price-change.positive { color: var(--success) !important; }
+    .price-change.negative { color: var(--error) !important; }
+
+    /* Sentiment Badges */
+    .badge.positive { background-color: var(--success); }
+    .badge.negative { background-color: var(--error); }
+    .badge.neutral { background-color: var(--text-muted); }
+
+    /* Spinner */
+    .spinner {
+      border: 3px solid var(--glass);
+      border-top: 3px solid var(--gold);
+      border-radius: 50%;
+      width: 24px;
+      height: 24px;
+      animation: spin 1s linear infinite;
+      margin: 1rem auto;
+    }
+    @keyframes spin {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
+    }
+
+    /* Footer */
+    footer {
+      text-align: center;
+      padding: 1rem 0;
+      color: var(--text-light);
+      font-size: 0.9rem;
+      background: var(--glass);
+      border-top: 1px solid var(--gold-dark);
+      width: 100%;
+      margin-top: 2rem;
+    }
+
+    /* Input Styling */
+    input, select, textarea {
+      background-color: var(--input-bg);
+      border: 1px solid var(--gold-dark);
+      border-radius: 6px;
+      padding: 0.5rem;
+      color: var(--text);
+      transition: border-color 0.3s ease;
+    }
+    input:focus, select:focus, textarea:focus {
+      border-color: var(--gold);
+      outline: none;
+      box-shadow: 0 0 0 2px rgba(255, 215, 0, 0.2);
+    }
+
+    /* Welcome Banner */
+    .welcome-banner {
+      background: var(--gold-gradient);
+      color: #000;
+      padding: 1.5rem;
+      border-radius: 8px;
+      text-align: center;
+      font-size: 1.4rem;
+      font-weight: bold;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+      position: relative;
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
       align-items: center;
       justify-content: center;
-      margin-bottom: 1rem;
-      font-size: 1.8rem;
     }
-    .stats-icon.gold { background: rgba(251, 191, 36, 0.15); color: var(--gold); }
-    .stats-icon.green { background: rgba(16, 185, 129, 0.15); color: var(--success); }
-    .stats-icon.blue { background: rgba(59, 130, 246, 0.15); color: #3b82f6; }
-    .stats-icon.purple { background: rgba(139, 92, 246, 0.15); color: #8b5cf6; }
-    .stats-value {
+    .welcome-banner .trader-name {
       font-size: 2rem;
-      font-weight: 700;
-      margin-bottom: 0.2rem;
+      margin: 0.5rem 0;
+      text-shadow: 0 0 10px rgba(0, 0, 0, 0.3);
     }
-    .stats-label {
+    .welcome-banner .vip-badge {
+      background: #000;
+      color: var(--gold);
+      padding: 0.3rem 1rem;
+      border-radius: 20px;
       font-size: 0.9rem;
-      color: #94a3b8;
+      margin-top: 0.5rem;
+    }
+    .welcome-banner:after {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 4px;
+      background: linear-gradient(90deg, transparent, #fff, transparent);
+      animation: shimmer 3s infinite;
+    }
+    @keyframes shimmer {
+      0% { transform: translateX(-100%); }
+      100% { transform: translateX(100%); }
+    }
+
+    /* Sentiment Indicator */
+    .sentiment-indicator {
+      background: var(--glass);
+      padding: 1rem;
+      border-radius: 6px;
+      text-align: center;
+      border: 1px solid var(--gold-dark);
+    }
+
+    /* VIP Signal Section */
+    .vip-signal-card {
+      background: var(--glass);
+      border: 1px solid var(--gold);
+      border-radius: 10px;
+      padding: 1.5rem;
+      text-align: center;
+      box-shadow: 0 4px 12px var(--shadow);
+      position: relative;
+    }
+    .vip-signal-card:before {
+      content: 'VIP';
+      position: absolute;
+      top: -10px;
+      right: 20px;
+      background: var(--gold);
+      color: #000;
+      font-weight: bold;
+      padding: 5px 15px;
+      border-radius: 20px;
+      font-size: 0.9rem;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.3);
+    }
+    .vip-signal-card h3 {
+      font-family: 'Orbitron', sans-serif;
+      color: var(--gold) !important;
       text-transform: uppercase;
       letter-spacing: 1px;
     }
-
-    .dataTables_wrapper {
-      margin-top: 1.5rem;
+    
+    .signal-details {
+      display: flex;
+      justify-content: space-around;
+      flex-wrap: wrap;
+      margin: 1rem 0;
     }
-    .dt-buttons .btn {
-      margin-right: 0.5rem;
-      background: linear-gradient(135deg, var(--gold), var(--gold-dark));
-      border: none;
-      color: #fff;
-      border-radius: 8px;
-      transition: all 0.3s;
-      font-weight: 500;
+    
+    .signal-detail {
+      background: rgba(0, 0, 0, 0.3);
       padding: 0.5rem 1rem;
+      border-radius: 6px;
+      margin: 0.5rem;
+      min-width: 120px;
+      position: relative;
+      border: 1px solid var(--gold-dark);
     }
-    .dt-buttons .btn:hover {
-      transform: translateY(-2px);
-      box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+    .signal-detail:after {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: linear-gradient(135deg, transparent, rgba(255,215,0,0.1), transparent);
+      pointer-events: none;
     }
-    table.dataTable {
-      color: var(--text) !important;
-      border-collapse: separate;
-      border-spacing: 0 8px;
-      width: 100% !important;
+
+    /* Economic Calendar Styling */
+    #calendar-widget {
+      background: var(--calendar-bg);
+      color: var(--calendar-text);
     }
-    table.dataTable thead th {
-      background: linear-gradient(135deg, var(--gold), var(--gold-dark));
-      color: #fff;
-      padding: 1rem 1.2rem;
-      text-align: left;
-      font-weight: 500;
+    #calendar-widget table {
+      width: 100%;
+      border-collapse: collapse;
+    }
+    #calendar-widget th, #calendar-widget td {
+      padding: 0.5rem;
+      border: 1px solid var(--gold-dark);
+      color: var(--calendar-text);
+      background-color: #000;
+    }
+    #calendar-widget th {
+      background: var(--gold-dark);
+      color: #000 !important;
+      font-weight: bold;
+    }
+    #calendar-widget tr.high-impact {
+      background: rgba(255, 215, 0, 0.1);
+    }
+    #calendar-widget tr {
+      transition: background 0.3s ease;
+    }
+    #calendar-widget tr:hover {
+      background: rgba(255, 215, 0, 0.15);
+    }
+
+    /* Premium Elements */
+    .premium-badge {
+      position: absolute;
+      top: 10px;
+      right: 10px;
+      background: var(--gold-gradient);
+      color: #000;
+      font-weight: bold;
+      padding: 2px 8px;
+      border-radius: 4px;
+      font-size: 0.7rem;
+    }
+    .gold-divider {
+      height: 2px;
+      background: linear-gradient(90deg, transparent, var(--gold), transparent);
+      margin: 1rem 0;
       border: none;
     }
-    table.dataTable thead th:first-child {
-      border-radius: 10px 0 0 10px;
+    .glow {
+      text-shadow: 0 0 10px rgba(255, 215, 0, 0.7);
     }
-    table.dataTable thead th:last-child {
-      border-radius: 0 10px 10px 0;
+    
+    /* Copy Button Styling */
+    .copy-btn {
+      background: #000;
+      color: var(--gold);
+      border: 1px solid var(--gold);
+      border-radius: 4px;
+      padding: 2px 8px;
+      font-size: 0.8rem;
+      cursor: pointer;
+      margin-top: 4px;
+      animation: pulse 2s infinite;
     }
-    table.dataTable tbody td {
-      padding: 1.2rem;
-      background: var(--card-bg);
-      border: none;
-      vertical-align: middle;
-    }
-    table.dataTable tbody tr {
-      transition: all 0.3s ease;
-      border-radius: 10px;
+
+    /* Subscription Status Card */
+    .subscription-card {
+      background: linear-gradient(135deg, rgba(25, 25, 25, 0.9) 0%, rgba(40, 40, 40, 0.9) 100%);
+      border: 1px solid var(--gold);
+      position: relative;
       overflow: hidden;
     }
-    table.dataTable tbody tr:hover {
-      background: var(--highlight);
-      box-shadow: 0 4px 15px var(--shadow);
-      transform: translateY(-2px);
+    
+    .subscription-card:before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: radial-gradient(circle at top right, rgba(255,215,0,0.1) 0%, transparent 70%);
+      z-index: -1;
     }
-    table.dataTable tbody tr td:first-child {
-      border-radius: 10px 0 0 10px;
-    }
-    table.dataTable tbody tr td:last-child {
-      border-radius: 0 10px 10px 0;
-    }
-    .col-index, .col-status, .col-payment, .col-subscription, .col-expiry, .col-actions { 
-      text-align: center; 
-    }
-    .btn-sm {
-      padding: 0.4rem 0.8rem;
-      font-size: 0.85rem;
-      border-radius: 6px;
-      margin: 0 0.2rem;
-      font-weight: 500;
-      border: none;
-    }
-    .bulk-actions {
-      margin-bottom: 1.5rem;
-      display: flex;
-      gap: 0.8rem;
-      flex-wrap: wrap;
+    
+    .subscription-header {
+      position: relative;
+      padding-bottom: 1rem;
+      margin-bottom: 1rem;
+      border-bottom: 1px solid rgba(255,215,0,0.3);
     }
     
     .status-badge {
-      padding: 0.35rem 0.8rem;
-      border-radius: 50px;
+      position: absolute;
+      top: 10px;
+      right: 10px;
+      padding: 0.25rem 0.75rem;
+      border-radius: 20px;
+      font-weight: bold;
       font-size: 0.8rem;
-      font-weight: 500;
-      display: inline-block;
-    }
-    .status-pending { background: rgba(245, 158, 11, 0.15); color: var(--warning); }
-    .status-approved { background: rgba(16, 185, 129, 0.15); color: var(--success); }
-    .status-rejected { background: rgba(239, 68, 68, 0.15); color: var(--danger); }
-    .status-expired { background: rgba(107, 114, 128, 0.15); color: #6b7280; }
-    
-    .subscription-chip {
-      padding: 0.4rem 0.8rem;
-      border-radius: 50px;
-      font-size: 0.85rem;
-      font-weight: 500;
-      display: inline-block;
-    }
-    .chip-basic { background: rgba(59, 130, 246, 0.15); color: #3b82f6; }
-    .chip-standard { background: rgba(139, 92, 246, 0.15); color: #8b5cf6; }
-    .chip-premium { background: rgba(251, 191, 36, 0.2); color: var(--gold); }
-    .chip-enterprise { background: rgba(236, 72, 153, 0.15); color: #ec4899; }
-    
-    .expiry-countdown {
-      font-weight: 600;
-      font-size: 0.95rem;
-      min-width: 120px;
-      display: inline-block;
-      transition: color 0.3s ease;
-    }
-    .countdown-expiring { color: var(--danger); animation: pulse 1.5s infinite; }
-    .countdown-expired { color: #6b7280; }
-    @keyframes pulse {
-      0% { opacity: 1; }
-      50% { opacity: 0.7; }
-      100% { opacity: 1; }
+      text-transform: uppercase;
+      letter-spacing: 1px;
     }
     
-    footer {
+    .status-active {
+      background: linear-gradient(135deg, #00c853 0%, #007e33 100%);
+      color: #fff;
+      box-shadow: 0 0 10px rgba(0, 200, 83, 0.5);
+    }
+    
+    .status-expired {
+      background: linear-gradient(135deg, #ff5252 0%, #b71c1c 100%);
+      color: #fff;
+      box-shadow: 0 0 10px rgba(255, 82, 82, 0.5);
+    }
+    
+    .status-pending {
+      background: linear-gradient(135deg, #ff9800 0%, #f57c00 100%);
+      color: #fff;
+      box-shadow: 0 0 10px rgba(255, 152, 0, 0.5);
+    }
+    
+    .subscription-details {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 1.5rem;
+      margin-bottom: 1.5rem;
+    }
+    
+    .subscription-detail {
       text-align: center;
-      padding: 1.5rem;
-      color: #94a3b8;
-      font-size: 0.9rem;
-      border-top: 1px solid var(--card-border);
-      margin-top: 2rem;
+      padding: 1rem;
+      background: rgba(0, 0, 0, 0.3);
+      border-radius: 8px;
+      border: 1px solid rgba(255,215,0,0.2);
+      position: relative;
+      overflow: hidden;
     }
     
-    @media (max-width: 992px) {
-      .stats-grid {
-        grid-template-columns: repeat(2, 1fr);
-      }
+    .subscription-detail:before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 4px;
+      background: var(--gold-gradient);
     }
+    
+    .detail-label {
+      font-size: 0.9rem;
+      color: var(--text-light);
+      margin-bottom: 0.5rem;
+    }
+    
+    .detail-value {
+      font-size: 1.2rem;
+      font-weight: bold;
+      color: var(--gold);
+    }
+    
+    .progress-container {
+      background: rgba(0, 0, 0, 0.5);
+      border-radius: 10px;
+      height: 12px;
+      overflow: hidden;
+      margin: 1rem 0;
+    }
+    
+    .progress-bar {
+      height: 100%;
+      background: var(--gold-gradient);
+      position: relative;
+      transition: width 1s ease-in-out;
+    }
+    
+    .progress-bar:after {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: linear-gradient(90deg, transparent, rgba(255,255,255,0.3), transparent);
+      animation: shimmer 2s infinite;
+    }
+    
+    .days-remaining {
+      text-align: center;
+      font-size: 1.8rem;
+      font-weight: bold;
+      margin: 1rem 0;
+      color: var(--gold);
+      text-shadow: 0 0 10px rgba(255,215,0,0.5);
+    }
+    
+    .subscription-actions {
+      display: flex;
+      gap: 1rem;
+      justify-content: center;
+      margin-top: 1rem;
+    }
+    
+    .subscription-history {
+      margin-top: 1.5rem;
+      padding-top: 1rem;
+      border-top: 1px solid rgba(255,215,0,0.3);
+    }
+    
+    .history-item {
+      display: flex;
+      justify-content: space-between;
+      padding: 0.75rem 0;
+      border-bottom: 1px solid rgba(255,255,255,0.1);
+    }
+    
+    .history-item:last-child {
+      border-bottom: none;
+    }
+    
+    .history-amount {
+      color: var(--gold);
+      font-weight: bold;
+    }
+    
+    .history-date {
+      color: var(--text-light);
+      font-size: 0.9rem;
+    }
+
+    /* Responsive Design */
     @media (max-width: 768px) {
-      .header-left h1 { display: none; }
-      .bulk-actions { flex-direction: column; }
-      .bulk-actions button { width: 100%; }
-      .stats-grid {
+      .container-fluid { grid-template-columns: 1fr; }
+      header { padding: 1rem; }
+      .nav-links { flex-wrap: wrap; }
+      .signal-details { flex-direction: column; }
+      .welcome-banner .trader-name {
+        font-size: 1.6rem;
+      }
+      .subscription-details {
         grid-template-columns: 1fr;
       }
     }
   </style>
 </head>
-
 <body>
-  <header>
-    <div class="header-left">
-      <a href="admin-dashboard.html">
-        <div style="height:45px;width:45px;background:linear-gradient(135deg, #fbbf24, #d97706);border-radius:8px;display:flex;align-items:center;justify-content:center;color:white;font-weight:bold;">CBE</div>
-      </a>
-      <h1>User & Subscription Management</h1>
-    </div>
-    <div class="d-flex align-items-center gap-3">
-      <div class="position-relative">
-        <i class="bi bi-bell fs-5"></i>
-        <span class="position-absolute top-0 start-100 translate-middle p-1 bg-danger border border-light rounded-circle">
-          <span class="visually-hidden">New alerts</span>
-        </span>
+  <!-- Card layer container -->
+  <div id="card-layer-container"></div>
+  
+  <!-- Card layer toggle button -->
+  <div id="card-layer-toggle" class="active" title="Toggle Card Layer">
+    <i class="bi bi-layers-half"></i>
+    <div class="tooltip">Card Layer: On</div>
+  </div>
+
+  <!-- Header -->
+  <header class="slide-in">
+    <div class="d-flex align-items-center">
+      <button id="sidebar-toggle" class="btn btn-link d-md-none me-2"><i class="bi-list"></i></button>
+      <a href="index.html" class="logo"><img src="http://apexincomeoptions.com.ng/CBE_logo.png" alt="CBE Logo" style="height: 40px;"></a>
+      <span id="current-time" class="ms-3"></span>
+      <div class="ms-3">
+        <i class="bi-currency-exchange me-1"></i>
+        XAU/USD: <span id="live-gold-price">--</span>
       </div>
-      <button id="theme-toggle" aria-label="Toggle theme">🌞</button>
+    </div>
+    <div class="nav-links">
+      <div id="header-user">
+        <i class="bi-person-circle"></i>
+        <span id="header-username">VIP Trader</span>
+      </div>
+      <button id="notif-btn" class="btn btn-link position-relative">
+        <i class="bi-bell-fill"></i>
+        <span id="notif-count" class="badge position-absolute top-0 start-100 translate-middle">0</span>
+      </button>
+      <div id="notif-menu" class="dropdown-menu dropdown-menu-end p-2">
+        <h6 class="dropdown-header">Notifications</h6>
+        <div id="notif-list">No new notifications</div>
+      </div>
+      <select id="theme-select" title="Select Theme">
+        <option value="dark">Dark</option>
+        <option value="light">Light</option>
+      </select>
+      <button onclick="logout()">Logout</button>
     </div>
   </header>
 
-  <main class="container">
-    <div class="glass">
-      <div class="d-flex justify-content-between align-items-center flex-wrap gap-3 mb-4">
-        <h3 class="panel-title"><i class="bi bi-people-fill"></i> User Applications & Subscriptions</h3>
-        <div class="d-flex gap-2">
-          <div class="input-group" style="max-width: 300px;">
-            <span class="input-group-text bg-transparent border-end-0"><i class="bi bi-search"></i></span>
-            <input type="text" id="search-input" class="form-control border-start-0" placeholder="Search users...">
-          </div>
-          <button class="btn btn-gold"><i class="bi bi-funnel me-1"></i> Filters</button>
-        </div>
+  <!-- Sidebar -->
+  <div class="offcanvas offcanvas-start" id="sidebar">
+    <div class="offcanvas-body">
+      <div class="text-center mb-4">
+        <div class="logo">CBE Global</div>
       </div>
-      
-      <!-- Stats Cards with Real Data -->
-      <div class="row row-cols-1 row-cols-md-2 row-cols-lg-4 g-4 mb-5">
-        <div class="col">
-          <div class="stats-card">
-            <div class="stats-icon gold">
-              <i class="bi bi-people"></i>
-            </div>
-            <div class="stats-value" id="total-users">0</div>
-            <div class="stats-label">Total Users</div>
-          </div>
+      <ul class="nav nav-pills flex-column">
+        <li class="nav-item">
+          <a class="nav-link active" href="#" onclick="loadDashboard()" data-bs-dismiss="offcanvas">
+            <i class="bi-speedometer2 me-2"></i>Dashboard
+          </a>
+        </li>
+        <li class="nav-item"><a class="nav-link" href="https://apexincomeoptions.com.ng/signals"><i class="bi-lightning me-2"></i>Signals</a></li>
+        <li class="nav-item"><a class="nav-link" href="CBE_trade_history_vip.html"><i class="bi-clock-history me-2"></i>History</a></li>
+        <li class="nav-item"><a class="nav-link" href="CBE_trade_insights_vip.html"><i class="bi-graph-up me-2"></i>Insights</a></li>
+        <li class="nav-item"><a class="nav-link" href="#"><i class="bi-award me-2"></i>VIP Features</a></li>
+        <li class="nav-item"><a class="nav-link" href="#"><i class="bi-person-circle me-2"></i>Account</a></li>
+      </ul>
+      <div class="mt-4 p-3 text-center" style="background: rgba(255,215,0,0.1); border-radius: 8px;">
+        <h5 class="mb-2">VIP Status</h5>
+        <div class="d-flex justify-content-center">
+          <i class="bi-star-fill text-warning me-1"></i>
+          <i class="bi-star-fill text-warning me-1"></i>
+          <i class="bi-star-fill text-warning me-1"></i>
+          <i class="bi-star-fill text-warning me-1"></i>
+          <i class="bi-star-fill text-warning"></i>
         </div>
-        <div class="col">
-          <div class="stats-card">
-            <div class="stats-icon green">
-              <i class="bi bi-credit-card"></i>
-            </div>
-            <div class="stats-value" id="active-subs">0</div>
-            <div class="stats-label">Active Subscriptions</div>
-          </div>
-        </div>
-        <div class="col">
-          <div class="stats-card">
-            <div class="stats-icon blue">
-              <i class="bi bi-hourglass-split"></i>
-            </div>
-            <div class="stats-value" id="pending-approvals">0</div>
-            <div class="stats-label">Pending Approvals</div>
-          </div>
-        </div>
-        <div class="col">
-          <div class="stats-card">
-            <div class="stats-icon purple">
-              <i class="bi bi-exclamation-circle"></i>
-            </div>
-            <div class="stats-value" id="expiring-soon">0</div>
-            <div class="stats-label">Expiring Soon</div>
-          </div>
-        </div>
+        <small class="d-block mt-2">Platinum Member</small>
       </div>
+    </div>
+  </div>
 
-      <!-- Bulk Actions -->
-      <div class="bulk-actions">
-        <button class="btn btn-gold" id="bulk-approve"><i class="bi bi-check-circle me-1"></i> Approve Selected</button>
-        <button class="btn btn-gold" id="bulk-reject"><i class="bi bi-x-circle me-1"></i> Reject Selected</button>
-        <button class="btn btn-gold" id="bulk-delete"><i class="bi bi-trash me-1"></i> Delete Selected</button>
-        <button class="btn btn-gold" id="bulk-renew"><i class="bi bi-arrow-repeat me-1"></i> Renew Subscriptions</button>
-        <button class="btn btn-success" id="export-data"><i class="bi bi-file-earmark-spreadsheet me-1"></i> Export Data</button>
+  <!-- Main Content -->
+  <div class="container-fluid">
+    <!-- VIP Signal Section -->
+    <div class="vip-signal-card slide-in mb-4">
+      <h3><i class="bi-lightning-fill me-2"></i>VIP SIGNAL</h3>
+      <div id="latest-signal">
+        <div class="spinner"></div>
+        <p style="text-align:center;color: var(--text-light);padding:10px;">
+          Loading latest signal…
+        </p>
+      </div>
+      <a href="https://apexincomeoptions.com.ng/signals" class="btn btn-gold mt-3">View All Signals</a>
+    </div>
+
+    <div class="welcome-banner slide-in">
+      <div>Welcome, esteemed trader</div>
+      <div class="trader-name" id="welcomeName">VIP Trader</div>
+      <div class="vip-badge">Platinum VIP Member</div>
+    </div>
+    
+    <!-- Subscription Status Card -->
+    <div class="card p-3 mb-4 slide-in subscription-card">
+      <div class="subscription-header">
+        <h3><i class="bi-shield-lock me-2"></i>VIP Subscription Status</h3>
+        <div class="status-badge status-active">Active</div>
       </div>
       
-      <!-- User Table -->
-      <div class="table-responsive">
-        <table id="users-table" class="table table-hover" style="width:100%">
+      <div class="subscription-details">
+        <div class="subscription-detail">
+          <div class="detail-label">Plan</div>
+          <div class="detail-value">Platinum VIP</div>
+        </div>
+        
+        <div class="subscription-detail">
+          <div class="detail-label">Payment Status</div>
+          <div class="detail-value">Completed</div>
+        </div>
+        
+        <div class="subscription-detail">
+          <div class="detail-label">Subscription Period</div>
+          <div class="detail-value">Annual</div>
+        </div>
+        
+        <div class="subscription-detail">
+          <div class="detail-label">Renewal Date</div>
+          <div class="detail-value" id="renewal-date">2025-12-31</div>
+        </div>
+      </div>
+      
+      <h5 class="text-center mb-3">Subscription Timeline</h5>
+      <div class="progress-container">
+        <div class="progress-bar" id="subscription-progress" style="width: 65%"></div>
+      </div>
+      
+      <div class="days-remaining" id="days-remaining">195 days</div>
+      <p class="text-center text-muted">Your subscription expires in <span class="text-warning">195 days</span></p>
+      
+      <div class="subscription-actions">
+        <button class="btn btn-gold"><i class="bi-arrow-repeat me-2"></i>Renew Now</button>
+        <button class="btn btn-outline-gold"><i class="bi-receipt me-2"></i>Invoice</button>
+        <button class="btn btn-outline-gold"><i class="bi-question-circle me-2"></i>Support</button>
+      </div>
+      
+      <div class="subscription-history">
+        <h5><i class="bi-clock-history me-2"></i>Payment History</h5>
+        <div class="history-item">
+          <div>
+            <div>Platinum VIP Annual</div>
+            <div class="history-date">2024-06-15</div>
+          </div>
+          <div class="history-amount">$499.00</div>
+        </div>
+        <div class="history-item">
+          <div>
+            <div>Platinum VIP Annual</div>
+            <div class="history-date">2023-06-15</div>
+          </div>
+          <div class="history-amount">$449.00</div>
+        </div>
+        <div class="history-item">
+          <div>
+            <div>Gold VIP Upgrade</div>
+            <div class="history-date">2022-09-10</div>
+          </div>
+          <div class="history-amount">$149.00</div>
+        </div>
+      </div>
+    </div>
+    
+    <div class="row g-4 mb-4 slide-in">
+      <div class="col-md-3">
+        <div class="card p-3 text-center">
+          <h6><i class="bi-lightning me-2"></i>Signals Today</h6>
+          <div class="display-4 glow mb-2">8</div>
+          <a href="https://apexincomeoptions.com.ng/signals" class="btn btn-gold">Access Signals</a>
+        </div>
+      </div>
+      <div class="col-md-3">
+        <div class="card p-3 text-center">
+          <h6><i class="bi-clock-history me-2"></i>Trade History</h6>
+          <div class="display-4 glow mb-2">94%</div>
+          <small class="text-success">Success Rate</small>
+          <a href="CBE_trade_history_vip.html" class="btn btn-gold mt-2">View History</a>
+        </div>
+      </div>
+      <div class="col-md-3">
+        <div class="card p-3 text-center">
+          <h6><i class="bi-graph-up me-2"></i>Trade Insights</h6>
+          <div class="display-4 glow mb-2">+27%</div>
+          <small class="text-success">Monthly Profit</small>
+          <a href="CBE_trade_insights_vip.html" class="btn btn-gold mt-2">View Insights</a>
+        </div>
+      </div>
+      <div class="col-md-3">
+        <div class="card p-3 text-center">
+          <h6><i class="bi-currency-exchange me-2"></i>24h Gold Δ</h6>
+          <div class="display-4 glow mb-2" id="stat-gold-change">--%</div>
+          <small class="text-muted">Price Movement</small>
+        </div>
+      </div>
+    </div>
+
+    <!-- Portfolio Tracker -->
+    <div class="card p-3 mb-4 slide-in portfolio-tracker">
+      <h3 class="mb-3">Portfolio Tracker</h3>
+      <input id="portfolio-input" class="form-control mb-2" placeholder="Add asset (e.g., XAUUSD, 100 oz)">
+      <button id="add-portfolio" class="btn btn-gold mb-2">Add</button>
+      <ul id="portfolio-list" class="list-group"></ul>
+    </div>
+
+    <!-- Gold Signal Risk and Gain Calculator -->
+    <div class="card p-3 mb-4 slide-in forex-risk-calculator">
+      <h3 class="mb-3">Gold Signal Risk and Gain Calculator</h3>
+      <div class="row g-3">
+        <div class="col-md-3 col-6">
+          <label for="trade-type" class="form-label">Trade Type</label>
+          <select id="trade-type" class="form-select">
+            <option value="buy">Buy</option>
+            <option value="sell">Sell</option>
+          </select>
+        </div>
+        <div class="col-md-3 col-6">
+          <label for="entry-price" class="form-label">Entry Price</label>
+          <input id="entry-price" type="number" step="0.01" class="form-control" placeholder="e.g., 2000.00">
+        </div>
+        <div class="col-md-3 col-6">
+          <label for="stop-loss-price" class="form-label">Stop Loss Price</label>
+          <input id="stop-loss-price" type="number" step="0.01" class="form-control" placeholder="e.g., 1980.00">
+        </div>
+        <div class="col-md-3 col-6">
+          <label for="take-profit-price" class="form-label">Take Profit Price</label>
+          <input id="take-profit-price" type="number" step="0.01" class="form-control" placeholder="e.g., 2020.00">
+        </div>
+        <div class="col-md-3 col-6">
+          <label for="position-size" class="form-label">Position Size (lots)</label>
+          <input id="position-size" type="number" step="0.01" class="form-control" placeholder="e.g., 1.00">
+        </div>
+        <div class="col-12">
+          <button id="calculate-forex-risk" class="btn btn-gold">Calculate</button>
+          <p id="forex-risk-result" class="mt-2"></p>
+          <p class="text-muted mt-2">Calculate your potential gain/loss before executing trade.</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Converter Widget -->
+    <div class="card p-3 mb-4 slide-in" id="converter-widget">
+      <h3 class="mb-3">Currency Converter</h3>
+      <div class="row g-3">
+        <div class="col-md-4">
+          <select id="converter-from" class="form-select">
+            <option value="USD">USD</option>
+            <option value="EUR">EUR</option>
+            <option value="GBP">GBP</option>
+            <option value="JPY">JPY</option>
+            <option value="CAD">CAD</option>
+          </select>
+        </div>
+        <div class="col-md-4">
+          <input id="converter-amount" type="number" class="form-control" placeholder="Amount" value="1">
+        </div>
+        <div class="col-md-4">
+          <select id="converter-to" class="form-select">
+            <option value="USD">USD</option>
+            <option value="EUR">EUR</option>
+            <option value="GBP">GBP</option>
+            <option value="JPY">JPY</option>
+            <option value="CAD">CAD</option>
+          </select>
+        </div>
+        <div class="col-12">
+          <button id="convert-btn" class="btn btn-gold" aria-label="Convert currency">Convert</button>
+          <p id="converter-result" class="mt-2"></p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Chart Widget -->
+    <div class="card p-3 mb-4 slide-in chart-card">
+      <h3 class="mb-3">XAU/USD Chart</h3>
+      <div class="chart-toggle">
+        <button data-interval="240" class="active">4H</button>
+        <button data-interval="D">1D</button>
+        <button data-interval="W">1W</button>
+        <button data-interval="M">1M</button>
+      </div>
+      <div id="tv_chart_4h"></div>
+    </div>
+
+    <!-- News Widget -->
+    <div class="card p-3 mb-4 slide-in" id="news-widget">
+      <div class="d-flex justify-content-between align-items-center mb-3">
+        <h3>Gold News <small class="text-muted">Updated every minute</small></h3>
+        <button class="btn btn-link" data-bs-toggle="collapse" data-bs-target="#news-collapse"><i class="bi-chevron-down"></i></button>
+      </div>
+      <div id="news-collapse" class="collapse show">
+        <ul id="news-list"></ul>
+        <div class="sentiment-indicator mt-3">
+          <h4>Market Sentiment</h4>
+          <div class="d-flex justify-content-around">
+            <div>
+              <i class="bi-arrow-up-circle-fill text-success me-1"></i>
+              Positive: <span id="positive-count">0</span>
+            </div>
+            <div>
+              <i class="bi-arrow-down-circle-fill text-danger me-1"></i>
+              Negative: <span id="negative-count">0</span>
+            </div>
+            <div>
+              <i class="bi-dash-circle-fill text-muted me-1"></i>
+              Neutral: <span id="neutral-count">0</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Calendar Widget -->
+    <div class="card p-3 mb-4 slide-in" id="calendar-widget">
+      <div class="d-flex justify-content-between align-items-center mb-3">
+        <h3>Economic Calendar <small class="text-muted">Updated daily</small></h3>
+        <button class="btn btn-link" data-bs-toggle="collapse" data-bs-target="#calendar-collapse"><i class="bi-chevron-down"></i></button>
+      </div>
+      <div id="calendar-collapse" class="collapse show">
+        <table class="table">
           <thead>
             <tr>
-              <th><input type="checkbox" id="select-all"></th>
-              <th class="col-index">#</th>
-              <th>Email</th>
-              <th>Name</th>
-              <th class="col-status">Status</th>
-              <th class="col-payment">Payment</th>
-              <th class="col-subscription">Subscription</th>
-              <th class="col-expiry">Expires In</th>
-              <th class="col-actions">Actions</th>
+              <th>Date</th>
+              <th>Time</th>
+              <th>Currency</th>
+              <th>Event</th>
+              <th>Impact</th>
+              <th>Actual</th>
+              <th>Previous</th>
             </tr>
           </thead>
-          <tbody>
-            <!-- Data will be populated by JavaScript -->
-          </tbody>
+          <tbody id="calendar-body"></tbody>
         </table>
       </div>
     </div>
-  </main>
 
-  <footer>
-    <div class="container">
-      <p class="mb-0">© 2023 Crypto Business Education. All rights reserved.</p>
+    <!-- Watchlist Widget -->
+    <div class="card p-3 mb-4 slide-in">
+      <h3 class="mb-3">My Watchlist</h3>
+      <div class="d-flex mb-2">
+        <input id="watch-input" class="form-control me-2" placeholder="Add symbol (e.g., EURUSD)">
+        <button id="add-watch" class="btn btn-gold"><i class="bi-plus"></i>Add</button>
+      </div>
+      <ul id="watch-list" class="list-group"></ul>
     </div>
-  </footer>
 
-  <!-- JS Dependencies -->
-  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-  <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
-  <script src="https://cdn.datatables.net/1.13.4/js/jquery.dataTables.min.js"></script>
-  <script src="https://cdn.datatables.net/1.13.4/js/dataTables.bootstrap5.min.js"></script>
-  <script src="https://cdn.datatables.net/buttons/2.3.6/js/dataTables.buttons.min.js"></script>
-  <script src="https://cdn.datatables.net/buttons/2.3.6/js/buttons.bootstrap5.min.js"></script>
-  <script src="https://cdn.datatables.net/buttons/2.3.6/js/buttons.html5.min.js"></script>
-  <script src="https://cdn.datatables.net/select/1.7.0/js/dataTables.select.min.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>
+    <!-- Text-to-Speech Widget -->
+    <div class="card p-3 mb-4 slide-in" id="tts-widget">
+      <div class="premium-badge">ENHANCED VOICES</div>
+      <h3 class="mb-3">Text to Speech <span class="text-warning">(Premium)</span></h3>
+      <textarea id="tts-text" class="form-control mb-2" rows="3" placeholder="Type something…">Welcome to your VIP dashboard. Gold prices are trending upwards today.</textarea>
+      <div class="d-flex align-items-center gap-2 flex-wrap">
+        <select id="tts-voice" class="form-select w-auto"></select>
+        <div class="d-flex align-items-center gap-1">
+          <label for="tts-rate" class="me-2">Rate:</label>
+          <input type="range" id="tts-rate" min="0.5" max="2" step="0.1" value="1" class="form-range" style="width: 100px;">
+        </div>
+        <div class="d-flex align-items-center gap-1">
+          <label for="tts-pitch" class="me-2">Pitch:</label>
+          <input type="range" id="tts-pitch" min="0.5" max="2" step="0.1" value="1" class="form-range" style="width: 100px;">
+        </div>
+        <button id="tts-play" class="btn btn-gold">Play</button>
+        <button id="tts-stop" class="btn btn-outline-light">Stop</button>
+        <button id="tts-test" class="btn btn-outline-light ms-2">Test Voices</button>
+      </div>
+      <div class="mt-3">
+        <h6>Voice Samples</h6>
+        <div class="d-flex gap-2">
+          <button class="btn btn-sm btn-outline-gold" data-voice="premium1">Voice 1</button>
+          <button class="btn btn-sm btn-outline-gold" data-voice="premium2">Voice 2</button>
+          <button class="btn btn-sm btn-outline-gold" data-voice="premium3">Voice 3</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <footer class="slide-in">© 2025 CBE Global. All rights reserved. VIP Platinum Edition</footer>
+
+  <!-- Floating Button -->
+  <button id="floating-signals-btn" class="btn" aria-label="View latest signals">
+    <i class="bi-lightning-charge-fill mb-1"></i><br>
+    View<br>Latest<br>Signals
+  </button>
+
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js" integrity="sha384-YvpcrYf0tY3lHB60NNkmXc5s9fDVZLESaAA55NDzOxhy9GkcIdslK1eN7N6jIeHz" crossorigin="anonymous"></script>
+  <audio id="notif-sound" src="notification.mp3" preload="auto"></audio>
+  <audio id="critical-notif-sound" src="alert.mp3" preload="auto"></audio>
 
   <script>
-  (async () => {
-    // Theme toggle logic
-    const html = document.documentElement;
-    const btn = document.getElementById('theme-toggle');
-    let theme = localStorage.getItem('theme') || 'dark';
-    html.setAttribute('data-theme', theme);
-    btn.textContent = theme === 'dark' ? '🌞' : '🌜';
-    btn.onclick = () => {
-      theme = theme === 'dark' ? 'light' : 'dark';
-      html.setAttribute('data-theme', theme);
-      localStorage.setItem('theme', theme);
-      btn.textContent = theme === 'dark' ? '🌞' : '🌜';
-    };
-
-    // Supabase client
-    const SUPABASE_URL = 'https://dapwpgvnfjcfqqhrpxla.supabase.co';
-    const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImRhcHdwZ3ZuZmpjZnFxaHJweGxhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDcwNDA4ODgsImV4cCI6MjA2MjYxNjg4OH0.ICC0UsLlzJDNre7rFCeD3k6iVzo6jOJgn3PhABpEMsQ';
-    const sb = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
-
-    // Initialize DataTable
-    const table = $('#users-table').DataTable({
-      dom: `<"d-flex justify-content-between mb-3"
-              <"dt-buttons"B>
-              <"col-auto"f>
-            >rt<"d-flex justify-content-between mt-3"lip>`,
-      buttons: [
-        { 
-          extend: 'csvHtml5', 
-          text: '<i class="bi bi-file-earmark-spreadsheet me-1"></i> CSV',
-          className: 'btn-gold'
-        },
-        { 
-          extend: 'pdfHtml5', 
-          text: '<i class="bi bi-file-earmark-pdf me-1"></i> PDF',
-          className: 'btn-gold'
-        }
-      ],
-      paging: true,
-      pageLength: 10,
-      lengthMenu: [5, 10, 25, 50],
-      searching: true,
-      select: { style: 'multi', selector: 'td:first-child input' },
-      order: [[1, 'asc']],
-      columnDefs: [
-        { orderable: false, targets: [0, 8] },
-        { searchable: false, targets: 0 }
-      ],
-      language: {
-        search: "",
-        searchPlaceholder: "Search users...",
-        paginate: {
-          previous: '<i class="bi bi-chevron-left"></i>',
-          next: '<i class="bi bi-chevron-right"></i>'
-        }
-      },
-      initComplete: function() {
-        $('.dataTables_filter input').addClass('form-control');
-        $('.dataTables_length select').addClass('form-select');
-      }
-    });
-
-    // Enhanced expiry calculation function
-    function getExpiryInfo(expiryDate) {
-      if (!expiryDate) return { text: '—', seconds: 0, class: '' };
-      
-      const now = new Date();
-      const expiry = new Date(expiryDate);
-      const diffMs = expiry - now;
-      const totalSeconds = Math.floor(diffMs / 1000);
-      
-      if (totalSeconds <= 0) {
-        return { text: 'Expired', seconds: 0, class: 'countdown-expired' };
-      }
-      
-      // Calculate days, hours, minutes
-      const days = Math.floor(totalSeconds / (3600 * 24));
-      const hours = Math.floor((totalSeconds % (3600 * 24)) / 3600);
-      const minutes = Math.floor((totalSeconds % 3600) / 60);
-      const seconds = totalSeconds % 60;
-      
-      // Format display based on time remaining
-      let displayText = '';
-      if (days > 0) {
-        displayText = `${days} day${days > 1 ? 's' : ''} ${hours}h`;
-      } else if (hours > 0) {
-        displayText = `${hours}h ${minutes}m`;
-      } else if (minutes > 0) {
-        displayText = `${minutes}m ${seconds}s`;
+    // NEW: Card layer toggle functionality
+    const cardLayerToggle = document.getElementById('card-layer-toggle');
+    const cardLayerContainer = document.getElementById('card-layer-container');
+    
+    // Check saved state from localStorage
+    const cardLayerState = localStorage.getItem('cardLayerState');
+    if (cardLayerState === 'disabled') {
+      cardLayerContainer.style.display = 'none';
+      cardLayerToggle.classList.remove('active');
+      cardLayerToggle.querySelector('.tooltip').textContent = 'Card Layer: Off';
+    }
+    
+    cardLayerToggle.addEventListener('click', function() {
+      if (this.classList.contains('active')) {
+        cardLayerContainer.style.display = 'none';
+        this.classList.remove('active');
+        this.querySelector('.tooltip').textContent = 'Card Layer: Off';
+        localStorage.setItem('cardLayerState', 'disabled');
       } else {
-        displayText = `${seconds}s`;
+        cardLayerContainer.style.display = 'block';
+        this.classList.add('active');
+        this.querySelector('.tooltip').textContent = 'Card Layer: On';
+        localStorage.setItem('cardLayerState', 'enabled');
       }
-      
-      // Apply warning class if less than 1 hour remains
-      const warningClass = totalSeconds < 3600 ? 'countdown-expiring' : '';
-      
-      return { 
-        text: displayText, 
-        seconds: totalSeconds,
-        class: warningClass
-      };
+    });
+    
+    // Supabase Initialization
+    const SUPABASE_URL = 'https://dapwpgvnfjcfqqhrpxla.supabase.co';
+    const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImRhcHdwZ3ZuZmpjZnFxaHJweGxhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDcwNDA4ODgsImV4cCI6MjA2MjYxNjg4OH0.ICC0UsLlzJDNre7rFCeD3k6iVzo6jOJgn3PhABpEMsQ';
+    const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+    // API Keys
+    const EXCHANGE_RATE_API_KEY = '4e4307b2bf8daac15365a410';
+
+    // Format Entry Function
+    function formatEntry(e) {
+      // if it’s a string containing a hyphen, just show it:
+      if (typeof e === 'string' && e.includes('-')) {
+        return e;
+      }
+      // otherwise, try to treat it as a number:
+      const n = parseFloat(e);
+      return Number.isFinite(n) ? n.toFixed(3) : 'N/A';
     }
 
-    // Helper to generate action buttons
-    function getActionButtons(id, status, paymentStatus) {
-      let buttons = `
-        <button class="btn btn-sm btn-gold" title="Edit" onclick="editUser('${id}')">
-          <i class="bi bi-pencil"></i>
-        </button>
-      `;
-      
-      if (status === 'Pending') {
-        buttons += `
-          <button class="btn btn-sm btn-success" title="Approve" onclick="approveUser('${id}')">
-            <i class="bi bi-check-lg"></i>
-          </button>
-        `;
+    // Utilities
+    async function getUserInfo() {
+      try {
+        const res = await fetch('https://api.ipify.org?format=json');
+        const { ip } = await res.json();
+        return { ip, city: 'Unknown', country: 'Unknown', device: navigator.userAgent };
+      } catch {
+        return { ip: 'Unknown', city: 'Unknown', country: 'Unknown', device: navigator.userAgent };
       }
-      
-      buttons += `
-        <button class="btn btn-sm btn-danger" title="Delete" onclick="deleteUser('${id}')">
-          <i class="bi bi-trash"></i>
-        </button>
-      `;
-      
-      if (status === 'Approved' && paymentStatus === 'Paid') {
-        buttons += `
-          <button class="btn btn-sm btn-warning" title="Notify" onclick="notifyUser('${id}')">
-            <i class="bi bi-bell"></i>
-          </button>
-        `;
-      }
-      
-      return buttons;
     }
 
-    // Real-time countdown updater
-    function updateCountdowns() {
-      table.rows().every(function() {
-        const row = this.node();
-        const expiryCell = $(row).find('.expiry-countdown');
-        const expiryDate = expiryCell.data('expiry');
-        
-        if (expiryDate) {
-          const expiryInfo = getExpiryInfo(expiryDate);
-          expiryCell.text(expiryInfo.text);
-          expiryCell.removeClass('countdown-expiring countdown-expired');
-          if (expiryInfo.class) {
-            expiryCell.addClass(expiryInfo.class);
-          }
-        }
+    // Log Activity
+    async function logActivity(action) {
+      const userInfo = await getUserInfo();
+      const userId = sessionStorage.getItem('cbeUserId') || 'anonymous';
+      try {
+        const { error } = await supabase.from('user_activity').insert({
+          user_id: userId,
+          action,
+          ip_address: userInfo.ip,
+          city: userInfo.city,
+          country: userInfo.country,
+          device: userInfo.device
+        });
+        if (error) throw error;
+        addNotification(`User ${action} from ${userInfo.city}`, 'info');
+      } catch (err) {
+        console.error('Activity log error:', err);
+        addNotification('Failed to log activity', 'critical');
+      }
+    }
+
+    // Currency Converter
+    async function convertCurrency() {
+      const from = document.getElementById('converter-from').value;
+      const to = document.getElementById('converter-to').value;
+      const amount = parseFloat(document.getElementById('converter-amount').value) || 1;
+      const resultEl = document.getElementById('converter-result');
+      resultEl.innerHTML = '<div class="spinner"></div>';
+
+      try {
+        const res = await fetch(`https://v6.exchangerate-api.com/v6/${EXCHANGE_RATE_API_KEY}/latest/${from}`);
+        const data = await res.json();
+        if (data.result !== 'success') throw new Error('API error');
+        const rate = data.conversion_rates[to];
+        resultEl.textContent = `${amount} ${from} = ${(amount * rate).toFixed(2)} ${to}`;
+      } catch (err) {
+        console.error('Conversion error:', err);
+        resultEl.innerHTML = '<span style="color: var(--error)">Failed to convert currency</span>';
+        addNotification('Currency conversion failed', 'critical');
+      }
+    }
+
+    // Logout
+    async function logout() {
+      await logActivity('logout');
+      localStorage.removeItem('isLoggedIn');
+      sessionStorage.removeItem('cbeUserId');
+      sessionStorage.removeItem('cbeUserName');
+      window.location.href = 'login.html?message=logged_out';
+    }
+
+    // Copy Text Function
+    function copyText(text) {
+      navigator.clipboard.writeText(text).then(() => {
+        alert('Copied: ' + text);
+      }).catch(err => {
+        console.error('Failed to copy: ', err);
       });
     }
 
-    // Load users with their latest payment
-    async function loadUsers() {
+    // Load Latest Signal - FIXED
+    async function loadLatestSignal() {
+      const signalEl = document.getElementById('latest-signal');
       try {
-        // Mock user data for demonstration
-        const users = [
-          {
-            id: '1',
-            email: 'john.doe@example.com',
-            name: 'John Doe',
-            status: 'Approved',
-            created_at: '2023-06-01T10:30:00Z'
-          },
-          {
-            id: '2',
-            email: 'jane.smith@example.com',
-            name: 'Jane Smith',
-            status: 'Approved',
-            created_at: '2023-06-05T14:45:00Z'
-          },
-          {
-            id: '3',
-            email: 'bob.johnson@example.com',
-            name: 'Bob Johnson',
-            status: 'Pending',
-            created_at: '2023-06-10T09:15:00Z'
-          },
-          {
-            id: '4',
-            email: 'sarah.williams@example.com',
-            name: 'Sarah Williams',
-            status: 'Approved',
-            created_at: '2023-06-15T16:20:00Z'
-          },
-          {
-            id: '5',
-            email: 'mike.brown@example.com',
-            name: 'Mike Brown',
-            status: 'Rejected',
-            created_at: '2023-06-20T11:10:00Z'
-          }
-        ];
-
-        // Mock payment data for demonstration
-        const payments = [
-          {
-            id: '101',
-            email: 'john.doe@example.com',
-            status: 'Paid',
-            plan: 'Premium',
-            created_at: '2023-06-01T10:30:00Z',
-            expiry_date: new Date(Date.now() + 86400000 * 2 + 3600000 * 5).toISOString() // 2 days 5 hours
-          },
-          {
-            id: '102',
-            email: 'jane.smith@example.com',
-            status: 'Paid',
-            plan: 'Standard',
-            created_at: '2023-06-05T14:45:00Z',
-            expiry_date: new Date(Date.now() + 3600000 * 3 + 60000 * 15).toISOString() // 3 hours 15 minutes
-          },
-          {
-            id: '103',
-            email: 'bob.johnson@example.com',
-            status: 'Pending',
-            plan: 'Basic',
-            created_at: '2023-06-10T09:15:00Z',
-            expiry_date: null
-          },
-          {
-            id: '104',
-            email: 'sarah.williams@example.com',
-            status: 'Paid',
-            plan: 'Enterprise',
-            created_at: '2023-06-15T16:20:00Z',
-            expiry_date: new Date(Date.now() - 86400000).toISOString() // Expired
-          },
-          {
-            id: '105',
-            email: 'mike.brown@example.com',
-            status: 'Failed',
-            plan: 'Premium',
-            created_at: '2023-06-20T11:10:00Z',
-            expiry_date: null
-          }
-        ];
-        
-        // Calculate statistics
-        const totalUsers = users.length;
-        const activeSubs = payments.filter(p => p.status === 'Paid' && 
-          new Date(p.expiry_date) > new Date()).length;
-        const pendingApprovals = users.filter(u => u.status === 'Pending').length;
-        
-        // Calculate expiring soon (less than 1 hour)
-        const expiringSoon = payments.filter(p => {
-          const expiry = new Date(p.expiry_date);
-          const now = new Date();
-          const diffHours = (expiry - now) / (1000 * 60 * 60);
-          return diffHours > 0 && diffHours <= 1 && p.status === 'Paid';
-        }).length;
-        
-        // Update stats cards
-        document.getElementById('total-users').textContent = totalUsers;
-        document.getElementById('active-subs').textContent = activeSubs;
-        document.getElementById('pending-approvals').textContent = pendingApprovals;
-        document.getElementById('expiring-soon').textContent = expiringSoon;
-        
-        // Map users to their latest payment
-        const userPayments = {};
-        payments.forEach(payment => {
-          const user = users.find(u => u.email === payment.email);
-          if (user) {
-            if (!userPayments[user.id] || 
-                new Date(payment.created_at) > new Date(userPayments[user.id].created_at)) {
-              userPayments[user.id] = payment;
-            }
-          }
-        });
-        
-        // Clear and populate table
-        table.clear();
-        users.forEach((user, index) => {
-          const payment = userPayments[user.id] || null;
-          const expiryInfo = payment ? getExpiryInfo(payment.expiry_date) : { text: '—', class: '' };
+        const { data, error } = await supabase
+          .from('signals')
+          .select('action, asset, entry, sl, tp1, tp2, created_at')
+          .order('created_at', { ascending: false })
+          .limit(1)
+          .single();
           
-          table.row.add([
-            `<input type="checkbox" class="row-select" data-id="${user.id}">`,
-            index + 1,
-            user.email,
-            user.name,
-            `<span class="status-badge status-${user.status.toLowerCase()}">${user.status}</span>`,
-            payment ? 
-              `<span class="status-badge status-${payment.status.toLowerCase()}">${payment.status}</span>` : 
-              `<span class="status-badge status-pending">N/A</span>`,
-            payment ? 
-              `<span class="subscription-chip chip-${payment.plan.toLowerCase().split(' ')[0]}">${payment.plan}</span>` : 
-              '—',
-            `
-              <span class="expiry-countdown ${expiryInfo.class}" data-expiry="${payment ? payment.expiry_date : ''}">
-                ${expiryInfo.text}
-              </span>
-            `,
-            getActionButtons(user.id, user.status, payment ? payment.status : 'N/A')
-          ]);
-        });
-        table.draw();
-      } catch (error) {
-        console.error('Error loading users:', error);
-        alert('Failed to load users: ' + error.message);
-      }
-    }
-
-    // User actions
-    window.editUser = async (id) => {
-      try {
-        const name = prompt('Edit name:', 'User ' + id);
-        const email = prompt('Edit email:', 'user' + id + '@example.com');
+        if (error) throw error;
         
-        if (name && email) {
-          alert(`User ${id} updated successfully!`);
-          await loadUsers();
-        }
-      } catch (error) {
-        console.error('Error editing user:', error);
-        alert('Failed to edit user: ' + error.message);
-      }
-    };
-    
-    window.approveUser = async (id) => {
-      try {
-        alert(`User ${id} approved successfully!`);
-        await loadUsers();
-      } catch (error) {
-        console.error('Error approving user:', error);
-        alert('Failed to approve user: ' + error.message);
-      }
-    };
-    
-    window.deleteUser = async (id) => {
-      if (confirm('Are you sure you want to delete this user?')) {
-        try {
-          alert(`User ${id} deleted successfully!`);
-          await loadUsers();
-        } catch (error) {
-          console.error('Error deleting user:', error);
-          alert('Failed to delete user: ' + error.message);
-        }
-      }
-    };
-    
-    window.notifyUser = async (id) => {
-      alert(`Notification sent to user ${id}`);
-    };
+        const dt = new Date(data.created_at);
+        const actionClass = data.action.toLowerCase() === 'buy' ? 'signal-buy' : 'signal-sell';
 
-    // Select all checkbox
-    document.getElementById('select-all').addEventListener('change', (e) => {
-      const checked = e.target.checked;
-      table.rows().every(function () {
-        this.nodes().to$().find('input[type="checkbox"]').prop('checked', checked);
-        this.select(checked);
-      });
-    });
+        // Format numbers to three decimal places
+        const formatNumber = (num) => typeof num === 'number' ? num.toFixed(3) : 'N/A';
 
-    // Helper to get selected UUIDs
-    function getSelectedUserIds() {
-      const selectedRows = table.rows({ selected: true }).nodes().toArray();
-      const userIds = selectedRows.map(row => {
-        return $(row).find('.row-select').data('id');
-      });
-      return userIds;
+        signalEl.innerHTML = `
+          <div class="signal-header">
+            <h4 class="${actionClass}">
+              ${data.action.toUpperCase()} ${data.asset}
+            </h4>
+            <div class="time">${dt.toLocaleDateString('en-GB')} ${dt.toLocaleTimeString('en-GB')}</div>
+          </div>
+          <div class="signal-details">
+            <div class="signal-detail">
+              <div>Entry</div>
+              <div><strong>${formatEntry(data.entry)}</strong></div>
+              <button class="copy-btn" onclick="copyText('${data.entry}')">Copy</button>
+            </div>
+            <div class="signal-detail">
+              <div>Stop Loss</div>
+              <div><strong>${formatNumber(data.sl)}</strong></div>
+              <button class="copy-btn" onclick="copyText('${data.sl}')">Copy</button>
+            </div>
+            <div class="signal-detail">
+              <div>Take Profit 1</div>
+              <div><strong>${formatNumber(data.tp1)}</strong></div>
+              <button class="copy-btn" onclick="copyText('${data.tp1}')">Copy</button>
+            </div>
+            <div class="signal-detail">
+              <div>Take Profit 2</div>
+              <div><strong>${data.tp2 ? formatNumber(data.tp2) : 'N/A'}</strong></div>
+              ${data.tp2 ? `<button class="copy-btn" onclick="copyText('${data.tp2}')">Copy</button>` : ''}
+            </div>
+          </div>
+          <p class="text-muted mt-2">Signal issued at ${dt.toLocaleTimeString('en-GB')}</p>
+        `;
+      } catch (err) {
+        console.error('Signal load error:', err);
+        signalEl.innerHTML = '<span style="color: var(--error)">Failed to load signal</span>';
+      }
     }
 
-    // Bulk actions
-    document.getElementById('bulk-approve').addEventListener('click', async () => {
-      const userIds = getSelectedUserIds();
-      if (userIds.length === 0) {
-        alert('Please select at least one user to approve.');
-        return;
+    // Load Dashboard
+    async function loadDashboard() {
+      try {
+        const today = new Date().toISOString().split('T')[0];
+        const { count, error: signalError } = await supabase
+          .from('signals')
+          .select('id', { count: 'exact' })
+          .gte('created_at', today);
+        if (signalError) throw signalError;
+
+        document.getElementById('stat-gold-change').textContent = 'N/A';
+
+        const list = JSON.parse(localStorage.getItem('watchlist') || '[]');
+        const ul = document.getElementById('watch-list');
+        ul.innerHTML = '';
+        for (const sym of list) {
+          const li = document.createElement('li');
+          li.className = 'list-group-item d-flex justify-content-between align-items-center';
+          let priceChange = 'N/A';
+          let priceClass = '';
+          try {
+            const res = await fetch(`https://v6.exchangerate-api.com/v6/${EXCHANGE_RATE_API_KEY}/latest/${sym.slice(0,3)}`);
+            const data = await res.json();
+            const rate = data.conversion_rates[sym.slice(3)] || 1;
+            priceChange = `+${(Math.random() * 2 - 1).toFixed(2)}%`;
+            priceClass = priceChange.startsWith('+') ? 'positive' : 'negative';
+          } catch (err) {
+            console.error('Watchlist error:', err);
+          }
+          li.innerHTML = `
+            <span>${sym}</span>
+            <canvas id="sparkline-${sym}" width="100" height="30"></canvas>
+            <span class="price-change ${priceClass}">${priceChange}</span>
+            <button class="btn btn-sm btn-outline-danger">Remove</button>
+          `;
+          li.querySelector('button').onclick = () => {
+            localStorage.setItem('watchlist', JSON.stringify(list.filter(s => s !== sym)));
+            loadDashboard();
+          };
+          ul.appendChild(li);
+          try {
+            const priceData = Array(10).fill(0).map(() => Math.random() * 10 + 90);
+            const ctx = document.getElementById(`sparkline-${sym}`).getContext('2d');
+            new Chart(ctx, {
+              type: 'line',
+              data: {
+                labels: priceData.map((_, i) => i),
+                datasets: [{ data: priceData, borderColor: priceChange.startsWith('+') ? 'var(--success)' : 'var(--error)', borderWidth: 1, pointRadius: 0 }]
+              },
+              options: { scales: { x: { display: false }, y: { display: false } }, plugins: { legend: { display: false }, tooltip: { enabled: false } } }
+            });
+          } catch (err) {
+            console.error('Sparkline error:', err);
+          }
+        }
+        document.getElementById('add-watch').onclick = () => {
+          const input = document.getElementById('watch-input');
+          const sym = input.value.trim().toUpperCase();
+          if (sym && !list.includes(sym)) {
+            list.push(sym);
+            localStorage.setItem('watchlist', JSON.stringify(list));
+            loadDashboard();
+            input.value = '';
+          }
+        };
+      } catch (err) {
+        console.error('Dashboard load error:', err);
+        addNotification('Failed to load dashboard data', 'critical');
       }
+    }
+
+    // TradingView Chart
+    function initChart(interval = '240') {
+      try {
+        document.getElementById('tv_chart_4h').innerHTML = '';
+        new window.TradingView.widget({
+          container_id: "tv_chart_4h",
+          width: "100%",
+          height: "450",
+          symbol: "OANDA:XAUUSD",
+          interval: interval,
+          timezone: "Africa/Lagos",
+          theme: document.documentElement.getAttribute('data-theme') || 'dark',
+          style: "1",
+          locale: "en",
+          toolbar_bg: "#1f1f1f",
+          studies: [
+            { id: "MASimple@tv-basicstudies", inputs: { length: 50 } },
+            { id: "MASimple@tv-basicstudies", inputs: { length: 200 } }
+          ],
+          enable_publishing: false,
+          allow_symbol_change: true,
+          save_image: false
+        });
+      } catch (err) {
+        console.error('Chart error:', err);
+        document.getElementById('tv_chart_4h').innerHTML = '<p style="color: var(--error)">Failed to load chart</p>';
+      }
+    }
+
+    // Gold News with Sentiment Analysis - FIXED
+    const positiveKeywords = ['rise', 'up', 'demand', 'buy', 'increase', 'gain', 'bullish'];
+    const negativeKeywords = ['fall', 'down', 'sell', 'decrease', 'loss', 'bearish'];
+
+    async function loadGoldNews() {
+      const ul = document.getElementById('news-list');
+      ul.innerHTML = '<li><div class="spinner"></div></li>';
       
       try {
-        alert(`${userIds.length} users approved successfully!`);
-        await loadUsers();
-      } catch (error) {
-        console.error('Bulk approval error:', error);
-        alert('Failed to approve users: ' + error.message);
+        // Using Investing.com RSS feed via allorigins proxy
+        const res = await fetch('https://api.allorigins.win/raw?url=https://www.investing.com/rss/news_285.rss');
+        const xml = new DOMParser().parseFromString(await res.text(), 'text/xml');
+        const items = Array.from(xml.querySelectorAll('item')).slice(0, 8);
+        
+        let positive = 0, negative = 0, neutral = 0;
+        ul.innerHTML = '';
+        
+        items.forEach(i => {
+          const link = i.querySelector('link').textContent;
+          const title = i.querySelector('title').textContent;
+          const titleLower = title.toLowerCase();
+          
+          let sentiment = 'neutral';
+          if (positiveKeywords.some(word => titleLower.includes(word))) {
+            sentiment = 'positive';
+            positive++;
+          } else if (negativeKeywords.some(word => titleLower.includes(word))) {
+            sentiment = 'negative';
+            negative++;
+          } else {
+            neutral++;
+          }
+          
+          const li = document.createElement('li');
+          li.className = 'list-group-item';
+          li.innerHTML = `
+            <a href="${link}" target="_blank">${title}</a>
+            <span class="badge ${sentiment}">${sentiment}</span>
+            <button class="btn btn-sm btn-outline-light ms-2" onclick="readAloud('${title.replace(/'/g, "\\'")}')">
+              <i class="bi-volume-up"></i>
+            </button>
+          `;
+          ul.appendChild(li);
+        });
+        
+        document.getElementById('positive-count').textContent = positive;
+        document.getElementById('negative-count').textContent = negative;
+        document.getElementById('neutral-count').textContent = neutral;
+        
+      } catch (err) {
+        console.error('News error:', err);
+        ul.innerHTML = '<li style="color: var(--error)">Failed to load news</li>';
       }
-    });
+    }
 
-    document.getElementById('bulk-reject').addEventListener('click', async () => {
-      const userIds = getSelectedUserIds();
-      if (userIds.length === 0) {
-        alert('Please select at least one user to reject.');
-        return;
-      }
+    // Economic Calendar - FIXED
+    async function loadEconCalendar() {
+      const tbody = document.getElementById('calendar-body');
+      tbody.innerHTML = '<tr><td colspan="7"><div class="spinner"></div></td></tr>';
       
       try {
-        alert(`${userIds.length} users rejected successfully!`);
-        await loadUsers();
-      } catch (error) {
-        console.error('Bulk rejection error:', error);
-        alert('Failed to reject users: ' + error.message);
+        // Sample events for demo (in a real app, use an API)
+        const events = [
+          { date: "05-25-2025", time: "6:40pm", currency: "USD", event: "Fed Chair Powell Speaks", impact: "Medium", actual: "", previous: "" },
+          { date: "05-26-2025", time: "7:00am", currency: "GBP", event: "Bank Holiday", impact: "Holiday", actual: "", previous: "" },
+          { date: "05-26-2025", time: "12:00pm", currency: "USD", event: "Bank Holiday", impact: "Holiday", actual: "", previous: "" },
+          { date: "05-26-2025", time: "1:20pm", currency: "EUR", event: "ECB President Lagarde Speaks", impact: "Medium", actual: "", previous: "" },
+          { date: "05-26-2025", time: "1:30pm", currency: "EUR", event: "German Buba President Nagel Speaks", impact: "Low", actual: "", previous: "" },
+          { date: "05-26-2025", time: "11:01pm", currency: "GBP", event: "BRC Shop Price Index y/y", impact: "Low", actual: "-0.1%", previous: "-0.1%" },
+          { date: "05-26-2025", time: "11:50pm", currency: "JPY", event: "SPPI y/y", impact: "Low", actual: "3.0%", previous: "3.1%" },
+          { date: "05-27-2025", time: "12:00am", currency: "JPY", event: "BOJ Gov Ueda Speaks", impact: "High", actual: "", previous: "" }
+        ];
+        
+        tbody.innerHTML = '';
+        events.forEach(ev => {
+          const tr = document.createElement('tr');
+          if (ev.impact === 'High') tr.classList.add('high-impact');
+          ['date', 'time', 'currency', 'event', 'impact', 'actual', 'previous'].forEach(key => {
+            const td = document.createElement('td');
+            td.textContent = ev[key] || '-';
+            tr.appendChild(td);
+          });
+          tbody.appendChild(tr);
+        });
+      } catch (err) {
+        console.error('Calendar error:', err);
+        tbody.innerHTML = '<tr><td colspan="7" style="color: var(--error)">Failed to load calendar</td></tr>';
       }
-    });
+    }
 
-    document.getElementById('bulk-delete').addEventListener('click', async () => {
-      const userIds = getSelectedUserIds();
-      if (userIds.length === 0) {
-        alert('Please select at least one user to delete.');
-        return;
+    // Theme Toggle
+    function toggleTheme(theme) {
+      document.documentElement.setAttribute('data-theme', theme);
+      document.getElementById('theme-select').value = theme;
+      localStorage.setItem('theme', theme);
+      initChart(document.querySelector('.chart-toggle button.active')?.dataset.interval || '240');
+    }
+
+    // Notifications
+    function addNotification(message, type = 'info') {
+      const list = document.getElementById('notif-list');
+      const count = document.getElementById('notif-count');
+      const li = document.createElement('li');
+      li.textContent = message;
+      li.classList.add(type);
+      list.insertBefore(li, list.firstChild);
+      count.textContent = parseInt(count.textContent) + 1;
+      const sound = document.querySelector(type === 'critical' ? '#critical-notif-sound' : '#notif-sound');
+      if (sound) sound.play().catch(() => console.error('Audio error'));
+    }
+
+    // TTS
+    const synth = window.speechSynthesis;
+    const voiceSelect = document.getElementById('tts-voice');
+    function loadVoices() {
+      const voices = synth.getVoices();
+      voiceSelect.innerHTML = '';
+      voices.forEach(v => {
+        const opt = document.createElement('option');
+        opt.value = v.name;
+        opt.textContent = `${v.name} (${v.lang})`;
+        voiceSelect.appendChild(opt);
+      });
+      const savedVoice = localStorage.getItem('ttsVoice');
+      if (savedVoice && voices.find(v => v.name === savedVoice)) voiceSelect.value = savedVoice;
+    }
+    synth.onvoiceschanged = loadVoices;
+    loadVoices();
+
+    // Premium voice samples
+    function playPremiumVoice(type) {
+      synth.cancel();
+      const utter = new SpeechSynthesisUtterance();
+      
+      // Different voice samples based on the selected type
+      switch(type) {
+        case 'premium1':
+          utter.text = "Gold prices are trending upwards with strong market sentiment. Consider long positions.";
+          utter.rate = 1.1;
+          utter.pitch = 1.0;
+          break;
+        case 'premium2':
+          utter.text = "Market volatility is increasing. Monitor key support levels for potential entry points.";
+          utter.rate = 0.95;
+          utter.pitch = 0.9;
+          break;
+        case 'premium3':
+          utter.text = "Economic calendar shows high impact events tomorrow. Adjust positions accordingly.";
+          utter.rate = 1.05;
+          utter.pitch = 1.1;
+          break;
+        default:
+          utter.text = "Welcome to the premium trading dashboard.";
       }
       
-      if (!confirm(`Are you sure you want to delete ${userIds.length} users?`)) return;
+      // Try to find the best available voice
+      const voice = synth.getVoices().find(v => v.name.includes('Google') || 
+                                               v.name.includes('Microsoft') || 
+                                               v.name.includes('Alex')) || 
+                     synth.getVoices()[0];
       
-      try {
-        alert(`${userIds.length} users deleted successfully!`);
-        await loadUsers();
-      } catch (error) {
-        console.error('Bulk deletion error:', error);
-        alert('Failed to delete users: ' + error.message);
-      }
-    });
+      utter.voice = voice;
+      synth.speak(utter);
+    }
 
-    document.getElementById('bulk-renew').addEventListener('click', async () => {
-      const userIds = getSelectedUserIds();
-      if (userIds.length === 0) {
-        alert('Please select at least one user to renew.');
-        return;
-      }
-      
-      alert(`Renewing subscriptions for ${userIds.length} users...`);
+    document.getElementById('tts-play').addEventListener('click', () => {
+      const text = document.getElementById('tts-text').value.trim();
+      if (!text) return alert('Please enter some text.');
+      synth.cancel();
+      const utter = new SpeechSynthesisUtterance(text);
+      utter.voice = synth.getVoices().find(v => v.name === voiceSelect.value) || null;
+      utter.rate = parseFloat(document.getElementById('tts-rate').value);
+      utter.pitch = parseFloat(document.getElementById('tts-pitch').value);
+      synth.speak(utter);
     });
-
-    document.getElementById('export-data').addEventListener('click', () => {
-      alert('Exporting user data...');
-    });
-
-    // Search functionality
-    document.getElementById('search-input').addEventListener('input', function() {
-      table.search(this.value).draw();
-    });
-
-    // Initial load
-    await loadUsers();
     
-    // Setup countdown timer
-    setInterval(updateCountdowns, 1000); // Update every second
-  })();
+    document.getElementById('tts-stop').addEventListener('click', () => synth.cancel());
+    
+    document.getElementById('tts-test').addEventListener('click', () => {
+      playPremiumVoice('premium1');
+    });
+    
+    // Add event listeners for voice sample buttons
+    document.querySelectorAll('[data-voice]').forEach(btn => {
+      btn.addEventListener('click', () => {
+        playPremiumVoice(btn.dataset.voice);
+      });
+    });
+
+    function readAloud(text) {
+      synth.cancel();
+      const utter = new SpeechSynthesisUtterance(text);
+      utter.voice = synth.getVoices().find(v => v.name === voiceSelect.value) || null;
+      utter.rate = parseFloat(document.getElementById('tts-rate').value);
+      utter.pitch = parseFloat(document.getElementById('tts-pitch').value);
+      synth.speak(utter);
+    }
+
+    document.getElementById('tts-voice').addEventListener('change', () => {
+      localStorage.setItem('ttsVoice', voiceSelect.value);
+    });
+    document.getElementById('tts-rate').addEventListener('change', () => {
+      localStorage.setItem('ttsRate', document.getElementById('tts-rate').value);
+    });
+    document.getElementById('tts-pitch').addEventListener('change', () => {
+      localStorage.setItem('ttsPitch', document.getElementById('tts-pitch').value);
+    });
+
+    const savedRate = localStorage.getItem('ttsRate');
+    if (savedRate) document.getElementById('tts-rate').value = savedRate;
+    const savedPitch = localStorage.getItem('ttsPitch');
+    if (savedPitch) document.getElementById('tts-pitch').value = savedPitch;
+
+    // Portfolio Tracker
+    document.getElementById('add-portfolio').addEventListener('click', () => {
+      const input = document.getElementById('portfolio-input').value;
+      const list = document.getElementById('portfolio-list');
+      const li = document.createElement('li');
+      li.className = 'list-group-item';
+      li.textContent = `${input} - Value: ${(Math.random() * 1000).toFixed(2)} USD`;
+      list.appendChild(li);
+    });
+
+    // Forex Risk Calculator
+    document.getElementById('calculate-forex-risk').addEventListener('click', () => {
+      const tradeType = document.getElementById('trade-type').value;
+      const entry = parseFloat(document.getElementById('entry-price').value);
+      const sl = parseFloat(document.getElementById('stop-loss-price').value);
+      const tp = parseFloat(document.getElementById('take-profit-price').value);
+      const size = parseFloat(document.getElementById('position-size').value);
+      const resultEl = document.getElementById('forex-risk-result');
+
+      if (!entry || !sl || !tp || !size) {
+        resultEl.textContent = 'Please fill all fields.';
+        return;
+      }
+
+      const pipValue = 1;
+      let pipsToSL, pipsToTP, loss, profit;
+
+      if (tradeType === 'buy') {
+        pipsToSL = (entry - sl) * 100;
+        pipsToTP = (tp - entry) * 100;
+      } else {
+        pipsToSL = (sl - entry) * 100;
+        pipsToTP = (entry - tp) * 100;
+      }
+
+      loss = pipsToSL * pipValue * size;
+      profit = pipsToTP * pipValue * size;
+
+      resultEl.innerHTML = `
+        Potential Loss: <span style="color: var(--error)">-$${loss.toFixed(2)}</span><br>
+        Potential Profit: <span style="color: var(--success)">+$${profit.toFixed(2)}</span>
+      `;
+    });
+
+    // Gold Price Ticker
+    async function updateGoldPrice() {
+      try {
+        // Simulate live gold price update
+        const price = 2384.82 + (Math.random() * 20 - 10);
+        const change = (price - 2384.82) / 2384.82 * 100;
+        const changeFormatted = change.toFixed(2);
+        const changeClass = change >= 0 ? 'positive' : 'negative';
+        const changeSign = change >= 0 ? '+' : '';
+        
+        document.getElementById('live-gold-price').innerHTML = `
+          ${price.toFixed(2)} 
+          <span class="price-change ${changeClass}">${changeSign}${changeFormatted}%</span>
+        `;
+        
+        document.getElementById('stat-gold-change').innerHTML = `${changeSign}${changeFormatted}%`;
+        document.getElementById('stat-gold-change').className = `display-4 glow mb-2 price-change ${changeClass}`;
+      } catch (err) {
+        console.error('Gold price update error:', err);
+      }
+    }
+
+    // Time and Date Update
+    function updateTime() {
+      const now = new Date();
+      const options = { year: 'numeric', month: 'long', day: 'numeric', hour: '2-digit', minute: '2-digit', second: '2-digit', timeZoneName: 'short' };
+      document.getElementById('current-time').textContent = now.toLocaleString('en-US', options);
+    }
+    setInterval(updateTime, 1000);
+    updateTime();
+
+    // Subscription Status Management
+    function updateSubscriptionStatus() {
+      // For demo purposes - in real app, get from server
+      const expiryDate = new Date('2025-12-31');
+      const today = new Date();
+      const timeDiff = expiryDate.getTime() - today.getTime();
+      const daysRemaining = Math.ceil(timeDiff / (1000 * 60 * 60 * 24));
+      const totalDays = Math.ceil((expiryDate.getTime() - new Date('2024-06-15').getTime()) / (1000 * 60 * 60 * 24));
+      const progressPercentage = Math.max(0, Math.min(100, 100 - (daysRemaining / totalDays * 100)));
+      
+      document.getElementById('days-remaining').textContent = `${daysRemaining} days`;
+      document.getElementById('subscription-progress').style.width = `${progressPercentage}%`;
+      document.querySelector('.subscription-card .text-warning').textContent = `${daysRemaining} days`;
+      
+      // Update renewal date
+      const renewalDate = expiryDate.toISOString().split('T')[0];
+      document.getElementById('renewal-date').textContent = renewalDate;
+    }
+
+    // On Load
+    document.addEventListener('DOMContentLoaded', async () => {
+      try {
+        document.querySelectorAll('.slide-in').forEach(el => {
+          new IntersectionObserver((entries, observer) => {
+            entries.forEach(entry => {
+              if (entry.isIntersecting) {
+                entry.target.classList.add('visible');
+                observer.unobserve(entry.target);
+              }
+            });
+          }, { threshold: 0.1 }).observe(el);
+        });
+
+        const savedTheme = localStorage.getItem('theme') || 'dark';
+        toggleTheme(savedTheme);
+
+        // Set trader name from session storage
+        const traderName = sessionStorage.getItem('cbeUserName') || 'VIP Trader';
+        document.getElementById('welcomeName').textContent = traderName;
+        document.getElementById('header-username').textContent = traderName;
+        
+        await logActivity('login');
+        await Promise.all([
+          loadLatestSignal(),
+          loadDashboard(),
+          initChart(),
+          loadGoldNews(),
+          loadEconCalendar()
+        ]);
+
+        // Initialize subscription status
+        updateSubscriptionStatus();
+        setInterval(updateSubscriptionStatus, 86400000); // Update once per day
+
+        document.querySelectorAll('.chart-toggle button').forEach(btn => {
+          btn.addEventListener('click', () => {
+            document.querySelector('.chart-toggle button.active')?.classList.remove('active');
+            btn.classList.add('active');
+            initChart(btn.dataset.interval);
+          });
+        });
+        document.getElementById('theme-select').addEventListener('change', e => toggleTheme(e.target.value));
+        document.getElementById('notif-btn').addEventListener('click', () => {
+          new bootstrap.Dropdown(document.getElementById('notif-btn')).toggle();
+        });
+        document.getElementById('sidebar-toggle').addEventListener('click', () => {
+          new bootstrap.Offcanvas(document.getElementById('sidebar')).toggle();
+        });
+        document.getElementById('convert-btn').addEventListener('click', convertCurrency);
+        document.getElementById('floating-signals-btn').addEventListener('click', () => {
+          window.location.href = 'https://apexincomeoptions.com.ng/signals';
+        });
+
+        supabase
+          .channel('signals')
+          .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'signals' }, payload => {
+            addNotification(`New ${payload.new.action} signal for ${payload.new.asset}!`, 'info');
+            loadLatestSignal();
+            loadDashboard();
+          })
+          .subscribe((status) => {
+            if (status === 'SUBSCRIBED') {
+              console.log('Subscribed to signals channel');
+            } else {
+              console.error('Subscription error:', status);
+              addNotification('Failed to subscribe to signals updates', 'critical');
+            }
+          });
+
+        setInterval(() => {
+          loadDashboard();
+          loadGoldNews();
+          loadEconCalendar();
+          updateGoldPrice();
+        }, 120000);
+
+        // Initialize gold price
+        updateGoldPrice();
+        setInterval(updateGoldPrice, 30000);
+
+      } catch (err) {
+        console.error('Page load error:', err);
+        addNotification('Failed to initialize dashboard', 'critical');
+      }
+    });
   </script>
 </body>
 </html>
