@@ -538,12 +538,10 @@
       const today = new Date();
       const expiry = new Date(expiryDate);
       const diffTime = expiry - today;
+      const diffHours = Math.ceil(diffTime / (1000 * 60 * 60));
       const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
       
-      let progressClass = 'progress-green';
-      let progressWidth = 100;
-      
-      if (diffDays <= 0) {
+      if (diffTime <= 0) {
         return { 
           text: 'Expired', 
           percent: 100, 
@@ -551,22 +549,25 @@
         };
       }
       
+      let displayText = '';
+      if (diffHours < 24) {
+        displayText = `${diffHours} hour${diffHours > 1 ? 's' : ''}`;
+      } else if (diffDays < 30) {
+        displayText = `${diffDays} day${diffDays > 1 ? 's' : ''}`;
+      } else {
+        const months = Math.floor(diffDays / 30);
+        displayText = `${months} month${months > 1 ? 's' : ''}`;
+      }
+      
+      let progressClass = 'progress-green';
+      let progressWidth = 100;
+      
       if (diffDays <= 7) {
         progressClass = 'progress-red';
         progressWidth = (diffDays / 7) * 100;
       } else if (diffDays <= 30) {
         progressClass = 'progress-yellow';
         progressWidth = (diffDays / 30) * 100;
-      } else {
-        progressWidth = 100;
-      }
-      
-      let displayText = '';
-      if (diffDays < 30) {
-        displayText = `${diffDays} days`;
-      } else {
-        const months = Math.floor(diffDays / 30);
-        displayText = `${months} month${months > 1 ? 's' : ''}`;
       }
       
       return { 
@@ -659,6 +660,7 @@
         users.forEach((user, index) => {
           const payment = userPayments[user.id] || null;
           const expiryInfo = payment ? getExpiryInfo(payment.expiry_date) : { text: '—', percent: 0, class: '' };
+          const expiryDate = payment ? payment.expiry_date : '';
           
           table.row.add([
             `<input type="checkbox" class="row-select" data-id="${user.id}">`,
@@ -673,8 +675,8 @@
               `<span class="subscription-chip chip-${payment.plan.toLowerCase()}">${payment.plan}</span>` : 
               '—',
             `
-              <div class="d-flex flex-column">
-                <span>${expiryInfo.text}</span>
+              <div class="d-flex flex-column" data-expiry="${expiryDate}">
+                <span class="expiry-text">${expiryInfo.text}</span>
                 <div class="expiry-progress">
                   <div class="progress-bar ${expiryInfo.class}" style="width: ${expiryInfo.percent}%"></div>
                 </div>
@@ -688,6 +690,25 @@
         console.error('Error loading users:', error);
         alert('Failed to load users: ' + error.message);
       }
+    }
+
+    // Function to update "Expires In" every hour
+    function updateExpiry() {
+      table.cells(null, 7).every(function() { // 7 is the index for "Expires In" column
+        const cell = this.node();
+        const expiryDate = cell.querySelector('.d-flex').dataset.expiry;
+        if (expiryDate) {
+          const expiryInfo = getExpiryInfo(expiryDate);
+          cell.innerHTML = `
+            <div class="d-flex flex-column" data-expiry="${expiryDate}">
+              <span class="expiry-text">${expiryInfo.text}</span>
+              <div class="expiry-progress">
+                <div class="progress-bar ${expiryInfo.class}" style="width: ${expiryInfo.percent}%"></div>
+              </div>
+            </div>
+          `;
+        }
+      });
     }
 
     // User actions
@@ -878,6 +899,9 @@
 
     // Initial load
     await loadUsers();
+
+    // Update "Expires In" every hour
+    setInterval(updateExpiry, 3600000);
   })();
   </script>
 </body>
