@@ -304,21 +304,21 @@
     .chip-premium { background: rgba(251, 191, 36, 0.2); color: var(--gold); }
     .chip-enterprise { background: rgba(236, 72, 153, 0.15); color: #ec4899; }
     
-    /* Progress bar */
-    .expiry-progress {
-      height: 8px;
-      border-radius: 4px;
-      background: var(--glass-light);
-      overflow: hidden;
-      margin-top: 0.5rem;
+    /* Expiry Countdown */
+    .expiry-countdown {
+      font-weight: 600;
+      font-size: 0.95rem;
+      min-width: 120px;
+      display: inline-block;
+      transition: color 0.3s ease;
     }
-    .progress-bar {
-      height: 100%;
-      border-radius: 4px;
+    .countdown-expiring { color: var(--danger); animation: pulse 1.5s infinite; }
+    .countdown-expired { color: #6b7280; }
+    @keyframes pulse {
+      0% { opacity: 1; }
+      50% { opacity: 0.7; }
+      100% { opacity: 1; }
     }
-    .progress-green { background: linear-gradient(90deg, var(--success), #0d9e6c); }
-    .progress-yellow { background: linear-gradient(90deg, var(--warning), #e68a00); }
-    .progress-red { background: linear-gradient(90deg, var(--danger), #d43030); }
     
     /* Footer */
     footer {
@@ -379,7 +379,7 @@
         </div>
       </div>
       
-      <!-- Stats Cards with Real Data -->
+      <!-- Stats Cards -->
       <div class="row row-cols-1 row-cols-md-2 row-cols-lg-4 g-4 mb-5">
         <div class="col">
           <div class="stats-card">
@@ -435,6 +435,7 @@
             <tr>
               <th><input type="checkbox" id="select-all"></th>
               <th class="col-index">#</th>
+              <th>ID</th> <!-- Hidden column for UUID -->
               <th>Email</th>
               <th>Name</th>
               <th class="col-status">Status</th>
@@ -514,8 +515,9 @@
       select: { style: 'multi', selector: 'td:first-child input' },
       order: [[1, 'asc']],
       columnDefs: [
-        { orderable: false, targets: [0, 8] },
-        { searchable: false, targets: 0 }
+        { orderable: false, targets: [0, 9] }, // Checkbox and Actions
+        { searchable: false, targets: [0, 2] }, // Checkbox and ID not searchable
+        { visible: false, targets: 2 } // Hide the ID column
       ],
       language: {
         search: "",
@@ -531,49 +533,43 @@
       }
     });
 
-    // Helper to calculate expiry info
+    // Helper to calculate expiry info in hours/minutes/seconds
     function getExpiryInfo(expiryDate) {
-      if (!expiryDate) return { text: '—', percent: 0, class: '' };
+      if (!expiryDate) return { text: '—', seconds: 0, class: '' };
       
-      const today = new Date();
       const expiry = new Date(expiryDate);
-      const diffTime = expiry - today;
-      const diffHours = Math.ceil(diffTime / (1000 * 60 * 60));
-      const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-      
-      if (diffTime <= 0) {
-        return { 
-          text: 'Expired', 
-          percent: 100, 
-          class: 'progress-red' 
-        };
+      if (isNaN(expiry.getTime())) {
+        console.error('Invalid expiry date:', expiryDate);
+        return { text: 'Invalid Date', seconds: 0, class: 'countdown-expired' };
       }
+      
+      const now = new Date();
+      const diffMs = expiry - now;
+      const diffSeconds = Math.floor(diffMs / 1000);
+      
+      if (diffSeconds <= 0) {
+        return { text: 'Expired', seconds: 0, class: 'countdown-expired' };
+      }
+      
+      const days = Math.floor(diffSeconds / (3600 * 24));
+      const hours = Math.floor((diffSeconds % (3600 * 24)) / 3600);
+      const minutes = Math.floor((diffSeconds % 3600) / 60);
       
       let displayText = '';
-      if (diffHours < 24) {
-        displayText = `${diffHours} hour${diffHours > 1 ? 's' : ''}`;
-      } else if (diffDays < 30) {
-        displayText = `${diffDays} day${diffDays > 1 ? 's' : ''}`;
+      if (days > 0) {
+        displayText = `${days}d ${hours}h`;
+      } else if (hours > 0) {
+        displayText = `${hours}h ${minutes}m`;
       } else {
-        const months = Math.floor(diffDays / 30);
-        displayText = `${months} month${months > 1 ? 's' : ''}`;
+        displayText = `${minutes}m`;
       }
       
-      let progressClass = 'progress-green';
-      let progressWidth = 100;
-      
-      if (diffDays <= 7) {
-        progressClass = 'progress-red';
-        progressWidth = (diffDays / 7) * 100;
-      } else if (diffDays <= 30) {
-        progressClass = 'progress-yellow';
-        progressWidth = (diffDays / 30) * 100;
-      }
+      const warningClass = days === 0 && hours < 24 ? 'countdown-expiring' : '';
       
       return { 
         text: displayText, 
-        percent: progressWidth, 
-        class: progressClass 
+        seconds: diffSeconds,
+        class: warningClass
       };
     }
 
@@ -610,6 +606,24 @@
       return buttons;
     }
 
+    // Real-time countdown updater
+    function updateCountdowns() {
+      table.rows().every(function() {
+        const row = this.node();
+        const expiryCell = $(row).find('.expiry-countdown');
+        const expiryDate = expiryCell.data('expiry');
+        
+        if (expiryDate) {
+          const expiryInfo = getExpiryInfo(expiryDate);
+          expiryCell.text(expiryInfo.text);
+          expiryCell.removeClass('countdown-expiring countdown-expired');
+          if (expiryInfo.class) {
+            expiryCell.addClass(expiryInfo.class);
+          }
+        }
+      });
+    }
+
     // Load users with their latest payment
     async function loadUsers() {
       try {
@@ -621,23 +635,24 @@
         
         if (usersError) throw usersError;
         
-        // Fetch payments
+        // Fetch payments with user_id
         const { data: payments, error: paymentsError } = await sb
           .from('payments')
-          .select('*');
+          .select('*')
+          .order('created_at', { ascending: false });
         
         if (paymentsError) throw paymentsError;
         
         // Calculate statistics
         const totalUsers = users.length;
-        const activeSubs = payments.filter(p => p.status === 'approved' && 
+        const activeSubs = payments.filter(p => p.status === 'Paid' && 
           new Date(p.expiry_date) > new Date()).length;
         const pendingApprovals = users.filter(u => u.status === 'Pending').length;
         const expiringSoon = payments.filter(p => {
           const expiry = new Date(p.expiry_date);
-          const today = new Date();
-          const diffDays = Math.ceil((expiry - today) / (1000 * 60 * 60 * 24));
-          return diffDays > 0 && diffDays <= 7 && p.status === 'approved';
+          const now = new Date();
+          const diffHours = (expiry - now) / (1000 * 60 * 60);
+          return diffHours > 0 && diffHours <= 24 && p.status === 'Paid';
         }).length;
         
         // Update stats cards
@@ -646,12 +661,14 @@
         document.getElementById('pending-approvals').textContent = pendingApprovals;
         document.getElementById('expiring-soon').textContent = expiringSoon;
         
-        // Map users to their latest payment
+        // Map users to their latest payment using user_id
         const userPayments = {};
         payments.forEach(payment => {
-          if (!userPayments[payment.user_id] || 
-              new Date(payment.created_at) > new Date(userPayments[payment.user_id].created_at)) {
-            userPayments[payment.user_id] = payment;
+          if (payment.user_id) {
+            if (!userPayments[payment.user_id] || 
+                new Date(payment.created_at) > new Date(userPayments[payment.user_id].created_at)) {
+              userPayments[payment.user_id] = payment;
+            }
           }
         });
         
@@ -659,12 +676,12 @@
         table.clear();
         users.forEach((user, index) => {
           const payment = userPayments[user.id] || null;
-          const expiryInfo = payment ? getExpiryInfo(payment.expiry_date) : { text: '—', percent: 0, class: '' };
-          const expiryDate = payment ? payment.expiry_date : '';
+          const expiryInfo = payment ? getExpiryInfo(payment.expiry_date) : { text: '—', class: '' };
           
           table.row.add([
-            `<input type="checkbox" class="row-select" data-id="${user.id}">`,
+            `<input type="checkbox" class="row-select">`,
             index + 1,
+            user.id, // Hidden UUID column
             user.email,
             user.name,
             `<span class="status-badge status-${user.status.toLowerCase()}">${user.status}</span>`,
@@ -672,15 +689,12 @@
               `<span class="status-badge status-${payment.status.toLowerCase()}">${payment.status}</span>` : 
               `<span class="status-badge status-pending">N/A</span>`,
             payment ? 
-              `<span class="subscription-chip chip-${payment.plan.toLowerCase()}">${payment.plan}</span>` : 
+              `<span class="subscription-chip chip-${payment.plan.toLowerCase().split(' ')[0]}">${payment.plan}</span>` : 
               '—',
             `
-              <div class="d-flex flex-column" data-expiry="${expiryDate}">
-                <span class="expiry-text">${expiryInfo.text}</span>
-                <div class="expiry-progress">
-                  <div class="progress-bar ${expiryInfo.class}" style="width: ${expiryInfo.percent}%"></div>
-                </div>
-              </div>
+              <span class="expiry-countdown ${expiryInfo.class}" data-expiry="${payment ? payment.expiry_date : ''}">
+                ${expiryInfo.text}
+              </span>
             `,
             getActionButtons(user.id, user.status, payment ? payment.status : 'N/A')
           ]);
@@ -690,25 +704,6 @@
         console.error('Error loading users:', error);
         alert('Failed to load users: ' + error.message);
       }
-    }
-
-    // Function to update "Expires In" every hour
-    function updateExpiry() {
-      table.cells(null, 7).every(function() { // 7 is the index for "Expires In" column
-        const cell = this.node();
-        const expiryDate = cell.querySelector('.d-flex').dataset.expiry;
-        if (expiryDate) {
-          const expiryInfo = getExpiryInfo(expiryDate);
-          cell.innerHTML = `
-            <div class="d-flex flex-column" data-expiry="${expiryDate}">
-              <span class="expiry-text">${expiryInfo.text}</span>
-              <div class="expiry-progress">
-                <div class="progress-bar ${expiryInfo.class}" style="width: ${expiryInfo.percent}%"></div>
-              </div>
-            </div>
-          `;
-        }
-      });
     }
 
     // User actions
@@ -777,6 +772,7 @@
     
     window.notifyUser = async (id) => {
       alert(`Notification sent to user ${id}`);
+      // Add actual notification logic here if needed
     };
 
     // Select all checkbox
@@ -788,18 +784,20 @@
       });
     });
 
+    // Helper to get selected UUIDs
+    function getSelectedUserIds() {
+      const selectedRows = table.rows({ selected: true }).data().toArray();
+      const userIds = selectedRows.map(rowData => rowData[2]); // ID is in column 2 (hidden)
+      return userIds;
+    }
+
     // Bulk actions
     document.getElementById('bulk-approve').addEventListener('click', async () => {
-      const selectedRows = table.rows({ selected: true }).indexes().toArray();
-      if (selectedRows.length === 0) {
+      const userIds = getSelectedUserIds();
+      if (userIds.length === 0) {
         alert('Please select at least one user to approve.');
         return;
       }
-      
-      const userIds = selectedRows.map(rowIndex => {
-        const rowData = table.row(rowIndex).data();
-        return rowData[1]; // ID is in the first column after checkbox
-      });
       
       try {
         const { error } = await sb
@@ -817,16 +815,11 @@
     });
 
     document.getElementById('bulk-reject').addEventListener('click', async () => {
-      const selectedRows = table.rows({ selected: true }).indexes().toArray();
-      if (selectedRows.length === 0) {
+      const userIds = getSelectedUserIds();
+      if (userIds.length === 0) {
         alert('Please select at least one user to reject.');
         return;
       }
-      
-      const userIds = selectedRows.map(rowIndex => {
-        const rowData = table.row(rowIndex).data();
-        return rowData[1]; // ID is in the first column after checkbox
-      });
       
       try {
         const { error } = await sb
@@ -844,18 +837,13 @@
     });
 
     document.getElementById('bulk-delete').addEventListener('click', async () => {
-      const selectedRows = table.rows({ selected: true }).indexes().toArray();
-      if (selectedRows.length === 0) {
+      const userIds = getSelectedUserIds();
+      if (userIds.length === 0) {
         alert('Please select at least one user to delete.');
         return;
       }
       
-      if (!confirm(`Are you sure you want to delete ${selectedRows.length} users?`)) return;
-      
-      const userIds = selectedRows.map(rowIndex => {
-        const rowData = table.row(rowIndex).data();
-        return rowData[1]; // ID is in the first column after checkbox
-      });
+      if (!confirm(`Are you sure you want to delete ${userIds.length} users?`)) return;
       
       try {
         const { error } = await sb
@@ -873,23 +861,37 @@
     });
 
     document.getElementById('bulk-renew').addEventListener('click', async () => {
-      const selectedRows = table.rows({ selected: true }).indexes().toArray();
-      if (selectedRows.length === 0) {
+      const userIds = getSelectedUserIds();
+      if (userIds.length === 0) {
         alert('Please select at least one user to renew.');
         return;
       }
       
-      const userIds = selectedRows.map(rowIndex => {
-        const rowData = table.row(rowIndex).data();
-        return rowData[1]; // ID is in the first column after checkbox
-      });
-      
-      alert(`Renewing subscriptions for ${userIds.length} users...`);
-      // In a real implementation, you would create new payment records here
+      try {
+        const newExpiryDate = new Date();
+        newExpiryDate.setMonth(newExpiryDate.getMonth() + 1); // Renew for 1 month
+        
+        const { error } = await sb
+          .from('payments')
+          .upsert(userIds.map(id => ({
+            user_id: id,
+            status: 'Paid',
+            plan: 'Standard', // Adjust plan as needed
+            expiry_date: newExpiryDate.toISOString(),
+            created_at: new Date().toISOString()
+          })), { onConflict: 'user_id' });
+          
+        if (error) throw error;
+        alert(`Subscriptions renewed for ${userIds.length} users!`);
+        await loadUsers();
+      } catch (error) {
+        console.error('Bulk renewal error:', error);
+        alert('Failed to renew subscriptions: ' + error.message);
+      }
     });
 
     document.getElementById('export-data').addEventListener('click', () => {
-      alert('Exporting user data...');
+      table.button('.buttons-csv').trigger();
     });
 
     // Search functionality
@@ -899,9 +901,28 @@
 
     // Initial load
     await loadUsers();
-
-    // Update "Expires In" every hour
-    setInterval(updateExpiry, 3600000);
+    
+    // Real-time updates
+    const userChannel = sb
+      .channel('users-changes')
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'users' },
+        () => loadUsers()
+      )
+      .subscribe();
+    
+    const paymentChannel = sb
+      .channel('payments-changes')
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'payments' },
+        () => loadUsers()
+      )
+      .subscribe();
+    
+    // Setup countdown timer
+    setInterval(updateCountdowns, 1000); // Update every second
   })();
   </script>
 </body>
