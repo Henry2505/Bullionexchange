@@ -929,7 +929,9 @@
           <i class="bi-star-fill text-warning me-1"></i>
           <i class="bi-star-fill text-warning"></i>
         </div>
-        <small class="d-block mt-2">Platinum Member</small>
+        <div id="sidebar-vip-status">
+          <small class="d-block mt-2">Platinum Member</small>
+        </div>
       </div>
     </div>
   </div>
@@ -958,23 +960,23 @@
     <div class="card p-3 mb-4 slide-in subscription-card">
       <div class="subscription-header">
         <h3><i class="bi-shield-lock me-2"></i>VIP Subscription Status</h3>
-        <div class="status-badge status-active">Active</div>
+        <div id="subscription-status-badge" class="status-badge status-active">Active</div>
       </div>
       
-      <div class="subscription-details">
+      <div class="subscription-details" id="subscription-details">
         <div class="subscription-detail">
           <div class="detail-label">Plan</div>
-          <div class="detail-value">Platinum VIP</div>
+          <div class="detail-value" id="subscription-plan">Platinum VIP</div>
         </div>
         
         <div class="subscription-detail">
           <div class="detail-label">Payment Status</div>
-          <div class="detail-value">Completed</div>
+          <div class="detail-value" id="payment-status">Completed</div>
         </div>
         
         <div class="subscription-detail">
           <div class="detail-label">Subscription Period</div>
-          <div class="detail-value">Annual</div>
+          <div class="detail-value" id="subscription-period">Annual</div>
         </div>
         
         <div class="subscription-detail">
@@ -989,7 +991,7 @@
       </div>
       
       <div class="days-remaining" id="days-remaining">195 days</div>
-      <p class="text-center text-muted">Your subscription expires in <span class="text-warning">195 days</span></p>
+      <p class="text-center text-muted">Your subscription expires in <span class="text-warning" id="days-remaining-text">195 days</span></p>
       
       <div class="subscription-actions">
         <button class="btn btn-gold"><i class="bi-arrow-repeat me-2"></i>Renew Now</button>
@@ -999,26 +1001,28 @@
       
       <div class="subscription-history">
         <h5><i class="bi-clock-history me-2"></i>Payment History</h5>
-        <div class="history-item">
-          <div>
-            <div>Platinum VIP Annual</div>
-            <div class="history-date">2024-06-15</div>
+        <div id="payment-history">
+          <div class="history-item">
+            <div>
+              <div>Platinum VIP Annual</div>
+              <div class="history-date">2024-06-15</div>
+            </div>
+            <div class="history-amount">$499.00</div>
           </div>
-          <div class="history-amount">$499.00</div>
-        </div>
-        <div class="history-item">
-          <div>
-            <div>Platinum VIP Annual</div>
-            <div class="history-date">2023-06-15</div>
+          <div class="history-item">
+            <div>
+              <div>Platinum VIP Annual</div>
+              <div class="history-date">2023-06-15</div>
+            </div>
+            <div class="history-amount">$449.00</div>
           </div>
-          <div class="history-amount">$449.00</div>
-        </div>
-        <div class="history-item">
-          <div>
-            <div>Gold VIP Upgrade</div>
-            <div class="history-date">2022-09-10</div>
+          <div class="history-item">
+            <div>
+              <div>Gold VIP Upgrade</div>
+              <div class="history-date">2022-09-10</div>
+            </div>
+            <div class="history-amount">$149.00</div>
           </div>
-          <div class="history-amount">$149.00</div>
         </div>
       </div>
     </div>
@@ -1469,7 +1473,7 @@
                 labels: priceData.map((_, i) => i),
                 datasets: [{ data: priceData, borderColor: priceChange.startsWith('+') ? 'var(--success)' : 'var(--error)', borderWidth: 1, pointRadius: 0 }]
               },
-              options: { scales: { x: { display: false }, y: { display: false } }, plugins: { legend: { display: false }, tooltip: { enabled: false } } }
+              options: { scales: { x: { display: false }, y: { display: false } }, plugins: { legend: { display: false }, tooltip: { enabled: false } }
             });
           } catch (err) {
             console.error('Sparkline error:', err);
@@ -1820,11 +1824,95 @@
       
       document.getElementById('days-remaining').textContent = `${daysRemaining} days`;
       document.getElementById('subscription-progress').style.width = `${progressPercentage}%`;
-      document.querySelector('.subscription-card .text-warning').textContent = `${daysRemaining} days`;
+      document.getElementById('days-remaining-text').textContent = `${daysRemaining} days`;
       
       // Update renewal date
       const renewalDate = expiryDate.toISOString().split('T')[0];
       document.getElementById('renewal-date').textContent = renewalDate;
+    }
+
+    // NEW: Subscription Status Functions
+    async function loadSubscriptionData() {
+      const userId = sessionStorage.getItem('cbeUserId');
+      if (!userId) {
+        console.error('User ID not found');
+        return;
+      }
+
+      try {
+        // Simulated subscription data - replace with actual API call
+        const subscriptionData = {
+          plan: "Platinum VIP",
+          period: "Annual",
+          status: "Active",
+          paymentStatus: "Completed",
+          startDate: "2024-06-15",
+          expiryDate: "2025-06-15",
+          renewalDate: "2025-06-15",
+          paymentHistory: [
+            { date: "2024-06-15", amount: "$499.00", plan: "Platinum VIP Annual" },
+            { date: "2023-06-15", amount: "$449.00", plan: "Platinum VIP Annual" },
+            { date: "2022-09-10", amount: "$149.00", plan: "Gold VIP Upgrade" }
+          ]
+        };
+
+        // Calculate days remaining
+        const expiryDate = new Date(subscriptionData.expiryDate);
+        const today = new Date();
+        const timeDiff = expiryDate.getTime() - today.getTime();
+        const daysRemaining = Math.ceil(timeDiff / (1000 * 60 * 60 * 24));
+        const totalDays = Math.ceil((expiryDate.getTime() - new Date(subscriptionData.startDate).getTime()) / (1000 * 60 * 60 * 24));
+        const progressPercentage = Math.max(0, Math.min(100, 100 - (daysRemaining / totalDays * 100)));
+        
+        // Update subscription card
+        document.getElementById('subscription-plan').textContent = subscriptionData.plan;
+        document.getElementById('payment-status').textContent = subscriptionData.paymentStatus;
+        document.getElementById('subscription-period').textContent = subscriptionData.period;
+        document.getElementById('renewal-date').textContent = subscriptionData.renewalDate;
+        document.getElementById('days-remaining').textContent = `${daysRemaining} days`;
+        document.getElementById('days-remaining-text').textContent = `${daysRemaining} days`;
+        document.getElementById('subscription-progress').style.width = `${progressPercentage}%`;
+        
+        // Update status badge
+        const statusBadge = document.getElementById('subscription-status-badge');
+        statusBadge.textContent = subscriptionData.status;
+        statusBadge.className = 'status-badge ';
+        if (subscriptionData.status === 'Active') {
+          statusBadge.classList.add('status-active');
+        } else if (subscriptionData.status === 'Expired') {
+          statusBadge.classList.add('status-expired');
+        } else {
+          statusBadge.classList.add('status-pending');
+        }
+        
+        // Update payment history
+        const paymentHistoryContainer = document.getElementById('payment-history');
+        paymentHistoryContainer.innerHTML = '';
+        
+        subscriptionData.paymentHistory.forEach(payment => {
+          const historyItem = document.createElement('div');
+          historyItem.className = 'history-item';
+          historyItem.innerHTML = `
+            <div>
+              <div>${payment.plan}</div>
+              <div class="history-date">${payment.date}</div>
+            </div>
+            <div class="history-amount">${payment.amount}</div>
+          `;
+          paymentHistoryContainer.appendChild(historyItem);
+        });
+        
+        // Update sidebar VIP status
+        const sidebarStatus = document.getElementById('sidebar-vip-status');
+        sidebarStatus.innerHTML = `
+          <small class="d-block mt-2">${subscriptionData.plan}</small>
+          <span class="badge ${subscriptionData.status === 'Active' ? 'bg-success' : 'bg-danger'} mt-2">${subscriptionData.status}</span>
+        `;
+        
+      } catch (err) {
+        console.error('Subscription load error:', err);
+        addNotification('Failed to load subscription data', 'critical');
+      }
     }
 
     // On Load
@@ -1855,7 +1943,8 @@
           loadDashboard(),
           initChart(),
           loadGoldNews(),
-          loadEconCalendar()
+          loadEconCalendar(),
+          loadSubscriptionData() // NEW: Load subscription data
         ]);
 
         // Initialize subscription status
