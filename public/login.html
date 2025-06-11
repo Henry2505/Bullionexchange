@@ -63,7 +63,45 @@
       background: var(--bg);
       color: var(--text);
       display: flex; align-items: center; justify-content: center;
-      min-height: 100vh; padding: 20px; position: relative; overflow: hidden;
+      min-height: 100vh; padding: 90px 20px 20px; position: relative; overflow: hidden;
+    }
+
+    /* Header Bar */
+    .header-bar {
+      position: fixed; top: 0; left: 0; right: 0; height: 70px;
+      background: rgba(0,0,0,0.8); backdrop-filter: blur(8px);
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 0 20px; z-index: 1000;
+      border-bottom: 1px solid var(--gold);
+    }
+    .header-left { display: flex; align-items: center; gap: 20px; }
+    .logo img {
+      width: 140px;
+      cursor: pointer; transition: transform .3s;
+    }
+    .logo img:hover { transform: scale(1.05); }
+    #local-time {
+      font-size: 1rem; color: var(--gold);
+      font-family: 'Roboto', sans-serif;
+      background: rgba(0,0,0,0.3);
+      padding: 5px 10px;
+      border-radius: 20px;
+    }
+    #theme-toggle {
+      background: none; border: none; font-size: 1.5rem;
+      color: var(--gold); cursor: pointer; margin-left: 10px;
+      transition: transform .3s;
+      width: 40px;
+      height: 40px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border-radius: 50%;
+      background: rgba(212, 175, 55, 0.1);
+    }
+    #theme-toggle:hover { 
+      transform: scale(1.2); 
+      background: rgba(212, 175, 55, 0.2);
     }
 
     /* Background Elements */
@@ -228,32 +266,6 @@
       border: 1px solid rgba(46,204,113,0.3);
     }
 
-    .logo {
-      position: fixed; top: 30px; left: 30px; z-index: 50;
-      animation: logoFadeIn 1s ease-in;
-    }
-    .logo img {
-      width: 150px; filter: drop-shadow(0 2px 5px rgba(0,0,0,0.3));
-    }
-
-    #theme-toggle {
-      position: fixed; top: 30px; right: 30px;
-      width: 50px; height: 50px; background: var(--card-bg);
-      backdrop-filter: blur(10px); border-radius: 50%;
-      border: 1px solid rgba(212,175,55,0.2);
-      box-shadow: 0 4px 15px rgba(0,0,0,0.1);
-      font-size: 1.4rem; color: var(--gold);
-      cursor: pointer; display: flex; align-items: center;
-      justify-content: center; transition: all 0.3s ease; z-index: 100;
-    }
-    #theme-toggle:hover { transform: rotate(15deg); box-shadow: 0 0 15px rgba(212,175,55,0.3); }
-
-    footer {
-      position: fixed; bottom: 25px; width: 100%; text-align: center;
-      color: var(--text-muted); font-size: 0.85rem; letter-spacing: 0.3px;
-      z-index: 100; animation: fadeIn 2s ease-in;
-    }
-
     /* Security Note */
     .security-note {
       text-align: center; font-size: 0.8rem; color: var(--text-muted);
@@ -291,10 +303,11 @@
 
     @media (max-width: 768px) {
       .login-card { padding: 30px 25px; max-width: 90%; }
-      .logo { top: 20px; left: 20px; }
+      .header-bar { padding: 0 15px; }
       .logo img { width: 120px; }
-      #theme-toggle { top: 25px; right: 25px; width: 44px; height: 44px; font-size: 1.2rem; }
+      #theme-toggle { width: 44px; height: 44px; font-size: 1.2rem; }
       footer { bottom: 15px; font-size: 0.8rem; }
+      body { padding-top: 80px; padding-bottom: 20px; }
     }
     @media (max-width: 480px) {
       .login-card { padding: 25px 20px; }
@@ -304,10 +317,24 @@
       .subtitle { font-size: 1rem; }
       .logo img { width: 100px; }
       .remember-me { width: 90%; max-width: 300px; margin: 15px auto 30px; }
+      #local-time { display: none; }
     }
   </style>
 </head>
 <body>
+  <!-- HEADER BAR -->
+  <div class="header-bar">
+    <div class="header-left">
+      <div class="logo">
+        <a href="index.html"><img src="CBE_logo.PNG" alt="CBE Logo"/></a>
+      </div>
+      <span id="local-time"></span>
+    </div>
+    <div>
+      <button id="theme-toggle" aria-label="Toggle theme">🌞</button>
+    </div>
+  </div>
+
   <!-- Background Elements -->
   <div class="gold-line line-1"></div>
   <div class="gold-line line-2"></div>
@@ -315,14 +342,6 @@
   <div class="gold-line line-4"></div>
   <div class="gold-circle circle-1"></div>
   <div class="gold-circle circle-2"></div>
-
-  <!-- LOGO -->
-  <div class="logo">
-    <a href="index.html"><img src="CBE_logo.PNG" alt="CBE Logo"/></a>
-  </div>
-
-  <!-- THEME TOGGLE -->
-  <button id="theme-toggle" aria-label="Toggle theme">🌞</button>
 
   <!-- LOGIN CARD -->
   <div class="login-card" id="login-card">
@@ -383,6 +402,19 @@
     // Setup & Theme Toggle
     const loginCard = document.getElementById('login-card');
     const toggleBtn = document.getElementById('theme-toggle');
+    
+    // Time update function
+    function updateLocalTime() {
+      const now = new Date();
+      document.getElementById('local-time').textContent = 
+        now.toLocaleString('en-US', {
+          hour: 'numeric', 
+          minute: 'numeric', 
+          second: 'numeric',
+          hour12: true,
+          timeZone: 'Africa/Lagos'
+        }) + ' WAT';
+    }
 
     window.addEventListener('DOMContentLoaded', () => {
       loginCard.classList.add('visible');
@@ -396,6 +428,10 @@
       // Set default email for demo purposes
       document.getElementById('email').value = 'vipuser@example.com';
       document.getElementById('password').value = 'securepassword';
+      
+      // Initialize time
+      updateLocalTime();
+      setInterval(updateLocalTime, 1000);
     });
 
     toggleBtn.addEventListener('click', () => {
@@ -516,9 +552,9 @@
 
         // Handle different subscription scenarios
         if (!payment) {
-          // No subscription found
-          showSubscriptionStatus('You have not subscribed to any VIP plan.', 'missing');
-          showRedirectNotice('Redirecting to subscription page in 5 seconds...', 'https://apexincomeoptions.com.ng/vip-subscription', 5000);
+          // No subscription found - redirect to apply page
+          showSubscriptionStatus('You have not completed your application process.', 'missing');
+          showRedirectNotice('Redirecting to application page in 5 seconds...', 'https://apexincomeoptions.com.ng/cbe_apply', 5000);
           return;
         }
 
