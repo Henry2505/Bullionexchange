@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>CBE Admin – Premium Payment Management</title>
+  <title>CBE Admin – Payment Activities</title>
 
   <!-- Fonts, Bootstrap & Icons -->
   <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700&family=Playfair+Display:wght@700&display=swap" rel="stylesheet">
@@ -133,39 +133,6 @@
     .panel { 
       margin-bottom: 2.5rem; 
     }
-    form.glass { 
-      border-radius: 10px; 
-      padding: 2rem; 
-      margin-bottom: 1.5rem; 
-    }
-    .form-row { 
-      display: flex; 
-      gap: 1.5rem; 
-      flex-wrap: wrap;
-      margin-bottom: 1.5rem;
-    }
-    .form-row > div { 
-      flex: 1; 
-      min-width: 200px; 
-    }
-    .form-label {
-      color: var(--gold-light);
-      margin-bottom: 0.5rem;
-      font-weight: 600;
-    }
-    .form-control, .form-select {
-      background: rgba(0, 0, 0, 0.3);
-      border: 1px solid rgba(255, 215, 0, 0.3);
-      color: var(--text);
-      padding: 0.75rem 1rem;
-      transition: all 0.3s;
-    }
-    .form-control:focus, .form-select:focus {
-      background: rgba(0, 0, 0, 0.5);
-      border-color: var(--gold);
-      box-shadow: 0 0 0 0.25rem rgba(255, 215, 0, 0.25);
-      color: var(--text);
-    }
     .btn {
       padding: 0.75rem 1.5rem;
       border-radius: 8px;
@@ -194,24 +161,6 @@
     .btn-outline-gold:hover {
       background: var(--gold);
       color: #000;
-    }
-    #methods-list .list-group-item {
-      background: var(--glass-bg); 
-      border: 1px solid rgba(255,215,0,0.3);
-      color: var(--text); 
-      margin-bottom: 0.75rem; 
-      border-radius: 8px;
-      display: flex; 
-      justify-content: space-between; 
-      align-items: center;
-      padding: 1.25rem;
-      transition: all 0.3s;
-    }
-    .method-info { 
-      flex-grow: 1; 
-    }
-    .method-actions button { 
-      margin-left: 0.75rem; 
     }
     .payments-table {
       background: var(--glass-bg);
@@ -311,9 +260,6 @@
       margin: 1.5rem 0;
     }
     @media (max-width: 768px) {
-      .form-row > div {
-        min-width: 100%;
-      }
       .search-box {
         min-width: 100%;
       }
@@ -349,49 +295,10 @@
         <div>Requires attention</div>
       </div>
       <div class="stat-card glass">
-        <div class="stat-label">Payment Methods</div>
-        <div class="stat-value" id="total-methods">0</div>
-        <div>Available options</div>
-      </div>
-      <div class="stat-card glass">
         <div class="stat-label">Revenue</div>
         <div class="stat-value">₦<span id="total-revenue">0</span></div>
         <div>Last 30 days</div>
       </div>
-    </div>
-
-    <!-- Payment Methods Panel -->
-    <h2 class="section-title">Payment Methods</h2>
-    <div class="panel">
-      <form id="method-form" class="glass">
-        <div class="form-row">
-          <div>
-            <label class="form-label">Name</label>
-            <input type="text" id="pm-name" class="form-control" placeholder="e.g. Pay ₦ via Card/Bank" required>
-          </div>
-          <div>
-            <label class="form-label">Type</label>
-            <select id="pm-type" class="form-select" required>
-              <option value="">-- Select --</option>
-              <option value="card">Card/Bank</option>
-              <option value="crypto">Crypto</option>
-              <option value="mobile">Mobile Money</option>
-              <option value="wallet">Digital Wallet</option>
-            </select>
-          </div>
-          <div>
-            <label class="form-label">Details</label>
-            <input type="text" id="pm-details" class="form-control"
-              placeholder="card → https://…  |  crypto → address" required>
-          </div>
-          <div class="d-flex align-items-end">
-            <button type="button" id="save-btn" class="btn btn-primary w-100">
-              <i class="bi bi-save"></i> Save Method
-            </button>
-          </div>
-        </div>
-      </form>
-      <ul class="list-group" id="methods-list"></ul>
     </div>
 
     <!-- User Payments Panel -->
@@ -414,12 +321,11 @@
       <div>
         <select id="method-filter" class="form-select">
           <option value="">All Methods</option>
-          <option value="card">Card/Bank</option>
-          <option value="crypto">Crypto</option>
+          <!-- Populated dynamically -->
         </select>
       </div>
       <div>
-        <button class="btn btn-outline-gold">
+        <button class="btn btn-outline-gold" id="filter-btn">
           <i class="bi bi-funnel"></i> Filter
         </button>
       </div>
@@ -454,12 +360,12 @@
   </main>
 
   <!-- Footer -->
-  <footer class="admin-footer glass mt-5">
-    <div>© 2023 CBE Payment Management System</div>
+  <footer class="admin-footer glass mt-5 p-3 text-center">
+    <div>© 2025 CBE Payment Management System</div>
     <div>Premium Admin Dashboard v3.0</div>
   </footer>
 
-  <!-- Modals (unchanged) -->
+  <!-- Modals -->
   <div class="modal fade" id="proofModal" tabindex="-1">
     <div class="modal-dialog modal-lg">
       <div class="modal-content">
@@ -468,9 +374,9 @@
           <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
         </div>
         <div class="modal-body text-center">
-          <img src="https://via.placeholder.com/600x400/333333/cccccc?text=Payment+Proof" class="img-fluid rounded" alt="Payment proof">
+          <img id="proof-image" src="" class="img-fluid rounded" alt="Payment proof">
           <div class="mt-3">
-            <button class="btn btn-outline-gold">
+            <button class="btn btn-outline-gold" id="download-proof">
               <i class="bi bi-download"></i> Download Proof
             </button>
           </div>
@@ -486,18 +392,14 @@
           <h5 class="modal-title">Payment Details</h5>
           <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
         </div>
-        <div class="modal-body">
-          <div class="payment-detail">
-            <span class="detail-label">Transaction ID:</span>
-            <span>TX-20231115-001</span>
-          </div>
-          <!-- Additional details omitted for brevity -->
+        <div class="modal-body" id="payment-details">
+          <!-- Filled dynamically -->
         </div>
         <div class="modal-footer">
-          <button type="button" class="btn btn-danger">
+          <button type="button" class="btn btn-danger" id="delete-payment">
             <i class="bi bi-trash"></i> Delete Payment
           </button>
-          <button type="button" class="btn btn-primary">
+          <button type="button" class="btn btn-primary" id="edit-payment">
             <i class="bi bi-pencil"></i> Edit Details
           </button>
         </div>
@@ -517,25 +419,17 @@
     const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
     // DOM refs
-    const form          = document.getElementById('method-form');
-    const nameInp       = document.getElementById('pm-name');
-    const typeInp       = document.getElementById('pm-type');
-    const detailsInp    = document.getElementById('pm-details');
-    const saveBtn       = document.getElementById('save-btn');
-    const listGroup     = document.getElementById('methods-list');
     const paymentsTbody = document.getElementById('payments-list');
-    const logo          = document.getElementById('logo');
-    const themeBtn      = document.getElementById('theme-toggle');
+    const logo = document.getElementById('logo');
+    const themeBtn = document.getElementById('theme-toggle');
     const totalPayments = document.getElementById('total-payments');
     const pendingPayments = document.getElementById('pending-payments');
-    const totalMethods  = document.getElementById('total-methods');
-    const totalRevenue  = document.getElementById('total-revenue');
+    const totalRevenue = document.getElementById('total-revenue');
     const paymentChange = document.getElementById('payment-change');
-    const searchInput   = document.getElementById('search-input');
-    const statusFilter  = document.getElementById('status-filter');
-    const methodFilter  = document.getElementById('method-filter');
-    const filterBtn     = document.querySelector('.search-container button');
-    let editId = null;
+    const searchInput = document.getElementById('search-input');
+    const statusFilter = document.getElementById('status-filter');
+    const methodFilter = document.getElementById('method-filter');
+    const filterBtn = document.getElementById('filter-btn');
     let paymentChart;
 
     // Toast helper
@@ -555,7 +449,6 @@
     }
 
     // Authentication check
-    /** @returns {Promise<void>} */
     async function checkAuth() {
       const { data: { session } } = await supabase.auth.getSession();
       if (!session) {
@@ -585,7 +478,6 @@
       return weeks;
     }
 
-    /** @param {Array} data */
     function updatePaymentChart(data) {
       const weeks = generateWeeks(6);
       const labels = weeks.map(w => w.toLocaleDateString('en-US', { month: 'short', day: 'numeric' }));
@@ -611,7 +503,6 @@
       paymentChart.update();
     }
 
-    /** @param {Array} paymentsData */
     function updateStats(paymentsData) {
       totalPayments.textContent = paymentsData.length;
       pendingPayments.textContent = paymentsData.filter(p => p.status === 'pending').length;
@@ -619,12 +510,11 @@
         .filter(p => p.status === 'approved')
         .reduce((sum, p) => sum + (parseFloat(p.amount) || 0), 0);
       totalRevenue.textContent = revenue.toLocaleString();
-      const growth = Math.floor(Math.random() * 15) + 5;
+      const growth = Math.floor(Math.random() * 15) + 5; // Placeholder for real growth calculation
       paymentChange.textContent = `+${growth}%`;
     }
 
     // Rendering functions
-    /** @param {Object} p @param {Object} methodMap @returns {HTMLElement} */
     function renderPaymentRow(p, methodMap) {
       const tr = document.createElement('tr');
       tr.id = `payment-row-${p.id}`;
@@ -639,7 +529,7 @@
         <td>${methodMap[p.method_id] || p.method_id}</td>
         <td>
           ${p.proof_url
-            ? `<button class="btn btn-sm btn-info" data-bs-toggle="modal" data-bs-target="#proofModal">
+            ? `<button class="btn btn-sm btn-info view-proof" data-url="${p.proof_url}" data-bs-toggle="modal" data-bs-target="#proofModal">
                 <i class="bi bi-eye"></i> View
               </button>`
             : '—'}
@@ -653,59 +543,32 @@
           <button class="btn btn-sm btn-danger" aria-label="Reject payment" onclick="updatePayment(${p.id},'rejected')">
             <i class="bi bi-x-circle"></i>
           </button>
-          <button class="btn btn-sm btn-secondary" data-bs-toggle="modal" data-bs-target="#paymentModal">
+          <button class="btn btn-sm btn-secondary view-details" data-id="${p.id}" data-bs-toggle="modal" data-bs-target="#paymentModal">
             <i class="bi bi-three-dots"></i>
           </button>
         </td>`;
       return tr;
     }
 
-    /** @param {Array} data @param {Object} methodMap */
     function renderPaymentsTable(data, methodMap) {
       paymentsTbody.innerHTML = '';
       data.forEach(p => paymentsTbody.append(renderPaymentRow(p, methodMap)));
     }
 
-    /** @param {Object} m @returns {HTMLElement} */
-    function renderMethodItem(m) {
-      const li = document.createElement('li');
-      li.className = 'list-group-item glass';
-      li.id = `method-item-${m.id}`;
-      const detTxt = m.type === 'card' ? m.details.link : m.details.address;
-      li.innerHTML = `
-        <div class="method-info">
-          <strong>${m.name}</strong> <em>(${m.type})</em><br><small>${detTxt}</small>
-        </div>
-        <div class="method-actions">
-          <button class="btn btn-sm btn-warning" onclick="onEdit(${m.id})">
-            <i class="bi bi-pencil"></i>
-          </button>
-          <button class="btn btn-sm btn-danger" onclick="onDelete(${m.id})">
-            <i class="bi bi-trash"></i>
-          </button>
-        </div>`;
-      return li;
-    }
-
-    /** @param {Array} data */
-    function renderMethodsList(data) {
-      listGroup.innerHTML = '';
-      data.forEach(m => listGroup.append(renderMethodItem(m)));
+    // Populate method filter
+    async function populateMethodFilter() {
+      const { data, error } = await supabase.from('payment_methods').select('id, name');
+      if (error) return showToast('Failed to load payment methods', false);
+      methodFilter.innerHTML = '<option value="">All Methods</option>';
+      data.forEach(m => {
+        const option = document.createElement('option');
+        option.value = m.id;
+        option.textContent = m.name;
+        methodFilter.appendChild(option);
+      });
     }
 
     // Data loading functions
-    /** @returns {Promise<void>} */
-    async function loadMethods() {
-      const { data, error } = await supabase
-        .from('payment_methods')
-        .select('*')
-        .order('id', { ascending: true });
-      if (error) return showToast('Failed to load methods', false);
-      renderMethodsList(data);
-      totalMethods.textContent = data.length;
-    }
-
-    /** @returns {Promise<void>} */
     async function loadPayments() {
       const { data: methods } = await supabase.from('payment_methods').select('id,name');
       const methodMap = methods.reduce((acc, m) => { acc[m.id] = m.name; return acc; }, {});
@@ -728,18 +591,13 @@
       };
     }
 
-    /** @returns {Promise<void>} */
     async function loadFilteredPayments() {
       const searchTerm = searchInput.value.trim();
       const status = statusFilter.value;
-      const methodType = methodFilter.value;
+      const methodId = methodFilter.value;
       let query = supabase.from('payments').select('*');
       if (status) query = query.eq('status', status);
-      if (methodType) {
-        const { data: methods } = await supabase.from('payment_methods').select('id').eq('type', methodType);
-        const methodIds = methods.map(m => m.id);
-        query = query.in('method_id', methodIds);
-      }
+      if (methodId) query = query.eq('method_id', methodId);
       if (searchTerm) query = query.ilike('email', `%${searchTerm}%`);
       query = query.order('created_at', { ascending: false });
       const { data, error } = await query;
@@ -749,7 +607,7 @@
       renderPaymentsTable(data, methodMap);
     }
 
-    /** @param {number} id @param {string} newStatus @returns {Promise<void>} */
+    // Update payment status
     async function updatePayment(id, newStatus) {
       const { error } = await supabase
         .from('payments')
@@ -761,60 +619,6 @@
     }
 
     // Event handlers
-    saveBtn.addEventListener('click', async () => {
-      saveBtn.disabled = true;
-      const name = nameInp.value.trim();
-      const type = typeInp.value;
-      const raw = detailsInp.value.trim();
-      if (!name || !type || !raw) {
-        showToast('All fields required', false);
-        saveBtn.disabled = false;
-        return;
-      }
-      let details = {};
-      if (type === 'card') details.link = raw;
-      else details.address = raw;
-      try {
-        let res;
-        if (editId) {
-          res = await supabase.from('payment_methods').update({ name, type, details }).eq('id', editId);
-        } else {
-          res = await supabase.from('payment_methods').insert([{ name, type, details }]);
-        }
-        if (res.error) throw res.error;
-        showToast(editId ? 'Updated' : 'Added');
-        form.reset();
-        editId = null;
-        saveBtn.innerHTML = '<i class="bi bi-save"></i> Save Method';
-        loadMethods();
-      } catch (err) {
-        showToast(err.message, false);
-      } finally {
-        saveBtn.disabled = false;
-      }
-    });
-
-    window.onEdit = async id => {
-      const { data, error } = await supabase.from('payment_methods').select('*').eq('id', id).single();
-      if (error) return showToast('Failed to load method', false);
-      editId = id;
-      nameInp.value = data.name;
-      typeInp.value = data.type;
-      detailsInp.value = data.type === 'card' ? data.details.link : data.details.address;
-      saveBtn.innerHTML = '<i class="bi bi-arrow-repeat"></i> Update Method';
-    };
-
-    window.onDelete = async id => {
-      if (!confirm('Are you sure you want to delete this payment method?')) return;
-      const { error } = await supabase.from('payment_methods').delete().eq('id', id);
-      if (error) return showToast('Delete failed', false);
-      showToast('Method deleted');
-      form.reset();
-      editId = null;
-      saveBtn.innerHTML = '<i class="bi bi-save"></i> Save Method';
-      loadMethods();
-    };
-
     logo.onclick = () => location.href = 'admin-dashboard.html';
     const applyTheme = t => {
       document.documentElement.setAttribute('data-theme', t);
@@ -824,6 +628,45 @@
     themeBtn.onclick = () => applyTheme(
       document.documentElement.getAttribute('data-theme') === 'dark' ? 'light' : 'dark'
     );
+
+    // Modal handlers
+    document.addEventListener('click', async e => {
+      if (e.target.closest('.view-proof')) {
+        const url = e.target.closest('.view-proof').dataset.url;
+        document.getElementById('proof-image').src = url;
+        document.getElementById('download-proof').onclick = () => {
+          const a = document.createElement('a');
+          a.href = url;
+          a.download = 'payment-proof.jpg';
+          a.click();
+        };
+      }
+      if (e.target.closest('.view-details')) {
+        const id = e.target.closest('.view-details').dataset.id;
+        const { data, error } = await supabase.from('payments').select('*').eq('id', id).single();
+        if (error) return showToast('Failed to load payment details', false);
+        const method = (await supabase.from('payment_methods').select('name').eq('id', data.method_id).single()).data?.name || data.method_id;
+        document.getElementById('payment-details').innerHTML = `
+          <div class="payment-detail"><span class="detail-label">Transaction ID:</span><span>${data.id}</span></div>
+          <div class="payment-detail"><span class="detail-label">Email:</span><span>${data.email}</span></div>
+          <div class="payment-detail"><span class="detail-label">Plan:</span><span>${data.plan}</span></div>
+          <div class="payment-detail"><span class="detail-label">Amount:</span><span>₦${parseInt(data.amount).toLocaleString()}</span></div>
+          <div class="payment-detail"><span class="detail-label">Method:</span><span>${method}</span></div>
+          <div class="payment-detail"><span class="detail-label">Date:</span><span>${new Date(data.created_at).toLocaleString()}</span></div>
+          <div class="payment-detail"><span class="detail-label">Status:</span><span>${data.status}</span></div>`;
+        document.getElementById('delete-payment').onclick = async () => {
+          if (!confirm('Delete this payment?')) return;
+          const { error } = await supabase.from('payments').delete().eq('id', id);
+          if (error) return showToast('Delete failed', false);
+          showToast('Payment deleted');
+          bootstrap.Modal.getInstance(document.getElementById('paymentModal')).hide();
+          loadPayments();
+        };
+        document.getElementById('edit-payment').onclick = () => {
+          showToast('Edit functionality not implemented', false);
+        };
+      }
+    });
 
     // Chart initialization
     function initChart() {
@@ -862,16 +705,16 @@
 
     // Real-time subscriptions
     supabase
-      .from('payments')
-      .on('INSERT', async payload => {
+      .channel('payments')
+      .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'payments' }, async payload => {
         const { data: methods } = await supabase.from('payment_methods').select('id,name');
         const methodMap = methods.reduce((acc, m) => { acc[m.id] = m.name; return acc; }, {});
         const row = renderPaymentRow(payload.new, methodMap);
         paymentsTbody.prepend(row);
         loadPayments();
       })
-      .on('UPDATE', async payload => {
-        const { data: methods } = await supabase.from('payment_methods').select('id,name');
+      .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'payments' }, async payload => {
+        const { data: methods } = await supabase.from('payment_methods').selectोड('id,name');
         const methodMap = methods.reduce((acc, m) => { acc[m.id] = m.name; return acc; }, {});
         const row = document.getElementById(`payment-row-${payload.new.id}`);
         if (row) {
@@ -882,28 +725,12 @@
       })
       .subscribe();
 
-    supabase
-      .from('payment_methods')
-      .on('INSERT', payload => {
-        const item = renderMethodItem(payload.new);
-        listGroup.append(item);
-        totalMethods.textContent = parseInt(totalMethods.textContent) + 1;
-      })
-      .on('UPDATE', payload => {
-        const item = document.getElementById(`method-item-${payload.new.id}`);
-        if (item) {
-          const newItem = renderMethodItem(payload.new);
-          item.replaceWith(newItem);
-        }
-      })
-      .subscribe();
-
     // Initial load
     document.addEventListener('DOMContentLoaded', async () => {
       await checkAuth();
       applyTheme(localStorage.getItem('theme') || 'dark');
       initChart();
-      await loadMethods();
+      await populateMethodFilter();
       await loadPayments();
       searchInput.addEventListener('input', debounce(loadFilteredPayments, 300));
       filterBtn.addEventListener('click', loadFilteredPayments);
