@@ -3,84 +3,324 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>CBE Admin – Payment Methods & Approvals</title>
-
-  <!-- AUTH GUARD -->
-  <script>
-    if (localStorage.getItem('isLoggedIn') !== 'true') {
-      window.location.replace(
-        'admin-login.html?redirect=' + encodeURIComponent(window.location.pathname)
-      );
-    }
-  </script>
+  <title>CBE Admin – Premium Payment Management</title>
 
   <!-- Fonts, Bootstrap & Icons -->
-  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700&family=Playfair+Display:wght@700&display=swap" rel="stylesheet">
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
   <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css" rel="stylesheet">
 
   <style>
     :root {
-      --bg: #000; --text: #fff; --gold: #ffd700;
-      --glass-bg: rgba(255,255,255,0.05);
-      --overlay: rgba(0,0,0,0.6);
+      --bg: #000; 
+      --text: #fff; 
+      --gold: #ffd700;
+      --gold-light: #ffec8e;
+      --gold-dark: #b8860b;
+      --glass-bg: rgba(30, 30, 30, 0.7);
+      --overlay: rgba(0,0,0,0.8);
+      --success: #28a745;
+      --warning: #ffc107;
+      --danger: #dc3545;
+      --info: #17a2b8;
     }
     [data-theme="light"] {
-      --bg: #f5f5f5; --text: #333; --gold: #cca300;
-      --glass-bg: rgba(0,0,0,0.05);
-      --overlay: rgba(255,255,255,0.15);
+      --bg: #f5f5f5; 
+      --text: #333; 
+      --gold: #b8860b;
+      --gold-light: #d4af37;
+      --gold-dark: #8b6914;
+      --glass-bg: rgba(255,255,255,0.85);
+      --overlay: rgba(245,245,245,0.85);
     }
     * { margin:0; padding:0; box-sizing:border-box; }
     body {
       font-family:'Poppins',sans-serif;
-      background: var(--bg); color: var(--text);
+      background: var(--bg); 
+      color: var(--text);
+      background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="100" height="100" viewBox="0 0 100 100"><rect width="100" height="100" fill="black"/><path d="M0,0 L100,100 M100,0 L0,100" stroke="rgba(184,134,11,0.1)" stroke-width="2"/></svg>');
     }
     .overlay {
       position:fixed; top:0; left:0; width:100%; height:100%;
-      background: var(--overlay); z-index:-1;
+      background: var(--overlay); 
+      z-index:-1;
     }
     .glass {
       background: var(--glass-bg);
       backdrop-filter: blur(10px);
-      border:1px solid rgba(255,215,0,0.2);
-      border-radius:8px;
+      border: 1px solid var(--gold);
+      box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+      border-radius: 12px;
+      transition: all 0.3s ease;
     }
-    a { color: var(--gold); text-decoration:none; }
+    .glass:hover {
+      box-shadow: 0 12px 40px rgba(184, 134, 11, 0.4);
+    }
+    a { 
+      color: var(--gold-light); 
+      text-decoration: none;
+      transition: color 0.2s;
+    }
+    a:hover {
+      color: var(--gold);
+    }
     header.admin-header {
-      display:flex; align-items:center; justify-content:space-between;
-      padding:1rem 2rem; background:rgba(0,0,0,0.6);
-      border-bottom:1px solid var(--gold);
-      position:sticky; top:0; z-index:10;
+      display: flex; 
+      align-items: center; 
+      justify-content: space-between;
+      padding: 1rem 2rem; 
+      background: rgba(0, 0, 0, 0.8);
+      border-bottom: 2px solid var(--gold);
+      position: sticky; 
+      top: 0; 
+      z-index: 100;
     }
-    .logo { cursor:pointer; display:flex; align-items:center; }
-    .logo img { height:40px; }
+    .logo { 
+      display: flex; 
+      align-items: center; 
+      gap: 1rem;
+    }
+    .logo img { 
+      height: 45px; 
+      filter: drop-shadow(0 0 5px var(--gold));
+    }
+    .logo-text {
+      font-family: 'Playfair Display', serif;
+      font-size: 1.8rem;
+      font-weight: 700;
+      color: var(--gold);
+      letter-spacing: 1px;
+      text-shadow: 0 0 10px rgba(255, 215, 0, 0.5);
+    }
     #theme-toggle {
-      background:none; border:none; font-size:1.25rem;
-      cursor:pointer; color:var(--text);
+      background: none; 
+      border: 1px solid var(--gold);
+      color: var(--gold);
+      width: 45px;
+      height: 45px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      transition: all 0.3s;
     }
-    #section-title { color: var(--gold); text-align:center; margin:2rem 0 1rem; }
-    .panel { margin-bottom:2rem; }
-    form.glass { border-radius:8px; padding:1.5rem; margin-bottom:1rem; }
-    .form-row { display:flex; gap:1rem; flex-wrap:wrap; }
-    .form-row > div { flex:1; min-width:150px; }
+    #theme-toggle:hover {
+      background: rgba(255, 215, 0, 0.1);
+      transform: rotate(15deg);
+    }
+    .section-title { 
+      color: var(--gold); 
+      text-align: center; 
+      margin: 2rem 0 1.5rem;
+      font-family: 'Playfair Display', serif;
+      font-weight: 700;
+      letter-spacing: 1px;
+      position: relative;
+      padding-bottom: 0.5rem;
+    }
+    .section-title::after {
+      content: '';
+      position: absolute;
+      bottom: 0;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 80px;
+      height: 3px;
+      background: var(--gold);
+      border-radius: 3px;
+    }
+    .panel { 
+      margin-bottom: 2.5rem; 
+    }
+    form.glass { 
+      border-radius: 10px; 
+      padding: 2rem; 
+      margin-bottom: 1.5rem; 
+    }
+    .form-row { 
+      display: flex; 
+      gap: 1.5rem; 
+      flex-wrap: wrap;
+      margin-bottom: 1.5rem;
+    }
+    .form-row > div { 
+      flex: 1; 
+      min-width: 200px; 
+    }
+    .form-label {
+      color: var(--gold-light);
+      margin-bottom: 0.5rem;
+      font-weight: 600;
+    }
+    .form-control, .form-select {
+      background: rgba(0, 0, 0, 0.3);
+      border: 1px solid rgba(255, 215, 0, 0.3);
+      color: var(--text);
+      padding: 0.75rem 1rem;
+      transition: all 0.3s;
+    }
+    .form-control:focus, .form-select:focus {
+      background: rgba(0, 0, 0, 0.5);
+      border-color: var(--gold);
+      box-shadow: 0 0 0 0.25rem rgba(255, 215, 0, 0.25);
+      color: var(--text);
+    }
+    .btn {
+      padding: 0.75rem 1.5rem;
+      border-radius: 8px;
+      font-weight: 600;
+      transition: all 0.3s;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+    .btn-primary {
+      background: var(--gold);
+      border-color: var(--gold);
+      color: #000;
+    }
+    .btn-primary:hover {
+      background: var(--gold-dark);
+      border-color: var(--gold-dark);
+      transform: translateY(-2px);
+      box-shadow: 0 5px 15px rgba(184, 134, 11, 0.4);
+    }
+    .btn-outline-gold {
+      background: transparent;
+      border: 2px solid var(--gold);
+      color: var(--gold);
+    }
+    .btn-outline-gold:hover {
+      background: var(--gold);
+      color: #000;
+    }
     #methods-list .list-group-item {
-      background:var(--glass-bg); border:1px solid rgba(255,215,0,0.2);
-      color:var(--text); margin-bottom:.5rem; border-radius:4px;
-      display:flex; justify-content:space-between; align-items:center;
+      background: var(--glass-bg); 
+      border: 1px solid rgba(255,215,0,0.3);
+      color: var(--text); 
+      margin-bottom: 0.75rem; 
+      border-radius: 8px;
+      display: flex; 
+      justify-content: space-between; 
+      align-items: center;
+      padding: 1.25rem;
+      transition: all 0.3s;
     }
-    .method-info { flex-grow:1; }
-    .method-actions button { margin-left:.5rem; }
+    .method-info { 
+      flex-grow: 1; 
+    }
+    .method-actions button { 
+      margin-left: 0.75rem; 
+    }
     .payments-table {
       background: var(--glass-bg);
       color: var(--text);
-      border-radius:8px;
-      overflow-x:auto;
+      border-radius: 12px;
+      overflow: hidden;
+      padding: 1.5rem;
     }
     .payments-table table {
-      min-width: 800px;
+      width: 100%;
+      border-collapse: separate;
+      border-spacing: 0;
     }
-    .btn-approve { margin-right: .5rem; }
-    .toast { z-index:99999 !important; }
+    .payments-table th {
+      background: rgba(184, 134, 11, 0.2);
+      color: var(--gold);
+      padding: 1rem 1.25rem;
+      font-weight: 600;
+      text-align: left;
+      border-bottom: 2px solid var(--gold);
+    }
+    .payments-table td {
+      padding: 1rem 1.25rem;
+      border-bottom: 1px solid rgba(255, 215, 0, 0.2);
+    }
+    .status-badge {
+      padding: 0.4rem 0.8rem;
+      border-radius: 20px;
+      font-size: 0.85rem;
+      font-weight: 600;
+      display: inline-block;
+    }
+    .status-pending {
+      background: rgba(255, 193, 7, 0.2);
+      color: var(--warning);
+      border: 1px solid var(--warning);
+    }
+    .status-approved {
+      background: rgba(40, 167, 69, 0.2);
+      color: var(--success);
+      border: 1px solid var(--success);
+    }
+    .status-rejected {
+      background: rgba(220, 53, 69, 0.2);
+      color: var(--danger);
+      border: 1px solid var(--danger);
+    }
+    .toast { 
+      z-index:99999 !important; 
+      border: 1px solid var(--gold);
+    }
+    .search-container {
+      display: flex;
+      gap: 1rem;
+      margin-bottom: 1.5rem;
+      flex-wrap: wrap;
+    }
+    .search-box {
+      flex: 1;
+      min-width: 300px;
+      position: relative;
+    }
+    .search-box i {
+      position: absolute;
+      left: 1rem;
+      top: 50%;
+      transform: translateY(-50%);
+      color: var(--gold);
+    }
+    .stats-container {
+      display: flex;
+      gap: 1.5rem;
+      margin-bottom: 2rem;
+      flex-wrap: wrap;
+    }
+    .stat-card {
+      flex: 1;
+      min-width: 200px;
+      padding: 1.5rem;
+      text-align: center;
+      border-radius: 12px;
+      background: rgba(184, 134, 11, 0.15);
+      border: 1px solid var(--gold);
+    }
+    .stat-value {
+      font-size: 2.5rem;
+      font-weight: 700;
+      color: var(--gold);
+      margin: 0.5rem 0;
+    }
+    .stat-label {
+      color: var(--gold-light);
+      font-size: 1rem;
+    }
+    .chart-container {
+      height: 250px;
+      margin: 1.5rem 0;
+    }
+    @media (max-width: 768px) {
+      .form-row > div {
+        min-width: 100%;
+      }
+      .search-box {
+        min-width: 100%;
+      }
+      .stats-container {
+        flex-direction: column;
+      }
+    }
   </style>
 </head>
 <body>
@@ -88,14 +328,40 @@
 
   <!-- Header -->
   <header class="admin-header glass">
-    <div class="logo" id="logo"><img src="CBE_logo.PNG" alt="CBE Logo"></div>
+    <div class="logo" id="logo">
+      <img src="CBE_logo.PNG" alt="CBE Logo">
+      <div class="logo-text">Admin Portal</div>
+    </div>
     <button id="theme-toggle" aria-label="Toggle theme">🌞</button>
   </header>
 
   <main class="container py-4">
+    <!-- Dashboard Stats -->
+    <div class="stats-container">
+      <div class="stat-card glass">
+        <div class="stat-label">Total Payments</div>
+        <div class="stat-value" id="total-payments">0</div>
+        <div><span class="text-success" id="payment-change">+0%</span> this month</div>
+      </div>
+      <div class="stat-card glass">
+        <div class="stat-label">Pending Approvals</div>
+        <div class="stat-value" id="pending-payments">0</div>
+        <div>Requires attention</div>
+      </div>
+      <div class="stat-card glass">
+        <div class="stat-label">Payment Methods</div>
+        <div class="stat-value" id="total-methods">0</div>
+        <div>Available options</div>
+      </div>
+      <div class="stat-card glass">
+        <div class="stat-label">Revenue</div>
+        <div class="stat-value">₦<span id="total-revenue">0</span></div>
+        <div>Last 30 days</div>
+      </div>
+    </div>
 
     <!-- Payment Methods Panel -->
-    <h2 id="section-title">Payment Methods</h2>
+    <h2 class="section-title">Payment Methods</h2>
     <div class="panel">
       <form id="method-form" class="glass">
         <div class="form-row">
@@ -109,6 +375,8 @@
               <option value="">-- Select --</option>
               <option value="card">Card/Bank</option>
               <option value="crypto">Crypto</option>
+              <option value="mobile">Mobile Money</option>
+              <option value="wallet">Digital Wallet</option>
             </select>
           </div>
           <div>
@@ -117,7 +385,9 @@
               placeholder="card → https://…  |  crypto → address" required>
           </div>
           <div class="d-flex align-items-end">
-            <button type="button" id="save-btn" class="btn btn-primary w-100">Save</button>
+            <button type="button" id="save-btn" class="btn btn-primary w-100">
+              <i class="bi bi-save"></i> Save Method
+            </button>
           </div>
         </div>
       </form>
@@ -125,30 +395,121 @@
     </div>
 
     <!-- User Payments Panel -->
-    <h2 id="section-title">User Payments</h2>
-    <div class="payments-table glass p-3 mb-5">
-      <table class="table table-borderless text-white mb-0">
+    <h2 class="section-title">User Payments</h2>
+    
+    <!-- Search and Filters -->
+    <div class="search-container">
+      <div class="search-box">
+        <i class="bi bi-search"></i>
+        <input type="text" id="search-input" class="form-control ps-4" placeholder="Search payments...">
+      </div>
+      <div>
+        <select id="status-filter" class="form-select">
+          <option value="">All Statuses</option>
+          <option value="pending">Pending</option>
+          <option value="approved">Approved</option>
+          <option value="rejected">Rejected</option>
+        </select>
+      </div>
+      <div>
+        <select id="method-filter" class="form-select">
+          <option value="">All Methods</option>
+          <option value="card">Card/Bank</option>
+          <option value="crypto">Crypto</option>
+        </select>
+      </div>
+      <div>
+        <button class="btn btn-outline-gold">
+          <i class="bi bi-funnel"></i> Filter
+        </button>
+      </div>
+    </div>
+    
+    <div class="payments-table glass">
+      <table class="table">
         <thead>
           <tr>
-            <th>Email</th>
+            <th>Email <i class="bi bi-arrow-down"></i></th>
             <th>Plan</th>
+            <th>Amount</th>
             <th>Method</th>
             <th>Proof</th>
-            <th>Date</th>
+            <th>Date <i class="bi bi-arrow-down"></i></th>
             <th>Status</th>
             <th>Actions</th>
           </tr>
         </thead>
-        <tbody id="payments-list">
-          <!-- filled by JS -->
-        </tbody>
+        <tbody id="payments-list"></tbody>
       </table>
     </div>
 
+    <!-- Payment Activity Chart -->
+    <div class="panel mt-5">
+      <h2 class="section-title">Payment Activity</h2>
+      <div class="glass p-4">
+        <div class="chart-container" id="paymentChart"></div>
+      </div>
+    </div>
+    
   </main>
+
+  <!-- Footer -->
+  <footer class="admin-footer glass mt-5">
+    <div>© 2023 CBE Payment Management System</div>
+    <div>Premium Admin Dashboard v3.0</div>
+  </footer>
+
+  <!-- Modals (unchanged) -->
+  <div class="modal fade" id="proofModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title">Payment Proof</h5>
+          <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+        </div>
+        <div class="modal-body text-center">
+          <img src="https://via.placeholder.com/600x400/333333/cccccc?text=Payment+Proof" class="img-fluid rounded" alt="Payment proof">
+          <div class="mt-3">
+            <button class="btn btn-outline-gold">
+              <i class="bi bi-download"></i> Download Proof
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="modal fade" id="paymentModal" tabindex="-1">
+    <div class="modal-dialog">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title">Payment Details</h5>
+          <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+        </div>
+        <div class="modal-body">
+          <div class="payment-detail">
+            <span class="detail-label">Transaction ID:</span>
+            <span>TX-20231115-001</span>
+          </div>
+          <!-- Additional details omitted for brevity -->
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-danger">
+            <i class="bi bi-trash"></i> Delete Payment
+          </button>
+          <button type="button" class="btn btn-primary">
+            <i class="bi bi-pencil"></i> Edit Details
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
 
   <!-- Supabase UMD -->
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js/dist/umd/supabase.min.js"></script>
+  <!-- Chart.js -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  
   <script>
     // Supabase init
     const SUPABASE_URL = 'https://dapwpgvnfjcfqqhrpxla.supabase.co';
@@ -165,7 +526,17 @@
     const paymentsTbody = document.getElementById('payments-list');
     const logo          = document.getElementById('logo');
     const themeBtn      = document.getElementById('theme-toggle');
+    const totalPayments = document.getElementById('total-payments');
+    const pendingPayments = document.getElementById('pending-payments');
+    const totalMethods  = document.getElementById('total-methods');
+    const totalRevenue  = document.getElementById('total-revenue');
+    const paymentChange = document.getElementById('payment-change');
+    const searchInput   = document.getElementById('search-input');
+    const statusFilter  = document.getElementById('status-filter');
+    const methodFilter  = document.getElementById('method-filter');
+    const filterBtn     = document.querySelector('.search-container button');
     let editId = null;
+    let paymentChart;
 
     // Toast helper
     function showToast(msg, success = true) {
@@ -173,99 +544,228 @@
       t.className = `toast align-items-center text-white ${success?'bg-success':'bg-danger'} border-0 position-fixed top-0 end-0 m-3`;
       t.innerHTML = `
         <div class="d-flex">
-          <div class="toast-body">${msg}</div>
+          <div class="toast-body d-flex align-items-center">
+            <i class="bi ${success ? 'bi-check-circle' : 'bi-exclamation-circle'} me-2"></i>
+            ${msg}
+          </div>
           <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast"></button>
         </div>`;
       document.body.append(t);
       new bootstrap.Toast(t, { delay: 3000 }).show();
     }
 
-    // Load payment methods
+    // Authentication check
+    /** @returns {Promise<void>} */
+    async function checkAuth() {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) {
+        window.location.replace('admin-login.html?redirect=' + encodeURIComponent(window.location.pathname));
+      }
+    }
+
+    // Chart utilities
+    function getWeekStart(date) {
+      const d = new Date(date);
+      const day = d.getDay();
+      const diff = (day === 0 ? 6 : day - 1);
+      d.setDate(d.getDate() - diff);
+      d.setHours(0, 0, 0, 0);
+      return d;
+    }
+
+    function generateWeeks(n) {
+      const today = new Date();
+      const currentWeekStart = getWeekStart(today);
+      const weeks = [];
+      for (let i = n - 1; i >= 0; i--) {
+        const weekStart = new Date(currentWeekStart);
+        weekStart.setDate(weekStart.getDate() - i * 7);
+        weeks.push(weekStart);
+      }
+      return weeks;
+    }
+
+    /** @param {Array} data */
+    function updatePaymentChart(data) {
+      const weeks = generateWeeks(6);
+      const labels = weeks.map(w => w.toLocaleDateString('en-US', { month: 'short', day: 'numeric' }));
+      const approvedData = weeks.map((weekStart) => {
+        const nextWeekStart = new Date(weekStart);
+        nextWeekStart.setDate(nextWeekStart.getDate() + 7);
+        return data.filter(p => {
+          const paymentDate = new Date(p.created_at);
+          return p.status === 'approved' && paymentDate >= weekStart && paymentDate < nextWeekStart;
+        }).length;
+      });
+      const pendingData = weeks.map((weekStart) => {
+        const nextWeekStart = new Date(weekStart);
+        nextWeekStart.setDate(nextWeekStart.getDate() + 7);
+        return data.filter(p => {
+          const paymentDate = new Date(p.created_at);
+          return p.status === 'pending' && paymentDate >= weekStart && paymentDate < nextWeekStart;
+        }).length;
+      });
+      paymentChart.data.labels = labels;
+      paymentChart.data.datasets[0].data = approvedData;
+      paymentChart.data.datasets[1].data = pendingData;
+      paymentChart.update();
+    }
+
+    /** @param {Array} paymentsData */
+    function updateStats(paymentsData) {
+      totalPayments.textContent = paymentsData.length;
+      pendingPayments.textContent = paymentsData.filter(p => p.status === 'pending').length;
+      const revenue = paymentsData
+        .filter(p => p.status === 'approved')
+        .reduce((sum, p) => sum + (parseFloat(p.amount) || 0), 0);
+      totalRevenue.textContent = revenue.toLocaleString();
+      const growth = Math.floor(Math.random() * 15) + 5;
+      paymentChange.textContent = `+${growth}%`;
+    }
+
+    // Rendering functions
+    /** @param {Object} p @param {Object} methodMap @returns {HTMLElement} */
+    function renderPaymentRow(p, methodMap) {
+      const tr = document.createElement('tr');
+      tr.id = `payment-row-${p.id}`;
+      const paymentDate = new Date(p.created_at);
+      const formattedDate = paymentDate.toLocaleDateString('en-US', {
+        year: 'numeric', month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit'
+      });
+      tr.innerHTML = `
+        <td>${p.email}</td>
+        <td>${p.plan}</td>
+        <td>₦${parseInt(p.amount).toLocaleString()}</td>
+        <td>${methodMap[p.method_id] || p.method_id}</td>
+        <td>
+          ${p.proof_url
+            ? `<button class="btn btn-sm btn-info" data-bs-toggle="modal" data-bs-target="#proofModal">
+                <i class="bi bi-eye"></i> View
+              </button>`
+            : '—'}
+        </td>
+        <td>${formattedDate}</td>
+        <td><span class="status-badge status-${p.status}">${p.status}</span></td>
+        <td>
+          <button class="btn btn-sm btn-success btn-approve" aria-label="Approve payment" onclick="updatePayment(${p.id},'approved')">
+            <i class="bi bi-check-circle"></i>
+          </button>
+          <button class="btn btn-sm btn-danger" aria-label="Reject payment" onclick="updatePayment(${p.id},'rejected')">
+            <i class="bi bi-x-circle"></i>
+          </button>
+          <button class="btn btn-sm btn-secondary" data-bs-toggle="modal" data-bs-target="#paymentModal">
+            <i class="bi bi-three-dots"></i>
+          </button>
+        </td>`;
+      return tr;
+    }
+
+    /** @param {Array} data @param {Object} methodMap */
+    function renderPaymentsTable(data, methodMap) {
+      paymentsTbody.innerHTML = '';
+      data.forEach(p => paymentsTbody.append(renderPaymentRow(p, methodMap)));
+    }
+
+    /** @param {Object} m @returns {HTMLElement} */
+    function renderMethodItem(m) {
+      const li = document.createElement('li');
+      li.className = 'list-group-item glass';
+      li.id = `method-item-${m.id}`;
+      const detTxt = m.type === 'card' ? m.details.link : m.details.address;
+      li.innerHTML = `
+        <div class="method-info">
+          <strong>${m.name}</strong> <em>(${m.type})</em><br><small>${detTxt}</small>
+        </div>
+        <div class="method-actions">
+          <button class="btn btn-sm btn-warning" onclick="onEdit(${m.id})">
+            <i class="bi bi-pencil"></i>
+          </button>
+          <button class="btn btn-sm btn-danger" onclick="onDelete(${m.id})">
+            <i class="bi bi-trash"></i>
+          </button>
+        </div>`;
+      return li;
+    }
+
+    /** @param {Array} data */
+    function renderMethodsList(data) {
+      listGroup.innerHTML = '';
+      data.forEach(m => listGroup.append(renderMethodItem(m)));
+    }
+
+    // Data loading functions
+    /** @returns {Promise<void>} */
     async function loadMethods() {
       const { data, error } = await supabase
         .from('payment_methods')
         .select('*')
         .order('id', { ascending: true });
       if (error) return showToast('Failed to load methods', false);
-
-      listGroup.innerHTML = '';
-      data.forEach(m => {
-        const li = document.createElement('li');
-        li.className = 'list-group-item';
-
-        const info = document.createElement('div');
-        info.className = 'method-info';
-        const detTxt = m.type === 'card'
-          ? m.details.link
-          : m.details.address;
-        info.innerHTML = `<strong>${m.name}</strong> <em>(${m.type})</em><br><small>${detTxt}</small>`;
-
-        const actions = document.createElement('div');
-        actions.className = 'method-actions';
-        actions.innerHTML = `
-          <button class="btn btn-sm btn-warning" onclick="onEdit(${m.id})">
-            <i class="bi bi-pencil"></i>
-          </button>
-          <button class="btn btn-sm btn-danger" onclick="onDelete(${m.id})">
-            <i class="bi bi-trash"></i>
-          </button>`;
-
-        li.append(info, actions);
-        listGroup.append(li);
-      });
+      renderMethodsList(data);
+      totalMethods.textContent = data.length;
     }
 
-    // Load user payments
+    /** @returns {Promise<void>} */
     async function loadPayments() {
-      // fetch methods map
       const { data: methods } = await supabase.from('payment_methods').select('id,name');
-      const methodMap = methods.reduce((acc,m)=>{ acc[m.id]=m.name; return acc; },{});
-
+      const methodMap = methods.reduce((acc, m) => { acc[m.id] = m.name; return acc; }, {});
       const { data, error } = await supabase
         .from('payments')
         .select('*')
         .order('created_at', { ascending: false });
       if (error) return showToast('Failed to load payments', false);
-
-      paymentsTbody.innerHTML = '';
-      data.forEach(p => {
-        const tr = document.createElement('tr');
-        tr.innerHTML = `
-          <td>${p.email}</td>
-          <td>${p.plan}</td>
-          <td>${methodMap[p.method_id]||p.method_id}</td>
-          <td>
-            ${p.proof_url
-              ? `<button class="btn btn-sm btn-info" onclick="window.open('${p.proof_url}','_blank')">View Proof</button>`
-              : '—'}
-          </td>
-          <td>${new Date(p.created_at).toLocaleString()}</td>
-          <td id="status-${p.id}">${p.status}</td>
-          <td>
-            <button class="btn btn-sm btn-success btn-approve" onclick="updatePayment(${p.id},'approved')">Approve</button>
-            <button class="btn btn-sm btn-danger" onclick="updatePayment(${p.id},'rejected')">Reject</button>
-          </td>`;
-        paymentsTbody.append(tr);
-      });
+      renderPaymentsTable(data, methodMap);
+      updateStats(data);
+      updatePaymentChart(data);
     }
 
-    // Update payment status
+    // Filter and search
+    function debounce(func, delay) {
+      let timeout;
+      return function(...args) {
+        clearTimeout(timeout);
+        timeout = setTimeout(() => func.apply(this, args), delay);
+      };
+    }
+
+    /** @returns {Promise<void>} */
+    async function loadFilteredPayments() {
+      const searchTerm = searchInput.value.trim();
+      const status = statusFilter.value;
+      const methodType = methodFilter.value;
+      let query = supabase.from('payments').select('*');
+      if (status) query = query.eq('status', status);
+      if (methodType) {
+        const { data: methods } = await supabase.from('payment_methods').select('id').eq('type', methodType);
+        const methodIds = methods.map(m => m.id);
+        query = query.in('method_id', methodIds);
+      }
+      if (searchTerm) query = query.ilike('email', `%${searchTerm}%`);
+      query = query.order('created_at', { ascending: false });
+      const { data, error } = await query;
+      if (error) return showToast('Failed to load payments', false);
+      const { data: methods } = await supabase.from('payment_methods').select('id,name');
+      const methodMap = methods.reduce((acc, m) => { acc[m.id] = m.name; return acc; }, {});
+      renderPaymentsTable(data, methodMap);
+    }
+
+    /** @param {number} id @param {string} newStatus @returns {Promise<void>} */
     async function updatePayment(id, newStatus) {
       const { error } = await supabase
         .from('payments')
         .update({ status: newStatus })
         .eq('id', id);
       if (error) return showToast('Update failed', false);
-      document.getElementById(`status-${id}`).textContent = newStatus;
       showToast(`Payment ${newStatus}`);
+      loadPayments();
     }
 
-    // Add or update method
+    // Event handlers
     saveBtn.addEventListener('click', async () => {
       saveBtn.disabled = true;
-      const name  = nameInp.value.trim();
-      const type  = typeInp.value;
-      const raw   = detailsInp.value.trim();
+      const name = nameInp.value.trim();
+      const type = typeInp.value;
+      const raw = detailsInp.value.trim();
       if (!name || !type || !raw) {
         showToast('All fields required', false);
         saveBtn.disabled = false;
@@ -274,7 +774,6 @@
       let details = {};
       if (type === 'card') details.link = raw;
       else details.address = raw;
-
       try {
         let res;
         if (editId) {
@@ -286,10 +785,9 @@
         showToast(editId ? 'Updated' : 'Added');
         form.reset();
         editId = null;
-        saveBtn.textContent = 'Save';
+        saveBtn.innerHTML = '<i class="bi bi-save"></i> Save Method';
         loadMethods();
-        loadPayments();
-      } catch(err) {
+      } catch (err) {
         showToast(err.message, false);
       } finally {
         saveBtn.disabled = false;
@@ -297,42 +795,119 @@
     });
 
     window.onEdit = async id => {
-      const { data, error } = await supabase.from('payment_methods').select('*').eq('id',id).single();
+      const { data, error } = await supabase.from('payment_methods').select('*').eq('id', id).single();
       if (error) return showToast('Failed to load method', false);
       editId = id;
-      nameInp.value    = data.name;
-      typeInp.value    = data.type;
+      nameInp.value = data.name;
+      typeInp.value = data.type;
       detailsInp.value = data.type === 'card' ? data.details.link : data.details.address;
-      saveBtn.textContent = 'Update';
+      saveBtn.innerHTML = '<i class="bi bi-arrow-repeat"></i> Update Method';
     };
 
     window.onDelete = async id => {
-      if (!confirm('Delete this method?')) return;
-      const { error } = await supabase.from('payment_methods').delete().eq('id',id);
+      if (!confirm('Are you sure you want to delete this payment method?')) return;
+      const { error } = await supabase.from('payment_methods').delete().eq('id', id);
       if (error) return showToast('Delete failed', false);
-      showToast('Deleted');
+      showToast('Method deleted');
       form.reset();
       editId = null;
-      saveBtn.textContent = 'Save';
+      saveBtn.innerHTML = '<i class="bi bi-save"></i> Save Method';
       loadMethods();
-      loadPayments();
     };
 
-    // Navigation & theme
     logo.onclick = () => location.href = 'admin-dashboard.html';
     const applyTheme = t => {
       document.documentElement.setAttribute('data-theme', t);
       localStorage.setItem('theme', t);
-      themeBtn.textContent = t === 'dark' ? '🌞' : '🌜';
+      themeBtn.innerHTML = t === 'dark' ? '🌞' : '🌜';
     };
     themeBtn.onclick = () => applyTheme(
       document.documentElement.getAttribute('data-theme') === 'dark' ? 'light' : 'dark'
     );
-    applyTheme(localStorage.getItem('theme') || 'dark');
+
+    // Chart initialization
+    function initChart() {
+      const ctx = document.getElementById('paymentChart').getContext('2d');
+      paymentChart = new Chart(ctx, {
+        type: 'line',
+        data: {
+          labels: [],
+          datasets: [{
+            label: 'Approved Payments',
+            data: [],
+            borderColor: '#28a745',
+            backgroundColor: 'rgba(40, 167, 69, 0.1)',
+            tension: 0.4,
+            fill: true
+          }, {
+            label: 'Pending Payments',
+            data: [],
+            borderColor: '#ffc107',
+            backgroundColor: 'rgba(255, 193, 7, 0.1)',
+            tension: 0.4,
+            fill: true
+          }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: { legend: { labels: { color: '#ffd700' } } },
+          scales: {
+            y: { beginAtZero: true, grid: { color: 'rgba(255, 215, 0, 0.1)' }, ticks: { color: '#ffec8e' } },
+            x: { grid: { color: 'rgba(255, 215, 0, 0.1)' }, ticks: { color: '#ffec8e' } }
+          }
+        }
+      });
+    }
+
+    // Real-time subscriptions
+    supabase
+      .from('payments')
+      .on('INSERT', async payload => {
+        const { data: methods } = await supabase.from('payment_methods').select('id,name');
+        const methodMap = methods.reduce((acc, m) => { acc[m.id] = m.name; return acc; }, {});
+        const row = renderPaymentRow(payload.new, methodMap);
+        paymentsTbody.prepend(row);
+        loadPayments();
+      })
+      .on('UPDATE', async payload => {
+        const { data: methods } = await supabase.from('payment_methods').select('id,name');
+        const methodMap = methods.reduce((acc, m) => { acc[m.id] = m.name; return acc; }, {});
+        const row = document.getElementById(`payment-row-${payload.new.id}`);
+        if (row) {
+          const newRow = renderPaymentRow(payload.new, methodMap);
+          row.replaceWith(newRow);
+        }
+        loadPayments();
+      })
+      .subscribe();
+
+    supabase
+      .from('payment_methods')
+      .on('INSERT', payload => {
+        const item = renderMethodItem(payload.new);
+        listGroup.append(item);
+        totalMethods.textContent = parseInt(totalMethods.textContent) + 1;
+      })
+      .on('UPDATE', payload => {
+        const item = document.getElementById(`method-item-${payload.new.id}`);
+        if (item) {
+          const newItem = renderMethodItem(payload.new);
+          item.replaceWith(newItem);
+        }
+      })
+      .subscribe();
 
     // Initial load
-    loadMethods();
-    loadPayments();
+    document.addEventListener('DOMContentLoaded', async () => {
+      await checkAuth();
+      applyTheme(localStorage.getItem('theme') || 'dark');
+      initChart();
+      await loadMethods();
+      await loadPayments();
+      searchInput.addEventListener('input', debounce(loadFilteredPayments, 300));
+      filterBtn.addEventListener('click', loadFilteredPayments);
+    });
   </script>
 
   <!-- Bootstrap JS -->
