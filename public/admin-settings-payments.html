@@ -1,9 +1,18 @@
 <!DOCTYPE html>
-<html lang="en" data-theme="dark">
+<html lang="en" data-theme="en">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
   <title>CBE Admin – Payment Activities</title>
+
+  <!-- AUTH GUARD -->
+  <script>
+    if (localStorage.getItem('isAuthenticated') !== 'true') {
+      window.location.replace(
+        'admin-login.html?redirect=' + encodeURIComponent(window.location.pathname)
+      );
+    }
+  </script>
 
   <!-- Fonts, Bootstrap & Icons -->
   <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700&family=Playfair+Display:wght@700&display=swap" rel="stylesheet">
@@ -17,8 +26,8 @@
       --gold: #ffd700;
       --gold-light: #ffec8e;
       --gold-dark: #b8860b;
-      --glass-bg: rgba(30, 30, 30, 0.7);
-      --overlay: rgba(0,0,0,0.8);
+      --glass-bg: rgba(255,255,255,0.7);
+      --overlay: rgba(0,255,0,0.8);
       --success: #28a745;
       --warning: #ffc107;
       --danger: #dc3545;
@@ -31,7 +40,7 @@
       --gold-light: #d4af37;
       --gold-dark: #8b6914;
       --glass-bg: rgba(255,255,255,0.85);
-      --overlay: rgba(245,245,245,0.85);
+      --overlay: rgba(255,255,245,0.85);
     }
     * { margin:0; padding:0; box-sizing:border-box; }
     body {
@@ -448,14 +457,6 @@
       new bootstrap.Toast(t, { delay: 3000 }).show();
     }
 
-    // Authentication check
-    async function checkAuth() {
-      const { data: { session } } = await supabase.auth.getSession();
-      if (!session) {
-        window.location.replace('admin-login.html?redirect=' + encodeURIComponent(window.location.pathname));
-      }
-    }
-
     // Chart utilities
     function getWeekStart(date) {
       const d = new Date(date);
@@ -714,7 +715,7 @@
         loadPayments();
       })
       .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'payments' }, async payload => {
-        const { data: methods } = await supabase.from('payment_methods').selectोड('id,name');
+        const { data: methods } = await supabase.from('payment_methods').select('id,name');
         const methodMap = methods.reduce((acc, m) => { acc[m.id] = m.name; return acc; }, {});
         const row = document.getElementById(`payment-row-${payload.new.id}`);
         if (row) {
@@ -727,7 +728,6 @@
 
     // Initial load
     document.addEventListener('DOMContentLoaded', async () => {
-      await checkAuth();
       applyTheme(localStorage.getItem('theme') || 'dark');
       initChart();
       await populateMethodFilter();
