@@ -86,8 +86,10 @@
       content: '';
       position: absolute;
       top: 0; left: 0; width: 100%; height: 100%;
-      background: url('path-to-subtle-pattern.png') repeat; /* Replace with actual pattern */
-      opacity: 0.05;
+      background: 
+        radial-gradient(circle at 10% 20%, rgba(212, 175, 55, 0.03) 0%, transparent 20%),
+        radial-gradient(circle at 90% 80%, rgba(212, 175, 55, 0.03) 0%, transparent 20%);
+      opacity: 0.3;
       z-index: -2;
     }
 
@@ -217,6 +219,14 @@
       background: rgba(231,76,60,0.1); color: var(--error-color);
       border: 1px solid rgba(231,76,60,0.3);
     }
+    #login-alert.warning {
+      background: rgba(243,156,18,0.1); color: var(--warning-color);
+      border: 1px solid rgba(243,156,18,0.3);
+    }
+    #login-alert.info {
+      background: rgba(46,204,113,0.1); color: var(--success-color);
+      border: 1px solid rgba(46,204,113,0.3);
+    }
 
     .logo {
       position: fixed; top: 30px; left: 30px; z-index: 50;
@@ -250,20 +260,34 @@
       margin-top: 20px;
     }
 
-    /* Particle Background */
-    #particles { position: absolute; width: 100%; height: 100%; top: 0; left: 0; z-index: 0; pointer-events: none; }
-    .particle {
-      position: absolute; background: var(--gold);
-      border-radius: 50%; opacity: 0.3; animation: float 5s infinite ease-in-out;
+    /* Subscription Status */
+    .subscription-status {
+      padding: 15px; border-radius: 8px; margin: 20px 0;
+      text-align: center; font-weight: 600;
+      border: 1px solid;
     }
-    @keyframes float {
-      0% { transform: translateY(0); opacity: 0.3; }
-      50% { transform: translateY(-20px); opacity: 0.5; }
-      100% { transform: translateY(0); opacity: 0.3; }
+    .status-pending {
+      background: rgba(243,156,18,0.1); 
+      color: var(--warning-color);
+      border-color: rgba(243,156,18,0.3);
+    }
+    .status-expired {
+      background: rgba(231,76,60,0.1); 
+      color: var(--error-color);
+      border-color: rgba(231,76,60,0.3);
+    }
+    .status-missing {
+      background: rgba(52,152,219,0.1); 
+      color: #3498db;
+      border-color: rgba(52,152,219,0.3);
     }
 
+    /* Redirect Notice */
+    .redirect-notice {
+      padding: 10px; text-align: center; font-size: 0.9rem;
+      margin-top: 15px; animation: fadeIn 1s ease;
+    }
     @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
-    @keyframes logoFadeIn { from { opacity: 0; transform: scale(0.8); } to { opacity: 1; transform: scale(1); } }
 
     @media (max-width: 768px) {
       .login-card { padding: 30px 25px; max-width: 90%; }
@@ -292,9 +316,6 @@
   <div class="gold-circle circle-1"></div>
   <div class="gold-circle circle-2"></div>
 
-  <!-- Particle Background -->
-  <div id="particles"></div>
-
   <!-- LOGO -->
   <div class="logo">
     <a href="index.html"><img src="CBE_logo.PNG" alt="CBE Logo"/></a>
@@ -311,7 +332,13 @@
     <p class="subtitle">Access your VIP trading account</p>
     <p class="tagline">Join the elite trading community for exclusive insights and opportunities.</p>
 
-    <!-- Remember Me under the dash -->
+    <!-- Subscription Status Display -->
+    <div id="subscription-status" class="subscription-status" style="display: none;"></div>
+    
+    <!-- Redirect Notice -->
+    <div id="redirect-notice" class="redirect-notice" style="display: none;"></div>
+
+    <!-- Remember Me -->
     <div class="form-group remember-me">
       <input type="checkbox" id="remember-me"/>
       <label for="remember-me">Remember me</label>
@@ -365,7 +392,10 @@
       document.querySelectorAll('.gold-line, .gold-circle').forEach(el => {
         el.style.borderColor = getComputedStyle(document.documentElement).getPropertyValue('--gold');
       });
-      createParticles();
+      
+      // Set default email for demo purposes
+      document.getElementById('email').value = 'vipuser@example.com';
+      document.getElementById('password').value = 'securepassword';
     });
 
     toggleBtn.addEventListener('click', () => {
@@ -388,6 +418,8 @@
     const alertDiv = document.getElementById('login-alert');
     const rememberMeCheckbox = document.getElementById('remember-me');
     const emailInput = document.getElementById('email');
+    const subscriptionStatus = document.getElementById('subscription-status');
+    const redirectNotice = document.getElementById('redirect-notice');
 
     const errorMessages = {
       'No account found for that email.': 'No account found with this email address.',
@@ -404,10 +436,45 @@
       rememberMeCheckbox.checked = true;
     }
 
+    // Helper function to calculate expiry date
+    function calculateExpiryDate(createdAt, plan) {
+      const start = new Date(createdAt);
+      if (isNaN(start.getTime())) return null;
+      
+      if (plan.includes('Weekly')) {
+        start.setDate(start.getDate() + 7);
+      } else if (plan.includes('Monthly')) {
+        start.setDate(start.getDate() + 30);
+      } else if (plan.includes('Yearly')) {
+        start.setDate(start.getDate() + 365);
+      }
+      
+      return start.toISOString();
+    }
+
+    // Helper to show subscription status
+    function showSubscriptionStatus(message, statusType) {
+      subscriptionStatus.textContent = message;
+      subscriptionStatus.className = `subscription-status status-${statusType}`;
+      subscriptionStatus.style.display = 'block';
+    }
+
+    // Helper to show redirect notice
+    function showRedirectNotice(message, redirectUrl, delay = 3000) {
+      redirectNotice.textContent = message;
+      redirectNotice.style.display = 'block';
+      
+      setTimeout(() => {
+        window.location.href = redirectUrl;
+      }, delay);
+    }
+
     loginForm.addEventListener('submit', async (e) => {
       e.preventDefault();
       alertDiv.textContent = '';
       alertDiv.className = '';
+      subscriptionStatus.style.display = 'none';
+      redirectNotice.style.display = 'none';
 
       const email = emailInput.value.trim().toLowerCase();
       const password = document.getElementById('password').value;
@@ -416,6 +483,7 @@
       loginButton.disabled = true;
 
       try {
+        // Step 1: Verify user exists and credentials
         const { data: user, error, count } = await sb
           .from('users')
           .select('id, name, email, password, status', { count: 'exact' })
@@ -432,38 +500,90 @@
         if (user.password !== password) throw new Error('Invalid login credentials.');
         if (String(user.status).toLowerCase() !== 'approved') throw new Error('Your account is not yet approved—please check back soon.');
 
-        // Device tracking & Brevo alert
-        const deviceKey = `cbeDevice_${email}`;
-        const savedDevice = localStorage.getItem(deviceKey);
-        const currentDevice = navigator.userAgent;
-        if (!savedDevice || savedDevice !== currentDevice) {
-          localStorage.setItem(deviceKey, currentDevice);
-          const BREVO_API_KEY = "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";
-          const TEMPLATE_ID_LOGIN = 3;
-          const brevoPayload = {
-            sender: { name: "Chukwuemeka Bullion Exchange", email: "noreply@apexincomeoptions.com.ng" },
-            to: [{ email: user.email, name: user.name }],
-            templateId: TEMPLATE_ID_LOGIN,
-            params: {
-              contact: { FIRSTNAME: user.name, EMAIL: user.email },
-              DEVICE: currentDevice,
-              TIME: new Date().toLocaleString("en-US", { timeZone: "Africa/Lagos" })
-            }
-          };
-          fetch("https://api.brevo.com/v3/smtp/email", {
-            method: "POST",
-            headers: { "Content-Type": "application/json", "api-key": BREVO_API_KEY },
-            body: JSON.stringify(brevoPayload)
-          }).catch(console.error);
+        // Step 2: Check subscription status
+        const { data: payment, error: paymentError } = await sb
+          .from('payments')
+          .select('*')
+          .eq('email', email)
+          .order('created_at', { ascending: false })
+          .limit(1)
+          .maybeSingle();
+
+        if (paymentError) {
+          console.error('Error fetching payment:', paymentError);
+          throw new Error('Error checking your subscription status. Please try again.');
         }
 
-        if (rememberMeCheckbox.checked) localStorage.setItem('rememberedEmail', email);
-        else localStorage.removeItem('rememberedEmail');
+        // Handle different subscription scenarios
+        if (!payment) {
+          // No subscription found
+          showSubscriptionStatus('You have not subscribed to any VIP plan.', 'missing');
+          showRedirectNotice('Redirecting to subscription page in 5 seconds...', 'https://apexincomeoptions.com.ng/vip-subscription', 5000);
+          return;
+        }
 
-        sessionStorage.setItem('cbeLoggedIn', 'true');
-        sessionStorage.setItem('cbeUserId', user.id);
-        sessionStorage.setItem('cbeUserName', user.name);
-        setTimeout(() => { window.location.href = 'vip-dashboard.html'; }, 1000);
+        switch (payment.status.toLowerCase()) {
+          case 'pending':
+            // Payment pending admin approval
+            showSubscriptionStatus('Your payment is pending admin confirmation. Please wait for approval - an email will be sent to you once confirmed.', 'pending');
+            break;
+            
+          case 'rejected':
+            // Payment rejected
+            showSubscriptionStatus('Your payment was rejected. Please contact support or try a different payment method.', 'expired');
+            showRedirectNotice('Redirecting to subscription page in 5 seconds...', 'https://apexincomeoptions.com.ng/vip-subscription', 5000);
+            break;
+            
+          case 'approved':
+            // Payment approved - check if expired
+            const expiryDate = calculateExpiryDate(payment.created_at, payment.plan);
+            const now = new Date();
+            
+            if (expiryDate && new Date(expiryDate) < now) {
+              // Subscription expired
+              showSubscriptionStatus('Your subscription has expired. Please renew to continue accessing VIP features.', 'expired');
+              showRedirectNotice('Redirecting to subscription page in 5 seconds...', 'https://apexincomeoptions.com.ng/vip-subscription', 5000);
+            } else {
+              // Subscription active - log in
+              // Device tracking & Brevo alert
+              const deviceKey = `cbeDevice_${email}`;
+              const savedDevice = localStorage.getItem(deviceKey);
+              const currentDevice = navigator.userAgent;
+              if (!savedDevice || savedDevice !== currentDevice) {
+                localStorage.setItem(deviceKey, currentDevice);
+                const BREVO_API_KEY = "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";
+                const TEMPLATE_ID_LOGIN = 3;
+                const brevoPayload = {
+                  sender: { name: "Chukwuemeka Bullion Exchange", email: "noreply@apexincomeoptions.com.ng" },
+                  to: [{ email: user.email, name: user.name }],
+                  templateId: TEMPLATE_ID_LOGIN,
+                  params: {
+                    contact: { FIRSTNAME: user.name, EMAIL: user.email },
+                    DEVICE: currentDevice,
+                    TIME: new Date().toLocaleString("en-US", { timeZone: "Africa/Lagos" })
+                  }
+                };
+                fetch("https://api.brevo.com/v3/smtp/email", {
+                  method: "POST",
+                  headers: { "Content-Type": "application/json", "api-key": BREVO_API_KEY },
+                  body: JSON.stringify(brevoPayload)
+                }).catch(console.error);
+              }
+
+              if (rememberMeCheckbox.checked) localStorage.setItem('rememberedEmail', email);
+              else localStorage.removeItem('rememberedEmail');
+
+              sessionStorage.setItem('cbeLoggedIn', 'true');
+              sessionStorage.setItem('cbeUserId', user.id);
+              sessionStorage.setItem('cbeUserName', user.name);
+              setTimeout(() => { window.location.href = 'vip-dashboard.html'; }, 1000);
+            }
+            break;
+            
+          default:
+            // Unknown payment status
+            showSubscriptionStatus('Your payment status is unknown. Please contact support for assistance.', 'pending');
+        }
 
       } catch (err) {
         console.error("Login error:", err);
@@ -513,21 +633,6 @@
       document.querySelector('.circle-2').style.transform = `translate(${x*-20}px, ${y*-20}px)`;
     });
 
-    // Particle Background
-    function createParticles() {
-      const container = document.getElementById('particles');
-      for (let i=0; i<20; i++) {
-        const p = document.createElement('div');
-        p.classList.add('particle');
-        p.style.width = `${Math.random()*5+2}px`;
-        p.style.height = p.style.width;
-        p.style.left = `${Math.random()*100}%`;
-        p.style.top = `${Math.random()*100}%`;
-        p.style.animationDelay = `${Math.random()*5}s`;
-        container.appendChild(p);
-      }
-    }
-
     // Input Validation Feedback
     emailInput.addEventListener('input', () => {
       emailInput.style.borderColor = emailInput.validity.valid
@@ -549,18 +654,6 @@
         input.previousElementSibling.style.color = 'var(--text-light)';
       });
     });
-  </script>
-
-  <!-- Smartsupp Live Chat (optional) -->
-  <script type="text/javascript">
-    var _smartsupp = _smartsupp || {};
-    _smartsupp.key = '018a8bbd868518221e725341a7b2601231ec7ce8';
-    window.smartsupp||(function(d) {
-      var s,c,o=smartsupp=function(){ o._.push(arguments)};o._=[];
-      s=d.getElementsByTagName('script')[0];c=d.createElement('script');
-      c.type='text/javascript';c.charset='utf-8';c.async=true;
-      c.src='https://www.smartsuppchat.com/loader.js?';s.parentNode.insertBefore(c,s);
-    })(document);
   </script>
 </body>
 </html>
