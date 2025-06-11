@@ -2,7 +2,7 @@
 <html lang="en" data-theme="dark">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>CBE Admin – Payment Methods & Approvals</title>
 
   <!-- AUTH GUARD -->
@@ -21,66 +21,99 @@
 
   <style>
     :root {
-      --bg: #000; --text: #fff; --gold: #ffd700;
+      --bg: #000;
+      --text: #fff;
+      --gold: #ffd700;
       --glass-bg: rgba(255,255,255,0.05);
       --overlay: rgba(0,0,0,0.6);
+      --primary: #ffd700;
+      --primary-dark: #e6c200;
+      --secondary: #333;
+      --border: rgba(255,215,0,0.2);
     }
     [data-theme="light"] {
-      --bg: #f5f5f5; --text: #333; --gold: #cca300;
+      --bg: #f5f5f5;
+      --text: #333;
+      --gold: #cca300;
       --glass-bg: rgba(0,0,0,0.05);
       --overlay: rgba(255,255,255,0.15);
+      --primary: #cca300;
+      --primary-dark: #b59400;
+      --secondary: #ccc;
+      --border: rgba(204,163,0,0.2);
     }
-    * { margin:0; padding:0; box-sizing:border-box; }
+    * { margin: 0; padding: 0; box-sizing: border-box; }
     body {
-      font-family:'Poppins',sans-serif;
-      background: var(--bg); color: var(--text);
+      font-family: 'Poppins', sans-serif;
+      background: var(--bg);
+      color: var(--text);
     }
     .overlay {
-      position:fixed; top:0; left:0; width:100%; height:100%;
-      background: var(--overlay); z-index:-1;
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: var(--overlay);
+      z-index: -1;
     }
     .glass {
       background: var(--glass-bg);
       backdrop-filter: blur(10px);
-      border:1px solid rgba(255,215,0,0.2);
-      border-radius:8px;
+      border: 1px solid var(--border);
+      border-radius: 8px;
     }
-    a { color: var(--gold); text-decoration:none; }
     header.admin-header {
-      display:flex; align-items:center; justify-content:space-between;
-      padding:1rem 2rem; background:rgba(0,0,0,0.6);
-      border-bottom:1px solid var(--gold);
-      position:sticky; top:0; z-index:10;
+      background: linear-gradient(135deg, #111, var(--primary-dark));
+      padding: 1rem 2rem;
+      position: sticky;
+      top: 0;
+      z-index: 10;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.3);
     }
-    .logo { cursor:pointer; display:flex; align-items:center; }
-    .logo img { height:40px; }
-    #theme-toggle {
-      background:none; border:none; font-size:1.25rem;
-      cursor:pointer; color:var(--text);
+    .logo img {
+      height: 40px;
+      border: 2px solid var(--gold);
+      border-radius: 50%;
+      transition: transform 0.3s;
     }
-    #section-title { color: var(--gold); text-align:center; margin:2rem 0 1rem; }
-    .panel { margin-bottom:2rem; }
-    form.glass { border-radius:8px; padding:1.5rem; margin-bottom:1rem; }
-    .form-row { display:flex; gap:1rem; flex-wrap:wrap; }
-    .form-row > div { flex:1; min-width:150px; }
-    #methods-list .list-group-item {
-      background:var(--glass-bg); border:1px solid rgba(255,215,0,0.2);
-      color:var(--text); margin-bottom:.5rem; border-radius:4px;
-      display:flex; justify-content:space-between; align-items:center;
-    }
-    .method-info { flex-grow:1; }
-    .method-actions button { margin-left:.5rem; }
-    .payments-table {
-      background: var(--glass-bg);
+    .logo img:hover { transform: scale(1.1); }
+    #theme-toggle, #logout-btn {
       color: var(--text);
-      border-radius:8px;
-      overflow-x:auto;
+      transition: color 0.3s;
     }
-    .payments-table table {
-      min-width: 800px;
+    #theme-toggle:hover, #logout-btn:hover { color: var(--gold); }
+    .section-title {
+      color: var(--gold);
+      text-align: center;
+      margin: 2rem 0 1rem;
+      padding-bottom: 0.5rem;
+      border-bottom: 1px solid var(--gold);
+      font-weight: 600;
     }
-    .btn-approve { margin-right: .5rem; }
-    .toast { z-index:99999 !important; }
+    .card {
+      background: var(--glass-bg);
+      border: 1px solid var(--border);
+      box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+      transition: transform 0.2s;
+    }
+    .card:hover { transform: translateY(-5px); }
+    .table {
+      color: var(--text);
+    }
+    .table th, .table td { border-color: var(--border); }
+    .table-hover tbody tr:hover {
+      background-color: rgba(255,215,0,0.1);
+    }
+    .btn-primary {
+      background-color: var(--primary);
+      border-color: var(--primary);
+    }
+    .btn-primary:hover {
+      background-color: var(--primary-dark);
+      border-color: var(--primary-dark);
+    }
+    .loading { text-align: center; padding: 1rem; }
   </style>
 </head>
 <body>
@@ -89,21 +122,26 @@
   <!-- Header -->
   <header class="admin-header glass">
     <div class="logo" id="logo"><img src="CBE_logo.PNG" alt="CBE Logo"></div>
-    <button id="theme-toggle" aria-label="Toggle theme">🌞</button>
+    <div>
+      <button id="theme-toggle" aria-label="Toggle theme">🌞</button>
+      <button id="logout-btn" class="btn btn-outline-light ms-2">Logout</button>
+    </div>
   </header>
 
   <main class="container py-4">
-
     <!-- Payment Methods Panel -->
-    <h2 id="section-title">Payment Methods</h2>
+    <h2 class="section-title">Payment Methods</h2>
     <div class="panel">
-      <form id="method-form" class="glass">
-        <div class="form-row">
-          <div>
+      <form id="method-form" class="glass p-3 mb-3">
+        <div class="row g-3">
+          <div class="col-md-4">
             <label class="form-label">Name</label>
-            <input type="text" id="pm-name" class="form-control" placeholder="e.g. Pay ₦ via Card/Bank" required>
+            <div class="input-group">
+              <span class="input-group-text"><i class="bi bi-tag"></i></span>
+              <input type="text" id="pm-name" class="form-control" placeholder="e.g. Pay ₦ via Card/Bank" required>
+            </div>
           </div>
-          <div>
+          <div class="col-md-3">
             <label class="form-label">Type</label>
             <select id="pm-type" class="form-select" required>
               <option value="">-- Select --</option>
@@ -111,40 +149,91 @@
               <option value="crypto">Crypto</option>
             </select>
           </div>
-          <div>
+          <div class="col-md-4">
             <label class="form-label">Details</label>
-            <input type="text" id="pm-details" class="form-control"
-              placeholder="card → https://…  |  crypto → address" required>
+            <input type="text" id="pm-details" class="form-control" placeholder="Select type first" required>
           </div>
-          <div class="d-flex align-items-end">
+          <div class="col-md-1 d-flex align-items-end">
             <button type="button" id="save-btn" class="btn btn-primary w-100">Save</button>
           </div>
         </div>
       </form>
-      <ul class="list-group" id="methods-list"></ul>
+      <div class="row" id="methods-list"></div>
     </div>
 
     <!-- User Payments Panel -->
-    <h2 id="section-title">User Payments</h2>
-    <div class="payments-table glass p-3 mb-5">
-      <table class="table table-borderless text-white mb-0">
-        <thead>
-          <tr>
-            <th>Email</th>
-            <th>Plan</th>
-            <th>Method</th>
-            <th>Proof</th>
-            <th>Date</th>
-            <th>Status</th>
-            <th>Actions</th>
-          </tr>
-        </thead>
-        <tbody id="payments-list">
-          <!-- filled by JS -->
-        </tbody>
-      </table>
+    <h2 class="section-title">User Payments</h2>
+    <div class="panel">
+      <div class="row mb-4" id="payment-summary">
+        <div class="col-md-3">
+          <div class="card text-center">
+            <div class="card-body">
+              <h5 class="card-title">Total Payments</h5>
+              <p class="card-text" id="total-payments">0</p>
+            </div>
+          </div>
+        </div>
+        <div class="col-md-3">
+          <div class="card text-center">
+            <div class="card-body">
+              <h5 class="card-title">Approved</h5>
+              <p class="card-text" id="approved-count">0</p>
+            </div>
+          </div>
+        </div>
+        <div class="col-md-3">
+          <div class="card text-center">
+            <div class="card-body">
+              <h5 class="card-title">Pending</h5>
+              <p class="card-text" id="pending-count">0</p>
+            </div>
+          </div>
+        </div>
+        <div class="col-md-3">
+          <div class="card text-center">
+            <div class="card-body">
+              <h5 class="card-title">Rejected</h5>
+              <p class="card-text" id="rejected-count">0</p>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="row mb-3">
+        <div class="col-md-6">
+          <input type="text" class="form-control" id="search-input" placeholder="Search by email or plan">
+        </div>
+        <div class="col-md-3">
+          <select class="form-select" id="status-filter">
+            <option value="">All Statuses</option>
+            <option value="pending">Pending</option>
+            <option value="approved">Approved</option>
+            <option value="rejected">Rejected</option>
+          </select>
+        </div>
+        <div class="col-md-3">
+          <button class="btn btn-primary w-100" id="apply-filter">Apply Filter</button>
+        </div>
+      </div>
+      <div class="mb-3">
+        <button class="btn btn-secondary" id="export-btn">Export to CSV</button>
+      </div>
+      <div class="payments-table glass p-3 mb-5">
+        <table class="table table-hover table-borderless">
+          <thead>
+            <tr>
+              <th>Email</th>
+              <th>Plan</th>
+              <th>Method</th>
+              <th>Proof</th>
+              <th>Date</th>
+              <th>Status</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody id="payments-list"></tbody>
+        </table>
+      </div>
     </div>
-
   </main>
 
   <!-- Supabase UMD -->
@@ -156,21 +245,27 @@
     const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
     // DOM refs
-    const form          = document.getElementById('method-form');
-    const nameInp       = document.getElementById('pm-name');
-    const typeInp       = document.getElementById('pm-type');
-    const detailsInp    = document.getElementById('pm-details');
-    const saveBtn       = document.getElementById('save-btn');
-    const listGroup     = document.getElementById('methods-list');
+    const form = document.getElementById('method-form');
+    const nameInp = document.getElementById('pm-name');
+    const typeInp = document.getElementById('pm-type');
+    const detailsInp = document.getElementById('pm-details');
+    const saveBtn = document.getElementById('save-btn');
+    const listGroup = document.getElementById('methods-list');
     const paymentsTbody = document.getElementById('payments-list');
-    const logo          = document.getElementById('logo');
-    const themeBtn      = document.getElementById('theme-toggle');
+    const logo = document.getElementById('logo');
+    const themeBtn = document.getElementById('theme-toggle');
+    const logoutBtn = document.getElementById('logout-btn');
+    const searchInput = document.getElementById('search-input');
+    const statusFilter = document.getElementById('status-filter');
+    const applyFilterBtn = document.getElementById('apply-filter');
+    const exportBtn = document.getElementById('export-btn');
     let editId = null;
+    let allPayments = [];
 
     // Toast helper
     function showToast(msg, success = true) {
       const t = document.createElement('div');
-      t.className = `toast align-items-center text-white ${success?'bg-success':'bg-danger'} border-0 position-fixed top-0 end-0 m-3`;
+      t.className = `toast align-items-center text-white ${success ? 'bg-success' : 'bg-danger'} border-0 position-fixed top-0 end-0 m-3`;
       t.innerHTML = `
         <div class="d-flex">
           <div class="toast-body">${msg}</div>
@@ -182,71 +277,85 @@
 
     // Load payment methods
     async function loadMethods() {
+      listGroup.innerHTML = '<div class="loading"><i class="bi bi-spinner bi-spin"></i> Loading...</div>';
       const { data, error } = await supabase
         .from('payment_methods')
         .select('*')
         .order('id', { ascending: true });
-      if (error) return showToast('Failed to load methods', false);
-
+      if (error) {
+        showToast('Failed to load methods', false);
+        listGroup.innerHTML = '';
+        return;
+      }
       listGroup.innerHTML = '';
       data.forEach(m => {
-        const li = document.createElement('li');
-        li.className = 'list-group-item';
-
-        const info = document.createElement('div');
-        info.className = 'method-info';
-        const detTxt = m.type === 'card'
-          ? m.details.link
-          : m.details.address;
-        info.innerHTML = `<strong>${m.name}</strong> <em>(${m.type})</em><br><small>${detTxt}</small>`;
-
-        const actions = document.createElement('div');
-        actions.className = 'method-actions';
-        actions.innerHTML = `
-          <button class="btn btn-sm btn-warning" onclick="onEdit(${m.id})">
-            <i class="bi bi-pencil"></i>
-          </button>
-          <button class="btn btn-sm btn-danger" onclick="onDelete(${m.id})">
-            <i class="bi bi-trash"></i>
-          </button>`;
-
-        li.append(info, actions);
-        listGroup.append(li);
+        const card = document.createElement('div');
+        card.className = 'col-md-4 mb-3';
+        card.innerHTML = `
+          <div class="card">
+            <div class="card-body">
+              <h5 class="card-title">${m.name}</h5>
+              <p class="card-text">Type: ${m.type}<br>Details: ${m.type === 'card' ? m.details.link : m.details.address}</p>
+              <div class="text-end">
+                <button class="btn btn-sm btn-warning" onclick="onEdit(${m.id})" data-bs-toggle="tooltip" title="Edit"><i class="bi bi-pencil"></i></button>
+                <button class="btn btn-sm btn-danger" onclick="onDelete(${m.id})" data-bs-toggle="tooltip" title="Delete"><i class="bi bi-trash"></i></button>
+              </div>
+            </div>
+          </div>
+        `;
+        listGroup.append(card);
       });
+      bootstrap.Tooltip.getOrCreateInstance(listGroup);
     }
 
     // Load user payments
     async function loadPayments() {
-      // fetch methods map
+      paymentsTbody.innerHTML = '<tr><td colspan="7" class="loading"><i class="bi bi-spinner bi-spin"></i> Loading...</td></tr>';
       const { data: methods } = await supabase.from('payment_methods').select('id,name');
-      const methodMap = methods.reduce((acc,m)=>{ acc[m.id]=m.name; return acc; },{});
-
+      const methodMap = methods.reduce((acc, m) => { acc[m.id] = m.name; return acc; }, {});
       const { data, error } = await supabase
         .from('payments')
         .select('*')
         .order('created_at', { ascending: false });
-      if (error) return showToast('Failed to load payments', false);
+      if (error) {
+        showToast('Failed to load payments', false);
+        paymentsTbody.innerHTML = '';
+        return;
+      }
+      allPayments = data;
+      renderPayments(allPayments);
+      updateSummary();
+    }
 
+    function renderPayments(payments) {
       paymentsTbody.innerHTML = '';
-      data.forEach(p => {
+      payments.forEach(p => {
         const tr = document.createElement('tr');
         tr.innerHTML = `
           <td>${p.email}</td>
           <td>${p.plan}</td>
-          <td>${methodMap[p.method_id]||p.method_id}</td>
-          <td>
-            ${p.proof_url
-              ? `<button class="btn btn-sm btn-info" onclick="window.open('${p.proof_url}','_blank')">View Proof</button>`
-              : '—'}
-          </td>
+          <td>${methodMap[p.method_id] || p.method_id}</td>
+          <td>${p.proof_url ? `<button class="btn btn-sm btn-info" onclick="window.open('${p.proof_url}','_blank')">View Proof</button>` : '—'}</td>
           <td>${new Date(p.created_at).toLocaleString()}</td>
-          <td id="status-${p.id}">${p.status}</td>
+          <td><span class="badge bg-${p.status === 'approved' ? 'success' : p.status === 'rejected' ? 'danger' : 'warning'}">${p.status}</span></td>
           <td>
-            <button class="btn btn-sm btn-success btn-approve" onclick="updatePayment(${p.id},'approved')">Approve</button>
-            <button class="btn btn-sm btn-danger" onclick="updatePayment(${p.id},'rejected')">Reject</button>
+            <button class="btn btn-sm btn-success btn-approve" onclick="updatePayment(${p.id},'approved')" data-bs-toggle="tooltip" title="Approve payment">Approve</button>
+            <button class="btn btn-sm btn-danger" onclick="updatePayment(${p.id},'rejected')" data-bs-toggle="tooltip" title="Reject payment">Reject</button>
           </td>`;
         paymentsTbody.append(tr);
       });
+      bootstrap.Tooltip.getOrCreateInstance(paymentsTbody);
+    }
+
+    function updateSummary() {
+      const total = allPayments.length;
+      const approved = allPayments.filter(p => p.status === 'approved').length;
+      const pending = allPayments.filter(p => p.status === 'pending').length;
+      const rejected = allPayments.filter(p => p.status === 'rejected').length;
+      document.getElementById('total-payments').textContent = total;
+      document.getElementById('approved-count').textContent = approved;
+      document.getElementById('pending-count').textContent = pending;
+      document.getElementById('rejected-count').textContent = rejected;
     }
 
     // Update payment status
@@ -256,16 +365,16 @@
         .update({ status: newStatus })
         .eq('id', id);
       if (error) return showToast('Update failed', false);
-      document.getElementById(`status-${id}`).textContent = newStatus;
       showToast(`Payment ${newStatus}`);
+      loadPayments();
     }
 
     // Add or update method
     saveBtn.addEventListener('click', async () => {
       saveBtn.disabled = true;
-      const name  = nameInp.value.trim();
-      const type  = typeInp.value;
-      const raw   = detailsInp.value.trim();
+      const name = nameInp.value.trim();
+      const type = typeInp.value;
+      const raw = detailsInp.value.trim();
       if (!name || !type || !raw) {
         showToast('All fields required', false);
         saveBtn.disabled = false;
@@ -289,7 +398,7 @@
         saveBtn.textContent = 'Save';
         loadMethods();
         loadPayments();
-      } catch(err) {
+      } catch (err) {
         showToast(err.message, false);
       } finally {
         saveBtn.disabled = false;
@@ -297,18 +406,18 @@
     });
 
     window.onEdit = async id => {
-      const { data, error } = await supabase.from('payment_methods').select('*').eq('id',id).single();
+      const { data, error } = await supabase.from('payment_methods').select('*').eq('id', id).single();
       if (error) return showToast('Failed to load method', false);
       editId = id;
-      nameInp.value    = data.name;
-      typeInp.value    = data.type;
+      nameInp.value = data.name;
+      typeInp.value = data.type;
       detailsInp.value = data.type === 'card' ? data.details.link : data.details.address;
       saveBtn.textContent = 'Update';
     };
 
     window.onDelete = async id => {
       if (!confirm('Delete this method?')) return;
-      const { error } = await supabase.from('payment_methods').delete().eq('id',id);
+      const { error } = await supabase.from('payment_methods').delete().eq('id', id);
       if (error) return showToast('Delete failed', false);
       showToast('Deleted');
       form.reset();
@@ -317,6 +426,51 @@
       loadMethods();
       loadPayments();
     };
+
+    // Filter payments
+    applyFilterBtn.addEventListener('click', () => {
+      const searchTerm = searchInput.value.toLowerCase();
+      const status = statusFilter.value;
+      const filteredPayments = allPayments.filter(p => {
+        const matchesSearch = p.email.toLowerCase().includes(searchTerm) || p.plan.toLowerCase().includes(searchTerm);
+        const matchesStatus = status ? p.status === status : true;
+        return matchesSearch && matchesStatus;
+      });
+      renderPayments(filteredPayments);
+    });
+
+    // Export to CSV
+    exportBtn.addEventListener('click', () => {
+      const headers = ['Email', 'Plan', 'Method', 'Proof', 'Date', 'Status'];
+      const csvRows = [headers.join(',')];
+      allPayments.forEach(p => {
+        const row = [
+          p.email,
+          p.plan,
+          p.method_id,
+          p.proof_url || '',
+          new Date(p.created_at).toLocaleString(),
+          p.status
+        ].map(v => `"${v}"`).join(',');
+        csvRows.push(row);
+      });
+      const csvString = csvRows.join('\n');
+      const blob = new Blob([csvString], { type: 'text/csv' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = 'payments.csv';
+      a.click();
+      URL.revokeObjectURL(url);
+    });
+
+    // Real-time updates
+    supabase
+      .from('payments')
+      .on('INSERT', payload => {
+        loadPayments();
+      })
+      .subscribe();
 
     // Navigation & theme
     logo.onclick = () => location.href = 'admin-dashboard.html';
@@ -329,6 +483,28 @@
       document.documentElement.getAttribute('data-theme') === 'dark' ? 'light' : 'dark'
     );
     applyTheme(localStorage.getItem('theme') || 'dark');
+
+    logoutBtn.addEventListener('click', () => {
+      localStorage.removeItem('isLoggedIn');
+      location.href = 'admin-login.html';
+    });
+
+    // Dynamic details placeholder
+    typeInp.addEventListener('change', () => {
+      detailsInp.value = '';
+      if (typeInp.value === 'card') {
+        detailsInp.placeholder = 'Enter payment link (https://...)';
+      } else if (typeInp.value === 'crypto') {
+        detailsInp.placeholder = 'Enter crypto address';
+      } else {
+        detailsInp.placeholder = 'Select type first';
+      }
+    });
+
+    // Initialize tooltips
+    document.addEventListener('DOMContentLoaded', () => {
+      document.querySelectorAll('[data-bs-toggle="tooltip"]').forEach(el => new bootstrap.Tooltip(el));
+    });
 
     // Initial load
     loadMethods();
