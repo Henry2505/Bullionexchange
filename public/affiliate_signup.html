@@ -3,160 +3,546 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Affiliate Signup</title>
+  <title>Affiliate Signup Portal</title>
   <link
     href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css"
     rel="stylesheet"
     crossorigin="anonymous"
   />
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>
   <style>
+    :root {
+      --primary-gradient: linear-gradient(135deg, #ff9a00, #ff5200);
+      --card-bg: rgba(25, 25, 35, 0.85);
+      --card-border: 1px solid rgba(204, 163, 0, 0.4);
+      --text-light: #f0f0f0;
+      --text-muted: #b0b0b0;
+    }
+    
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+    
     body {
-      background: linear-gradient(135deg, #1a1a1a, #2c2c2c);
-      color: #e0e0e0;
-      font-family: 'Poppins', sans-serif;
-      height: 100vh;
+      background: radial-gradient(circle at top right, #1a1a2e, #0d0d1a);
+      color: var(--text-light);
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      min-height: 100vh;
       display: flex;
       align-items: center;
       justify-content: center;
-      margin: 0;
+      padding: 20px;
+      position: relative;
+      overflow-x: hidden;
     }
-    .signup-container {
-      background: rgba(40, 40, 40, 0.9);
-      padding: 2.5rem;
-      border-radius: 12px;
-      box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5);
+    
+    /* Background animation */
+    .bg-animation {
+      position: absolute;
+      top: 0;
+      left: 0;
       width: 100%;
-      max-width: 450px;
-      border: 1px solid #cca300;
+      height: 100%;
+      z-index: -1;
+      overflow: hidden;
     }
-    .signup-container h4 {
-      color: #cca300;
+    
+    .circle {
+      position: absolute;
+      border-radius: 50%;
+      background: rgba(255, 154, 0, 0.05);
+      animation: float 15s infinite linear;
+    }
+    
+    .circle:nth-child(1) {
+      width: 300px;
+      height: 300px;
+      top: 10%;
+      left: 5%;
+    }
+    
+    .circle:nth-child(2) {
+      width: 200px;
+      height: 200px;
+      top: 60%;
+      left: 80%;
+      animation-delay: -5s;
+    }
+    
+    .circle:nth-child(3) {
+      width: 150px;
+      height: 150px;
+      top: 30%;
+      left: 75%;
+      animation-delay: -8s;
+    }
+    
+    @keyframes float {
+      0% {
+        transform: translate(0, 0) rotate(0deg);
+      }
+      50% {
+        transform: translate(20px, 30px) rotate(180deg);
+      }
+      100% {
+        transform: translate(0, 0) rotate(360deg);
+      }
+    }
+    
+    .container {
+      max-width: 1200px;
+      margin: 0 auto;
+    }
+    
+    .card {
+      background: var(--card-bg);
+      padding: 2.5rem;
+      border: var(--card-border);
+      border-radius: 16px;
+      width: 100%;
+      max-width: 500px;
+      box-shadow: 0 15px 35px rgba(0, 0, 0, 0.5);
+      backdrop-filter: blur(10px);
+      position: relative;
+      overflow: hidden;
+      transition: transform 0.3s ease, box-shadow 0.3s ease;
+    }
+    
+    .card:hover {
+      transform: translateY(-5px);
+      box-shadow: 0 20px 40px rgba(0, 0, 0, 0.6);
+    }
+    
+    .card::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 4px;
+      background: var(--primary-gradient);
+    }
+    
+    .logo {
       text-align: center;
       margin-bottom: 2rem;
-      font-weight: 600;
     }
+    
+    .logo i {
+      font-size: 3.5rem;
+      background: var(--primary-gradient);
+      -webkit-background-clip: text;
+      background-clip: text;
+      color: transparent;
+      margin-bottom: 0.5rem;
+    }
+    
+    .logo h2 {
+      font-weight: 700;
+      letter-spacing: 1px;
+      background: var(--primary-gradient);
+      -webkit-background-clip: text;
+      background-clip: text;
+      color: transparent;
+      margin: 0;
+    }
+    
     .form-control {
-      background: #333;
-      border: 1px solid #555;
-      color: #e0e0e0;
+      background: rgba(40, 40, 50, 0.6);
+      border: 1px solid rgba(100, 100, 120, 0.4);
+      color: var(--text-light);
+      padding: 0.75rem 1.25rem;
+      border-radius: 8px;
+      transition: all 0.3s ease;
     }
+    
     .form-control:focus {
-      background: #333;
-      border-color: #cca300;
-      box-shadow: 0 0 5px rgba(204, 163, 0, 0.5);
-      color: #e0e0e0;
+      background: rgba(50, 50, 60, 0.8);
+      border-color: #ff9a00;
+      box-shadow: 0 0 0 0.25rem rgba(255, 154, 0, 0.25);
+      color: var(--text-light);
     }
-    .btn-signup {
-      background: #cca300;
+    
+    .form-control::placeholder {
+      color: var(--text-muted);
+    }
+    
+    .input-group-text {
+      background: rgba(40, 40, 50, 0.6);
+      border: 1px solid rgba(100, 100, 120, 0.4);
+      color: var(--text-muted);
+      border-right: none;
+    }
+    
+    .btn-primary {
+      background: var(--primary-gradient);
       border: none;
       padding: 0.75rem;
-      font-weight: 500;
-      transition: background 0.3s ease;
-    }
-    .btn-signup:hover {
-      background: #e0b000;
-    }
-    .alert {
-      margin-bottom: 1.5rem;
-      padding: 0.75rem;
       border-radius: 8px;
+      font-weight: 600;
+      letter-spacing: 0.5px;
+      text-transform: uppercase;
+      transition: all 0.3s ease;
+      position: relative;
+      overflow: hidden;
+    }
+    
+    .btn-primary:hover {
+      background: linear-gradient(135deg, #ff8c00, #ff4500);
+      transform: translateY(-2px);
+      box-shadow: 0 10px 20px rgba(255, 140, 0, 0.3);
+    }
+    
+    .btn-primary:disabled {
+      opacity: 0.7;
+      transform: none;
+      box-shadow: none;
+    }
+    
+    .btn-primary::after {
+      content: '';
+      position: absolute;
+      top: -50%;
+      left: -50%;
+      width: 200%;
+      height: 200%;
+      background: rgba(255, 255, 255, 0.1);
+      transform: rotate(30deg);
+      transition: all 0.6s ease;
+    }
+    
+    .btn-primary:hover::after {
+      transform: rotate(30deg) translate(20%, 20%);
+    }
+    
+    .referral-badge {
+      display: inline-block;
+      background: rgba(255, 154, 0, 0.15);
+      color: #ff9a00;
+      padding: 0.25rem 0.75rem;
+      border-radius: 20px;
+      font-size: 0.85rem;
+      margin-top: 0.5rem;
+    }
+    
+    .status-message {
+      padding: 1rem;
+      border-radius: 8px;
+      margin-top: 1.5rem;
+      text-align: center;
+      display: none;
+      animation: fadeIn 0.3s ease;
+    }
+    
+    .success {
+      background: rgba(40, 167, 69, 0.15);
+      color: #28a745;
+      border: 1px solid rgba(40, 167, 69, 0.3);
+    }
+    
+    .error {
+      background: rgba(220, 53, 69, 0.15);
+      color: #dc3545;
+      border: 1px solid rgba(220, 53, 69, 0.3);
+    }
+    
+    .warning {
+      background: rgba(255, 193, 7, 0.15);
+      color: #ffc107;
+      border: 1px solid rgba(255, 193, 7, 0.3);
+    }
+    
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(10px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+    
+    .features {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 1.5rem;
+      margin-top: 3rem;
+      justify-content: center;
+    }
+    
+    .feature-card {
+      background: var(--card-bg);
+      border: var(--card-border);
+      border-radius: 12px;
+      padding: 1.5rem;
+      width: 250px;
+      text-align: center;
+      transition: transform 0.3s ease;
+    }
+    
+    .feature-card:hover {
+      transform: translateY(-5px);
+    }
+    
+    .feature-card i {
+      font-size: 2.5rem;
+      background: var(--primary-gradient);
+      -webkit-background-clip: text;
+      background-clip: text;
+      color: transparent;
+      margin-bottom: 1rem;
+    }
+    
+    .feature-card h4 {
+      font-size: 1.1rem;
+      margin-bottom: 0.5rem;
+      color: var(--text-light);
+    }
+    
+    .feature-card p {
+      font-size: 0.9rem;
+      color: var(--text-muted);
+    }
+    
+    footer {
+      text-align: center;
+      margin-top: 3rem;
+      color: var(--text-muted);
+      font-size: 0.9rem;
+    }
+    
+    @media (max-width: 768px) {
+      .card {
+        padding: 1.5rem;
+      }
+      
+      .features {
+        flex-direction: column;
+        align-items: center;
+      }
     }
   </style>
 </head>
 <body>
-  <div class="signup-container">
-    <div id="message" class="mb-3"></div>
-    <h4>Affiliate Signup</h4>
-    <form id="signup-form">
-      <div class="mb-3">
-        <label for="email" class="form-label">Email</label>
-        <input id="email" class="form-control" type="email" placeholder="Enter your email" required>
+  <div class="bg-animation">
+    <div class="circle"></div>
+    <div class="circle"></div>
+    <div class="circle"></div>
+  </div>
+  
+  <div class="container">
+    <div class="row justify-content-center">
+      <div class="col-md-8 col-lg-6">
+        <div class="card">
+          <div class="logo">
+            <i class="fas fa-chart-network"></i>
+            <h2>AFFILIATE SIGNUP PORTAL</h2>
+          </div>
+          
+          <div id="referralStatus" class="referral-badge">
+            <i class="fas fa-link me-2"></i>No referral detected
+          </div>
+          
+          <form id="signupForm" class="mt-4">
+            <div class="mb-3">
+              <label for="email" class="form-label">Email Address</label>
+              <div class="input-group">
+                <span class="input-group-text"><i class="fas fa-envelope"></i></span>
+                <input id="email" class="form-control" type="email" placeholder="your.email@example.com" required>
+              </div>
+            </div>
+            
+            <div class="mb-3">
+              <label for="password" class="form-label">Password</label>
+              <div class="input-group">
+                <span class="input-group-text"><i class="fas fa-lock"></i></span>
+                <input id="password" class="form-control" type="password" placeholder="Create a strong password" required>
+              </div>
+              <div class="form-text">Use at least 8 characters with numbers and symbols</div>
+            </div>
+            
+            <div class="d-grid mt-4">
+              <button id="submitBtn" class="btn btn-primary" type="submit">
+                <span id="buttonText">Create Affiliate Account</span>
+                <span id="spinner" class="spinner-border spinner-border-sm ms-2" role="status" aria-hidden="true" style="display: none;"></span>
+              </button>
+            </div>
+          </form>
+          
+          <div id="statusMessage" class="status-message"></div>
+        </div>
       </div>
-      <div class="mb-3">
-        <label for="password" class="form-label">Password</label>
-        <input id="password" class="form-control" type="password" placeholder="Enter your password" required>
+    </div>
+    
+    <div class="features">
+      <div class="feature-card">
+        <i class="fas fa-bolt"></i>
+        <h4>Real-Time Tracking</h4>
+        <p>Monitor referrals and commissions in real-time</p>
       </div>
-      <button class="btn btn-signup" type="submit">Sign Up</button>
-    </form>
+      
+      <div class="feature-card">
+        <i class="fas fa-chart-line"></i>
+        <h4>Performance Dashboard</h4>
+        <p>Track your success with detailed analytics</p>
+      </div>
+      
+      <div class="feature-card">
+        <i class="fas fa-wallet"></i>
+        <h4>Easy Payouts</h4>
+        <p>Get paid quickly with multiple options</p>
+      </div>
+    </div>
+    
+    <footer>
+      <p>© 2023 Affiliate Program. All rights reserved.</p>
+    </footer>
   </div>
 
   <!-- Bootstrap JS -->
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js" crossorigin="anonymous"></script>
 
   <script>
-    // Initialize Supabase client
-    const client = window.supabase.createClient(
-      'https://dapwpgvnfjcfqqhrpxla.supabase.co',
-      'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImRhcHdwZ3ZuZmpjZnFxaHJweGxhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDcwNDA4ODgsImV4cCI6MjA2MjYxNjg4OH0.ICC0UsLlzJDNre7rFCeD3k6iVzo6jOJgn3PhABpEMsQ'
-    );
-
-    // Get form and URL referral code
-    const form = document.getElementById('signup-form');
-    const urlParams = new URLSearchParams(window.location.search);
-    const refCode = urlParams.get('ref');
-
-    // Function to display messages
-    function showMessage(text, type = 'success') {
-      const messageDiv = document.getElementById('message');
-      messageDiv.innerHTML = `<div class="alert alert-${type}">${text}</div>`;
-    }
-
-    // Form submission handler
-    async function handleSubmit(e) {
-      e.preventDefault();
-
-      const submitButton = form.querySelector('button[type="submit"]');
-      submitButton.disabled = true;
-      submitButton.innerHTML = 'Signing up... <span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>';
-      document.getElementById('message').innerHTML = '';
-
-      const email = document.getElementById('email').value.trim();
-      const password = document.getElementById('password').value;
-      const newCode = Math.random().toString(36).slice(2, 10).toUpperCase();
-
-      let refererId = null;
-      if (refCode) {
-        const { data: referer, error: refererError } = await client
-          .from('affiliate_accounts')
-          .select('id')
-          .eq('referral_code', refCode)
-          .single();
-        if (!refererError && referer) {
-          refererId = referer.id;
-        }
+    document.addEventListener('DOMContentLoaded', function() {
+      // Create Supabase client
+      const client = window.supabase.createClient(
+        'https://dapwpgvnfjcfqqhrpxla.supabase.co',
+        'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImRhcHdwZ3ZuZmpjZnFxaHJweGxhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDcwNDA4ODgsImV4cCI6MjA2MjYxNjg4OH0.ICC0UsLlzJDNre7rFCeD3k6iVzo6jOJgn3PhABpEMsQ'
+      );
+      
+      // DOM elements
+      const form = document.getElementById('signupForm');
+      const submitBtn = document.getElementById('submitBtn');
+      const buttonText = document.getElementById('buttonText');
+      const spinner = document.getElementById('spinner');
+      const statusMessage = document.getElementById('statusMessage');
+      const referralStatus = document.getElementById('referralStatus');
+      
+      // Get referral code from URL
+      const urlParams = new URLSearchParams(window.location.search);
+      const referralCode = urlParams.get('ref');
+      let referredBy = null;
+      
+      // Update UI based on referral code presence
+      if (referralCode) {
+        referralStatus.innerHTML = `<i class="fas fa-link me-2"></i>Referral detected: ${referralCode}`;
       }
-
-      const { data: newUser, error: insertError } = await client
-        .from('affiliate_accounts')
-        .insert([{ email, password, referral_code: newCode }])
-        .select()
-        .single();
-
-      if (insertError) {
-        let errorMessage = 'An error occurred. Please try again.';
-        if (insertError.code === '23505') {  // Unique constraint violation (e.g., duplicate email)
-          errorMessage = 'This email is already registered. Please use a different email.';
+      
+      // Form submission handler
+      form.addEventListener('submit', async function(e) {
+        e.preventDefault();
+        
+        // Get form values
+        const email = document.getElementById('email').value.trim();
+        const password = document.getElementById('password').value;
+        
+        // Basic validation
+        if (!email || !password) {
+          showMessage('Please fill in all fields', 'error');
+          return;
         }
-        showMessage(errorMessage, 'danger');
-      } else {
-        if (refererId) {
-          const { error: referralError } = await client
-            .from('referrals')
-            .insert([{ affiliate_id: refererId, referred_email: email }]);
-          if (referralError) {
-            console.error('Referral insert error:', referralError);
+        
+        // Validate email format
+        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+        if (!emailRegex.test(email)) {
+          showMessage('Please enter a valid email address', 'error');
+          return;
+        }
+        
+        // Validate password strength
+        if (password.length < 8) {
+          showMessage('Password must be at least 8 characters', 'error');
+          return;
+        }
+        
+        // Show loading state
+        submitBtn.disabled = true;
+        buttonText.textContent = 'Creating Account...';
+        spinner.style.display = 'inline-block';
+        
+        try {
+          // If referral code exists, find the referrer
+          if (referralCode) {
+            const { data: referrer, error: referrerError } = await client
+              .from('affiliate_accounts')
+              .select('id')
+              .eq('referral_code', referralCode)
+              .single();
+              
+            if (!referrerError && referrer) {
+              referredBy = referrer.id;
+            }
           }
+          
+          // Generate new referral code for this affiliate
+          const newReferralCode = generateReferralCode();
+          
+          // Create affiliate account
+          const { data, error } = await client
+            .from('affiliate_accounts')
+            .insert([{ 
+              email, 
+              password, 
+              referral_code: newReferralCode,
+              referred_by: referredBy 
+            }])
+            .select();
+          
+          if (error) {
+            showMessage(`Signup failed: ${error.message}`, 'error');
+          } else {
+            const newAffiliate = data[0];
+            
+            // Log the referral if applicable
+            if (referredBy) {
+              await client
+                .from('referrals')
+                .insert([{ 
+                  affiliate_id: referredBy, 
+                  referred_email: email 
+                }]);
+            }
+            
+            showMessage(
+              `✅ Account created successfully!<br>Your referral code: <strong>${newReferralCode}</strong>`,
+              'success'
+            );
+            
+            // Reset form
+            form.reset();
+          }
+        } catch (err) {
+          showMessage(`An unexpected error occurred: ${err.message}`, 'error');
+        } finally {
+          // Reset button state
+          submitBtn.disabled = false;
+          buttonText.textContent = 'Create Affiliate Account';
+          spinner.style.display = 'none';
         }
-        showMessage('Signup successful! Welcome to the affiliate program.');
-        form.reset();
+      });
+      
+      // Generate random referral code
+      function generateReferralCode() {
+        const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
+        let code = '';
+        for (let i = 0; i < 8; i++) {
+          code += chars.charAt(Math.floor(Math.random() * chars.length));
+        }
+        return code;
       }
-
-      submitButton.disabled = false;
-      submitButton.innerHTML = 'Sign Up';
-    }
-
-    form.addEventListener('submit', handleSubmit);
+      
+      // Show status message
+      function showMessage(message, type) {
+        statusMessage.innerHTML = message;
+        statusMessage.className = `status-message ${type}`;
+        statusMessage.style.display = 'block';
+        
+        // Auto-hide success messages after 5 seconds
+        if (type === 'success') {
+          setTimeout(() => {
+            statusMessage.style.display = 'none';
+          }, 5000);
+        }
+      }
+    });
   </script>
 </body>
 </html>
