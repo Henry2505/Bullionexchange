@@ -4,343 +4,553 @@
   <meta charset="UTF-8" />
   <meta http-equiv="X-UA-Compatible" content="IE=edge" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>World-Class Clock Implementation</title>
+
+  <!-- Primary Page Meta -->
+  <title>Trade Insights – CBE | The Pinnacle of Gold Trading Wisdom</title>
+  <meta name="description" content="Gain comprehensive access to historical signals, trade records, insights, pips, and performance for XAUUSD (gold)—VIP access required." />
+  <meta name="keywords" content="CBE, trade insights, historical signals, trade records, pips, performance, XAUUSD, gold trading" />
+  <link rel="canonical" href="https://www.apexincomeoptions.com/trade-insights.html" />
+
+  <!-- Open Graph / Social -->
+  <meta property="og:title" content="Trade Insights – CBE | Gold Trading Wisdom" />
+  <meta property="og:description" content="Comprehensive VIP access to historical signals, trade records, and insights for XAUUSD (gold). Join Chukwuemeka Bullion Exchange today." />
+  <meta property="og:image" content="https://www.apexincomeoptions.com/assets/og-image.jpg" />
+  <meta property="og:url" content="https://www.apexincomeoptions.com/trade-insights.html" />
+  <meta name="twitter:card" content="summary_large_image" />
+
+  <!-- Preconnect & Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700&family=Roboto:wght@300;400;700&display=swap" rel="stylesheet" />
+
+  <!-- TradingView & Particles.js -->
+  <script src="https://s3.tradingview.com/tv.js" defer></script>
+  <script src="https://s3.tradingview.com/external-embedding/embed-widget-ticker-tape.js" defer></script>
+  <script src="https://s3.tradingview.com/external-embedding/embed-widget-news.js" defer></script>
+  <script src="https://cdn.jsdelivr.net/npm/particles.js@2.0.0/particles.min.js" defer></script>
+
+  <!-- Core Styles -->
   <style>
-    /* -- Reset & Base -- */
+    /* — Reset & Base — */
     *, *:before, *:after { box-sizing: border-box; margin: 0; padding: 0; }
     html { scroll-behavior: smooth; }
     body {
-      font-family: 'Segoe UI', Roboto, 'Helvetica Neue', sans-serif;
-      background: linear-gradient(135deg, #1a1a1a, #0d0d0d);
-      color: #fff;
+      font-family: 'Roboto', sans-serif;
+      background: var(--bg);
+      color: var(--text);
       line-height: 1.6;
       overflow-x: hidden;
-      min-height: 100vh;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      padding: 2rem;
+      transition: background .3s, color .3s;
     }
-    
-    /* -- World-Class Clock Styles -- */
-    .clock-container {
-      position: fixed;
+    a { color: var(--gold); text-decoration: none; transition: color .2s; }
+    a:hover { color: var(--text-light); }
+
+    /* — Theme Variables — */
+    :root {
+      --bg: #1a1a1a;
+      --text: #fff;
+      --text-light: #ccc;
+      --text-muted: #888;
+      --gold: #d4af37;
+      --glass: rgba(255,255,255,0.1);
+    }
+    [data-theme="light"] {
+      --bg: #fff;
+      --text: #111;
+      --text-light: #333;
+      --text-muted: #666;
+      --gold: #b8860b;
+      --glass: rgba(0,0,0,0.05);
+    }
+
+    /* — Utilities — */
+    .hidden { display: none !important; }
+    .center { text-align: center; }
+    .btn { display: inline-block; text-transform: uppercase; font-family: 'Playfair Display', serif; cursor: pointer; }
+    .btn-gold {
+      background: var(--gold);
+      color: var(--bg);
+      padding: 1rem 2rem;
+      border-radius: 50px;
+      box-shadow: 0 4px 20px rgba(0,0,0,0.3);
+      transition: transform .3s, box-shadow .3s;
+    }
+    .btn-gold:hover {
+      transform: scale(1.05);
+      box-shadow: 0 8px 30px rgba(0,0,0,0.4);
+    }
+
+    /* — Layout — */
+    header {
+      position: sticky;
       top: 0;
-      right: 0;
       width: 100%;
+      background: var(--bg);
+      backdrop-filter: blur(8px);
+      z-index: 100;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 1rem 2rem;
+    }
+    main { max-width: 1200px; margin: 0 auto; padding: 2rem 1rem; }
+    footer {
+      text-align: center;
+      padding: 2rem 1rem;
+      color: var(--text-muted);
+      font-size: .9rem;
+    }
+
+    /* — Header Specific Styles — */
+    .header-left, .header-right {
+      display: flex;
+      align-items: center;
+    }
+    .header-center {
+      text-align: center;
+    }
+    #header-time {
+      font-family: 'Playfair Display', serif;
+      color: var(--gold);
+    }
+    #header-date {
+      font-family: 'Roboto', sans-serif;
+      font-size: 0.9rem;
+      color: var(--text-light);
+    }
+    #header-clock {
+      font-size: 1.2rem;
+    }
+
+    /* — Logo & Theme Toggle — */
+    .logo img { width: 150px; transition: transform .3s; }
+    .logo img:hover { transform: scale(1.1); }
+    #theme-toggle {
+      background: none;
+      border: none;
+      font-size: 1.8rem;
+      cursor: pointer;
+      transition: transform .5s;
+    }
+    #theme-toggle:hover { transform: rotate(360deg); }
+
+    /* — Navigation — */
+    nav {
       display: flex;
       justify-content: center;
-      padding: 1rem;
-      z-index: 1000;
-      background: rgba(10, 10, 10, 0.8);
-      backdrop-filter: blur(10px);
-      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.5);
-      border-bottom: 1px solid rgba(212, 175, 55, 0.3);
+      flex-wrap: wrap;
+      margin: 1rem 0;
     }
-    
-    .world-class-clock {
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      font-family: 'Orbitron', 'Arial', sans-serif;
-      color: #d4af37;
-      text-shadow: 0 0 10px rgba(212, 175, 55, 0.5);
-      padding: 1rem 2rem;
-      border-radius: 15px;
-      background: rgba(20, 20, 20, 0.7);
-      border: 1px solid rgba(212, 175, 55, 0.2);
-      transition: all 0.3s ease;
-    }
-    
-    .world-class-clock:hover {
-      background: rgba(30, 30, 30, 0.9);
-      box-shadow: 0 0 25px rgba(212, 175, 55, 0.3);
-      transform: translateY(-3px);
-    }
-    
-    .date-display {
-      font-size: 1.3rem;
-      font-weight: 400;
-      letter-spacing: 2px;
-      margin-bottom: 0.5rem;
-      color: #e0e0e0;
-    }
-    
-    .time-display {
-      font-size: 2.8rem;
-      font-weight: 700;
-      display: flex;
-      gap: 0.2rem;
-    }
-    
-    .time-segment {
-      display: inline-block;
-      min-width: 60px;
-      text-align: center;
+    nav a {
+      margin: 0.5rem 1rem;
+      font-weight: 600;
+      font-size: 1.1rem;
       position: relative;
     }
-    
-    .time-segment::after {
-      content: ":";
+    nav a:hover::after {
+      content: '';
       position: absolute;
-      right: -12px;
+      bottom: -4px;
+      left: 0;
+      width: 100%;
+      height: 2px;
+      background: var(--gold);
+      animation: underline 0.4s ease-out forwards;
     }
-    
-    .time-segment:last-child::after {
-      display: none;
-    }
-    
-    .milliseconds {
-      font-size: 1.2rem;
-      align-self: flex-end;
-      margin-bottom: 0.4rem;
-      color: #b3b3b3;
-    }
-    
-    /* -- Information Panel -- */
-    .info-panel {
-      max-width: 800px;
-      background: rgba(30, 30, 30, 0.7);
-      border-radius: 15px;
-      padding: 2.5rem;
-      margin-top: 120px;
-      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
-      border: 1px solid rgba(212, 175, 55, 0.2);
-      backdrop-filter: blur(5px);
-    }
-    
-    .info-panel h1 {
-      font-size: 2.5rem;
-      color: #d4af37;
-      text-align: center;
-      margin-bottom: 1.5rem;
-      text-shadow: 0 0 10px rgba(212, 175, 55, 0.3);
-    }
-    
-    .info-panel h2 {
-      color: #d4af37;
-      margin-top: 2rem;
-      margin-bottom: 1rem;
-      border-bottom: 1px solid rgba(212, 175, 55, 0.3);
-      padding-bottom: 0.5rem;
-    }
-    
-    .features-grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-      gap: 1.5rem;
-      margin-top: 2rem;
-    }
-    
-    .feature-card {
-      background: rgba(40, 40, 40, 0.5);
-      border-radius: 10px;
-      padding: 1.5rem;
-      border: 1px solid rgba(212, 175, 55, 0.2);
-      transition: all 0.3s ease;
-    }
-    
-    .feature-card:hover {
-      transform: translateY(-5px);
-      box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
-      background: rgba(50, 50, 50, 0.6);
-    }
-    
-    .feature-card h3 {
-      color: #d4af37;
-      margin-bottom: 0.8rem;
-      display: flex;
-      align-items: center;
-      gap: 0.5rem;
-    }
-    
-    .feature-card h3::before {
-      content: "✓";
-      color: #4CAF50;
-    }
-    
-    /* -- Theme Switcher -- */
-    .theme-switcher {
+    @keyframes underline { from { width: 0 } to { width: 100% } }
+
+    /* — Particles Background — */
+    #particles-js {
       position: fixed;
-      bottom: 2rem;
-      right: 2rem;
-      background: rgba(30, 30, 30, 0.8);
-      border-radius: 50%;
-      width: 50px;
-      height: 50px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      cursor: pointer;
-      border: 1px solid rgba(212, 175, 55, 0.3);
-      box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3);
-      z-index: 100;
+      top: 0; left: 0;
+      width: 100%; height: 100%;
+      pointer-events: none;
+      z-index: -1;
     }
-    
-    .theme-switcher:hover {
-      background: rgba(40, 40, 40, 0.9);
+
+    /* — Cards & Scroll Animation — */
+    .card {
+      background: var(--glass);
+      backdrop-filter: blur(12px);
+      border-radius: 12px;
+      padding: 2rem;
+      margin-bottom: 3rem;
+      box-shadow: 0 8px 30px rgba(0,0,0,0.3);
+      opacity: 0;
+      transform: translateY(40px);
+      transition: opacity .8s ease-out, transform .8s ease-out;
     }
-    
-    /* -- Responsive Design -- */
+    .card.visible {
+      opacity: 1;
+      transform: translateY(0);
+    }
+    .card h2 {
+      font-family: 'Playfair Display', serif;
+      color: var(--gold);
+      margin-bottom: 1rem;
+      font-size: 2.2rem;
+    }
+
+    /* — Video Grid — */
+    .video-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+      gap: 2rem;
+      margin-top: 1rem;
+    }
+    .video-grid video {
+      width: 100%;
+      border-radius: 8px;
+      box-shadow: 0 4px 15px rgba(0,0,0,0.3);
+      transition: transform .3s;
+    }
+    .video-grid video:hover { transform: scale(1.03); }
+
+    /* — TradingView & Chart — */
+    #chart { height: 500px; border-radius: 10px; overflow: hidden; }
+    .tradingview-widget-container { margin-top: 1rem; overflow: hidden; border-radius: 8px; }
+
+    /* — Countdown & Progress — */
+    .countdown { margin-top: 1rem; font-size: 1rem; color: var(--text-light); }
+    .countdown-bar {
+      width: 100%;
+      height: 6px;
+      background: var(--text-muted);
+      border-radius: 4px;
+      overflow: hidden;
+      margin-top: .5rem;
+    }
+    .countdown-bar .fill {
+      height: 100%;
+      width: 0%;
+      background: var(--gold);
+      transition: width 1s linear;
+    }
+
+    /* — Responsive — */
     @media (max-width: 768px) {
-      .time-display {
-        font-size: 2rem;
-      }
-      
-      .time-segment {
-        min-width: 45px;
-      }
-      
-      .date-display {
-        font-size: 1rem;
-      }
-      
-      .info-panel {
-        padding: 1.5rem;
-        margin-top: 100px;
-      }
-      
-      .info-panel h1 {
-        font-size: 2rem;
-      }
-    }
-    
-    @media (max-width: 480px) {
-      .time-display {
-        font-size: 1.5rem;
-      }
-      
-      .time-segment {
-        min-width: 35px;
-      }
-      
-      .milliseconds {
-        font-size: 0.9rem;
-      }
-      
-      .world-class-clock {
-        padding: 0.8rem 1.5rem;
-      }
+      nav { flex-direction: column; }
+      nav a { margin: .3rem 0; }
     }
   </style>
-  <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;500;700&display=swap" rel="stylesheet">
 </head>
 <body>
-  <!-- World-Class Clock -->
-  <div class="clock-container">
-    <div class="world-class-clock">
-      <div class="date-display" id="date-display">Friday, June 14, 2025</div>
-      <div class="time-display">
-        <span class="time-segment" id="hours">00</span>
-        <span class="time-segment" id="minutes">00</span>
-        <span class="time-segment" id="seconds">00</span>
-        <span class="milliseconds" id="milliseconds">.000</span>
+
+  <!-- Particles Background -->
+  <div id="particles-js"></div>
+
+  <!-- SITE HEADER -->
+  <header>
+    <div class="header-left">
+      <div class="logo">
+        <a href="index.html">
+          <img src="CBE_logo.PNG" alt="Chukwuemeka Bullion Exchange Logo" />
+        </a>
       </div>
     </div>
-  </div>
-  
-  <!-- Information Panel -->
-  <div class="info-panel">
-    <h1>World-Class Clock Implementation</h1>
-    
-    <p>This is the pinnacle of web-based timekeeping. The clock you see at the top of this page represents the highest standard of digital time display, designed for precision, elegance, and functionality.</p>
-    
-    <h2>Features of Our World-Class Clock</h2>
-    
-    <div class="features-grid">
-      <div class="feature-card">
-        <h3>Precision Timing</h3>
-        <p>Displays time down to the millisecond with atomic-clock level accuracy using JavaScript's high-resolution timer.</p>
-      </div>
-      
-      <div class="feature-card">
-        <h3>Elegant Design</h3>
-        <p>Crafted with a luxurious gold color scheme and subtle animations that provide a premium user experience.</p>
-      </div>
-      
-      <div class="feature-card">
-        <h3>Perfect Positioning</h3>
-        <p>Fixed at the top of the page for constant visibility without interfering with content.</p>
-      </div>
-      
-      <div class="feature-card">
-        <h3>Responsive Layout</h3>
-        <p>Adapts seamlessly to all screen sizes, from desktop monitors to mobile devices.</p>
-      </div>
-      
-      <div class="feature-card">
-        <h3>Dynamic Date Formatting</h3>
-        <p>Intelligently formats the date according to the user's locale for a personalized experience.</p>
-      </div>
-      
-      <div class="feature-card">
-        <h3>Performance Optimized</h3>
-        <p>Uses efficient animation techniques to ensure smooth operation without taxing system resources.</p>
+    <div class="header-center">
+      <div id="header-time">
+        <div id="header-date"></div>
+        <div id="header-clock"></div>
       </div>
     </div>
-    
-    <h2>Technical Implementation</h2>
-    
-    <p>The world-class clock is built using modern web technologies:</p>
-    
-    <ul style="margin-left: 1.5rem; margin-top: 1rem;">
-      <li>HTML5 for semantic structure</li>
-      <li>CSS3 for styling, animations, and responsive design</li>
-      <li>JavaScript for real-time updates and precision timing</li>
-      <li>Web Fonts (Orbitron) for the perfect digital display</li>
-      <li>CSS Variables for theme consistency</li>
-    </ul>
-    
-    <p style="margin-top: 1.5rem;">The clock updates every 10 milliseconds to ensure millisecond accuracy while maintaining optimal performance. The elegant design features a subtle hover effect and is positioned with a fixed layout to remain visible at all times.</p>
-  </div>
-  
-  <!-- Theme Switcher -->
-  <div class="theme-switcher" id="theme-toggle">
-    <span style="font-size: 1.5rem;">🌙</span>
-  </div>
-  
+    <div class="header-right">
+      <button id="theme-toggle" aria-label="Toggle theme">🌞</button>
+    </div>
+  </header>
+
+  <!-- PAGE CONTENT -->
+  <main>
+    <!-- 1. Trade Insights -->
+    <section class="card su" id="insights">
+      <h2>Latest Trade Insights</h2>
+      <div class="video-grid">
+        <div>
+          <video controls preload="metadata" src="trade_insight_1.mp4"></video>
+          <p>Deep-dive: Hidden patterns in XAUUSD.</p>
+        </div>
+        <div>
+          <video controls preload="metadata" src="trade_insight_2.mp4"></video>
+          <p>Fractal retracement strategy for gold.</p>
+        </div>
+        <div>
+          <video controls preload="metadata" src="trade_insight_3.mp4"></video>
+          <p>AI forecast: 95% accuracy in price moves.</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- 2. Live Market Pulse -->
+    <section class="card su" id="market" style="background:#000;">
+      <h2 style="color:var(--gold);">Live Market Pulse</h2>
+      <p id="currentTime" class="countdown" style="margin-bottom:1rem;">Last updated: --:--:--</p>
+
+      <!-- Ticker Tape -->
+      <div class="tradingview-widget-container" style="padding:1rem 0; background: #000;">
+        <div class="tradingview-widget-container__widget"></div>
+        <script type="text/javascript">
+          {
+            "symbols": [{ "proName": "OANDA:XAUUSD", "title": "Gold / USD" }],
+            "showSymbolLogo": true,
+            "colorTheme": "dark",
+            "isTransparent": false,
+            "displayMode": "adaptive",
+            "locale": "en"
+          }
+        </script>
+      </div>
+
+      <!-- News Headlines -->
+      <div class="tradingview-widget-container" style="background:#111; margin-top:1.5rem;">
+        <div class="tradingview-widget-container__widget"></div>
+        <script type="text/javascript">
+          {
+            "colorTheme": "dark",
+            "isTransparent": false,
+            "width": "100%",
+            "height": "200",
+            "locale": "en",
+            "newsType": "headlines"
+          }
+        </script>
+      </div>
+
+      <!-- Order Book -->
+      <div id="orderbook" style="display:flex; justify-content:space-around; margin-top:1.5rem;">
+        <div>
+          <h3 style="color:var(--gold); font-size:1rem; margin-bottom:.5rem;">Top Bids</h3>
+          <ul id="bids" style="list-style:none; line-height:1.4;"></ul>
+        </div>
+        <div>
+          <h3 style="color:var(--gold); font-size:1rem; margin-bottom:.5rem;">Top Asks</h3>
+          <ul id="asks" style="list-style:none; line-height:1.4;"></ul>
+        </div>
+      </div>
+
+      <!-- Countdown to Fed Event -->
+      <div class="countdown" style="margin-top:1.5rem;">
+        Next major event: <span id="cd-text">--h --m --s</span>
+        <div class="countdown-bar">
+          <div class="fill" id="cd-bar"></div>
+        </div>
+      </div>
+
+      <!-- Price Alert -->
+      <div id="price-alert" class="hidden" style="
+        margin-top:1.5rem; padding:1rem;
+        background:#2b2b2b; border-left:4px solid var(--gold);
+        border-radius:4px; font-weight:600;
+      ">
+        ⚡️ Alert: XAUUSD just crossed your 1,950.00 level!
+      </div>
+    </section>
+
+    <!-- 3. Interactive Chart -->
+    <section class="card su" id="chart-container">
+      <h2>Interactive XAUUSD Chart</h2>
+      <div id="chart"></div>
+    </section>
+
+    <!-- 4. Recommendations -->
+    <section class="card su" id="recs">
+      <h2>Your Custom Edge</h2>
+      <p>AI signals detect unusual inflows—consider a tactical long with a 10-pip stop for optimized risk/reward over the next 6 hours.</p>
+    </section>
+
+    <!-- 5. Risk Management -->
+    <section class="card su" id="risk">
+      <h2>Risk Management Mastery</h2>
+      <ul>
+        <li><strong>Dynamic Sizing:</strong> Scale position by real-time volatility z-score.</li>
+        <li><strong>ATR Stops:</strong> Volatility-adaptive stop losses.</li>
+        <li><strong>Hedging:</strong> Inverse ETF overlays to neutralize systemic risk.</li>
+        <li><strong>Exit Rules:</strong> Pre-defined triggers to remove emotion.</li>
+        <li><strong>Cost Analysis:</strong> Only deploy when E[R]/σ ≥ 1.5.</li>
+      </ul>
+    </section>
+
+    <!-- 6. In-Page Navigation -->
+    <section class="card su" id="navigation">
+      <h2 class="center">Explore More</h2>
+      <nav aria-label="Main navigation">
+        <a href="#market">Market Data</a>
+        <a href="#insights">Insights</a>
+        <a href="#recs">Recommendations</a>
+        <a href="#risk">Risk Management</a>
+      </nav>
+    </section>
+
+    <!-- 7. Apply to Join -->
+    <section class="card su" id="intro">
+      <h2>Apply to Join CBE</h2>
+      <p>Gain comprehensive access to the company’s historical signals, trade records, trade insights, pips, and detailed historical performance, providing a transparent and growth-oriented overview of the organization’s development.</p>
+      <p style="font-style: italic; color: var(--text-light); margin-top: 1rem;">
+        "The market is always right. Trade what you see, not what you think."
+      </p>
+      <div class="center" style="margin-top:1.5rem;">
+        <a href="https://apexincomeoptions.com.ng/cbe_apply" class="btn btn-gold" aria-label="Join VIP Access">Unlock VIP Edge</a>
+      </div>
+    </section>
+  </main>
+
+  <!-- SITE FOOTER -->
+  <footer>
+    © 2025 Chukwuemeka Bullion Exchange. All rights reserved.
+  </footer>
+
+  <!-- SCRIPTS -->
   <script>
-    // Update the clock with high precision
-    function updateClock() {
-      const now = new Date();
-      
-      // Format date
-      const dateOptions = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
-      document.getElementById('date-display').textContent = now.toLocaleDateString('en-US', dateOptions);
-      
-      // Format time
-      const hours = now.getHours().toString().padStart(2, '0');
-      const minutes = now.getMinutes().toString().padStart(2, '0');
-      const seconds = now.getSeconds().toString().padStart(2, '0');
-      const milliseconds = now.getMilliseconds().toString().padStart(3, '0');
-      
-      document.getElementById('hours').textContent = hours;
-      document.getElementById('minutes').textContent = minutes;
-      document.getElementById('seconds').textContent = seconds;
-      document.getElementById('milliseconds').textContent = `.${milliseconds}`;
-      
-      // Add animation effect to milliseconds
-      const msElement = document.getElementById('milliseconds');
-      msElement.style.opacity = '0.7';
-      setTimeout(() => {
-        msElement.style.opacity = '1';
-      }, 10);
-    }
-    
-    // Update clock immediately and then every 10ms
-    updateClock();
-    setInterval(updateClock, 10);
-    
-    // Theme toggle functionality
-    const themeToggle = document.getElementById('theme-toggle');
-    themeToggle.addEventListener('click', () => {
-      const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
-      document.documentElement.setAttribute('data-theme', isDark ? 'light' : 'dark');
-      themeToggle.innerHTML = isDark ? '<span style="font-size: 1.5rem;">☀️</span>' : '<span style="font-size: 1.5rem;">🌙</span>';
+    // Disable auto-scroll
+    if ('scrollRestoration' in history) history.scrollRestoration = 'manual';
+
+    // Load Particles.js
+    document.addEventListener('DOMContentLoaded', () => {
+      particlesJS.load('particles-js', 'particles.json', () => {});
     });
-    
-    // Initialize theme
-    document.documentElement.setAttribute('data-theme', 'dark');
+
+    // Scroll-in animations
+    const observer = new IntersectionObserver((entries, obs) => {
+      entries.forEach(entry => {
+        if (entry.isIntersecting) {
+          entry.target.classList.add('visible');
+          obs.unobserve(entry.target);
+        }
+      });
+    }, { threshold: 0.2 });
+    document.querySelectorAll('.su').forEach(el => observer.observe(el));
+
+    // Theme toggle
+    const themeBtn = document.getElementById('theme-toggle');
+    themeBtn.addEventListener('click', () => {
+      const next = document.documentElement.getAttribute('data-theme') === 'dark' ? 'light' : 'dark';
+      document.documentElement.setAttribute('data-theme', next);
+      localStorage.setItem('theme', next);
+      themeBtn.textContent = next === 'dark' ? '🌞' : '🌜';
+      initWidgets(next);
+    });
+    (() => {
+      const stored = localStorage.getItem('theme') || 'dark';
+      document.documentElement.setAttribute('data-theme', stored);
+      themeBtn.textContent = stored === 'dark' ? '🌞' : '🌜';
+    })();
+
+    // TradingView & Chart initialization
+    function initWidgets(theme) {
+      document.getElementById('chart').innerHTML = '';
+      new TradingView.widget({
+        container_id: 'chart',
+        autosize: true,
+        symbol: 'OANDA:XAUUSD',
+        interval: '60',
+        theme,
+        style: '1',
+        toolbar_bg: theme === 'dark' ? '#1a1a1a' : '#f1f3f6',
+        hideideas: true,
+        withdateranges: true,
+        allow_symbol_change: true
+      });
+      // Ticker tape
+      document.querySelectorAll('.tradingview-widget-container__widget').forEach(el => el.innerHTML = '');
+      new TradingView.widget({
+        symbols: [{ proName: "OANDA:XAUUSD", title: "Gold / USD" }],
+        showSymbolLogo: true,
+        colorTheme: theme,
+        isTransparent: false,
+        displayMode: "adaptive",
+        locale: "en"
+      });
+      // News ticker
+      new TradingView.widget({
+        colorTheme: theme,
+        isTransparent: false,
+        width: "100%",
+        height: "200",
+        locale: "en",
+        newsType: "headlines"
+      });
+    }
+    window.addEventListener('load', () => initWidgets(document.documentElement.getAttribute('data-theme')));
+
+    // Real-time clock updates
+    function updateTimes() {
+      const now = new Date();
+      const timeZone = 'Africa/Lagos'; // WAT
+
+      // Update header time
+      const dateOptions = { weekday: 'short', month: 'short', day: 'numeric', year: 'numeric', timeZone };
+      const timeOptions = { hour: '2-digit', minute: '2-digit', second: '2-digit', timeZone, timeZoneName: 'short' };
+      document.getElementById('header-date').textContent = now.toLocaleDateString('en-US', dateOptions);
+      document.getElementById('header-clock').textContent = now.toLocaleTimeString('en-US', timeOptions);
+
+      // Update market time
+      document.getElementById('currentTime').textContent = 'Last updated: ' + now.toLocaleTimeString('en-US', { timeZone });
+    }
+
+    // Initial update
+    updateTimes();
+
+    // Update every second
+    setInterval(updateTimes, 1000);
+
+    // Countdown to next Fed event
+    const cdText = document.getElementById('cd-text');
+    const cdBar = document.getElementById('cd-bar');
+    const target = Date.UTC(2025, 6, 30, 14, 0, 0);
+    function updateCountdown() {
+      const now = Date.now();
+      const diff = target - now;
+      if (diff <= 0) {
+        cdText.textContent = 'Now Live';
+        cdBar.style.width = '100%';
+        return;
+      }
+      const h = Math.floor(diff / 3600000),
+            m = Math.floor((diff % 3600000) / 60000),
+            s = Math.floor((diff % 60000) / 1000);
+      cdText.textContent = `${h}h ${m}m ${s}s`;
+      const pct = ((86400000 - diff % 86400000) / 86400000) * 100;
+      cdBar.style.width = `${pct}%`;
+    }
+    setInterval(updateCountdown, 1000);
+    updateCountdown();
+
+    // Mock order-book updates
+    function updateOrderBook() {
+      const bids = document.getElementById('bids'),
+            asks = document.getElementById('asks');
+      bids.innerHTML = '';
+      asks.innerHTML = '';
+      for (let i = 0; i < 5; i++) {
+        const priceBid = (1950 - i * 0.2).toFixed(2),
+              volBid = (Math.random() * 10 + 1).toFixed(1),
+              priceAsk = (1950 + i * 0.2).toFixed(2),
+              volAsk = (Math.random() * 10 + 1).toFixed(1);
+        bids.innerHTML += `<li style="color:#0f0;">${priceBid} (${volBid}k)</li>`;
+        asks.innerHTML += `<li style="color:#f33;">${priceAsk} (${volAsk}k)</li>`;
+      }
+    }
+    setInterval(updateOrderBook, 5000);
+    updateOrderBook();
+
+    // Price alert simulation
+    let lastPrice = null;
+    setInterval(() => {
+      const simulated = 1950 + (Math.random() - 0.5) * 10;
+      if (lastPrice !== null && lastPrice < 1950 && simulated >= 1950) {
+        document.getElementById('price-alert').classList.remove('hidden');
+      }
+      lastPrice = simulated;
+    }, 3000);
   </script>
+
+  <!-- No-JS Fallback -->
+  <noscript>
+    <style>
+      .su { opacity: 1; transform: none; }
+    </style>
+    <div style="padding:1rem; background:#fdd; color:#900; text-align:center;">
+      JavaScript is required for full functionality. Please enable it.
+    </div>
+  </noscript>
 </body>
 </html>
