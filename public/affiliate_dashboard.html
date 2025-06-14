@@ -927,6 +927,178 @@
         document.getElementById('sidebar').classList.toggle('expanded');
       });
     }
+   <!-- JAVASCRIPT: Affiliate Dashboard Logic (REPLACE YOUR OLD SCRIPT WITH THIS) -->
+  <script>
+  (async function() {
+    // — Initialize Supabase —
+    const SUPA_URL = 'https://dapwpgvnfjcfqqhrpxla.supabase.co';
+    const SUPA_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImRhcHdwZ3ZuZmpjZnFxaHJweGxhIiwicm9sIjoicmF3ZnNkIiwiaWF0IjoxNzQ3MDQwODg4LCJleHAiOjIwNjI2MTY4ODh9.ICC0UsLlzJDNre7rFCeD3k6iVzo6jOJgn3PhABpEMsQ';
+    const supabase = window.supabase.createClient(SUPA_URL, SUPA_KEY);
+
+    // — Utility Functions —
+    function showToast(msg) {
+      const toastEl = document.getElementById('liveToast');
+      document.getElementById('toast-body').textContent = msg;
+      new bootstrap.Toast(toastEl).show();
+    }
+    function copyToClipboard(text) {
+      navigator.clipboard.writeText(text)
+        .then(() => showToast('Copied to clipboard'))
+        .catch(() => showToast('Copy failed'));
+    }
+    function toUSD(v) {
+      return Number(v).toLocaleString(undefined, { style:'currency', currency:'USD' });
+    }
+    function qrURL(link) {
+      return `https://chart.googleapis.com/chart?chs=150x150&cht=qr&chl=${encodeURIComponent(link)}`;
+    }
+
+    // — 1. Authentication & Affiliate Setup —
+    const { data: { user }, error: authErr } = await supabase.auth.getUser();
+    if (authErr || !user) return window.location.replace('affiliate_login.html');
+    const userId = user.id;
+    document.getElementById('user-email').textContent = user.email;
+    document.getElementById('joined-date').textContent = new Date(user.created_at).toLocaleDateString();
+
+    // Fetch or generate referral code
+    let { data: aff, error: affErr } = await supabase
+      .from('affiliates')
+      .select('referral_code')
+      .eq('user_id', userId)
+      .single();
+    let code = aff?.referral_code;
+    if (!code) {
+      code = Array.from({length:8}, () => 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789'
+        .charAt(Math.random()*62|0)).join('');
+      await supabase.from('affiliates').insert({ user_id: userId, referral_code: code });
+    }
+
+    // Build referral link & QR
+    const link = `${window.location.origin}/CBE_apply.html?ref=${code}`;
+    document.getElementById('referral-code').textContent = code;
+    document.getElementById('referral-link').value = link;
+    document.getElementById('referral-code-sidebar').textContent = code;
+    document.getElementById('referral-link-sidebar').value = link;
+    const qrImg = new Image(); qrImg.src = qrURL(link); qrImg.alt = 'QR Code';
+    document.getElementById('qr-code-container').appendChild(qrImg);
+
+    // Copy button handlers
+    document.getElementById('copy-referral').onclick = () => copyToClipboard(code);
+    document.getElementById('copy-link').onclick     = () => copyToClipboard(link);
+    document.getElementById('copy-referral-sidebar').onclick = () => copyToClipboard(code);
+    document.getElementById('copy-link-sidebar').onclick     = () => copyToClipboard(link);
+
+    // — 2. Referral Metrics & Earnings —
+    const { count: totalRefs } = await supabase
+      .from('users').select('*', { count:'exact', head:true })
+      .eq('referred_by', userId);
+    document.getElementById('overview-total-referrals').textContent = totalRefs;
+    document.getElementById('total-referrals').textContent = totalRefs;
+
+    const usdAllTime = totalRefs * 5;
+    document.getElementById('overview-est-earn-usd').textContent = toUSD(usdAllTime);
+    document.getElementById('overview-est-earn-usd-inline').textContent = toUSD(usdAllTime);
+    document.getElementById('alltime-earnings').textContent = toUSD(usdAllTime);
+
+    // Weekly & monthly earnings
+    async function countSince(days) {
+      const cutoff = new Date(Date.now() - days*864e5).toISOString();
+      const { count } = await supabase
+        .from('users').select('*', { count:'exact', head:true })
+        .eq('referred_by', userId)
+        .gt('created_at', cutoff);
+      return count * 5;
+    }
+    document.getElementById('weekly-earnings').textContent = toUSD(await countSince(7));
+    document.getElementById('monthly-earnings').textContent = toUSD(await countSince(30));
+
+    // Conversion rate
+    const { count: converted } = await supabase
+      .from('users').select('*', { count:'exact', head:true })
+      .eq('referred_by', userId)
+      .eq('converted', true);
+    const convRate = totalRefs
+      ? `${((converted/totalRefs)*100).toFixed(2)}%`
+      : '0%';
+    document.getElementById('overview-conversion-rate').textContent = convRate;
+    document.getElementById('overview-conversion-rate-inline').textContent = convRate;
+
+    // — 3. Referral Activity Chart —
+    const { data: referrals } = await supabase
+      .from('users').select('created_at')
+      .eq('referred_by', userId);
+    // Build last-30-days array
+    const last30 = Array(30).fill(0);
+    referrals.forEach(r => {
+      const diff = (Date.now() - new Date(r.created_at))/864e5;
+      if (diff <= 29) last30[29-Math.floor(diff)]++;
+    });
+    // Build all-time map
+    const mapAll = {};
+    referrals.forEach(r => {
+      const d = r.created_at.slice(0,10);
+      mapAll[d] = (mapAll[d]||0) + 1;
+    });
+    const allLabels = Object.keys(mapAll).sort();
+    const allCounts = allLabels.map(d=>mapAll[d]);
+
+    const ctx = document.getElementById('referralChart').getContext('2d');
+    let chart = new Chart(ctx, {
+      type: 'line',
+      data: {
+        labels: last30.map((_,i)=>new Date(Date.now()-(29-i)*864e5).toISOString().slice(0,10)),
+        datasets: [{ label:'Last 30 Days', data: last30, backgroundColor:'rgba(255,215,0,0.3)', borderColor:'rgba(255,215,0,1)', fill:true }]
+      },
+      options: { maintainAspectRatio:false }
+    });
+    document.getElementById('toggle-referral-range').onclick = function() {
+      chart.destroy();
+      if (this.textContent.includes('All Time')) {
+        chart = new Chart(ctx, { type:'line',
+          data: { labels: allLabels, datasets:[{ label:'All Time', data: allCounts, backgroundColor:'rgba(255,215,0,0.3)', borderColor:'rgba(255,215,0,1)', fill:true }] }
+        });
+        this.textContent = 'Show Last 30 Days';
+      } else {
+        chart = new Chart(ctx, { type:'line',
+          data: { labels: last30.map((_,i)=>new Date(Date.now()-(29-i)*864e5).toISOString().slice(0,10)), datasets:[{ label:'Last 30 Days', data: last30, backgroundColor:'rgba(255,215,0,0.3)', borderColor:'rgba(255,215,0,1)', fill:true }] }
+        });
+        this.textContent = 'Show All Time';
+      }
+    };
+
+    // — 4. Leaderboard —
+    (async () => {
+      const { data: allUsers } = await supabase.from('users').select('referred_by');
+      const counts = allUsers.reduce((m,u)=> {
+        if (u.referred_by) m[u.referred_by]=(m[u.referred_by]||0)+1;
+        return m;
+      }, {});
+      const top = Object.entries(counts)
+        .sort((a,b)=>b[1]-a[1])
+        .slice(0,5);
+      const ul = document.getElementById('leaderboard-list');
+      ul.innerHTML = '';
+      for (let [uid,c] of top) {
+        const [{ data: uData }] = await supabase.from('users').select('email').eq('id',uid).limit(1);
+        const [{ data: aData }] = await supabase.from('affiliates').select('referral_code').eq('user_id',uid).limit(1);
+        const li = document.createElement('li');
+        li.innerHTML = `<div>${uData.email} (${aData.referral_code})</div><div>${c}</div>`;
+        ul.appendChild(li);
+      }
+    })();
+
+    // — 5. Initialize Other Features (banks, wallets, payouts, converter) —
+    // Copy your existing handlers for:
+    //   #bank-form, #wallet-form, #request-withdraw-btn, #converter-form
+    // … no changes needed here — they continue to work as before.
+
+    // — 6. Logout, Theme & Sidebar —
+    document.getElementById('logout-btn').onclick = async () => {
+      await supabase.auth.signOut();
+      window.location.replace('affiliate_login.html');
+    };
+    // Your existing theme toggle & sidebar toggle code go here…
+  })();
   </script>
 </body>
 </html>
