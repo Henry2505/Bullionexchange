@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width,initial-scale=1">
   <title>Affiliate Signup • Apex Income Options</title>
 
-  <!-- Bootstrap & Icons -->
+  <!-- Bootstrap CSS & Icons -->
   <link
     href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css"
     rel="stylesheet"
@@ -122,6 +122,7 @@
   </div>
 
   <script>
+    // 1) Initialize Supabase
     const SUPA_URL = 'https://dapwpgvnfjcfqqhrpxla.supabase.co';
     const SUPA_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImRhcHdwZ3ZuZmpjZnFxaHJweGxhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDcwNDA4ODgsImV4cCI6MjA2MjYxNjg4OH0.ICC0UsLlzJDNre7rFCeD3k6iVzo6jOJgn3PhABpEMsQ';
     const supabase = window.supabase.createClient(SUPA_URL, SUPA_KEY);
@@ -162,45 +163,57 @@
       }
 
       try {
-        // 1) Validate referral code
-        let referredBy = null;
+        // 2) Optional: credit an existing affiliate
+        let creditedAffiliateId = null;
         if (refCode) {
           const { data: ref, error: refErr } = await supabase
             .from('affiliates')
             .select('user_id')
             .eq('referral_code', refCode)
             .single();
-          if (refErr || !ref) throw new Error('Invalid referral code');
-          referredBy = ref.user_id;
+          if (ref && !refErr) {
+            creditedAffiliateId = ref.user_id;
+          }
         }
 
-        // 2) Sign up
+        // 3) Sign up user
         const { data: authData, error: authErr } = await supabase.auth.signUp({
           email, password: pwd
         });
         if (authErr) throw authErr;
 
-        // 3) Brief pause for session to propagate
-        await new Promise(r => setTimeout(r, 1000));
+        // 4) Wait momentarily for JWT
+        await new Promise(r => setTimeout(r, 500));
 
-        // 4) Insert into users with required columns
-        const { error: userErr } = await supabase
-          .from('users')
+        // 5) Create affiliate_accounts row
+        const { error: acctErr } = await supabase
+          .from('affiliate_accounts')
           .insert([{
             id: authData.user.id,
             name: fullName,
-            email,
-            referred_by: referredBy,
-            status: 'Pending'
+            email
           }]);
-        if (userErr) throw userErr;
+        if (acctErr) throw acctErr;
 
-        // 5) Create affiliate record
+        // 6) Insert referral record if we credited someone
+        if (creditedAffiliateId) {
+          await supabase
+            .from('referral_records')
+            .insert([{
+              affiliate_id: creditedAffiliateId,
+              referred_email: email
+            }]);
+        }
+
+        // 7) Create the affiliate’s own code
         const newCode = genCode();
-        const { error: affErr } = await supabase
+        const { error: refErr2 } = await supabase
           .from('affiliates')
-          .insert([{ user_id: authData.user.id, referral_code: newCode }]);
-        if (affErr) throw affErr;
+          .insert([{
+            user_id: authData.user.id,
+            referral_code: newCode
+          }]);
+        if (refErr2) throw refErr2;
 
         showToast('Account created! Redirecting…');
         setTimeout(() => window.location.href = 'affiliate_login.html', 1500);
