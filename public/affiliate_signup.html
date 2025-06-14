@@ -1,212 +1,50 @@
 <!DOCTYPE html>
 <html lang="en" data-theme="dark">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>Affiliate Signup • Apex Income Options</title>
-
-  <!-- Bootstrap CSS & Icons -->
-  <link
-    href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css"
-    rel="stylesheet"
-    crossorigin="anonymous"
-  />
-  <link
-    href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css"
-    rel="stylesheet"
-  />
-
-  <!-- Supabase client v2 -->
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>
-
+  <meta charset="UTF-8" /><meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Affiliate Signup</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet"/>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js/dist/umd/supabase.min.js"></script>
   <style>
-    :root[data-theme="dark"] {
-      --bg: #121212; --text: #e0e0e0; --accent: rgba(30,30,30,0.7);
-      --gold: #ffd700; --gold-dark: #cca300; --shadow: rgba(0,0,0,0.5);
-    }
-    body {
-      background: var(--bg);
-      color: var(--text);
-      margin: 0;
-      font-family: Poppins, sans-serif;
-      height: 100vh;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-    }
-    .auth-container {
-      background: var(--accent);
-      border: 1px solid var(--gold-dark);
-      border-radius: 10px;
-      box-shadow: 0 2px 8px var(--shadow);
-      max-width: 400px;
-      width: 100%;
-      padding: 2rem;
-    }
-    .auth-header { text-align: center; margin-bottom: 1.5rem; }
-    .auth-logo { color: var(--gold); font-size: 2rem; margin-bottom: .5rem; }
-    .auth-title { color: var(--gold); font-weight: 700; }
-    .form-control {
-      background: var(--accent)!important;
-      color: var(--text)!important;
-      border: 1px solid var(--gold-dark)!important;
-    }
-    .form-control:focus {
-      border: 1px solid var(--gold)!important;
-      box-shadow: 0 0 0 .25rem rgba(255,215,0,0.25)!important;
-    }
-    .btn-primary {
-      background: linear-gradient(45deg, var(--gold), var(--gold-dark));
-      border: none;
-      color: #000;
-      font-weight: 600;
-    }
-    .btn-primary:hover {
-      background: linear-gradient(45deg, var(--gold-dark), var(--gold));
-    }
-    .toast-container {
-      position: fixed; top: 20px; right: 20px; z-index: 1001;
-    }
-    .toast {
-      background: var(--accent)!important;
-      border: 1px solid var(--gold-dark);
-      color: var(--text);
-      backdrop-filter: blur(10px);
-      white-space: pre-wrap;
-    }
+    /* (copy your existing dark theme styles here) */
   </style>
 </head>
 <body>
-
-  <div class="auth-container">
-    <div class="auth-header">
-      <div class="auth-logo"><i class="bi bi-people-fill"></i></div>
-      <h2 class="auth-title">Affiliate Signup</h2>
-      <p>Create your affiliate account & start earning</p>
-    </div>
-
-    <form id="signup-form" novalidate>
-      <div class="mb-3">
-        <label for="full-name" class="form-label">Full Name</label>
-        <input type="text" id="full-name" class="form-control" required />
-      </div>
-      <div class="mb-3">
-        <label for="email" class="form-label">Email Address</label>
-        <input type="email" id="email" class="form-control" required />
-      </div>
-      <div class="mb-3">
-        <label for="password" class="form-label">Password</label>
-        <input type="password" id="password" class="form-control" minlength="6" required />
-      </div>
-      <div class="mb-3">
-        <label for="confirm-password" class="form-label">Confirm Password</label>
-        <input type="password" id="confirm-password" class="form-control" required />
-      </div>
-
-      <button type="submit" class="btn btn-primary w-100 mt-3" id="signup-btn">
-        <span id="signup-text">Create Account</span>
-        <span id="signup-spinner" class="spinner-border spinner-border-sm ms-2 d-none"></span>
-      </button>
+  <div class="container py-5">
+    <h1 class="mb-4">Signup</h1>
+    <form id="form">
+      <input id="email" type="email" placeholder="Email" class="form-control mb-2" required>
+      <input id="password" type="password" placeholder="Password" class="form-control mb-2" required>
+      <button class="btn btn-primary">Create Account</button>
     </form>
-
-    <div class="text-center mt-3">
-      Already have an account?
-      <a href="affiliate_login.html" style="color: var(--gold)">Login here</a>
-    </div>
+    <div id="message" class="mt-3"></div>
   </div>
 
-  <div class="toast-container">
-    <div id="liveToast" class="toast align-items-center border-0" role="alert">
-      <div class="d-flex">
-        <div class="toast-body" id="toast-body"></div>
-        <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast"></button>
-      </div>
-    </div>
-  </div>
-
-  <!-- 1) Load Bootstrap JS first, so bootstrap.Toast exists -->
-  <script
-    src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"
-    crossorigin="anonymous"
-  ></script>
-
-  <!-- 2) Then our inline signup logic -->
   <script>
-    // Init Supabase
-    const supabase = window.supabase.createClient(
+    const supabase = supabase.createClient(
       'https://dapwpgvnfjcfqqhrpxla.supabase.co',
-      'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImRhcHdwZ3ZuZmpjZnFxaHJweGxhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDcwNDA4ODgsImV4cCI6MjA2MjYxNjg4OH0.ICC0UsLlzJDNre7rFCeD3k6iVzo6jOJgn3PhABpEMsQ'
+      'YOUR_ANON_KEY'
     );
 
-    // DOM refs
-    const form  = document.getElementById('signup-form');
-    const btn   = document.getElementById('signup-btn');
-    const txt   = document.getElementById('signup-text');
-    const spin  = document.getElementById('signup-spinner');
-
-    // Safe toast helper
-    function showToast(msg) {
-      // try native bootstrap toast...
-      try {
-        document.getElementById('toast-body').textContent = msg;
-        new bootstrap.Toast(document.getElementById('liveToast')).show();
-      } catch (e) {
-        // fallback
-        alert(msg);
-      }
-    }
-
-    function genReferralCode() {
-      const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
-      return Array.from({ length: 8 }, () =>
-        chars[Math.floor(Math.random() * chars.length)]
-      ).join('');
-    }
-
-    form.addEventListener('submit', async e => {
+    document.getElementById('form').addEventListener('submit', async e => {
       e.preventDefault();
-      e.stopPropagation();
+      const email = document.getElementById('email').value;
+      const password = document.getElementById('password').value;
+      const code = Math.random().toString(36).slice(2,10).toUpperCase();
 
-      // loading UI
-      btn.disabled = true;
-      txt.textContent = 'Submitting…';
-      spin.classList.remove('d-none');
+      // 1) Insert into affiliate_accounts
+      const { data, error } = await supabase
+        .from('affiliate_accounts')
+        .insert([{ email, password, referral_code: code }])
+        .select();
 
-      // values
-      const fullName = document.getElementById('full-name').value.trim();
-      const email    = document.getElementById('email').value.trim();
-      const pwd      = document.getElementById('password').value;
-      const pwd2     = document.getElementById('confirm-password').value;
-
-      if (!fullName || !email || pwd.length < 6 || pwd !== pwd2) {
-        showToast('Please fill out everything correctly.');
-        btn.disabled = false;
-        txt.textContent = 'Create Account';
-        spin.classList.add('d-none');
+      if (error) {
+        document.getElementById('message').innerText = 'Error: ' + error.message;
         return;
       }
 
-      try {
-        // pure auth signup
-        const { error } = await supabase.auth.signUp({
-          email,
-          password: pwd,
-          options: {
-            data: {
-              full_name: fullName,
-              referral_code: genReferralCode()
-            }
-          }
-        });
-        if (error) throw error;
-        showToast('✅ Check your email to confirm your account.');
-      } catch (err) {
-        showToast(err.message || 'Signup failed');
-      } finally {
-        btn.disabled = false;
-        txt.textContent = 'Create Account';
-        spin.classList.add('d-none');
-      }
+      // 2) Redirect to dashboard (you can pass code via query string)
+      window.location.href = `affiliate_dashboard.html?code=${data[0].referral_code}`;
     });
   </script>
 </body>
