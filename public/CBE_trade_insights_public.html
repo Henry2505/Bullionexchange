@@ -7,12 +7,10 @@
   <meta name="description" content="Unlock elite trade insights, cutting-edge AI forecasts, and rock-solid risk management for XAUUSD (gold) from Chukwuemeka Bullion Exchange—VIP access required."/>
   <meta name="keywords" content="CBE, trade insights, AI forecasts, risk management, VIP trading, XAUUSD, gold trading, strategic wisdom"/>
   <link rel="canonical" href="https://www.apexincomeoptions.com/trade-insights.html"/>
-  <!-- Theme CSS -->
-  <link rel="stylesheet" href="theme.css"/>
   <!-- Fonts -->
   <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700&family=Roboto:wght@300;400;700&display=swap" rel="stylesheet"/>
-  <!-- Chart.js for interactive charts -->
-  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <!-- TradingView Script -->
+  <script type="text/javascript" src="https://s3.tradingview.com/tv.js" async></script>
 
   <style>
     /* Reset & Base Styles */
@@ -28,7 +26,7 @@
     a { color: var(--gold); text-decoration: none; }
     a:hover { text-decoration: underline; }
 
-    /* Variables */
+    /* Theme Variables */
     :root {
       --bg: #1a1a1a;
       --text: #ffffff;
@@ -36,6 +34,14 @@
       --text-muted: #888888;
       --gold: #d4af37;
       --glass-bg: rgba(255, 255, 255, 0.1);
+    }
+    [data-theme="light"] {
+      --bg: #ffffff;
+      --text: #000000;
+      --text-light: #333333;
+      --text-muted: #666666;
+      --gold: #b8860b;
+      --glass-bg: rgba(0, 0, 0, 0.1);
     }
 
     /* Logo & Theme Toggle */
@@ -87,7 +93,7 @@
       margin: 0 15px; font-size: 1.1rem; color: var(--gold);
       text-transform: uppercase; transition: color 0.3s ease;
     }
-    .nav-menu a:hover { color: #fff; }
+    .nav-menu a:hover { color: var(--text); }
 
     /* Search Bar */
     .search-bar {
@@ -124,16 +130,9 @@
       font-size: 2rem; color: var(--gold);
       margin-bottom: 20px;
     }
-    .market-data ul {
-      list-style: none; padding: 0;
+    .market-data .tradingview-widget-container {
+      margin: 0 auto;
     }
-    .market-data li {
-      font-size: 1.1rem; color: var(--text-light);
-      margin-bottom: 12px; transition: color 0.3s ease;
-    }
-    .market-data li:hover { color: var(--gold); }
-
-    /* Countdown Timer */
     .countdown {
       margin-top: 20px; font-size: 1.2rem; color: var(--text-light);
     }
@@ -156,7 +155,6 @@
     }
     .video-item {
       flex: 1 1 30%; margin: 15px; text-align: center;
-      position: relative;
     }
     .video-item video {
       width: 100%; max-width: 300px; height: auto;
@@ -186,7 +184,8 @@
 
     /* Chart Container */
     .chart-container {
-      margin: 30px auto; width: 80%; max-width: 700px;
+      margin: 30px auto; width: 100%; max-width: 900px;
+      height: 500px;
     }
 
     /* Recommendations */
@@ -206,7 +205,7 @@
       max-width: 700px; margin: 0 auto;
     }
 
-    /* Risk Management Mastery */
+    /* Risk Management */
     .risk-mastery {
       background: var(--glass-bg); backdrop-filter: blur(12px);
       padding: 30px; border-radius: 15px;
@@ -234,14 +233,14 @@
       font-size: 0.9rem;
     }
 
-    /* Responsive */
+    /* Responsive Design */
     @media (max-width: 768px) {
       main { padding: 120px 15px 40px; }
       .logo img { width: 120px; }
       .header-card h1 { font-size: 2.5rem; }
       .video-item { flex: 1 1 100%; }
       .search-bar input { width: 100%; }
-      .chart-container { width: 100%; }
+      .chart-container { height: 300px; }
     }
   </style>
 </head>
@@ -252,8 +251,8 @@
     <a href="index.html"><img src="CBE_logo.PNG" alt="CBE Logo"/></a>
   </div>
 
-  <!-- Theme Toggle -->
-  <button id="theme-toggle" aria-label="Toggle light/dark">🌞</button>
+  <!-- Theme Toggle Button -->
+  <button id="theme-toggle" aria-label="Toggle light/dark theme">🌞</button>
 
   <main>
     <!-- Navigation Menu -->
@@ -264,7 +263,7 @@
       <a href="#risk-mastery">Risk Management</a>
     </div>
 
-    <!-- Header -->
+    <!-- Header Section -->
     <div class="header-card slide-in" id="header">
       <h1>Trade Insights for XAUUSD</h1>
       <p>Unlock elite trade insights, cutting-edge AI forecasts, and rock-solid risk management for XAUUSD (gold) trading—VIP access required.</p>
@@ -276,13 +275,23 @@
       <button onclick="searchInsights()">Search</button>
     </div>
 
-    <!-- Real-Time Market Data with Timestamp -->
+    <!-- Real-Time Market Data with TradingView Ticker -->
     <div class="market-data slide-in" id="market-data" style="transition-delay: .2s;">
       <h2>Live Market Pulse</h2>
       <p id="timestamp">Last updated: <span id="currentTime"></span></p>
-      <ul id="marketDataList">
-        <li>XAUUSD: 1800.00</li>
-      </ul>
+      <!-- TradingView Single Ticker Widget -->
+      <div class="tradingview-widget-container">
+        <div class="tradingview-widget-container__widget"></div>
+        <script type="text/javascript" src="https://s3.tradingview.com/external/embedding/embed-widget-single-quote.js" async>
+        {
+          "symbol": "OANDA:XAUUSD",
+          "width": "350",
+          "locale": "en",
+          "colorTheme": "dark",
+          "isTransparent": false
+        }
+        </script>
+      </div>
       <div class="countdown">
         Next major event: Federal Reserve Announcement in <span id="countdownTimer">00:00:00</span>
       </div>
@@ -295,18 +304,21 @@
         <div class="video-item">
           <video controls loading="lazy">
             <source src="trade_insight_1.mp4" type="video/mp4">
+            Your browser does not support the video tag.
           </video>
           <p>Deep-dive: Uncover hidden patterns in XAUUSD price action.</p>
         </div>
         <div class="video-item">
           <video controls loading="lazy">
             <source src="trade_insight_2.mp4" type="video/mp4">
+            Your browser does not support the video tag.
           </video>
           <p>Strategy Blueprint: Exploit fractal retracements in gold with precision.</p>
         </div>
         <div class="video-item">
           <video controls loading="lazy">
             <source src="trade_insight_3.mp4" type="video/mp4">
+            Your browser does not support the video tag.
           </video>
           <p>AI Forecast: Predict XAUUSD price movements with 95% accuracy using advanced machine learning algorithms.</p>
         </div>
@@ -315,9 +327,28 @@
       <a href="vip-subscription.html" class="btn-vip">Unlock VIP Edge</a>
     </div>
 
-    <!-- Interactive Chart for XAUUSD -->
+    <!-- Interactive XAUUSD Chart -->
     <div class="chart-container slide-in" style="transition-delay: .4s;">
-      <canvas id="xauusdChart"></canvas>
+      <div id="tradingview_chart"></div>
+      <script type="text/javascript">
+        function loadChart(theme) {
+          new TradingView.widget({
+            "width": "100%",
+            "height": "100%",
+            "symbol": "OANDA:XAUUSD",
+            "interval": "60",
+            "timezone": "Etc/UTC",
+            "theme": theme,
+            "style": "1",
+            "locale": "en",
+            "toolbar_bg": "#f1f3f6",
+            "enable_publishing": false,
+            "allow_symbol_change": true,
+            "container_id": "tradingview_chart"
+          });
+        }
+        loadChart('dark'); // Initial load with dark theme
+      </script>
     </div>
 
     <!-- Personalized Recommendations -->
@@ -344,7 +375,7 @@
   </footer>
 
   <script>
-    // Slide-in on scroll
+    // Slide-in Animation on Scroll
     document.addEventListener('DOMContentLoaded', () => {
       document.querySelectorAll('.slide-in').forEach(el => {
         new IntersectionObserver((entries, obs) => {
@@ -358,29 +389,50 @@
       });
     });
 
-    // Theme toggle
+    // Theme Toggle Functionality
     const toggle = document.getElementById('theme-toggle');
     toggle.addEventListener('click', () => {
-      const current = document.documentElement.getAttribute('data-theme');
-      const next = current === 'dark' ? 'light' : 'dark';
-      document.documentElement.setAttribute('data-theme', next);
-      localStorage.setItem('theme', next);
-      toggle.textContent = next === 'dark' ? '🌞' : '🌜';
+      const currentTheme = document.documentElement.getAttribute('data-theme');
+      const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
+      document.documentElement.setAttribute('data-theme', newTheme);
+      localStorage.setItem('theme', newTheme);
+      toggle.textContent = newTheme === 'dark' ? '🌞' : '🌜';
       document.body.style.transition = 'background 0.5s ease, color 0.5s ease';
+
+      // Update TradingView Widgets
+      document.querySelector('.tradingview-widget-container__widget').innerHTML = '';
+      document.getElementById('tradingview_chart').innerHTML = '';
+      const tickerScript = document.createElement('script');
+      tickerScript.type = 'text/javascript';
+      tickerScript.src = 'https://s3.tradingview.com/external/embedding/embed-widget-single-quote.js';
+      tickerScript.async = true;
+      tickerScript.innerHTML = JSON.stringify({
+        "symbol": "OANDA:XAUUSD",
+        "width": "350",
+        "locale": "en",
+        "colorTheme": newTheme,
+        "isTransparent": false
+      });
+      document.querySelector('.tradingview-widget-container').appendChild(tickerScript);
+      loadChart(newTheme);
     });
-    (() => {
-      const theme = document.documentElement.getAttribute('data-theme');
-      toggle.textContent = theme === 'dark' ? '🌞' : '🌜';
+
+    // Load Saved Theme
+    (function() {
+      const savedTheme = localStorage.getItem('theme') || 'dark';
+      document.documentElement.setAttribute('data-theme', savedTheme);
+      toggle.textContent = savedTheme === 'dark' ? '🌞' : '🌜';
     })();
 
-    // Real-time timestamp
+    // Real-Time Timestamp
     function updateTimestamp() {
       const now = new Date();
       document.getElementById('currentTime').textContent = now.toLocaleString();
     }
     setInterval(updateTimestamp, 1000);
+    updateTimestamp();
 
-    // Countdown timer (example: next event in 24 hours)
+    // Countdown Timer (Example: 24 hours)
     function updateCountdown() {
       const eventTime = new Date().getTime() + 24 * 60 * 60 * 1000;
       const now = new Date().getTime();
@@ -388,45 +440,16 @@
       const hours = Math.floor((distance % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
       const minutes = Math.floor((distance % (1000 * 60 * 60)) / (1000 * 60));
       const seconds = Math.floor((distance % (1000 * 60)) / 1000);
-      document.getElementById('countdownTimer').textContent = `${hours}h ${minutes}m ${seconds}s`;
+      document.getElementById('countdownTimer').textContent = `${hours.toString().padStart(2, '0')}h ${minutes.toString().padStart(2, '0')}m ${seconds.toString().padStart(2, '0')}s`;
     }
     setInterval(updateCountdown, 1000);
+    updateCountdown();
 
-    // Simulate real-time market updates for XAUUSD
-    setInterval(() => {
-      const list = document.getElementById('marketDataList');
-      list.innerHTML = `
-        <li>XAUUSD: ${(Math.random() * (1850 - 1750) + 1750).toFixed(2)}</li>
-      `;
-    }, 5000);
-
-    // Chart.js for XAUUSD price trends
-    const ctx = document.getElementById('xauusdChart').getContext('2d');
-    const xauusdChart = new Chart(ctx, {
-      type: 'line',
-      data: {
-        labels: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun'],
-        datasets: [{
-          label: 'XAUUSD Price',
-          data: [1800, 1820, 1780, 1850, 1830, 1870],
-          borderColor: 'rgba(212, 175, 55, 1)',
-          backgroundColor: 'rgba(212, 175, 55, 0.2)',
-          fill: true,
-        }]
-      },
-      options: {
-        responsive: true,
-        scales: {
-          y: { beginAtZero: false }
-        }
-      }
-    });
-
-    // Enhanced search stub
+    // Search Functionality (Stub)
     function searchInsights() {
-      const q = document.getElementById('searchInput').value.trim();
-      if (!q) return alert('Enter a keyword to unlock targeted insights.');
-      alert(`🔍 Applying AI filters for “${q}” – imagine the intelligence that awaits.`);
+      const query = document.getElementById('searchInput').value.trim();
+      if (!query) return alert('Please enter a keyword to search.');
+      alert(`Searching for "${query}" – Imagine the powerful insights awaiting you!`);
     }
   </script>
 
