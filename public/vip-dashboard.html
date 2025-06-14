@@ -1226,6 +1226,66 @@
     <i class="bi-lightning-charge-fill mb-1"></i><br>
     View<br>Latest<br>Signals
   </button>
+    <!-- ─── TradingView Gold Chart Widget ─── -->
+<script type="text/javascript" src="https://s3.tradingview.com/tv.js"></script>
+<script>
+  new TradingView.widget({
+    container_id: "live-gold-chart",
+    width: "100%",
+    height: "100%",
+    symbol: "OANDA:XAUUSD",
+    interval: "60",
+    timezone: "Etc/UTC",
+    theme: "dark",
+    style: "1",
+    locale: "en",
+    toolbar_bg: "#1e1e2f",
+    hide_top_toolbar: true,
+    withdateranges: false,
+    allow_symbol_change: false,
+    details: true,
+    hotlist: false,
+    calendar: false
+  });
+</script>
+
+<!-- ─── AI Signal & Meter Logic ─── -->
+<script>
+  async function fetchMarketData() {
+    const now = await fetch('https://api.example.com/gold/ohlc');
+    return now.json();
+  }
+
+  function analyzeSignal(data) {
+    const close = data.close.slice(-1)[0];
+    const ema20 = data.ema20.slice(-1)[0];
+    const ema50 = data.ema50.slice(-1)[0];
+    let signal, strength;
+    if (close > ema20 && ema20 > ema50) {
+      signal = "Strong Bullish"; strength = 80;
+    } else if (close < ema20 && ema20 < ema50) {
+      signal = "Strong Bearish"; strength = 20;
+    } else {
+      signal = "Neutral / Sideways"; strength = 50;
+    }
+    return { signal, strength };
+  }
+
+  async function updateSignalBlock() {
+    const data = await fetchMarketData();
+    const { signal, strength } = analyzeSignal(data);
+    document.getElementById('signal-summary').textContent = signal;
+    document.getElementById('signal-confidence').textContent = `Confidence: ${strength}%`;
+    const fill = document.getElementById('signal-fill');
+    fill.style.width = `${strength}%`;
+    fill.style.background = (strength >= 50) ? '#4caf50' : '#e53935';
+    document.getElementById('signal-meter-label').textContent =
+      `${strength}% ${strength >= 50 ? 'Bullish' : 'Bearish'}`;
+  }
+
+  updateSignalBlock();
+  setInterval(updateSignalBlock, 60 * 1000);
+</script>
 
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js" integrity="sha384-YvpcrYf0tY3lHB60NNkmXc5s9fDVZLESaAA55NDzOxhy9GkcIdslK1eN7N6jIeHz" crossorigin="anonymous"></script>
   <audio id="notif-sound" src="notification.mp3" preload="auto"></audio>
