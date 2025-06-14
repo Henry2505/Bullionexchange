@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>CBE Affiliate Signup</title>
+  <style>
+    body {
+      background: #0f0f0f;
+      color: #fff;
+      font-family: 'Segoe UI', sans-serif;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      height: 100vh;
+      margin: 0;
+    }
+    form {
+      background: #1e1e1e;
+      padding: 30px;
+      border-radius: 8px;
+      box-shadow: 0 0 20px gold;
+      width: 90%;
+      max-width: 400px;
+    }
+    input {
+      width: 100%;
+      padding: 12px;
+      margin: 10px 0;
+      border-radius: 4px;
+      border: none;
+      background: #333;
+      color: #fff;
+    }
+    button {
+      width: 100%;
+      padding: 12px;
+      background: gold;
+      border: none;
+      border-radius: 4px;
+      color: #000;
+      font-weight: bold;
+      cursor: pointer;
+    }
+    .status {
+      margin-top: 20px;
+      text-align: center;
+    }
+    .success {
+      color: limegreen;
+    }
+    .error {
+      color: red;
+    }
+  </style>
+</head>
+<body>
+  <form id="signupForm">
+    <h2 style="text-align:center;">Affiliate Signup</h2>
+    <input type="email" id="email" placeholder="Email Address" required />
+    <input type="password" id="password" placeholder="Password" required />
+    <button type="submit">Sign Up</button>
+    <div class="status" id="statusMessage"></div>
+  </form>
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js"></script>
+  <script>
+    const supabaseUrl = "https://dapwpgvnfjcfqqhrpxla.supabase.co";
+    const supabaseKey = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImRhcHdwZ3ZuZmpjZnFxaHJweGxhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDcwNDA4ODgsImV4cCI6MjA2MjYxNjg4OH0.ICC0UsLlzJDNre7rFCeD3k6iVzo6jOJgn3PhABpEMsQ";
+    const supabase = supabase.createClient(supabaseUrl, supabaseKey);
+
+    document.getElementById("signupForm").addEventListener("submit", async function (e) {
+      e.preventDefault();
+      const email = document.getElementById("email").value.trim();
+      const password = document.getElementById("password").value.trim();
+      const status = document.getElementById("statusMessage");
+
+      if (!email || !password) {
+        status.textContent = "All fields are required.";
+        status.className = "status error";
+        return;
+      }
+
+      const referralCode = generateReferralCode();
+
+      const { data, error } = await supabase
+        .from("affiliate_accounts")
+        .insert([{
+          email: email,
+          password: password,
+          referral_code: referralCode
+        }]);
+
+      if (error) {
+        status.textContent = "Signup failed. Please try again.";
+        status.className = "status error";
+      } else {
+        status.textContent = "Signup successful! Welcome aboard.";
+        status.className = "status success";
+        document.getElementById("signupForm").reset();
+      }
+    });
+
+    function generateReferralCode() {
+      return Math.random().toString(36).substring(2, 10).toUpperCase();
+    }
+  </script>
+</body>
+</html>
