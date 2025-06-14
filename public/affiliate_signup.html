@@ -20,8 +20,8 @@
 
   <style>
     :root[data-theme="dark"] {
-      --bg: #121212; --text: #e0e0e0; --accent: rgba(30,30,30,0.7);
-      --gold: #ffd700; --gold-dark: #cca300; --shadow: rgba(0,0,0,0.5);
+      --bg:#121212;--text:#e0e0e0;--accent:rgba(30,30,30,0.7);
+      --gold:#ffd700;--gold-dark:#cca300;--shadow:rgba(0,0,0,0.5);
     }
     body {
       background: var(--bg); color: var(--text); margin:0;
@@ -59,7 +59,6 @@
     .toast {
       background: var(--accent)!important; border:1px solid var(--gold-dark);
       color:var(--text); backdrop-filter: blur(10px);
-      white-space: pre-wrap; /* allow multiline */
     }
   </style>
 </head>
@@ -109,15 +108,17 @@
     <div id="liveToast" class="toast align-items-center border-0" role="alert">
       <div class="d-flex p-2">
         <div class="toast-body flex-grow-1" id="toast-body"></div>
-        <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast"></button>
+        <button type="button" class="btn-close btn-close-white me-2" data-bs-dismiss="toast"></button>
       </div>
     </div>
   </div>
 
   <script>
-    const SUPA_URL = 'https://dapwpgvnfjcfqqhrpxla.supabase.co';
-    const SUPA_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImRhcHdwZ3ZuZmpjZnFxaHJweGxhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDcwNDA4ODgsImV4cCI6MjA2MjYxNjg4OH0.ICC0UsLlzJDNre7rFCeD3k6iVzo6jOJgn3PhABpEMsQ';
-    const supabase = window.supabase.createClient(SUPA_URL, SUPA_KEY);
+    // 1) Init Supabase
+    const supabase = window.supabase.createClient(
+      'https://dapwpgvnfjcfqqhrpxla.supabase.co',
+      'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImRhcHdwZ3ZuZmpjZnFxaHJweGxhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDcwNDA4ODgsImV4cCI6MjA2MjYxNjg4OH0.ICC0UsLlzJDNre7rFCeD3k6iVzo6jOJgn3PhABpEMsQ'
+    );
 
     const form    = document.getElementById('signup-form');
     const btn     = document.getElementById('signup-btn');
@@ -129,7 +130,7 @@
       new bootstrap.Toast(document.getElementById('liveToast')).show();
     }
 
-    function genCode() {
+    function genReferralCode() {
       const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
       return Array.from({ length: 8 }, () =>
         chars[Math.floor(Math.random() * chars.length)]
@@ -156,60 +157,22 @@
       }
 
       try {
-        // 1) Sign up in Auth
-        const { data: authData, error: authErr } = await supabase.auth.signUp({
-          email, password: pwd
+        // 2) Sign up with metadata
+        const referralCode = genReferralCode();
+        const { data, error } = await supabase.auth.signUp({
+          email,
+          password: pwd,
+          options: {
+            data: { full_name: fullName, referral_code: referralCode }
+          }
         });
-        if (authErr) throw authErr;
+        if (error) throw error;
 
-        // 2) Wait briefly
-        await new Promise(r => setTimeout(r, 500));
-
-        // 3) Insert into affiliate_accounts — capture full error
-        const { data: newAcct, error: acctErr } = await supabase
-          .from('affiliate_accounts')
-          .insert([{
-            id: authData.user.id,
-            name: fullName,
-            email
-          }])
-          .select()
-          .single();
-
-        if (acctErr) {
-          // Show the complete error object in the toast
-          const info = JSON.stringify(
-            {
-              code: acctErr.code,
-              message: acctErr.message,
-              details: acctErr.details,
-              hint: acctErr.hint,
-              table: acctErr.table
-            },
-            null,
-            2
-          );
-          showToast(info);
-          throw acctErr;
-        }
-
-        // 4) Create referral code
-        const newCode = genCode();
-        const { error: refErr } = await supabase
-          .from('affiliates')
-          .insert([{
-            user_id: authData.user.id,
-            referral_code: newCode
-          }]);
-        if (refErr) throw refErr;
-
-        showToast('Account created! Redirecting…');
-        setTimeout(() => window.location.href = 'affiliate_login.html', 1500);
+        showToast('Account created! Check your email to confirm.');
+        // after confirmation, they can login normally.
       } catch (err) {
-        console.error('Signup error:', err);
-        if (!err.message) err.message = 'Signup failed';
-        // If it's not our affiliate_accounts error, show its message
-        showToast(err.message);
+        console.error(err);
+        showToast(err.message || 'Signup failed');
       } finally {
         btn.disabled = false;
         btnText.textContent = 'Create Account';
