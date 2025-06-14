@@ -19,8 +19,8 @@
 
   <style>
     :root[data-theme="dark"] {
-      --bg:#121212; --text:#e0e0e0; --accent:rgba(30,30,30,0.7);
-      --gold:#ffd700; --gold-dark:#cca300; --shadow:rgba(0,0,0,0.5);
+      --bg:#121212;--text:#e0e0e0;--accent:rgba(30,30,30,0.7);
+      --gold:#ffd700;--gold-dark:#cca300;--shadow:rgba(0,0,0,0.5);
     }
     body {
       background: var(--bg); color: var(--text); margin:0;
@@ -107,7 +107,7 @@
   </div>
 
   <script>
-    // 1) Init Supabase
+    // 1) Initialize Supabase
     const supabase = window.supabase.createClient(
       'https://dapwpgvnfjcfqqhrpxla.supabase.co',
       'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImRhcHdwZ3ZuZmpjZnFxaHJweGxhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDcwNDA4ODgsImV4cCI6MjA2MjYxNjg4OH0.ICC0UsLlzJDNre7rFCeD3k6iVzo6jOJgn3PhABpEMsQ'
@@ -123,7 +123,6 @@
       new bootstrap.Toast(document.getElementById('liveToast')).show();
     }
 
-    // random 8-char code
     function genReferralCode() {
       const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
       return Array.from({ length: 8 }, () =>
@@ -143,28 +142,26 @@
       const pwd2 = form['confirm-password'].value;
 
       if (!fullName || !email || pwd.length < 6 || pwd !== pwd2) {
-        showToast('Please fill out all fields correctly.');
+        showToast('Please fill all fields correctly.');
         btn.disabled = false;
         btnText.textContent = 'Create Account';
         spinner.classList.add('d-none');
         return;
       }
 
+      const referralCode = genReferralCode();
       try {
-        // 2) Simple signUp + store full_name & referral_code in user_metadata
+        // 2) PURE Auth signUp with metadata
         const { data, error } = await supabase.auth.signUp({
           email,
           password: pwd,
           options: {
-            data: {
-              full_name: fullName,
-              referral_code: genReferralCode()
-            }
+            data: { full_name: fullName, referral_code: referralCode }
           }
         });
         if (error) throw error;
 
-        showToast('Account created! Check your email to confirm.');
+        showToast('Account created! Confirm via email.');
       } catch (err) {
         showToast(err.message || 'Signup failed');
       } finally {
