@@ -1,172 +1,156 @@
 <!DOCTYPE html>
 <html lang="en" data-theme="dark">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Affiliate Login • Apex Income Options</title>
-
-  <!-- Bootstrap & Icons -->
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Affiliate Login</title>
   <link
     href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css"
     rel="stylesheet"
-    integrity="sha384-QWTKZyjpPEjISv5WaRU9OFeRpok6YctnYmDr5pNlyT2bRjXh0JMhjY6hW+ALEwIH"
     crossorigin="anonymous"
-  >
-  <link
-    href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css"
-    rel="stylesheet"
-  >
+  />
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>
-
   <style>
-    :root[data-theme="dark"] {
-      --bg: #121212; --text: #e0e0e0; --accent: rgba(30,30,30,0.7);
-      --gold: #ffd700; --gold-dark: #cca300; --shadow: rgba(0,0,0,0.5);
-    }
-    :root[data-theme="light"] {
-      --bg: #f5f5f5; --text: #333; --accent: rgba(255,255,255,0.7);
-      --gold: #cca300; --gold-dark: #b58900; --shadow: rgba(0,0,0,0.2);
-    }
     body {
-      background: var(--bg);
-      color: var(--text);
-      height: 100vh;
+      background: linear-gradient(135deg, #1a1a1a, #2c2c2c);
+      color: #e0e0e0;
       font-family: 'Poppins', sans-serif;
-      display: flex; align-items: center; justify-content: center;
+      height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin: 0;
     }
-    .auth-container {
-      background: var(--accent);
-      border: 1px solid var(--gold-dark);
-      border-radius: 10px;
-      box-shadow: 0 2px 8px var(--shadow);
-      width: 100%; max-width: 400px; padding: 2rem;
+    .login-container {
+      background: rgba(40, 40, 40, 0.9);
+      padding: 2.5rem;
+      border-radius: 12px;
+      box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5);
+      width: 100%;
+      max-width: 450px;
+      border: 1px solid #cca300;
     }
-    .auth-header { text-align: center; margin-bottom: 1.5rem; }
-    .auth-logo { color: var(--gold); font-size: 2rem; margin-bottom: .5rem; }
-    .auth-title { color: var(--gold); font-weight: 700; }
+    .login-container h4 {
+      color: #cca300;
+      text-align: center;
+      margin-bottom: 2rem;
+      font-weight: 600;
+    }
     .form-control {
-      background: var(--accent) !important;
-      color: var(--text) !important;
-      border: 1px solid var(--gold-dark) !important;
+      background: #333;
+      border: 1px solid #555;
+      color: #e0e0e0;
     }
     .form-control:focus {
-      border: 1px solid var(--gold) !important;
-      box-shadow: 0 0 0 .25rem rgba(255,215,0,0.25) !important;
+      background: #333;
+      border-color: #cca300;
+      box-shadow: 0 0 5px rgba(204, 163, 0, 0.5);
+      color: #e0e0e0;
     }
-    .btn-primary {
-      background: linear-gradient(45deg, var(--gold), var(--gold-dark));
-      border: none; color: #000; font-weight: 600;
+    .btn-signup {
+      background: #cca300;
+      border: none;
+      padding: 0.75rem;
+      font-weight: 500;
+      transition: background 0.3s ease;
     }
-    .btn-primary:hover {
-      background: linear-gradient(45deg, var(--gold-dark), var(--gold));
+    .btn-signup:hover {
+      background: #e0b000;
     }
-    .auth-footer { margin-top: 1.5rem; text-align: center; }
-    .auth-link { color: var(--gold); font-weight: 500; text-decoration: none; }
-    .auth-link:hover { color: var(--gold-dark); text-decoration: underline; }
-    .toast-container { position: fixed; top: 20px; right: 20px; z-index: 1000; }
-    .toast {
-      background: var(--accent) !important;
-      backdrop-filter: blur(10px);
-      border: 1px solid var(--gold-dark);
-      color: var(--text);
+    .alert {
+      margin-bottom: 1.5rem;
+      padding: 0.75rem;
+      border-radius: 8px;
     }
   </style>
 </head>
 <body>
-  <div class="auth-container">
-    <div class="auth-header">
-      <div class="auth-logo"><i class="bi bi-people-fill"></i></div>
-      <h2 class="auth-title">Affiliate Login</h2>
-      <p>Access your affiliate dashboard</p>
-    </div>
-
+  <div class="login-container">
+    <div id="message" class="mb-3"></div>
+    <h4>Affiliate Login</h4>
     <form id="login-form">
       <div class="mb-3">
-        <label class="form-label">Email Address</label>
-        <input type="email" id="email" class="form-control" required>
+        <label for="email" class="form-label">Email</label>
+        <input id="email" class="form-control" type="email" placeholder="Enter your email" required>
       </div>
       <div class="mb-3">
-        <label class="form-label">Password</label>
-        <input type="password" id="password" class="form-control" required>
+        <label for="password" class="form-label">Password</label>
+        <input id="password" class="form-control" type="password" placeholder="Enter your password" required>
       </div>
-      <button type="submit" class="btn btn-primary w-100" id="login-btn">
-        <span id="login-text">Login</span>
-        <span id="login-spinner" class="spinner-border spinner-border-sm ms-2 d-none"></span>
-      </button>
+      <button class="btn btn-signup" type="submit">Login</button>
     </form>
-
-    <div class="auth-footer">
-      <p>Don't have an account? <a href="affiliate_signup.html" class="auth-link">Sign up here</a></p>
-    </div>
+    <p class="mt-3 text-center">Don't have an account? <a href="signup.html">Sign up here</a></p>
   </div>
-
-  <div class="toast-container">
-    <div id="liveToast" class="toast align-items-center border-0" role="alert" aria-live="assertive">
-      <div class="d-flex">
-        <div class="toast-body" id="toast-body"></div>
-        <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast"></button>
-      </div>
-    </div>
-  </div>
-
-  <script>
-    const SUPA_URL = 'https://dapwpgvnfjcfqqhrpxla.supabase.co';
-    const SUPA_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImRhcHdwZ3ZuZmpjZnFxaHJweGxhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDcwNDA4ODgsImV4cCI6MjA2MjYxNjg4OH0.ICC0UsLlzJDNre7rFCeD3k6iVzo6jOJgn3PhABpEMsQ';
-    const supabase = supabase.createClient(SUPA_URL, SUPA_KEY);
-
-    const form    = document.getElementById('login-form');
-    const btn     = document.getElementById('login-btn');
-    const btnText = document.getElementById('login-text');
-    const spinner = document.getElementById('login-spinner');
-
-    function showToast(msg) {
-      document.getElementById('toast-body').textContent = msg;
-      new bootstrap.Toast(document.getElementById('liveToast')).show();
-    }
-
-    form.addEventListener('submit', async e => {
-      e.preventDefault();
-      const email    = document.getElementById('email').value.trim();
-      const password = document.getElementById('password').value;
-
-      if (!email) { showToast('Enter your email'); return; }
-      if (!password) { showToast('Enter your password'); return; }
-
-      btn.disabled = true;
-      btnText.textContent = 'Logging in…';
-      spinner.classList.remove('d-none');
-
-      try {
-        const { data, error: authErr } = await supabase.auth.signInWithPassword({ email, password });
-        if (authErr) throw authErr;
-
-        // verify affiliate record
-        const { data: aff, error: affErr } = await supabase
-          .from('affiliates')
-          .select('user_id')
-          .eq('user_id', data.user.id)
-          .single();
-        if (affErr || !aff) throw new Error('Not registered as affiliate');
-
-        // success → redirect
-        window.location.href = 'affiliate_dashboard.html';
-
-      } catch (err) {
-        console.error(err);
-        showToast(err.message || 'Login failed');
-      } finally {
-        btn.disabled = false;
-        btnText.textContent = 'Login';
-        spinner.classList.add('d-none');
-      }
-    });
-  </script>
 
   <!-- Bootstrap JS -->
-  <script
-    src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"
-    integrity="sha384-YvpcrYf0tY3lHB60NNkmXc5s9fDVZLESaAA55NDzOxhy9GkcIdslK1eN7N6jIeHz"
-    crossorigin="anonymous"
-  ></script>
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js" crossorigin="anonymous"></script>
+
+  <script>
+    // Initialize Supabase client
+    const client = window.supabase.createClient(
+      'https://dapwpgvnfjcfqqhrpxla.supabase.co',
+      'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImRhcHdwZ3ZuZmpjZnFxaHJweGxhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDcwNDA4ODgsImV4cCI6MjA2MjYxNjg4OH0.ICC0UsLlzJDNre7rFCeD3k6iVzo6jOJgn3PhABpEMsQ'
+    );
+
+    // Get form
+    const form = document.getElementById('login-form');
+
+    // Function to display messages
+    function showMessage(text, type = 'success') {
+      const messageDiv = document.getElementById('message');
+      messageDiv.innerHTML = `<div class="alert alert-${type}">${text}</div>`;
+    }
+
+    // Form submission handler
+    async function handleSubmit(e) {
+      e.preventDefault();
+
+      const submitButton = form.querySelector('button[type="submit"]');
+      submitButton.disabled = true;
+      submitButton.innerHTML = 'Logging in... <span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>';
+      document.getElementById('message').innerHTML = '';
+
+      const email = document.getElementById('email').value.trim();
+      const password = document.getElementById('password').value;
+
+      if (!email || !password) {
+        showMessage('Please enter both email and password', 'danger');
+        submitButton.disabled = false;
+        submitButton.innerHTML = 'Login';
+        return;
+      }
+
+      try {
+        const { data, error } = await client
+          .from('affiliate_accounts')
+          .select('password')
+          .eq('email', email)
+          .single();
+
+        if (error) {
+          if (error.message.includes('0 rows')) {
+            showMessage('Email not found. Please check your email or sign up.', 'danger');
+          } else {
+            showMessage('Unable to connect to the server. Please try again later.', 'danger');
+          }
+        } else {
+          if (data.password === password) {
+            // Login successful
+            window.location.href = 'affiliate_dashboard.html';
+          } else {
+            showMessage('Incorrect password. Please try again.', 'danger');
+          }
+        }
+      } catch (err) {
+        console.error(err);
+        showMessage('Unable to connect to the server. Please try again later.', 'danger');
+      } finally {
+        submitButton.disabled = false;
+        submitButton.innerHTML = 'Login';
+      }
+    }
+
+    form.addEventListener('submit', handleSubmit);
+  </script>
 </body>
 </html>
