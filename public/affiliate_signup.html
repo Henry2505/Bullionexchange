@@ -134,7 +134,11 @@
         .single();
 
       if (insertError) {
-        showMessage('Error: ' + insertError.message, 'danger');
+        let errorMessage = 'An error occurred. Please try again.';
+        if (insertError.code === '23505') {  // Unique constraint violation (e.g., duplicate email)
+          errorMessage = 'This email is already registered. Please use a different email.';
+        }
+        showMessage(errorMessage, 'danger');
       } else {
         if (refererId) {
           const { error: referralError } = await client
@@ -144,7 +148,7 @@
             console.error('Referral insert error:', referralError);
           }
         }
-        showMessage(`Signed up successfully! Your referral code is ${newCode}`);
+        showMessage('Signup successful! Welcome to the affiliate program.');
         form.reset();
       }
 
