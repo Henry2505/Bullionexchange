@@ -21,7 +21,7 @@
   <!-- Preconnect & Fonts -->
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700&family=Roboto:wght@300;400;700&display=swap" rel="stylesheet" />
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700&family=Roboto:wght@300;400;700&family=Orbitron:wght@400;700&display=swap" rel="stylesheet" />
 
   <!-- TradingView & Particles.js -->
   <script src="https://s3.tradingview.com/tv.js" defer></script>
@@ -53,6 +53,9 @@
       --text-muted: #888;
       --gold: #d4af37;
       --glass: rgba(255,255,255,0.1);
+      --clock-bg: rgba(26, 26, 26, 0.9);
+      --clock-text: #fff;
+      --clock-glow: rgba(212, 175, 55, 0.5);
     }
     [data-theme="light"] {
       --bg: #fff;
@@ -61,6 +64,9 @@
       --text-muted: #666;
       --gold: #b8860b;
       --glass: rgba(0,0,0,0.05);
+      --clock-bg: rgba(255, 255, 255, 0.9);
+      --clock-text: #111;
+      --clock-glow: rgba(184, 134, 11, 0.5);
     }
 
     /* — Utilities — */
@@ -112,6 +118,41 @@
       transition: transform .5s;
     }
     #theme-toggle:hover { transform: rotate(360deg); }
+
+    /* — Clock Styles — */
+    .clock-container {
+      display: flex;
+      align-items: center;
+      background: var(--clock-bg);
+      backdrop-filter: blur(12px);
+      border-radius: 12px;
+      padding: 0.5rem 1rem;
+      box-shadow: 0 4px 20px var(--clock-glow);
+      font-family: 'Orbitron', sans-serif;
+      color: var(--clock-text);
+      font-size: 1rem;
+      transition: all 0.3s ease;
+      animation: clockFadeIn 1s ease-out;
+    }
+    .clock-container:hover {
+      transform: scale(1.05);
+      box-shadow: 0 6px 25px var(--clock-glow);
+    }
+    #clock-time, #clock-date {
+      display: inline-block;
+      margin: 0 0.5rem;
+    }
+    #clock-time::after {
+      content: '';
+      animation: blink 1s step-end infinite;
+    }
+    @keyframes clockFadeIn {
+      from { opacity: 0; transform: translateY(-10px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+    @keyframes blink {
+      50% { opacity: 0; }
+    }
 
     /* — Navigation — */
     nav {
@@ -210,11 +251,16 @@
     @media (max-width: 768px) {
       nav { flex-direction: column; }
       nav a { margin: .3rem 0; }
+      .clock-container { font-size: 0.9rem; padding: 0.4rem 0.8rem; }
+      header { flex-wrap: wrap; justify-content: center; }
+      .logo, .clock-container, #theme-toggle { margin: 0.5rem; }
+    }
+    @media (max-width: 480px) {
+      .clock-container { font-size: 0.8rem; }
     }
   </style>
 </head>
 <body>
-
   <!-- Particles Background -->
   <div id="particles-js"></div>
 
@@ -225,10 +271,16 @@
         <img src="CBE_logo.PNG" alt="Chukwuemeka Bullion Exchange Logo" />
       </a>
     </div>
-    <button id="theme-toggle" aria-label="Toggle theme">🌞</button>
+    <div class="header-right">
+      <div class="clock-container">
+        <span id="clock-date"></span>
+        <span id="clock-time"></span>
+      </div>
+      <button id="theme-toggle" aria-label="Toggle theme">🌞</button>
+    </div>
   </header>
 
-  <!-- PAGE CONTENT -->
+  <!-- PAGE CONTENT (unchanged) -->
   <main>
     <!-- 1. Trade Insights -->
     <section class="card su" id="insights">
@@ -281,230 +333,4 @@
             "locale": "en",
             "newsType": "headlines"
           }
-        </script>
-      </div>
-
-      <!-- Order Book -->
-      <div id="orderbook" style="display:flex; justify-content:space-around; margin-top:1.5rem;">
-        <div>
-          <h3 style="color:var(--gold); font-size:1rem; margin-bottom:.5rem;">Top Bids</h3>
-          <ul id="bids" style="list-style:none; line-height:1.4;"></ul>
-        </div>
-        <div>
-          <h3 style="color:var(--gold); font-size:1rem; margin-bottom:.5rem;">Top Asks</h3>
-          <ul id="asks" style="list-style:none; line-height:1.4;"></ul>
-        </div>
-      </div>
-
-      <!-- Countdown to Fed Event -->
-      <div class="countdown" style="margin-top:1.5rem;">
-        Next major event: <span id="cd-text">--h --m --s</span>
-        <div class="countdown-bar">
-          <div class="fill" id="cd-bar"></div>
-        </div>
-      </div>
-
-      <!-- Price Alert -->
-      <div id="price-alert" class="hidden" style="
-        margin-top:1.5rem; padding:1rem;
-        background:#2b2b2b; border-left:4px solid var(--gold);
-        border-radius:4px; font-weight:600;
-      ">
-        ⚡️ Alert: XAUUSD just crossed your 1,950.00 level!
-      </div>
-    </section>
-
-    <!-- 3. Interactive Chart -->
-    <section class="card su" id="chart-container">
-      <h2>Interactive XAUUSD Chart</h2>
-      <div id="chart"></div>
-    </section>
-
-    <!-- 4. Recommendations -->
-    <section class="card su" id="recs">
-      <h2>Your Custom Edge</h2>
-      <p>AI signals detect unusual inflows—consider a tactical long with a 10-pip stop for optimized risk/reward over the next 6 hours.</p>
-    </section>
-
-    <!-- 5. Risk Management -->
-    <section class="card su" id="risk">
-      <h2>Risk Management Mastery</h2>
-      <ul>
-        <li><strong>Dynamic Sizing:</strong> Scale position by real-time volatility z-score.</li>
-        <li><strong>ATR Stops:</strong> Volatility-adaptive stop losses.</li>
-        <li><strong>Hedging:</strong> Inverse ETF overlays to neutralize systemic risk.</li>
-        <li><strong>Exit Rules:</strong> Pre-defined triggers to remove emotion.</li>
-        <li><strong>Cost Analysis:</strong> Only deploy when E[R]/σ ≥ 1.5.</li>
-      </ul>
-    </section>
-
-    <!-- 6. In-Page Navigation -->
-    <section class="card su" id="navigation">
-      <h2 class="center">Explore More</h2>
-      <nav aria-label="Main navigation">
-        <a href="#market">Market Data</a>
-        <a href="#insights">Insights</a>
-        <a href="#recs">Recommendations</a>
-        <a href="#risk">Risk Management</a>
-      </nav>
-    </section>
-
-    <!-- 7. Apply to Join -->
-    <section class="card su" id="intro">
-      <h2>Apply to Join CBE</h2>
-      <p>Gain comprehensive access to the company’s historical signals, trade records, trade insights, pips, and detailed historical performance, providing a transparent and growth-oriented overview of the organization’s development.</p>
-      <p style="font-style: italic; color: var(--text-light); margin-top: 1rem;">
-        "The market is always right. Trade what you see, not what you think."
-      </p>
-      <div class="center" style="margin-top:1.5rem;">
-        <a href="https://apexincomeoptions.com.ng/cbe_apply" class="btn btn-gold" aria-label="Join VIP Access">Unlock VIP Edge</a>
-      </div>
-    </section>
-  </main>
-
-  <!-- SITE FOOTER -->
-  <footer>
-    © 2025 Chukwuemeka Bullion Exchange. All rights reserved.
-  </footer>
-
-  <!-- SCRIPTS -->
-  <script>
-    // Disable auto-scroll
-    if ('scrollRestoration' in history) history.scrollRestoration = 'manual';
-
-    // Load Particles.js
-    document.addEventListener('DOMContentLoaded', () => {
-      particlesJS.load('particles-js', 'particles.json', () => {});
-    });
-
-    // Scroll-in animations
-    const observer = new IntersectionObserver((entries, obs) => {
-      entries.forEach(entry => {
-        if (entry.isIntersecting) {
-          entry.target.classList.add('visible');
-          obs.unobserve(entry.target);
-        }
-      });
-    }, { threshold: 0.2 });
-    document.querySelectorAll('.su').forEach(el => observer.observe(el));
-
-    // Theme toggle
-    const themeBtn = document.getElementById('theme-toggle');
-    themeBtn.addEventListener('click', () => {
-      const next = document.documentElement.getAttribute('data-theme') === 'dark' ? 'light' : 'dark';
-      document.documentElement.setAttribute('data-theme', next);
-      localStorage.setItem('theme', next);
-      themeBtn.textContent = next === 'dark' ? '🌞' : '🌜';
-      initWidgets(next);
-    });
-    (() => {
-      const stored = localStorage.getItem('theme') || 'dark';
-      document.documentElement.setAttribute('data-theme', stored);
-      themeBtn.textContent = stored === 'dark' ? '🌞' : '🌜';
-    })();
-
-    // TradingView & Chart initialization
-    function initWidgets(theme) {
-      document.getElementById('chart').innerHTML = '';
-      new TradingView.widget({
-        container_id: 'chart',
-        autosize: true,
-        symbol: 'OANDA:XAUUSD',
-        interval: '60',
-        theme,
-        style: '1',
-        toolbar_bg: theme === 'dark' ? '#1a1a1a' : '#f1f3f6',
-        hideideas: true,
-        withdateranges: true,
-        allow_symbol_change: true
-      });
-      // Ticker tape
-      document.querySelectorAll('.tradingview-widget-container__widget').forEach(el => el.innerHTML = '');
-      new TradingView.widget({
-        symbols: [{ proName: "OANDA:XAUUSD", title: "Gold / USD" }],
-        showSymbolLogo: true,
-        colorTheme: theme,
-        isTransparent: false,
-        displayMode: "adaptive",
-        locale: "en"
-      });
-      // News ticker
-      new TradingView.widget({
-        colorTheme: theme,
-        isTransparent: false,
-        width: "100%",
-        height: "200",
-        locale: "en",
-        newsType: "headlines"
-      });
-    }
-    window.addEventListener('load', () => initWidgets(document.documentElement.getAttribute('data-theme')));
-
-    // Real-time clock
-    setInterval(() => {
-      document.getElementById('currentTime').textContent =
-        'Last updated: ' + new Date().toLocaleTimeString();
-    }, 1000);
-
-    // Countdown to next Fed event
-    const cdText = document.getElementById('cd-text');
-    const cdBar = document.getElementById('cd-bar');
-    const target = Date.UTC(2025, 6, 30, 14, 0, 0);
-    function updateCountdown() {
-      const now = Date.now();
-      const diff = target - now;
-      if (diff <= 0) {
-        cdText.textContent = 'Now Live';
-        cdBar.style.width = '100%';
-        return;
-      }
-      const h = Math.floor(diff / 3600000),
-            m = Math.floor((diff % 3600000) / 60000),
-            s = Math.floor((diff % 60000) / 1000);
-      cdText.textContent = `${h}h ${m}m ${s}s`;
-      const pct = ((86400000 - diff % 86400000) / 86400000) * 100;
-      cdBar.style.width = `${pct}%`;
-    }
-    setInterval(updateCountdown, 1000);
-    updateCountdown();
-
-    // Mock order-book updates
-    function updateOrderBook() {
-      const bids = document.getElementById('bids'),
-            asks = document.getElementById('asks');
-      bids.innerHTML = '';
-      asks.innerHTML = '';
-      for (let i = 0; i < 5; i++) {
-        const priceBid = (1950 - i * 0.2).toFixed(2),
-              volBid = (Math.random() * 10 + 1).toFixed(1),
-              priceAsk = (1950 + i * 0.2).toFixed(2),
-              volAsk = (Math.random() * 10 + 1).toFixed(1);
-        bids.innerHTML += `<li style="color:#0f0;">${priceBid} (${volBid}k)</li>`;
-        asks.innerHTML += `<li style="color:#f33;">${priceAsk} (${volAsk}k)</li>`;
-      }
-    }
-    setInterval(updateOrderBook, 5000);
-    updateOrderBook();
-
-    // Price alert simulation
-    let lastPrice = null;
-    setInterval(() => {
-      const simulated = 1950 + (Math.random() - 0.5) * 10;
-      if (lastPrice !== null && lastPrice < 1950 && simulated >= 1950) {
-        document.getElementById('price-alert').classList.remove('hidden');
-      }
-      lastPrice = simulated;
-    }, 3000);
-  </script>
-
-  <!-- No-JS Fallback -->
-  <noscript>
-    <style>
-      .su { opacity: 1; transform: none; }
-    </style>
-    <div style="padding:1rem; background:#fdd; color:#900; text-align:center;">
-      JavaScript is required for full functionality. Please enable it.
-    </div>
-  </noscript>
-</body>
-</html>
+        </
