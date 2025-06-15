@@ -19,23 +19,82 @@
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>
 
   <style>
-    body { background: #000; color: #ffd700; font-family: sans-serif; padding: 2rem; }
-    .card { background: #111; border: 1px solid #333; border-radius: 8px; padding: 1rem; max-width: 400px; }
-    input { background: #222; color: #ffd700; border: 1px solid #333; }
-    button { background: #ffd700; color: #000; border: none; }
+    body {
+      background: #000;
+      color: #ffd700;
+      font-family: sans-serif;
+      padding: 2rem;
+    }
+    .card {
+      background: #111;
+      border: 1px solid #333;
+      border-radius: 8px;
+      padding: 1.5rem;
+      margin-bottom: 1.5rem;
+      max-width: 500px;
+    }
+    input {
+      background: #222;
+      color: #ffd700;
+      border: 1px solid #333;
+    }
+    button {
+      background: #ffd700;
+      color: #000;
+      border: none;
+    }
+    .metrics {
+      display: flex;
+      gap: 1rem;
+      flex-wrap: wrap;
+    }
+    .metric {
+      flex: 1;
+      background: #111;
+      border: 1px solid #333;
+      border-radius: 6px;
+      padding: 1rem;
+      text-align: center;
+    }
+    .metric h6 {
+      margin-bottom: .5rem;
+      font-size: .9rem;
+      color: #ccc;
+    }
+    .metric p {
+      font-size: 1.3rem;
+      margin: 0;
+    }
   </style>
 </head>
 <body>
 
   <h1 class="mb-4">Your Affiliate Dashboard</h1>
 
+  <!-- Referral Code & Link -->
   <div class="card">
     <h5>Your Referral Code</h5>
     <p id="referral-code">Loading…</p>
     <h5>Your Referral Link</h5>
-    <div class="d-flex">
+    <div class="d-flex mb-2">
       <input id="referral-link" class="form-control me-2" readonly />
-      <button id="copy-btn" class="btn">Copy</button>
+      <button id="copy-btn" class="btn"><i class="bi bi-clipboard"></i></button>
+    </div>
+  </div>
+
+  <!-- Metrics -->
+  <div class="metrics">
+    <div class="metric">
+      <h6>Total Referrals</h6>
+      <p id="total-refs">–</p>
+    </div>
+    <div class="metric">
+      <h6>Weekly Earnings</h6>
+      <p id="weekly-earn">$–.00</p>
+    </div>
+    <div class="metric">
+      <h6>All-Time Earnings</h6>
+      <p id="alltime-earn">$–.00</p>
     </div>
   </div>
 
@@ -45,15 +104,20 @@
     const SUPA_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImRhcHdwZ3ZuZmpjZnFxaHJweGxhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDcwNDA4ODgsImV4cCI6MjA2MjYxNjg4OH0.ICC0UsLlzJDNre7rFCeD3k6iVzo6jOJgn3PhABpEMsQ';
     const supabase = window.supabase.createClient(SUPA_URL, SUPA_KEY);
 
-    // 2️⃣ Grab your affiliateId (set at login)
+    // 2️⃣ Get affiliateId from localStorage
     const affiliateId = localStorage.getItem('affiliateId');
     if (!affiliateId) {
-      alert('Not logged in – redirecting to login page.');
+      alert('Not logged in. Redirecting to login.');
       window.location.href = 'affiliate_login.html';
       throw new Error('No affiliateId');
     }
 
-    // 3️⃣ Fetch & render your code + link
+    // Helper to format USD
+    function toUSD(n) {
+      return `$${(n).toFixed(2)}`;
+    }
+
+    // 3️⃣ Load referral code + link
     async function loadReferral() {
       try {
         const { data, error } = await supabase
@@ -65,22 +129,44 @@
 
         const code = data.referral_code;
         document.getElementById('referral-code').textContent = code;
-        const fullLink = `${window.location.origin}/CBE_apply.html?ref=${code}`;
-        document.getElementById('referral-link').value = fullLink;
+        const link = `${window.location.origin}/CBE_apply.html?ref=${code}`;
+        document.getElementById('referral-link').value = link;
       } catch (err) {
-        console.error('Error loading referral:', err);
-        document.getElementById('referral-code').textContent = 'Error loading code';
+        console.error(err);
+        document.getElementById('referral-code').textContent = 'Error';
       }
     }
-    loadReferral();
 
-    // 4️⃣ Copy button
+    // 4️⃣ Load metrics: total refs, weekly & all-time earnings
+    async function loadMetrics() {
+      const now = new Date();
+      const weekAgo = new Date(now.getTime() - 7*24*3600*1000).toISOString();
+
+      // Total referrals
+      const [{ count: totalCount }, { count: weekCount }] = await Promise.all([
+        supabase.from('referrals').select('*', { head: true, count: 'exact' })
+          .eq('affiliate_id', affiliateId),
+        supabase.from('referrals').select('*', { head: true, count: 'exact' })
+          .eq('affiliate_id', affiliateId)
+          .gt('created_at', weekAgo)
+      ]);
+
+      document.getElementById('total-refs').textContent = totalCount;
+      document.getElementById('weekly-earn').textContent = toUSD(weekCount * 5);
+      document.getElementById('alltime-earn').textContent = toUSD(totalCount * 5);
+    }
+
+    // 5️⃣ Copy button
     document.getElementById('copy-btn').addEventListener('click', () => {
       const linkEl = document.getElementById('referral-link');
       linkEl.select();
       document.execCommand('copy');
       alert('Referral link copied!');
     });
+
+    // On load
+    loadReferral();
+    loadMetrics();
   </script>
 
 </body>
