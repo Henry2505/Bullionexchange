@@ -19,31 +19,543 @@
   <link href="https://cdn.datatables.net/1.13.4/css/dataTables.bootstrap5.min.css" rel="stylesheet"/>
   <link href="https://cdn.datatables.net/buttons/2.3.6/css/buttons.bootstrap5.min.css" rel="stylesheet"/>
   <link href="https://cdn.datatables.net/responsive/2.5.0/css/responsive.bootstrap5.min.css" rel="stylesheet"/>
-  <link href="https://cdn.datatables.net/select/1.7.0/css/select.bootstrap5.min.css" rel="stylesheet"/>
   <style>
-    /* Existing styles unchanged, adding new styles for enhancements */
-    .bulk-actions {
-      display: none;
-      gap: 8px;
-      margin-left: 12px;
+    :root {
+      --bg: #000000;
+      --card-bg: #111111;
+      --text: #e2e8f0;
+      --gold: #fcd34d;
+      --accent: #7dd3fc;
+      --success: #86efac;
+      --warning: #fde68a;
+      --danger: #fca5a5;
+      --glass-bg: rgba(17, 17, 17, 0.7);
+      --overlay: rgba(0, 0, 0, 0.9);
     }
-    .bulk-actions.show {
-      display: flex;
+    [data-theme="light"] {
+      --bg: #f1f5f9;
+      --card-bg: #ffffff;
+      --text: #334155;
+      --gold: #ca8a04;
+      --accent: #0284c7;
+      --success: #16a34a;
+      --warning: #ca8a04;
+      --danger: #dc2626;
+      --glass-bg: rgba(241, 245, 249, 0.7);
+      --overlay: rgba(241, 245, 249, 0.7);
     }
-    .tooltip-inner {
-      max-width: 200px;
-      padding: 8px;
-      background: var(--card-bg);
-      border: 1px solid var(--gold);
+    
+    body {
+      font-family: 'Poppins', sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      overflow-x: hidden;
+      background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="100" height="100" viewBox="0 0 100 100"><rect width="100" height="100" fill="none"/><path d="M0,0 L100,100 M100,0 L0,100" stroke="rgba(124, 211, 252, 0.05)" stroke-width="1"/></svg>');
     }
-    .modal-glass {
+    
+    .overlay {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: var(--overlay);
+      z-index: -1;
+    }
+    
+    .glass {
       background: var(--glass-bg);
       backdrop-filter: blur(10px);
       border: 1px solid rgba(252, 211, 77, 0.2);
+      border-radius: 12px;
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.15);
+      transition: all 0.3s ease;
     }
-    .select-checkbox {
-      width: 18px;
-      height: 18px;
+    
+    .glass:hover {
+      box-shadow: 0 15px 35px rgba(0, 0, 0, 0.2);
+      transform: translateY(-2px);
+    }
+    
+    header.admin-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 1rem 2rem;
+      background: var(--card-bg);
+      border-bottom: 1px solid var(--gold);
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    }
+    
+    .logo {
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+    
+    .logo img {
+      height: 40px;
+    }
+    
+    .logo-text {
+      font-weight: 700;
+      font-size: 1.5rem;
+      background: linear-gradient(to right, var(--gold), var(--accent));
+      -webkit-background-clip: text;
+      background-clip: text;
+      color: transparent;
+    }
+    
+    #theme-toggle {
+      background: none;
+      border: none;
+      font-size: 1.25rem;
+      cursor: pointer;
+      color: var(--text);
+      transition: transform 0.3s ease;
+    }
+    
+    #theme-toggle:hover {
+      transform: rotate(15deg);
+    }
+    
+    #section-title {
+      color: var(--gold);
+      text-align: center;
+      margin: 2remIsra 0 1rem;
+      font-weight: 700;
+      text-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+    }
+    
+    .table-panel {
+      padding: 1.5rem;
+      margin-bottom: 2rem;
+      overflow: hidden;
+      position: relative;
+    }
+    
+    .panel-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 1.5rem;
+    }
+    
+    .panel-title {
+      font-size: 1.25rem;
+      font-weight: 600;
+      color: var(--gold);
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    
+    .stats-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+      gap: 1.5rem;
+      margin-bottom: 2rem;
+    }
+    
+    .stat-card {
+      padding: 1.5rem;
+      display: flex;
+      flex-direction: column;
+      position: relative;
+      overflow: hidden;
+      cursor: pointer;
+    }
+    
+    .stat-card::after {
+      content: "";
+      position: absolute;
+      top: -50%;
+      right: -50%;
+      width: 200%;
+      height: 200%;
+      background: radial-gradient(circle, rgba(252, 211, 77, 0.1) 0%, transparent 70%);
+      z-index: 0;
+    }
+    
+    .stat-value {
+      font-size: 2.5rem;
+      font-weight: 700;
+      margin-bottom: 0.5rem;
+      z-index: 1;
+    }
+    
+    .stat-label {
+      font-size: 0.9rem;
+      opacity: 0.8;
+      z-index: 1;
+    }
+    
+    .stat-icon {
+      position: absolute;
+      top: 1rem;
+      right: 1rem;
+      font-size: 2.5rem;
+      opacity: 0.2;
+      z-index: 0;
+    }
+    
+    .dataTables_wrapper .dataTables_filter input {
+      background: var(--card-bg);
+      color: var(--text);
+      border: 1px solid var(--gold);
+      border-radius: 6px;
+      padding: 0.375rem 0.75rem;
+    }
+    
+    table.dataTable {
+      border-collapse: separate;
+      border-spacing: 0;
+      border-radius: 10px;
+      overflow: hidden;
+    }
+    
+    table.dataTable th {
+      background: rgba(30, 41, 59, 0.8);
+      color: var(--gold);
+      font-weight: 600;
+      padding: 1rem;
+    }
+    
+    table.dataTable td {
+      padding: 0.75rem 1rem;
+      border-bottom: 1px solid rgba(252, 211, 77, 0.1);
+    }
+    
+    table.dataTable tr:last-child td {
+      border-bottom: none;
+    }
+    
+    table.dataTable tbody tr {
+      transition: background 0.2s ease;
+    }
+    
+    table.dataTable tbody tr:hover {
+      background: rgba(252, 211, 77, 0.05);
+    }
+    
+    .status-badge {
+      padding: 0.25rem 0.75rem;
+      border-radius: 50px;
+      font-size: 0.85rem;
+      font-weight: 500;
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+    }
+    
+    .status-pending {
+      background: rgba(253, 230, 138, 0.2);
+      color: var(--warning);
+      border: 1px solid rgba(253, 230, 138, 0.3);
+    }
+    
+    .status-paid {
+      background: rgba(134, 239, 172, 0.2);
+      color: var(--success);
+      border: 1px solid rgba(134, 239, 172, 0.3);
+    }
+    
+    .status-rejected {
+      background: rgba(252, 165, 165, 0.2);
+      color: var(--danger);
+      border: 1px solid rgba(252, 165, 165, 0.3);
+    }
+    
+    .btn-action {
+      padding: 0.25rem 0.75rem;
+      font-size: 0.85rem;
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      transition: all 0.2s ease;
+    }
+    
+    .btn-paid {
+      background: rgba(134, 239, 172, 0.15);
+      color: var(--success);
+      border: 1px solid rgba(134, 239, 172, 0.3);
+    }
+    
+    .btn-paid:hover {
+      background: rgba(134, 239, 172, 0.3);
+      transform: translateY(-2px);
+    }
+    
+    .btn-reject {
+      background: rgba(252, 165, 165, 0.15);
+      color: var(--danger);
+      border: 1px solid rgba(252, 165, 165, 0.3);
+    }
+    
+    .btn-reject:hover {
+      background: rgba(252, 165, 165, 0.3);
+      transform: translateY(-2px);
+    }
+    
+    .toast {
+      z-index: 99999 !important;
+      border: 1px solid rgba(252, 211, 77, 0.3);
+    }
+    
+    .filter-bar {
+      display: flex;
+      gap: 12px;
+      margin-bottom: 1.5rem;
+      flex-wrap: wrap;
+    }
+    
+    .filter-btn {
+      background: var(--card-bg);
+      border: 1px solid rgba(252, 211, 77, 0.3);
+      color: var(--text);
+      padding: 0.5rem 1rem;
+      border-radius: 50px;
+      font-size: 0.9rem;
+      transition: all 0.2s ease;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+    
+    .filter-btn.active {
+      background: rgba(252, 211, 77, 0.15);
+      color: var(--gold);
+      border-color: var(--gold);
+    }
+    
+    .filter-btn:hover {
+      background: rgba(252, 211, 77, 0.1);
+    }
+    
+    .footer {
+      text-align: center;
+      padding: 2rem;
+      font-size: 0.9rem;
+      opacity: 0.7;
+      margin-top: 2rem;
+    }
+    
+    .highlight-row {
+      animation: highlight 2s ease;
+    }
+    
+    @keyframes highlight {
+      0% { background-color: rgba(252, 211, 77, 0.5); }
+      100% { background-color: transparent; }
+    }
+    
+    .badge-indicator {
+      position: absolute;
+      top: -8px;
+      right: -8px;
+      width: 24px;
+      height: 24px;
+      background: var(--danger);
+      color: white;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 0.75rem;
+      font-weight: bold;
+    }
+    
+    .action-cell {
+      display: flex;
+      gap: 8px;
+      justify-content: center;
+    }
+    
+    .summary-row {
+      background: rgba(30, 41, 59, 0.5) !important;
+      font-weight: 600;
+    }
+    
+    .summary-row td {
+      border-top: 2px solid var(--gold);
+    }
+    
+    .table-container {
+      overflow-x: auto;
+      -webkit-overflow-scrolling: touch;
+      scrollbar-width: thin;
+      scrollbar-color: var(--gold) var(--card-bg);
+      position: relative;
+      border-radius: 10px;
+    }
+    
+    .table-container::-webkit-scrollbar {
+      height: 8px;
+    }
+    
+    .table-container::-webkit-scrollbar-track {
+      background: var(--card-bg);
+      border-radius: 10px;
+    }
+    
+    .table-container::-webkit-scrollbar-thumb {
+      background: var(--gold);
+      border-radius: 10px;
+    }
+    
+    .table-container table.dataTable {
+      min-width: 800px;
+      width: 100%;
+    }
+    
+    .table-container::before,
+    .table-container::after {
+      content: '';
+      position: absolute;
+      top: 0;
+      bottom: 0;
+      width: 20px;
+      pointer-events: none;
+      z-index: 1;
+      opacity: 0;
+      transition: opacity 0.3s ease;
+    }
+    
+    .table-container::before {
+      left: 0;
+      background: linear-gradient(to right, var(--card-bg), transparent);
+    }
+    
+    .table-container::after {
+      right: 0;
+      background: linear-gradient(to left, var(--card-bg), transparent);
+    }
+    
+    .table-container.scroll-left::before,
+    .table-container.scroll-right::after {
+      opacity: 1;
+    }
+    
+    /* New styles for affiliate email and manageability */
+    .email-link {
+      color: var(--accent);
+      cursor: pointer;
+      text-decoration: none;
+      position: relative;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+      max-width: 200px;
+      display: inline-block;
+    }
+    
+    .email-link:hover {
+      text-decoration: underline;
+    }
+    
+    .email-tooltip {
+      position: relative;
+    }
+    
+    .email-tooltip:hover::after {
+      content: attr(data-tooltip);
+      position: absolute;
+      background: var(--card-bg);
+      color: var(--text);
+      padding: 0.5rem;
+      border-radius: 6px;
+      border: 1px solid var(--gold);
+      z-index: 10;
+      top: -30px;
+      left: 50%;
+      transform: translateX(-50%);
+      white-space: nowrap;
+      font-size: 0.85rem;
+    }
+    
+    .loading-overlay {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: var(--glass-bg);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 100;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.3s ease;
+    }
+    
+    .loading-overlay.active {
+      opacity: 1;
+      pointer-events: auto;
+    }
+    
+    .loading-content {
+      text-align: center;
+      color: var(--gold);
+    }
+    
+    .btn-retry {
+      background: var(--gold);
+      color: var(--card-bg);
+      border: none;
+      padding: 0.5rem 1rem;
+      border-radius: 50px;
+      font-size: 0.9rem;
+      margin-top: 1rem;
+      cursor: pointer;
+    }
+    
+    .btn-retry:hover {
+      background: var(--accent);
+    }
+    
+    @media (max-width: 768px) {
+      .stats-grid {
+        grid-template-columns: 1fr;
+      }
+      
+      .table-panel {
+        padding: 1rem;
+      }
+      
+      .panel-header {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 1rem;
+      }
+      
+      .filter-bar {
+        flex-direction: column;
+        gap: 8px;
+      }
+      
+      .filter-btn {
+        width: 100%;
+      }
+      
+      .table-container {
+        margin-left: -1rem;
+        margin-right: -1rem;
+        padding-left: 1rem;
+        padding-right: 1rem;
+      }
+      
+      .table-container table.dataTable {
+        min-width: 600px;
+      }
+      
+      .email-link {
+        max-width: 150px;
+      }
     }
   </style>
 </head>
@@ -58,12 +570,12 @@
     </div>
     <div class="d-flex align-items-center gap-3">
       <div class="position-relative">
-        <button class="btn btn-sm position-relative" data-bs-toggle="tooltip" title="Pending Payouts">
+        <button class="btn btn-sm position-relative">
           <i class="bi bi-bell"></i>
           <span class="badge-indicator" id="pending-count">0</span>
         </button>
       </div>
-      <button id="theme-toggle" data-bs-toggle="tooltip" title="Toggle Theme">🌞</button>
+      <button id="theme-toggle">🌞</button>
     </div>
   </header>
 
@@ -102,6 +614,13 @@
           Affiliates
         </div>
       </div>
+      <div class="loading-overlay" id="affiliates-loading">
+        <div class="loading-content">
+          <div class="spinner-border text-warning" role="status"></div>
+          <div>Loading Affiliates...</div>
+          <button class="btn-retry" style="display: none;">Retry</button>
+        </div>
+      </div>
       <table id="affiliates-table" class="table table-hover w-100">
         <thead><tr>
           <th>ID</th><th>Affiliate</th><th>Email</th><th>Referral Code</th><th>Joined On</th><th>Status</th>
@@ -131,25 +650,22 @@
               <i class="bi bi-x-circle"></i> Rejected
             </button>
           </div>
-          <div class="bulk-actions">
-            <button class="btn-action btn-paid bulk-pay" data-bs-toggle="tooltip" title="Pay Selected">
-              <i class="bi bi-check-lg"></i> Pay Selected
-            </button>
-            <button class="btn-action btn-reject bulk-reject" data-bs-toggle="tooltip" title="Reject Selected">
-              <i class="bi bi-x-lg"></i> Reject Selected
-            </button>
-          </div>
+        </div>
+      </div>
+      <div class="loading-overlay" id="payouts-loading">
+        <div class="loading-content">
+          <div class="spinner-border text-warning" role="status"></div>
+          <div>Loading Payouts...</div>
+          <button class="btn-retry" style="display: none;">Retry</button>
         </div>
       </div>
       <table id="payouts-table" class="table table-hover w-100">
         <thead><tr>
-          <th><input type="checkbox" id="select-all"></th>
-          <th>ID</th><th>Affiliate</th><th>Email</th><th>Amount</th><th>Method</th><th>Status</th><th>Requested On</th><th>Actions</th>
+          <th>ID</th><th>Affiliate</th><th>Amount</th><th>Method</th><th>Status</th><th>Requested On</th><th>Actions</th>
         </tr></thead><tbody></tbody>
         <tfoot>
           <tr class="summary-row">
-            <td colspan="3">Total Pending</td>
-            <td></td>
+            <td colspan="2">Total Pending</td>
             <td id="pending-total">$0.00</td>
             <td colspan="4"></td>
           </tr>
@@ -163,6 +679,13 @@
         <div class="panel-title">
           <i class="bi bi-bank"></i>
           Bank Accounts
+        </div>
+      </div>
+      <div class="loading-overlay" id="bank-loading">
+        <div class="loading-content">
+          <div class="spinner-border text-warning" role="status"></div>
+          <div>Loading Bank Accounts...</div>
+          <button class="btn-retry" style="display: none;">Retry</button>
         </div>
       </div>
       <table id="bank-table" class="table table-hover w-100">
@@ -180,6 +703,13 @@
           Crypto Wallets
         </div>
       </div>
+      <div class="loading-overlay" id="wallet-loading">
+        <div class="loading-content">
+          <div class="spinner-border text-warning" role="status"></div>
+          <div>Loading Crypto Wallets...</div>
+          <button class="btn-retry" style="display: none;">Retry</button>
+        </div>
+      </div>
       <table id="wallet-table" class="table table-hover w-100">
         <thead><tr>
           <th>ID</th><th>Affiliate ID</th><th>Affiliate Email</th><th>Currency</th><th>Address</th><th>Created On</th>
@@ -195,52 +725,27 @@
           Referrals
         </div>
       </div>
-      <table id="referrals-table" class="table table-hover w-100">
-        <thead><tr>
-          <th>ID</th><th>Affiliate ID</th><th>Referred Email</th><th>Converted</th><th>Date</th>
-        </tr></thead><tbody></tbody>
-      </table>
-    </div>
-    
-    <!-- Audit Logs Table -->
-    <div class="glass table-panel mt-4" id="audit-panel">
-      <div class="panel-header">
-        <div class="panel-title">
-          <i class="bi bi-journal-text"></i>
-          Audit Logs
+      <div class="loading-overlay" id="referrals-loading">
+        <div class="loading-content">
+          <div class="spinner-border text-warning" role="status"></div>
+          <div>Loading Referrals...</div>
+          <button class="btn-retry" style="display: none;">Retry</button>
         </div>
       </div>
-      <table id="audit-table" class="table table-hover w-100">
+      <table id="referrals-table" class="table table-hover w-100">
         <thead><tr>
-          <th>ID</th><th>Action</th><th>Details</th><th>Performed By</th><th>Timestamp</th>
+          <th>ID</th><th>Affiliate ID</th><th>Affiliate Email</th><th>Referred Email</th><th>Converted</th><th>Date</th>
         </tr></thead><tbody></tbody>
       </table>
     </div>
   </main>
   
-  <!-- Confirmation Modal -->
-  <div class="modal fade" id="confirmModal" tabindex="-1">
-    <div class="modal-dialog">
-      <div class="modal-content modal-glass">
-        <div class="modal-header">
-          <h5 class="modal-title" id="confirmModalTitle">Confirm Action</h5>
-          <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-        </div>
-        <div class="modal-body" id="confirmModalBody"></div>
-        <div class="modal-footer">
-          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-          <button type="button" class="btn btn-primary" id="confirmAction">Confirm</button>
-        </div>
-      </div>
-    </div>
-  </div>
-
   <footer class="footer">
     <div class="container">
       <div class="glass py-3 px-4">
         <div class="d-flex justify-content-between align-items-center">
           <div>CBE Affiliate System</div>
-          <div>v2.9.0</div>
+          <div>v2.8.1</div>
           <div>© 2025 All Rights Reserved</div>
         </div>
       </div>
@@ -255,73 +760,42 @@
   <script src="https://cdn.datatables.net/buttons/2.3.6/js/dataTables.buttons.min.js"></script>
   <script src="https://cdn.datatables.net/buttons/2.3.6/js/buttons.bootstrap5.min.js"></script>
   <script src="https://cdn.datatables.net/responsive/2.5.0/js/dataTables.responsive.min.js"></script>
-  <script src="https://cdn.datatables.net/select/1.7.0/js/dataTables.select.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script>
   $(function(){
     // Logo → Dashboard
-    $('#logo').click(() => location.href='admin-dashboard.html');
+    $('#logo').click(()=> location.href='admin-dashboard.html');
 
     // Theme Toggle
     const themeBtn = $('#theme-toggle');
-    function applyTheme(t) {
+    function applyTheme(t){
       $('html').attr('data-theme', t);
       localStorage.setItem('theme', t);
-      themeBtn.text(t === 'dark' ? '🌞' : '🌜');
+      themeBtn.text(t==='dark' ? '🌞' : '🌜');
     }
-    themeBtn.click(() => applyTheme($('html').attr('data-theme') === 'dark' ? 'light' : 'dark'));
-    applyTheme(localStorage.getItem('theme') || 'dark');
-
-    // Enable Tooltips
-    const tooltipTriggerList = document.querySelectorAll('[data-bs-toggle="tooltip"]');
-    const tooltipList = [...tooltipTriggerList].map(tooltipTriggerEl => new bootstrap.Tooltip(tooltipTriggerEl));
+    themeBtn.click(()=> applyTheme($('html').attr('data-theme')==='dark'?'light':'dark'));
+    applyTheme(localStorage.getItem('theme')||'dark');
 
     // Supabase init
     const SUPA_URL = 'https://dapwpgvnfjcfqqhrpxla.supabase.co';
     const SUPA_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImRhcHdwZ3ZuZmpjZnFxaHJweGxhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDcwNDA4ODgsImV4cCI6MjA2MjYxNjg4OH0.ICC0UsLlzJDNre7rFCeD3k6iVzo6jOJgn3PhABpEMsQ';
     const supabase = window.supabase.createClient(SUPA_URL, SUPA_KEY);
 
-    // Admin Info (Mocked for audit logs)
-    const adminEmail = localStorage.getItem('adminEmail') || 'admin@example.com';
-
     // Simple toast
-    function showToast(msg, ok = true) {
-      const $t = $(`
-        <div class="toast align-items-center text-white ${ok ? 'bg-success' : 'bg-danger'} border-0 position-fixed top-0 end-0 m-3">
+    function showToast(msg, ok=true){
+      const $t=$(`
+        <div class="toast align-items-center text-white ${ok?'bg-success':'bg-danger'} border-0 position-fixed top-0 end-0 m-3">
           <div class="d-flex">
             <div class="toast-body">${msg}</div>
             <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast"></button>
           </div>
         </div>`);
       $('body').append($t);
-      new bootstrap.Toast($t[0], { delay: 3000 }).show();
-      $t.on('hidden.bs.toast', () => $t.remove());
+      new bootstrap.Toast($t[0],{delay:3000}).show();
+      $t.on('hidden.bs.toast',()=>$t.remove());
     }
 
-    // Retry mechanism for Supabase queries
-    async function withRetry(fn, retries = 3, delay = 1000) {
-      for (let i = 0; i < retries; i++) {
-        try {
-          return await fn();
-        } catch (err) {
-          if (i === retries - 1) throw err;
-          await new Promise(resolve => setTimeout(resolve, delay));
-        }
-      }
-    }
-
-    // Confirmation Modal
-    function showConfirmModal(title, body, onConfirm) {
-      $('#confirmModalTitle').text(title);
-      $('#confirmModalBody').html(body);
-      $('#confirmAction').off('click').on('click', () => {
-        onConfirm();
-        $('#confirmModal').modal('hide');
-      });
-      $('#confirmModal').modal('show');
-    }
-
-    // Initialize DataTables
+    // Initialize DataTables with responsive and export buttons
     const affiliatesTable = $('#affiliates-table').DataTable({
       responsive: true,
       dom: 'Bfrtip',
@@ -336,13 +810,22 @@
                         <span class="text-dark fw-bold">${data.email.charAt(0).toUpperCase()}</span>
                       </div>
                       <div>
-                        <div class="fw-medium">${data.email}</div>
+                        <div class="fw-medium email-tooltip" data-tooltip="${data.email}">
+                          <a class="email-link" data-email="${data.email}">${data.email}</a>
+                        </div>
                         <div class="text-muted small">ID: ${data.id}</div>
                       </div>
                     </div>`;
           }
         },
-        { data: 'email' },
+        { 
+          data: 'email',
+          render: function(data) {
+            return `<span class="email-tooltip" data-tooltip="${data}">
+                      <a class="email-link" data-email="${data}">${data}</a>
+                    </span>`;
+          }
+        },
         { data: 'referral_code' },
         { 
           data: 'created_at',
@@ -356,37 +839,29 @@
         }
       ],
       language: {
-        loadingRecords: '<div class="spinner-border text-warning" role="status"></div> Loading...',
+        loadingRecords: '',
         zeroRecords: 'No affiliates found.'
       },
       order: [[4, 'desc']]
     });
-
+    
     const payoutsTable = $('#payouts-table').DataTable({
       responsive: true,
       dom: 'Bfrtip',
       buttons: ['csv', 'excel'],
-      select: {
-        style: 'multi',
-        selector: 'td:first-child input'
-      },
       columns: [
-        {
-          data: null,
-          orderable: false,
-          render: (data, type, row) => row.status.toLowerCase() === 'pending' ? `<input type="checkbox" class="select-checkbox">` : ''
-        },
         { data: 'id' },
         { 
           data: null,
           render: function(data) {
             return `<div>
-                      <div class="fw-medium">${data.affiliate_email}</div>
+                      <div class="fw-medium email-tooltip" data-tooltip="${data.affiliate_email}">
+                        <a class="email-link" data-email="${data.affiliate_email}">${data.affiliate_email || 'ID: ' + data.affiliate_id}</a>
+                      </div>
                       <div class="text-muted small">ID: ${data.affiliate_id}</div>
                     </div>`;
           }
         },
-        { data: 'affiliate_email' },
         { 
           data: 'amount',
           render: v => `<span class="fw-bold">$${parseFloat(v).toFixed(2)}</span>`
@@ -418,10 +893,10 @@
             const status = data.status.toLowerCase();
             if (status === 'pending') {
               return `<div class="action-cell">
-                        <button class="btn-action btn-paid mark-paid" data-id="${data.id}" data-bs-toggle="tooltip" title="Mark as Paid">
+                        <button class="btn-action btn-paid mark-paid" data-id="${data.id}">
                           <i class="bi bi-check-lg"></i> Pay
                         </button>
-                        <button class="btn-action btn-reject reject-payout" data-id="${data.id}" data-bs-toggle="tooltip" title="Reject Payout">
+                        <button class="btn-action btn-reject reject-payout" data-id="${data.id}">
                           <i class="bi bi-x-lg"></i> Reject
                         </button>
                       </div>`;
@@ -434,21 +909,21 @@
         }
       ],
       language: {
-        loadingRecords: '<div class="spinner-border text-warning" role="status"></div> Loading...',
+        loadingRecords: '',
         zeroRecords: 'No payout requests found.'
       },
-      order: [[7, 'desc']],
+      order: [[5, 'desc']],
       footerCallback: function() {
         const api = this.api();
         const pendingTotal = api
-          .column(4, {filter: 'applied'})
+          .column(2, {filter: 'applied'})
           .data()
-          .filter((value, index) => api.cell(index, 6).data().includes('Pending'))
+          .filter((value, index) => api.cell(index, 4).data().includes('Pending'))
           .reduce((sum, amount) => sum + parseFloat(amount.replace('$', '')), 0);
         $('#pending-total').text('$' + pendingTotal.toFixed(2));
       }
     });
-
+    
     const bankTable = $('#bank-table').DataTable({
       responsive: true,
       dom: 'Bfrtip',
@@ -456,7 +931,14 @@
       columns: [
         { data: 'id' },
         { data: 'affiliate_id' },
-        { data: 'affiliate_email' },
+        { 
+          data: 'affiliate_email',
+          render: function(data) {
+            return `<span class="email-tooltip" data-tooltip="${data}">
+                      <a class="email-link" data-email="${data}">${data}</a>
+                    </span>`;
+          }
+        },
         { data: 'bank_name' },
         { data: 'bank_code' },
         { data: 'account_number' },
@@ -470,12 +952,12 @@
         }
       ],
       language: {
-        loadingRecords: '<div class="spinner-border text-warning" role="status"></div> Loading...',
+        loadingRecords: '',
         zeroRecords: 'No bank accounts found.'
       },
       order: [[7, 'desc']]
     });
-
+    
     const walletTable = $('#wallet-table').DataTable({
       responsive: true,
       dom: 'Bfrtip',
@@ -483,7 +965,14 @@
       columns: [
         { data: 'id' },
         { data: 'affiliate_id' },
-        { data: 'affiliate_email' },
+        { 
+          data: 'affiliate_email',
+          render: function(data) {
+            return `<span class="email-tooltip" data-tooltip="${data}">
+                      <a class="email-link" data-email="${data}">${data}</a>
+                    </span>`;
+          }
+        },
         { data: 'currency' },
         { data: 'address' },
         { 
@@ -495,12 +984,12 @@
         }
       ],
       language: {
-        loadingRecords: '<div class="spinner-border text-warning" role="status"></div> Loading...',
+        loadingRecords: '',
         zeroRecords: 'No wallets found.'
       },
       order: [[5, 'desc']]
     });
-
+    
     const referralsTable = $('#referrals-table').DataTable({
       responsive: true,
       dom: 'Bfrtip',
@@ -508,6 +997,14 @@
       columns: [
         { data: 'id' },
         { data: 'affiliate_id' },
+        { 
+          data: 'affiliate_email',
+          render: function(data) {
+            return `<span class="email-tooltip" data-tooltip="${data}">
+                      <a class="email-link" data-email="${data}">${data}</a>
+                    </span>`;
+          }
+        },
         { data: 'referred_email' },
         { 
           data: 'converted',
@@ -522,63 +1019,10 @@
         }
       ],
       language: {
-        loadingRecords: '<div class="spinner-border text-warning" role="status"></div> Loading...',
+        loadingRecords: '',
         zeroRecords: 'No referrals found.'
       },
-      order: [[4, 'desc']]
-    });
-
-    const auditTable = $('#audit-table').DataTable({
-      responsive: true,
-      dom: 'Bfrtip',
-      buttons: ['csv', 'excel'],
-      columns: [
-        { data: 'id' },
-        { data: 'action' },
-        { data: 'details' },
-        { data: 'performed_by' },
-        { 
-          data: 'created_at',
-          render: d => new Date(d).toLocaleDateString('en-US', {
-            year: 'numeric', month: 'short', day: 'numeric',
-            hour: '2-digit', minute: '2-digit'
-          })
-        }
-      ],
-      language: {
-        loadingRecords: '<div class="spinner-border text-warning" role="status"></div> Loading...',
-        zeroRecords: 'No audit logs found.'
-      },
-      order: [[4, 'desc']]
-    });
-
-    // Select All Checkbox
-    $('#select-all').on('click', function() {
-      const checked = this.checked;
-      payoutsTable.rows({ filter: 'applied' }).every(function() {
-        const row = $(this.node());
-        const checkbox = row.find('td:first-child input');
-        if (checkbox.length && this.data().status.toLowerCase() === 'pending') {
-          checkbox.prop('checked', checked);
-          row.toggleClass('selected', checked);
-        }
-      });
-      toggleBulkActions();
-    });
-
-    // Toggle Bulk Actions Visibility
-    function toggleBulkActions() {
-      const selectedRows = payoutsTable.rows('.selected').data().length;
-      $('.bulk-actions').toggleClass('show', selectedRows > 0);
-    }
-
-    // Row Selection
-    payoutsTable.on('click', 'td:first-child input', function(e) {
-      e.stopPropagation();
-      const row = $(this).closest('tr');
-      row.toggleClass('selected', this.checked);
-      toggleBulkActions();
-      $('#select-all').prop('checked', false);
+      order: [[5, 'desc']]
     });
 
     // Filter buttons functionality for payouts
@@ -589,7 +1033,7 @@
       if (filter === 'all') {
         payoutsTable.search('').columns().search('').draw();
       } else {
-        payoutsTable.column(6).search(filter).draw();
+        payoutsTable.column(4).search(filter).draw();
       }
     });
 
@@ -604,153 +1048,133 @@
       $('html, body').animate({scrollTop: $(panelId).offset().top - 100}, 500);
     });
 
-    // Log Audit Action
-    async function logAuditAction(action, details) {
-      try {
-        await supabase.from('audit_logs').insert({
-          action,
-          details,
-          performed_by: adminEmail,
-          created_at: new Date().toISOString()
-        });
-        loadAuditLogs();
-      } catch (err) {
-        console.error('Audit log error:', err);
-      }
+    // Filter all tables by affiliate email
+    function filterByEmail(email) {
+      affiliatesTable.search(email).draw();
+      payoutsTable.search(email).draw();
+      bankTable.search(email).draw();
+      walletTable.search(email).draw();
+      referralsTable.search(email).draw();
+      showToast(`Filtered all tables for ${email}`);
+    }
+
+    // Email click handler
+    $(document).on('click', '.email-link', function() {
+      const email = $(this).data('email');
+      filterByEmail(email);
+      $('html, body').animate({scrollTop: $('#affiliates-panel').offset().top - 100}, 500);
+    });
+
+    // Confirmation dialog for actions
+    function confirmAction(title, message, callback) {
+      const $modal = $(`
+        <div class="modal fade" tabindex="-1">
+          <div class="modal-dialog modal-sm">
+            <div class="modal-content glass">
+              <div class="modal-header">
+                <h5 class="modal-title" style="color: var(--gold);">${title}</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+              </div>
+              <div class="modal-body">
+                ${message}
+              </div>
+              <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-primary confirm-action">Confirm</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      `);
+      $('body').append($modal);
+      const modal = new bootstrap.Modal($modal[0]);
+      $modal.find('.confirm-action').click(() => {
+        callback();
+        modal.hide();
+      });
+      $modal.on('hidden.bs.modal', () => $modal.remove());
+      modal.show();
     }
 
     // Mark as Paid functionality
     $('#payouts-table').on('click', '.mark-paid', async function() {
       const payoutId = $(this).data('id');
       const row = $(this).closest('tr');
-      showConfirmModal('Confirm Payment', `Are you sure you want to mark payout #${payoutId} as paid?`, async () => {
-        try {
-          const { error } = await withRetry(() => supabase
-            .from('affiliate_payouts')
-            .update({ status: 'paid', paid_at: new Date().toISOString() })
-            .eq('id', payoutId));
-          
-          if (error) throw error;
-          
-          const data = payoutsTable.row(row).data();
-          data.status = 'paid';
-          payoutsTable.row(row).data(data).draw();
-          
-          row.addClass('highlight-row');
-          setTimeout(() => row.removeClass('highlight-row'), 2000);
-          
-          await logAuditAction('Payout Paid', `Payout #${payoutId} marked as paid`);
-          updateStats();
-          
-          showToast(`Payout #${payoutId} marked as paid successfully!`);
-        } catch (err) {
-          showToast('Error updating payout: ' + err.message, false);
+      
+      confirmAction(
+        'Confirm Payment',
+        `Are you sure you want to mark payout #${payoutId} as paid?`,
+        async () => {
+          try {
+            const { error } = await supabase
+              .from('affiliate_payouts')
+              .update({ status: 'paid', paid_at: new Date().toISOString() })
+              .eq('id', payoutId);
+            
+            if (error) throw error;
+            
+            const data = payoutsTable.row(row).data();
+            data.status = 'paid';
+            payoutsTable.row(row).data(data).draw();
+            
+            row.addClass('highlight-row');
+            setTimeout(() => row.removeClass('highlight-row'), 2000);
+            
+            updateStats();
+            
+            showToast(`Payout #${payoutId} marked as paid successfully!`);
+          } catch (err) {
+            showToast(`Error updating payout #${payoutId}: ${err.message}`, false);
+          }
         }
-      });
+      );
     });
-
+    
     // Reject payout functionality
     $('#payouts-table').on('click', '.reject-payout', async function() {
       const payoutId = $(this).data('id');
       const row = $(this).closest('tr');
-      showConfirmModal('Confirm Rejection', `Are you sure you want to reject payout #${payoutId}?`, async () => {
-        try {
-          const { error } = await withRetry(() => supabase
-            .from('affiliate_payouts')
-            .update({ status: 'rejected', paid_at: new Date().toISOString() })
-            .eq('id', payoutId));
-          
-          if (error) throw error;
-          
-          const data = payoutsTable.row(row).data();
-          data.status = 'rejected';
-          payoutsTable.row(row).data(data).draw();
-          
-          row.addClass('highlight-row');
-          setTimeout(() => row.removeClass('highlight-row'), 2000);
-          
-          await logAuditAction('Payout Rejected', `Payout #${payoutId} rejected`);
-          updateStats();
-          
-          showToast(`Payout #${payoutId} has been rejected.`);
-        } catch (err) {
-          showToast('Error rejecting payout: ' + err.message, false);
-        }
-      });
-    });
-
-    // Bulk Pay
-    $('.bulk-pay').click(() => {
-      const selectedRows = payoutsTable.rows('.selected').data().toArray();
-      if (!selectedRows.length) return showToast('No payouts selected.', false);
-      showConfirmModal('Confirm Bulk Payment', `Are you sure you want to mark ${selectedRows.length} payout(s) as paid?`, async () => {
-        try {
-          const payoutIds = selectedRows.map(row => row.id);
-          const { error } = await withRetry(() => supabase
-            .from('affiliate_payouts')
-            .update({ status: 'paid', paid_at: new Date().toISOString() })
-            .in('id', payoutIds));
-          
-          if (error) throw error;
-          
-          payoutsTable.rows('.selected').every(function() {
-            const data = this.data();
-            data.status = 'paid';
-            this.data(data);
-            $(this.node()).addClass('highlight-row');
-            setTimeout(() => $(this.node()).removeClass('highlight-row'), 2000);
-          });
-          payoutsTable.draw();
-          
-          await logAuditAction('Bulk Payout Paid', `Paid ${payoutIds.length} payouts: ${payoutIds.join(', ')}`);
-          updateStats();
-          
-          showToast(`${payoutIds.length} payout(s) marked as paid successfully!`);
-        } catch (err) {
-          showToast('Error processing bulk payment: ' + err.message, false);
-        }
-      });
-    });
-
-    // Bulk Reject
-    $('.bulk-reject').click(() => {
-      const selectedRows = payoutsTable.rows('.selected').data().toArray();
-      if (!selectedRows.length) return showToast('No payouts selected.', false);
-      showConfirmModal('Confirm Bulk Rejection', `Are you sure you want to reject ${selectedRows.length} payout(s)?`, async () => {
-        try {
-          const payoutIds = selectedRows.map(row => row.id);
-          const { error } = await withRetry(() => supabase
-            .from('affiliate_payouts')
-            .update({ status: 'rejected', paid_at: new Date().toISOString() })
-            .in('id', payoutIds));
-          
-          if (error) throw error;
-          
-          payoutsTable.rows('.selected').every(function() {
-            const data = this.data();
+      
+      confirmAction(
+        'Confirm Rejection',
+        `Are you sure you want to reject payout #${payoutId}?`,
+        async () => {
+          try {
+            const { error } = await supabase
+              .from('affiliate_payouts')
+              .update({ status: 'rejected', paid_at: new Date().toISOString() })
+              .eq('id', payoutId);
+            
+            if (error) throw error;
+            
+            const data = payoutsTable.row(row).data();
             data.status = 'rejected';
-            this.data(data);
-            $(this.node()).addClass('highlight-row');
-            setTimeout(() => $(this.node()).removeClass('highlight-row'), 2000);
-          });
-          payoutsTable.draw();
-          
-          await logAuditAction('Bulk Payout Rejected', `Rejected ${payoutIds.length} payouts: ${payoutIds.join(', ')}`);
-          updateStats();
-          
-          showToast(`${payoutIds.length} payout(s) rejected successfully!`);
-        } catch (err) {
-          showToast('Error processing bulk rejection: ' + err.message, false);
+            payoutsTable.row(row).data(data).draw();
+            
+            row.addClass('highlight-row');
+            setTimeout(() => row.removeClass('highlight-row'), 2000);
+            
+            updateStats();
+            
+            showToast(`Payout #${payoutId} has been rejected.`);
+          } catch (err) {
+            showToast(`Error rejecting payout #${payoutId}: ${err.message}`, false);
+          }
         }
-      });
+      );
     });
 
     // Update stats function
     async function updateStats() {
       try {
-        const { data: affiliates } = await withRetry(() => supabase.from('affiliate_accounts').select('id'));
-        const { data: payouts } = await withRetry(() => supabase.from('affiliate_payouts').select('amount, status'));
-        const { data: referrals } = await withRetry(() => supabase.from('referrals').select('converted'));
+        const { data: affiliates, error: affError } = await supabase.from('affiliate_accounts').select('id');
+        if (affError) throw affError;
+        
+        const { data: payouts, error: payError } = await supabase.from('affiliate_payouts').select('amount, status');
+        if (payError) throw payError;
+        
+        const { data: referrals, error: refError } = await supabase.from('referrals').select('converted');
+        if (refError) throw refError;
         
         const totalAffiliates = affiliates.length;
         const pendingPayouts = payouts.filter(p => p.status.toLowerCase() === 'pending').length;
@@ -767,7 +1191,7 @@
         $('#total-paid').text('$' + totalPaid.toFixed(2));
         $('#conversion-rate').text(conversionRate + '%');
       } catch (err) {
-        showToast('Error updating stats: ' + err.message, false);
+        showToast(`Error updating stats: ${err.message}`, false);
       }
     }
 
@@ -790,89 +1214,106 @@
       setTimeout(updateScrollIndicators, 100);
     });
 
-    // Load Audit Logs
-    async function loadAuditLogs() {
-      try {
-        const { data: logs } = await withRetry(() => supabase
-          .from('audit_logs')
-          .select('*')
-          .order('created_at', { ascending: false }));
-        auditTable.clear().rows.add(logs).draw();
-      } catch (err) {
-        showToast('Error loading audit logs: ' + err.message, false);
-      }
-    }
-
-    // Load all data
+    // Load all data with enhanced error handling
     async function loadAll() {
-      try {
-        // Affiliates
-        let { data: affs } = await withRetry(() => supabase
-          .from('affiliate_accounts')
-          .select('id, email, referral_code, created_at')
-          .order('created_at', { ascending: false }));
-        affiliatesTable.clear().rows.add(affs).draw();
+      const tables = [
+        {
+          id: 'affiliates',
+          table: affiliatesTable,
+          query: () => supabase
+            .from('affiliate_accounts')
+            .select('id, email, referral_code, created_at')
+            .order('created_at', { ascending: false }),
+          loading: '#affiliates-loading'
+        },
+        {
+          id: 'payouts',
+          table: payoutsTable,
+          query: () => supabase
+            .from('affiliate_payouts')
+            .select(`
+              id, affiliate_id, amount, method, status, requested_at,
+              affiliate_accounts!affiliate_payouts_affiliate_id_fkey(email)
+            `)
+            .order('requested_at', { ascending: false }),
+          transform: data => data.map(p => ({
+            ...p,
+            affiliate_email: p.affiliate_accounts?.email || ''
+          })),
+          loading: '#payouts-loading'
+        },
+        {
+          id: 'bank',
+          table: bankTable,
+          query: () => supabase
+            .from('affiliate_bank_accounts')
+            .select(`
+              id, affiliate_id, bank_name, bank_code, account_number, account_name, created_at,
+              affiliate_accounts!affiliate_bank_accounts_affiliate_id_fkey(email)
+            `)
+            .order('created_at', { ascending: false }),
+          transform: data => data.map(b => ({
+            ...b,
+            affiliate_email: b.affiliate_accounts?.email || ''
+          })),
+          loading: '#bank-loading'
+        },
+        {
+          id: 'wallet',
+          table: walletTable,
+          query: () => supabase
+            .from('affiliate_wallets')
+            .select(`
+              id, affiliate_id, currency, address, created_at,
+              affiliate_accounts!affiliate_wallets_affiliate_id_fkey(email)
+            `)
+            .order('created_at', { ascending: false }),
+          transform: data => data.map(w => ({
+            ...w,
+            affiliate_email: w.affiliate_accounts?.email || ''
+          })),
+          loading: '#wallet-loading'
+        },
+        {
+          id: 'referrals',
+          table: referralsTable,
+          query: () => supabase
+            .from('referrals')
+            .select(`
+              id, affiliate_id, referred_email, converted, created_at,
+              affiliate_accounts!referrals_affiliate_id_fkey(email)
+            `)
+            .order('created_at', { ascending: false }),
+          transform: data => data.map(r => ({
+            ...r,
+            affiliate_email: r.affiliate_accounts?.email || ''
+          })),
+          loading: '#referrals-loading'
+        }
+      ];
 
-        // Payouts with affiliate email
-        let { data: pts } = await withRetry(() => supabase
-          .from('affiliate_payouts')
-          .select(`
-            id, affiliate_id, amount, method, status, requested_at,
-            affiliate_accounts!affiliate_payouts_affiliate_id_fkey(email)
-          `)
-          .order('requested_at', { ascending: false }));
-        pts = pts.map(p => ({
-          ...p,
-          affiliate_email: p.affiliate_accounts?.email || 'N/A'
-        }));
-        payoutsTable.clear().rows.add(pts).draw();
-
-        // Bank accounts with affiliate email
-        let { data: bks } = await withRetry(() => supabase
-          .from('affiliate_bank_accounts')
-          .select(`
-            id, affiliate_id, bank_name, bank_code, account_number, account_name, created_at,
-            affiliate_accounts!affiliate_bank_accounts_affiliate_id_fkey(email)
-          `)
-          .order('created_at', { ascending: false }));
-        bks = bks.map(b => ({
-          ...b,
-          affiliate_email: b.affiliate_accounts?.email || 'N/A'
-        }));
-        bankTable.clear().rows.add(bks).draw();
-
-        // Wallets with affiliate email
-        let { data: wts } = await withRetry(() => supabase
-          .from('affiliate_wallets')
-          .select(`
-            id, affiliate_id, currency, address, created_at,
-            affiliate_accounts!affiliate_wallets_affiliate_id_fkey(email)
-          `)
-          .order('created_at', { ascending: false }));
-        wts = wts.map(w => ({
-          ...w,
-          affiliate_email: w.affiliate_accounts?.email || 'N/A'
-        }));
-        walletTable.clear().rows.add(wts).draw();
-
-        // Referrals
-        let { data: rfs } = await withRetry(() => supabase
-          .from('referrals')
-          .select('*')
-          .order('created_at', { ascending: false }));
-        referralsTable.clear().rows.add(rfs).draw();
-
-        // Audit Logs
-        await loadAuditLogs();
-
-        // Update stats
-        await updateStats();
-      } catch (err) {
-        console.error('Load error:', err);
-        showToast('Error loading data: ' + err.message, false);
-      } finally {
-        setTimeout(() => $('.spinner-border').hide(), 1500);
+      for (const { id, table, query, transform, loading } of tables) {
+        $(loading).addClass('active');
+        try {
+          const { data, error } = await query();
+          if (error) throw new Error(`Failed to load ${id}: ${error.message}`);
+          const transformedData = transform ? transform(data) : data;
+          table.clear().rows.add(transformedData).draw();
+          $(loading).removeClass('active');
+        } catch (err) {
+          $(loading).find('.spinner-border').hide();
+          $(loading).find('.loading-content div').text(`Error: ${err.message}`);
+          $(loading).find('.btn-retry').show().off('click').on('click', () => {
+            $(loading).find('.spinner-border').show();
+            $(loading).find('.loading-content div').text(`Loading ${id.charAt(0).toUpperCase() + id.slice(1)}...`);
+            $(loading).find('.btn-retry').hide();
+            loadAll();
+          });
+          showToast(`Error loading ${id}: ${err.message}`, false);
+        }
       }
+
+      await updateStats();
     }
 
     loadAll();
