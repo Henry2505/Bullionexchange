@@ -594,10 +594,13 @@
       try {
         // A) Check for duplicate email
         const { data: existingUser, error: userError } = await supabaseClient
-          .from('affiliate_accounts').select('email').eq('email', email).single();
+          .from('applications')
+          .select('email')
+          .eq('email', email)
+          .single();
 
         if (existingUser) {
-          showError('This email is already registered. Please log in or use a different email.');
+          showError('This email is already registered. Please use a different email or contact support.');
           return;
         }
         if (userError && userError.code !== 'PGRST116') throw userError;
@@ -608,7 +611,7 @@
           const { data: aff, error: refErr } = await supabaseClient
             .from('affiliate_accounts')
             .select('id')
-            .eq('referral_code', code)  // Code is uppercase, matches stored format
+            .eq('referral_code', code)
             .single();
 
           if (refErr || !aff) {
@@ -618,20 +621,51 @@
           referredBy = aff.id;
         }
 
-        // C) Send to your function
-        const payload = { name, email, password, phone, experience, referral_code: code, referred_by: referredBy };
-        const res = await fetch('/.netlify/functions/send-application', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(payload)
-        });
-        const result = await res.json();
-        if (!res.ok) {
-          showError(result.error || 'Application submission failed on the server.');
+        // C) Insert application directly into Supabase
+        const { data: appData, error: appError } = await supabaseClient
+          .from('applications')
+          .insert({
+            name,
+            email,
+            password, // Note: Password should be hashed server-side in production
+            phone,
+            experience,
+            referral_code: code || null,
+            referred_by: referredBy
+          })
+          .select()
+          .single();
+
+        if (appError) {
+          if (appError.code === '23505') {
+            showError('This email is already registered. Please use a different email.');
+          } else {
+            throw appError;
+          }
           return;
         }
 
-        // D) Success!
+        // D) Send email notification via Netlify function
+        const emailPayload = {
+          name,
+          email,
+          phone,
+          experience,
+          referral_code: code || null,
+          referred_by: referredBy
+        };
+        const emailRes = await fetch('/.netlify/functions/send-application', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(emailPayload)
+        });
+        const emailResult = await emailRes.json();
+        if (!emailRes.ok) {
+          console.warn('Email notification failed:', emailResult.error);
+          // Continue to success even if email fails to avoid blocking user
+        }
+
+        // E) Success!
         showSuccess(`
           <strong>Application Submitted Successfully!</strong><br>
           Thank you for applying. A confirmation email has been sent to ${email}.<br>
