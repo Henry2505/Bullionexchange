@@ -126,7 +126,7 @@
     #section-title {
       color: var(--gold);
       text-align: center;
-      margin: 2remIsra 0 1rem;
+      margin: 2rem 0 1rem;
       font-weight: 700;
       text-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
     }
@@ -407,11 +407,6 @@
       border-radius: 10px;
     }
     
-    .table-container table.dataTable {
-      min-width: 800px;
-      width: 100%;
-    }
-    
     .table-container::before,
     .table-container::after {
       content: '';
@@ -440,7 +435,6 @@
       opacity: 1;
     }
     
-    /* New styles for affiliate email and manageability */
     .email-link {
       color: var(--accent);
       cursor: pointer;
@@ -621,7 +615,7 @@
           <button class="btn-retry" style="display: none;">Retry</button>
         </div>
       </div>
-      <table id="affiliates-table" class="table table-hover w-100">
+      <table id="affiliates-table" class class="table table-hover w-100">
         <thead><tr>
           <th>ID</th><th>Affiliate</th><th>Email</th><th>Referral Code</th><th>Joined On</th><th>Status</th>
         </tr></thead><tbody></tbody>
@@ -1099,28 +1093,62 @@
     // Mark as Paid functionality
     $('#payouts-table').on('click', '.mark-paid', async function() {
       const payoutId = $(this).data('id');
-      const row = $(this).closest('tr');
       
       confirmAction(
         'Confirm Payment',
         `Are you sure you want to mark payout #${payoutId} as paid?`,
         async () => {
           try {
-            const { error } = await supabase
+            // Update the payout status in Supabase
+            const { error: updateError } = await supabase
               .from('affiliate_payouts')
               .update({ status: 'paid', paid_at: new Date().toISOString() })
               .eq('id', payoutId);
             
-            if (error) throw error;
+            if (updateError) throw updateError;
+
+            // Fetch the updated payout data from Supabase
+            const { data: updatedPayout, error: fetchError } = await supabase
+              .from('affiliate_payouts')
+              .select(`
+                id, affiliate_id, amount, method, status, requested_at,
+                affiliate_accounts!affiliate_payouts_affiliate_id_fkey(email)
+              `)
+              .eq('id', payoutId)
+              .single();
             
-            const data = payoutsTable.row(row).data();
-            data.status = 'paid';
-            payoutsTable.row(row).data(data).draw();
-            
-            row.addClass('highlight-row');
-            setTimeout(() => row.removeClass('highlight-row'), 2000);
-            
-            updateStats();
+            if (fetchError) throw fetchError;
+
+            if (!updatedPayout) {
+              throw new Error('Payout not found after update');
+            }
+
+            // Transform the data to match DataTable structure
+            const transformedData = {
+              ...updatedPayout,
+              affiliate_email: updatedPayout.affiliate_accounts?.email || ''
+            };
+
+            // Find the row in the DataTable by payout ID
+            const rowIndex = payoutsTable
+              .rows()
+              .indexes()
+              .filter(idx => payoutsTable.row(idx).data().id === payoutId)[0];
+
+            if (rowIndex === undefined) {
+              throw new Error('Row not found in table');
+            }
+
+            // Update the DataTable row
+            payoutsTable.row(rowIndex).data(transformedData).draw(false);
+
+            // Highlight the row
+            const $row = payoutsTable.row(rowIndex).node();
+            $($row).addClass('highlight-row');
+            setTimeout(() => $($row).removeClass('highlight-row'), 2000);
+
+            // Update stats
+            await updateStats();
             
             showToast(`Payout #${payoutId} marked as paid successfully!`);
           } catch (err) {
@@ -1133,28 +1161,62 @@
     // Reject payout functionality
     $('#payouts-table').on('click', '.reject-payout', async function() {
       const payoutId = $(this).data('id');
-      const row = $(this).closest('tr');
       
       confirmAction(
         'Confirm Rejection',
         `Are you sure you want to reject payout #${payoutId}?`,
         async () => {
           try {
-            const { error } = await supabase
+            // Update the payout status in Supabase
+            const { error: updateError } = await supabase
               .from('affiliate_payouts')
               .update({ status: 'rejected', paid_at: new Date().toISOString() })
               .eq('id', payoutId);
             
-            if (error) throw error;
+            if (updateError) throw updateError;
+
+            // Fetch the updated payout data from Supabase
+            const { data: updatedPayout, error: fetchError } = await supabase
+              .from('affiliate_payouts')
+              .select(`
+                id, affiliate_id, amount, method, status, requested_at,
+                affiliate_accounts!affiliate_payouts_affiliate_id_fkey(email)
+              `)
+              .eq('id', payoutId)
+              .single();
             
-            const data = payoutsTable.row(row).data();
-            data.status = 'rejected';
-            payoutsTable.row(row).data(data).draw();
-            
-            row.addClass('highlight-row');
-            setTimeout(() => row.removeClass('highlight-row'), 2000);
-            
-            updateStats();
+            if (fetchError) throw fetchError;
+
+            if (!updatedPayout) {
+              throw new Error('Payout not found after update');
+            }
+
+            // Transform the data to match DataTable structure
+            const transformedData = {
+              ...updatedPayout,
+              affiliate_email: updatedPayout.affiliate_accounts?.email || ''
+            };
+
+            // Find the row in the DataTable by payout ID
+            const rowIndex = payoutsTable
+              .rows()
+              .indexes()
+              .filter(idx => payoutsTable.row(idx).data().id === payoutId)[0];
+
+            if (rowIndex === undefined) {
+              throw new Error('Row not found in table');
+            }
+
+            // Update the DataTable row
+            payoutsTable.row(rowIndex).data(transformedData).draw(false);
+
+            // Highlight the row
+            const $row = payoutsTable.row(rowIndex).node();
+            $($row).addClass('highlight-row');
+            setTimeout(() => $($row).removeClass('highlight-row'), 2000);
+
+            // Update stats
+            await updateStats();
             
             showToast(`Payout #${payoutId} has been rejected.`);
           } catch (err) {
