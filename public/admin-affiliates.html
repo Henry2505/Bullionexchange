@@ -3,202 +3,214 @@
 <head>
   <meta charset="UTF-8"/>
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
-  <title>CBE Admin – Affiliates</title>
+  <title>CBE Admin – Affiliates & Data</title>
 
-  <!-- ── 0) AUTH GUARD ─────────────────────────────────────────────────── -->
+  <!-- AUTH GUARD -->
   <script>
     if (localStorage.getItem('isLoggedIn') !== 'true') {
-      window.location.replace(
-        'admin-login.html?redirect=' + encodeURIComponent(window.location.pathname)
-      );
+      window.location.replace('admin-login.html?redirect='+encodeURIComponent(location.pathname));
     }
   </script>
 
-  <!-- ── 1) FONTS & BOOTSTRAP & DATA TABLES CSS ────────────────────────── -->
-  <link
-    href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700&display=swap"
-    rel="stylesheet"
-  />
-  <link
-    href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css"
-    rel="stylesheet"
-  />
-  <link
-    href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css"
-    rel="stylesheet"
-  />
-  <link
-    href="https://cdn.datatables.net/1.13.4/css/dataTables.bootstrap5.min.css"
-    rel="stylesheet"
-  />
-
+  <!-- CSS: Bootstrap, Icons, DataTables -->
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700&display=swap" rel="stylesheet"/>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet"/>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css" rel="stylesheet"/>
+  <link href="https://cdn.datatables.net/1.13.4/css/dataTables.bootstrap5.min.css" rel="stylesheet"/>
   <style>
-    :root {
-      --bg: #000;
-      --text: #fff;
-      --gold: #ffd700;
-      --glass-bg: rgba(255, 255, 255, 0.05);
-      --overlay: rgba(0, 0, 0, 0.6);
-    }
-    [data-theme="light"] {
-      --bg: #f5f5f5;
-      --text: #333;
-      --gold: #cca300;
-      --glass-bg: rgba(0, 0, 0, 0.05);
-      --overlay: rgba(255, 255, 255, 0.15);
-    }
-    * { margin: 0; padding: 0; box-sizing: border-box; }
-    body {
-      font-family: 'Poppins', sans-serif;
-      background: var(--bg);
-      color: var(--text);
-      overflow-x: hidden;
-    }
-    .overlay {
-      position: fixed; top: 0; left: 0;
-      width: 100%; height: 100%;
-      background: var(--overlay);
-      z-index: -1;
-    }
-    .glass {
-      background: var(--glass-bg);
-      backdrop-filter: blur(10px);
-      border: 1px solid rgba(255, 215, 0, 0.2);
-    }
-    header.admin-header {
-      display: flex; align-items: center; justify-content: space-between;
-      padding: 1rem 2rem;
-      background: rgba(0, 0, 0, 0.6);
-      border-bottom: 1px solid var(--gold);
-      position: sticky; top: 0; z-index: 10;
-    }
-    .logo { cursor: pointer; }
-    .logo img { height: 40px; }
-    #theme-toggle {
-      background: none; border: none; font-size: 1.25rem;
-      cursor: pointer; color: var(--text);
-    }
-    #section-title {
-      color: var(--gold);
-      text-align: center;
-      margin: 2rem 0 1rem;
-    }
-    .table-panel { padding: 2rem; border-radius: 8px; margin-bottom: 2rem; }
-    .dataTables_wrapper .dataTables_filter input {
-      background: var(--bg); color: var(--text);
-      border: 1px solid var(--gold);
-    }
-    table.dataTable th, table.dataTable td { vertical-align: middle; }
-    .toast { z-index: 99999 !important; }
+    :root { --bg:#000;--text:#fff;--gold:#ffd700;--glass-bg:rgba(255,255,255,0.05);--overlay:rgba(0,0,0,0.6); }
+    [data-theme="light"]{--bg:#f5f5f5;--text:#333;--gold:#cca300;--glass-bg:rgba(0,0,0,0.05);--overlay:rgba(255,255,255,0.15);}
+    body{font-family:'Poppins',sans-serif;background:var(--bg);color:var(--text);overflow-x:hidden;}
+    .overlay{position:fixed;top:0;left:0;width:100%;height:100%;background:var(--overlay);z-index:-1;}
+    .glass{background:var(--glass-bg);backdrop-filter:blur(10px);border:1px solid rgba(255,215,0,0.2);}
+    header.admin-header{display:flex;justify-content:space-between;align-items:center;padding:1rem 2rem;background:rgba(0,0,0,0.6);border-bottom:1px solid var(--gold);position:sticky;top:0;z-index:10;}
+    .logo{cursor:pointer;} .logo img{height:40px;}
+    #theme-toggle{background:none;border:none;font-size:1.25rem;cursor:pointer;color:var(--text);}
+    #section-title{color:var(--gold);text-align:center;margin:2rem 0 1rem;}
+    .table-panel{padding:2rem;border-radius:8px;margin-bottom:2rem;}
+    .dataTables_wrapper .dataTables_filter input{background:var(--bg);color:var(--text);border:1px solid var(--gold);}
+    table.dataTable th, table.dataTable td{vertical-align:middle;}
+    .toast{z-index:99999!important;}
   </style>
 </head>
-
 <body>
   <div class="overlay"></div>
 
-  <!-- ── HEADER ──────────────────────────────────────────────────────────── -->
+  <!-- HEADER -->
   <header class="admin-header glass">
-    <div class="logo" id="logo">
-      <img src="CBE_logo.PNG" alt="CBE Logo"/>
-    </div>
-    <button id="theme-toggle" aria-label="Toggle theme">🌞</button>
+    <div class="logo" id="logo"><img src="CBE_logo.PNG" alt="CBE Logo"/></div>
+    <button id="theme-toggle">🌞</button>
   </header>
 
-  <!-- ── MAIN CONTENT ───────────────────────────────────────────────────── -->
   <main class="container">
-    <h2 id="section-title">Affiliates</h2>
+    <h2 id="section-title">Affiliates & Related Data</h2>
+
+    <!-- Affiliates Table -->
     <div class="glass table-panel">
-      <table
-        id="affiliates-table"
-        class="table table-hover text-white w-100"
-      >
-        <thead>
-          <tr>
-            <th>ID</th>
-            <th>Email</th>
-            <th>Referral Code</th>
-            <th>Joined On</th>
-          </tr>
-        </thead>
-        <tbody></tbody>
+      <h4>All Affiliates</h4>
+      <table id="affiliates-table" class="table table-hover text-white w-100">
+        <thead><tr>
+          <th>ID</th><th>Email</th><th>Referral Code</th><th>Joined On</th>
+        </tr></thead><tbody></tbody>
+      </table>
+    </div>
+
+    <!-- Bank Accounts Table -->
+    <div class="glass table-panel">
+      <h4>Bank Accounts</h4>
+      <table id="bank-table" class="table table-hover text-white w-100">
+        <thead><tr>
+          <th>ID</th><th>Affiliate ID</th><th>Bank Name</th><th>Code</th>
+          <th>Account #</th><th>Account Name</th><th>Created On</th>
+        </tr></thead><tbody></tbody>
+      </table>
+    </div>
+
+    <!-- Crypto Wallets Table -->
+    <div class="glass table-panel">
+      <h4>Crypto Wallets</h4>
+      <table id="wallet-table" class="table table-hover text-white w-100">
+        <thead><tr>
+          <th>ID</th><th>Affiliate ID</th><th>Currency</th><th>Address</th><th>Created On</th>
+        </tr></thead><tbody></tbody>
+      </table>
+    </div>
+
+    <!-- Referrals Table -->
+    <div class="glass table-panel">
+      <h4>Referrals</h4>
+      <table id="referrals-table" class="table table-hover text-white w-100">
+        <thead><tr>
+          <th>ID</th><th>Affiliate ID</th><th>Referred Email</th><th>Converted</th><th>Date</th>
+        </tr></thead><tbody></tbody>
+      </table>
+    </div>
+
+    <!-- Payouts Table -->
+    <div class="glass table-panel">
+      <h4>Payout Requests</h4>
+      <table id="payouts-table" class="table table-hover text-white w-100">
+        <thead><tr>
+          <th>ID</th><th>Affiliate ID</th><th>Amount</th><th>Method</th><th>Status</th><th>Requested On</th>
+        </tr></thead><tbody></tbody>
       </table>
     </div>
   </main>
 
-  <!-- ── SCRIPTS ─────────────────────────────────────────────────────────── -->
+  <!-- SCRIPTS -->
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
   <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
   <script src="https://cdn.datatables.net/1.13.4/js/jquery.dataTables.min.js"></script>
   <script src="https://cdn.datatables.net/1.13.4/js/dataTables.bootstrap5.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-
   <script>
   $(function(){
-    // ── HEADER LOGO → BACK TO ADMIN DASHBOARD ─────────────────────────────
-    $('#logo').click(() => location.href = 'admin-dashboard.html');
+    // Logo → Dashboard
+    $('#logo').click(()=> location.href='admin-dashboard.html');
 
-    // ── THEME TOGGLE ─────────────────────────────────────────────────────
+    // Theme Toggle
     const themeBtn = $('#theme-toggle');
-    function applyTheme(t) {
+    function applyTheme(t){
       $('html').attr('data-theme', t);
       localStorage.setItem('theme', t);
-      themeBtn.text(t === 'dark' ? '🌞' : '🌜');
+      themeBtn.text(t==='dark' ? '🌞' : '🌜');
     }
-    themeBtn.click(() => {
-      applyTheme($('html').attr('data-theme') === 'dark' ? 'light' : 'dark');
-    });
-    applyTheme(localStorage.getItem('theme') || 'dark');
+    themeBtn.click(()=> applyTheme($('html').attr('data-theme')==='dark'?'light':'dark'));
+    applyTheme(localStorage.getItem('theme')||'dark');
 
-    // ── 3) INITIALIZE SUPABASE ───────────────────────────────────────────
+    // Supabase init
     const SUPA_URL = 'https://dapwpgvnfjcfqqhrpxla.supabase.co';
-    const SUPA_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImRhcHdwZ3ZuZmpjZnFxaHJweGxhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDcwNDA4ODgsImV4cCI6MjA2MjYxNjg4OH0.ICC0UsLlzJDNre7rFCeD3k6iVzo6jOJgn3PhABpEMsQ';
+    const SUPA_KEY = 'eyJhbGciOiJIUzI1...';  // use your full anon key
     const supabase = window.supabase.createClient(SUPA_URL, SUPA_KEY);
 
-    // ── SIMPLE TOAST ─────────────────────────────────────────────────────
-    function showToast(msg, ok = true) {
-      const $t = $(`
-        <div class="toast align-items-center text-white ${ok ? 'bg-success' : 'bg-danger'} border-0 position-fixed top-0 end-0 m-3">
+    // Simple toast
+    function showToast(msg, ok=true){
+      const $t=$(`
+        <div class="toast align-items-center text-white ${ok?'bg-success':'bg-danger'} border-0 position-fixed top-0 end-0 m-3">
           <div class="d-flex">
             <div class="toast-body">${msg}</div>
             <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast"></button>
           </div>
         </div>`);
       $('body').append($t);
-      new bootstrap.Toast($t[0], { delay: 3000 }).show();
-      $t.on('hidden.bs.toast', () => $t.remove());
+      new bootstrap.Toast($t[0],{delay:3000}).show();
+      $t.on('hidden.bs.toast',()=>$t.remove());
     }
 
-    // ── INITIALIZE DATATABLE ─────────────────────────────────────────────
-    const table = $('#affiliates-table').DataTable({
-      columns: [
-        { data: 'id' },
-        { data: 'email' },
-        { data: 'referral_code' },
-        { data: 'created_at', render: d => new Date(d).toLocaleDateString() }
-      ],
-      language: {
-        loadingRecords: 'Loading affiliates…',
-        zeroRecords: 'No affiliates found.'
-      }
+    // Initialize DataTables
+    const affiliatesTable = $('#affiliates-table').DataTable({
+      columns:[
+        {data:'id'},{data:'email'},{data:'referral_code'},{data:'created_at',render:d=>new Date(d).toLocaleDateString()}
+      ],language:{loadingRecords:'Loading…',zeroRecords:'No affiliates.'}
+    });
+    const bankTable = $('#bank-table').DataTable({
+      columns:[
+        {data:'id'},{data:'affiliate_id'},{data:'bank_name'},{data:'bank_code'},
+        {data:'account_number'},{data:'account_name'},{data:'created_at',render:d=>new Date(d).toLocaleString()}
+      ],language:{loadingRecords:'Loading…',zeroRecords:'No bank accounts.'}
+    });
+    const walletTable = $('#wallet-table').DataTable({
+      columns:[
+        {data:'id'},{data:'affiliate_id'},{data:'currency'},{data:'address'},{data:'created_at',render:d=>new Date(d).toLocaleString()}
+      ],language:{loadingRecords:'Loading…',zeroRecords:'No wallets.'}
+    });
+    const referralsTable = $('#referrals-table').DataTable({
+      columns:[
+        {data:'id'},{data:'affiliate_id'},{data:'referred_email'},{data:'converted',render:b=>b?'Yes':'No'},{data:'created_at',render:d=>new Date(d).toLocaleString()}
+      ],language:{loadingRecords:'Loading…',zeroRecords:'No referrals.'}
+    });
+    const payoutsTable = $('#payouts-table').DataTable({
+      columns:[
+        {data:'id'},{data:'affiliate_id'},{data:'amount',render:v=>`$${v.toFixed(2)}`},
+        {data:'method'},{data:'status'},{data:'requested_at',render:d=>new Date(d).toLocaleString()}
+      ],language:{loadingRecords:'Loading…',zeroRecords:'No payouts.'}
     });
 
-    // ── LOAD AFFILIATES ───────────────────────────────────────────────────
-    async function loadAffiliates() {
+    // Load each table
+    async function loadAll(){
       try {
-        const { data, error } = await supabase
-          .from('affiliate_accounts')
-          .select('id, email, referral_code, created_at')
-          .order('created_at', { ascending: false });
-        if (error) throw error;
-        table.clear().rows.add(data).draw();
-      } catch (err) {
-        console.error('Error loading affiliates:', err);
-        showToast('Error loading affiliates: ' + err.message, false);
+        // Affiliates
+        let {data:affs, error:ea} = await supabase.from('affiliate_accounts')
+          .select('id,email,referral_code,created_at')
+          .order('created_at',{ascending:false});
+        if(ea) throw ea;
+        affiliatesTable.clear().rows.add(affs).draw();
+
+        // Bank accounts
+        let {data:bks, error:eb} = await supabase.from('affiliate_bank_accounts')
+          .select('*')
+          .order('created_at',{ascending:false});
+        if(eb) throw eb;
+        bankTable.clear().rows.add(bks).draw();
+
+        // Wallets
+        let {data:wts, error:ew} = await supabase.from('affiliate_wallets')
+          .select('*')
+          .order('created_at',{ascending:false});
+        if(ew) throw ew;
+        walletTable.clear().rows.add(wts).draw();
+
+        // Referrals
+        let {data:rfs, error:er} = await supabase.from('referrals')
+          .select('*')
+          .order('created_at',{ascending:false});
+        if(er) throw er;
+        referralsTable.clear().rows.add(rfs).draw();
+
+        // Payouts
+        let {data:pts, error:ep} = await supabase.from('affiliate_payouts')
+          .select('*')
+          .order('requested_at',{ascending:false});
+        if(ep) throw ep;
+        payoutsTable.clear().rows.add(pts).draw();
+
+      } catch(err){
+        console.error('Load error:', err);
+        showToast('Error loading data: '+err.message,false);
       }
     }
 
-    // ── RUN INITIAL LOAD ──────────────────────────────────────────────────
-    loadAffiliates();
+    loadAll();
   });
   </script>
 </body>
