@@ -487,48 +487,47 @@
       submitBtn.classList.toggle('enabled',ok);
     });
 
-    form.addEventListener('submit',async e=>{
+    form.addEventListener('submit', async e => {
       e.preventDefault();
-      alertDiv.textContent=''; 
+      alertDiv.textContent = '';
       alertDiv.className = '';
-      
-      const name=document.getElementById('apply-name').value.trim(),
-            email=document.getElementById('apply-email').value.trim().toLowerCase(),
-            password=document.getElementById('apply-password').value,
-            phone=document.getElementById('apply-phone').value.trim(),
-            experience=document.getElementById('apply-message').value.trim(),
-            manualRef=document.getElementById('apply-referral').value.trim();
+
+      const name = document.getElementById('apply-name').value.trim(),
+            email = document.getElementById('apply-email').value.trim().toLowerCase(),
+            password = document.getElementById('apply-password').value,
+            phone = document.getElementById('apply-phone').value.trim(),
+            experience = document.getElementById('apply-message').value.trim(),
+            manualRef = document.getElementById('apply-referral').value.trim();
 
       // Validation
-      if(!name || !email || !password || !phone || !experience){
+      if (!name || !email || !password || !phone || !experience) {
         showError('Please complete all required fields before submitting.');
         return;
       }
-      if(!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)){
+      if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
         showError('Please enter a valid email address.');
         return;
       }
-      if(password.length < 8){
+      if (password.length < 8) {
         showError('Password must be at least 8 characters long.');
         return;
       }
-      if(!/^[0-9+()\-\s]+$/.test(phone)){
+      if (!/^[0-9+()\-\s]+$/.test(phone)) {
         showError('Please enter a valid contact number.');
         return;
       }
-      
-      submitBtn.disabled=true; 
-      submitBtn.textContent='Submitting…';
 
-      try{
-        const urlRef=new URLSearchParams(location.search).get('ref'),
-              code=manualRef||urlRef||null;
-        let referredBy=null;
-        if(code){
-          // look up the affiliate_accounts table by referral_code
+      submitBtn.disabled = true;
+      submitBtn.textContent = 'Submitting…';
+
+      try {
+        const urlRef = new URLSearchParams(location.search).get('ref'),
+              code = manualRef || urlRef || null;
+        let referredBy = null;
+        if (code) {
           const { data: aff, error: refErr } = await supabaseClient
-            .from('affiliate_accounts')   // ← correct table
-            .select('id')                 // ← your primary key column
+            .from('affiliate_accounts')
+            .select('id')
             .eq('referral_code', code)
             .single();
 
@@ -538,43 +537,43 @@
           }
           referredBy = aff.id;
         }
-        const payload={ name,email,password,phone,experience,referral_code:code,referred_by:referredBy };
-        const res=await fetch('/.netlify/functions/send-application',{
-          method:'POST',
-          headers:{'Content-Type':'application/json'},
-          body:JSON.stringify(payload)
+        const payload = { name, email, password, phone, experience, referral_code: code, referred_by: referredBy };
+        const res = await fetch('/.netlify/functions/send-application', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload)
         });
-        const result=await res.json();
-        if(!res.ok){
-          throw new Error(result.error||JSON.stringify(result));
+        const result = await res.json();
+        if (!res.ok) {
+          if (result.error === 'This email is already registered.') {
+            showError('This email is already registered. Please <a href="login.html">log in</a> to access your account and subscribe to VIP if you haven’t already.');
+          } else {
+            throw new Error(result.error || 'Unknown error');
+          }
+        } else {
+          // Success handling
+          alertDiv.className = 'alert-success';
+          alertDiv.innerHTML = `
+            <i class="fas fa-check-circle"></i> 
+            <strong>Application Submitted Successfully!</strong><br>
+            A welcome email has been sent to ${email}. Redirecting to subscription...
+          `;
+          form.reset();
+          agree.checked = false;
+          submitBtn.classList.remove('enabled');
+          setTimeout(() => {
+            window.location.href = 'vip-subscription';
+          }, 3500);
         }
-        
-        // Success handling
-        alertDiv.className = 'alert-success';
-        alertDiv.innerHTML = `
-          <i class="fas fa-check-circle"></i> 
-          <strong>Application Submitted Successfully!</strong><br>
-          A welcome email has been sent to ${email}. Redirecting to subscription...
-        `;
-        
-        form.reset(); 
-        agree.checked=false; 
-        submitBtn.classList.remove('enabled');
-        
-        // Redirect after delay
-        setTimeout(() => {
-          window.location.href = 'vip-subscription';
-        }, 3500);
-        
-      }catch(err){
+      } catch (err) {
         console.error(err);
         showError('We encountered an issue processing your application. Please try again or contact support if the problem persists.');
-      }finally{
-        submitBtn.disabled=true; 
-        submitBtn.textContent='Submit Application';
+      } finally {
+        submitBtn.disabled = true;
+        submitBtn.textContent = 'Submit Application';
       }
     });
-    
+
     // Show error message
     function showError(message) {
       alertDiv.className = 'alert-error';
