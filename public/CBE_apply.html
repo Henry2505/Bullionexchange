@@ -74,7 +74,7 @@
       background: rgba(212, 175, 55, 0.2);
     }
 
-    /* Slide‑in animation */
+    /* Slide-in animation */
     .slide-in {
       opacity:0; transform:translateY(20px);
       transition:opacity .6s ease-out,transform .6s ease-out;
@@ -100,7 +100,7 @@
       align-items: center;
     }
     .quote-section::before {
-      content: """"";
+      content: "''''";
       position: absolute;
       top: -30px;
       left: 10px;
@@ -472,9 +472,9 @@
     document.getElementById('refresh-quote').addEventListener('click', updateQuote);
 
     // Referral validation & submission
-    const SUPA_URL="https://dapwpgvnfjcfqqhrpxla.supabase.co",
-          SUPA_KEY="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpZ...";
-    const supabaseClient=supabase.createClient(SUPA_URL,SUPA_KEY);
+    const SUPA_URL = "https://dapwpgvnfjcfqqhrpxla.supabase.co";
+    const SUPA_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImRhcHdwZ3ZuZmpjZnFxaHJweGxhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDcwNDA4ODgsImV4cCI6MjA2MjYxNjg4OH0.ICC0UsLlzJDNre7rFCeD3k6iVzo6jOJgn3PhABpEMsQ";
+    const supabaseClient = supabase.createClient(SUPA_URL, SUPA_KEY);
 
     const form=document.getElementById('apply-form'),
           agree=document.getElementById('agree-terms'),
@@ -525,13 +525,18 @@
               code=manualRef||urlRef||null;
         let referredBy=null;
         if(code){
-          const { data, error }=await supabaseClient
-            .from('affiliates').select('user_id').eq('referral_code',code).single();
-          if(error||!data){
+          // look up the affiliate_accounts table by referral_code
+          const { data: aff, error: refErr } = await supabaseClient
+            .from('affiliate_accounts')   // ← correct table
+            .select('id')                 // ← your primary key column
+            .eq('referral_code', code)
+            .single();
+
+          if (refErr || !aff) {
             showError('The referral code you entered is invalid. Please check and try again.');
-            throw error||new Error('No affiliate');
+            throw refErr || new Error('Invalid referral code');
           }
-          referredBy=data.user_id;
+          referredBy = aff.id;
         }
         const payload={ name,email,password,phone,experience,referral_code:code,referred_by:referredBy };
         const res=await fetch('/.netlify/functions/send-application',{
