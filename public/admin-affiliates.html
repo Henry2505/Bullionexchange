@@ -12,11 +12,12 @@
     }
   </script>
 
-  <!-- CSS: Bootstrap, Icons, DataTables -->
+  <!-- CSS: Bootstrap, Icons, DataTables, Toastr -->
   <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700&display=swap" rel="stylesheet"/>
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet"/>
   <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css" rel="stylesheet"/>
   <link href="https://cdn.datatables.net/1.13.4/css/dataTables.bootstrap5.min.css" rel="stylesheet"/>
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/toastr.js/latest/toastr.min.css" rel="stylesheet"/>
   <style>
     :root { --bg:#000;--text:#fff;--gold:#ffd700;--glass-bg:rgba(255,255,255,0.05);--overlay:rgba(0,0,0,0.6); }
     [data-theme="light"]{--bg:#f5f5f5;--text:#333;--gold:#cca300;--glass-bg:rgba(0,0,0,0.05);--overlay:rgba(255,255,255,0.15);}
@@ -31,6 +32,7 @@
     .dataTables_wrapper .dataTables_filter input{background:var(--bg);color:var(--text);border:1px solid var(--gold);}
     table.dataTable th, table.dataTable td{vertical-align:middle;}
     .toast{z-index:99999!important;}
+    .bulk-actions{margin-bottom:1rem;}
   </style>
 </head>
 <body>
@@ -39,18 +41,51 @@
   <!-- HEADER -->
   <header class="admin-header glass">
     <div class="logo" id="logo"><img src="CBE_logo.PNG" alt="CBE Logo"/></div>
-    <button id="theme-toggle">🌞</button>
+    <div>
+      <button id="refresh-btn" class="btn btn-outline-light me-2">Refresh</button>
+      <button id="theme-toggle">🌞</button>
+    </div>
   </header>
 
   <main class="container">
     <h2 id="section-title">Affiliates & Related Data</h2>
+
+    <!-- Search Bars and Bulk Actions -->
+    <div class="mb-3">
+      <input type="text" id="affiliates-search" class="form-control" placeholder="Search affiliates...">
+      <div class="bulk-actions">
+        <button id="bulk-ban" class="btn btn-danger btn-sm me-2" disabled>Ban Selected</button>
+        <button id="export-affiliates" class="btn btn-info btn-sm">Export to CSV</button>
+      </div>
+    </div>
+    <div class="mb-3">
+      <input type="text" id="bank-search" class="form-control" placeholder="Search bank accounts...">
+    </div>
+    <div class="mb-3">
+      <input type="text" id="wallet-search" class="form-control" placeholder="Search wallets...">
+    </div>
+    <div class="mb-3">
+      <input type="text" id="referrals-search" class="form-control" placeholder="Search referrals...">
+    </div>
+    <div class="mb-3">
+      <input type="text" id="payouts-search" class="form-control" placeholder="Search payouts...">
+      <div class="bulk-actions">
+        <button id="bulk-approve" class="btn btn-success btn-sm me-2" disabled>Approve Selected</button>
+      </div>
+    </div>
 
     <!-- Affiliates Table -->
     <div class="glass table-panel">
       <h4>All Affiliates</h4>
       <table id="affiliates-table" class="table table-hover text-white w-100">
         <thead><tr>
-          <th>ID</th><th>Email</th><th>Referral Code</th><th>Joined On</th>
+          <th><input type="checkbox" id="select-all-affiliates"></th>
+          <th data-toggle="tooltip" title="The unique identifier for the affiliate">ID</th>
+          <th data-toggle="tooltip" title="The email address of the affiliate">Email</th>
+          <th data-toggle="tooltip" title="The referral code used by the affiliate">Referral Code</th>
+          <th data-toggle="tooltip" title="The date the affiliate joined">Joined On</th>
+          <th data-toggle="tooltip" title="Current status of the affiliate">Status</th>
+          <th data-toggle="tooltip" title="Actions that can be performed on the affiliate">Actions</th>
         </tr></thead><tbody></tbody>
       </table>
     </div>
@@ -81,7 +116,7 @@
       <h4>Referrals</h4>
       <table id="referrals-table" class="table table-hover text-white w-100">
         <thead><tr>
-          <th>ID</th><th>Affiliate ID</th><th>Referred Email</th><th>Converted</th><th>Date</th>
+          <th>ID</th><th>Affiliate ID</th><th>Affiliate Email</th><th>Referred Email</th><th>Converted</th><th>Date</th>
         </tr></thead><tbody></tbody>
       </table>
     </div>
@@ -91,9 +126,68 @@
       <h4>Payout Requests</h4>
       <table id="payouts-table" class="table table-hover text-white w-100">
         <thead><tr>
-          <th>ID</th><th>Affiliate ID</th><th>Amount</th><th>Method</th><th>Status</th><th>Requested On</th>
+          <th><input type="checkbox" id="select-all-payouts"></th>
+          <th>ID</th><th>Affiliate ID</th><th>Affiliate Email</th><th>Amount</th><th>Method</th><th>Status</th><th>Requested On</th><th>Actions</th>
         </tr></thead><tbody></tbody>
       </table>
+    </div>
+
+    <!-- Analytics -->
+    <div class="glass table-panel">
+      <h4>Analytics</h4>
+      <canvas id="referrals-chart" width="400" height="200"></canvas>
+    </div>
+
+    <!-- Audit Logs -->
+    <div class="glass table-panel">
+      <h4>Audit Logs</h4>
+      <table id="audit-table" class="table table-hover text-white w-100">
+        <thead><tr>
+          <th>ID</th><th>Admin ID</th><th>Action</th><th>Details</th><th>Timestamp</th>
+        </tr></thead><tbody></tbody>
+      </table>
+    </div>
+
+    <!-- Affiliate Details Modal -->
+    <div class="modal fade" id="affiliateModal" tabindex="-1">
+      <div class="modal-dialog modal-lg">
+        <div class="modal-content glass">
+          <div class="modal-header">
+            <h5 class="modal-title">Affiliate Details</h5>
+            <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+          </div>
+          <div class="modal-body">
+            <ul class="nav nav-tabs">
+              <li class="nav-item"><a class="nav-link active" data-bs-toggle="tab" href="#bank-accounts">Bank Accounts</a></li>
+              <li class="nav-item"><a class="nav-link" data-bs-toggle="tab" href="#wallets">Wallets</a></li>
+              <li class="nav-item"><a class="nav-link" data-bs-toggle="tab" href="#referrals">Referrals</a></li>
+              <li class="nav-item"><a class="nav-link" data-bs-toggle="tab" href="#payouts">Payouts</a></li>
+            </ul>
+            <div class="tab-content mt-3">
+              <div class="tab-pane active" id="bank-accounts">
+                <table class="table table-hover text-white w-100" id="modal-bank-table">
+                  <thead><tr><th>Bank Name</th><th>Code</th><th>Account #</th><th>Account Name</th><th>Created On</th></tr></thead><tbody></tbody>
+                </table>
+              </div>
+              <div class="tab-pane" id="wallets">
+                <table class="table table-hover text-white w-100" id="modal-wallet-table">
+                  <thead><tr><th>Currency</th><th>Address</th><th>Created On</th></tr></thead><tbody></tbody>
+                </table>
+              </div>
+              <div class="tab-pane" id="referrals">
+                <table class="table table-hover text-white w-100" id="modal-referrals-table">
+                  <thead><tr><th>Referred Email</th><th>Converted</th><th>Date</th></tr></thead><tbody></tbody>
+                </table>
+              </div>
+              <div class="tab-pane" id="payouts">
+                <table class="table table-hover text-white w-100" id="modal-payouts-table">
+                  <thead><tr><th>Amount</th><th>Method</th><th>Status</th><th>Requested On</th></tr></thead><tbody></tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
     </div>
   </main>
 
@@ -103,113 +197,480 @@
   <script src="https://cdn.datatables.net/1.13.4/js/jquery.dataTables.min.js"></script>
   <script src="https://cdn.datatables.net/1.13.4/js/dataTables.bootstrap5.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/toastr.js/latest/toastr.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <script>
   $(function(){
     // Logo → Dashboard
-    $('#logo').click(()=> location.href='admin-dashboard.html');
+    $('#logo').click(() => location.href = 'admin-dashboard.html');
 
     // Theme Toggle
     const themeBtn = $('#theme-toggle');
-    function applyTheme(t){
+    function applyTheme(t) {
       $('html').attr('data-theme', t);
       localStorage.setItem('theme', t);
-      themeBtn.text(t==='dark' ? '🌞' : '🌜');
+      themeBtn.text(t === 'dark' ? '🌞' : '🌜');
     }
-    themeBtn.click(()=> applyTheme($('html').attr('data-theme')==='dark'?'light':'dark'));
-    applyTheme(localStorage.getItem('theme')||'dark');
+    themeBtn.click(() => applyTheme($('html').attr('data-theme') === 'dark' ? 'light' : 'dark'));
+    applyTheme(localStorage.getItem('theme') || 'dark');
 
     // Supabase init
     const SUPA_URL = 'https://dapwpgvnfjcfqqhrpxla.supabase.co';
     const SUPA_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImRhcHdwZ3ZuZmpjZnFxaHJweGxhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDcwNDA4ODgsImV4cCI6MjA2MjYxNjg4OH0.ICC0UsLlzJDNre7rFCeD3k6iVzo6jOJgn3PhABpEMsQ';
     const supabase = window.supabase.createClient(SUPA_URL, SUPA_KEY);
 
-    // Simple toast
-    function showToast(msg, ok=true){
-      const $t=$(`
-        <div class="toast align-items-center text-white ${ok?'bg-success':'bg-danger'} border-0 position-fixed top-0 end-0 m-3">
-          <div class="d-flex">
-            <div class="toast-body">${msg}</div>
-            <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast"></button>
-          </div>
-        </div>`);
-      $('body').append($t);
-      new bootstrap.Toast($t[0],{delay:3000}).show();
-      $t.on('hidden.bs.toast',()=>$t.remove());
-    }
+    // Toastr options
+    toastr.options = {
+      closeButton: true,
+      progressBar: true,
+      positionClass: 'toast-top-right',
+      timeOut: 3000
+    };
 
     // Initialize DataTables
     const affiliatesTable = $('#affiliates-table').DataTable({
-      columns:[
-        {data:'id'},{data:'email'},{data:'referral_code'},{data:'created_at',render:d=>new Date(d).toLocaleDateString()}
-      ],language:{loadingRecords:'Loading…',zeroRecords:'No affiliates.'}
-    });
-    const bankTable = $('#bank-table').DataTable({
-      columns:[
-        {data:'id'},{data:'affiliate_id'},{data:'bank_name'},{data:'bank_code'},
-        {data:'account_number'},{data:'account_name'},{data:'created_at',render:d=>new Date(d).toLocaleString()}
-      ],language:{loadingRecords:'Loading…',zeroRecords:'No bank accounts.'}
-    });
-    const walletTable = $('#wallet-table').DataTable({
-      columns:[
-        {data:'id'},{data:'affiliate_id'},{data:'currency'},{data:'address'},{data:'created_at',render:d=>new Date(d).toLocaleString()}
-      ],language:{loadingRecords:'Loading…',zeroRecords:'No wallets.'}
-    });
-    const referralsTable = $('#referrals-table').DataTable({
-      columns:[
-        {data:'id'},{data:'affiliate_id'},{data:'referred_email'},{data:'converted',render:b=>b?'Yes':'No'},{data:'created_at',render:d=>new Date(d).toLocaleString()}
-      ],language:{loadingRecords:'Loading…',zeroRecords:'No referrals.'}
-    });
-    const payoutsTable = $('#payouts-table').DataTable({
-      columns:[
-        {data:'id'},{data:'affiliate_id'},{data:'amount',render:v=>`$${v.toFixed(2)}`},
-        {data:'method'},{data:'status'},{data:'requested_at',render:d=>new Date(d).toLocaleString()}
-      ],language:{loadingRecords:'Loading…',zeroRecords:'No payouts.'}
+      columns: [
+        {
+          data: null,
+          orderable: false,
+          render: (data, type, row) => `<input type="checkbox" class="select-affiliate" data-id="${row.id}">`
+        },
+        { data: 'id' },
+        { data: 'email' },
+        { data: 'referral_code' },
+        { data: 'created_at', render: d => new Date(d).toLocaleDateString() },
+        { data: 'status' },
+        {
+          data: null,
+          render: (data, type, row) => {
+            return row.status !== 'banned' ? 
+              `<button class="btn btn-sm btn-outline-light view-details" data-id="${row.id}" data-email="${row.email}">View</button> <button class="btn btn-sm btn-danger ban-affiliate" data-id="${row.id}">Ban</button>` : 
+              'Banned';
+          }
+        }
+      ],
+      language: { loadingRecords: 'Loading…', zeroRecords: 'No affiliates.' },
+      ordering: true,
+      paging: true,
+      pageLength: 10
     });
 
-    // Load each table
-    async function loadAll(){
+    const bankTable = $('#bank-table').DataTable({
+      columns: [
+        { data: 'id' },
+        { data: 'affiliate_id' },
+        { data: 'bank_name' },
+        { data: 'bank_code' },
+        { data: 'account_number' },
+        { data: 'account_name' },
+        { data: 'created_at', render: d => new Date(d).toLocaleString() }
+      ],
+      language: { loadingRecords: 'Loading…', zeroRecords: 'No bank accounts.' },
+      ordering: true,
+      paging: true,
+      pageLength: 10
+    });
+
+    const walletTable = $('#wallet-table').DataTable({
+      columns: [
+        { data: 'id' },
+        { data: 'affiliate_id' },
+        { data: 'currency' },
+        { data: 'address' },
+        { data: 'created_at', render: d => new Date(d).toLocaleString() }
+      ],
+      language: { loadingRecords: 'Loading…', zeroRecords: 'No wallets.' },
+      ordering: true,
+      paging: true,
+      pageLength: 10
+    });
+
+    const referralsTable = $('#referrals-table').DataTable({
+      columns: [
+        { data: 'id' },
+        {
+          data: 'affiliate_id',
+          render: (data, type, row) => `<a href="#" class="affiliate-link" data-id="${data}">${data}</a>`
+        },
+        { data: 'affiliate_email' },
+        { data: 'referred_email' },
+        { data: 'converted', render: b => b ? 'Yes' : 'No' },
+        { data: 'created_at', render: d => new Date(d).toLocaleString() }
+      ],
+      language: { loadingRecords: 'Loading…', zeroRecords: 'No referrals.' },
+      ordering: true,
+      paging: true,
+      pageLength: 10
+    });
+
+    const payoutsTable = $('#payouts-table').DataTable({
+      columns: [
+        {
+          data: null,
+          orderable: false,
+          render: (data, type, row) => row.status === 'pending' ? `<input type="checkbox" class="select-payout" data-id="${row.id}">` : ''
+        },
+        { data: 'id' },
+        { data: 'affiliate_id' },
+        { data: 'affiliate_email' },
+        { data: 'amount', render: v => `$${v.toFixed(2)}` },
+        { data: 'method' },
+        { data: 'status' },
+        { data: 'requested_at', render: d => new Date(d).toLocaleString() },
+        {
+          data: null,
+          render: (data, type, row) => row.status === 'pending' ? 
+            `<button class="btn btn-sm btn-success approve-payout" data-id="${row.id}">Approve</button>` : ''
+        }
+      ],
+      language: { loadingRecords: 'Loading…', zeroRecords: 'No payouts.' },
+      ordering: true,
+      paging: true,
+      pageLength: 10
+    });
+
+    const auditTable = $('#audit-table').DataTable({
+      columns: [
+        { data: 'id' },
+        { data: 'admin_id' },
+        { data: 'action' },
+        { data: 'details' },
+        { data: 'created_at', render: d => new Date(d).toLocaleString() }
+      ],
+      language: { loadingRecords: 'Loading…', zeroRecords: 'No audit logs.' },
+      ordering: true,
+      paging: true,
+      pageLength: 10
+    });
+
+    // Load all data
+    async function loadAll() {
       try {
         // Affiliates
-        let {data:affs, error:ea} = await supabase.from('affiliate_accounts')
-          .select('id,email,referral_code,created_at')
-          .order('created_at',{ascending:false});
-        if(ea) throw ea;
+        let { data: affs, error: ea } = await supabase.from('affiliate_accounts')
+          .select('id,email,referral_code,created_at,status')
+          .order('created_at', { ascending: false });
+        if (ea) throw ea;
+        const affiliateMap = {};
+        affs.forEach(a => affiliateMap[a.id] = a.email);
         affiliatesTable.clear().rows.add(affs).draw();
 
         // Bank accounts
-        let {data:bks, error:eb} = await supabase.from('affiliate_bank_accounts')
+        let { data: bks, error: eb } = await supabase.from('affiliate_bank_accounts')
           .select('*')
-          .order('created_at',{ascending:false});
-        if(eb) throw eb;
+          .order('created_at', { ascending: false });
+        if (eb) throw eb;
         bankTable.clear().rows.add(bks).draw();
 
         // Wallets
-        let {data:wts, error:ew} = await supabase.from('affiliate_wallets')
+        let { data: wts, error: ew } = await supabase.from('affiliate_wallets')
           .select('*')
-          .order('created_at',{ascending:false});
-        if(ew) throw ew;
+          .order('created_at', { ascending: false });
+        if (ew) throw ew;
         walletTable.clear().rows.add(wts).draw();
 
         // Referrals
-        let {data:rfs, error:er} = await supabase.from('referrals')
+        let { data: rfs, error: er } = await supabase.from('referrals')
           .select('*')
-          .order('created_at',{ascending:false});
-        if(er) throw er;
+          .order('created_at', { ascending: false });
+        if (er) throw er;
+        rfs.forEach(r => r.affiliate_email = affiliateMap[r.affiliate_id] || 'Unknown');
         referralsTable.clear().rows.add(rfs).draw();
 
         // Payouts
-        let {data:pts, error:ep} = await supabase.from('affiliate_payouts')
+        let { data: pts, error: ep } = await supabase.from('affiliate_payouts')
           .select('*')
-          .order('requested_at',{ascending:false});
-        if(ep) throw ep;
+          .order('requested_at', { ascending: false });
+        if (ep) throw ep;
+        pts.forEach(p => p.affiliate_email = affiliateMap[p.affiliate_id] || 'Unknown');
         payoutsTable.clear().rows.add(pts).draw();
 
-      } catch(err){
+        // Audit Logs
+        let { data: logs, error: el } = await supabase.from('audit_logs')
+          .select('*')
+          .order('created_at', { ascending: false });
+        if (el) throw el;
+        auditTable.clear().rows.add(logs).draw();
+
+        // Load analytics
+        loadReferralsChart();
+      } catch (err) {
         console.error('Load error:', err);
-        showToast('Error loading data: '+err.message,false);
+        toastr.error('Error loading data: ' + err.message);
       }
     }
 
+    // Show affiliate details in modal
+    async function showAffiliateDetails(id, email) {
+      const modal = $('#affiliateModal');
+      modal.find('.modal-title').text(`Affiliate Details for ${email}`);
+      modal.modal('show');
+
+      if (!modal.data('tablesInitialized')) {
+        modal.data('tablesInitialized', true);
+        const bankTable = $('#modal-bank-table').DataTable({
+          columns: [
+            { data: 'bank_name' },
+            { data: 'bank_code' },
+            { data: 'account_number' },
+            { data: 'account_name' },
+            { data: 'created_at', render: d => new Date(d).toLocaleString() }
+          ],
+          language: { loadingRecords: 'Loading…', zeroRecords: 'No bank accounts.' }
+        });
+        const walletTable = $('#modal-wallet-table').DataTable({
+          columns: [
+            { data: 'currency' },
+            { data: 'address' },
+            { data: 'created_at', render: d => new Date(d).toLocaleString() }
+          ],
+          language: { loadingRecords: 'Loading…', zeroRecords: 'No wallets.' }
+        });
+        const referralsTable = $('#modal-referrals-table').DataTable({
+          columns: [
+            { data: 'referred_email' },
+            { data: 'converted', render: b => b ? 'Yes' : 'No' },
+            { data: 'created_at', render: d => new Date(d).toLocaleString() }
+          ],
+          language: { loadingRecords: 'Loading…', zeroRecords: 'No referrals.' }
+        });
+        const payoutsTable = $('#modal-payouts-table').DataTable({
+          columns: [
+            { data: 'amount', render: v => `$${v.toFixed(2)}` },
+            { data: 'method' },
+            { data: 'status' },
+            { data: 'requested_at', render: d => new Date(d).toLocaleString() }
+          ],
+          language: { loadingRecords: 'Loading…', zeroRecords: 'No payouts.' }
+        });
+        modal.data('bankTable', bankTable);
+        modal.data('walletTable', walletTable);
+        modal.data('referralsTable', referralsTable);
+        modal.data('payoutsTable', payoutsTable);
+      }
+
+      try {
+        const [banks, wallets, referrals, payouts] = await Promise.all([
+          supabase.from('affiliate_bank_accounts').select('*').eq('affiliate_id', id),
+          supabase.from('affiliate_wallets').select('*').eq('affiliate_id', id),
+          supabase.from('referrals').select('*').eq('affiliate_id', id),
+          supabase.from('affiliate_payouts').select('*').eq('affiliate_id', id)
+        ]);
+
+        modal.data('bankTable').clear().rows.add(banks.data).draw();
+        modal.data('walletTable').clear().rows.add(wallets.data).draw();
+        modal.data('referralsTable').clear().rows.add(referrals.data).draw();
+        modal.data('payoutsTable').clear().rows.add(payouts.data).draw();
+      } catch (err) {
+        console.error('Error loading affiliate details:', err);
+        toastr.error('Error loading details: ' + err.message);
+      }
+    }
+
+    // Log audit action
+    async function logAuditAction(action, details) {
+      const adminId = localStorage.getItem('adminId') || 'unknown';
+      try {
+        const { error } = await supabase.from('audit_logs').insert({
+          admin_id: adminId,
+          action,
+          details,
+          created_at: new Date().toISOString()
+        });
+        if (error) throw error;
+        auditTable.row.add({
+          id: Date.now(), // Temporary ID
+          admin_id: adminId,
+          action,
+          details,
+          created_at: new Date().toISOString()
+        }).draw();
+      } catch (err) {
+        console.error('Audit log error:', err);
+      }
+    }
+
+    // Event listeners
+    $('#affiliates-table').on('click', '.view-details', function() {
+      const id = $(this).data('id');
+      const email = $(this).data('email');
+      showAffiliateDetails(id, email);
+    });
+
+    $('#affiliates-table').on('click', '.ban-affiliate', async function() {
+      if (localStorage.getItem('adminRole') !== 'superadmin') {
+        toastr.error('You do not have permission to ban affiliates');
+        return;
+      }
+      const id = $(this).data('id');
+      if (confirm('Are you sure you want to ban this affiliate?')) {
+        try {
+          const { error } = await supabase
+            .from('affiliate_accounts')
+            .update({ status: 'banned' })
+            .eq('id', id);
+          if (error) throw error;
+          toastr.success('Affiliate banned successfully');
+          logAuditAction('ban_affiliate', `Affiliate ID: ${id}`);
+          loadAll();
+        } catch (err) {
+          console.error('Ban error:', err);
+          toastr.error('Error banning affiliate: ' + err.message);
+        }
+      }
+    });
+
+    $('#referrals-table').on('click', '.affiliate-link', function(e) {
+      e.preventDefault();
+      const id = $(this).data('id');
+      const row = referralsTable.row($(this).closest('tr')).data();
+      const email = row.affiliate_email;
+      showAffiliateDetails(id, email);
+    });
+
+    $('#payouts-table').on('click', '.approve-payout', async function() {
+      const id = $(this).data('id');
+      try {
+        const { error } = await supabase
+          .from('affiliate_payouts')
+          .update({ status: 'approved' })
+          .eq('id', id);
+        if (error) throw error;
+        toastr.success('Payout approved successfully');
+        logAuditAction('approve_payout', `Payout ID: ${id}`);
+        loadAll();
+      } catch (err) {
+        console.error('Approve error:', err);
+        toastr.error('Error approving payout: ' + err.message);
+      }
+    });
+
+    // Bulk actions
+    $('#select-all-affiliates').on('change', function() {
+      $('.select-affiliate').prop('checked', this.checked);
+      $('#bulk-ban').prop('disabled', !$('.select-affiliate:checked').length);
+    });
+
+    $('#affiliates-table').on('change', '.select-affiliate', function() {
+      $('#bulk-ban').prop('disabled', !$('.select-affiliate:checked').length);
+    });
+
+    $('#bulk-ban').on('click', async function() {
+      if (localStorage.getItem('adminRole') !== 'superadmin') {
+        toastr.error('You do not have permission to ban affiliates');
+        return;
+      }
+      const selectedIds = $('.select-affiliate:checked').map((_, el) => $(el).data('id')).get();
+      if (confirm(`Are you sure you want to ban ${selectedIds.length} affiliates?`)) {
+        try {
+          const { error } = await supabase
+            .from('affiliate_accounts')
+            .update({ status: 'banned' })
+            .in('id', selectedIds);
+          if (error) throw error;
+          toastr.success(`${selectedIds.length} affiliates banned successfully`);
+          logAuditAction('bulk_ban_affiliates', `Affiliate IDs: ${selectedIds.join(', ')}`);
+          loadAll();
+        } catch (err) {
+          console.error('Bulk ban error:', err);
+          toastr.error('Error banning affiliates: ' + err.message);
+        }
+      }
+    });
+
+    $('#select-all-payouts').on('change', function() {
+      $('.select-payout').prop('checked', this.checked);
+      $('#bulk-approve').prop('disabled', !$('.select-payout:checked').length);
+    });
+
+    $('#payouts-table').on('change', '.select-payout', function() {
+      $('#bulk-approve').prop('disabled', !$('.select-payout:checked').length);
+    });
+
+    $('#bulk-approve').on('click', async function() {
+      const selectedIds = $('.select-payout:checked').map((_, el) => $(el).data('id')).get();
+      if (confirm(`Are you sure you want to approve ${selectedIds.length} payouts?`)) {
+        try {
+          const { error } = await supabase
+            .from('affiliate_payouts')
+            .update({ status: 'approved' })
+            .in('id', selectedIds);
+          if (error) throw error;
+          toastr.success(`${selectedIds.length} payouts approved successfully`);
+          logAuditAction('bulk_approve_payouts', `Payout IDs: ${selectedIds.join(', ')}`);
+          loadAll();
+        } catch (err) {
+          console.error('Bulk approve error:', err);
+          toastr.error('Error approving payouts: ' + err.message);
+        }
+      }
+    });
+
+    // Export to CSV
+    $('#export-affiliates').on('click', function() {
+      const data = affiliatesTable.data().toArray();
+      const csv = 'ID,Email,Referral Code,Joined On,Status\n' + 
+        data.map(row => `${row.id},${row.email},${row.referral_code},${new Date(row.created_at).toLocaleDateString()},${row.status}`).join('\n');
+      const blob = new Blob([csv], { type: 'text/csv' });
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = 'affiliates.csv';
+      a.click();
+      window.URL.revokeObjectURL(url);
+    });
+
+    // Search functionality
+    $('#affiliates-search').on('input', function() { affiliatesTable.search(this.value).draw(); });
+    $('#bank-search').on('input', function() { bankTable.search(this.value).draw(); });
+    $('#wallet-search').on('input', function() { walletTable.search(this.value).draw(); });
+    $('#referrals-search').on('input', function() { referralsTable.search(this.value).draw(); });
+    $('#payouts-search').on('input', function() { payoutsTable.search(this.value).draw(); });
+
+    // Refresh button
+    $('#refresh-btn').click(loadAll);
+
+    // Tooltips
+    $('[data-toggle="tooltip"]').tooltip();
+
+    // Analytics: Referrals Chart
+    async function loadReferralsChart() {
+      const { data, error } = await supabase
+        .from('referrals')
+        .select('converted');
+      if (error) {
+        console.error('Error loading referrals data:', error);
+        return;
+      }
+      const converted = data.filter(d => d.converted).length;
+      const notConverted = data.length - converted;
+      const ctx = document.getElementById('referrals-chart').getContext('2d');
+      new Chart(ctx, {
+        type: 'bar',
+        data: {
+          labels: ['Converted', 'Not Converted'],
+          datasets: [{
+            label: 'Referrals',
+            data: [converted, notConverted],
+            backgroundColor: ['#4caf50', '#f44336']
+          }]
+        },
+        options: {
+          scales: { y: { beginAtZero: true } }
+        }
+      });
+    }
+
+    // Real-time subscriptions
+    supabase.channel('affiliate_changes')
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'affiliate_accounts' }, () => loadAll())
+      .subscribe();
+
+    supabase.channel('payout_changes')
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'affiliate_payouts' }, () => loadAll())
+      .subscribe();
+
+    // Initial load
     loadAll();
   });
   </script>
