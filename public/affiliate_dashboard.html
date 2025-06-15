@@ -21,8 +21,97 @@
 
   <!-- ===================== CUSTOM STYLES ===================== -->
   <style>
-    /* [Your existing CSS styles remain unchanged] */
-    /* I've kept all your existing styles but added minor improvements for responsiveness */
+    :root {
+      --black: #000000;
+      --gold: #FFD700;
+      --text-dark: #FFFFFF;
+      --text-light: #000000;
+      --card-bg-dark: #1a1a1a;
+      --card-bg-light: #FFFFFF;
+    }
+
+    [data-theme="dark"] {
+      --background: var(--black);
+      --text: var(--text-dark);
+      --card-bg: var(--card-bg-dark);
+      --accent: var(--gold);
+    }
+
+    [data-theme="light"] {
+      --background: #FFFFFF;
+      --text: var(--text-light);
+      --card-bg: var(--card-bg-light);
+      --accent: var(--gold);
+    }
+
+    body {
+      background-color: var(--background);
+      color: var(--text);
+      font-family: 'Arial', sans-serif;
+    }
+
+    .section-title {
+      color: var(--accent);
+      font-weight: bold;
+      margin-bottom: 1.5rem;
+      font-size: 1.75rem;
+    }
+
+    .card {
+      background-color: var(--card-bg);
+      border: 1px solid var(--accent);
+      border-radius: 8px;
+    }
+
+    .btn-primary {
+      background-color: var(--accent);
+      border-color: var(--accent);
+      color: var(--background);
+      transition: background-color 0.3s ease;
+    }
+
+    .btn-primary:hover {
+      background-color: #E5C100; /* Slightly darker gold for hover */
+      border-color: #E5C100;
+    }
+
+    .current-time {
+      text-align: right;
+      font-size: 0.9rem;
+      color: var(--text);
+      margin-bottom: 1rem;
+      font-style: italic;
+    }
+
+    .leaderboard-item {
+      display: flex;
+      justify-content: space-between;
+      padding: 0.5rem 0;
+      border-bottom: 1px solid var(--accent);
+    }
+
+    section {
+      margin-bottom: 3rem;
+    }
+
+    .sidebar-title {
+      color: var(--accent);
+    }
+
+    .nav-link {
+      color: var(--text);
+    }
+
+    .nav-link:hover {
+      color: var(--accent);
+    }
+
+    .earn-banner {
+      background-color: var(--accent);
+      color: var(--black);
+      padding: 0.5rem;
+      border-radius: 4px;
+    }
   </style>
 </head>
 <body>
@@ -32,10 +121,8 @@
     const SUPA_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImRhcHdwZ3ZuZmpjZnFxaHJweGxhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDcwNDA4ODgsImV4cCI6MjA2MjYxNjg4OH0.ICC0UsLlzJDNre7rFCeD3k6iVzo6jOJgn3PhABpEMsQ';
     const supabaseClient = window.supabase.createClient(SUPA_URL, SUPA_KEY);
 
-    // ▶️ Grab our affiliate’s ID from login
     const affiliateId = localStorage.getItem('affiliateId');
     if (!affiliateId) {
-      // not logged in → back to login page
       window.location.replace('affiliate_login.html');
       throw new Error('No affiliateId in localStorage');
     }
@@ -88,6 +175,7 @@
   <!-- ===================== MAIN CONTENT ===================== -->
   <div class="main-content" id="main-content">
     <div class="container-fluid">
+      <div class="current-time" id="current-time">Current Time: Loading...</div>
 
       <!-- ===================== REFERRAL SECTION ===================== -->
       <section id="referral-section-main" class="mb-5">
@@ -166,7 +254,7 @@
 
       <!-- ===================== LEADERBOARD ===================== -->
       <section id="leaderboard-section" class="mb-5">
-        <div class="section-title"><i class="bi bi-trophy-fill"></i> Leaderboard: Top Affiliates</div>
+        <div class="section-title"><i class="bi bi-trophy-fill"></i> Leaderboard: Top Affiliates ha</div>
         <ul class="leaderboard-list" id="leaderboard-list">
           <li class="text-center text-muted">Loading leaderboard…</li>
         </ul>
@@ -349,8 +437,22 @@
       return d;
     }
 
+    function updateCurrentTime() {
+      const now = new Date();
+      const options = { 
+        weekday: 'long', 
+        year: 'numeric', 
+        month: 'long', 
+        day: 'numeric', 
+        hour: '2-digit', 
+        minute: '2-digit', 
+        second: '2-digit', 
+        timeZoneName: 'short' 
+      };
+      document.getElementById('current-time').textContent = `Current Time: ${now.toLocaleString('en-US', options)}`;
+    }
+
     document.addEventListener('DOMContentLoaded', async () => {
-      // Fetch affiliate data to set email and joined date
       const { data: affiliate, error: affError } = await supabase
         .from('affiliate_accounts')
         .select('email, created_at')
@@ -578,9 +680,12 @@
           }
         }
       });
+
+      // Initialize and update the current time
+      updateCurrentTime();
+      setInterval(updateCurrentTime, 1000);
     });
 
-    // FETCH / GENERATE REFERRAL CODE
     async function fetchReferralCode() {
       const refSpanMain = document.getElementById('referral-code');
       const linkInputMain = document.getElementById('referral-link');
@@ -630,7 +735,6 @@
       document.getElementById('qr-code-container').appendChild(qr);
     }
 
-    // FETCH TOTAL REFERRALS
     async function fetchTotalReferrals() {
       const { count, error } = await supabase
         .from('referrals')
@@ -647,7 +751,6 @@
       }
     }
 
-    // CALCULATE & DISPLAY EARNINGS
     async function calculateAndDisplayEarnings() {
       const totalRefs = parseInt(document.getElementById('overview-total-referrals').textContent) || 0;
       const usdEarnings = totalRefs * 5;
@@ -676,7 +779,6 @@
       }
     }
 
-    // FETCH CONVERSION RATE
     async function fetchConversionRate() {
       const { count: totalRefCount } = await supabase
         .from('referrals')
@@ -695,9 +797,8 @@
       document.getElementById('overview-conversion-rate-inline').textContent = rateText;
     }
 
-    // LOAD REFERRAL CHART DATA
     async function loadReferralChartData() {
-      const { data: rawReferrals, error } = await supabase
+      const、手首を切る。 const { data: rawReferrals, error } = await supabase
         .from('referrals')
         .select('created_at')
         .eq('affiliate_id', affiliateId);
@@ -725,7 +826,6 @@
       chartData30Days.counts = last30Counts;
     }
 
-    // RENDER REFERRAL CHART
     async function renderReferralChart(range) {
       const ctx = document.getElementById('referralChart').getContext('2d');
       if (referralChart) referralChart.destroy();
@@ -741,7 +841,6 @@
       });
     }
 
-    // LOAD LEADERBOARD
     async function loadLeaderboard() {
       const listEl = document.getElementById('leaderboard-list');
       listEl.innerHTML = `<li class="text-center text-muted">Loading leaderboard…</li>`;
@@ -781,7 +880,6 @@
       }
     }
 
-    // LOAD BANK ACCOUNTS
     async function loadBankAccounts() {
       const tbody = document.getElementById('bank-accounts-body');
       tbody.innerHTML = `<tr><td colspan="5"><div class="text-center spinner-border"></div></td></tr>`;
@@ -812,7 +910,6 @@
       });
     }
 
-    // DELETE BANK ACCOUNT
     async function deleteBankAccount(id) {
       if (!confirm('Delete this bank account?')) return;
       const { error } = await supabase
@@ -824,7 +921,6 @@
       await loadBankAccounts();
     }
 
-    // LOAD CRYPTO WALLETS
     async function loadWallets() {
       const tbody = document.getElementById('wallets-body');
       tbody.innerHTML = `<tr><td colspan="3"><div class="text-center spinner-border"></div></td></tr>`;
@@ -853,7 +949,6 @@
       });
     }
 
-    // DELETE WALLET
     async function deleteWallet(id) {
       if (!confirm('Delete this wallet?')) return;
       const { error } = await supabase
@@ -865,7 +960,6 @@
       await loadWallets();
     }
 
-    // LOAD PAYOUTS
     async function loadPayouts() {
       const listEl = document.getElementById('withdrawals-list');
       listEl.innerHTML = `<li class="text-center"><div class="spinner-border"></div></li>`;
@@ -898,7 +992,6 @@
       });
     }
 
-    // THEME TOGGLE
     function setupThemeToggle() {
       const btn = document.getElementById('theme-toggle-btn');
       const icon = document.getElementById('theme-icon');
@@ -914,7 +1007,6 @@
       });
     }
 
-    // SIDEBAR TOGGLE
     function setupSidebarToggle() {
       document.getElementById('sidebar-toggle').addEventListener('click', () => {
         document.getElementById('sidebar').classList.toggle('expanded');
