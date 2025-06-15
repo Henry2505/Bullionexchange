@@ -1,146 +1,87 @@
 <!DOCTYPE html>
 <html lang="en" data-theme="dark">
 <head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width,initial-scale=1">
-  <title>Affiliate Dashboard • Apex Income Options</title>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Affiliate Dashboard</title>
+
+  <!-- Bootstrap & Icons -->
   <link
     href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css"
     rel="stylesheet"
     crossorigin="anonymous"
   />
+  <link
+    href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css"
+    rel="stylesheet"
+  />
+  <!-- Supabase client -->
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>
+
   <style>
-    body { background: #121212; color: #EEE; }
-    .card { background: #1E1E1E; border: none; }
-    .card-header { background: #2C2C2C; color: #FFD700; }
-    .error { background: #800; color: #FFF; padding: .5rem; border-radius:4px; margin-bottom:1rem; }
-    .copy-btn { cursor: pointer; }
+    body { background: #000; color: #ffd700; font-family: sans-serif; padding: 2rem; }
+    .card { background: #111; border: 1px solid #333; border-radius: 8px; padding: 1rem; max-width: 400px; }
+    input { background: #222; color: #ffd700; border: 1px solid #333; }
+    button { background: #ffd700; color: #000; border: none; }
   </style>
 </head>
-<body class="p-4">
+<body>
 
-  <h1 class="mb-4">Affiliate Dashboard</h1>
-  <div id="error-box"></div>
+  <h1 class="mb-4">Your Affiliate Dashboard</h1>
 
-  <div class="card mb-3">
-    <div class="card-header">Your Referral Code</div>
-    <div class="card-body">
-      <h3 id="ref-code">…</h3>
-      <button class="btn btn-sm btn-outline-light copy-btn" id="btn-copy-code">Copy Code</button>
-      <hr class="border-secondary">
-      <small>Referral Link:</small>
-      <div class="input-group mb-2">
-        <input type="text" id="ref-link" class="form-control bg-dark text-light" readonly>
-        <button class="btn btn-outline-light copy-btn" id="btn-copy-link">Copy</button>
-      </div>
-      <small>Joined: <span id="joined-date">…</span></small>
-    </div>
-  </div>
-
-  <div class="row g-3">
-    <div class="col-md-4">
-      <div class="card text-center p-3">
-        <h5>Total Referrals</h5>
-        <h2 id="total-refs">0</h2>
-      </div>
-    </div>
-    <div class="col-md-4">
-      <div class="card text-center p-3">
-        <h5>Weekly Earnings</h5>
-        <h2 id="weekly-earn">$0.00</h2>
-      </div>
-    </div>
-    <div class="col-md-4">
-      <div class="card text-center p-3">
-        <h5>All-Time Earnings</h5>
-        <h2 id="alltime-earn">$0.00</h2>
-      </div>
+  <div class="card">
+    <h5>Your Referral Code</h5>
+    <p id="referral-code">Loading…</p>
+    <h5>Your Referral Link</h5>
+    <div class="d-flex">
+      <input id="referral-link" class="form-control me-2" readonly />
+      <button id="copy-btn" class="btn">Copy</button>
     </div>
   </div>
 
   <script>
-  (async()=>{
-    // Helper to show errors
-    const showError = msg=>{
-      document.getElementById('error-box').innerHTML =
-        `<div class="error">🚨 ${msg}</div>`;
-    };
+    // 1️⃣ Initialize Supabase
+    const SUPA_URL = 'https://dapwpgvnfjcfqqhrpxla.supabase.co';
+    const SUPA_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImRhcHdwZ3ZuZmpjZnFxaHJweGxhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDcwNDA4ODgsImV4cCI6MjA2MjYxNjg4OH0.ICC0UsLlzJDNre7rFCeD3k6iVzo6jOJgn3PhABpEMsQ';
+    const supabase = window.supabase.createClient(SUPA_URL, SUPA_KEY);
 
-    // 1. Grab affiliateId/email from localStorage
-    const affiliateId    = localStorage.getItem('affiliateId');
-    const affiliateEmail = localStorage.getItem('affiliateEmail');
+    // 2️⃣ Grab your affiliateId (set at login)
+    const affiliateId = localStorage.getItem('affiliateId');
     if (!affiliateId) {
-      return showError('Not logged in—affiliateId missing. Please log in again.');
+      alert('Not logged in – redirecting to login page.');
+      window.location.href = 'affiliate_login.html';
+      throw new Error('No affiliateId');
     }
 
-    // 2. Init Supabase
-    const supabase = supabase.createClient(
-      'https://dapwpgvnfjcfqqhrpxla.supabase.co',
-      'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImRhcHdwZ3ZuZmpjZnFxaHJweGxhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDcwNDA4ODgsImV4cCI6MjA2MjYxNjg4OH0.ICC0UsLlzJDNre7rFCeD3k6iVzo6jOJgn3PhABpEMsQ'
-    );
+    // 3️⃣ Fetch & render your code + link
+    async function loadReferral() {
+      try {
+        const { data, error } = await supabase
+          .from('affiliate_accounts')
+          .select('referral_code')
+          .eq('id', affiliateId)
+          .single();
+        if (error) throw error;
 
-    // Utility: to USD
-    const toUSD = v=>parseFloat(v).toLocaleString(undefined,{
-      style:'currency',currency:'USD'
+        const code = data.referral_code;
+        document.getElementById('referral-code').textContent = code;
+        const fullLink = `${window.location.origin}/CBE_apply.html?ref=${code}`;
+        document.getElementById('referral-link').value = fullLink;
+      } catch (err) {
+        console.error('Error loading referral:', err);
+        document.getElementById('referral-code').textContent = 'Error loading code';
+      }
+    }
+    loadReferral();
+
+    // 4️⃣ Copy button
+    document.getElementById('copy-btn').addEventListener('click', () => {
+      const linkEl = document.getElementById('referral-link');
+      linkEl.select();
+      document.execCommand('copy');
+      alert('Referral link copied!');
     });
-
-    // 3. Fetch affiliate record
-    const { data: aff, error: affErr } = await supabase
-      .from('affiliate_accounts')
-      .select('referral_code, created_at')
-      .eq('id', affiliateId)
-      .single();
-    if (affErr) return showError('Failed to load your affiliate info: '+affErr.message);
-
-    // Populate code, link, joined date
-    const code = aff.referral_code;
-    document.getElementById('ref-code').textContent = code;
-    const link = `${window.location.origin}/CBE_apply.html?ref=${code}`;
-    document.getElementById('ref-link').value = link;
-    document.getElementById('joined-date').textContent =
-      new Date(aff.created_at).toLocaleDateString();
-
-    // Copy handlers
-    document.getElementById('btn-copy-code').onclick = ()=>{
-      navigator.clipboard.writeText(code).then(
-        ()=>alert('Code copied!'),
-        ()=>alert('Copy failed')
-      );
-    };
-    document.getElementById('btn-copy-link').onclick = ()=>{
-      navigator.clipboard.writeText(link).then(
-        ()=>alert('Link copied!'),
-        ()=>alert('Copy failed')
-      );
-    };
-
-    // 4. Count total referrals
-    const { count: totalCount, error: cntErr } = await supabase
-      .from('referrals')
-      .select('*',{ count: 'exact', head: true })
-      .eq('affiliate_id', affiliateId);
-    if (cntErr) return showError('Failed to count referrals: '+cntErr.message);
-    document.getElementById('total-refs').textContent = totalCount;
-
-    // 5. Weekly & all-time earnings
-    const now = new Date(), weekAgo = new Date(now);
-    weekAgo.setDate(weekAgo.getDate()-7);
-
-    const [{ count: weekCount }, { count: allCount }] = await Promise.all([
-      supabase.from('referrals')
-        .select('*',{ count:'exact', head:true })
-        .eq('affiliate_id',affiliateId)
-        .gt('created_at', weekAgo.toISOString()),
-      supabase.from('referrals')
-        .select('*',{ count:'exact', head:true })
-        .eq('affiliate_id',affiliateId)
-    ]);
-
-    document.getElementById('weekly-earn').textContent = toUSD(weekCount*5);
-    document.getElementById('alltime-earn').textContent = toUSD(allCount*5);
-
-  })();
   </script>
+
 </body>
 </html>
