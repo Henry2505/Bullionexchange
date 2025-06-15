@@ -9,7 +9,7 @@
   <!-- Fonts & Icons -->
   <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700&family=Roboto:wght@300;400;700&display=swap" rel="stylesheet" />
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js/dist/umd/supabase.min.js"></script>
 
   <style>
     :root[data-theme="dark"] {
@@ -422,217 +422,128 @@
     }
 
     // Local time
-    function updateLocalTime() {
-      const now = new Date();
-      document.getElementById('local-time').textContent =
-        now.toLocaleString('en-US', { hour: 'numeric', minute: 'numeric', second: 'numeric', hour12: true, timeZone: 'Africa/Lagos' }) + ' WAT';
+    function updateLocalTime(){
+      const now=new Date();
+      document.getElementById('local-time').textContent=
+        now.toLocaleString('en-US',{hour:'numeric',minute:'numeric',second:'numeric',hour12:true,timeZone:'Africa/Lagos'})+' WAT';
     }
-    setInterval(updateLocalTime, 1000);
-    updateLocalTime();
+    setInterval(updateLocalTime,1000); updateLocalTime();
 
     // Slide in
-    document.addEventListener('DOMContentLoaded', () => {
-      console.log('Page loaded, initializing...');
-      const card = document.getElementById('apply-card');
+    document.addEventListener('DOMContentLoaded',()=>{
+      const card=document.getElementById('apply-card');
       card.classList.add('visible');
       // referral from URL
-      const params = new URLSearchParams(location.search);
-      const ref = params.get('ref');
-      if (ref) {
-        console.log('Referral code from URL:', ref);
-        document.getElementById('referral-note').textContent = 'Referred by: ' + ref;
-        document.getElementById('apply-referral').value = ref;
+      const params=new URLSearchParams(location.search),ref=params.get('ref');
+      if(ref){
+        document.getElementById('referral-note').textContent='Referred by: '+ref;
+        document.getElementById('apply-referral').value=ref;
       }
-
+      
       // Initialize quote
       updateQuote();
     });
 
     // Theme toggle
-    const themeBtn = document.getElementById('theme-toggle');
-    themeBtn.addEventListener('click', () => {
-      const curr = document.documentElement.getAttribute('data-theme');
-      const next = curr === 'dark' ? 'light' : 'dark';
-      document.documentElement.setAttribute('data-theme', next);
-      localStorage.setItem('theme', next);
-      themeBtn.textContent = next === 'dark' ? '🌞' : '🌜';
-      console.log('Theme toggled to:', next);
+    const themeBtn=document.getElementById('theme-toggle');
+    themeBtn.addEventListener('click',()=>{
+      const curr=document.documentElement.getAttribute('data-theme');
+      const next=curr==='dark'?'light':'dark';
+      document.documentElement.setAttribute('data-theme',next);
+      localStorage.setItem('theme',next);
+      themeBtn.textContent=next==='dark'?'🌞':'🌜';
     });
-    (() => {
-      const saved = localStorage.getItem('theme') || 'dark';
-      document.documentElement.setAttribute('data-theme', saved);
-      themeBtn.textContent = saved === 'dark' ? '🌞' : '🌜';
+    (()=>{
+      const saved=localStorage.getItem('theme')||'dark';
+      document.documentElement.setAttribute('data-theme',saved);
+      themeBtn.textContent=saved==='dark'?'🌞':'🌜';
     })();
 
     // Voice toggle
-    const voiceBtn = document.getElementById('voice-toggle');
-    const audio = document.getElementById('page-audio');
-    voiceBtn.addEventListener('click', () => {
-      if (audio.paused) {
-        audio.play();
-        voiceBtn.textContent = '⏸️';
-        console.log('Audio playing');
-      } else {
-        audio.pause();
-        voiceBtn.textContent = '▶️';
-        console.log('Audio paused');
-      }
+    const voiceBtn=document.getElementById('voice-toggle');
+    const audio=document.getElementById('page-audio');
+    voiceBtn.addEventListener('click',()=>{
+      if(audio.paused){ audio.play(); voiceBtn.textContent='⏸️'; }
+      else{ audio.pause(); voiceBtn.textContent='▶️'; }
     });
-    audio.addEventListener('ended', () => {
-      voiceBtn.textContent = '▶️';
-      console.log('Audio ended');
-    });
-
+    audio.addEventListener('ended',()=>voiceBtn.textContent='▶️');
+    
     // Quote refresh
-    document.getElementById('refresh-quote').addEventListener('click', () => {
-      updateQuote();
-      console.log('Quote refreshed');
+    document.getElementById('refresh-quote').addEventListener('click', updateQuote);
+
+    // Referral validation & submission
+    const SUPA_URL="https://dapwpgvnfjcfqqhrpxla.supabase.co",
+          SUPA_KEY="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpZ...";
+    const supabaseClient=supabase.createClient(SUPA_URL,SUPA_KEY);
+
+    const form=document.getElementById('apply-form'),
+          agree=document.getElementById('agree-terms'),
+          submitBtn=document.getElementById('submit-btn'),
+          alertDiv=document.getElementById('apply-alert');
+
+    agree.addEventListener('change',()=>{
+      const ok=agree.checked;
+      submitBtn.disabled=!ok;
+      submitBtn.classList.toggle('enabled',ok);
     });
 
-    // Supabase client initialization
-    const SUPABASE_URL = "https://dapwpgvnfjcfqqhrpxla.supabase.co";
-    const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImRhcHdwZ3ZuZmpjZnFxaHJweGxhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDcwNDA4ODgsImV4cCI6MjA2MjYxNjg4OH0.ICC0UsLlzJDNre7rFCeD3k6iVzo6jOJgn3PhABpEMsQ";
-    console.log('Initializing Supabase client...');
-    let supabaseClient;
-    try {
-      supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
-      console.log('Supabase client initialized successfully');
-    } catch (error) {
-      console.error('Failed to initialize Supabase client:', error);
-      showError('Failed to initialize application. Please try again or contact support.');
-    }
-
-    // Form handling
-    const form = document.getElementById('apply-form');
-    const agree = document.getElementById('agree-terms');
-    const submitBtn = document.getElementById('submit-btn');
-    const alertDiv = document.getElementById('apply-alert');
-
-    agree.addEventListener('change', () => {
-      const ok = agree.checked;
-      submitBtn.disabled = !ok;
-      submitBtn.classList.toggle('enabled', ok);
-      console.log('Terms agreement changed:', ok);
-    });
-
-    form.addEventListener('submit', async (e) => {
+    form.addEventListener('submit',async e=>{
       e.preventDefault();
-      alertDiv.textContent = '';
+      alertDiv.textContent=''; 
       alertDiv.className = '';
-      console.log('Form submitted');
-
-      const name = document.getElementById('apply-name').value.trim();
-      const email = document.getElementById('apply-email').value.trim().toLowerCase();
-      const password = document.getElementById('apply-password').value;
-      const phone = document.getElementById('apply-phone').value.trim();
-      const experience = document.getElementById('apply-message').value.trim();
-      const manualRef = document.getElementById('apply-referral').value.trim();
-
-      console.log('Form data:', { name, email, password: '****', phone, experience, manualRef });
+      
+      const name=document.getElementById('apply-name').value.trim(),
+            email=document.getElementById('apply-email').value.trim().toLowerCase(),
+            password=document.getElementById('apply-password').value,
+            phone=document.getElementById('apply-phone').value.trim(),
+            experience=document.getElementById('apply-message').value.trim(),
+            manualRef=document.getElementById('apply-referral').value.trim();
 
       // Validation
-      if (!name || !email || !password || !phone || !experience) {
+      if(!name || !email || !password || !phone || !experience){
         showError('Please complete all required fields before submitting.');
-        console.log('Validation failed: Missing required fields');
         return;
       }
-      if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+      if(!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)){
         showError('Please enter a valid email address.');
-        console.log('Validation failed: Invalid email');
         return;
       }
-      if (password.length < 8) {
+      if(password.length < 8){
         showError('Password must be at least 8 characters long.');
-        console.log('Validation failed: Password too short');
         return;
       }
-      if (!/^[0-9+()\-\s]+$/.test(phone)) {
+      if(!/^[0-9+()\-\s]+$/.test(phone)){
         showError('Please enter a valid contact number.');
-        console.log('Validation failed: Invalid phone number');
         return;
       }
+      
+      submitBtn.disabled=true; 
+      submitBtn.textContent='Submitting…';
 
-      submitBtn.disabled = true;
-      submitBtn.textContent = 'Submitting…';
-      console.log('Starting submission process...');
-
-      try {
-        // Check referral code
-        const urlRef = new URLSearchParams(location.search).get('ref');
-        const code = manualRef || urlRef || null;
-        let referredBy = null;
-
-        if (code) {
-          console.log('Validating referral code:', code);
-          try {
-            const { data, error } = await supabaseClient
-              .from('affiliates')
-              .select('user_id')
-              .eq('referral_code', code)
-              .single();
-            if (error || !data) {
-              console.error('Referral code validation failed:', error || 'No data');
-              showError('The referral code you entered is invalid. Please check and try again.');
-              throw new Error('Invalid referral code');
-            }
-            referredBy = data.user_id;
-            console.log('Referral code valid, referredBy:', referredBy);
-          } catch (error) {
-            console.error('Referral code check error:', error);
-            throw error;
+      try{
+        const urlRef=new URLSearchParams(location.search).get('ref'),
+              code=manualRef||urlRef||null;
+        let referredBy=null;
+        if(code){
+          const { data, error }=await supabaseClient
+            .from('affiliates').select('user_id').eq('referral_code',code).single();
+          if(error||!data){
+            showError('The referral code you entered is invalid. Please check and try again.');
+            throw error||new Error('No affiliate');
           }
-        } else {
-          console.log('No referral code provided');
+          referredBy=data.user_id;
         }
-
-        // Insert user into Supabase
-        console.log('Inserting user into users table...');
-        const { data: userData, error: userError } = await supabaseClient
-          .from('users')
-          .insert({
-            name,
-            email,
-            phone,
-            experience,
-            referral_code: code,
-            referred_by: referredBy,
-            status: 'Pending',
-            created_at: new Date().toISOString()
-          })
-          .select()
-          .single();
-
-        if (userError) {
-          console.error('User insertion error:', userError);
-          if (userError.code === '23505') {
-            showError('This email is already registered. Please use a different email or contact support.');
-          } else {
-            showError('Failed to submit application: ' + userError.message);
-          }
-          throw userError;
-        }
-        console.log('User inserted successfully:', userData);
-
-        // Attempt to sign up with Supabase Auth
-        console.log('Attempting Supabase Auth signup...');
-        const { error: authError } = await supabaseClient.auth.signUp({
-          email,
-          password,
-          options: {
-            data: { name, phone, experience, referral_code: code }
-          }
+        const payload={ name,email,password,phone,experience,referral_code:code,referred_by:referredBy };
+        const res=await fetch('/.netlify/functions/send-application',{
+          method:'POST',
+          headers:{'Content-Type':'application/json'},
+          body:JSON.stringify(payload)
         });
-
-        if (authError) {
-          console.error('Auth signup error:', authError);
-          // Clean up user record if auth fails
-          console.log('Cleaning up user record due to auth failure...');
-          await supabaseClient.from('users').delete().eq('id', userData.id);
-          showError('Failed to create account: ' + authError.message);
-          throw authError;
+        const result=await res.json();
+        if(!res.ok){
+          throw new Error(result.error||JSON.stringify(result));
         }
-        console.log('Auth signup successful');
-
+        
         // Success handling
         alertDiv.className = 'alert-success';
         alertDiv.innerHTML = `
@@ -640,33 +551,29 @@
           <strong>Application Submitted Successfully!</strong><br>
           A welcome email has been sent to ${email}. Redirecting to subscription...
         `;
-        console.log('Submission successful, resetting form');
-
-        form.reset();
-        agree.checked = false;
+        
+        form.reset(); 
+        agree.checked=false; 
         submitBtn.classList.remove('enabled');
-
+        
         // Redirect after delay
         setTimeout(() => {
-          console.log('Redirecting to vip-subscription');
           window.location.href = 'vip-subscription';
         }, 3500);
-      } catch (err) {
-        console.error('Submission error:', err);
-        showError('We encountered an issue processing your application. Please try again or contact support at support@apexincomeoptions.com.ng.');
-      } finally {
-        submitBtn.disabled = true;
-        submitBtn.textContent = 'Submit Application';
-        console.log('Submission process completed');
+        
+      }catch(err){
+        console.error(err);
+        showError('We encountered an issue processing your application. Please try again or contact support if the problem persists.');
+      }finally{
+        submitBtn.disabled=true; 
+        submitBtn.textContent='Submit Application';
       }
     });
-
+    
     // Show error message
     function showError(message) {
       alertDiv.className = 'alert-error';
       alertDiv.innerHTML = `<i class="fas fa-exclamation-circle"></i> ${message}`;
-      alertDiv.style.display = 'block';
-      console.log('Error displayed:', message);
     }
   </script>
 </body>
