@@ -5,143 +5,180 @@
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <meta name="description" content="Join the Chukwuemeka Bullion Exchange VIP trading community." />
   <title>Apply • Chukwuemeka Bullion Exchange</title>
+  
   <!-- Fonts & Icons -->
-  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700&family=Roboto:wght@300;400;700&display=swap" rel="stylesheet"/>
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"/>
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js/dist/umd/supabase.min.js"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700&family=Roboto:wght@300;400;700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>
+
+  <!-- Placeholder for your existing styles -->
   <style>
-    /* … your existing CSS … */
+    /* Insert your existing CSS styles here */
   </style>
 </head>
 <body>
-
-  <div class="header-bar">
-    <!-- … header markup … -->
-  </div>
-
-  <main>
-    <section class="apply-card slide-in" id="apply-card">
-      <h1>Apply to Join CBE</h1>
-
-      <!-- Quote box… -->
-
-      <!-- Referral Note -->
-      <p class="referral-note" id="referral-note"></p>
-
-      <form id="apply-form" novalidate>
-        <!-- … your existing form fields … -->
-
-        <div class="form-group optional">
-          <label for="apply-referral">Referral Code (optional)</label>
-          <i class="fas fa-user-friends input-icon"></i>
-          <input type="text" id="apply-referral" placeholder="Enter code if you have one" readonly />
-        </div>
-
-        <!-- … terms, submit button, alert div … -->
-      </form>
-    </section>
-  </main>
-
-  <footer>© 2025 Chukwuemeka Bullion Exchange. All rights reserved.</footer>
+  <!-- Placeholder for your existing HTML content -->
+  <form id="apply-form">
+    <input id="apply-name" type="text" placeholder="Full Name" required />
+    <input id="apply-email" type="email" placeholder="Email Address" required />
+    <input id="apply-password" type="password" placeholder="Password" required />
+    <input id="apply-phone" type="tel" placeholder="Phone Number" required />
+    <textarea id="apply-message" placeholder="Trading Experience" required></textarea>
+    <input id="apply-referral" type="text" placeholder="Referral Code (optional)" />
+    <label><input id="agree-terms" type="checkbox" /> I agree to the terms and privacy policy</label>
+    <button id="submit-btn" type="submit">Submit Application</button>
+    <div id="apply-alert"></div>
+  </form>
 
   <script>
-    // — initialize Supabase client
+    // Supabase initialization
     const SUPA_URL = "https://dapwpgvnfjcfqqhrpxla.supabase.co";
-    const SUPA_KEY = "YOUR_SUPABASE_ANON_KEY";
-    const supabase = supabase.createClient(SUPA_URL, SUPA_KEY);
+    const SUPA_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImRhcHdwZ3ZuZmpjZnFxaHJweGxhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDcwNDA4ODgsImV4cCI6MjA2MjYxNjg4OH0.ICC0UsLlzJDNre7rFCeD3k6iVzo6jOJgn3PhABpEMsQ";
+    const supabaseClient = supabase.createClient(SUPA_URL, SUPA_KEY);
 
-    // Grab DOM elements
-    const noteEl     = document.getElementById('referral-note');
-    const refInput   = document.getElementById('apply-referral');
-    const form       = document.getElementById('apply-form');
-    const submitBtn  = document.getElementById('submit-btn');
-    const alertDiv   = document.getElementById('apply-alert');
+    // Form elements
+    const form = document.getElementById('apply-form'),
+          agree = document.getElementById('agree-terms'),
+          submitBtn = document.getElementById('submit-btn'),
+          alertDiv = document.getElementById('apply-alert'),
+          inputs = {
+            name: document.getElementById('apply-name'),
+            email: document.getElementById('apply-email'),
+            password: document.getElementById('apply-password'),
+            phone: document.getElementById('apply-phone'),
+            experience: document.getElementById('apply-message'),
+            referral: document.getElementById('apply-referral')
+          };
 
-    // Utility: show error
+    // Validation functions
+    function validateField(field, value) {
+      const v = value.trim();
+      switch (field) {
+        case 'name': return v.length < 2 ? 'Name must be at least 2 characters.' : null;
+        case 'email': return !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v) ? 'Invalid email address.' : null;
+        case 'password': return v.length < 8 ? 'Password must be at least 8 characters.' : null;
+        case 'phone': return !/^\+?\d{10,15}$/.test(v.replace(/\D/g, '')) ? 'Invalid phone number.' : null;
+        case 'experience': return v.length < 10 ? 'Please provide more details about your experience (10+ characters).' : null;
+        default: return null;
+      }
+    }
+
     function showError(msg) {
-      alertDiv.className = 'alert-error';
-      alertDiv.innerHTML = `<i class="fas fa-exclamation-circle"></i> ${msg}`;
+      alertDiv.className = 'error';
+      alertDiv.innerHTML = msg;
       alertDiv.style.display = 'block';
       submitBtn.disabled = false;
+      submitBtn.innerHTML = 'Submit Application';
     }
 
-    // Utility: show success
     function showSuccess(msg) {
-      alertDiv.className = 'alert-success';
-      alertDiv.innerHTML = `<i class="fas fa-check-circle"></i> ${msg}`;
+      alertDiv.className = 'success';
+      alertDiv.innerHTML = msg;
       alertDiv.style.display = 'block';
+      submitBtn.disabled = false;
+      submitBtn.innerHTML = 'Submit Application';
     }
 
-    // On page load…
-    document.addEventListener('DOMContentLoaded', async () => {
-      // 1) Check URL param
-      const params = new URLSearchParams(window.location.search);
-      const code   = params.get('ref')?.trim();
-
-      if (code) {
-        // 2) Verify against affiliate_accounts table
-        const { data: aff, error } = await supabase
-          .from('affiliate_accounts')
-          .select('id')
-          .eq('referral_code', code)
-          .maybeSingle();
-
-        if (error) {
-          console.error('Referral lookup error', error);
-          noteEl.textContent = 'Error verifying referral; please try again.';
-        }
-        else if (!aff) {
-          noteEl.textContent = 'Invalid referral code.';
-          // keep the field blank and block submission if you like:
-          // submitBtn.disabled = true;
-        }
-        else {
-          // valid code!
-          noteEl.textContent = `Referred by: ${code}`;
-          refInput.value    = code;
-        }
-      }
-
-      // …rest of your initialization (quotes, theme toggle, local time, etc.)…
-    });
-
-    // Form submission
+    // Form submission handler
     form.addEventListener('submit', async e => {
       e.preventDefault();
       alertDiv.style.display = 'none';
+      alertDiv.textContent = '';
+      alertDiv.className = '';
+
+      // Collect & trim values
+      const name       = inputs.name.value.trim(),
+            email      = inputs.email.value.trim().toLowerCase(),
+            password   = inputs.password.value,
+            phone      = inputs.phone.value.trim(),
+            experience = inputs.experience.value.trim(),
+            manualRef  = inputs.referral.value.trim();
+
+      // 1) Client-side validation
+      for (const [key, input] of Object.entries(inputs)) {
+        if (key !== 'referral') {
+ Govern          const err = validateField(key, input.value);
+          if (err) { showError(err); return; }
+        }
+      }
+      if (!agree.checked) {
+        showError('You must agree to the terms and privacy policy before applying.');
+        return;
+      }
+
+      // 2) Disable button & show spinner
       submitBtn.disabled = true;
       submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Submitting…';
 
-      // collect & validate other fields…
-      // …
-
-      // include referral code if present and valid
-      const referredBy = refInput.value ? refInput.value : null;
-
-      // your payload
-      const payload = {
-        /* name, email, password, phone, experience, */
-        referral_code: referredBy
-      };
-
       try {
-        // send to your Netlify function (or Supabase directly)
+        // A) Check for duplicate email
+        const { data: existingUser, error: userError } = await supabaseClient
+          .from('affiliate_accounts').select('email').eq('email', email).single();
+
+        if (existingUser) {
+          showError('This email is already registered. Please log in or use a different email.');
+          return;
+        }
+        if (userError && userError.code !== 'PGRST116') throw userError;
+
+        // B) Validate referral code if provided (case-insensitive)
+        let referredBy = null;
+        const urlRef = new URLSearchParams(location.search).get('ref'),
+              code = (manualRef || urlRef || '').trim();
+
+        if (code) {
+          if (!/^[A-Za-z0-9]{8}$/.test(code)) {
+            showError('Referral code must be exactly 8 alphanumeric characters.');
+            return;
+          }
+          const { data: aff, error: refErr } = await supabaseClient
+            .from('affiliate_accounts')
+            .select('id')
+            .ilike('referral_code', code)  // Case-insensitive match
+            .single();
+
+          console.log('Referral lookup:', { code, aff, refErr });
+          if (refErr || !aff) {
+            showError('Invalid referral code. Please check and try again, or leave it blank.');
+            return;
+          }
+          referredBy = aff.id;
+        }
+
+        // C) Send to your function
+        const payload = { name, email, password, phone, experience, referral_code: code, referred_by: referredBy };
         const res    = await fetch('/.netlify/functions/send-application', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify(payload)
         });
         const result = await res.json();
-
         if (!res.ok) {
-          showError(result.error || 'Submission failed.');
-        } else {
-          showSuccess('Application submitted! Redirecting…');
-          setTimeout(() => window.location.href = 'vip-subscription', 2000);
+          showError(result.error || 'Application submission failed on the server.');
+          return;
         }
+
+        // D) Success!
+        showSuccess(`
+          <strong> personallySubmitted Successfully!</strong><br>
+          Thank you for applying. A confirmation email has been sent to ${email}.<br>
+          Redirecting to subscription options shortly.
+        `);
+        form.reset();
+        agree.checked = false;
+        Object.values(inputs).forEach(i => {
+          const fe = i.parentElement.querySelector('.field-error');
+          if (fe) fe.remove();
+        });
+        setTimeout(() => window.location.href = 'vip-subscription', 5000);
+
       } catch (err) {
-        console.error(err);
-        showError('Network error. Please try again.');
+        console.error('Submission error:', err);
+        if (err.message.includes('NetworkError') || err.message.includes('Failed to fetch')) {
+          showError('Network issue detected. Please check your connection and try again.');
+        } else {
+          showError('An unexpected error occurred. Please try again later or contact support at support@apexincomeoptions.com.ng.');
+        }
       }
     });
   </script>
