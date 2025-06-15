@@ -10,6 +10,7 @@
   <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" rel="stylesheet" />
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.3.0/dist/chart.umd.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/qrcodejs@1.0.0/qrcode.min.js"></script>
 
   <!-- Custom Styles -->
   <style>
@@ -165,9 +166,30 @@
       background-color: #E5C200; /* Slightly darker gold on hover */
     }
 
+    /* QR Code Styling */
+    .qr-code {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      background-color: #FFFFFF; /* White background for contrast */
+      padding: 10px;
+      border-radius: 5px;
+      border: 1px solid var(--accent);
+      max-width: 220px; /* Constrain for small screens */
+      margin: 0 auto;
+    }
+
+    .qr-code canvas, .qr-code img {
+      max-width: 100%;
+      height: auto;
+    }
+
     @media (max-width: 768px) {
       .main-content {
         margin-left: 0;
+      }
+      .qr-code {
+        max-width: 180px; /* Smaller on mobile */
       }
     }
   </style>
@@ -234,6 +256,7 @@
                 </div>
                 <div class="earn-banner mt-3">🎉 Earn <strong>$5</strong> per successful referral!</div>
                 <div class="qr-code mt-3" id="qr-code-container"></div>
+                <button id="download-qr" class="btn btn-primary btn-sm mt-2"><i class="bi bi-download"></i> Download QR Code</button>
               </div>
             </div>
           </div>
@@ -474,6 +497,16 @@
       document.getElementById('copy-referral').addEventListener('click', () => copyTextToClipboard(document.getElementById('referral-code').textContent));
       document.getElementById('copy-link').addEventListener('click', () => copyTextToClipboard(document.getElementById('referral-link').value));
 
+      document.getElementById('download-qr').addEventListener('click', () => {
+        const qrCanvas = document.querySelector('#qr-code-container canvas');
+        if (!qrCanvas) return showToast('QR code not available.');
+        const link = document.createElement('a');
+        link.href = qrCanvas.toDataURL('image/png');
+        link.download = `referral-qr-${document.getElementById('referral-code').textContent}.png`;
+        link.click();
+        showToast('QR code downloaded.');
+      });
+
       document.getElementById('bank-form').addEventListener('submit', async (e) => {
         e.preventDefault();
         const bankName = document.getElementById('bank-name').value.trim();
@@ -557,19 +590,16 @@
         const method = document.getElementById('withdraw-method').value;
         const currentBalance = window.currentEarningsUSD || 0;
 
-        // Check if balance is zero or negative
         if (currentBalance <= 0) {
           showToast('No funds available for withdrawal.');
           return;
         }
 
-        // Check if requested amount exceeds balance
         if (amount > currentBalance) {
           showToast(`Requested amount exceeds your balance of ${toUSD(currentBalance)}.`);
           return;
         }
 
-        // Check if amount is valid and method is selected
         if (!amount || amount <= 0) {
           showToast('Enter a valid withdrawal amount.');
           return;
@@ -640,28 +670,51 @@
     async function fetchReferralCode() {
       const refSpan = document.getElementById('referral-code');
       const linkInput = document.getElementById('referral-link');
+      const qrContainer = document.getElementById('qr-code-container');
       refSpan.textContent = 'Loading…';
-      const { data, error } = await supabase.from('affiliate_accounts').select('referral_code').eq('id', affiliateId).single();
-      if (error) {
-        refSpan.textContent = '—';
-        return;
-      }
-      let code = data?.referral_code;
-      if (!code) {
-        code = generateReferralCode();
-        const { error: updateErr } = await supabase.from('affiliate_accounts').update({ referral_code: code }).eq('id', affiliateId);
-        if (updateErr) {
-          refSpan.textContent = '—';
-          return;
+      qrContainer.innerHTML = '<div class="text-muted">Generating QR code…</div>';
+
+      try {
+        const { data, error } = await supabase.from('affiliate_accounts').select('referral_code').eq('id', affiliateId).single();
+        if (error) throw new Error('Failed to fetch referral code');
+
+        let code = data?.referral_code;
+        if (!code) {
+          code = generateReferralCode();
+          const { error: updateErr } = await supabase.from('affiliate_accounts').update({ referral_code: code }).eq('id', affiliateId);
+          if (updateErr) throw new Error('Failed to generate referral code');
         }
+
+        refSpan.textContent = code;
+        const fullLink = `${window.location.origin}/CBE_apply.html?ref=${code}`;
+        linkInput.value = fullLink;
+        console.log('Referral Link:', fullLink); // Debug log
+
+        qrContainer.innerHTML = ''; // Clear loading message
+        const qr = document.createElement('div');
+        qrContainer.appendChild(qr);
+
+        new QRCode(qr, {
+          text: fullLink,
+          width: 200,
+          height: 200,
+          colorDark: '#000000',
+          colorLight: '#FFFFFF',
+          correctLevel: QRCode.CorrectLevel.Q // 25% error correction
+        });
+
+        // Verify QR code rendering
+        setTimeout(() => {
+          if (!qr.querySelector('canvas')) {
+            throw new Error('QR code failed to render');
+          }
+        }, 100);
+      } catch (err) {
+        console.error('QR Code Error:', err);
+        refSpan.textContent = '—';
+        qrContainer.innerHTML = '<div class="text-danger">Failed to generate QR code.</div>';
+        showToast('Unable to load referral QR code. Please try again.');
       }
-      refSpan.textContent = code;
-      const fullLink = `${window.location.origin}/CBE_apply.html?ref=${code}`;
-      linkInput.value = fullLink;
-      const qr = document.createElement('img');
-      qr.src = `https://chart.googleapis.com/chart?chs=150x150&cht=qr&chl=${encodeURIComponent(fullLink)}`;
-      qr.alt = 'Referral QR Code';
-      document.getElementById('qr-code-container').appendChild(qr);
     }
 
     async function fetchTotalReferrals() {
