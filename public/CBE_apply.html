@@ -9,34 +9,487 @@
   <!-- Fonts & Icons -->
   <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700&family=Roboto:wght@300;400;700&display=swap" rel="stylesheet" />
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js/dist/umd/supabase.min.js"></script>
 
-  <!-- Placeholder for your existing styles -->
   <style>
-    /* Insert your existing CSS styles here */
+    :root[data-theme="dark"] {
+      --bg: #121212; --text: #f0f0f0;
+      --gold: #d4af37; --gold-dark: #b3932b;
+      --glass-bg: rgba(30,30,30,0.6);
+      --text-light: #bbbbbb; --border: #333;
+      --success: #2ecc71; --error: #e74c3c;
+    }
+    :root[data-theme="light"] {
+      --bg: #fafafa; --text: #222;
+      --gold: #d4af37; --gold-dark: #b3932b;
+      --glass-bg: rgba(255,255,255,0.6);
+      --text-light: #555; --border: #ddd;
+      --success: #27ae60; --error: #c0392b;
+    }
+    * { margin:0; padding:0; box-sizing:border-box; }
+    body { 
+      font-family:'Roboto',sans-serif;
+      background:var(--bg); color:var(--text);
+      min-height:100vh; position:relative;
+      background-image: linear-gradient(135deg, #1a1a1a 0%, #121212 100%);
+    }
+    a { color:var(--gold); text-decoration:none; }
+    a:hover { text-decoration:underline; }
+
+    /* Header Bar */
+    .header-bar {
+      position:fixed; top:0; left:0; right:0; height:70px;
+      background:rgba(0,0,0,0.8); backdrop-filter:blur(8px);
+      display:flex; align-items:center; justify-content:space-between;
+      padding:0 20px; z-index:1000;
+      border-bottom: 1px solid var(--gold);
+    }
+    .header-left { display:flex; align-items:center; gap:20px; }
+    .logo img {
+      width:140px; margin-top:15px;
+      cursor:pointer; transition:transform .3s;
+    }
+    .logo img:hover { transform:scale(1.05); }
+    #local-time {
+      font-size:1rem; color:var(--gold);
+      font-family:'Roboto',sans-serif;
+      background: rgba(0,0,0,0.3);
+      padding: 5px 10px;
+      border-radius: 20px;
+    }
+    #theme-toggle, #voice-toggle {
+      background:none; border:none; font-size:1.5rem;
+      color:var(--gold); cursor:pointer; margin-left:10px;
+      transition:transform .3s;
+      width: 40px;
+      height: 40px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border-radius: 50%;
+      background: rgba(212, 175, 55, 0.1);
+    }
+    #theme-toggle:hover, #voice-toggle:hover { 
+      transform:scale(1.2); 
+      background: rgba(212, 175, 55, 0.2);
+    }
+
+    /* Slide-in animation */
+    .slide-in {
+      opacity:0; transform:translateY(20px);
+      transition:opacity .6s ease-out,transform .6s ease-out;
+    }
+    .visible { opacity:1; transform:translateY(0); }
+
+    main {
+      padding:100px 20px 60px; display:flex; justify-content:center;
+    }
+
+    /* Forex Quotes Section */
+    .quote-section {
+      background: linear-gradient(135deg, rgba(212, 175, 55, 0.15) 0%, rgba(180, 149, 43, 0.1) 100%);
+      border-radius: 12px;
+      padding: 25px;
+      margin-bottom: 25px;
+      text-align: center;
+      border: 1px solid var(--gold);
+      position: relative;
+      overflow: hidden;
+      min-height: 120px;
+      display: flex;
+      align-items: center;
+    }
+    .quote-section::before {
+      content: "''''";
+      position: absolute;
+      top: -30px;
+      left: 10px;
+      font-size: 120px;
+      color: rgba(212, 175, 55, 0.1);
+      font-family: serif;
+      z-index: 0;
+    }
+    .quote-content {
+      position: relative;
+      z-index: 1;
+      width: 100%;
+    }
+    .quote-text {
+      font-size: 1.1rem;
+      font-style: italic;
+      color: var(--gold);
+      margin-bottom: 10px;
+      font-weight: 500;
+      line-height: 1.4;
+    }
+    .quote-author {
+      font-size: 0.9rem;
+      color: var(--text-light);
+      font-weight: 400;
+    }
+    .quote-refresh {
+      position: absolute;
+      top: 10px;
+      right: 10px;
+      background: none;
+      border: none;
+      color: var(--gold);
+      cursor: pointer;
+      font-size: 1.2rem;
+      opacity: 0.7;
+      transition: opacity 0.3s;
+    }
+    .quote-refresh:hover {
+      opacity: 1;
+    }
+
+    /* Form Card */
+    .apply-card {
+      max-width:450px; width:100%;
+      background:var(--glass-bg); backdrop-filter:blur(10px);
+      padding:30px; border-radius:12px;
+      box-shadow:0 8px 32px rgba(0,0,0,0.3);
+      border: 1px solid rgba(212, 175, 55, 0.3);
+    }
+    .apply-card h1 {
+      font-family:'Playfair Display',serif;
+      font-size:2rem; color:var(--gold);
+      text-align:center; margin-bottom:25px;
+      position: relative;
+    }
+    .apply-card h1::after {
+      content: "";
+      display: block;
+      width: 80px;
+      height: 3px;
+      background: var(--gold);
+      margin: 10px auto 0;
+      border-radius: 3px;
+    }
+    .referral-note {
+      color:var(--text-light); font-size:0.9rem;
+      text-align:center; margin-bottom:15px;
+      padding: 10px;
+      background: rgba(212, 175, 55, 0.1);
+      border-radius: 8px;
+    }
+    .form-group { margin-bottom:20px; position: relative; }
+    label {
+      display:block; margin-bottom:8px;
+      color:var(--text-light); font-weight:500;
+    }
+    input, textarea {
+      width:100%; padding:12px 12px 12px 45px;
+      border:1px solid var(--border); border-radius:8px;
+      background:rgba(28,28,28,0.8); color:var(--text);
+      transition:all .3s;
+      font-family: 'Roboto', sans-serif;
+      font-size: 0.95rem;
+    }
+    input:focus, textarea:focus {
+      outline:none; 
+      border-color: var(--gold);
+      box-shadow:0 0 8px rgba(212, 175, 55, 0.4);
+    }
+    textarea { 
+      resize:vertical; 
+      min-height:100px; 
+      padding-left: 12px;
+    }
+    .input-icon {
+      position: absolute;
+      left: 15px;
+      top: 38px;
+      color: var(--gold);
+      font-size: 1.1rem;
+    }
+
+    .terms-container {
+      display:flex; align-items:center; gap:10px;
+      padding:12px; background:rgba(255,255,255,0.05);
+      border:1px solid var(--gold); border-radius:8px;
+      margin-bottom:20px;
+      transition: background 0.3s;
+    }
+    .terms-container:hover {
+      background: rgba(255,255,255,0.08);
+    }
+    .terms-container input {
+      width:20px; height:20px; accent-color:var(--gold);
+    }
+
+    button {
+      width:100%; padding:14px; border:none; border-radius:8px;
+      background:var(--gold); color:#000;
+      font-size:1rem; font-weight:700; cursor:pointer;
+      opacity:.6; pointer-events:none;
+      transition:background .3s,opacity .3s,box-shadow .3s;
+      position: relative;
+      overflow: hidden;
+      letter-spacing: 0.5px;
+    }
+    button.enabled {
+      opacity:1; pointer-events:auto; box-shadow:0 0 10px var(--gold);
+    }
+    button.enabled:hover { 
+      background:var(--gold-dark); 
+      box-shadow: 0 0 20px rgba(212, 175, 55, 0.6);
+    }
+    button::after {
+      content: "";
+      position: absolute;
+      top: 0;
+      left: -100%;
+      width: 100%;
+      height: 100%;
+      background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+      transition: 0.5s;
+    }
+    button.enabled:hover::after {
+      left: 100%;
+    }
+
+    #apply-alert {
+      margin-top:15px; text-align:center; font-size:.9rem;
+      font-weight:600; min-height:24px;
+      padding: 12px;
+      border-radius: 8px;
+      transition: all 0.3s;
+      display: none;
+    }
+    .alert-success {
+      background: rgba(46, 204, 113, 0.15);
+      border: 1px solid var(--success);
+      color: var(--success);
+      display: block;
+    }
+    .alert-error {
+      background: rgba(231, 76, 60, 0.15);
+      border: 1px solid var(--error);
+      color: var(--error);
+      display: block;
+    }
+
+    footer {
+      text-align:center; padding:20px 0;
+      color:var(--text-light); font-size:.85rem;
+    }
+    @media(max-width:600px){
+      .apply-card { margin-top:120px; padding:20px; }
+      .header-bar { padding:0 15px; }
+      .logo img { width:120px; margin-top:10px; }
+      .quote-section { padding: 15px; }
+      .quote-text { font-size: 1rem; }
+    }
   </style>
 </head>
 <body>
-  <!-- Placeholder for your existing HTML content -->
-  <form id="apply-form">
-    <input id="apply-name" type="text" placeholder="Full Name" required />
-    <input id="apply-email" type="email" placeholder="Email Address" required />
-    <input id="apply-password" type="password" placeholder="Password" required />
-    <input id="apply-phone" type="tel" placeholder="Phone Number" required />
-    <textarea id="apply-message" placeholder="Trading Experience" required></textarea>
-    <input id="apply-referral" type="text" placeholder="Referral Code (optional)" />
-    <label><input id="agree-terms" type="checkbox" /> I agree to the terms and privacy policy</label>
-    <button id="submit-btn" type="submit">Submit Application</button>
-    <div id="apply-alert"></div>
-  </form>
+
+  <div class="header-bar">
+    <div class="header-left">
+      <div class="logo">
+        <a href="index.html"><img src="CBE_logo.PNG" alt="CBE Logo"></a>
+      </div>
+      <span id="local-time"></span>
+    </div>
+    <div>
+      <button id="theme-toggle" aria-label="Toggle theme">🌞</button>
+      <button id="voice-toggle" aria-label="Play page audio">▶️</button>
+      <audio id="page-audio" src="apply.mp3" preload="auto"></audio>
+    </div>
+  </div>
+
+  <main>
+    <section class="apply-card slide-in" id="apply-card">
+      <h1>Apply to Join CBE</h1>
+      
+      <!-- Forex Quote Section -->
+      <div class="quote-section">
+        <div class="quote-content">
+          <p class="quote-text" id="forex-quote">The market is always right. Trade what you see, not what you think.</p>
+          <p class="quote-author" id="quote-author">- Market Wisdom</p>
+        </div>
+        <button class="quote-refresh" id="refresh-quote">
+          <i class="fas fa-sync-alt"></i>
+        </button>
+      </div>
+      
+      <p class="referral-note" id="referral-note"></p>
+
+      <form id="apply-form" novalidate>
+        <div class="form-group">
+          <label for="apply-name">Full Name</label>
+          <i class="fas fa-user input-icon"></i>
+          <input type="text" id="apply-name" placeholder="Full Name" required />
+        </div>
+        <div class="form-group">
+          <label for="apply-email">Email Address</label>
+          <i class="fas fa-envelope input-icon"></i>
+          <input type="email" id="apply-email" placeholder="Email Address" required />
+        </div>
+        <div class="form-group">
+          <label for="apply-password">Password</label>
+          <i class="fas fa-lock input-icon"></i>
+          <input type="password" id="apply-password" placeholder="Password" required />
+        </div>
+        <div class="form-group">
+          <label for="apply-phone">Contact Number</label>
+          <i class="fas fa-phone input-icon"></i>
+          <input type="tel" id="apply-phone" placeholder="Contact Number" required />
+        </div>
+        <div class="form-group">
+          <label for="apply-message">Trading Experience</label>
+          <textarea id="apply-message" placeholder="Tell us about your trading experience, strategies, and goals" required></textarea>
+        </div>
+        <div class="form-group optional">
+          <label for="apply-referral">Referral Code (optional)</label>
+          <i class="fas fa-user-friends input-icon"></i>
+          <input type="text" id="apply-referral" placeholder="Enter code if you have one" />
+        </div>
+        <div class="terms-container">
+          <input type="checkbox" id="agree-terms" />
+          <label for="agree-terms">
+            I agree to the
+            <a href="https://apexincomeoptions.com.ng/privacy" target="_blank">Privacy Policy</a>
+            and
+            <a href="https://apexincomeoptions.com.ng/terms" target="_blank">Terms & Conditions</a>
+          </label>
+        </div>
+        <button type="submit" id="submit-btn">Submit Application</button>
+        <div id="apply-alert" role="alert"></div>
+      </form>
+    </section>
+  </main>
+
+  <footer>© 2025 Chukwuemeka Bullion Exchange. All rights reserved.</footer>
 
   <script>
-    // Supabase initialization
+    // Forex motivational quotes
+    const forexQuotes = [
+      {
+        text: "The market is always right. Trade what you see, not what you think.",
+        author: "Market Wisdom"
+      },
+      {
+        text: "Risk comes from not knowing what you're doing. Master your strategy before trading.",
+        author: "Warren Buffett"
+      },
+      {
+        text: "Success in trading is not about being right all the time; it's about risk management and consistency.",
+        author: "Alexander Elder"
+      },
+      {
+        text: "The goal of a successful trader is to make the best trades. Money is secondary.",
+        author: "Alexander Elder"
+      },
+      {
+        text: "In trading, discipline is the bridge between goals and accomplishment.",
+        author: "Jim Rohn"
+      },
+      {
+        text: "The most important quality for an investor is temperament, not intellect. The same applies to traders.",
+        author: "Warren Buffett"
+      },
+      {
+        text: "Trading is a journey of self-discovery. The better you know yourself, the better trader you become.",
+        author: "Van Tharp"
+      },
+      {
+        text: "Patience is not the ability to wait, but the ability to keep a good attitude while waiting. This is essential in trading.",
+        author: "Unknown"
+      },
+      {
+        text: "The trend is your friend until the end when it bends. Always respect the market direction.",
+        author: "Ed Seykota"
+      },
+      {
+        text: "Trading is 90% psychology and 10% methodology. Master your mind, master the markets.",
+        author: "Trading Proverb"
+      }
+    ];
+
+    // Function to get a random forex quote
+    function getRandomQuote() {
+      const randomIndex = Math.floor(Math.random() * forexQuotes.length);
+      return forexQuotes[randomIndex];
+    }
+
+    // Update quote on page
+    function updateQuote() {
+      const quote = getRandomQuote();
+      document.getElementById('forex-quote').textContent = quote.text;
+      document.getElementById('quote-author').textContent = `- ${quote.author}`;
+    }
+
+    // Local time
+    function updateLocalTime() {
+      const now = new Date();
+      document.getElementById('local-time').textContent =
+        now.toLocaleString('en-US', {
+          hour: 'numeric',
+          minute: 'numeric',
+          second: 'numeric',
+          hour12: true,
+          timeZone: 'Africa/Lagos'
+        }) + ' WAT';
+    }
+    setInterval(updateLocalTime, 1000);
+    updateLocalTime();
+
+    // Slide in
+    document.addEventListener('DOMContentLoaded', () => {
+      const card = document.getElementById('apply-card');
+      card.classList.add('visible');
+      // Referral from URL
+      const params = new URLSearchParams(location.search),
+            ref = params.get('ref') ? params.get('ref').toUpperCase() : null;
+      if (ref) {
+        document.getElementById('referral-note').textContent = `Referred by: ${ref}`;
+        document.getElementById('apply-referral').value = ref;
+      } else {
+        document.getElementById('referral-note').textContent = 'Have a referral code? Enter it below to support an affiliate!';
+      }
+      // Initialize quote
+      updateQuote();
+    });
+
+    // Theme toggle
+    const themeBtn = document.getElementById('theme-toggle');
+    themeBtn.addEventListener('click', () => {
+      const curr = document.documentElement.getAttribute('data-theme');
+      const next = curr === 'dark' ? 'light' : 'dark';
+      document.documentElement.setAttribute('data-theme', next);
+      localStorage.setItem('theme', next);
+      themeBtn.textContent = next === 'dark' ? '🌞' : '🌜';
+    });
+    (() => {
+      const saved = localStorage.getItem('theme') || 'dark';
+      document.documentElement.setAttribute('data-theme', saved);
+      themeBtn.textContent = saved === 'dark' ? '🌞' : '🌜';
+    })();
+
+    // Voice toggle
+    const voiceBtn = document.getElementById('voice-toggle');
+    const audio = document.getElementById('page-audio');
+    voiceBtn.addEventListener('click', () => {
+      if (audio.paused) {
+        audio.play();
+        voiceBtn.textContent = '⏸️';
+      } else {
+        audio.pause();
+        voiceBtn.textContent = '▶️';
+      }
+    });
+    audio.addEventListener('ended', () => voiceBtn.textContent = '▶️');
+
+    // Quote refresh
+    document.getElementById('refresh-quote').addEventListener('click', updateQuote);
+
+    // Form handling
     const SUPA_URL = "https://dapwpgvnfjcfqqhrpxla.supabase.co";
     const SUPA_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImRhcHdwZ3ZuZmpjZnFxaHJweGxhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDcwNDA4ODgsImV4cCI6MjA2MjYxNjg4OH0.ICC0UsLlzJDNre7rFCeD3k6iVzo6jOJgn3PhABpEMsQ";
     const supabaseClient = supabase.createClient(SUPA_URL, SUPA_KEY);
 
-    // Form elements
     const form = document.getElementById('apply-form'),
           agree = document.getElementById('agree-terms'),
           submitBtn = document.getElementById('submit-btn'),
@@ -50,54 +503,107 @@
             referral: document.getElementById('apply-referral')
           };
 
-    // Validation functions
+    // Real-time validation
     function validateField(field, value) {
-      const v = value.trim();
       switch (field) {
-        case 'name': return v.length < 2 ? 'Name must be at least 2 characters.' : null;
-        case 'email': return !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v) ? 'Invalid email address.' : null;
-        case 'password': return v.length < 8 ? 'Password must be at least 8 characters.' : null;
-        case 'phone': return !/^\+?\d{10,15}$/.test(v.replace(/\D/g, '')) ? 'Invalid phone number.' : null;
-        case 'experience': return v.length < 10 ? 'Please provide more details about your experience (10+ characters).' : null;
-        default: return null;
+        case 'name':
+          if (!value.trim()) return 'Full name is required.';
+          if (!/^[A-Za-z\s]{12,}\s[A-Za-z\s]{2,}$/.test(value)) return 'Please enter a valid full name (first and last name).';
+          return '';
+        case 'email':
+          if (!value.trim()) return 'Email address is required.';
+          if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value)) return 'Please enter a valid email address.';
+          return '';
+        case 'password':
+          if (!value) return 'Password is required.';
+          if (value.length < 8) return 'Password must be at least 8 characters long.';
+          return '';
+        case 'phone':
+          if (!value.trim()) return 'Contact number is required.';
+          if (!/^[0-9+()\-\s]{10,}$/.test(value)) return 'Please enter a valid phone number (at least 10 digits).';
+          return '';
+        case 'experience':
+          if (!value.trim()) return 'Trading experience is required.';
+          if (value.length < 20) return 'Please provide more details about your trading experience (at least 20 characters).';
+          return '';
+        default:
+          return '';
       }
     }
 
-    function showError(msg) {
-      alertDiv.className = 'error';
-      alertDiv.innerHTML = msg;
+    // Real-time input validation
+    Object.keys(inputs).forEach(key => {
+      if (key !== 'referral') {
+        inputs[key].addEventListener('input', () => {
+          const error = validateField(key, inputs[key].value);
+          const formGroup = inputs[key].parentElement;
+          const errorDiv = formGroup.querySelector('.field-error') || document.createElement('div');
+          errorDiv.className = 'field-error';
+          errorDiv.style.color = 'var(--error)';
+          errorDiv.style.fontSize = '0.85rem';
+          errorDiv.style.marginTop = '5px';
+          errorDiv.textContent = error;
+          if (!formGroup.querySelector('.field-error')) formGroup.appendChild(errorDiv);
+          checkFormValidity();
+        });
+      }
+    });
+
+    // Check form validity for enabling submit button
+    function checkFormValidity() {
+      const allValid = agree.checked &&
+        !validateField('name', inputs.name.value) &&
+        !validateField('email', inputs.email.value) &&
+        !validateField('password', inputs.password.value) &&
+        !validateField('phone', inputs.phone.value) &&
+        !validateField('experience', inputs.experience.value);
+      submitBtn.disabled = !allValid;
+      submitBtn.classList.toggle('enabled', allValid);
+    }
+
+    // Terms checkbox
+    agree.addEventListener('change', checkFormValidity);
+
+    // Show error message
+    function showError(message) {
+      alertDiv.className = 'alert-error';
+      alertDiv.innerHTML = `<i class="fas fa-exclamation-circle"></i> ${message}`;
+      alertDiv.setAttribute('aria-live', 'assertive');
       alertDiv.style.display = 'block';
+      // re-enable the submit button so user can retry
       submitBtn.disabled = false;
+      submitBtn.classList.add('enabled');
       submitBtn.innerHTML = 'Submit Application';
     }
 
-    function showSuccess(msg) {
-      alertDiv.className = 'success';
-      alertDiv.innerHTML = msg;
+    // Show success message
+    function showSuccess(message) {
+      alertDiv.className = 'alert-success';
+      alertDiv.innerHTML = `<i class="fas fa-check-circle"></i> ${message}`;
+      alertDiv.setAttribute('aria-live', 'polite');
       alertDiv.style.display = 'block';
-      submitBtn.disabled = false;
-      submitBtn.innerHTML = 'Submit Application';
     }
 
-    // Form submission handler
+    // Form submission
     form.addEventListener('submit', async e => {
       e.preventDefault();
+      // hide any previous alert
       alertDiv.style.display = 'none';
       alertDiv.textContent = '';
       alertDiv.className = '';
 
-      // Collect & trim values
+      // collect & trim values
       const name       = inputs.name.value.trim(),
             email      = inputs.email.value.trim().toLowerCase(),
             password   = inputs.password.value,
             phone      = inputs.phone.value.trim(),
             experience = inputs.experience.value.trim(),
-            manualRef  = inputs.referral.value.trim();
+            manualRef  = inputs.referral.value.trim().toUpperCase();
 
       // 1) Client-side validation
       for (const [key, input] of Object.entries(inputs)) {
         if (key !== 'referral') {
- Govern          const err = validateField(key, input.value);
+          const err = validateField(key, input.value);
           if (err) { showError(err); return; }
         }
       }
@@ -121,24 +627,27 @@
         }
         if (userError && userError.code !== 'PGRST116') throw userError;
 
-        // B) Validate referral code if provided (case-insensitive)
+        // B) Validate referral code if provided
         let referredBy = null;
-        const urlRef = new URLSearchParams(location.search).get('ref'),
-              code = (manualRef || urlRef || '').trim();
+        const urlRef = new URLSearchParams(location.search).get('ref') ? new URLSearchParams(location.search).get('ref').toUpperCase() : null;
+        const code   = (manualRef || urlRef || '').trim();
 
         if (code) {
-          if (!/^[A-Za-z0-9]{8}$/.test(code)) {
-            showError('Referral code must be exactly 8 alphanumeric characters.');
-            return;
-          }
           const { data: aff, error: refErr } = await supabaseClient
             .from('affiliate_accounts')
             .select('id')
-            .ilike('referral_code', code)  // Case-insensitive match
+            .eq('referral_code', code)
             .single();
 
-          console.log('Referral lookup:', { code, aff, refErr });
-          if (refErr || !aff) {
+          if (refErr) {
+            if (refErr.code === '429') {
+              showError('Too many requests. Please try again later.');
+            } else {
+              showError('Invalid referral code. Please check and try again, or leave it blank.');
+            }
+            return;
+          }
+          if (!aff) {
             showError('Invalid referral code. Please check and try again, or leave it blank.');
             return;
           }
@@ -160,7 +669,7 @@
 
         // D) Success!
         showSuccess(`
-          <strong> personallySubmitted Successfully!</strong><br>
+          <strong>Application Submitted Successfully!</strong><br>
           Thank you for applying. A confirmation email has been sent to ${email}.<br>
           Redirecting to subscription options shortly.
         `);
