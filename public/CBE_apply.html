@@ -617,10 +617,7 @@
       try {
         // A) Check for duplicate email
         const { data: existingUser, error: userError } = await supabaseClient
-          .from('affiliate_accounts')
-          .select('email')
-          .eq('email', email)
-          .single();
+          .from('affiliate_accounts').select('email').eq('email', email).single();
 
         if (existingUser) {
           showError('This email is already registered. Please log in or use a different email.');
@@ -631,14 +628,16 @@
         // B) Validate referral code if provided
         let referredBy = null;
         const urlRef = new URLSearchParams(location.search).get('ref'),
-              code   = manualRef || urlRef || null;
+              code   = (manualRef || urlRef || '').trim();
+
         if (code) {
           const { data: aff, error: refErr } = await supabaseClient
             .from('affiliate_accounts')
             .select('id')
-            .ilike('referral_code', code)    // Changed to .ilike() for case-insensitive match
+            .eq('referral_code', code)     // ← use exact match
             .single();
 
+          console.log('Referral lookup:', { code, aff, refErr });
           if (refErr || !aff) {
             showError('Invalid referral code. Please check and try again, or leave it blank.');
             return;
