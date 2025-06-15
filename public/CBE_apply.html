@@ -410,9 +410,9 @@
     document.addEventListener('DOMContentLoaded', () => {
       const card = document.getElementById('apply-card');
       card.classList.add('visible');
-      // Referral from URL, converted to uppercase
+      // Referral from URL
       const params = new URLSearchParams(location.search),
-            ref = params.get('ref')?.toUpperCase() || '';
+            ref = params.get('ref')?.trim() || '';
       if (ref) {
         document.getElementById('referral-note').textContent = `Referred by: ${ref}`;
         document.getElementById('apply-referral').value = ref;
@@ -470,11 +470,6 @@
             experience: document.getElementById('apply-message'),
             referral: document.getElementById('apply-referral')
           };
-
-    // Convert referral code to uppercase as user types
-    inputs.referral.addEventListener('input', function() {
-      this.value = this.value.toUpperCase();
-    });
 
     // Real-time validation
     function validateField(field, value) {
@@ -543,9 +538,7 @@
       alertDiv.innerHTML = `<i class="fas fa-exclamation-circle"></i> ${message}`;
       alertDiv.setAttribute('aria-live', 'assertive');
       alertDiv.style.display = 'block';
-      // Re-enable the submit button so user can retry
       submitBtn.disabled = false;
-      submitBtn.classList.add('enabled');
       submitBtn.innerHTML = 'Submit Application';
     }
 
@@ -565,14 +558,14 @@
       alertDiv.textContent = '';
       alertDiv.className = '';
 
-      // Collect & trim values, convert referral code to uppercase
+      // Collect & trim values
       const name       = inputs.name.value.trim(),
             email      = inputs.email.value.trim().toLowerCase(),
             password   = inputs.password.value,
             phone      = inputs.phone.value.trim(),
             experience = inputs.experience.value.trim(),
-            manualRef  = inputs.referral.value.trim().toUpperCase(),
-            urlRef     = new URLSearchParams(location.search).get('ref')?.trim().toUpperCase() || '',
+            manualRef  = inputs.referral.value.trim(),
+            urlRef     = new URLSearchParams(location.search).get('ref')?.trim() || '',
             code       = manualRef || urlRef;
 
       // 1) Client-side validation
@@ -594,24 +587,24 @@
       try {
         // A) Check for duplicate email
         const { data: existingUser, error: userError } = await supabaseClient
-          .from('applications')
+          .from('affiliate_accounts')
           .select('email')
           .eq('email', email)
           .single();
 
         if (existingUser) {
-          showError('This email is already registered. Please use a different email or contact support.');
+          showError('This email is already registered. Please log in or use a different email.');
           return;
         }
         if (userError && userError.code !== 'PGRST116') throw userError;
 
-        // B) Validate referral code if provided
+        // B) Validate referral code if provided (case-insensitive)
         let referredBy = null;
         if (code) {
           const { data: aff, error: refErr } = await supabaseClient
             .from('affiliate_accounts')
             .select('id')
-            .eq('referral_code', code)
+            .ilike('referral_code', code)  // Case-insensitive matching
             .single();
 
           if (refErr || !aff) {
@@ -621,48 +614,34 @@
           referredBy = aff.id;
         }
 
-        // C) Insert application directly into Supabase
-        const { data: appData, error: appError } = await supabaseClient
+        // C) Insert application data directly into Supabase
+        const { data: application, error: appError } = await supabaseClient
           .from('applications')
-          .insert({
+          .insert([{
             name,
             email,
-            password, // Note: Password should be hashed server-side in production
+            password,  // Note: Consider hashing before storing
             phone,
             experience,
-            referral_code: code || null,
+            referral_code: code,
             referred_by: referredBy
-          })
-          .select()
-          .single();
+          }]);
 
         if (appError) {
-          if (appError.code === '23505') {
-            showError('This email is already registered. Please use a different email.');
-          } else {
-            throw appError;
-          }
-          return;
+          throw appError;
         }
 
-        // D) Send email notification via Netlify function
-        const emailPayload = {
-          name,
-          email,
-          phone,
-          experience,
-          referral_code: code || null,
-          referred_by: referredBy
-        };
-        const emailRes = await fetch('/.netlify/functions/send-application', {
+        // D) Call Netlify function to send email
+        const emailPayload = { name, email };
+        const emailRes = await fetch('/.netlify/functions/send-email', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify(emailPayload)
         });
         const emailResult = await emailRes.json();
         if (!emailRes.ok) {
-          console.warn('Email notification failed:', emailResult.error);
-          // Continue to success even if email fails to avoid blocking user
+          showError(emailResult.error || 'Failed to send confirmation email.');
+          return;
         }
 
         // E) Success!
@@ -686,6 +665,10 @@
         } else {
           showError('An unexpected error occurred. Please try again later or contact support at support@apexincomeoptions.com.ng.');
         }
+      } finally {
+        // Re-enable the submit button
+        submitBtn.disabled = false;
+        submitBtn.innerHTML = 'Submit Application';
       }
     });
   </script>
