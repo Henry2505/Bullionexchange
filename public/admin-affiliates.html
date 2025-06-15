@@ -2,108 +2,826 @@
 <html lang="en" data-theme="dark">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>Admin • Affiliates</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Affiliate Admin Dashboard • Apex Income Options</title>
+  
+  <!-- Dependencies -->
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet" />
   <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" rel="stylesheet" />
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.3.0/dist/chart.umd.min.js"></script>
+  
   <style>
     :root {
-      --bg: #000;
-      --text: #fff;
-      --accent: #ffd700;
-      --glass: rgba(255,255,255,0.05);
+      --background: #0d1117; /* Dark blue background */
+      --card-bg: #161b22; /* Card background */
+      --accent: #FFD700; /* Gold accent */
+      --text: #FFFFFF; /* Pure white text */
+      --text-light: #8b949e; /* Brighter light gray for secondary text */
+      --success: #2ea043;
+      --warning: #d29922;
+      --danger: #f85149;
     }
-    body { background: var(--bg); color: var(--text); font-family: sans-serif; }
-    .glass { background: var(--glass); backdrop-filter: blur(8px); border: 1px solid var(--accent); }
-    table thead { background: var(--accent); color: var(--bg); }
+    
+    body {
+      background-color: var(--background);
+      color: var(--text);
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      min-height: 100vh;
+    }
+    
+    .glass-card {
+      background: rgba(22, 27, 34, 0.7);
+      backdrop-filter: blur(10px);
+      border: 1px solid rgba(255, 215, 0, 0.1);
+      border-radius: 12px;
+      overflow: hidden;
+      transition: transform 0.3s ease, box-shadow 0.3s ease;
+    }
+    
+    .glass-card:hover {
+      transform: translateY(-5px);
+      box-shadow: 0 10px 20px rgba(0, 0, 0, 0.2);
+    }
+    
+    .card-header {
+      background-color: rgba(255, 215, 0, 0.15);
+      border-bottom: 1px solid rgba(255, 215, 0, 0.1);
+      padding: 1rem 1.5rem;
+    }
+    
+    .navbar {
+      background-color: var(--background);
+      border-bottom: 1px solid rgba(255, 215, 0, 0.1);
+    }
+    
+    .sidebar {
+      background-color: var(--background);
+      height: 100vh;
+      position: fixed;
+      width: 250px;
+      border-right: 1px solid rgba(255, 215, 0, 0.1);
+      transition: all 0.3s ease;
+    }
+    
+    .main-content {
+      margin-left: 250px;
+      transition: all 0.3s ease;
+      padding: 20px;
+    }
+    
+    .stat-card {
+      background: linear-gradient(135deg, rgba(22, 27, 34, 0.8), rgba(13, 17, 23, 0.8));
+      border-radius: 12px;
+      padding: 1.5rem;
+      text-align: center;
+      border: 1px solid rgba(255, 215, 0, 0.1);
+    }
+    
+    .stat-value {
+      font-size: 2.5rem;
+      font-weight: 700;
+      color: var(--accent);
+      margin: 0.5rem 0;
+    }
+    
+    .stat-label {
+      font-size: 0.9rem;
+      color: var(--text-light);
+      text-transform: uppercase;
+      letter-spacing: 1px;
+    }
+    
+    .btn-primary {
+      background-color: var(--accent);
+      border-color: var(--accent);
+      color: #000;
+      font-weight: 600;
+    }
+    
+    .btn-primary:hover {
+      background-color: #e5c200;
+      border-color: #e5c200;
+    }
+    
+    .table-container {
+      background-color: var(--card-bg);
+      border-radius: 12px;
+      overflow: hidden;
+      border: 1px solid rgba(255, 215, 0, 0.1);
+    }
+    
+    .table {
+      color: var(--text);
+      margin-bottom: 0;
+    }
+    
+    .table thead th {
+      background-color: rgba(255, 215, 0, 0.1);
+      border-bottom: 1px solid rgba(255, 215, 0, 0.1);
+      font-weight: 600;
+    }
+    
+    .table-hover tbody tr:hover {
+      background-color: rgba(255, 215, 0, 0.05);
+    }
+    
+    .status-badge {
+      padding: 0.35rem 0.75rem;
+      border-radius: 20px;
+      font-size: 0.85rem;
+      font-weight: 600;
+    }
+    
+    .status-pending {
+      background-color: rgba(210, 153, 34, 0.2);
+      color: var(--warning);
+    }
+    
+    .status-completed {
+      background-color: rgba(46, 160, 67, 0.2);
+      color: var(--success);
+    }
+    
+    .status-rejected {
+      background-color: rgba(248, 81, 73, 0.2);
+      color: var(--danger);
+    }
+    
+    .action-btn {
+      padding: 0.25rem 0.75rem;
+      font-size: 0.85rem;
+    }
+    
+    .chart-container {
+      background-color: var(--card-bg);
+      border-radius: 12px;
+      padding: 1.5rem;
+      border: 1px solid rgba(255, 215, 0, 0.1);
+      height: 100%;
+    }
+    
+    .toast {
+      background-color: var(--card-bg);
+      color: var(--text);
+      border: 1px solid rgba(255, 215, 0, 0.2);
+    }
+    
+    .sidebar-link {
+      display: block;
+      padding: 0.75rem 1.5rem;
+      color: var(--text-light);
+      text-decoration: none;
+      transition: all 0.2s ease;
+      border-left: 3px solid transparent;
+    }
+    
+    .sidebar-link:hover, .sidebar-link.active {
+      color: var(--accent);
+      background-color: rgba(255, 215, 0, 0.05);
+      border-left: 3px solid var(--accent);
+    }
+    
+    .sidebar-link i {
+      margin-right: 10px;
+      width: 20px;
+      text-align: center;
+    }
+    
+    @media (max-width: 992px) {
+      .sidebar {
+        transform: translateX(-250px);
+        z-index: 1000;
+      }
+      
+      .sidebar.expanded {
+        transform: translateX(0);
+      }
+      
+      .main-content {
+        margin-left: 0;
+      }
+      
+      .sidebar-toggle {
+        display: block;
+      }
+    }
   </style>
 </head>
 <body>
-  <!-- 0) Auth guard -->
+  <!-- Auth Guard -->
   <script>
-    if (localStorage.getItem('isAdminLoggedIn') !== 'true') {
+    const SUPA_URL = 'https://dapwpgvnfjcfqqhrpxla.supabase.co';
+    const SUPA_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImRhcHdwZ3ZuZmpjZnFxaHJweGxhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDcwNDA4ODgsImV4cCI6MjA2MjYxNjg4OH0.ICC0UsLlzJDNre7rFCeD3k6iVzo6jOJgn3PhABpEMsQ';
+    const supabase = window.supabase.createClient(SUPA_URL, SUPA_KEY);
+    
+    // Check if admin is logged in
+    const isLoggedIn = localStorage.getItem('adminLoggedIn') === 'true';
+    if (!isLoggedIn) {
       window.location.replace('admin-login.html');
-      throw new Error('Not logged in');
     }
   </script>
 
-  <div class="container py-4">
-    <h1 class="mb-4">🧑‍💼 Affiliates</h1>
-    <table class="table table-striped glass text-white">
-      <thead>
-        <tr>
-          <th>Email</th>
-          <th>Code</th>
-          <th>Joined On</th>
-          <th># Referrals</th>
-          <th># Banks</th>
-          <th># Wallets</th>
-          <th># Payouts</th>
-        </tr>
-      </thead>
-      <tbody id="affiliates-body">
-        <tr><td colspan="7" class="text-center"><div class="spinner-border text-warning"></div> Loading…</td></tr>
-      </tbody>
-    </table>
+  <!-- Sidebar Toggle Button (Mobile) -->
+  <button class="btn btn-primary d-lg-none position-fixed top-1 start-1 z-3 m-3" id="sidebarToggle">
+    <i class="bi bi-list"></i>
+  </button>
+
+  <!-- Sidebar -->
+  <div class="sidebar" id="sidebar">
+    <div class="p-4 text-center border-bottom border-secondary">
+      <h3 class="text-warning">Admin Dashboard</h3>
+      <p class="text-light mb-0">Apex Income Options</p>
+    </div>
+    
+    <div class="py-3">
+      <a href="#" class="sidebar-link active" data-section="dashboard">
+        <i class="bi bi-speedometer2"></i> Dashboard
+      </a>
+      <a href="#" class="sidebar-link" data-section="affiliates">
+        <i class="bi bi-people-fill"></i> Affiliates
+      </a>
+      <a href="#" class="sidebar-link" data-section="referrals">
+        <i class="bi bi-diagram-3"></i> Referrals
+      </a>
+      <a href="#" class="sidebar-link" data-section="payouts">
+        <i class="bi bi-cash-stack"></i> Payouts
+      </a>
+      <a href="#" class="sidebar-link" data-section="analytics">
+        <i class="bi bi-graph-up"></i> Analytics
+      </a>
+      <a href="#" class="sidebar-link" data-section="settings">
+        <i class="bi bi-gear"></i> Settings
+      </a>
+    </div>
+    
+    <div class="position-absolute bottom-0 w-100 p-3 border-top border-secondary">
+      <button id="logout-btn" class="btn btn-outline-danger w-100">
+        <i class="bi bi-box-arrow-right"></i> Logout
+      </button>
+    </div>
   </div>
 
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>
+  <!-- Main Content -->
+  <div class="main-content" id="main-content">
+    <!-- Dashboard Section -->
+    <section id="dashboard-section" class="content-section">
+      <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+          <h2 class="text-warning mb-0">Dashboard</h2>
+          <p class="text-light mb-0">Welcome back, Admin! Here's your system overview.</p>
+        </div>
+        <div class="text-end">
+          <div id="date-time" class="text-light"></div>
+        </div>
+      </div>
+      
+      <!-- Stats Overview -->
+      <div class="row mb-4 g-4">
+        <div class="col-md-3 col-sm-6">
+          <div class="stat-card">
+            <div class="stat-label">Total Affiliates</div>
+            <div class="stat-value" id="total-affiliates">0</div>
+            <div class="text-success"><i class="bi bi-arrow-up"></i> 12% from last month</div>
+          </div>
+        </div>
+        <div class="col-md-3 col-sm-6">
+          <div class="stat-card">
+            <div class="stat-label">Active Referrals</div>
+            <div class="stat-value" id="active-referrals">0</div>
+            <div class="text-success"><i class="bi bi-arrow-up"></i> 8% from last week</div>
+          </div>
+        </div>
+        <div class="col-md-3 col-sm-6">
+          <div class="stat-card">
+            <div class="stat-label">Pending Payouts</div>
+            <div class="stat-value" id="pending-payouts">$0</div>
+            <div class="text-danger"><i class="bi bi-arrow-down"></i> 3 requests</div>
+          </div>
+        </div>
+        <div class="col-md-3 col-sm-6">
+          <div class="stat-card">
+            <div class="stat-label">Conversion Rate</div>
+            <div class="stat-value" id="conversion-rate">0%</div>
+            <div class="text-success"><i class="bi bi-arrow-up"></i> 2.5% improvement</div>
+          </div>
+        </div>
+      </div>
+      
+      <!-- Charts -->
+      <div class="row mb-4 g-4">
+        <div class="col-lg-8">
+          <div class="chart-container">
+            <h5 class="text-light mb-3">Referral Activity (Last 30 Days)</h5>
+            <canvas id="referralChart" height="250"></canvas>
+          </div>
+        </div>
+        <div class="col-lg-4">
+          <div class="chart-container">
+            <h5 class="text-light mb-3">Payout Status Distribution</h5>
+            <canvas id="payoutChart" height="250"></canvas>
+          </div>
+        </div>
+      </div>
+      
+      <!-- Recent Activity -->
+      <div class="row">
+        <div class="col-12">
+          <div class="glass-card">
+            <div class="card-header d-flex justify-content-between align-items-center">
+              <h5 class="mb-0">Recent Payout Requests</h5>
+              <a href="#" class="btn btn-sm btn-primary" data-section="payouts">View All</a>
+            </div>
+            <div class="table-container">
+              <table class="table table-hover">
+                <thead>
+                  <tr>
+                    <th>Affiliate</th>
+                    <th>Amount</th>
+                    <th>Method</th>
+                    <th>Date</th>
+                    <th>Status</th>
+                    <th>Action</th>
+                  </tr>
+                </thead>
+                <tbody id="recent-payouts">
+                  <tr>
+                    <td colspan="6" class="text-center py-4">
+                      <div class="spinner-border text-warning" role="status">
+                        <span class="visually-hidden">Loading...</span>
+                      </div>
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+    
+    <!-- Affiliates Section (Hidden by default) -->
+    <section id="affiliates-section" class="content-section d-none">
+      <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+          <h2 class="text-warning mb-0">Affiliate Management</h2>
+          <p class="text-light mb-0">Manage all your affiliate accounts</p>
+        </div>
+        <button class="btn btn-primary" id="add-affiliate-btn">
+          <i class="bi bi-plus-circle"></i> Add Affiliate
+        </button>
+      </div>
+      
+      <div class="glass-card">
+        <div class="card-header">
+          <h5 class="mb-0">Affiliate List</h5>
+        </div>
+        <div class="table-container">
+          <table class="table table-hover">
+            <thead>
+              <tr>
+                <th>ID</th>
+                <th>Name</th>
+                <th>Email</th>
+                <th>Referrals</th>
+                <th>Earnings</th>
+                <th>Status</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody id="affiliates-list">
+              <tr>
+                <td colspan="7" class="text-center py-4">
+                  <div class="spinner-border text-warning" role="status">
+                    <span class="visually-hidden">Loading...</span>
+                  </div>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+    
+    <!-- Payouts Section (Hidden by default) -->
+    <section id="payouts-section" class="content-section d-none">
+      <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+          <h2 class="text-warning mb-0">Payout Management</h2>
+          <p class="text-light mb-0">Manage and process affiliate payouts</p>
+        </div>
+        <div class="btn-group">
+          <button class="btn btn-outline-warning">Export CSV</button>
+          <button class="btn btn-outline-warning">Filter</button>
+        </div>
+      </div>
+      
+      <div class="glass-card">
+        <div class="card-header d-flex justify-content-between align-items-center">
+          <h5 class="mb-0">All Payout Requests</h5>
+          <div>
+            <select class="form-select form-select-sm d-inline-block w-auto">
+              <option>All Statuses</option>
+              <option>Pending</option>
+              <option>Completed</option>
+              <option>Rejected</option>
+            </select>
+          </div>
+        </div>
+        <div class="table-container">
+          <table class="table table-hover">
+            <thead>
+              <tr>
+                <th>ID</th>
+                <th>Affiliate</th>
+                <th>Amount</th>
+                <th>Method</th>
+                <th>Request Date</th>
+                <th>Status</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody id="payouts-list">
+              <tr>
+                <td colspan="7" class="text-center py-4">
+                  <div class="spinner-border text-warning" role="status">
+                    <span class="visually-hidden">Loading...</span>
+                  </div>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+    
+    <!-- Other sections (Referrals, Analytics, Settings) would go here -->
+  </div>
+
+  <!-- Toast Container -->
+  <div class="toast-container position-fixed bottom-0 end-0 p-3">
+    <div id="liveToast" class="toast" role="alert" aria-live="assertive" aria-atomic="true">
+      <div class="d-flex">
+        <div class="toast-body text-white" id="toast-body"></div>
+        <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast" aria-label="Close"></button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Bootstrap JS -->
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+  
+  <!-- JavaScript -->
   <script>
-    (async function(){
-      // 1) Init
-      const SUPA_URL = 'https://dapwpgvnfjcfqqhrpxla.supabase.co';
-      const SUPA_KEY = 'YOUR_SERVICE_ROLE_KEY'; // or anon key if policies allow
-      const supabase = window.supabase.createClient(SUPA_URL, SUPA_KEY);
-
-      // 2) Fetch all affiliates
-      const { data: affs, error: affErr } = await supabase
-        .from('affiliate_accounts')
-        .select('id,email,referral_code,created_at')
-        .order('created_at',{ascending:false});
-      if (affErr) return showError('Failed to load affiliates');
-
-      // 3) Fetch counts for each table
-      const affiliateIds = affs.map(a=>a.id);
-      // parallel count queries
-      const [{ count: refCount }, { count: bankCount }, { count: walletCount }, { count: payoutCount }] =
-        await Promise.all([
-          supabase.from('referrals').select('affiliate_id',{head:true, count:'exact'}).in('affiliate_id',affiliateIds),
-          supabase.from('affiliate_bank_accounts').select('affiliate_id',{head:true, count:'exact'}).in('affiliate_id',affiliateIds),
-          supabase.from('affiliate_wallets').select('affiliate_id',{head:true, count:'exact'}).in('affiliate_id',affiliateIds),
-          supabase.from('affiliate_payouts').select('affiliate_id',{head:true, count:'exact'}).in('affiliate_id',affiliateIds)
-        ]);
-      // but above gives totals across all affiliates; instead we need per-affiliate.  
-      // Let's fetch raw arrays and count in JS:
-      const [{ data: refs }, { data: banks }, { data: wallets }, { data: payouts }] =
-        await Promise.all([
-          supabase.from('referrals').select('affiliate_id'),
-          supabase.from('affiliate_bank_accounts').select('affiliate_id'),
-          supabase.from('affiliate_wallets').select('affiliate_id'),
-          supabase.from('affiliate_payouts').select('affiliate_id')
-        ]);
-      const refMap = refs.reduce((m,r)=>(m[r.affiliate_id]=(m[r.affiliate_id]||0)+1,m),{});
-      const bankMap = banks.reduce((m,b)=>(m[b.affiliate_id]=(m[b.affiliate_id]||0)+1,m),{});
-      const walletMap = wallets.reduce((m,w)=>(m[w.affiliate_id]=(m[w.affiliate_id]||0)+1,m),{});
-      const payoutMap = payouts.reduce((m,p)=>(m[p.affiliate_id]=(m[p.affiliate_id]||0)+1,m),{});
-
-      // 4) Render
-      const tbody = document.getElementById('affiliates-body');
-      tbody.innerHTML = affs.map(a=>`
-        <tr>
-          <td>${a.email}</td>
-          <td>${a.referral_code||'—'}</td>
-          <td>${new Date(a.created_at).toLocaleDateString()}</td>
-          <td>${refMap[a.id]||0}</td>
-          <td>${bankMap[a.id]||0}</td>
-          <td>${walletMap[a.id]||0}</td>
-          <td>${payoutMap[a.id]||0}</td>
-        </tr>
-      `).join('');
-
-      function showError(msg) {
-        tbody.innerHTML = `<tr><td colspan="7" class="text-center text-danger">${msg}</td></tr>`;
+    // Initialize Supabase
+    const supabaseClient = supabase;
+    let referralChart = null;
+    let payoutChart = null;
+    
+    // Sample data for demonstration
+    const sampleAffiliates = [
+      { id: 1, name: "John Smith", email: "john@example.com", referrals: 12, earnings: 60, status: "Active" },
+      { id: 2, name: "Sarah Johnson", email: "sarah@example.com", referrals: 8, earnings: 40, status: "Active" },
+      { id: 3, name: "Michael Brown", email: "michael@example.com", referrals: 5, earnings: 25, status: "Pending" },
+      { id: 4, name: "Emily Davis", email: "emily@example.com", referrals: 18, earnings: 90, status: "Active" },
+      { id: 5, name: "David Wilson", email: "david@example.com", referrals: 3, earnings: 15, status: "Suspended" }
+    ];
+    
+    const samplePayouts = [
+      { id: 1001, affiliate: "John Smith", amount: 60, method: "Bank Transfer", date: "2023-05-15", status: "Pending" },
+      { id: 1002, affiliate: "Emily Davis", amount: 90, method: "Crypto", date: "2023-05-14", status: "Completed" },
+      { id: 1003, affiliate: "Sarah Johnson", amount: 40, method: "Bank Transfer", date: "2023-05-13", status: "Pending" },
+      { id: 1004, affiliate: "Michael Brown", amount: 25, method: "PayPal", date: "2023-05-12", status: "Rejected" },
+      { id: 1005, affiliate: "David Wilson", amount: 15, method: "Crypto", date: "2023-05-10", status: "Completed" }
+    ];
+    
+    // DOM Ready
+    document.addEventListener('DOMContentLoaded', async () => {
+      // Initialize UI
+      updateDateTime();
+      setInterval(updateDateTime, 1000);
+      setupEventListeners();
+      loadDashboardData();
+      
+      // Load sample data
+      renderAffiliatesTable();
+      renderPayoutsTable();
+      renderRecentPayouts();
+      renderCharts();
+    });
+    
+    // Update date and time display
+    function updateDateTime() {
+      const now = new Date();
+      const options = { 
+        weekday: 'long', 
+        year: 'numeric', 
+        month: 'long', 
+        day: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit',
+        second: '2-digit'
+      };
+      document.getElementById('date-time').textContent = now.toLocaleDateString('en-US', options);
+    }
+    
+    // Setup event listeners
+    function setupEventListeners() {
+      // Logout button
+      document.getElementById('logout-btn').addEventListener('click', () => {
+        localStorage.removeItem('adminLoggedIn');
+        window.location.href = 'admin-login.html';
+      });
+      
+      // Sidebar toggle for mobile
+      document.getElementById('sidebarToggle').addEventListener('click', () => {
+        document.getElementById('sidebar').classList.toggle('expanded');
+      });
+      
+      // Navigation links
+      document.querySelectorAll('.sidebar-link').forEach(link => {
+        link.addEventListener('click', (e) => {
+          e.preventDefault();
+          const section = link.getAttribute('data-section');
+          
+          // Update active link
+          document.querySelectorAll('.sidebar-link').forEach(el => {
+            el.classList.remove('active');
+          });
+          link.classList.add('active');
+          
+          // Show the correct section
+          document.querySelectorAll('.content-section').forEach(section => {
+            section.classList.add('d-none');
+          });
+          
+          if (section === 'dashboard') {
+            document.getElementById('dashboard-section').classList.remove('d-none');
+          } else if (section === 'affiliates') {
+            document.getElementById('affiliates-section').classList.remove('d-none');
+          } else if (section === 'payouts') {
+            document.getElementById('payouts-section').classList.remove('d-none');
+          }
+          
+          // Close sidebar on mobile after selection
+          if (window.innerWidth < 992) {
+            document.getElementById('sidebar').classList.remove('expanded');
+          }
+        });
+      });
+      
+      // Add affiliate button
+      document.getElementById('add-affiliate-btn').addEventListener('click', () => {
+        showToast('Add affiliate functionality would open a modal in a real implementation');
+      });
+    }
+    
+    // Load dashboard data
+    function loadDashboardData() {
+      // In a real implementation, this would fetch data from Supabase
+      document.getElementById('total-affiliates').textContent = sampleAffiliates.length;
+      document.getElementById('active-referrals').textContent = sampleAffiliates.reduce((sum, aff) => sum + aff.referrals, 0);
+      document.getElementById('pending-payouts').textContent = '$' + samplePayouts
+        .filter(p => p.status === 'Pending')
+        .reduce((sum, p) => sum + p.amount, 0);
+      
+      // Calculate conversion rate (simulated)
+      const conversionRate = Math.floor(Math.random() * 20) + 10;
+      document.getElementById('conversion-rate').textContent = conversionRate + '%';
+    }
+    
+    // Render affiliates table
+    function renderAffiliatesTable() {
+      const tbody = document.getElementById('affiliates-list');
+      tbody.innerHTML = '';
+      
+      sampleAffiliates.forEach(affiliate => {
+        const row = document.createElement('tr');
+        
+        // Determine status badge
+        let statusBadge = '';
+        if (affiliate.status === 'Active') {
+          statusBadge = '<span class="status-badge status-completed">Active</span>';
+        } else if (affiliate.status === 'Pending') {
+          statusBadge = '<span class="status-badge status-pending">Pending</span>';
+        } else {
+          statusBadge = '<span class="status-badge status-rejected">Suspended</span>';
+        }
+        
+        row.innerHTML = `
+          <td>${affiliate.id}</td>
+          <td>${affiliate.name}</td>
+          <td>${affiliate.email}</td>
+          <td>${affiliate.referrals}</td>
+          <td>$${affiliate.earnings}</td>
+          <td>${statusBadge}</td>
+          <td>
+            <button class="btn btn-sm btn-outline-warning action-btn me-1">
+              <i class="bi bi-pencil"></i>
+            </button>
+            <button class="btn btn-sm btn-outline-danger action-btn">
+              <i class="bi bi-trash"></i>
+            </button>
+          </td>
+        `;
+        
+        tbody.appendChild(row);
+      });
+    }
+    
+    // Render payouts table
+    function renderPayoutsTable() {
+      const tbody = document.getElementById('payouts-list');
+      tbody.innerHTML = '';
+      
+      samplePayouts.forEach(payout => {
+        const row = document.createElement('tr');
+        
+        // Determine status badge
+        let statusBadge = '';
+        if (payout.status === 'Completed') {
+          statusBadge = '<span class="status-badge status-completed">Completed</span>';
+        } else if (payout.status === 'Pending') {
+          statusBadge = '<span class="status-badge status-pending">Pending</span>';
+        } else {
+          statusBadge = '<span class="status-badge status-rejected">Rejected</span>';
+        }
+        
+        // Action buttons based on status
+        let actions = '';
+        if (payout.status === 'Pending') {
+          actions = `
+            <button class="btn btn-sm btn-success action-btn me-1" onclick="processPayout(${payout.id}, 'approve')">
+              <i class="bi bi-check-circle"></i> Approve
+            </button>
+            <button class="btn btn-sm btn-danger action-btn" onclick="processPayout(${payout.id}, 'reject')">
+              <i class="bi bi-x-circle"></i> Reject
+            </button>
+          `;
+        } else if (payout.status === 'Completed') {
+          actions = '<span class="text-success">Processed</span>';
+        } else {
+          actions = '<span class="text-danger">Rejected</span>';
+        }
+        
+        row.innerHTML = `
+          <td>${payout.id}</td>
+          <td>${payout.affiliate}</td>
+          <td>$${payout.amount}</td>
+          <td>${payout.method}</td>
+          <td>${payout.date}</td>
+          <td>${statusBadge}</td>
+          <td>${actions}</td>
+        `;
+        
+        tbody.appendChild(row);
+      });
+    }
+    
+    // Render recent payouts
+    function renderRecentPayouts() {
+      const tbody = document.getElementById('recent-payouts');
+      tbody.innerHTML = '';
+      
+      // Show only the first 3 payouts
+      samplePayouts.slice(0, 3).forEach(payout => {
+        const row = document.createElement('tr');
+        
+        // Determine status badge
+        let statusBadge = '';
+        if (payout.status === 'Completed') {
+          statusBadge = '<span class="status-badge status-completed">Completed</span>';
+        } else if (payout.status === 'Pending') {
+          statusBadge = '<span class="status-badge status-pending">Pending</span>';
+        } else {
+          statusBadge = '<span class="status-badge status-rejected">Rejected</span>';
+        }
+        
+        row.innerHTML = `
+          <td>${payout.affiliate}</td>
+          <td>$${payout.amount}</td>
+          <td>${payout.method}</td>
+          <td>${payout.date}</td>
+          <td>${statusBadge}</td>
+          <td>
+            <button class="btn btn-sm btn-outline-warning action-btn">
+              View
+            </button>
+          </td>
+        `;
+        
+        tbody.appendChild(row);
+      });
+    }
+    
+    // Render charts
+    function renderCharts() {
+      // Referral Activity Chart
+      const referralCtx = document.getElementById('referralChart').getContext('2d');
+      referralChart = new Chart(referralCtx, {
+        type: 'line',
+        data: {
+          labels: ['May 1', 'May 5', 'May 10', 'May 15', 'May 20', 'May 25', 'May 30'],
+          datasets: [{
+            label: 'New Referrals',
+            data: [12, 19, 8, 15, 10, 17, 22],
+            borderColor: '#FFD700',
+            backgroundColor: 'rgba(255, 215, 0, 0.1)',
+            tension: 0.3,
+            fill: true
+          }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: {
+            legend: {
+              labels: {
+                color: '#8b949e'
+              }
+            }
+          },
+          scales: {
+            x: {
+              grid: {
+                color: 'rgba(255, 255, 255, 0.05)'
+              },
+              ticks: {
+                color: '#8b949e'
+              }
+            },
+            y: {
+              grid: {
+                color: 'rgba(255, 255, 255, 0.05)'
+              },
+              ticks: {
+                color: '#8b949e'
+              }
+            }
+          }
+        }
+      });
+      
+      // Payout Status Chart
+      const payoutCtx = document.getElementById('payoutChart').getContext('2d');
+      payoutChart = new Chart(payoutCtx, {
+        type: 'doughnut',
+        data: {
+          labels: ['Completed', 'Pending', 'Rejected'],
+          datasets: [{
+            data: [65, 25, 10],
+            backgroundColor: [
+              'rgba(46, 160, 67, 0.8)',
+              'rgba(210, 153, 34, 0.8)',
+              'rgba(248, 81, 73, 0.8)'
+            ],
+            borderColor: [
+              'rgba(46, 160, 67, 1)',
+              'rgba(210, 153, 34, 1)',
+              'rgba(248, 81, 73, 1)'
+            ],
+            borderWidth: 1
+          }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: {
+            legend: {
+              position: 'bottom',
+              labels: {
+                color: '#8b949e',
+                padding: 20
+              }
+            }
+          }
+        }
+      });
+    }
+    
+    // Show toast notification
+    function showToast(message) {
+      const toastEl = document.getElementById('liveToast');
+      document.getElementById('toast-body').textContent = message;
+      const toast = new bootstrap.Toast(toastEl);
+      toast.show();
+    }
+    
+    // Process payout (approve or reject)
+    function processPayout(id, action) {
+      if (action === 'approve') {
+        showToast(`Payout #${id} approved successfully`);
+      } else {
+        showToast(`Payout #${id} rejected`);
       }
-    })();
+      
+      // In a real implementation, this would update the database
+      // For now, just reload the table
+      setTimeout(() => {
+        renderPayoutsTable();
+        renderRecentPayouts();
+      }, 1000);
+    }
   </script>
 </body>
 </html>
