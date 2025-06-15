@@ -366,46 +366,16 @@
   <script>
     // Forex motivational quotes
     const forexQuotes = [
-      {
-        text: "The market is always right. Trade what you see, not what you think.",
-        author: "Market Wisdom"
-      },
-      {
-        text: "Risk comes from not knowing what you're doing. Master your strategy before trading.",
-        author: "Warren Buffett"
-      },
-      {
-        text: "Success in trading is not about being right all the time; it's about risk management and consistency.",
-        author: "Alexander Elder"
-      },
-      {
-        text: "The goal of a successful trader is to make the best trades. Money is secondary.",
-        author: "Alexander Elder"
-      },
-      {
-        text: "In trading, discipline is the bridge between goals and accomplishment.",
-        author: "Jim Rohn"
-      },
-      {
-        text: "The most important quality for an investor is temperament, not intellect. The same applies to traders.",
-        author: "Warren Buffett"
-      },
-      {
-        text: "Trading is a journey of self-discovery. The better you know yourself, the better trader you become.",
-        author: "Van Tharp"
-      },
-      {
-        text: "Patience is not the ability to wait, but the ability to keep a good attitude while waiting. This is essential in trading.",
-        author: "Unknown"
-      },
-      {
-        text: "The trend is your friend until the end when it bends. Always respect the market direction.",
-        author: "Ed Seykota"
-      },
-      {
-        text: "Trading is 90% psychology and 10% methodology. Master your mind, master the markets.",
-        author: "Trading Proverb"
-      }
+      { text: "The market is always right. Trade what you see, not what you think.", author: "Market Wisdom" },
+      { text: "Risk comes from not knowing what you're doing. Master your strategy before trading.", author: "Warren Buffett" },
+      { text: "Success in trading is not about being right all the time; it's about risk management and consistency.", author: "Alexander Elder" },
+      { text: "The goal of a successful trader is to make the best trades. Money is secondary.", author: "Alexander Elder" },
+      { text: "In trading, discipline is the bridge between goals and accomplishment.", author: "Jim Rohn" },
+      { text: "The most important quality for an investor is temperament, not intellect. The same applies to traders.", author: "Warren Buffett" },
+      { text: "Trading is a journey of self-discovery. The better you know yourself, the better trader you become.", author: "Van Tharp" },
+      { text: "Patience is not the ability to wait, but the ability to keep a good attitude while waiting. This is essential in trading.", author: "Unknown" },
+      { text: "The trend is your friend until the end when it bends. Always respect the market direction.", author: "Ed Seykota" },
+      { text: "Trading is 90% psychology and 10% methodology. Master your mind, master the markets.", author: "Trading Proverb" }
     ];
 
     // Function to get a random forex quote
@@ -436,13 +406,13 @@
     setInterval(updateLocalTime, 1000);
     updateLocalTime();
 
-    // Slide in
+    // Slide in and referral handling
     document.addEventListener('DOMContentLoaded', () => {
       const card = document.getElementById('apply-card');
       card.classList.add('visible');
-      // Referral from URL
+      // Referral from URL, converted to uppercase
       const params = new URLSearchParams(location.search),
-            ref = params.get('ref');
+            ref = params.get('ref')?.toUpperCase() || '';
       if (ref) {
         document.getElementById('referral-note').textContent = `Referred by: ${ref}`;
         document.getElementById('apply-referral').value = ref;
@@ -500,6 +470,11 @@
             experience: document.getElementById('apply-message'),
             referral: document.getElementById('apply-referral')
           };
+
+    // Convert referral code to uppercase as user types
+    inputs.referral.addEventListener('input', function() {
+      this.value = this.value.toUpperCase();
+    });
 
     // Real-time validation
     function validateField(field, value) {
@@ -568,7 +543,7 @@
       alertDiv.innerHTML = `<i class="fas fa-exclamation-circle"></i> ${message}`;
       alertDiv.setAttribute('aria-live', 'assertive');
       alertDiv.style.display = 'block';
-      // re-enable the submit button so user can retry
+      // Re-enable the submit button so user can retry
       submitBtn.disabled = false;
       submitBtn.classList.add('enabled');
       submitBtn.innerHTML = 'Submit Application';
@@ -585,18 +560,20 @@
     // Form submission
     form.addEventListener('submit', async e => {
       e.preventDefault();
-      // hide any previous alert
+      // Hide any previous alert
       alertDiv.style.display = 'none';
       alertDiv.textContent = '';
       alertDiv.className = '';
 
-      // collect & trim values
+      // Collect & trim values, convert referral code to uppercase
       const name       = inputs.name.value.trim(),
             email      = inputs.email.value.trim().toLowerCase(),
             password   = inputs.password.value,
             phone      = inputs.phone.value.trim(),
             experience = inputs.experience.value.trim(),
-            manualRef  = inputs.referral.value.trim();
+            manualRef  = inputs.referral.value.trim().toUpperCase(),
+            urlRef     = new URLSearchParams(location.search).get('ref')?.trim().toUpperCase() || '',
+            code       = manualRef || urlRef;
 
       // 1) Client-side validation
       for (const [key, input] of Object.entries(inputs)) {
@@ -627,17 +604,13 @@
 
         // B) Validate referral code if provided
         let referredBy = null;
-        const urlRef = new URLSearchParams(location.search).get('ref'),
-              code   = (manualRef || urlRef || '').trim();
-
         if (code) {
           const { data: aff, error: refErr } = await supabaseClient
             .from('affiliate_accounts')
             .select('id')
-            .eq('referral_code', code)     // ← use exact match
+            .eq('referral_code', code)  // Code is uppercase, matches stored format
             .single();
 
-          console.log('Referral lookup:', { code, aff, refErr });
           if (refErr || !aff) {
             showError('Invalid referral code. Please check and try again, or leave it blank.');
             return;
@@ -647,7 +620,7 @@
 
         // C) Send to your function
         const payload = { name, email, password, phone, experience, referral_code: code, referred_by: referredBy };
-        const res    = await fetch('/.netlify/functions/send-application', {
+        const res = await fetch('/.netlify/functions/send-application', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify(payload)
