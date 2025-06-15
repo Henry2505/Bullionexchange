@@ -18,7 +18,6 @@
   <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css" rel="stylesheet"/>
   <link href="https://cdn.datatables.net/1.13.4/css/dataTables.bootstrap5.min.css" rel="stylesheet"/>
   <link href="https://cdn.datatables.net/buttons/2.3.6/css/buttons.bootstrap5.min.css" rel="stylesheet"/>
-  <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet"/>
   <style>
     :root {
       --bg: #0f172a;
@@ -421,7 +420,7 @@
       <div class="position-relative">
         <button class="btn btn-sm position-relative">
           <i class="bi bi-bell"></i>
-          <span class="badge-indicator">3</span>
+          <span class="badge-indicator" id="pending-count">0</span>
         </button>
       </div>
       <button id="theme-toggle">🌞</button>
@@ -515,6 +514,51 @@
         </tfoot>
       </table>
     </div>
+    
+    <!-- Bank Accounts Table -->
+    <div class="glass table-panel mt-4">
+      <div class="panel-header">
+        <div class="panel-title">
+          <i class="bi bi-bank"></i>
+          Bank Accounts
+        </div>
+      </div>
+      <table id="bank-table" class="table table-hover w-100">
+        <thead><tr>
+          <th>ID</th><th>Affiliate ID</th><th>Bank Name</th><th>Code</th><th>Account #</th><th>Account Name</th><th>Created On</th>
+        </tr></thead><tbody></tbody>
+      </table>
+    </div>
+    
+    <!-- Crypto Wallets Table -->
+    <div class="glass table-panel mt-4">
+      <div class="panel-header">
+        <div class="panel-title">
+          <i class="bi bi-wallet"></i>
+          Crypto Wallets
+        </div>
+      </div>
+      <table id="wallet-table" class="table table-hover w-100">
+        <thead><tr>
+          <th>ID</th><th>Affiliate ID</th><th>Currency</th><th>Address</th><th>Created On</th>
+        </tr></thead><tbody></tbody>
+      </table>
+    </div>
+    
+    <!-- Referrals Table -->
+    <div class="glass table-panel mt-4">
+      <div class="panel-header">
+        <div class="panel-title">
+          <i class="bi bi-person-plus"></i>
+          Referrals
+        </div>
+      </div>
+      <table id="referrals-table" class="table table-hover w-100">
+        <thead><tr>
+          <th>ID</th><th>Affiliate ID</th><th>Referred Email</th><th>Converted</th><th>Date</th>
+        </tr></thead><tbody></tbody>
+      </table>
+    </div>
   </main>
   
   <footer class="footer">
@@ -570,59 +614,6 @@
       new bootstrap.Toast($t[0],{delay:3000}).show();
       $t.on('hidden.bs.toast',()=>$t.remove());
     }
-    
-    // Generate random data for demo
-    function generateDemoData() {
-      const affiliates = [];
-      const payouts = [];
-      const names = ['Alex Johnson', 'Maria Garcia', 'James Smith', 'Sarah Williams', 
-                    'Robert Brown', 'Emily Davis', 'Michael Miller', 'Jennifer Wilson'];
-      const emails = ['alex@example.com', 'maria@example.com', 'james@example.com', 
-                     'sarah@example.com', 'robert@example.com', 'emily@example.com'];
-      const methods = ['Bank Transfer', 'PayPal', 'Stripe', 'Crypto'];
-      const statuses = ['pending', 'paid', 'rejected'];
-      
-      // Generate affiliates
-      for (let i = 1; i <= 8; i++) {
-        affiliates.push({
-          id: i,
-          name: names[i-1],
-          email: emails[i % 6],
-          referral_code: `REF${1000 + i}`,
-          created_at: new Date(Date.now() - Math.floor(Math.random() * 30) * 24 * 60 * 60 * 1000).toISOString(),
-          status: i % 5 === 0 ? 'inactive' : 'active'
-        });
-      }
-      
-      // Generate payouts
-      let pendingTotal = 0;
-      for (let i = 1; i <= 12; i++) {
-        const amount = parseFloat((Math.random() * 500 + 50).toFixed(2));
-        const status = statuses[Math.floor(Math.random() * statuses.length)];
-        const affiliate = affiliates[Math.floor(Math.random() * affiliates.length)];
-        
-        if (status === 'pending') pendingTotal += amount;
-        
-        payouts.push({
-          id: i,
-          affiliate_id: affiliate.id,
-          affiliate_name: affiliate.name,
-          amount: amount,
-          method: methods[Math.floor(Math.random() * methods.length)],
-          status: status,
-          requested_at: new Date(Date.now() - Math.floor(Math.random() * 7) * 24 * 60 * 60 * 1000).toISOString()
-        });
-      }
-      
-      // Update stats
-      $('#total-affiliates').text(affiliates.length);
-      $('#pending-payouts').text(payouts.filter(p => p.status === 'pending').length);
-      $('#total-paid').text('$' + payouts.filter(p => p.status === 'paid').reduce((sum, p) => sum + p.amount, 0).toFixed(2));
-      $('#conversion-rate').text((Math.random() * 30 + 10).toFixed(1) + '%');
-      $('#pending-total').text('$' + pendingTotal.toFixed(2));
-      
-      return { affiliates, payouts };
-    }
 
     // Initialize DataTables
     const affiliatesTable = $('#affiliates-table').DataTable({
@@ -633,10 +624,10 @@
           render: function(data) {
             return `<div class="d-flex align-items-center">
                       <div class="bg-warning rounded-circle me-2" style="width: 36px; height: 36px; display: flex; align-items: center; justify-content: center;">
-                        <span class="text-dark fw-bold">${data.name.charAt(0)}</span>
+                        <span class="text-dark fw-bold">${data.email.charAt(0).toUpperCase()}</span>
                       </div>
                       <div>
-                        <div class="fw-medium">${data.name}</div>
+                        <div class="fw-medium">${data.email}</div>
                         <div class="text-muted small">ID: ${data.id}</div>
                       </div>
                     </div>`;
@@ -651,10 +642,8 @@
           })
         },
         {
-          data: 'status',
-          render: s => s === 'active' ? 
-            '<span class="status-badge status-paid"><i class="bi bi-check-circle"></i> Active</span>' :
-            '<span class="status-badge status-rejected"><i class="bi bi-dash-circle"></i> Inactive</span>'
+          data: null,
+          render: () => '<span class="status-badge status-paid"><i class="bi bi-check-circle"></i> Active</span>'
         }
       ],
       language: {
@@ -671,22 +660,23 @@
           data: null,
           render: function(data) {
             return `<div>
-                      <div class="fw-medium">${data.affiliate_name}</div>
+                      <div class="fw-medium">${data.affiliate_email || 'ID: ' + data.affiliate_id}</div>
                       <div class="text-muted small">ID: ${data.affiliate_id}</div>
                     </div>`;
           }
         },
         { 
           data: 'amount',
-          render: v => `<span class="fw-bold">$${v.toFixed(2)}</span>`
+          render: v => `<span class="fw-bold">$${parseFloat(v).toFixed(2)}</span>`
         },
         { data: 'method' },
         {
           data: 'status',
           render: s => {
-            if (s === 'pending') {
+            const status = s.toLowerCase();
+            if (status === 'pending') {
               return '<span class="status-badge status-pending"><i class="bi bi-clock"></i> Pending</span>';
-            } else if (s === 'paid') {
+            } else if (status === 'paid') {
               return '<span class="status-badge status-paid"><i class="bi bi-check-circle"></i> Paid</span>';
             } else {
               return '<span class="status-badge status-rejected"><i class="bi bi-x-circle"></i> Rejected</span>';
@@ -703,7 +693,8 @@
         {
           data: null,
           render: function(data) {
-            if (data.status === 'pending') {
+            const status = data.status.toLowerCase();
+            if (status === 'pending') {
               return `<div class="action-cell">
                         <button class="btn-action btn-paid mark-paid" data-id="${data.id}">
                           <i class="bi bi-check-lg"></i> Pay
@@ -712,7 +703,7 @@
                           <i class="bi bi-x-lg"></i> Reject
                         </button>
                       </div>`;
-            } else if (data.status === 'paid') {
+            } else if (status === 'paid') {
               return `<div class="text-success"><i class="bi bi-check2-all"></i> Completed</div>`;
             } else {
               return `<div class="text-danger"><i class="bi bi-x-circle"></i> Rejected</div>`;
@@ -726,27 +717,89 @@
       },
       order: [[5, 'desc']],
       footerCallback: function() {
-        // Update footer with total pending
         const api = this.api();
         const pendingTotal = api
           .column(2, {filter: 'applied'})
           .data()
           .filter((value, index) => api.cell(index, 4).data().includes('Pending'))
-          .reduce((sum, amount) => sum + amount, 0);
-        
+          .reduce((sum, amount) => sum + parseFloat(amount.replace('$', '')), 0);
         $('#pending-total').text('$' + pendingTotal.toFixed(2));
       }
+    });
+    
+    const bankTable = $('#bank-table').DataTable({
+      columns: [
+        { data: 'id' },
+        { data: 'affiliate_id' },
+        { data: 'bank_name' },
+        { data: 'bank_code' },
+        { data: 'account_number' },
+        { data: 'account_name' },
+        { 
+          data: 'created_at',
+          render: d => new Date(d).toLocaleDateString('en-US', {
+            year: 'numeric', month: 'short', day: 'numeric',
+            hour: '2-digit', minute: '2-digit'
+          })
+        }
+      ],
+      language: {
+        loadingRecords: '<div class="spinner-border text-warning" role="status"></div> Loading...',
+        zeroRecords: 'No bank accounts found.'
+      },
+      order: [[6, 'desc']]
+    });
+    
+    const walletTable = $('#wallet-table').DataTable({
+      columns: [
+        { data: 'id' },
+        { data: 'affiliate_id' },
+        { data: 'currency' },
+        { data: 'address' },
+        { 
+          data: 'created_at',
+          render: d => new Date(d).toLocaleDateString('en-US', {
+            year: 'numeric', month: 'short', day: 'numeric',
+            hour: '2-digit', minute: '2-digit'
+          })
+        }
+      ],
+      language: {
+        loadingRecords: '<div class="spinner-border text-warning" role="status"></div> Loading...',
+        zeroRecords: 'No wallets found.'
+      },
+      order: [[4, 'desc']]
+    });
+    
+    const referralsTable = $('#referrals-table').DataTable({
+      columns: [
+        { data: 'id' },
+        { data: 'affiliate_id' },
+        { data: 'referred_email' },
+        { 
+          data: 'converted',
+          render: b => `<span class="status-badge ${b ? 'status-paid' : 'status-rejected'}"><i class="bi bi-${b ? 'check-circle' : 'x-circle'}"></i> ${b ? 'Yes' : 'No'}</span>`
+        },
+        { 
+          data: 'created_at',
+          render: d => new Date(d).toLocaleDateString('en-US', {
+            year: 'numeric', month: 'short', day: 'numeric',
+            hour: '2-digit', minute: '2-digit'
+          })
+        }
+      ],
+      language: {
+        loadingRecords: '<div class="spinner-border text-warning" role="status"></div> Loading...',
+        zeroRecords: 'No referrals found.'
+      },
+      order: [[4, 'desc']]
     });
 
     // Filter buttons functionality
     $('.filter-btn').click(function() {
       const filter = $(this).data('filter');
-      
-      // Update button states
       $('.filter-btn').removeClass('active');
       $(this).addClass('active');
-      
-      // Apply filter to table
       if (filter === 'all') {
         payoutsTable.search('').columns().search('').draw();
       } else {
@@ -760,24 +813,21 @@
       const row = $(this).closest('tr');
       
       try {
-        // In a real app, this would call Supabase
-        // const { error } = await supabase
-        //   .from('affiliate_payouts')
-        //   .update({ status: 'paid', paid_at: new Date().toISOString() })
-        //   .eq('id', payoutId);
+        const { error } = await supabase
+          .from('affiliate_payouts')
+          .update({ status: 'paid', paid_at: new Date().toISOString() })
+          .eq('id', payoutId);
         
-        // For demo purposes, we simulate the update
+        if (error) throw error;
+        
         const data = payoutsTable.row(row).data();
         data.status = 'paid';
         payoutsTable.row(row).data(data).draw();
         
-        // Highlight the updated row
         row.addClass('highlight-row');
         setTimeout(() => row.removeClass('highlight-row'), 2000);
         
-        // Update stats
-        const pendingCount = $('.status-badge.status-pending').length;
-        $('#pending-payouts').text(pendingCount);
+        updateStats();
         
         showToast(`Payout #${payoutId} marked as paid successfully!`);
       } catch (err) {
@@ -786,35 +836,125 @@
     });
     
     // Reject payout functionality
-    $('#payouts-table').on('click', '.reject-payout', function() {
+    $('#payouts-table').on('click', '.reject-payout', async function() {
       const payoutId = $(this).data('id');
       const row = $(this).closest('tr');
       
-      // For demo purposes, we simulate the update
-      const data = payoutsTable.row(row).data();
-      data.status = 'rejected';
-      payoutsTable.row(row).data(data).draw();
-      
-      // Highlight the updated row
-      row.addClass('highlight-row');
-      setTimeout(() => row.removeClass('highlight-row'), 2000);
-      
-      // Update stats
-      const pendingCount = $('.status-badge.status-pending').length;
-      $('#pending-payouts').text(pendingCount);
-      
-      showToast(`Payout #${payoutId} has been rejected.`);
+      try {
+        const { error } = await supabase
+          .from('affiliate_payouts')
+          .update({ status: 'rejected', paid_at: new Date().toISOString() })
+          .eq('id', payoutId);
+        
+        if (error) throw error;
+        
+        const data = payoutsTable.row(row).data();
+        data.status = 'rejected';
+        payoutsTable.row(row).data(data).draw();
+        
+        row.addClass('highlight-row');
+        setTimeout(() => row.removeClass('highlight-row'), 2000);
+        
+        updateStats();
+        
+        showToast(`Payout #${payoutId} has been rejected.`);
+      } catch (err) {
+        showToast('Error rejecting payout: ' + err.message, false);
+      }
     });
 
-    // Load demo data
-    const demoData = generateDemoData();
-    affiliatesTable.clear().rows.add(demoData.affiliates).draw();
-    payoutsTable.clear().rows.add(demoData.payouts).draw();
-    
-    // Simulate loading delay
-    setTimeout(() => {
-      $('.spinner-border').hide();
-    }, 1500);
+    // Update stats function
+    async function updateStats() {
+      try {
+        const { data: affiliates, error: affError } = await supabase.from('affiliate_accounts').select('id');
+        if (affError) throw affError;
+        
+        const { data: payouts, error: payError } = await supabase.from('affiliate_payouts').select('amount, status');
+        if (payError) throw payError;
+        
+        const { data: referrals, error: refError } = await supabase.from('referrals').select('converted');
+        if (refError) throw refError;
+        
+        const totalAffiliates = affiliates.length;
+        const pendingPayouts = payouts.filter(p => p.status.toLowerCase() === 'pending').length;
+        const totalPaid = payouts
+          .filter(p => p.status.toLowerCase() === 'paid')
+          .reduce((sum, p) => sum + parseFloat(p.amount), 0);
+        const totalReferrals = referrals.length;
+        const convertedReferrals = referrals.filter(r => r.converted).length;
+        const conversionRate = totalReferrals > 0 ? (convertedReferrals / totalReferrals * 100).toFixed(1) : 0;
+        
+        $('#total-affiliates').text(totalAffiliates);
+        $('#pending-payouts').text(pendingPayouts);
+        $('#pending-count').text(pendingPayouts);
+        $('#total-paid').text('$' + totalPaid.toFixed(2));
+        $('#conversion-rate').text(conversionRate + '%');
+      } catch (err) {
+        showToast('Error updating stats: ' + err.message, false);
+      }
+    }
+
+    // Load all data
+    async function loadAll() {
+      try {
+        // Affiliates
+        let { data: affs, error: ea } = await supabase
+          .from('affiliate_accounts')
+          .select('id, email, referral_code, created_at')
+          .order('created_at', { ascending: false });
+        if (ea) throw ea;
+        affiliatesTable.clear().rows.add(affs).draw();
+
+        // Payouts with affiliate email
+        let { data: pts, error: ep } = await supabase
+          .from('affiliate_payouts')
+          .select(`
+            id, affiliate_id, amount, method, status, requested_at,
+            affiliate_accounts!affiliate_payouts_affiliate_id_fkey(email)
+          `)
+          .order('requested_at', { ascending: false });
+        if (ep) throw ep;
+        pts = pts.map(p => ({
+          ...p,
+          affiliate_email: p.affiliate_accounts?.email
+        }));
+        payoutsTable.clear().rows.add(pts).draw();
+
+        // Bank accounts
+        let { data: bks, error: eb } = await supabase
+          .from('affiliate_bank_accounts')
+          .select('*')
+          .order('created_at', { ascending: false });
+        if (eb) throw eb;
+        bankTable.clear().rows.add(bks).draw();
+
+        // Wallets
+        let { data: wts, error: ew } = await supabase
+          .from('affiliate_wallets')
+          .select('*')
+          .order('created_at', { ascending: false });
+        if (ew) throw ew;
+        walletTable.clear().rows.add(wts).draw();
+
+        // Referrals
+        let { data: rfs, error: er } = await supabase
+          .from('referrals')
+          .select('*')
+          .order('created_at', { ascending: false });
+        if (er) throw er;
+        referralsTable.clear().rows.add(rfs).draw();
+
+        // Update stats
+        await updateStats();
+      } catch (err) {
+        console.error('Load error:', err);
+        showToast('Error loading data: ' + err.message, false);
+      } finally {
+        setTimeout(() => $('.spinner-border').hide(), 1500);
+      }
+    }
+
+    loadAll();
   });
   </script>
 </body>
