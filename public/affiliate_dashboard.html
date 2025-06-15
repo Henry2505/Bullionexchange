@@ -321,7 +321,7 @@
           <div class="card-header"><i class="bi bi-plus-circle"></i> Add New Crypto Wallet</div>
           <div class="card-body">
             <form id="wallet-form" class="row g-3">
-              <div class="col-md-6"><label for="crypto-currency" class="form-label text-white">Currency</label><select id="crypto-currency" class="form-select" required²²²required><option value="">Select Currency</option><option value="BTC">Bitcoin (BTC)</option><option value="ETH">Ethereum (ETH)</option><option value="USDT">Tether (USDT)</option><option value="BCH">Bitcoin Cash (BCH)</option><option value="LTC">Litecoin (LTC)</option></select></div>
+              <div class="col-md-6"><label for="crypto-currency" class="form-label text-white">Currency</label><select id="crypto-currency" class="form-select" required><option value="">Select Currency</option><option value="BTC">Bitcoin (BTC)</option><option value="ETH">Ethereum (ETH)</option><option value="USDT">Tether (USDT)</option><option value="BCH">Bitcoin Cash (BCH)</option><option value="LTC">Litecoin (LTC)</option></select></div>
               <div class="col-md-6"><label for="crypto-address" class="form-label text-white">Wallet Address</label><input type="text" id="crypto-address" class="form-control" placeholder="e.g. 1BoatSLRHtKNngkdXEeobR76b53LETtpyT" required /></div>
               <div class="col-12 text-end"><button type="submit" class="btn btn-primary" id="add-wallet-btn"><span id="wallet-btn-text">Add Wallet</span><span id="wallet-spinner" class="spinner-border spinner-border-sm ms-2" role="status" style="display: none;"></span></button></div>
             </form>
@@ -555,8 +555,30 @@
       document.getElementById('request-withdraw-btn').addEventListener('click', async () => {
         const amount = parseFloat(document.getElementById('withdraw-amount').value);
         const method = document.getElementById('withdraw-method').value;
-        if (!amount || amount <= 0) return showToast('Enter a valid withdrawal amount.');
-        if (!method) return showToast('Select payout method.');
+        const currentBalance = window.currentEarningsUSD || 0;
+
+        // Check if balance is zero or negative
+        if (currentBalance <= 0) {
+          showToast('No funds available for withdrawal.');
+          return;
+        }
+
+        // Check if requested amount exceeds balance
+        if (amount > currentBalance) {
+          showToast(`Requested amount exceeds your balance of ${toUSD(currentBalance)}.`);
+          return;
+        }
+
+        // Check if amount is valid and method is selected
+        if (!amount || amount <= 0) {
+          showToast('Enter a valid withdrawal amount.');
+          return;
+        }
+        if (!method) {
+          showToast('Select payout method.');
+          return;
+        }
+
         document.getElementById('withdraw-btn-text').textContent = 'Requesting…';
         document.getElementById('withdraw-spinner').style.display = 'inline-block';
         try {
