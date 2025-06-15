@@ -12,24 +12,25 @@
     }
   </script>
 
-  <!-- CSS: Bootstrap, Icons, DataTables -->
+  <!-- CSS: Bootstrap, Icons, DataTables, Responsive -->
   <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet"/>
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet"/>
   <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css" rel="stylesheet"/>
   <link href="https://cdn.datatables.net/1.13.4/css/dataTables.bootstrap5.min.css" rel="stylesheet"/>
   <link href="https://cdn.datatables.net/buttons/2.3.6/css/buttons.bootstrap5.min.css" rel="stylesheet"/>
+  <link href="https://cdn.datatables.net/responsive/2.5.0/css/responsive.bootstrap5.min.css" rel="stylesheet"/>
   <style>
     :root {
-      --bg: #0f172a;
-      --card-bg: #1e293b;
+      --bg: #000000; /* Pure black for the theme */
+      --card-bg: #111111; /* Slightly lighter black for cards */
       --text: #e2e8f0;
-      --gold: #fcd34d;
+      --gold: #fcd34d; /* Gold accent */
       --accent: #7dd3fc;
       --success: #86efac;
       --warning: #fde68a;
       --danger: #fca5a5;
-      --glass-bg: rgba(30, 41, 59, 0.7);
-      --overlay: rgba(15, 23, 42, 0.9);
+      --glass-bg: rgba(17, 17, 17, 0.7);
+      --overlay: rgba(0, 0, 0, 0.9);
     }
     [data-theme="light"] {
       --bg: #f1f5f9;
@@ -165,6 +166,7 @@
       flex-direction: column;
       position: relative;
       overflow: hidden;
+      cursor: pointer;
     }
     
     .stat-card::after {
@@ -432,22 +434,22 @@
     
     <!-- Stats Overview -->
     <div class="stats-grid mb-5">
-      <div class="stat-card glass">
+      <div class="stat-card glass" data-target="affiliates" data-filter="">
         <div class="stat-value" id="total-affiliates">0</div>
         <div class="stat-label">Total Affiliates</div>
         <i class="bi bi-people stat-icon"></i>
       </div>
-      <div class="stat-card glass">
+      <div class="stat-card glass" data-target="payouts" data-filter="pending">
         <div class="stat-value" id="pending-payouts">0</div>
         <div class="stat-label">Pending Payouts</div>
         <i class="bi bi-clock-history stat-icon"></i>
       </div>
-      <div class="stat-card glass">
+      <div class="stat-card glass" data-target="payouts" data-filter="paid">
         <div class="stat-value" id="total-paid">$0.00</div>
         <div class="stat-label">Total Paid</div>
         <i class="bi bi-currency-dollar stat-icon"></i>
       </div>
-      <div class="stat-card glass">
+      <div class="stat-card glass" data-target="referrals" data-filter="">
         <div class="stat-value" id="conversion-rate">0%</div>
         <div class="stat-label">Conversion Rate</div>
         <i class="bi bi-graph-up stat-icon"></i>
@@ -455,19 +457,11 @@
     </div>
     
     <!-- Affiliates Table -->
-    <div class="glass table-panel">
+    <div class="glass table-panel" id="affiliates-panel">
       <div class="panel-header">
         <div class="panel-title">
           <i class="bi bi-people"></i>
           Affiliates
-        </div>
-        <div>
-          <button class="btn btn-sm btn-outline-warning me-2">
-            <i class="bi bi-download"></i> Export
-          </button>
-          <button class="btn btn-sm btn-warning">
-            <i class="bi bi-plus-lg"></i> Add Affiliate
-          </button>
         </div>
       </div>
       <table id="affiliates-table" class="table table-hover w-100">
@@ -478,7 +472,7 @@
     </div>
     
     <!-- Payouts Table -->
-    <div class="glass table-panel mt-4">
+    <div class="glass table-panel mt-4" id="payouts-panel">
       <div class="panel-header">
         <div class="panel-title">
           <i class="bi bi-cash-coin"></i>
@@ -516,7 +510,7 @@
     </div>
     
     <!-- Bank Accounts Table -->
-    <div class="glass table-panel mt-4">
+    <div class="glass table-panel mt-4" id="bank-panel">
       <div class="panel-header">
         <div class="panel-title">
           <i class="bi bi-bank"></i>
@@ -531,7 +525,7 @@
     </div>
     
     <!-- Crypto Wallets Table -->
-    <div class="glass table-panel mt-4">
+    <div class="glass table-panel mt-4" id="wallet-panel">
       <div class="panel-header">
         <div class="panel-title">
           <i class="bi bi-wallet"></i>
@@ -546,7 +540,7 @@
     </div>
     
     <!-- Referrals Table -->
-    <div class="glass table-panel mt-4">
+    <div class="glass table-panel mt-4" id="referrals-panel">
       <div class="panel-header">
         <div class="panel-title">
           <i class="bi bi-person-plus"></i>
@@ -580,6 +574,7 @@
   <script src="https://cdn.datatables.net/1.13.4/js/dataTables.bootstrap5.min.js"></script>
   <script src="https://cdn.datatables.net/buttons/2.3.6/js/dataTables.buttons.min.js"></script>
   <script src="https://cdn.datatables.net/buttons/2.3.6/js/buttons.bootstrap5.min.js"></script>
+  <script src="https://cdn.datatables.net/responsive/2.5.0/js/dataTables.responsive.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script>
   $(function(){
@@ -615,8 +610,11 @@
       $t.on('hidden.bs.toast',()=>$t.remove());
     }
 
-    // Initialize DataTables
+    // Initialize DataTables with responsive and export buttons
     const affiliatesTable = $('#affiliates-table').DataTable({
+      responsive: true,
+      dom: 'Bfrtip',
+      buttons: ['csv', 'excel'],
       columns: [
         { data: 'id' },
         { 
@@ -654,6 +652,9 @@
     });
     
     const payoutsTable = $('#payouts-table').DataTable({
+      responsive: true,
+      dom: 'Bfrtip',
+      buttons: ['csv', 'excel'],
       columns: [
         { data: 'id' },
         { 
@@ -728,6 +729,9 @@
     });
     
     const bankTable = $('#bank-table').DataTable({
+      responsive: true,
+      dom: 'Bfrtip',
+      buttons: ['csv', 'excel'],
       columns: [
         { data: 'id' },
         { data: 'affiliate_id' },
@@ -751,6 +755,9 @@
     });
     
     const walletTable = $('#wallet-table').DataTable({
+      responsive: true,
+      dom: 'Bfrtip',
+      buttons: ['csv', 'excel'],
       columns: [
         { data: 'id' },
         { data: 'affiliate_id' },
@@ -772,6 +779,9 @@
     });
     
     const referralsTable = $('#referrals-table').DataTable({
+      responsive: true,
+      dom: 'Bfrtip',
+      buttons: ['csv', 'excel'],
       columns: [
         { data: 'id' },
         { data: 'affiliate_id' },
@@ -795,7 +805,7 @@
       order: [[4, 'desc']]
     });
 
-    // Filter buttons functionality
+    // Filter buttons functionality for payouts
     $('.filter-btn').click(function() {
       const filter = $(this).data('filter');
       $('.filter-btn').removeClass('active');
@@ -805,6 +815,17 @@
       } else {
         payoutsTable.column(4).search(filter).draw();
       }
+    });
+
+    // Stat cards click to scroll and filter
+    $('.stat-card').click(function() {
+      const target = $(this).data('target');
+      const filter = $(this).data('filter');
+      if (target === 'payouts' && filter) {
+        $('.filter-btn[data-filter="' + filter + '"]').click();
+      }
+      const panelId = '#' + target + '-panel';
+      $('html, body').animate({scrollTop: $(panelId).offset().top - 100}, 500);
     });
 
     // Mark as Paid functionality
