@@ -628,41 +628,64 @@
       submitButton.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i> Logging in...';
       document.getElementById('message').innerHTML = '';
 
-      const email = document.getElementById('email').value.trim();
-      const password = document.getElementById('password').value;
+      const email = document.getElementById('email').value.trim().toLowerCase(); // Normalize email
+      const password = document.getElementById('password').value.trim();
 
-      // Fetch user data from Supabase
-      const { data: user, error } = await client
-        .from('affiliate_accounts')
-        .select('id, email, password')
-        .eq('email', email)
-        .single();
-
-      if (error || !user) {
-        showMessage('Invalid email or password.', 'danger');
+      // Input validation
+      if (!email || !password) {
+        showMessage('Please enter both email and password.', 'danger');
         submitButton.disabled = false;
         submitButton.innerHTML = originalButtonText;
         return;
       }
 
-      // Compare passwords (assuming passwords are stored hashed in production)
-      // Note: In a production environment, use proper password hashing (e.g., bcrypt) and comparison
-      if (user.password !== password) {
-        showMessage('Invalid email or password.', 'danger');
+      try {
+        // Fetch user data from Supabase with case-insensitive email
+        const { data: users, error } = await client
+          .from('affiliate_accounts')
+          .select('id, email, password')
+          .ilike('email', email); // Use ilike for case-insensitive matching
+
+        if (error) {
+          console.error('Supabase query error:', error);
+          showMessage('An error occurred. Please try again later.', 'danger');
+          submitButton.disabled = false;
+          submitButton.innerHTML = originalButtonText;
+          return;
+        }
+
+        if (!users || users.length === 0) {
+          showMessage('No account found with this email.', 'danger');
+          submitButton.disabled = false;
+          submitButton.innerHTML = originalButtonText;
+          return;
+        }
+
+        const user = users[0]; // Take the first matching user
+
+        // Compare passwords
+        if (user.password !== password) {
+          showMessage('Incorrect password.', 'danger');
+          submitButton.disabled = false;
+          submitButton.innerHTML = originalButtonText;
+          return;
+        }
+
+        // Store affiliate ID in localStorage
+        localStorage.setItem('affiliateId', user.id);
+
+        showMessage('🎉 Login successful! Redirecting to dashboard...', 'success');
+        
+        // Redirect to dashboard after 2 seconds
+        setTimeout(() => {
+          window.location.href = 'affiliate_dashboard.html';
+        }, 2000);
+      } catch (err) {
+        console.error('Unexpected error during login:', err);
+        showMessage('An unexpected error occurred. Please try again.', 'danger');
         submitButton.disabled = false;
         submitButton.innerHTML = originalButtonText;
-        return;
       }
-
-      // Store affiliate ID in localStorage for dashboard authentication
-      localStorage.setItem('affiliateId', user.id);
-
-      showMessage('🎉 Login successful! Redirecting to dashboard...', 'success');
-      
-      // Redirect to dashboard after 2 seconds
-      setTimeout(() => {
-        window.location.href = 'affiliate_dashboard.html';
-      }, 2000);
     }
 
     form.addEventListener('submit', handleSubmit);
