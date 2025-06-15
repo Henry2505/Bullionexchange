@@ -3,191 +3,107 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>Admin Dashboard • Apex Income Options</title>
-
-  <!-- 0) Auth Guard -->
+  <title>Admin • Affiliates</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet" />
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" rel="stylesheet" />
+  <style>
+    :root {
+      --bg: #000;
+      --text: #fff;
+      --accent: #ffd700;
+      --glass: rgba(255,255,255,0.05);
+    }
+    body { background: var(--bg); color: var(--text); font-family: sans-serif; }
+    .glass { background: var(--glass); backdrop-filter: blur(8px); border: 1px solid var(--accent); }
+    table thead { background: var(--accent); color: var(--bg); }
+  </style>
+</head>
+<body>
+  <!-- 0) Auth guard -->
   <script>
-    if (localStorage.getItem('isLoggedIn') !== 'true') {
+    if (localStorage.getItem('isAdminLoggedIn') !== 'true') {
       window.location.replace('admin-login.html');
       throw new Error('Not logged in');
     }
   </script>
 
-  <!-- 1) Styles & Icons -->
-  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet" />
-  <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" rel="stylesheet" />
-  <style>
-    body { background: #000; color: #fff; }
-    .nav-tabs .nav-link.active { background: #ffd700; color: #000; }
-    .table thead th { background: #ffd700; color: #000; }
-    .table tbody tr:nth-child(odd) { background: rgba(255,255,255,0.05); }
-  </style>
-</head>
-<body>
   <div class="container py-4">
-
-    <!-- Header -->
-    <div class="d-flex justify-content-between align-items-center mb-4">
-      <h1>Admin Dashboard</h1>
-      <button id="logout-btn" class="btn btn-outline-danger">
-        <i class="bi bi-box-arrow-right"></i> Logout
-      </button>
-    </div>
-
-    <!-- Tabs -->
-    <ul class="nav nav-tabs mb-3" id="adminTabs" role="tablist">
-      <li class="nav-item">
-        <button class="nav-link active" data-bs-toggle="tab" data-bs-target="#affiliates">Affiliates</button>
-      </li>
-      <li class="nav-item">
-        <button class="nav-link" data-bs-toggle="tab" data-bs-target="#referrals">Referrals</button>
-      </li>
-      <li class="nav-item">
-        <button class="nav-link" data-bs-toggle="tab" data-bs-target="#payouts">Payouts</button>
-      </li>
-    </ul>
-
-    <!-- Tab Content -->
-    <div class="tab-content">
-
-      <!-- Affiliates -->
-      <div class="tab-pane fade show active" id="affiliates">
-        <table class="table table-striped table-hover">
-          <thead>
-            <tr><th>ID</th><th>Email</th><th>Referral Code</th><th>Joined At</th></tr>
-          </thead>
-          <tbody id="affiliates-body">
-            <tr><td colspan="4" class="text-center">Loading…</td></tr>
-          </tbody>
-        </table>
-      </div>
-
-      <!-- Referrals -->
-      <div class="tab-pane fade" id="referrals">
-        <table class="table table-striped table-hover">
-          <thead>
-            <tr><th>ID</th><th>Affiliate Email</th><th>Referred Email</th><th>Created At</th><th>Converted</th></tr>
-          </thead>
-          <tbody id="referrals-body">
-            <tr><td colspan="5" class="text-center">Loading…</td></tr>
-          </tbody>
-        </table>
-      </div>
-
-      <!-- Payouts -->
-      <div class="tab-pane fade" id="payouts">
-        <table class="table table-striped table-hover">
-          <thead>
-            <tr><th>ID</th><th>Affiliate Email</th><th>Amount</th><th>Method</th><th>Status</th><th>Requested At</th></tr>
-          </thead>
-          <tbody id="payouts-body">
-            <tr><td colspan="6" class="text-center">Loading…</td></tr>
-          </tbody>
-        </table>
-      </div>
-
-    </div>
+    <h1 class="mb-4">🧑‍💼 Affiliates</h1>
+    <table class="table table-striped glass text-white">
+      <thead>
+        <tr>
+          <th>Email</th>
+          <th>Code</th>
+          <th>Joined On</th>
+          <th># Referrals</th>
+          <th># Banks</th>
+          <th># Wallets</th>
+          <th># Payouts</th>
+        </tr>
+      </thead>
+      <tbody id="affiliates-body">
+        <tr><td colspan="7" class="text-center"><div class="spinner-border text-warning"></div> Loading…</td></tr>
+      </tbody>
+    </table>
   </div>
 
-  <!-- Supabase & Bootstrap -->
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
-
   <script>
-    const SUPA_URL = 'https://dapwpgvnfjcfqqhrpxla.supabase.co';
-    const SUPA_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9…'; // your anon key
-    const supabase = supabase.createClient(SUPA_URL, SUPA_KEY);
+    (async function(){
+      // 1) Init
+      const SUPA_URL = 'https://dapwpgvnfjcfqqhrpxla.supabase.co';
+      const SUPA_KEY = 'YOUR_SERVICE_ROLE_KEY'; // or anon key if policies allow
+      const supabase = window.supabase.createClient(SUPA_URL, SUPA_KEY);
 
-    // Logout
-    document.getElementById('logout-btn').onclick = () => {
-      localStorage.removeItem('isLoggedIn');
-      window.location = 'admin-login.html';
-    };
-
-    // Load Affiliates
-    async function loadAffiliates() {
-      const { data, error } = await supabase
+      // 2) Fetch all affiliates
+      const { data: affs, error: affErr } = await supabase
         .from('affiliate_accounts')
         .select('id,email,referral_code,created_at')
-        .order('created_at', { ascending: false });
+        .order('created_at',{ascending:false});
+      if (affErr) return showError('Failed to load affiliates');
+
+      // 3) Fetch counts for each table
+      const affiliateIds = affs.map(a=>a.id);
+      // parallel count queries
+      const [{ count: refCount }, { count: bankCount }, { count: walletCount }, { count: payoutCount }] =
+        await Promise.all([
+          supabase.from('referrals').select('affiliate_id',{head:true, count:'exact'}).in('affiliate_id',affiliateIds),
+          supabase.from('affiliate_bank_accounts').select('affiliate_id',{head:true, count:'exact'}).in('affiliate_id',affiliateIds),
+          supabase.from('affiliate_wallets').select('affiliate_id',{head:true, count:'exact'}).in('affiliate_id',affiliateIds),
+          supabase.from('affiliate_payouts').select('affiliate_id',{head:true, count:'exact'}).in('affiliate_id',affiliateIds)
+        ]);
+      // but above gives totals across all affiliates; instead we need per-affiliate.  
+      // Let's fetch raw arrays and count in JS:
+      const [{ data: refs }, { data: banks }, { data: wallets }, { data: payouts }] =
+        await Promise.all([
+          supabase.from('referrals').select('affiliate_id'),
+          supabase.from('affiliate_bank_accounts').select('affiliate_id'),
+          supabase.from('affiliate_wallets').select('affiliate_id'),
+          supabase.from('affiliate_payouts').select('affiliate_id')
+        ]);
+      const refMap = refs.reduce((m,r)=>(m[r.affiliate_id]=(m[r.affiliate_id]||0)+1,m),{});
+      const bankMap = banks.reduce((m,b)=>(m[b.affiliate_id]=(m[b.affiliate_id]||0)+1,m),{});
+      const walletMap = wallets.reduce((m,w)=>(m[w.affiliate_id]=(m[w.affiliate_id]||0)+1,m),{});
+      const payoutMap = payouts.reduce((m,p)=>(m[p.affiliate_id]=(m[p.affiliate_id]||0)+1,m),{});
+
+      // 4) Render
       const tbody = document.getElementById('affiliates-body');
-      if (error) {
-        tbody.innerHTML = `<tr><td colspan="4" class="text-danger text-center">Error loading affiliates</td></tr>`;
-        return;
-      }
-      if (!data.length) {
-        tbody.innerHTML = `<tr><td colspan="4" class="text-center">No affiliates yet</td></tr>`;
-        return;
-      }
-      tbody.innerHTML = data.map(a => `
+      tbody.innerHTML = affs.map(a=>`
         <tr>
-          <td>${a.id}</td>
           <td>${a.email}</td>
-          <td>${a.referral_code || '—'}</td>
-          <td>${new Date(a.created_at).toLocaleString()}</td>
+          <td>${a.referral_code||'—'}</td>
+          <td>${new Date(a.created_at).toLocaleDateString()}</td>
+          <td>${refMap[a.id]||0}</td>
+          <td>${bankMap[a.id]||0}</td>
+          <td>${walletMap[a.id]||0}</td>
+          <td>${payoutMap[a.id]||0}</td>
         </tr>
       `).join('');
-    }
 
-    // Load Referrals
-    async function loadReferrals() {
-      const { data, error } = await supabase
-        .from('referrals')
-        .select('id,referred_email,created_at,converted,affiliate_accounts(email)')
-        .order('created_at', { ascending: false });
-      const tbody = document.getElementById('referrals-body');
-      if (error) {
-        tbody.innerHTML = `<tr><td colspan="5" class="text-danger text-center">Error loading referrals</td></tr>`;
-        return;
+      function showError(msg) {
+        tbody.innerHTML = `<tr><td colspan="7" class="text-center text-danger">${msg}</td></tr>`;
       }
-      if (!data.length) {
-        tbody.innerHTML = `<tr><td colspan="5" class="text-center">No referrals yet</td></tr>`;
-        return;
-      }
-      tbody.innerHTML = data.map(r => `
-        <tr>
-          <td>${r.id}</td>
-          <td>${r.affiliate_accounts?.email || '—'}</td>
-          <td>${r.referred_email}</td>
-          <td>${new Date(r.created_at).toLocaleString()}</td>
-          <td>${r.converted ? '✅' : '❌'}</td>
-        </tr>
-      `).join('');
-    }
-
-    // Load Payouts
-    async function loadPayouts() {
-      const { data, error } = await supabase
-        .from('affiliate_payouts')
-        .select('id,amount,method,status,requested_at,affiliate_accounts(email)')
-        .order('requested_at', { ascending: false });
-      const tbody = document.getElementById('payouts-body');
-      if (error) {
-        tbody.innerHTML = `<tr><td colspan="6" class="text-danger text-center">Error loading payouts</td></tr>`;
-        return;
-      }
-      if (!data.length) {
-        tbody.innerHTML = `<tr><td colspan="6" class="text-center">No payouts yet</td></tr>`;
-        return;
-      }
-      tbody.innerHTML = data.map(p => `
-        <tr>
-          <td>${p.id}</td>
-          <td>${p.affiliate_accounts?.email || '—'}</td>
-          <td>$${p.amount.toFixed(2)}</td>
-          <td>${p.method.toUpperCase()}</td>
-          <td>${p.status}</td>
-          <td>${new Date(p.requested_at).toLocaleString()}</td>
-        </tr>
-      `).join('');
-    }
-
-    // Initial load
-    document.addEventListener('DOMContentLoaded', () => {
-      loadAffiliates();
-      loadReferrals();
-      loadPayouts();
-    });
+    })();
   </script>
 </body>
 </html>
