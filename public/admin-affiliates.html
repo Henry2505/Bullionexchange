@@ -271,7 +271,7 @@
     
     .btn-action {
       padding: 0.25rem 0.75rem;
-      font-size: 0 presidencial85rem;
+      font-size: 0.85rem;
       display: inline-flex;
       align-items: center;
       gap: 4px;
@@ -383,6 +383,65 @@
       border-top: 2px solid var(--gold);
     }
     
+    /* New styles for scrollable tables */
+    .table-container {
+      overflow-x: auto;
+      -webkit-overflow-scrolling: touch; /* Smooth scrolling on iOS */
+      scrollbar-width: thin;
+      scrollbar-color: var(--gold) var(--card-bg);
+      position: relative;
+      border-radius: 10px;
+    }
+    
+    .table-container::-webkit-scrollbar {
+      height: 8px;
+    }
+    
+    .table-container::-webkit-scrollbar-track {
+      background: var(--card-bg);
+      border-radius: 10px;
+    }
+    
+    .table-container::-webkit-scrollbar-thumb {
+      background: var(--gold);
+      border-radius: 10px;
+    }
+    
+    .table-container table.dataTable {
+      min-width: 800px; /* Ensure table is wide enough to trigger scrolling if needed */
+      width: 100%;
+    }
+    
+    /* Scroll indicators for UX */
+    .table-container::before,
+    .table-container::after {
+      content: '';
+      position: absolute;
+      top: 0;
+      bottom: 0;
+      width: 20px;
+      pointer-events: none;
+      z-index: 1;
+      opacity: 0;
+      transition: opacity 0.3s ease;
+    }
+    
+    .table-container::before {
+      left: 0;
+ множество
+      background: linear-gradient(to right, var(--card-bg), transparent);
+    }
+    
+    .table-container::after {
+      right: 0;
+      background: linear-gradient(to left, var(--card-bg), transparent);
+    }
+    
+    .table-container.scroll-left::before,
+    .table-container.scroll-right::after {
+      opacity: 1;
+    }
+    
     @media (max-width: 768px) {
       .stats-grid {
         grid-template-columns: 1fr;
@@ -405,6 +464,17 @@
       
       .filter-btn {
         width: 100%;
+      }
+      
+      .table-container {
+        margin-left: -1rem;
+        margin-right: -1rem;
+        padding-left: 1rem;
+        padding-right: 1rem;
+      }
+      
+      .table-container table.dataTable {
+        min-width: 600px; /* Slightly smaller min-width for mobile */
       }
     }
   </style>
@@ -653,8 +723,6 @@
     
     const payoutsTable = $('#payouts-table').DataTable({
       responsive: true,
-      scrollY: '50vh',
-      scrollCollapse: true,
       dom: 'Bfrtip',
       buttons: ['csv', 'excel'],
       columns: [
@@ -782,8 +850,6 @@
     
     const referralsTable = $('#referrals-table').DataTable({
       responsive: true,
-      scrollY: '50vh',
-      scrollCollapse: true,
       dom: 'Bfrtip',
       buttons: ['csv', 'excel'],
       columns: [
@@ -918,6 +984,25 @@
         showToast('Error updating stats: ' + err.message, false);
       }
     }
+
+    // Add scroll indicators for table containers
+    $('.table-panel table').each(function() {
+      const $table = $(this);
+      const $container = $table.closest('.dataTables_wrapper').wrap('<div class="table-container"></div>').parent();
+      
+      function updateScrollIndicators() {
+        const scrollLeft = $container.scrollLeft();
+        const scrollWidth = $container[0].scrollWidth;
+        const clientWidth = $container[0].clientWidth;
+        
+        $container.toggleClass('scroll-left', scrollLeft > 0);
+        $container.toggleClass('scroll-right', scrollLeft < scrollWidth - clientWidth - 1);
+      }
+      
+      $container.on('scroll', updateScrollIndicators);
+      $(window).on('resize', updateScrollIndicators);
+      setTimeout(updateScrollIndicators, 100); // Initial check after table render
+    });
 
     // Load all data
     async function loadAll() {
