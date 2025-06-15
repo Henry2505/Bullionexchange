@@ -3,140 +3,170 @@
 <head>
   <meta charset="UTF-8"/>
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
-  <title>Admin – Affiliates</title>
+  <title>CBE Admin – Affiliates</title>
 
-  <!-- 0) AUTH GUARD -->
+  <!-- ── 1) AUTH GUARD: Redirect if not logged in ───────────────────────────── -->
   <script>
     if (localStorage.getItem('isLoggedIn') !== 'true') {
       window.location.replace(
-        'admin-login.html?redirect=' + encodeURIComponent(location.pathname)
+        'admin-login.html?redirect=' + encodeURIComponent(window.location.pathname)
       );
     }
   </script>
 
-  <!-- 1) STYLES -->
-  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet"/>
-  <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" rel="stylesheet"/>
+  <!-- ── 2) STYLES ────────────────────────────────────────────────────────────── -->
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700&display=swap" rel="stylesheet"/>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet"/>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css" rel="stylesheet"/>
   <style>
     :root {
-      --bg: #000;
-      --text: #fff;
-      --accent: #ffd700;
-      --glass: rgba(255,255,255,0.05);
+      --bg: #000; --text: #fff; --gold: #ffd700;
+      --glass-bg: rgba(255,255,255,0.05); --overlay: rgba(0,0,0,0.6);
     }
-    body {
-      background: var(--bg);
-      color: var(--text);
-      font-family: 'Poppins', sans-serif;
+    [data-theme="light"] {
+      --bg: #f5f5f5; --text: #333; --gold: #cca300;
+      --glass-bg: rgba(0,0,0,0.05); --overlay: rgba(255,255,255,0.15);
+    }
+    * { margin:0; padding:0; box-sizing:border-box; }
+    body { font-family:'Poppins',sans-serif; background:var(--bg); color:var(--text); }
+    .overlay {
+      position:fixed; top:0; left:0; width:100%; height:100%;
+      background:var(--overlay); z-index:-1;
     }
     .glass {
-      background: var(--glass);
-      backdrop-filter: blur(8px);
-      border: 1px solid var(--accent);
+      background:var(--glass-bg); backdrop-filter:blur(10px);
+      border:1px solid rgba(255,215,0,0.2); border-radius:8px;
+      padding:1rem;
     }
-    table thead {
-      background: var(--accent);
-      color: var(--bg);
+    header.admin-header {
+      display:flex; align-items:center; justify-content:space-between;
+      padding:1rem 2rem; background:rgba(0,0,0,0.6);
+      border-bottom:1px solid var(--gold); position:sticky; top:0; z-index:10;
     }
+    .logo { cursor:pointer; }
+    .logo img { height:40px; }
+    #theme-toggle { background:none; border:none; font-size:1.25rem; cursor:pointer; color:var(--text); }
+    h2#section-title { color:var(--gold); text-align:center; margin:2rem 0 1rem; }
+    table thead { background:var(--gold); color:var(--bg); }
+    table td, table th { vertical-align:middle; }
   </style>
 </head>
 <body>
-  <!-- 2) HEADER -->
-  <header class="glass d-flex align-items-center justify-content-between p-3 mb-4">
-    <div class="d-flex align-items-center">
-      <img src="CBE_logo.PNG" alt="Logo" style="height:40px; margin-right:10px;" />
-      <h4 class="mb-0">Affiliates</h4>
+  <div class="overlay"></div>
+
+  <!-- ── HEADER ──────────────────────────────────────────────────────────── -->
+  <header class="admin-header glass">
+    <div class="logo" id="logo">
+      <img src="CBE_logo.PNG" alt="CBE Logo"/>
     </div>
-    <button id="btn-logout" class="btn btn-outline-light btn-sm">
-      <i class="bi bi-box-arrow-right"></i> Logout
-    </button>
+    <button id="theme-toggle" aria-label="Toggle theme">🌞</button>
   </header>
 
-  <!-- 3) TABLE -->
-  <div class="container-fluid">
-    <table class="table table-striped glass text-white">
-      <thead>
-        <tr>
-          <th>Email</th>
-          <th>Code</th>
-          <th>Joined On</th>
-          <th># Referrals</th>
-          <th># Banks</th>
-          <th># Wallets</th>
-          <th># Payouts</th>
-        </tr>
-      </thead>
-      <tbody id="affiliates-body">
-        <tr>
-          <td colspan="7" class="text-center py-5">
-            <div class="spinner-border text-warning" role="status"></div>
-            <span class="ms-2">Loading…</span>
-          </td>
-        </tr>
-      </tbody>
-    </table>
-  </div>
+  <!-- ── MAIN ─────────────────────────────────────────────────────────────── -->
+  <main class="container py-4">
+    <h2 id="section-title">Affiliates</h2>
+    <div class="glass">
+      <table class="table table-hover table-responsive w-100 text-white" id="affiliates-table">
+        <thead>
+          <tr>
+            <th>Email</th>
+            <th>Referral Code</th>
+            <th>Joined On</th>
+            <th>Total Refs</th>
+            <th>Converted</th>
+            <th>Conversion Rate</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr><td colspan="6" class="text-center text-muted py-5">Loading…</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </main>
 
-  <!-- 4) SCRIPTS -->
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>
+  <!-- ── SCRIPTS ──────────────────────────────────────────────────────────── -->
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js/dist/umd/supabase.js"></script>
   <script>
-    (async ()=>{
-      // 4a) Supabase init
-      const SUPA_URL = 'https://dapwpgvnfjcfqqhrpxla.supabase.co';
-      const SUPA_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.…'; // your anon or service role key
-      const supabase = window.supabase.createClient(SUPA_URL, SUPA_KEY);
+    // 1) Logo → Dashboard
+    document.getElementById('logo').onclick = () => {
+      location.href = 'admin-dashboard.html';
+    };
 
-      // 4b) Logout button
-      document.getElementById('btn-logout').onclick = ()=>{
-        localStorage.removeItem('isLoggedIn');
-        window.location.href = 'admin-login.html';
-      };
+    // 2) Theme toggle
+    const themeBtn = document.getElementById('theme-toggle');
+    const applyTheme = t => {
+      document.documentElement.setAttribute('data-theme', t);
+      localStorage.setItem('theme', t);
+      themeBtn.textContent = t==='dark' ? '🌞' : '🌜';
+    };
+    themeBtn.onclick = () => {
+      applyTheme(document.documentElement.getAttribute('data-theme') === 'dark' ? 'light' : 'dark');
+    };
+    applyTheme(localStorage.getItem('theme') || 'dark');
 
-      // 4c) Fetch affiliates
-      const { data: affs, error: errA } = await supabase
+    // 3) Supabase init
+    const SUPA_URL = 'https://dapwpgvnfjcfqqhrpxla.supabase.co';
+    const SUPA_KEY = 'YOUR_SERVICE_ROLE_OR_ANON_KEY';
+    const supabase = window.supabase.createClient(SUPA_URL, SUPA_KEY);
+
+    // 4) Load & render affiliates
+    async function loadAffiliates() {
+      const tbody = document.querySelector('#affiliates-table tbody');
+      tbody.innerHTML = `<tr><td colspan="6" class="text-center py-5"><div class="spinner-border text-gold" role="status"></div></td></tr>`;
+
+      // Fetch all affiliates
+      const { data: affs, error: affErr } = await supabase
         .from('affiliate_accounts')
         .select('id,email,referral_code,created_at')
-        .order('created_at',{ascending:false});
-      if (errA) return showError('Failed to load affiliates');
+        .order('created_at', { ascending: false });
 
-      // 4d) Fetch all related rows
-      const [{ data: refs },{ data: banks },{ data: wallets },{ data: payouts }] =
-        await Promise.all([
-          supabase.from('referrals').select('affiliate_id'),
-          supabase.from('affiliate_bank_accounts').select('affiliate_id'),
-          supabase.from('affiliate_wallets').select('affiliate_id'),
-          supabase.from('affiliate_payouts').select('affiliate_id')
-        ]);
-
-      // 4e) Count per-affiliate
-      const makeMap = arr => arr.reduce((m,r)=>(m[r.affiliate_id]=(m[r.affiliate_id]||0)+1,m),{});
-      const refMap    = makeMap(refs);
-      const bankMap   = makeMap(banks);
-      const walletMap = makeMap(wallets);
-      const payoutMap = makeMap(payouts);
-
-      // 4f) Render table
-      const tbody = document.getElementById('affiliates-body');
-      tbody.innerHTML = affs.map(a=>`
-        <tr>
-          <td>${a.email}</td>
-          <td>${a.referral_code||'—'}</td>
-          <td>${new Date(a.created_at).toLocaleDateString()}</td>
-          <td>${refMap[a.id]||0}</td>
-          <td>${bankMap[a.id]||0}</td>
-          <td>${walletMap[a.id]||0}</td>
-          <td>${payoutMap[a.id]||0}</td>
-        </tr>
-      `).join('');
-
-      // 4g) Error helper
-      function showError(msg) {
-        tbody.innerHTML = `
-          <tr>
-            <td colspan="7" class="text-center text-danger py-5">${msg}</td>
-          </tr>`;
+      if (affErr) {
+        tbody.innerHTML = `<tr><td colspan="6" class="text-danger text-center">Error loading affiliates: ${affErr.message}</td></tr>`;
+        return;
       }
-    })();
+
+      if (!affs.length) {
+        tbody.innerHTML = `<tr><td colspan="6" class="text-center text-muted">No affiliates found.</td></tr>`;
+        return;
+      }
+
+      // For each affiliate, fetch referral counts
+      const rows = await Promise.all(affs.map(async a => {
+        // total referrals
+        const { count: total } = await supabase
+          .from('referrals')
+          .select('*', { count: 'exact', head: true })
+          .eq('affiliate_id', a.id);
+
+        // converted referrals
+        const { count: conv } = await supabase
+          .from('referrals')
+          .select('*', { count: 'exact', head: true })
+          .eq('affiliate_id', a.id)
+          .eq('converted', true);
+
+        const rate = total
+          ? ((conv / total) * 100).toFixed(2) + '%'
+          : '0%';
+
+        return `
+          <tr>
+            <td>${a.email}</td>
+            <td>${a.referral_code || '—'}</td>
+            <td>${new Date(a.created_at).toLocaleDateString()}</td>
+            <td>${total}</td>
+            <td>${conv}</td>
+            <td>${rate}</td>
+          </tr>
+        `;
+      }));
+
+      tbody.innerHTML = rows.join('');
+    }
+
+    // 5) Kick it off
+    loadAffiliates();
   </script>
 </body>
 </html>
