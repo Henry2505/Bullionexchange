@@ -427,433 +427,256 @@
       document.getElementById('local-time').textContent =
         now.toLocaleString('en-US', {
           hour: 'numeric',
-      minute: 'numeric',
-      second: 'numeric',
-      hour12: true,
-      timeZone: 'Africa/Lagos'
-    }) + ' WAT';
-  }
-  setInterval(updateLocalTime, 1000);
-  updateLocalTime();
-
-  // Slide in
-  document.addEventListener('DOMContentLoaded', () => {
-    const card = document.getElementById('apply-card');
-    card.classList.add('visible');
-    // Referral from URL
-    const params = new URLSearchParams(location.search),
-          ref = params.get('ref');
-    if (ref) {
-      document.getElementById('referral-note').textContent = `Referred by: ${ref}`;
-      document.getElementById('apply-referral').value = ref;
+          minute: 'numeric',
+          second: 'numeric',
+          hour12: true,
+          timeZone: 'Africa/Lagos'
+        }) + ' WAT';
     }
-    // Initialize quote
-    updateQuote();
-  });
+    setInterval(updateLocalTime, 1000);
+    updateLocalTime();
 
-  // Theme toggle
-  const themeBtn = document.getElementById('theme-toggle');
-  themeBtn.addEventListener('click', () => {
-    const curr = document.documentElement.getAttribute('data-theme');
-    const next = curr === 'dark' ? 'light' : 'dark';
-    document.documentElement.setAttribute('data-theme', next);
-    localStorage.setItem('theme', next);
-    themeBtn.textContent = next === 'dark' ? '🌞' : '🌜';
-  });
-  (() => {
-    const saved = localStorage.getItem('theme') || 'dark';
-    document.documentElement.setAttribute('data-theme', saved);
-    themeBtn.textContent = saved === 'dark' ? '🌞' : '🌜';
-  })();
+    // Slide in
+    document.addEventListener('DOMContentLoaded', () => {
+      const card = document.getElementById('apply-card');
+      card.classList.add('visible');
+      // Referral from URL
+      const params = new URLSearchParams(location.search),
+            ref = params.get('ref');
+      if (ref) {
+        document.getElementById('referral-note').textContent = `Referred by: ${ref}`;
+        document.getElementById('apply-referral').value = ref;
+      }
+      // Initialize quote
+      updateQuote();
+    });
 
-  // Voice toggle
-  const voiceBtn = document.getElementById('voice-toggle');
-  const audio = document.getElementById('page-audio');
-  voiceBtn.addEventListener('click', () => {
-    if (audio.paused) {
-      audio.play();
-      voiceBtn.textContent = '⏸️';
-    } else {
-      audio.pause();
-      voiceBtn.textContent = '▶️';
-    }
-  });
-  audio.addEventListener('ended', () => voiceBtn.textContent = '▶️');
+    // Theme toggle
+    const themeBtn = document.getElementById('theme-toggle');
+    themeBtn.addEventListener('click', () => {
+      const curr = document.documentElement.getAttribute('data-theme');
+      const next = curr === 'dark' ? 'light' : 'dark';
+      document.documentElement.setAttribute('data-theme', next);
+      localStorage.setItem('theme', next);
+      themeBtn.textContent = next === 'dark' ? '🌞' : '🌜';
+    });
+    (() => {
+      const saved = localStorage.getItem('theme') || 'dark';
+      document.documentElement.setAttribute('data-theme', saved);
+      themeBtn.textContent = saved === 'dark' ? '🌞' : '🌜';
+    })();
 
-  // Quote refresh
-  document.getElementById('refresh-quote').addEventListener('click', updateQuote);
+    // Voice toggle
+    const voiceBtn = document.getElementById('voice-toggle');
+    const audio = document.getElementById('page-audio');
+    voiceBtn.addEventListener('click', () => {
+      if (audio.paused) {
+        audio.play();
+        voiceBtn.textContent = '⏸️';
+      } else {
+        audio.pause();
+        voiceBtn.textContent = '▶️';
+      }
+    });
+    audio.addEventListener('ended', () => voiceBtn.textContent = '▶️');
 
-  // Form handling
-  const SUPA_URL = "https://dapwpgvnfjcfqqhrpxla.supabase.co";
-  const SUPA_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImRhcHdwZ3ZuZmpjZnFxaHJweGxhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDcwNDA4ODgsImV4cCI6MjA2MjYxNjg4OH0.ICC0UsLlzJDNre7rFCeD3k6iVzo6jOJgn3PhABpEMsQ";
-  const supabaseClient = supabase.createClient(SUPA_URL, SUPA_KEY);
+    // Quote refresh
+    document.getElementById('refresh-quote').addEventListener('click', updateQuote);
 
-  const form = document.getElementById('apply-form'),
-        agree = document.getElementById('agree-terms'),
-        submitBtn = document.getElementById('submit-btn'),
-        alertDiv = document.getElementById('apply-alert'),
-        inputs = {
-          name: document.getElementById('apply-name'),
-          email: document.getElementById('apply-email'),
-          password: document.getElementById('apply-password'),
-          phone: document.getElementById('apply-phone'),
-          experience: document.getElementById('apply-message'),
-          referral: document.getElementById('apply-referral')
-        };
+    // Form handling
+    const SUPA_URL = "https://dapwpgvnfjcfqqhrpxla.supabase.co";
+    const SUPA_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImRhcHdwZ3ZuZmpjZnFxaHJweGxhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDcwNDA4ODgsImV4cCI6MjA2MjYxNjg4OH0.ICC0UsLlzJDNre7rFCeD3k6iVzo6jOJgn3PhABpEMsQ";
+    const supabaseClient = supabase.createClient(SUPA_URL, SUPA_KEY);
 
-  // Real-time validation
-  function validateField(field, value) {
-    switch (field) {
-      case 'name':
-        if (!value.trim()) return 'Full name is required.';
-        if (!/^[A-Za-z\s]{2,}\s[A-Za-z\s]{2,}$/.test(value)) return 'Please enter a valid full name (first and last name).';
-        return '';
-      case 'email':
-        if (!value.trim()) return 'Email address is required.';
-        if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value)) return 'Please enter a valid email address.';
-        return '';
-      case 'password':
-        if (!value) return 'Password is required.';
-        if (value.length < 8) return 'Password must be at least 8 characters long.';
-        return '';
-      case 'phone':
-        if (!value.trim()) return 'Contact number is required.';
-        if (!/^[0-9+()\-\s]{10,}$/.test(value)) return 'Please enter a valid phone number (at least 10 digits).';
-        return '';
-      case 'experience':
-        if (!value.trim()) return 'Trading experience is required.';
-        if (value.length < 20) return 'Please provide more details about your trading experience (at least 20 characters).';
-        return '';
-      default:
-        return '';
-    }
-  }
+    const form = document.getElementById('apply-form'),
+          agree = document.getElementById('agree-terms'),
+          submitBtn = document.getElementById('submit-btn'),
+          alertDiv = document.getElementById('apply-alert'),
+          inputs = {
+            name: document.getElementById('apply-name'),
+            email: document.getElementById('apply-email'),
+            password: document.getElementById('apply-password'),
+            phone: document.getElementById('apply-phone'),
+            experience: document.getElementById('apply-message'),
+            referral: document.getElementById('apply-referral')
+          };
 
-  // Real-time input validation
-  Object.keys(inputs).forEach(key => {
-    if (key !== 'referral') {
-      inputs[key].addEventListener('input', () => {
-        const error = validateField(key, inputs[key].value);
-        const formGroup = inputs[key].parentElement;
-        const errorDiv = formGroup.querySelector('.field-error') || document.createElement('进展
-
-System: Here's the corrected and completed version of the `<script>` section, ensuring proper formatting and functionality. I've replaced the `showError` and `showSuccess` functions and the form submission handler as per your instructions, placing them before the closing `</script>` tag. I've also fixed the indentation and ensured the code is consistent with your original script.
-
-```html
-<script>
-  // Forex motivational quotes
-  const forexQuotes = [
-    {
-      text: "The market is always right. Trade what you see, not what you think.",
-      author: "Market Wisdom"
-    },
-    {
-      text: "Risk comes from not knowing what you're doing. Master your strategy before trading.",
-      author: "Warren Buffett"
-    },
-    {
-      text: "Success in trading is not about being right all the time; it's about risk management and consistency.",
-      author: "Alexander Elder"
-    },
-    {
-      text: "The goal of a successful trader is to make the best trades. Money is secondary.",
-      author: "Alexander Elder"
-    },
-    {
-      text: "In trading, discipline is the bridge between goals and accomplishment.",
-      author: "Jim Rohn"
-    },
-    {
-      text: "The most important quality for an investor is temperament, not intellect. The same applies to traders.",
-      author: "Warren Buffett"
-    },
-    {
-      text: "Trading is a journey of self-discovery. The better you know yourself, the better trader you become.",
-      author: "Van Tharp"
-    },
-    {
-      text: "Patience is not the ability to wait, but the ability to keep a good attitude while waiting. This is essential in trading.",
-      author: "Unknown"
-    },
-    {
-      text: "The trend is your friend until the end when it bends. Always respect the market direction.",
-      author: "Ed Seykota"
-    },
-    {
-      text: "Trading is 90% psychology and 10% methodology. Master your mind, master the markets.",
-      author: "Trading Proverb"
-    }
-  ];
-
-  // Function to get a random forex quote
-  function getRandomQuote() {
-    const randomIndex = Math.floor(Math.random() * forexQuotes.length);
-    return forexQuotes[randomIndex];
-  }
-
-  // Update quote on page
-  function updateQuote() {
-    const quote = getRandomQuote();
-    document.getElementById('forex-quote').textContent = quote.text;
-    document.getElementById('quote-author').textContent = `- ${quote.author}`;
-  }
-
-  // Local time
-  function updateLocalTime() {
-    const now = new Date();
-    document.getElementById('local-time').textContent =
-      now.toLocaleString('en-US', {
-        hour: 'numeric',
-        minute: 'numeric',
-        second: 'numeric',
-        hour12: true,
-        timeZone: 'Africa/Lagos'
-      }) + ' WAT';
-  }
-  setInterval(updateLocalTime, 1000);
-  updateLocalTime();
-
-  // Slide in
-  document.addEventListener('DOMContentLoaded', () => {
-    const card = document.getElementById('apply-card');
-    card.classList.add('visible');
-    // Referral from URL
-    const params = new URLSearchParams(location.search),
-          ref = params.get('ref');
-    if (ref) {
-      document.getElementById('referral-note').textContent = `Referred by: ${ref}`;
-      document.getElementById('apply-referral').value = ref;
-    }
-    // Initialize quote
-    updateQuote();
-  });
-
-  // Theme toggle
-  const themeBtn = document.getElementById('theme-toggle');
-  themeBtn.addEventListener('click', () => {
-    const curr = document.documentElement.getAttribute('data-theme');
-    const next = curr === 'dark' ? 'light' : 'dark';
-    document.documentElement.setAttribute('data-theme', next);
-    localStorage.setItem('theme', next);
-    themeBtn.textContent = next === 'dark' ? '🌞' : '🌜';
-  });
-  (() => {
-    const saved = localStorage.getItem('theme') || 'dark';
-    document.documentElement.setAttribute('data-theme', saved);
-    themeBtn.textContent = saved === 'dark' ? '🌞' : '🌜';
-  })();
-
-  // Voice toggle
-  const voiceBtn = document.getElementById('voice-toggle');
-  const audio = document.getElementById('page-audio');
-  voiceBtn.addEventListener('click', () => {
-    if (audio.paused) {
-      audio.play();
-      voiceBtn.textContent = '⏸️';
-    } else {
-      audio.pause();
-      voiceBtn.textContent = '▶️';
-    }
-  });
-  audio.addEventListener('ended', () => voiceBtn.textContent = '▶️');
-
-  // Quote refresh
-  document.getElementById('refresh-quote').addEventListener('click', updateQuote);
-
-  // Form handling
-  const SUPA_URL = "https://dapwpgvnfjcfqqhrpxla.supabase.co";
-  const SUPA_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImRhcHdwZ3ZuZmpjZnFxaHJweGxhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDcwNDA4ODgsImV4cCI6MjA2MjYxNjg4OH0.ICC0UsLlzJDNre7rFCeD3k6iVzo6jOJgn3PhABpEMsQ";
-  const supabaseClient = supabase.createClient(SUPA_URL, SUPA_KEY);
-
-  const form = document.getElementById('apply-form'),
-        agree = document.getElementById('agree-terms'),
-        submitBtn = document.getElementById('submit-btn'),
-        alertDiv = document.getElementById('apply-alert'),
-        inputs = {
-          name: document.getElementById('apply-name'),
-          email: document.getElementById('apply-email'),
-          password: document.getElementById('apply-password'),
-          phone: document.getElementById('apply-phone'),
-          experience: document.getElementById('apply-message'),
-          referral: document.getElementById('apply-referral')
-        };
-
-  // Real-time validation
-  function validateField(field, value) {
-    switch (field) {
-      case 'name':
-        if (!value.trim()) return 'Full name is required.';
-        if (!/^[A-Za-z\s]{2,}\s[A-Za-z\s]{2,}$/.test(value)) return 'Please enter a valid full name (first and last name).';
-        return '';
-      case 'email':
-        if (!value.trim()) return 'Email address is required.';
-        if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value)) return 'Please enter a valid email address.';
-        return '';
-      case 'password':
-        if (!value) return 'Password is required.';
-        if (value.length < 8) return 'Password must be at least 8 characters long.';
-        return '';
-      case 'phone':
-        if (!value.trim()) return 'Contact number is required.';
-        if (!/^[0-9+()\-\s]{10,}$/.test(value)) return 'Please enter a valid phone number (at least 10 digits).';
-        return '';
-      case 'experience':
-        if (!value.trim()) return 'Trading experience is required.';
-        if (value.length < 20) return 'Please provide more details about your trading experience (at least 20 characters).';
-        return '';
-      default:
-        return '';
-    }
-  }
-
-  // Real-time input validation
-  Object.keys(inputs).forEach(key => {
-    if (key !== 'referral') {
-      inputs[key].addEventListener('input', () => {
-        const error = validateField(key, inputs[key].value);
-        const formGroup = inputs[key].parentElement;
-        const errorDiv = formGroup.querySelector('.field-error') || document.createElement('div');
-        errorDiv.className = 'field-error';
-        errorDiv.style.color = 'var(--error)';
-        errorDiv.style.fontSize = '0.85rem';
-        errorDiv.style.marginTop = '5px';
-        errorDiv.textContent = error;
-        if (!formGroup.querySelector('.field-error')) formGroup.appendChild(errorDiv);
-        checkFormValidity();
-      });
-    }
-  });
-
-  // Check form validity for enabling submit button
-  function checkFormValidity() {
-    const allValid = agree.checked &&
-      !validateField('name', inputs.name.value) &&
-      !validateField('email', inputs.email.value) &&
-      !validateField('password', inputs.password.value) &&
-      !validateField('phone', inputs.phone.value) &&
-      !validateField('experience', inputs.experience.value);
-    submitBtn.disabled = !allValid;
-    submitBtn.classList.toggle('enabled', allValid);
-  }
-
-  // Terms checkbox
-  agree.addEventListener('change', checkFormValidity);
-
-  // Show error message
-  function showError(message) {
-    alertDiv.className = 'alert-error';
-    alertDiv.innerHTML = `<i class="fas fa-exclamation-circle"></i> ${message}`;
-    alertDiv.setAttribute('aria-live', 'assertive');
-    alertDiv.style.display = 'block';
-    // re-enable the submit button so user can retry
-    submitBtn.disabled = false;
-    submitBtn.classList.add('enabled');
-    submitBtn.innerHTML = 'Submit Application';
-  }
-
-  // Show success message
-  function showSuccess(message) {
-    alertDiv.className = 'alert-success';
-    alertDiv.innerHTML = `<i class="fas fa-check-circle"></i> ${message}`;
-    alertDiv.setAttribute('aria-live', 'polite');
-    alertDiv.style.display = 'block';
-  }
-
-  // Form submission
-  form.addEventListener('submit', async e => {
-    e.preventDefault();
-    // hide any previous alert
-    alertDiv.style.display = 'none';
-    alertDiv.textContent = '';
-    alertDiv.className = '';
-
-    // collect & trim values
-    const name       = inputs.name.value.trim(),
-          email      = inputs.email.value.trim().toLowerCase(),
-          password   = inputs.password.value,
-          phone      = inputs.phone.value.trim(),
-          experience = inputs.experience.value.trim(),
-          manualRef  = inputs.referral.value.trim();
-
-    // 1) Client-side validation
-    for (const [key, input] of Object.entries(inputs)) {
-      if (key !== 'referral') {
-        const err = validateField(key, input.value);
-        if (err) { showError(err); return; }
+    // Real-time validation
+    function validateField(field, value) {
+      switch (field) {
+        case 'name':
+          if (!value.trim()) return 'Full name is required.';
+          if (!/^[A-Za-z\s]{2,}\s[A-Za-z\s]{2,}$/.test(value)) return 'Please enter a valid full name (first and last name).';
+          return '';
+        case 'email':
+          if (!value.trim()) return 'Email address is required.';
+          if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value)) return 'Please enter a valid email address.';
+          return '';
+        case 'password':
+          if (!value) return 'Password is required.';
+          if (value.length < 8) return 'Password must be at least 8 characters long.';
+          return '';
+        case 'phone':
+          if (!value.trim()) return 'Contact number is required.';
+          if (!/^[0-9+()\-\s]{10,}$/.test(value)) return 'Please enter a valid phone number (at least 10 digits).';
+          return '';
+        case 'experience':
+          if (!value.trim()) return 'Trading experience is required.';
+          if (value.length < 20) return 'Please provide more details about your trading experience (at least 20 characters).';
+          return '';
+        default:
+          return '';
       }
     }
-    if (!agree.checked) {
-      showError('You must agree to the terms and privacy policy before applying.');
-      return;
+
+    // Real-time input validation
+    Object.keys(inputs).forEach(key => {
+      if (key !== 'referral') {
+        inputs[key].addEventListener('input', () => {
+          const error = validateField(key, inputs[key].value);
+          const formGroup = inputs[key].parentElement;
+          const errorDiv = formGroup.querySelector('.field-error') || document.createElement('div');
+          errorDiv.className = 'field-error';
+          errorDiv.style.color = 'var(--error)';
+          errorDiv.style.fontSize = '0.85rem';
+          errorDiv.style.marginTop = '5px';
+          errorDiv.textContent = error;
+          if (!formGroup.querySelector('.field-error')) formGroup.appendChild(errorDiv);
+          checkFormValidity();
+        });
+      }
+    });
+
+    // Check form validity for enabling submit button
+    function checkFormValidity() {
+      const allValid = agree.checked &&
+        !validateField('name', inputs.name.value) &&
+        !validateField('email', inputs.email.value) &&
+        !validateField('password', inputs.password.value) &&
+        !validateField('phone', inputs.phone.value) &&
+        !validateField('experience', inputs.experience.value);
+      submitBtn.disabled = !allValid;
+      submitBtn.classList.toggle('enabled', allValid);
     }
 
-    // 2) Disable button & show spinner
-    submitBtn.disabled = true;
-    submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Submitting…';
+    // Terms checkbox
+    agree.addEventListener('change', checkFormValidity);
 
-    try {
-      // A) Check for duplicate email
-      const { data: existingUser, error: userError } = await supabaseClient
-        .from('users').select('email').eq('email', email).single();
+    // Show error message
+    function showError(message) {
+      alertDiv.className = 'alert-error';
+      alertDiv.innerHTML = `<i class="fas fa-exclamation-circle"></i> ${message}`;
+      alertDiv.setAttribute('aria-live', 'assertive');
+      alertDiv.style.display = 'block';
+      // re-enable the submit button so user can retry
+      submitBtn.disabled = false;
+      submitBtn.classList.add('enabled');
+      submitBtn.innerHTML = 'Submit Application';
+    }
 
-      if (existingUser) {
-        showError('This email is already registered. Please log in or use a different email.');
+    // Show success message
+    function showSuccess(message) {
+      alertDiv.className = 'alert-success';
+      alertDiv.innerHTML = `<i class="fas fa-check-circle"></i> ${message}`;
+      alertDiv.setAttribute('aria-live', 'polite');
+      alertDiv.style.display = 'block';
+    }
+
+    // Form submission
+    form.addEventListener('submit', async e => {
+      e.preventDefault();
+      // hide any previous alert
+      alertDiv.style.display = 'none';
+      alertDiv.textContent = '';
+      alertDiv.className = '';
+
+      // collect & trim values
+      const name       = inputs.name.value.trim(),
+            email      = inputs.email.value.trim().toLowerCase(),
+            password   = inputs.password.value,
+            phone      = inputs.phone.value.trim(),
+            experience = inputs.experience.value.trim(),
+            manualRef  = inputs.referral.value.trim();
+
+      // 1) Client-side validation
+      for (const [key, input] of Object.entries(inputs)) {
+        if (key !== 'referral') {
+          const err = validateField(key, input.value);
+          if (err) { showError(err); return; }
+        }
+      }
+      if (!agree.checked) {
+        showError('You must agree to the terms and privacy policy before applying.');
         return;
       }
-      if (userError && userError.code !== 'PGRST116') throw userError;
 
-      // B) Validate referral code if provided
-      let referredBy = null;
-      const urlRef = new URLSearchParams(location.search).get('ref'),
-            code   = manualRef || urlRef || null;
-      if (code) {
-        const { data: aff, error: refErr } = await supabaseClient
-          .from('affiliate_accounts').select('id')
-          .eq('referral_code', code).single();
+      // 2) Disable button & show spinner
+      submitBtn.disabled = true;
+      submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Submitting…';
 
-        if (refErr || !aff) {
-          showError('Invalid referral code. Please check and try again, or leave it blank.');
+      try {
+        // A) Check for duplicate email
+        const { data: existingUser, error: userError } = await supabaseClient
+          .from('users').select('email').eq('email', email).single();
+
+        if (existingUser) {
+          showError('This email is already registered. Please log in or use a different email.');
           return;
         }
-        referredBy = aff.id;
-      }
+        if (userError && userError.code !== 'PGRST116') throw userError;
 
-      // C) Send to your function
-      const payload = { name, email, password, phone, experience, referral_code: code, referred_by: referredBy };
-      const res    = await fetch('/.netlify/functions/send-application', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(payload)
-      });
-      const result = await res.json();
-      if (!res.ok) {
-        showError(result.error || 'Application submission failed on the server.');
-        return;
-      }
+        // B) Validate referral code if provided
+        let referredBy = null;
+        const urlRef = new URLSearchParams(location.search).get('ref'),
+              code   = manualRef || urlRef || null;
+        if (code) {
+          const { data: aff, error: refErr } = await supabaseClient
+            .from('affiliate_accounts').select('id')
+            .eq('referral_code', code).single();
 
-      // D) Success!
-      showSuccess(`
-        <strong>Application Submitted Successfully!</strong><br>
-        Thank you for applying. A confirmation email has been sent to ${email}.<br>
-        Redirecting to subscription options shortly.
-      `);
-      form.reset();
-      agree.checked = false;
-      Object.values(inputs).forEach(i => {
-        const fe = i.parentElement.querySelector('.field-error');
-        if (fe) fe.remove();
-      });
-      setTimeout(() => window.location.href = 'vip-subscription', 5000);
+          if (refErr || !aff) {
+            showError('Invalid referral code. Please check and try again, or leave it blank.');
+            return;
+          }
+          referredBy = aff.id;
+        }
 
-    } catch (err) {
-      console.error('Submission error:', err);
-      if (err.message.includes('NetworkError') || err.message.includes('Failed to fetch')) {
-        showError('Network issue detected. Please check your connection and try again.');
-      } else {
-        showError('An unexpected error occurred. Please try again later or contact support at support@apexincomeoptions.com.ng.');
+        // C) Send to your function
+        const payload = { name, email, password, phone, experience, referral_code: code, referred_by: referredBy };
+        const res    = await fetch('/.netlify/functions/send-application', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload)
+        });
+        const result = await res.json();
+        if (!res.ok) {
+          showError(result.error || 'Application submission failed on the server.');
+          return;
+        }
+
+        // D) Success!
+        showSuccess(`
+          <strong>Application Submitted Successfully!</strong><br>
+          Thank you for applying. A confirmation email has been sent to ${email}.<br>
+          Redirecting to subscription options shortly.
+        `);
+        form.reset();
+        agree.checked = false;
+        Object.values(inputs).forEach(i => {
+          const fe = i.parentElement.querySelector('.field-error');
+          if (fe) fe.remove();
+        });
+        setTimeout(() => window.location.href = 'vip-subscription', 5000);
+
+      } catch (err) {
+        console.error('Submission error:', err);
+        if (err.message.includes('NetworkError') || err.message.includes('Failed to fetch')) {
+          showError('Network issue detected. Please check your connection and try again.');
+        } else {
+          showError('An unexpected error occurred. Please try again later or contact support at support@apexincomeoptions.com.ng.');
+        }
       }
-    }
-  });
-</script>
+    });
+  </script>
 </body>
 </html>
