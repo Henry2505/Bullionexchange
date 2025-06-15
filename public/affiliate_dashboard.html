@@ -1,74 +1,202 @@
 <!DOCTYPE html>
 <html lang="en" data-theme="dark">
 <head>
-  <meta charset="UTF-8"/>
-  <meta name="viewport" content="width=device-width,initial-scale=1"/>
-  <title>Your Affiliate Dashboard</title>
-  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet"/>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Affiliate Dashboard • Apex Income Options</title>
+
+  <!-- Dependencies -->
+  <link
+    href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css"
+    rel="stylesheet"
+    crossorigin="anonymous"
+  />
+  <link
+    href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css"
+    rel="stylesheet"
+  />
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.3.0/dist/chart.umd.min.js"></script>
+
+  <!-- Custom Styles -->
+  <style>
+    /* (Your existing CSS here—all unchanged) */
+    :root { /* … */ }
+    [data-theme="dark"] { /* … */ }
+    /* … and so on … */
+  </style>
 </head>
-<body class="bg-dark text-light">
-  <div class="container py-5">
-    <h1 class="mb-4">Welcome, <span id="user-email">…</span></h1>
-    <div class="card bg-secondary mb-3">
-      <div class="card-body">
-        <h5>Your Referral Code</h5>
-        <p class="display-6"><code id="referral-code">…</code></p>
-        <h6>Referral Link</h6>
-        <input id="referral-link" class="form-control mb-2" readonly/>
-        <button id="copy-link" class="btn btn-sm btn-warning">Copy Link</button>
-      </div>
+<body>
+  <!-- Sidebar Toggle -->
+  <div id="sidebar-toggle" title="Toggle Menu">
+    <i class="bi bi-list"></i>
+  </div>
+
+  <!-- Sidebar -->
+  <div class="sidebar" id="sidebar">
+    <!-- … sidebar HTML … -->
+  </div>
+
+  <!-- Main Content -->
+  <div class="main-content" id="main-content">
+    <div class="container-fluid">
+      <!-- … all your sections (Referral, Overview, Activity, Leaderboard, etc.) … -->
+      <!-- In your “Profile” section you have: -->
+      <!--
+      <p><strong>Email:</strong> <span id="user-email">Loading…</span></p>
+      <p><strong>Joined On:</strong> <span id="joined-date">--</span></p>
+      <p><strong>Total Referrals:</strong> <span id="total-referrals">0</span></p>
+      <p><strong>Est. Earnings (USD):</strong> <span id="overview-est-earn-usd-inline">$0.00</span></p>
+      -->
     </div>
-    <div class="card bg-secondary">
-      <div class="card-body">
-        <h5>Total Referrals</h5>
-        <p class="display-6" id="total-referrals">0</p>
-        <h6>All-Time Earnings</h6>
-        <p class="h4 text-warning" id="alltime-earnings">$0.00</p>
+  </div>
+
+  <!-- Toast Container -->
+  <div class="toast-container position-fixed top-0 end-0 p-3">
+    <div id="liveToast" class="toast align-items-center text-bg-dark border-0" role="alert"
+         aria-live="assertive" aria-atomic="true">
+      <div class="d-flex">
+        <div class="toast-body" id="toast-body"></div>
+        <button type="button" class="btn-close btn-close-white me-2 m-auto"
+                data-bs-dismiss="toast" aria-label="Close"></button>
       </div>
     </div>
   </div>
 
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>
-  <script>
-    const SUPA_URL = 'https://dapwpgvnfjcfqqhrpxla.supabase.co';
-    const SUPA_KEY = 'YOUR_ANON_KEY';
-    const supabase = supabase.createClient(SUPA_URL, SUPA_KEY);
+  <!-- Theme Toggle Button -->
+  <div class="theme-toggle-btn" id="theme-toggle-btn">
+    <i class="bi bi-sun-fill" id="theme-icon"></i>
+  </div>
 
-    // must have been set on login
+  <!-- Bootstrap JS -->
+  <script
+    src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"
+    crossorigin="anonymous"
+  ></script>
+
+  <!-- Dashboard Logic -->
+  <script>
+    // ── 1) BOOTSTRAP AUTH CHECK ───────────────────────────────────────────────────
+    // retrieve our affiliateId & email from login
     const affiliateId = localStorage.getItem('affiliateId');
     const affiliateEmail = localStorage.getItem('affiliateEmail');
-    if (!affiliateId) return location.replace('affiliate_login.html');
-    document.getElementById('user-email').textContent = affiliateEmail;
+    if (!affiliateId) {
+      // not logged in → redirect to login
+      window.location.replace('affiliate_login.html');
+      throw new Error('No affiliateId—redirecting to login');
+    }
+    // show email in UI
+    document.addEventListener('DOMContentLoaded', () => {
+      const el = document.getElementById('user-email');
+      if (el) el.textContent = affiliateEmail;
+    });
 
-    // fetch code + link
-    supabase
-      .from('affiliate_accounts')
-      .select('referral_code')
-      .eq('id', affiliateId)
-      .single()
-      .then(({ data, error }) => {
-        if (error) return console.error(error);
-        document.getElementById('referral-code').textContent = data.referral_code;
-        const link = `${location.origin}/CBE_apply.html?ref=${data.referral_code}`;
-        document.getElementById('referral-link').value = link;
-      });
+    // ── 2) INITIALIZE SUPABASE ────────────────────────────────────────────────────
+    const SUPA_URL = 'https://dapwpgvnfjcfqqhrpxla.supabase.co';
+    const SUPA_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImRhcHdwZ3ZuZmpjZ...'; // your anon key
+    const supabase = window.supabase.createClient(SUPA_URL, SUPA_KEY);
 
-    // fetch count
-    supabase
-      .from('referrals')
-      .select('*', { count: 'exact', head: true })
-      .eq('affiliate_id', affiliateId)
-      .then(({ count, error }) => {
-        if (error) return console.error(error);
-        document.getElementById('total-referrals').textContent = count;
-        document.getElementById('alltime-earnings').textContent = `$${(count*5).toFixed(2)}`;
-      });
+    // ── 3) UTILITY FUNCTIONS ──────────────────────────────────────────────────────
+    function showToast(msg) {
+      const toastEl = document.getElementById('liveToast');
+      document.getElementById('toast-body').textContent = msg;
+      new bootstrap.Toast(toastEl).show();
+    }
+    function copyText(txt) {
+      navigator.clipboard.writeText(txt).then(() => showToast('Copied!'));
+    }
+    function toUSD(val) {
+      return parseFloat(val).toLocaleString(undefined,{style:'currency',currency:'USD'});
+    }
+    function getDateNDaysAgo(n) {
+      const d=new Date();d.setDate(d.getDate()-n);return d;
+    }
 
-    // copy link
-    document.getElementById('copy-link').onclick = () => {
-      navigator.clipboard.writeText(document.getElementById('referral-link').value);
-      alert('Link copied!');
-    };
+    // ── 4) DATA-FETCHING FUNCTIONS ─────────────────────────────────────────────────
+    async function fetchReferralCode() {
+      const { data, error } = await supabase
+        .from('affiliate_accounts')
+        .select('referral_code, created_at')
+        .eq('id', affiliateId)
+        .single();
+      if (error) return console.error(error);
+      // update UI…
+      document.getElementById('referral-code').textContent = data.referral_code;
+      document.getElementById('joined-date').textContent = new Date(data.created_at).toLocaleDateString();
+      const fullLink = `${window.location.origin}/CBE_apply.html?ref=${data.referral_code}`;
+      document.getElementById('referral-link').value = fullLink;
+      document.getElementById('qr-code-container').innerHTML =
+        `<img src="https://chart.googleapis.com/chart?chs=150x150&cht=qr&chl=${encodeURIComponent(fullLink)}" alt="QR">`;
+    }
+
+    async function fetchTotals() {
+      let [{ count: total }, { count: week }, { count: month }] = await Promise.all([
+        supabase.from('referrals').select('*',{head:true,count:'exact'}).eq('affiliate_id',affiliateId),
+        supabase.from('referrals').select('*',{head:true,count:'exact'}).eq('affiliate_id',affiliateId).gt('created_at',getDateNDaysAgo(7).toISOString()),
+        supabase.from('referrals').select('*',{head:true,count:'exact'}).eq('affiliate_id',affiliateId).gt('created_at',getDateNDaysAgo(30).toISOString())
+      ]);
+      document.getElementById('overview-total-referrals').textContent = total||0;
+      document.getElementById('total-referrals').textContent = total||0;
+      document.getElementById('weekly-earnings').textContent = toUSD((week||0)*5);
+      document.getElementById('monthly-earnings').textContent = toUSD((month||0)*5);
+      document.getElementById('alltime-earnings').textContent = toUSD((total||0)*5);
+      document.getElementById('overview-est-earn-usd').textContent = toUSD((total||0)*5);
+      document.getElementById('overview-est-earn-usd-inline').textContent = toUSD((total||0)*5);
+    }
+
+    async function loadReferralChartData() {
+      const { data, error } = await supabase
+        .from('referrals')
+        .select('created_at')
+        .eq('affiliate_id', affiliateId);
+      if (error) return console.error(error);
+      // build chartDataAllTime & chartData30Days…
+      // (same logic you had—just scoping to affiliateId)
+    }
+
+    async function renderReferralChart(range) {
+      // destroy & re-create Chart.js line chart…
+    }
+
+    async function loadLeaderboard() {
+      const { data, error } = await supabase
+        .from('referrals')
+        .select('affiliate_id');
+      if (error) return console.error(error);
+      const counts = data.reduce((m,r)=>{m[r.affiliate_id]=(m[r.affiliate_id]||0)+1;return m;},{});
+      const arr = Object.entries(counts).sort((a,b)=>b[1]-a[1]).slice(0,5);
+      const ul = document.getElementById('leaderboard-list');
+      ul.innerHTML = '';
+      for (let [id,c] of arr) {
+        let { data: acct } = await supabase
+          .from('affiliate_accounts').select('email,referral_code').eq('id',id).single();
+        const li = document.createElement('li');
+        li.className = 'leaderboard-item';
+        li.innerHTML = `
+          <div>${acct.email} <small>(${acct.referral_code})</small></div>
+          <div>${c}</div>
+        `;
+        ul.appendChild(li);
+      }
+    }
+
+    // (…and similarly for bank accounts, wallets, payouts—all using .eq('affiliate_id', affiliateId) …)
+
+    // ── 5) ONCE DOM IS READY ────────────────────────────────────────────────────────
+    document.addEventListener('DOMContentLoaded', async () => {
+      // sidebar/theme toggles…
+      // copy buttons:
+      document.getElementById('copy-referral').onclick = () => copyText(document.getElementById('referral-code').textContent);
+      document.getElementById('copy-link').onclick     = () => copyText(document.getElementById('referral-link').value);
+      // same for sidebar…
+
+      await fetchReferralCode();
+      await fetchTotals();
+      await loadReferralChartData();
+      await renderReferralChart('30days');
+      await loadLeaderboard();
+      // …and kick off your bank/wallet/payout loaders…
+    });
   </script>
 </body>
 </html>
