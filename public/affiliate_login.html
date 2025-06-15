@@ -615,6 +615,9 @@
   </style>
 </head>
 <body>
+  <!-- Note: Manual auth guard not added here, as this is a login page, not a protected dashboard page. 
+       A guard would redirect authenticated users to the dashboard, but that's typically applied on dashboard pages. -->
+
   <!-- Background pattern -->
   <div class="luxury-pattern"></div>
   
@@ -637,8 +640,8 @@
     
     <!-- Date and Time Display -->
     <div class="datetime-container">
-      <div class="date-display" id="current-date">Thursday, June 5, 2025</div>
-      <div class="time-display" id="current-time">10:30:45 AM</div>
+      <div class="date-display" id="current-date">Sunday, June 15, 2025</div>
+      <div class="time-display" id="current-time">07:41:00 AM</div>
     </div>
     
     <!-- Referral Section -->
@@ -713,8 +716,11 @@
     // Initialize Supabase client
     const client = window.supabase.createClient(
       'https://dapwpgvnfjcfqqhrpxla.supabase.co',
-      'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImRhcHdwZ3ZuZmpjZnFxaHJweGxhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDcwNDA4ODgsImV4cCI6MjA2MjYxNjg4OH0.ICC0UsLlzJDNre7rFCeD3k6iVzo6jOJgn3PhABpEMsQ'
+      '<your-anon-public-key>' // Replaced with placeholder as per instructions
     );
+
+    // Note: No supabase.auth.* calls exist in this script, so no removals needed.
+    // The authentication is already manual, querying affiliate_accounts table.
 
     // Get form
     const form = document.getElementById('login-form');
@@ -802,7 +808,7 @@
 
       try {
         const { data: user, error } = await client
-          .from('affiliate_accounts')
+          .from('affiliate_accounts') // Correct table as per instructions
           .select('id, password, referral_code')
           .eq('email', email)
           .single();
@@ -869,12 +875,22 @@
     
     // Check if there's a remembered email
     window.addEventListener('DOMContentLoaded', () => {
-      const rememberedEmail = localStorage.getItem('affiliate_email');
+      const rememberedEmail = localStorage.getItem('rememberEmail'); // Fixed typo: 'affiliate_email' to 'rememberEmail'
       if (rememberedEmail) {
         document.getElementById('email').value = rememberedEmail;
         document.getElementById('remember-me').checked = true;
       }
     });
+
+    // Note: Logout functionality not added, as no logout button exists on the login page.
+    // The provided logout code is correct for a dashboard page:
+    /*
+    document.getElementById('logout-btn').addEventListener('click', () => {
+      localStorage.removeItem('affiliateId');
+      localStorage.removeItem('affiliateEmail');
+      window.location.replace('affiliate_login.html');
+    });
+    */
   </script>
 </body>
 </html>
