@@ -637,8 +637,8 @@
     
     <!-- Date and Time Display -->
     <div class="datetime-container">
-      <div class="date-display" id="current-date">Sunday, June 15, 2025</div>
-      <div class="time-display" id="current-time">06:29:00 AM</div>
+      <div class="date-display" id="current-date">Thursday, June 5, 2025</div>
+      <div class="time-display" id="current-time">10:30:45 AM</div>
     </div>
     
     <!-- Referral Section -->
@@ -735,4 +735,145 @@
       // Auto-hide messages after 5 seconds
       setTimeout(() => {
         messageDiv.innerHTML = '';
-      }, 500
+      }, 5000);
+    }
+
+    // Password strength indicator
+    function checkPasswordStrength(password) {
+      const strengthIndicator = document.getElementById('password-strength');
+      
+      if (!password) {
+        strengthIndicator.textContent = '';
+        strengthIndicator.className = 'password-strength';
+        return;
+      }
+      
+      // Simple strength calculation
+      let strength = 0;
+      if (password.length >= 8) strength += 1;
+      if (/[A-Z]/.test(password)) strength += 1;
+      if (/[0-9]/.test(password)) strength += 1;
+      if (/[^A-Za-z0-9]/.test(password)) strength += 1;
+      
+      let strengthText = '';
+      let strengthClass = '';
+      
+      if (strength <= 1) {
+        strengthText = 'Weak password';
+        strengthClass = 'weak';
+      } else if (strength <= 3) {
+        strengthText = 'Medium password';
+        strengthClass = 'medium';
+      } else {
+        strengthText = 'Strong password';
+        strengthClass = 'strong';
+      }
+      
+      strengthIndicator.textContent = strengthText;
+      strengthIndicator.className = 'password-strength ' + strengthClass;
+    }
+
+    // Password strength checker
+    document.getElementById('password').addEventListener('input', function() {
+      checkPasswordStrength(this.value);
+    });
+
+    // Form submission handler
+    async function handleSubmit(e) {
+      e.preventDefault();
+
+      const submitButton = form.querySelector('button[type="submit"]');
+      const originalButtonText = submitButton.innerHTML;
+      
+      submitButton.disabled = true;
+      submitButton.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i> Logging in...';
+      document.getElementById('message').innerHTML = '';
+
+      const email = document.getElementById('email').value.trim();
+      const password = document.getElementById('password').value;
+      const rememberMe = document.getElementById('remember-me').checked;
+
+      if (!email || !password) {
+        showMessage('Please enter both email and password', 'danger');
+        submitButton.disabled = false;
+        submitButton.innerHTML = originalButtonText;
+        return;
+      }
+
+      try {
+        const { data: user, error } = await client
+          .from('affiliate_accounts')
+          .select('id, password, referral_code')
+          .eq('email', email)
+          .single();
+
+        if (error) {
+          if (error.message.includes('0 rows')) {
+            showMessage('Email not found. Please check your email or sign up.', 'danger');
+          } else {
+            showMessage('Unable to connect to the server. Please try again later.', 'danger');
+          }
+        } else {
+          if (user.password === password) {
+            // Login successful - store user data in localStorage if "Remember me" is checked
+            if (rememberMe) {
+              localStorage.setItem('affiliate_email', email);
+            }
+            
+            // Show success message with animation
+            showMessage('🎉 Login successful! Redirecting to dashboard...', 'success');
+            
+            // Simulate delay for UX
+            await new Promise(resolve => setTimeout(resolve, 1500));
+            
+            // Redirect to dashboard
+            window.location.href = 'affiliate_dashboard.html';
+          } else {
+            showMessage('Incorrect password. Please try again.', 'danger');
+          }
+        }
+      } catch (err) {
+        console.error('Login error:', err);
+        showMessage('An unexpected error occurred. Please try again later.', 'danger');
+      } finally {
+        submitButton.disabled = false;
+        submitButton.innerHTML = originalButtonText;
+      }
+    }
+
+    form.addEventListener('submit', handleSubmit);
+
+    // Date and time display
+    function updateDateTime() {
+      const now = new Date();
+      
+      // Format date
+      const options = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
+      document.getElementById('current-date').textContent = now.toLocaleDateString('en-US', options);
+      
+      // Format time
+      let hours = now.getHours();
+      const minutes = now.getMinutes().toString().padStart(2, '0');
+      const seconds = now.getSeconds().toString().padStart(2, '0');
+      const ampm = hours >= 12 ? 'PM' : 'AM';
+      hours = hours % 12;
+      hours = hours ? hours : 12; // the hour '0' should be '12'
+      
+      document.getElementById('current-time').textContent = `${hours}:${minutes}:${seconds} ${ampm}`;
+    }
+    
+    // Update time every second
+    updateDateTime();
+    setInterval(updateDateTime, 1000);
+    
+    // Check if there's a remembered email
+    window.addEventListener('DOMContentLoaded', () => {
+      const rememberedEmail = localStorage.getItem('affiliate_email');
+      if (rememberedEmail) {
+        document.getElementById('email').value = rememberedEmail;
+        document.getElementById('remember-me').checked = true;
+      }
+    });
+  </script>
+</body>
+</html>
