@@ -22,80 +22,47 @@
   <!-- ===================== CUSTOM STYLES ===================== -->
   <style>
     :root {
-      --black: #000000;
-      --gold: #FFD700;
-      --text-dark: #FFFFFF;
-      --text-light: #000000;
-      --card-bg-dark: #1a1a1a;
-      --card-bg-light: #FFFFFF;
-    }
-
-    [data-theme="dark"] {
-      --background: var(--black);
-      --text: var(--text-dark);
-      --card-bg: var(--card-bg-dark);
-      --accent: var(--gold);
-    }
-
-    [data-theme="light"] {
-      --background: #FFFFFF;
-      --text: var(--text-light);
-      --card-bg: var(--card-bg-light);
-      --accent: var(--gold);
+      --background: #000000; /* Black background */
+      --accent: #FFD700; /* Gold accent */
+      --text: #FFFFFF; /* White text */
+      --text-light: #CCCCCC; /* Light grey for secondary text */
+      --shadow: rgba(255, 215, 0, 0.1); /* Subtle gold shadow */
     }
 
     body {
       background-color: var(--background);
       color: var(--text);
-      font-family: 'Arial', sans-serif;
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; /* Professional font */
     }
 
-    .section-title {
-      color: var(--accent);
-      font-weight: bold;
-      margin-bottom: 1.5rem;
-      font-size: 1.75rem;
+    .sidebar {
+      background-color: var(--background);
+      color: var(--text);
+    }
+
+    .main-content {
+      background-color: var(--background);
     }
 
     .card {
-      background-color: var(--card-bg);
+      background-color: var(--background);
       border: 1px solid var(--accent);
-      border-radius: 8px;
+    }
+
+    .card-header {
+      background-color: var(--accent);
+      color: var(--background); /* Black text on gold header */
     }
 
     .btn-primary {
       background-color: var(--accent);
       border-color: var(--accent);
       color: var(--background);
-      transition: background-color 0.3s ease;
     }
 
-    .btn-primary:hover {
-      background-color: #E5C100; /* Slightly darker gold for hover */
-      border-color: #E5C100;
-    }
-
-    .current-time {
-      text-align: right;
-      font-size: 0.9rem;
-      color: var(--text);
-      margin-bottom: 1rem;
-      font-style: italic;
-    }
-
-    .leaderboard-item {
-      display: flex;
-      justify-content: space-between;
-      padding: 0.5rem 0;
-      border-bottom: 1px solid var(--accent);
-    }
-
-    section {
-      margin-bottom: 3rem;
-    }
-
-    .sidebar-title {
+    .btn-outline-secondary {
       color: var(--accent);
+      border-color: var(--accent);
     }
 
     .nav-link {
@@ -106,11 +73,90 @@
       color: var(--accent);
     }
 
+    .section-title {
+      color: var(--accent);
+    }
+
+    .overview-card {
+      background-color: var(--background);
+      border: 1px solid var(--accent);
+    }
+
+    .leaderboard-item {
+      color: var(--text);
+    }
+
+    .withdraw-item {
+      color: var(--text);
+    }
+
     .earn-banner {
       background-color: var(--accent);
-      color: var(--black);
-      padding: 0.5rem;
-      border-radius: 4px;
+      color: var(--background);
+    }
+
+    /* Additional styles for maturity and professionalism */
+    .container-fluid {
+      padding: 20px;
+    }
+
+    .chart-container {
+      background-color: var(--background);
+      border: 1px solid var(--accent);
+      padding: 10px;
+    }
+
+    .table {
+      color: var(--text);
+    }
+
+    .table thead th {
+      background-color: var(--accent);
+      color: var(--background);
+    }
+
+    .form-control {
+      background-color: var(--background);
+      color: var(--text);
+      border: 1px solid var(--accent);
+    }
+
+    .form-select {
+      background-color: var(--background);
+      color: var(--text);
+      border: 1px solid var(--accent);
+    }
+
+    .text-muted {
+      color: var(--text-light) !important;
+    }
+
+    .spinner-border {
+      color: var(--accent);
+    }
+
+    .toast {
+      background-color: var(--background);
+      color: var(--text);
+      border: 1px solid var(--accent);
+    }
+
+    .theme-toggle-btn {
+      background-color: var(--accent);
+      color: var(--background);
+    }
+
+    /* Ensure text visibility */
+    h1, h2, h3, h4, h5, h6, p, span, div {
+      color: var(--text);
+    }
+
+    a {
+      color: var(--accent);
+    }
+
+    a:hover {
+      color: var(--text-light);
     }
   </style>
 </head>
@@ -121,8 +167,10 @@
     const SUPA_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImRhcHdwZ3ZuZmpjZnFxaHJweGxhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDcwNDA4ODgsImV4cCI6MjA2MjYxNjg4OH0.ICC0UsLlzJDNre7rFCeD3k6iVzo6jOJgn3PhABpEMsQ';
     const supabaseClient = window.supabase.createClient(SUPA_URL, SUPA_KEY);
 
+    // ▶️ Grab our affiliate’s ID from login
     const affiliateId = localStorage.getItem('affiliateId');
     if (!affiliateId) {
+      // not logged in → back to login page
       window.location.replace('affiliate_login.html');
       throw new Error('No affiliateId in localStorage');
     }
@@ -148,7 +196,7 @@
           <button id="copy-referral-sidebar" class="copy-btn ms-2"><i class="bi bi-clipboard"></i></button>
           <div class="mt-2">
             <small>Share your link:</small><br />
-            <input type="text" id="referral-link-sidebar" readonly class="form-control form-control-sm text-center" style="background: var(--accent); color: var(--text);" />
+            <input type="text" id="referral-link-sidebar" readonly class="form-control form-control-sm text-center" style="background: var(--accent); color: var(--background);" />
             <button id="copy-link-sidebar" class="copy-btn mt-1"><i class="bi bi-link-45deg"></i> Copy</button>
           </div>
           <div class="earn-banner">🎉 Earn <strong>$5</strong> for each successful referral!</div>
@@ -175,7 +223,8 @@
   <!-- ===================== MAIN CONTENT ===================== -->
   <div class="main-content" id="main-content">
     <div class="container-fluid">
-      <div class="current-time" id="current-time">Current Time: Loading...</div>
+      <!-- ===================== DATE AND TIME ===================== -->
+      <div id="date-time" class="text-center mb-3" style="color: var(--text);"></div>
 
       <!-- ===================== REFERRAL SECTION ===================== -->
       <section id="referral-section-main" class="mb-5">
@@ -190,7 +239,7 @@
                 <button id="copy-referral" class="copy-btn mb-2"><i class="bi bi-clipboard"></i> Copy Code</button>
                 <div class="mt-2">
                   <small>Share your link:</small><br />
-                  <input type="text" id="referral-link" readonly class="form-control form-control-sm text-center" style="background: var(--accent); color: var(--text);" />
+                  <input type="text" id="referral-link" readonly class="form-control form-control-sm text-center" style="background: var(--accent); color: var(--background);" />
                   <button id="copy-link" class="copy-btn mt-1"><i class="bi bi-link-45deg"></i> Copy Link</button>
                 </div>
                 <div class="earn-banner mt-3">🎉 Earn <strong>$5</strong> for each successful referral!</div>
@@ -254,7 +303,7 @@
 
       <!-- ===================== LEADERBOARD ===================== -->
       <section id="leaderboard-section" class="mb-5">
-        <div class="section-title"><i class="bi bi-trophy-fill"></i> Leaderboard: Top Affiliates ha</div>
+        <div class="section-title"><i class="bi bi-trophy-fill"></i> Leaderboard: Top Affiliates</div>
         <ul class="leaderboard-list" id="leaderboard-list">
           <li class="text-center text-muted">Loading leaderboard…</li>
         </ul>
@@ -349,7 +398,6 @@
           </div>
         </div>
       </section>
-
     </div>
   </div>
 
@@ -437,22 +485,26 @@
       return d;
     }
 
-    function updateCurrentTime() {
+    // Accurate Date and Time Feature
+    function updateDateTime() {
       const now = new Date();
       const options = { 
         weekday: 'long', 
         year: 'numeric', 
         month: 'long', 
         day: 'numeric', 
-        hour: '2-digit', 
-        minute: '2-digit', 
-        second: '2-digit', 
+        hour: 'numeric', 
+        minute: 'numeric', 
+        second: 'numeric', 
         timeZoneName: 'short' 
       };
-      document.getElementById('current-time').textContent = `Current Time: ${now.toLocaleString('en-US', options)}`;
+      document.getElementById('date-time').textContent = now.toLocaleString('en-US', options);
     }
+    setInterval(updateDateTime, 1000); // Updates every second for accuracy
+    updateDateTime(); // Initial call
 
     document.addEventListener('DOMContentLoaded', async () => {
+      // Fetch affiliate data to set email and joined date
       const { data: affiliate, error: affError } = await supabase
         .from('affiliate_accounts')
         .select('email, created_at')
@@ -471,7 +523,7 @@
       await fetchConversionRate();
 
       document.getElementById('logout-btn').addEventListener('click', async () => {
-        localStorage.removeItem('affiliateId');
+        localStorage.addEventListener('affiliateId');
         window.location.href = 'affiliate_login.html';
       });
       document.getElementById('copy-referral').addEventListener('click', () => {
@@ -680,12 +732,9 @@
           }
         }
       });
-
-      // Initialize and update the current time
-      updateCurrentTime();
-      setInterval(updateCurrentTime, 1000);
     });
 
+    // FETCH / GENERATE REFERRAL CODE
     async function fetchReferralCode() {
       const refSpanMain = document.getElementById('referral-code');
       const linkInputMain = document.getElementById('referral-link');
@@ -735,6 +784,7 @@
       document.getElementById('qr-code-container').appendChild(qr);
     }
 
+    // FETCH TOTAL REFERRALS
     async function fetchTotalReferrals() {
       const { count, error } = await supabase
         .from('referrals')
@@ -751,6 +801,7 @@
       }
     }
 
+    // CALCULATE & DISPLAY EARNINGS
     async function calculateAndDisplayEarnings() {
       const totalRefs = parseInt(document.getElementById('overview-total-referrals').textContent) || 0;
       const usdEarnings = totalRefs * 5;
@@ -779,6 +830,7 @@
       }
     }
 
+    // FETCH CONVERSION RATE
     async function fetchConversionRate() {
       const { count: totalRefCount } = await supabase
         .from('referrals')
@@ -797,8 +849,9 @@
       document.getElementById('overview-conversion-rate-inline').textContent = rateText;
     }
 
+    // LOAD REFERRAL CHART DATA
     async function loadReferralChartData() {
-      const、手首を切る。 const { data: rawReferrals, error } = await supabase
+      const { data: rawReferrals, error } = await supabase
         .from('referrals')
         .select('created_at')
         .eq('affiliate_id', affiliateId);
@@ -826,6 +879,7 @@
       chartData30Days.counts = last30Counts;
     }
 
+    // RENDER REFERRAL CHART
     async function renderReferralChart(range) {
       const ctx = document.getElementById('referralChart').getContext('2d');
       if (referralChart) referralChart.destroy();
@@ -841,6 +895,7 @@
       });
     }
 
+    // LOAD LEADERBOARD
     async function loadLeaderboard() {
       const listEl = document.getElementById('leaderboard-list');
       listEl.innerHTML = `<li class="text-center text-muted">Loading leaderboard…</li>`;
@@ -849,7 +904,7 @@
         .select('affiliate_id');
       if (error) {
         console.error('Leaderboard grouping error:', error);
-        listEl.innerHTML = `<li style="color: var(--gold);">Failed to load leaderboard.</li>`;
+        listEl.innerHTML = `<li style="color: var(--accent);">Failed to load leaderboard.</li>`;
         return;
       }
       const map = {};
@@ -880,6 +935,7 @@
       }
     }
 
+    // LOAD BANK ACCOUNTS
     async function loadBankAccounts() {
       const tbody = document.getElementById('bank-accounts-body');
       tbody.innerHTML = `<tr><td colspan="5"><div class="text-center spinner-border"></div></td></tr>`;
@@ -889,7 +945,7 @@
         .eq('affiliate_id', affiliateId)
         .order('created_at', { ascending: false });
       if (error) {
-        tbody.innerHTML = `<tr><td colspan="5" style="color: var(--gold);">Failed to load bank accounts.</td></tr>`;
+        tbody.innerHTML = `<tr><td colspan="5" style="color: var(--accent);">Failed to load bank accounts.</td></tr>`;
         return;
       }
       if (!data.length) {
@@ -910,6 +966,7 @@
       });
     }
 
+    // DELETE BANK ACCOUNT
     async function deleteBankAccount(id) {
       if (!confirm('Delete this bank account?')) return;
       const { error } = await supabase
@@ -921,6 +978,7 @@
       await loadBankAccounts();
     }
 
+    // LOAD CRYPTO WALLETS
     async function loadWallets() {
       const tbody = document.getElementById('wallets-body');
       tbody.innerHTML = `<tr><td colspan="3"><div class="text-center spinner-border"></div></td></tr>`;
@@ -930,7 +988,7 @@
         .eq('affiliate_id', affiliateId)
         .order('created_at', { ascending: false });
       if (error) {
-        tbody.innerHTML = `<tr><td colspan="3" style="color: var(--gold);">Failed to load wallets.</td></tr>`;
+        tbody.innerHTML = `<tr><td colspan="3" style="color: var(--accent);">Failed to load wallets.</td></tr>`;
         return;
       }
       if (!data.length) {
@@ -949,6 +1007,7 @@
       });
     }
 
+    // DELETE WALLET
     async function deleteWallet(id) {
       if (!confirm('Delete this wallet?')) return;
       const { error } = await supabase
@@ -960,6 +1019,7 @@
       await loadWallets();
     }
 
+    // LOAD PAYOUTS
     async function loadPayouts() {
       const listEl = document.getElementById('withdrawals-list');
       listEl.innerHTML = `<li class="text-center"><div class="spinner-border"></div></li>`;
@@ -969,7 +1029,7 @@
         .eq('affiliate_id', affiliateId)
         .order('requested_at', { ascending: false });
       if (error) {
-        listEl.innerHTML = `<li style="color: var(--gold);">Failed to load payouts.</li>`;
+        listEl.innerHTML = `<li style="color: var(--accent);">Failed to load payouts.</li>`;
         return;
       }
       if (!data.length) {
@@ -992,6 +1052,7 @@
       });
     }
 
+    // THEME TOGGLE
     function setupThemeToggle() {
       const btn = document.getElementById('theme-toggle-btn');
       const icon = document.getElementById('theme-icon');
@@ -1007,6 +1068,7 @@
       });
     }
 
+    // SIDEBAR TOGGLE
     function setupSidebarToggle() {
       document.getElementById('sidebar-toggle').addEventListener('click', () => {
         document.getElementById('sidebar').classList.toggle('expanded');
