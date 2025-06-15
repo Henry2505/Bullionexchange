@@ -442,12 +442,10 @@
       card.classList.add('visible');
       // Referral from URL
       const params = new URLSearchParams(location.search),
-            ref = params.get('ref') ? params.get('ref').toUpperCase() : null;
+            ref = params.get('ref');
       if (ref) {
         document.getElementById('referral-note').textContent = `Referred by: ${ref}`;
         document.getElementById('apply-referral').value = ref;
-      } else {
-        document.getElementById('referral-note').textContent = 'Have a referral code? Enter it below to support an affiliate!';
       }
       // Initialize quote
       updateQuote();
@@ -508,7 +506,7 @@
       switch (field) {
         case 'name':
           if (!value.trim()) return 'Full name is required.';
-          if (!/^[A-Za-z\s]{12,}\s[A-Za-z\s]{2,}$/.test(value)) return 'Please enter a valid full name (first and last name).';
+          if (!/^[A-Za-z\s]{2,}\s[A-Za-z\s]{2,}$/.test(value)) return 'Please enter a valid full name (first and last name).';
           return '';
         case 'email':
           if (!value.trim()) return 'Email address is required.';
@@ -598,7 +596,7 @@
             password   = inputs.password.value,
             phone      = inputs.phone.value.trim(),
             experience = inputs.experience.value.trim(),
-            manualRef  = inputs.referral.value.trim().toUpperCase();
+            manualRef  = inputs.referral.value.trim();
 
       // 1) Client-side validation
       for (const [key, input] of Object.entries(inputs)) {
@@ -629,25 +627,18 @@
 
         // B) Validate referral code if provided
         let referredBy = null;
-        const urlRef = new URLSearchParams(location.search).get('ref') ? new URLSearchParams(location.search).get('ref').toUpperCase() : null;
-        const code   = (manualRef || urlRef || '').trim();
+        const urlRef = new URLSearchParams(location.search).get('ref'),
+              code   = (manualRef || urlRef || '').trim();
 
         if (code) {
           const { data: aff, error: refErr } = await supabaseClient
             .from('affiliate_accounts')
             .select('id')
-            .eq('referral_code', code)
+            .eq('referral_code', code)     // ← use exact match
             .single();
 
-          if (refErr) {
-            if (refErr.code === '429') {
-              showError('Too many requests. Please try again later.');
-            } else {
-              showError('Invalid referral code. Please check and try again, or leave it blank.');
-            }
-            return;
-          }
-          if (!aff) {
+          console.log('Referral lookup:', { code, aff, refErr });
+          if (refErr || !aff) {
             showError('Invalid referral code. Please check and try again, or leave it blank.');
             return;
           }
