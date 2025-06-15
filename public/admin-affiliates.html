@@ -424,11 +424,10 @@
           .from('referrals')
           .select(`
             id,
-            referral_code,
             status,
             account_number,
             referred_email,
-            affiliate:affiliate_id (email)
+            affiliate:affiliate_id (email, referral_code)
           `)
           .order('created_at', { ascending: false });
         if (error) throw error;
@@ -450,7 +449,7 @@
             index + 1,
             referral.affiliate?.email || '—',
             referral.referred_email || '—',
-            referral.referral_code || '—',
+            referral.affiliate?.referral_code || '—',
             `<span class="status-badge status-${referral.status.toLowerCase()}">${referral.status.charAt(0).toUpperCase() + referral.status.slice(1)}</span>`,
             referral.account_number || '—',
             getActionButtons(referral.id, referral.status)
@@ -496,18 +495,13 @@
     // Action Functions
     window.editReferral = async (id) => {
       try {
-        const { data: referral, error } = await sb.from('referrals').select('account_number, referral_code').eq('id', id).single();
+        const { data: referral, error } = await sb.from('referrals').select('account_number').eq('id', id).single();
         if (error) throw error;
         
         const accountNumber = prompt('Edit account number:', referral.account_number || '');
-        const referralCode = prompt('Edit referral code:', referral.referral_code || '');
         
-        if (accountNumber !== null || referralCode !== null) {
-          const updates = {};
-          if (accountNumber !== null) updates.account_number = accountNumber;
-          if (referralCode !== null) updates.referral_code = referralCode;
-          
-          const { error: updateError } = await sb.from('referrals').update(updates).eq('id', id);
+        if (accountNumber !== null) {
+          const { error: updateError } = await sb.from('referrals').update({ account_number: accountNumber }).eq('id', id);
           if (updateError) throw updateError;
           showNotification('Referral updated successfully!');
           await loadReferrals();
