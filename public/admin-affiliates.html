@@ -127,6 +127,9 @@
       transform: translateY(-8px); box-shadow: 0 15px 30px rgba(0,0,0,0.3);
       border-color: var(--gold);
     }
+    .stats-card.active {
+      box-shadow: 0 0 0 3px var(--gold);
+    }
     .stats-icon {
       width: 60px; height: 60px; border-radius: 12px; display: flex;
       align-items: center; justify-content: center; margin-bottom: 1rem; font-size: 1.8rem;
@@ -198,15 +201,32 @@
     .status-approved { background: rgba(40, 167, 69, 0.15); color: var(--success); }
     .status-rejected { background: rgba(220, 53, 69, 0.15); color: var(--danger); }
     
+    .notification-popup {
+      position: fixed; top: 20px; right: 20px; padding: 15px 25px; background: var(--gold);
+      color: #000; border-radius: 8px; box-shadow: 0 5px 15px rgba(0,0,0,0.3); z-index: 1000;
+      transform: translateX(110%); transition: transform 0.3s ease;
+    }
+    .notification-popup.show { transform: translateX(0); }
+    
+    footer {
+      text-align: center; padding: 1.5rem; color: #aaa; font-size: 0.9rem;
+      border-top: 1px solid rgba(212, 175, 55, 0.1); margin-top: 2rem;
+      background: var(--glass); backdrop-filter: blur(10px);
+    }
+    
     .gold-divider {
       height: 2px; background: var(--gold-gradient); margin: 1.5rem 0;
       border-radius: 2px; box-shadow: 0 0 10px rgba(212, 175, 55, 0.2);
     }
     
+    @media (max-width: 992px) {
+      .stats-grid { grid-template-columns: repeat(2, 1fr); }
+    }
     @media (max-width: 768px) {
       .header-left h1 { display: none; }
       .bulk-actions { flex-direction: column; }
       .bulk-actions button { width: 100%; }
+      .stats-grid { grid-template-columns: 1fr; }
       main { padding: 1rem; }
       .glass { padding: 1.5rem; }
     }
@@ -251,7 +271,7 @@
       </div>
       
       <!-- Statistics Cards -->
-      <div class="row row-cols-1 row-cols-md-2 row-cols-lg-4 g-4 mb-5">
+      <div class="row row-cols-1 row-cols-md-2 row-cols-lg-4 g-4 mb-5 stats-grid">
         <div class="col">
           <div class="stats-card" id="all-referrals-card">
             <div class="stats-icon gold"><i class="bi bi-people"></i></div>
@@ -289,6 +309,7 @@
         <button class="btn btn-gold" id="bulk-approve"><i class="bi bi-check-circle me-1"></i> Approve Selected</button>
         <button class="btn btn-gold" id="bulk-reject"><i class="bi bi-x-circle me-1"></i> Reject Selected</button>
         <button class="btn btn-gold" id="bulk-delete"><i class="bi bi-trash me-1"></i> Delete Selected</button>
+        <button class="btn btn-success" id="export-data"><i class="bi bi-file-earmark-spreadsheet me-1"></i> Export Data</button>
       </div>
       
       <!-- Referrals Table -->
@@ -313,6 +334,19 @@
       </div>
     </div>
   </main>
+
+  <!-- Notification Popup -->
+  <div class="notification-popup" id="notification-popup">
+    <i class="bi bi-check-circle-fill me-2"></i>
+    <span id="notification-text">Action completed successfully!</span>
+  </div>
+
+  <!-- Footer -->
+  <footer>
+    <div class="container">
+      <p class="mb-0">© 2025 Chukwuemeka Bullion Exchange. All rights reserved.</p>
+    </div>
+  </footer>
 
   <!-- External Scripts -->
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
@@ -342,9 +376,18 @@
     };
 
     // Supabase Client
-    const SUPABASE_URL = 'YOUR_SUPABASE_URL_HERE';
-    const SUPABASE_ANON_KEY = 'YOUR_SUPABASE_ANON_KEY_HERE';
+    const SUPABASE_URL = 'https://dapwpgvnfjcfqqhrpxla.supabase.co';
+    const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImRhcHdwZ3ZuZmpjZnFxaHJweGxhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDcwNDA4ODgsImV4cCI6MjA2MjYxNjg4OH0.ICC0UsLlzJDNre7rFCeD3k6iVzo6jOJgn3PhABpEMsQ';
     const sb = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+    // Notification Function
+    function showNotification(message) {
+      const popup = document.getElementById('notification-popup');
+      const text = document.getElementById('notification-text');
+      text.textContent = message;
+      popup.classList.add('show');
+      setTimeout(() => popup.classList.remove('show'), 3000);
+    }
 
     // Initialize DataTable
     const table = $('#referrals-table').DataTable({
@@ -384,8 +427,8 @@
             referral_code,
             status,
             account_number,
-            referrer:referrer_id (email),
-            referred:referred_user_id (email)
+            referred_email,
+            affiliate:affiliate_id (email)
           `)
           .order('created_at', { ascending: false });
         if (error) throw error;
@@ -405,10 +448,10 @@
           table.row.add([
             `<input type="checkbox" class="row-select" data-id="${referral.id}" style="accent-color: var(--gold);">`,
             index + 1,
-            referral.referrer?.email || '—',
-            referral.referred?.email || '—',
+            referral.affiliate?.email || '—',
+            referral.referred_email || '—',
             referral.referral_code || '—',
-            `<span class="status-badge status-${referral.status.toLowerCase()}">${referral.status}</span>`,
+            `<span class="status-badge status-${referral.status.toLowerCase()}">${referral.status.charAt(0).toUpperCase() + referral.status.slice(1)}</span>`,
             referral.account_number || '—',
             getActionButtons(referral.id, referral.status)
           ]);
@@ -421,7 +464,7 @@
         document.getElementById('rejected-referrals').textContent = rejectedReferrals;
       } catch (error) {
         console.error('Error loading referrals:', error);
-        alert('Failed to load referrals: ' + error.message);
+        showNotification('Failed to load referrals: ' + error.message);
       }
     }
 
@@ -452,18 +495,38 @@
 
     // Action Functions
     window.editReferral = async (id) => {
-      alert('Edit functionality not implemented yet.'); // Placeholder for future implementation
+      try {
+        const { data: referral, error } = await sb.from('referrals').select('account_number, referral_code').eq('id', id).single();
+        if (error) throw error;
+        
+        const accountNumber = prompt('Edit account number:', referral.account_number || '');
+        const referralCode = prompt('Edit referral code:', referral.referral_code || '');
+        
+        if (accountNumber !== null || referralCode !== null) {
+          const updates = {};
+          if (accountNumber !== null) updates.account_number = accountNumber;
+          if (referralCode !== null) updates.referral_code = referralCode;
+          
+          const { error: updateError } = await sb.from('referrals').update(updates).eq('id', id);
+          if (updateError) throw updateError;
+          showNotification('Referral updated successfully!');
+          await loadReferrals();
+        }
+      } catch (error) {
+        console.error('Error editing referral:', error);
+        showNotification('Failed to edit referral: ' + error.message);
+      }
     };
 
     window.approveReferral = async (id) => {
       try {
         const { error } = await sb.from('referrals').update({ status: 'approved' }).eq('id', id);
         if (error) throw error;
-        alert('Referral approved successfully!');
+        showNotification('Referral approved successfully!');
         await loadReferrals();
       } catch (error) {
         console.error('Error approving referral:', error);
-        alert('Failed to approve referral: ' + error.message);
+        showNotification('Failed to approve referral: ' + error.message);
       }
     };
 
@@ -471,11 +534,11 @@
       try {
         const { error } = await sb.from('referrals').update({ status: 'rejected' }).eq('id', id);
         if (error) throw error;
-        alert('Referral rejected successfully!');
+        showNotification('Referral rejected successfully!');
         await loadReferrals();
       } catch (error) {
         console.error('Error rejecting referral:', error);
-        alert('Failed to reject referral: ' + error.message);
+        showNotification('Failed to reject referral: ' + error.message);
       }
     };
 
@@ -484,11 +547,11 @@
         try {
           const { error } = await sb.from('referrals').delete().eq('id', id);
           if (error) throw error;
-          alert('Referral deleted successfully!');
+          showNotification('Referral deleted successfully!');
           await loadReferrals();
         } catch (error) {
           console.error('Error deleting referral:', error);
-          alert('Failed to delete referral: ' + error.message);
+          showNotification('Failed to delete referral: ' + error.message);
         }
       }
     };
@@ -511,45 +574,49 @@
     // Bulk Actions
     document.getElementById('bulk-approve').addEventListener('click', async () => {
       const referralIds = getSelectedReferralIds();
-      if (referralIds.length === 0) return alert('Please select at least one referral to approve.');
+      if (referralIds.length === 0) return showNotification('Please select at least one referral to approve.');
       try {
         const { error } = await sb.from('referrals').update({ status: 'approved' }).in('id', referralIds);
         if (error) throw error;
-        alert(`${referralIds.length} referrals approved successfully!`);
+        showNotification(`${referralIds.length} referrals approved successfully!`);
         await loadReferrals();
       } catch (error) {
         console.error('Bulk approval error:', error);
-        alert('Failed to approve referrals: ' + error.message);
+        showNotification('Failed to approve referrals: ' + error.message);
       }
     });
 
     document.getElementById('bulk-reject').addEventListener('click', async () => {
       const referralIds = getSelectedReferralIds();
-      if (referralIds.length === 0) return alert('Please select at least one referral to reject.');
+      if (referralIds.length === 0) return showNotification('Please select at least one referral to reject.');
       try {
         const { error } = await sb.from('referrals').update({ status: 'rejected' }).in('id', referralIds);
         if (error) throw error;
-        alert(`${referralIds.length} referrals rejected successfully!`);
+        showNotification(`${referralIds.length} referrals rejected successfully!`);
         await loadReferrals();
       } catch (error) {
         console.error('Bulk rejection error:', error);
-        alert('Failed to reject referrals: ' + error.message);
+        showNotification('Failed to reject referrals: ' + error.message);
       }
     });
 
     document.getElementById('bulk-delete').addEventListener('click', async () => {
       const referralIds = getSelectedReferralIds();
-      if (referralIds.length === 0) return alert('Please select at least one referral to delete.');
+      if (referralIds.length === 0) return showNotification('Please select at least one referral to delete.');
       if (!confirm(`Are you sure you want to delete ${referralIds.length} referrals?`)) return;
       try {
         const { error } = await sb.from('referrals').delete().in('id', referralIds);
         if (error) throw error;
-        alert(`${referralIds.length} referrals deleted successfully!`);
+        showNotification(`${referralIds.length} referrals deleted successfully!`);
         await loadReferrals();
       } catch (error) {
         console.error('Bulk deletion error:', error);
-        alert('Failed to delete referrals: ' + error.message);
+        showNotification('Failed to delete referrals: ' + error.message);
       }
+    });
+
+    document.getElementById('export-data').addEventListener('click', () => {
+      table.button('.buttons-csv').trigger();
     });
 
     // Search Input
@@ -559,19 +626,28 @@
 
     // Statistics Card Filters
     document.getElementById('pending-referrals-card').addEventListener('click', () => {
-      table.column(5).search('pending').draw();
+      table.search('').columns().search('').column(5).search('pending').draw();
+      $('.stats-card').removeClass('active');
+      document.getElementById('pending-referrals-card').classList.add('active');
     });
     document.getElementById('approved-referrals-card').addEventListener('click', () => {
-      table.column(5).search('approved').draw();
+      table.search('').columns().search('').column(5).search('approved').draw();
+      $('.stats-card').removeClass('active');
+      document.getElementById('approved-referrals-card').classList.add('active');
     });
     document.getElementById('rejected-referrals-card').addEventListener('click', () => {
-      table.column(5).search('rejected').draw();
+      table.search('').columns().search('').column(5).search('rejected').draw();
+      $('.stats-card').removeClass('active');
+      document.getElementById('rejected-referrals-card').classList.add('active');
     });
     document.getElementById('all-referrals-card').addEventListener('click', () => {
       table.search('').columns().search('').draw();
+      $('.stats-card').removeClass('active');
+      document.getElementById('all-referrals-card').classList.add('active');
     });
     document.getElementById('reset-filters').addEventListener('click', () => {
       table.search('').columns().search('').draw();
+      $('.stats-card').removeClass('active');
     });
 
     // Initial Load
