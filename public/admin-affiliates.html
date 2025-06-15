@@ -1,535 +1,177 @@
 <!DOCTYPE html>
 <html lang="en" data-theme="dark">
 <head>
-  <meta charset="UTF-8"/>
-  <meta name="viewport" content="width=device-width, initial-scale=1"/>
-  <title>CBE Admin – Referral Management</title>
-  
-  <!-- Basic Authentication Check -->
-  <script>
-    if (localStorage.getItem('isLoggedIn') !== 'true') {
-      window.location.replace('admin-login.html?redirect=' + encodeURIComponent(window.location.pathname));
-    }
-  </script>
-  
-  <!-- External Stylesheets -->
-  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-  <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css" rel="stylesheet">
-  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet"/>
-  <link href="https://cdn.datatables.net/1.13.4/css/dataTables.bootstrap5.min.css" rel="stylesheet"/>
-  <link href="https://cdn.datatables.net/buttons/2.3.6/css/buttons.bootstrap5.min.css" rel="stylesheet"/>
-  <link href="https://cdn.datatables.net/select/1.7.0/css/select.bootstrap5.min.css" rel="stylesheet"/>
-  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Admin Panel • Apex Income Options</title>
 
-  <!-- Inline CSS -->
+  <!-- Bootstrap & Icons -->
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" rel="stylesheet">
+
   <style>
-    :root[data-theme="dark"] {
-      --bg: #0a0a0a; --text: #ffffff; --gold: #d4af37; --gold-light: #e6c567;
-      --gold-dark: #a67c00; --gold-darker: #7d5d00; --glass: rgba(30, 30, 30, 0.8);
-      --glass-light: rgba(60, 60, 60, 0.5); --success: #28a745; --warning: #ffc107;
-      --danger: #dc3545; --card-bg: #1a1a1a; --card-border: #333; --shadow: rgba(0, 0, 0, 0.5);
-      --highlight: rgba(212, 175, 55, 0.15); --gold-gradient: linear-gradient(135deg, var(--gold), var(--gold-dark));
+    :root {
+      --background: #000;
+      --accent:   #FFD700;
+      --text:     #FFF;
+      --muted:    #BBB;
     }
-    :root[data-theme="light"] {
-      --bg: #f5f5f5; --text: #1a1a1a; --gold: #d4af37; --gold-light: #e6c567;
-      --gold-dark: #a67c00; --gold-darker: #7d5d00; --glass: rgba(245, 245, 245, 0.9);
-      --glass-light: rgba(230, 230, 230, 0.7); --success: #28a745; --warning: #ffc107;
-      --danger: #dc3545; --card-bg: #ffffff; --card-border: #e0e0e0; --shadow: rgba(0, 0, 0, 0.1);
-      --highlight: rgba(212, 175, 55, 0.1); --gold-gradient: linear-gradient(135deg, var(--gold), var(--gold-dark));
+    body {
+      background: var(--background);
+      color: var(--text);
     }
-
-    * { margin: 0; padding: 0; box-sizing: border-box; }
-    body, html {
-      width: 100%; height: 100%; font-family: 'Poppins', sans-serif;
-      background: var(--bg); color: var(--text); overflow-x: hidden;
-      background-image: radial-gradient(circle at 15% 50%, rgba(212, 175, 55, 0.05) 0%, transparent 20%),
-                      radial-gradient(circle at 85% 30%, rgba(212, 175, 55, 0.05) 0%, transparent 20%);
+    .sidebar {
+      width: 240px;
+      position: fixed;
+      top: 0; bottom: 0;
+      background: var(--background);
+      border-right: 1px solid var(--accent);
+      padding-top: 1rem;
     }
-    a { text-decoration: none; }
-    
-    .btn-gold {
-      background: var(--gold-gradient); color: #fff; border: none; transition: all 0.3s ease;
-      font-weight: 500; border-radius: 8px; box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
-      position: relative; overflow: hidden;
+    .sidebar .nav-link {
+      color: var(--text);
     }
-    .btn-gold:before {
-      content: ''; position: absolute; top: 0; left: -100%; width: 100%; height: 100%;
-      background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
-      transition: 0.5s;
+    .sidebar .nav-link.active, .sidebar .nav-link:hover {
+      color: var(--background);
+      background: var(--accent);
     }
-    .btn-gold:hover {
-      background: linear-gradient(135deg, var(--gold-light), var(--gold-darker));
-      transform: translateY(-2px); box-shadow: 0 6px 15px rgba(0,0,0,0.3);
+    .main-content {
+      margin-left: 240px;
+      padding: 1.5rem;
     }
-    .btn-gold:hover:before { left: 100%; }
-    .btn-success { background: linear-gradient(135deg, var(--success), #1e7e34); }
-    .btn-danger { background: linear-gradient(135deg, var(--danger), #bd2130); }
-
-    header {
-      display: flex; align-items: center; justify-content: space-between;
-      background: var(--glass); padding: 0.8rem 2rem; box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
-      position: sticky; top: 0; z-index: 100; backdrop-filter: blur(10px);
-      border-bottom: 2px solid var(--gold);
+    .card, .table {
+      background: var(--background);
+      border: 1px solid var(--accent);
     }
-    .header-left { display: flex; align-items: center; gap: 1.5rem; }
-    .header-left img {
-      height: 45px; transition: transform 0.3s; filter: drop-shadow(0 0 5px rgba(212, 175, 55, 0.5));
+    .card-header, .table thead th {
+      background: var(--accent);
+      color: var(--background);
     }
-    .header-left img:hover { transform: scale(1.05); }
-    header h1 {
-      font-size: 1.4rem; font-weight: 600; color: var(--gold); letter-spacing: 0.5px;
-      text-shadow: 0 0 10px rgba(212, 175, 55, 0.3);
-    }
-    #theme-toggle {
-      background: var(--glass-light); border: 1px solid rgba(212, 175, 55, 0.3);
-      font-size: 1.5rem; cursor: pointer; color: var(--gold); width: 40px; height: 40px;
-      border-radius: 50%; display: flex; align-items: center; justify-content: center;
-      transition: all 0.3s; box-shadow: 0 0 10px rgba(0,0,0,0.1);
-    }
-    #theme-toggle:hover {
-      transform: rotate(15deg); background: var(--highlight);
-      box-shadow: 0 0 15px rgba(212, 175, 55, 0.3);
-    }
-
-    main { padding: 2rem; }
-    .glass {
-      background: var(--glass); backdrop-filter: blur(12px); border-radius: 12px;
-      padding: 2rem; box-shadow: 0 15px 35px var(--shadow); border: 1px solid var(--card-border);
-      position: relative; overflow: hidden;
-    }
-    .glass:before {
-      content: ''; position: absolute; top: -50%; left: -50%; width: 200%; height: 200%;
-      background: radial-gradient(circle, rgba(212, 175, 55, 0.1) 0%, transparent 70%);
-      pointer-events: none;
-    }
-    .panel-title {
-      color: var(--gold); margin-bottom: 1.8rem; font-weight: 600; font-size: 1.4rem;
-      display: flex; align-items: center; gap: 10px; position: relative;
-      text-shadow: 0 0 8px rgba(212, 175, 55, 0.2);
-    }
-    .panel-title:after {
-      content: ''; position: absolute; bottom: -10px; left: 0;
-      width: 50px; height: 3px; background: var(--gold-gradient); border-radius: 3px;
-    }
-    .panel-title i { font-size: 1.3rem; }
-
-    .stats-card {
-      background: var(--card-bg); border-radius: 12px; padding: 1.5rem;
-      border: 1px solid rgba(212, 175, 55, 0.2); transition: all 0.3s; height: 100%;
-      position: relative; overflow: hidden; box-shadow: 0 5px 15px rgba(0,0,0,0.2);
-      cursor: pointer;
-    }
-    .stats-card:before {
-      content: ''; position: absolute; top: 0; left: 0; right: 0; height: 4px;
-      background: var(--gold-gradient);
-    }
-    .stats-card:hover {
-      transform: translateY(-8px); box-shadow: 0 15px 30px rgba(0,0,0,0.3);
-      border-color: var(--gold);
-    }
-    .stats-card.active {
-      box-shadow: 0 0 0 3px var(--gold);
-    }
-    .stats-icon {
-      width: 60px; height: 60px; border-radius: 12px; display: flex;
-      align-items: center; justify-content: center; margin-bottom: 1rem; font-size: 1.8rem;
-      box-shadow: 0 5px 15px rgba(0,0,0,0.1);
-    }
-    .stats-icon.gold { background: rgba(212, 175, 55, 0.15); color: var(--gold); }
-    .stats-value {
-      font-size: 2rem; font-weight: 700; margin-bottom: 0.2rem; color: var(--text);
-    }
-    .stats-label {
-      font-size: 0.9rem; color: #aaa; text-transform: uppercase; letter-spacing: 1px;
-    }
-
-    .dataTables_wrapper { margin-top: 1.5rem; }
-    .dt-buttons .btn {
-      margin-right: 0.5rem; background: var(--gold-gradient); border: none; color: #fff;
-      border-radius: 8px; transition: all 0.3s; font-weight: 500; padding: 0.5rem 1rem;
-      box-shadow: 0 4px 10px rgba(0,0,0,0.2);
-    }
-    .dt-buttons .btn:hover {
-      transform: translateY(-2px); box-shadow: 0 6px 15px rgba(0,0,0,0.3);
-    }
-    table.dataTable {
-      color: var(--text) !important; border-collapse: separate; border-spacing: 0 8px;
-      width: 100% !important;
-    }
-    table.dataTable thead th {
-      background: var(--gold-gradient); color: #fff; padding: 1rem 1.2rem; text-align: left;
-      font-weight: 500; border: none; text-shadow: 0 1px 2px rgba(0,0,0,0.3); position: relative;
-    }
-    table.dataTable thead th:first-child { border-radius: 10px 0 0 10px; }
-    table.dataTable thead th:last-child { border-radius: 0 10px 10px 0; }
-    table.dataTable thead th:after {
-      content: ''; position: absolute; bottom: 0; left: 0; right: 0; height: 2px;
-      background: rgba(255, 255, 255, 0.2);
-    }
-    table.dataTable tbody td {
-      padding: 1.2rem; background: var(--card-bg); border: none; vertical-align: middle;
-      border: 1px solid rgba(212, 175, 55, 0.05);
-    }
-    table.dataTable tbody tr {
-      transition: all 0.3s ease; border-radius: 10px; overflow: hidden;
-      box-shadow: 0 3px 10px rgba(0,0,0,0.1);
-    }
-    table.dataTable tbody tr:hover {
-      background: var(--highlight); box-shadow: 0 8px 25px rgba(0,0,0,0.3);
-      transform: translateY(-3px);
-    }
-    table.dataTable tbody tr td:first-child { border-radius: 10px 0 0 10px; border-left: 2px solid var(--gold); }
-    table.dataTable tbody tr td:last-child { border-radius: 0 10px 10px 0; }
-    .col-index, .col-actions { text-align: center; }
-    .btn-sm {
-      padding: 0.4rem 0.8rem; font-size: 0.85rem; border-radius: 6px; margin: 0 0.2rem;
-      font-weight: 500; border: none; transition: all 0.2s; box-shadow: 0 2px 5px rgba(0,0,0,0.1);
-    }
-    .btn-sm:hover {
-      transform: translateY(-2px); box-shadow: 0 4px 8px rgba(0,0,0,0.2);
-    }
-    .bulk-actions { margin-bottom: 1.5rem; display: flex; gap: 0.8rem; flex-wrap: wrap; }
-    
-    .notification-popup {
-      position: fixed; top: 20px; right: 20px; padding: 15px 25px; background: var(--gold);
-      color: #000; border-radius: 8px; box-shadow: 0 5px 15px rgba(0,0,0,0.3); z-index: 1000;
-      transform: translateX(110%); transition: transform 0.3s ease;
-    }
-    .notification-popup.show { transform: translateX(0); }
-    
-    footer {
-      text-align: center; padding: 1.5rem; color: #aaa; font-size: 0.9rem;
-      border-top: 1px solid rgba(212, 175, 55, 0.1); margin-top: 2rem;
-      background: var(--glass); backdrop-filter: blur(10px);
-    }
-    
-    .gold-divider {
-      height: 2px; background: var(--gold-gradient); margin: 1.5rem 0;
-      border-radius: 2px; box-shadow: 0 0 10px rgba(212, 175, 55, 0.2);
-    }
-    
-    @media (max-width: 992px) {
-      .stats-grid { grid-template-columns: repeat(2, 1fr); }
-    }
-    @media (max-width: 768px) {
-      .header-left h1 { display: none; }
-      .bulk-actions { flex-direction: column; }
-      .bulk-actions button { width: 100%; }
-      .stats-grid { grid-template-columns: 1fr; }
-      main { padding: 1rem; }
-      .glass { padding: 1.5rem; }
+    .btn-primary {
+      background: var(--accent);
+      border-color: var(--accent);
+      color: var(--background);
     }
   </style>
 </head>
-
 <body>
-  <!-- Header -->
-  <header>
-    <div class="header-left">
-      <a href="admin-dashboard.html">
-        <img src="CBE_logo.PNG" alt="CBE Logo"/>
-      </a>
-      <h1>Referral Management</h1>
-    </div>
-    <div class="d-flex align-items-center gap-3">
-      <div class="position-relative">
-        <i class="bi bi-bell fs-5" style="color: var(--gold);"></i>
-        <span class="position-absolute top-0 start-100 translate-middle p-1 bg-danger border border-light rounded-circle">
-          <span class="visually-hidden">New alerts</span>
-        </span>
-      </div>
-      <button id="theme-toggle" aria-label="Toggle theme">🌞</button>
-    </div>
-  </header>
 
-  <!-- Main Content -->
-  <main class="container">
-    <div class="glass">
-      <div class="d-flex justify-content-between align-items-center flex-wrap gap-3 mb-4">
-        <h3 class="panel-title"><i class="bi bi-people-fill"></i> Referral Management</h3>
-        <div class="d-flex gap-2">
-          <div class="input-group" style="max-width: 300px;">
-            <span class="input-group-text bg-transparent border-end-0" style="color: var(--gold);">
-              <i class="bi bi-search"></i>
-            </span>
-            <input type="text" id="search-input" class="form-control border-start-0" 
-                   placeholder="Search referrals..." style="background: var(--card-bg); color: var(--text);">
-          </div>
-          <button class="btn btn-gold" id="reset-filters"><i class="bi bi-x-circle me-1"></i> Reset Filters</button>
-        </div>
-      </div>
-      
-      <!-- Statistics Cards -->
-      <div class="row row-cols-1 row-cols-md-2 row-cols-lg-4 g-4 mb-5 stats-grid">
-        <div class="col">
-          <div class="stats-card" id="all-referrals-card">
-            <div class="stats-icon gold"><i class="bi bi-people"></i></div>
-            <div class="stats-value" id="total-referrals">0</div>
-            <div class="stats-label">Total Referrals</div>
-          </div>
-        </div>
-      </div>
-      
-      <div class="gold-divider"></div>
-
-      <!-- Bulk Actions -->
-      <div class="bulk-actions">
-        <button class="btn btn-gold" id="bulk-delete"><i class="bi bi-trash me-1"></i> Delete Selected</button>
-        <button class="btn btn-success" id="export-data"><i class="bi bi-file-earmark-spreadsheet me-1"></i> Export Data</button>
-      </div>
-      
-      <!-- Referrals Table -->
-      <div class="table-responsive">
-        <table id="referrals-table" class="table table-hover" style="width:100%">
-          <thead>
-            <tr>
-              <th><input type="checkbox" id="select-all" style="accent-color: var(--gold);"></th>
-              <th class="col-index">#</th>
-              <th>Referrer Email</th>
-              <th>Referred Email</th>
-              <th>Referral Code</th>
-              <th>Account Number</th>
-              <th class="col-actions">Actions</th>
-            </tr>
-          </thead>
-          <tbody>
-            <!-- Data populated by JavaScript -->
-          </tbody>
-        </table>
-      </div>
-    </div>
-  </main>
-
-  <!-- Notification Popup -->
-  <div class="notification-popup" id="notification-popup">
-    <i class="bi bi-check-circle-fill me-2"></i>
-    <span id="notification-text">Action completed successfully!</span>
+  <!-- Sidebar -->
+  <div class="sidebar d-flex flex-column">
+    <h4 class="px-3 text-accent">Admin Panel</h4>
+    <nav class="nav flex-column px-3">
+      <a class="nav-link active" href="#overview">🏠 Overview</a>
+      <a class="nav-link" href="#affiliates">👥 Affiliates</a>
+      <a class="nav-link" href="#referrals">🔗 Referrals</a>
+      <a class="nav-link" href="#payouts">💵 Payouts</a>
+      <a class="nav-link" href="#settings">⚙️ Settings</a>
+      <button id="logout-btn" class="btn btn-outline-danger mt-3">Logout</button>
+    </nav>
   </div>
 
-  <!-- Footer -->
-  <footer>
-    <div class="container">
-      <p class="mb-0">© 2025 Chukwuemeka Bullion Exchange. All rights reserved.</p>
-    </div>
-  </footer>
+  <!-- Main -->
+  <div class="main-content">
+    <!-- Overview -->
+    <section id="overview" class="mb-5">
+      <h2>Overview</h2>
+      <div class="row g-3">
+        <div class="col-md-3">
+          <div class="card p-3 text-center">
+            <h5>Total Affiliates</h5>
+            <div class="display-6" id="stat-affiliates">0</div>
+          </div>
+        </div>
+        <div class="col-md-3">
+          <div class="card p-3 text-center">
+            <h5>Total Referrals</h5>
+            <div class="display-6" id="stat-referrals">0</div>
+          </div>
+        </div>
+        <div class="col-md-3">
+          <div class="card p-3 text-center">
+            <h5>Pending Payouts</h5>
+            <div class="display-6" id="stat-payouts">0</div>
+          </div>
+        </div>
+      </div>
+    </section>
 
-  <!-- External Scripts -->
-  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-  <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
-  <script src="https://cdn.datatables.net/1.13.4/js/jquery.dataTables.min.js"></script>
-  <script src="https://cdn.datatables.net/1.13.4/js/dataTables.bootstrap5.min.js"></script>
-  <script src="https://cdn.datatables.net/buttons/2.3.6/js/dataTables.buttons.min.js"></script>
-  <script src="https://cdn.datatables.net/buttons/2.3.6/js/buttons.bootstrap5.min.js"></script>
-  <script src="https://cdn.datatables.net/buttons/2.3.6/js/buttons.html5.min.js"></script>
-  <script src="https://cdn.datatables.net/select/1.7.0/js/dataTables.select.min.js"></script>
+    <!-- Affiliates -->
+    <section id="affiliates" class="mb-5">
+      <h2>Affiliates</h2>
+      <table class="table table-striped table-hover text-white">
+        <thead>
+          <tr>
+            <th>Email</th>
+            <th>Joined</th>
+            <th>Ref Code</th>
+            <th># Referrals</th>
+            <th>Earnings</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody id="affiliates-table-body">
+          <!-- JS will inject rows here -->
+        </tbody>
+      </table>
+    </section>
+
+    <!-- (Other sections for Referrals, Payouts, Settings go here) -->
+  </div>
+
+  <!-- Bootstrap JS & Supabase -->
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>
-
-  <!-- Inline JavaScript -->
   <script>
-  (async () => {
-    // Theme Toggle
-    const html = document.documentElement;
-    const btn = document.getElementById('theme-toggle');
-    let theme = localStorage.getItem('theme') || 'dark';
-    html.setAttribute('data-theme', theme);
-    btn.textContent = theme === 'dark' ? '🌞' : '🌜';
-    btn.onclick = () => {
-      theme = theme === 'dark' ? 'light' : 'dark';
-      html.setAttribute('data-theme', theme);
-      localStorage.setItem('theme', theme);
-      btn.textContent = theme === 'dark' ? '🌞' : '🌜';
-    };
+    // Initialize Supabase
+    const SUPA_URL = 'https://dapwpgvnfjcfqqhrpxla.supabase.co';
+    const SUPA_KEY = 'PUBLIC_ANON_KEY_HERE';
+    const supabase = supabase.createClient(SUPA_URL, SUPA_KEY);
 
-    // Supabase Client
-    const SUPABASE_URL = 'https://dapwpgvnfjcfqqhrpxla.supabase.co';
-    const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImRhcHdwZ3ZuZmpjZnFxaHJweGxhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDcwNDA4ODgsImV4cCI6MjA2MjYxNjg4OH0.ICC0UsLlzJDNre7rFCeD3k6iVzo6jOJgn3PhABpEMsQ';
-    const sb = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+    // On load, fetch stats & table
+    document.addEventListener('DOMContentLoaded', async () => {
+      // Fetch total affiliates
+      const { count: affCount } = await supabase.from('affiliate_accounts').select('*', { count: 'exact', head: true });
+      document.getElementById('stat-affiliates').textContent = affCount || 0;
 
-    // Notification Function
-    function showNotification(message) {
-      const popup = document.getElementById('notification-popup');
-      const text = document.getElementById('notification-text');
-      text.textContent = message;
-      popup.classList.add('show');
-      setTimeout(() => popup.classList.remove('show'), 3000);
+      // Fetch total referrals
+      const { count: refCount } = await supabase.from('referrals').select('*', { count: 'exact', head: true });
+      document.getElementById('stat-referrals').textContent = refCount || 0;
+
+      // Fetch pending payouts
+      const { count: payCount } = await supabase.from('affiliate_payouts').select('*', { count: 'exact', head: true })
+        .eq('status','pending');
+      document.getElementById('stat-payouts').textContent = payCount || 0;
+
+      // Load affiliates list
+      const { data: affs } = await supabase.from('affiliate_accounts')
+        .select(`id,email,created_at,referral_code,
+          referrals:referrals(count), affiliate_payouts(amount)`)
+        .order('created_at',{ ascending:false });
+      const tbody = document.getElementById('affiliates-table-body');
+      tbody.innerHTML = affs.map(a => {
+        const eCount = a.referrals?.count || 0;
+        const totalEarn = (eCount * 5).toLocaleString(undefined,{ style:'currency', currency:'USD' });
+        return `
+          <tr>
+            <td>${a.email}</td>
+            <td>${new Date(a.created_at).toLocaleDateString()}</td>
+            <td>${a.referral_code||'—'}</td>
+            <td>${eCount}</td>
+            <td>${totalEarn}</td>
+            <td>
+              <button class="btn btn-sm btn-outline-light" onclick="viewAffiliate('${a.id}')">
+                <i class="bi bi-eye"></i>
+              </button>
+            </td>
+          </tr>`;
+      }).join('');
+    });
+
+    function viewAffiliate(id) {
+      // TODO: Navigate to a detail screen or open a modal
+      alert(`Show details for ${id}`);
     }
-
-    // Initialize DataTable
-    const table = $('#referrals-table').DataTable({
-      dom: '<"d-flex justify-content-between mb-3"<"dt-buttons"B><"col-auto"f>>rt<"d-flex justify-content-between mt-3"lip>',
-      buttons: [
-        { extend: 'csvHtml5', text: '<i class="bi bi-file-earmark-spreadsheet me-1"></i> CSV', className: 'btn-gold' },
-        { extend: 'pdfHtml5', text: '<i class="bi bi-file-earmark-pdf me-1"></i> PDF', className: 'btn-gold' }
-      ],
-      paging: true,
-      pageLength: 10,
-      lengthMenu: [5, 10, 25, 50],
-      searching: true,
-      select: { style: 'multi', selector: 'td:first-child input' },
-      order: [[1, 'asc']],
-      columnDefs: [
-        { orderable: false, targets: [0, 6] },
-        { searchable: false, targets: 0 }
-      ],
-      language: {
-        search: "",
-        searchPlaceholder: "Search referrals...",
-        paginate: { previous: '<i class="bi bi-chevron-left"></i>', next: '<i class="bi bi-chevron-right"></i>' }
-      },
-      initComplete: function() {
-        $('.dataTables_filter input').addClass('form-control');
-        $('.dataTables_length select').addClass('form-select');
-      }
-    });
-
-    // Load Referrals from Supabase
-    async function loadReferrals() {
-      try {
-        const { data: referrals, error } = await sb
-          .from('referrals')
-          .select(`
-            id,
-            account_number,
-            referred_email,
-            affiliate:affiliate_id (email, referral_code)
-          `)
-          .order('created_at', { ascending: false });
-        if (error) throw error;
-
-        let totalReferrals = 0;
-
-        table.clear();
-        referrals.forEach((referral, index) => {
-          totalReferrals++;
-          table.row.add([
-            `<input type="checkbox" class="row-select" data-id="${referral.id}" style="accent-color: var(--gold);">`,
-            index + 1,
-            referral.affiliate?.email || '—',
-            referral.referred_email || '—',
-            referral.affiliate?.referral_code || '—',
-            referral.account_number || '—',
-            getActionButtons(referral.id)
-          ]);
-        });
-        table.draw();
-
-        document.getElementById('total-referrals').textContent = totalReferrals;
-      } catch (error) {
-        console.error('Error loading referrals:', error);
-        showNotification('Failed to load referrals: ' + error.message);
-      }
-    }
-
-    // Action Buttons for Each Row
-    function getActionButtons(id) {
-      return `
-        <button class="btn btn-sm btn-gold" title="Edit" onclick="editReferral('${id}')">
-          <i class="bi bi-pencil"></i>
-        </button>
-        <button class="btn btn-sm btn-danger" title="Delete" onclick="deleteReferral('${id}')">
-          <i class="bi bi-trash"></i>
-        </button>
-      `;
-    }
-
-    // Action Functions
-    window.editReferral = async (id) => {
-      try {
-        const { data: referral, error } = await sb.from('referrals').select('account_number, referred_email').eq('id', id).single();
-        if (error) throw error;
-        
-        const accountNumber = prompt('Edit account number:', referral.account_number || '');
-        const referredEmail = prompt('Edit referred email:', referral.referred_email || '');
-        
-        if (accountNumber !== null || referredEmail !== null) {
-          const updates = {};
-          if (accountNumber !== null) updates.account_number = accountNumber;
-          if (referredEmail !== null) updates.referred_email = referredEmail;
-          
-          const { error: updateError } = await sb.from('referrals').update(updates).eq('id', id);
-          if (updateError) throw updateError;
-          showNotification('Referral updated successfully!');
-          await loadReferrals();
-        }
-      } catch (error) {
-        console.error('Error editing referral:', error);
-        showNotification('Failed to edit referral: ' + error.message);
-      }
-    };
-
-    window.deleteReferral = async (id) => {
-      if (confirm('Are you sure you want to delete this referral?')) {
-        try {
-          const { error } = await sb.from('referrals').delete().eq('id', id);
-          if (error) throw error;
-          showNotification('Referral deleted successfully!');
-          await loadReferrals();
-        } catch (error) {
-          console.error('Error deleting referral:', error);
-          showNotification('Failed to delete referral: ' + error.message);
-        }
-      }
-    };
-
-    // Select All Checkbox
-    document.getElementById('select-all').addEventListener('change', (e) => {
-      const checked = e.target.checked;
-      table.rows().every(function () {
-        this.nodes().to$().find('input[type="checkbox"]').prop('checked', checked);
-        this.select(checked);
-      });
-    });
-
-    // Get Selected Referral IDs
-    function getSelectedReferralIds() {
-      const selectedRows = table.rows({ selected: true }).nodes().toArray();
-      return selectedRows.map(row => $(row).find('.row-select').data('id'));
-    }
-
-    // Bulk Actions
-    document.getElementById('bulk-delete').addEventListener('click', async () => {
-      const referralIds = getSelectedReferralIds();
-      if (referralIds.length === 0) return showNotification('Please select at least one referral to delete.');
-      if (!confirm(`Are you sure you want to delete ${referralIds.length} referrals?`)) return;
-      try {
-        const { error } = await sb.from('referrals').delete().in('id', referralIds);
-        if (error) throw error;
-        showNotification(`${referralIds.length} referrals deleted successfully!`);
-        await loadReferrals();
-      } catch (error) {
-        console.error('Bulk deletion error:', error);
-        showNotification('Failed to delete referrals: ' + error.message);
-      }
-    });
-
-    document.getElementById('export-data').addEventListener('click', () => {
-      table.button('.buttons-csv').trigger();
-    });
-
-    // Search Input
-    document.getElementById('search-input').addEventListener('input', function() {
-      table.search(this.value).draw();
-    });
-
-    // Statistics Card Filter
-    document.getElementById('all-referrals-card').addEventListener('click', () => {
-      table.search('').columns().search('').draw();
-      $('.stats-card').removeClass('active');
-      document.getElementById('all-referrals-card').classList.add('active');
-    });
-    document.getElementById('reset-filters').addEventListener('click', () => {
-      table.search('').columns().search('').draw();
-      $('.stats-card').removeClass('active');
-    });
-
-    // Initial Load
-    await loadReferrals();
-
-    // Real-Time Updates
-    const referralChannel = sb.channel('referrals-changes')
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'referrals' }, () => loadReferrals())
-      .subscribe();
-  })();
   </script>
 </body>
 </html>
