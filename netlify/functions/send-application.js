@@ -3,7 +3,7 @@
 /**
  * 1) Validates POST payload
  * 2) Checks “users” table for existing email
- * 3) Verifies referral_code (if provided) by looking up affiliate_accounts → gets affiliate.user_id
+ * 3) Verifies referral_code (if provided) by looking up affiliate_accounts → gets affiliate.id
  * 4) Hashes password (optional) or stores raw
  * 5) Inserts new row into Supabase `users` with status="pending" and referred_by=affiliate_id
  * 6) Sends a confirmation email via Brevo
@@ -107,28 +107,27 @@ exports.handler = async (event, context) => {
   }
 
   // ─── 3) If referral_code provided, verify it in "affiliate_accounts" ───────────────────────
-  let referredByUserId = null;
+  let referredByAffiliateId = null;
   if (referral_code) {
-    // 1) normalize to uppercase
     const code = referral_code.trim().toUpperCase();
-    console.log('🔍 [send-application] validating referral_code:', code);
+    console.log('🔍 validating referral_code:', code);
 
     try {
-      // 2) use the same table your front-end writes to
       const { data: affRow, error: checkErr } = await supabase
-        .from('affiliate_accounts')         // ← was "affiliates"
-        .select('user_id')
-        .eq('referral_code', code)          // exact match against uppercase codes
+        .from('affiliate_accounts')
+        .select('id')            // ← select the correct PK column
+        .eq('referral_code', code)
         .single();
 
-      console.log('↩️ [send-application] supabase reply:', { affRow, checkErr });
+      console.log('↩️ lookup result:', { affRow, checkErr });
       if (checkErr || !affRow) {
         return {
           statusCode: 400,
           body: JSON.stringify({ error: 'Invalid referral code.' }),
         };
       }
-      referredByUserId = affRow.user_id;
+      // store the affiliate_accounts.id, so you can use it in your `users.referred_by` column
+      referredByAffiliateId = affRow.id;
     } catch (err) {
       console.error('Error validating referral code:', err);
       return {
@@ -169,8 +168,8 @@ exports.handler = async (event, context) => {
           password: pwToStore,
           phone,
           experience,
-          referred_by: referredByUserId, // ← store affiliate’s user_id here
-          status: 'pending',             // ensure `users` table has a "status" column
+          referred_by: referredByAffiliateId, // ← store affiliate’s id here
+          status: 'pending',                  // ensure `users` table has a "status" column
         },
       ])
       .single();
