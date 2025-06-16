@@ -742,7 +742,7 @@
       </div>
       <table id="referrals-table" class="table table-hover w-100">
         <thead><tr>
-          <th>ID</th><th>Affiliate ID</th><th>Affiliate Email</th><th>Referred Email</th><th>Converted</th><th>Date</th>
+          <th>ID</th><th>Affiliate ID</th><th>Referred Email</th><th>Converted</th><th>Date</th>
         </tr></thead><tbody></tbody>
       </table>
     </div>
@@ -1035,14 +1035,13 @@
         { data: 'id' },
         { data: 'affiliate_id' },
         { 
-          data: 'affiliate_email',
+          data: 'referred_email',
           render: function(data) {
             return `<span class="email-tooltip" data-tooltip="${data}">
                       <a class="email-link" data-email="${data}">${data}</a>
                     </span>`;
           }
         },
-        { data: 'referred_email' },
         { 
           data: 'converted',
           render: b => `<span class="status-badge ${b ? 'status-paid' : 'status-rejected'}"><i class="bi bi-${b ? 'check-circle' : 'x-circle'}"></i> ${b ? 'Yes' : 'No'}</span>`
@@ -1059,7 +1058,7 @@
         loadingRecords: '',
         zeroRecords: 'No referrals found.'
       },
-      order: [[5, 'desc']]
+      order: [[4, 'desc']]
     });
 
     // Filter buttons functionality for payouts
@@ -1448,13 +1447,19 @@
           query: () => supabase
             .from('referrals')
             .select(`
-              id, affiliate_id, referred_email, converted, created_at,
-              affiliate_accounts!referrals_affiliate_id_fkey(email)
+              id,
+              affiliate_id,
+              converted,
+              created_at,
+              users!referrals_user_id_fkey(email)
             `)
             .order('created_at', { ascending: false }),
           transform: data => data.map(r => ({
-            ...r,
-            affiliate_email: r.affiliate_accounts?.email || ''
+            id: r.id,
+            affiliate_id: r.affiliate_id,
+            referred_email: r.users?.email || '(unknown)',
+            converted: r.converted,
+            created_at: r.created_at,
           })),
           loading: '#referrals-loading'
         }
