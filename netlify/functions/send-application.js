@@ -3,7 +3,7 @@
 /**
  * 1) Validates POST payload
  * 2) Checks “users” table for existing email
- * 3) Verifies referral_code (if provided) by looking up affiliate_accounts → gets affiliate.id
+ * 3) Verifies referral_code (if provided) by looking up affiliate_accounts → gets affiliate.user_id
  * 4) Hashes password (optional) or stores raw
  * 5) Inserts new row into Supabase `users` with status="pending" and referred_by=affiliate_id
  * 6) Sends a confirmation email via Brevo
@@ -106,35 +106,26 @@ exports.handler = async (event, context) => {
     };
   }
 
-  // ─── 3) If referral_code provided, verify it in "affiliate_accounts" ───────────────────────
-  let referredByAffiliateId = null;
+  // ─── 3) If referral_code provided, verify it in "affiliate_accounts" ───────────────
+  let referredByUserId = null;
   if (referral_code) {
     const code = referral_code.trim().toUpperCase();
-    console.log('🔍 validating referral_code:', code);
 
-    try {
-      const { data: affRow, error: checkErr } = await supabase
-        .from('affiliate_accounts')
-        .select('id')            // ← select the correct PK column
-        .eq('referral_code', code)
-        .single();
+    // Fetch the affiliate_accounts row, grabbing the user_id foreign key
+    const { data: affRow, error: checkErr } = await supabase
+      .from('affiliate_accounts')
+      .select('user_id')
+      .eq('referral_code', code)
+      .single();
 
-      console.log('↩️ lookup result:', { affRow, checkErr });
-      if (checkErr || !affRow) {
-        return {
-          statusCode: 400,
-          body: JSON.stringify({ error: 'Invalid referral code.' }),
-        };
-      }
-      // store the affiliate_accounts.id, so you can use it in your `users.referred_by` column
-      referredByAffiliateId = affRow.id;
-    } catch (err) {
-      console.error('Error validating referral code:', err);
+    if (checkErr || !affRow) {
       return {
-        statusCode: 500,
-        body: JSON.stringify({ error: 'Failed to validate referral code.' }),
+        statusCode: 400,
+        body: JSON.stringify({ error: 'Invalid referral code.' }),
       };
     }
+    // Now this is the actual users.id of the referrer
+    referredByUserId = affRow.user_id;
   }
 
   // ─── 4) Hash the password (optional) ────────────────────────────────────────────────
@@ -168,8 +159,8 @@ exports.handler = async (event, context) => {
           password: pwToStore,
           phone,
           experience,
-          referred_by: referredByAffiliateId, // ← store affiliate’s id here
-          status: 'pending',                  // ensure `users` table has a "status" column
+          referred_by: referredByUserId, // ← this now points at users.id
+          status: 'pending',
         },
       ])
       .single();
