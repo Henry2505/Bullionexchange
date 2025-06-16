@@ -106,31 +106,37 @@ exports.handler = async (event, context) => {
     };
   }
 
-  // ─── 3) If referral_code provided, verify it in "affiliates" ───────────────────────
-  let referredByUserId = null;
-  if (referral_code) {
-    try {
-      const { data: affRow, error: checkErr } = await supabase
-        .from('affiliates')
-        .select('user_id')
-        .eq('referral_code', referral_code)
-        .single();
+  // ─── 3) If referral_code provided, verify it in "affiliate_accounts" ───────────────────────
+let referredByUserId = null;
+if (referral_code) {
+  // 1) normalize to uppercase
+  const code = referral_code.trim().toUpperCase();
+  console.log('🔍 [send-application] validating referral_code:', code);
 
-      if (checkErr || !affRow) {
-        return {
-          statusCode: 400,
-          body: JSON.stringify({ error: 'Invalid referral code.' }),
-        };
-      }
-      referredByUserId = affRow.user_id;
-    } catch (err) {
-      console.error('Error validating referral code:', err);
+  try {
+    // 2) use the same table your front-end writes to
+    const { data: affRow, error: checkErr } = await supabase
+      .from('affiliate_accounts')         // ← was "affiliates"
+      .select('user_id')
+      .eq('referral_code', code)          // exact match against uppercase codes
+      .single();
+
+    console.log('↩️ [send-application] supabase reply:', { affRow, checkErr });
+    if (checkErr || !affRow) {
       return {
-        statusCode: 500,
-        body: JSON.stringify({ error: 'Failed to validate referral code.' }),
+        statusCode: 400,
+        body: JSON.stringify({ error: 'Invalid referral code.' }),
       };
     }
+    referredByUserId = affRow.user_id;
+  } catch (err) {
+    console.error('Error validating referral code:', err);
+    return {
+      statusCode: 500,
+      body: JSON.stringify({ error: 'Failed to validate referral code.' }),
+    };
   }
+}
 
   // ─── 4) Hash the password (optional) ────────────────────────────────────────────────
   // Uncomment the below lines if you want to store a hashed password:
