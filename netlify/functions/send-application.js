@@ -6,8 +6,7 @@
  * 3) Verifies referral_code (if provided) by looking up affiliate_accounts → gets affiliate_accounts.id
  * 4) Hashes password (optional) or stores raw
  * 5) Inserts new row into Supabase `users` with status="pending" and referred_by=affiliate_accounts.id
- * 6a) Records the referral in the `referrals` table
- * 6b) Sends a confirmation email via Brevo
+ * 6) Sends a confirmation email via Brevo
  */
 
 const { createClient } = require('@supabase/supabase-js');
@@ -183,23 +182,7 @@ exports.handler = async (event, context) => {
     };
   }
 
-  // ─── 6a) Record the referral ───────────────────────────────────────────────────────
-  if (referredByAffiliateId) {
-    const { error: refErr } = await supabase
-      .from('referrals')
-      .insert([{
-        affiliate_id: referredByAffiliateId,
-        referred_user_id: newUser.id,
-        created_at: new Date().toISOString()
-      }]);
-
-    if (refErr) {
-      console.error('Failed to record referral:', refErr);
-      // but don’t fail the whole process—just log it
-    }
-  }
-
-  // ─── 6b) Send confirmation email via Brevo ────────────────────────────────────────
+  // ─── 6) Send confirmation email via Brevo ────────────────────────────────────────
   if (!BREVO_API_KEY) {
     console.error('Missing BREVO_API_KEY');
     return {
