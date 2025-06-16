@@ -281,6 +281,16 @@
       .quote-section { padding: 15px; }
       .quote-text { font-size: 1rem; }
     }
+
+    /* Debug Styles */
+    #debug-ref-code, #debug-ref-lookup {
+      color: #FFD700;
+      margin-bottom: 1rem;
+      font-size: 0.9rem;
+      background: rgba(255, 215, 0, 0.1);
+      padding: 10px;
+      border-radius: 5px;
+    }
   </style>
 </head>
 <body>
@@ -315,6 +325,10 @@
       </div>
       
       <p class="referral-note" id="referral-note"></p>
+
+      <!-- Debug output -->
+      <div id="debug-ref-code"></div>
+      <div id="debug-ref-lookup"></div>
 
       <form id="apply-form" novalidate>
         <div class="form-group">
@@ -374,7 +388,7 @@
       { text: "The most important quality for an investor is temperament, not intellect. The same applies to traders.", author: "Warren Buffett" },
       { text: "Trading is a journey of self-discovery. The better you know yourself, the better trader you become.", author: "Van Tharp" },
       { text: "Patience is not the ability to wait, but the ability to keep a good attitude while waiting. This is essential in trading.", author: "Unknown" },
-      { text: "The trend is your friend until the end when it bends. Always respect the market direction.", author: "Ed Seykota" },
+      { text: "The trend is your friend until the end when it bends.ousy Always respect the market direction.", author: "Ed Seykota" },
       { text: "Trading is 90% psychology and 10% methodology. Master your mind, master the markets.", author: "Trading Proverb" }
     ];
 
@@ -575,6 +589,10 @@
             urlRef     = new URLSearchParams(location.search).get('ref')?.trim().toUpperCase() || '',
             code       = manualRef || urlRef;
 
+      // Debug: show us exactly what code we're using
+      document.getElementById('debug-ref-code').textContent =
+        '🔍 Debug — referral code to lookup: ' + (code || '[none]');
+
       // 1) Client-side validation
       for (const [key, input] of Object.entries(inputs)) {
         if (key !== 'referral') {
@@ -607,9 +625,14 @@
         if (code) {
           const { data: aff, error: refErr } = await supabaseClient
             .from('affiliate_accounts')
-            .select('id')
-            .ilike('referral_code', code)  // ← use ILIKE for case-insensitive match
+            .select('id, referral_code')
+            .ilike('referral_code', code)
             .single();
+
+          // Debug: show us the lookup response
+          document.getElementById('debug-ref-lookup').textContent =
+            '📋 Lookup result → data: ' + JSON.stringify(aff) +
+            ', error: ' + (refErr ? refErr.message : 'none');
 
           if (refErr || !aff) {
             showError('Invalid referral code. Please check and try again, or leave it blank.');
