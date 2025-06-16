@@ -592,9 +592,13 @@
       submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Submitting…';
 
       try {
-        // A) Check for duplicate email
+        // A) Check for duplicate email, excluding soft-deleted users
         const { data: existingUser, error: userError } = await supabaseClient
-          .from('affiliate_accounts').select('email').eq('email', email).single();
+          .from('affiliate_accounts')
+          .select('email')
+          .eq('email', email)
+          .is('deleted_at', null) // Only check non-deleted users
+          .single();
 
         if (existingUser) {
           showError('This email is already registered. Please log in or use a different email.');
