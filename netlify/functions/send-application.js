@@ -3,7 +3,7 @@
 /**
  * 1) Validates POST payload
  * 2) Checks “users” table for existing email
- * 3) Verifies referral_code (if provided) by looking up affiliates → gets affiliate.user_id
+ * 3) Verifies referral_code (if provided) by looking up affiliate_accounts → gets affiliate.user_id
  * 4) Hashes password (optional) or stores raw
  * 5) Inserts new row into Supabase `users` with status="pending" and referred_by=affiliate_id
  * 6) Sends a confirmation email via Brevo
@@ -107,36 +107,36 @@ exports.handler = async (event, context) => {
   }
 
   // ─── 3) If referral_code provided, verify it in "affiliate_accounts" ───────────────────────
-let referredByUserId = null;
-if (referral_code) {
-  // 1) normalize to uppercase
-  const code = referral_code.trim().toUpperCase();
-  console.log('🔍 [send-application] validating referral_code:', code);
+  let referredByUserId = null;
+  if (referral_code) {
+    // 1) normalize to uppercase
+    const code = referral_code.trim().toUpperCase();
+    console.log('🔍 [send-application] validating referral_code:', code);
 
-  try {
-    // 2) use the same table your front-end writes to
-    const { data: affRow, error: checkErr } = await supabase
-      .from('affiliate_accounts')         // ← was "affiliates"
-      .select('user_id')
-      .eq('referral_code', code)          // exact match against uppercase codes
-      .single();
+    try {
+      // 2) use the same table your front-end writes to
+      const { data: affRow, error: checkErr } = await supabase
+        .from('affiliate_accounts')         // ← was "affiliates"
+        .select('user_id')
+        .eq('referral_code', code)          // exact match against uppercase codes
+        .single();
 
-    console.log('↩️ [send-application] supabase reply:', { affRow, checkErr });
-    if (checkErr || !affRow) {
+      console.log('↩️ [send-application] supabase reply:', { affRow, checkErr });
+      if (checkErr || !affRow) {
+        return {
+          statusCode: 400,
+          body: JSON.stringify({ error: 'Invalid referral code.' }),
+        };
+      }
+      referredByUserId = affRow.user_id;
+    } catch (err) {
+      console.error('Error validating referral code:', err);
       return {
-        statusCode: 400,
-        body: JSON.stringify({ error: 'Invalid referral code.' }),
+        statusCode: 500,
+        body: JSON.stringify({ error: 'Failed to validate referral code.' }),
       };
     }
-    referredByUserId = affRow.user_id;
-  } catch (err) {
-    console.error('Error validating referral code:', err);
-    return {
-      statusCode: 500,
-      body: JSON.stringify({ error: 'Failed to validate referral code.' }),
-    };
   }
-}
 
   // ─── 4) Hash the password (optional) ────────────────────────────────────────────────
   // Uncomment the below lines if you want to store a hashed password:
