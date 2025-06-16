@@ -615,9 +615,9 @@
           <button class="btn-retry" style="display: none;">Retry</button>
         </div>
       </div>
-      <table id="affiliates-table" class class="table table-hover w-100">
+      <table id="affiliates-table" class="table table-hover w-100">
         <thead><tr>
-          <th>ID</th><th>Affiliate</th><th>Email</th><th>Referral Code</th><th>Joined On</th><th>Status</th>
+          <th>ID</th><th>Affiliate</th><th>Email</th><th>Referral Code</th><th>Joined On</th><th>Status</th><th>Actions</th>
         </tr></thead><tbody></tbody>
       </table>
     </div>
@@ -830,6 +830,13 @@
         {
           data: null,
           render: () => '<span class="status-badge status-paid"><i class="bi bi-check-circle"></i> Active</span>'
+        },
+        {
+          data: null,
+          orderable: false,
+          render: function(data) {
+            return `<button class="btn-action btn-reject delete-affiliate" data-id="${data.id}"><i class="bi bi-trash"></i> Delete</button>`;
+          }
         }
       ],
       language: {
@@ -1221,6 +1228,57 @@
             showToast(`Payout #${payoutId} has been rejected.`);
           } catch (err) {
             showToast(`Error rejecting payout #${payoutId}: ${err.message}`, false);
+          }
+        }
+      );
+    });
+
+    // Delete affiliate functionality
+    $('#affiliates-table').on('click', '.delete-affiliate', function() {
+      const affiliateId = $(this).data('id');
+      const row = $(this).closest('tr');
+      const affiliateData = affiliatesTable.row(row).data();
+      const affiliateEmail = affiliateData.email;
+      
+      confirmAction(
+        'Confirm Deletion',
+        `Are you sure you want to delete affiliate ${affiliateEmail}? This action cannot be undone and will delete all related data.`,
+        async () => {
+          try {
+            // Delete the affiliate from Supabase
+            const { error } = await supabase
+              .from('affiliate_accounts')
+              .delete()
+              .eq('id', affiliateId);
+            
+            if (error) throw error;
+
+            // Remove the row from affiliatesTable
+            affiliatesTable.row(row).remove().draw();
+
+            // Remove related rows from other tables
+            payoutsTable.rows(function(idx, data, node) {
+              return data.affiliate_id === affiliateId;
+            }).remove().draw();
+
+            bankTable.rows(function(idx, data, node) {
+              return data.affiliate_id === affiliateId;
+            }).remove().draw();
+
+            walletTable.rows(function(idx, data, node) {
+              return data.affiliate_id === affiliateId;
+            }).remove().draw();
+
+            referralsTable.rows(function(idx, data, node) {
+              return data.affiliate_id === affiliateId;
+            }).remove().draw();
+
+            // Update stats
+            await updateStats();
+            
+            showToast(`Affiliate ${affiliateEmail} deleted successfully!`);
+          } catch (err) {
+            showToast(`Error deleting affiliate: ${err.message}`, false);
           }
         }
       );
