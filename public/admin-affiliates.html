@@ -1448,22 +1448,23 @@
         {
           id: 'referrals',
           table: referralsTable,
-          query: () => supabase
-            .from('referrals')
-            .select(`
-              id,
-              affiliate_id,
-              converted,
-              created_at,
-              affiliate_accounts!referrals_referred_id_fkey(email)
-            `)
-            .order('created_at', { ascending: false }),
+          query: () =>
+            supabase
+              .from('referrals')
+              .select(`
+                id,
+                affiliate_id,
+                converted,
+                created_at,
+                users!fk_referrals_user(email)
+              `)
+              .order('created_at', { ascending: false }),
           transform: data => data.map(r => ({
-            id: r.id,
-            affiliate_id: r.affiliate_id,
-            referred_email: r.affiliate_accounts?.email || '(no email)',
-            converted: r.converted,
-            created_at: r.created_at,
+            id:             r.id,
+            affiliate_id:   r.affiliate_id,
+            referred_email: r.users?.email || '(no email)',
+            converted:      r.converted,
+            created_at:     r.created_at,
           })),
           loading: '#referrals-loading'
         }
