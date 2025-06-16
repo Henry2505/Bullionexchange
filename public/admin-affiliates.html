@@ -742,7 +742,11 @@
       </div>
       <table id="referrals-table" class="table table-hover w-100">
         <thead><tr>
-          <th>ID</th><th>Affiliate ID</th><th>Referred Email</th><th>Converted</th><th>Date</th>
+          <th>ID</th>
+          <th>Affiliate ID</th>
+          <th>Referred Email</th>
+          <th>Converted</th>
+          <th>Date</th>
         </tr></thead><tbody></tbody>
       </table>
     </div>
@@ -1154,7 +1158,7 @@
               .from('affiliate_payouts')
               .select(`
                 id, affiliate_id, amount, method, status, requested_at,
-                affiliate_accounts!affiliate_payouts_affiliate_id_fkey(email)
+                affiliate_accounts(email)
               `)
               .eq('id', payoutId)
               .single();
@@ -1222,7 +1226,7 @@
               .from('affiliate_payouts')
               .select(`
                 id, affiliate_id, amount, method, status, requested_at,
-                affiliate_accounts!affiliate_payouts_affiliate_id_fkey(email)
+                affiliate_accounts(email)
               `)
               .eq('id', payoutId)
               .single();
@@ -1400,7 +1404,7 @@
             .from('affiliate_payouts')
             .select(`
               id, affiliate_id, amount, method, status, requested_at,
-              affiliate_accounts!affiliate_payouts_affiliate_id_fkey(email)
+              affiliate_accounts(email)
             `)
             .order('requested_at', { ascending: false }),
           transform: data => data.map(p => ({
@@ -1416,7 +1420,7 @@
             .from('affiliate_bank_accounts')
             .select(`
               id, affiliate_id, bank_name, bank_code, account_number, account_name, created_at,
-              affiliate_accounts!affiliate_bank_accounts_affiliate_id_fkey(email)
+              affiliate_accounts(email)
             `)
             .order('created_at', { ascending: false }),
           transform: data => data.map(b => ({
@@ -1432,7 +1436,7 @@
             .from('affiliate_wallets')
             .select(`
               id, affiliate_id, currency, address, created_at,
-              affiliate_accounts!affiliate_wallets_affiliate_id_fkey(email)
+              affiliate_accounts(email)
             `)
             .order('created_at', { ascending: false }),
           transform: data => data.map(w => ({
@@ -1447,11 +1451,8 @@
           query: () => supabase
             .from('referrals')
             .select(`
-              id,
-              affiliate_id,
-              converted,
-              created_at,
-              users!referrals_user_id_fkey(email)
+              id, affiliate_id, converted, created_at,
+              users(email)
             `)
             .order('created_at', { ascending: false }),
           transform: data => data.map(r => ({
