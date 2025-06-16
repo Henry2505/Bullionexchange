@@ -645,6 +645,16 @@
       this.innerHTML = type === 'password' ? '<i class="fas fa-eye"></i>' : '<i class="fas fa-eye-slash"></i>';
     });
 
+    // Function to generate referral code
+    function generateReferralCode() {
+      const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';  // Only uppercase letters and digits
+      let code = '';
+      for (let i = 0; i < 8; i++) {
+        code += chars.charAt(Math.floor(Math.random() * chars.length));
+      }
+      return code;  // Always uppercase
+    }
+
     // Function to display messages
     function showMessage(text, type = 'success') {
       const messageDiv = document.getElementById('message');
@@ -671,7 +681,7 @@
 
       const email = document.getElementById('email').value.trim();
       const password = document.getElementById('password').value;
-      const newCode = Math.random().toString(36).slice(2, 10).toUpperCase();
+      const newCode = generateReferralCode();
 
       let refererId = null;
       if (refCode) {
@@ -704,7 +714,7 @@
           const { error: referralError } = await client
             .from('referrals')
             .insert([{ affiliate_id: refererId, referred_email: email }]);
-          if (referalError) {
+          if (referralError) {
             console.error('Referral insert error:', referralError);
           }
         }
