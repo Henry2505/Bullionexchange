@@ -543,6 +543,10 @@
       alertDiv.innerHTML = `<i class="fas fa-exclamation-circle"></i> ${message}`;
       alertDiv.setAttribute('aria-live', 'assertive');
       alertDiv.style.display = 'block';
+      // Re-enable the submit button so user can retry
+      submitBtn.disabled = false;
+      submitBtn.classList.add('enabled');
+      submitBtn.innerHTML = 'Submit Application';
     }
 
     // Show success message
@@ -588,13 +592,23 @@
       submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Submitting…';
 
       try {
-        // A) Validate referral code if provided (case-insensitive)
+        // A) Check for duplicate email
+        const { data: existingUser, error: userError } = await supabaseClient
+          .from('affiliate_accounts').select('email').eq('email', email).single();
+
+        if (existingUser) {
+          showError('This email is already registered. Please log in or use a different email.');
+          return;
+        }
+        if (userError && userError.code !== 'PGRST116') throw userError;
+
+        // B) Validate referral code if provided
         let referredBy = null;
         if (code) {
           const { data: aff, error: refErr } = await supabaseClient
             .from('affiliate_accounts')
             .select('id')
-            .ilike('referral_code', code)
+            .eq('referral_code', code)  // Code is uppercase, matches stored format
             .single();
 
           if (refErr || !aff) {
@@ -604,57 +618,20 @@
           referredBy = aff.id;
         }
 
-        // B) Sign up the user with Supabase Auth
-        const { data: authData, error: authError } = await supabaseClient.auth.signUp({
-          email,
-          password
-        });
-
-        if (authError) {
-          if (authError.message.includes('already registered')) {
-            showError('This email is already registered. Please log in or use a different email.');
-          } else {
-            showError(`Sign-up failed: ${authError.message}`);
-          }
-          return;
-        }
-
-        // Get user ID from auth response
-        const userId = authData.user.id;
-
-        // C) Insert application data directly into Supabase
-        const applicationData = {
-          user_id: userId,
-          name,
-          phone,
-          experience,
-          referral_code: code || null,
-          referred_by: referredBy || null
-        };
-
-        const { data: appData, error: appError } = await supabaseClient
-          .from('applications')
-          .insert([applicationData]);
-
-        if (appError) {
-          showError(`Failed to submit application: ${appError.message}`);
-          return;
-        }
-
-        // D) Send confirmation email via Netlify function
-        const emailResponse = await fetch('/.netlify/functions/send-confirmation-email', {
+        // C) Send to your function
+        const payload = { name, email, password, phone, experience, referral_code: code, referred_by: referredBy };
+        const res = await fetch('/.netlify/functions/send-application', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ email, name })
+          body: JSON.stringify(payload)
         });
-
-        if (!emailResponse.ok) {
-          const emailResult = await emailResponse.json();
-          showError(emailResult.error || 'Failed to send confirmation email.');
+        const result = await res.json();
+        if (!res.ok) {
+          showError(result.error || 'Application submission failed on the server.');
           return;
         }
 
-        // E) Success!
+        // D) Success!
         showSuccess(`
           <strong>Application Submitted Successfully!</strong><br>
           Thank you for applying. A confirmation email has been sent to ${email}.<br>
@@ -673,13 +650,8 @@
         if (err.message.includes('NetworkError') || err.message.includes('Failed to fetch')) {
           showError('Network issue detected. Please check your connection and try again.');
         } else {
-          showError(`An unexpected error occurred: ${err.message}. Please try again later or contact support at support@apexincomeoptions.com.ng.`);
+          showError('An unexpected error occurred. Please try again later or contact support at support@apexincomeoptions.com.ng.');
         }
-      } finally {
-        // Re-enable the submit button
-        submitBtn.disabled = false;
-        submitBtn.classList.add('enabled');
-        submitBtn.innerHTML = 'Submit Application';
       }
     });
   </script>
