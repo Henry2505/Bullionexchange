@@ -772,17 +772,17 @@
   <script>
   $(function(){
     // Logo → Dashboard
-    $('#logo').click(()=> location.href='admin-dashboard.html');
+    $('#logo').click(() => location.href='admin-dashboard.html');
 
     // Theme Toggle
     const themeBtn = $('#theme-toggle');
-    function applyTheme(t){
+    function applyTheme(t) {
       $('html').attr('data-theme', t);
       localStorage.setItem('theme', t);
-      themeBtn.text(t==='dark' ? '🌞' : '🌜');
+      themeBtn.text(t === 'dark' ? '🌞' : '🌜');
     }
-    themeBtn.click(()=> applyTheme($('html').attr('data-theme')==='dark'?'light':'dark'));
-    applyTheme(localStorage.getItem('theme')||'dark');
+    themeBtn.click(() => applyTheme($('html').attr('data-theme') === 'dark' ? 'light' : 'dark'));
+    applyTheme(localStorage.getItem('theme') || 'dark');
 
     // Supabase init
     const SUPA_URL = 'https://dapwpgvnfjcfqqhrpxla.supabase.co';
@@ -790,17 +790,17 @@
     const supabase = window.supabase.createClient(SUPA_URL, SUPA_KEY);
 
     // Simple toast
-    function showToast(msg, ok=true){
-      const $t=$(`
-        <div class="toast align-items-center text-white ${ok?'bg-success':'bg-danger'} border-0 position-fixed top-0 end-0 m-3">
+    function showToast(msg, ok = true) {
+      const $t = $(`
+        <div class="toast align-items-center text-white ${ok ? 'bg-success' : 'bg-danger'} border-0 position-fixed top-0 end-0 m-3">
           <div class="d-flex">
             <div class="toast-body">${msg}</div>
             <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast"></button>
           </div>
         </div>`);
       $('body').append($t);
-      new bootstrap.Toast($t[0],{delay:3000}).show();
-      $t.on('hidden.bs.toast',()=>$t.remove());
+      new bootstrap.Toast($t[0], { delay: 3000 }).show();
+      $t.on('hidden.bs.toast', () => $t.remove());
     }
 
     // Initialize DataTables with responsive and export buttons
@@ -849,7 +849,9 @@
           data: null,
           orderable: false,
           render: function(data) {
-            return `<button class="btn-action btn-reject delete-affiliate" data-id="${data.id}"><i class="bi bi-trash"></i> Delete</button>`;
+            return `<button class="btn btn-outline-danger btn-sm btn-delete-affiliate" data-id="${data.id}" data-email="${data.email}">
+                      <i class="bi bi-trash"></i>
+                    </button>`;
           }
         }
       ],
@@ -1080,7 +1082,7 @@
         $('.filter-btn[data-filter="' + filter + '"]').click();
       }
       const panelId = '#' + target + '-panel';
-      $('html, body').animate({scrollTop: $(panelId).offset().top - 100}, 500);
+      $('html, body').animate({ scrollTop: $(panelId).offset().top - 100 }, 500);
     });
 
     // Filter all tables by affiliate email
@@ -1097,7 +1099,7 @@
     $(document).on('click', '.email-link', function() {
       const email = $(this).data('email');
       filterByEmail(email);
-      $('html, body').animate({scrollTop: $('#affiliates-panel').offset().top - 100}, 500);
+      $('html, body').animate({ scrollTop: $('#affiliates-panel').offset().top - 100 }, 500);
     });
 
     // Confirmation dialog for actions
@@ -1268,15 +1270,14 @@
     });
 
     // Delete affiliate functionality
-    $('#affiliates-table').on('click', '.delete-affiliate', function() {
+    $('#affiliates-table').on('click', '.btn-delete-affiliate', function() {
       const affiliateId = $(this).data('id');
+      const affiliateEmail = $(this).data('email');
       const row = $(this).closest('tr');
-      const affiliateData = affiliatesTable.row(row).data();
-      const affiliateEmail = affiliateData.email;
       
       confirmAction(
-        'Confirm Deletion',
-        `Are you sure you want to delete affiliate ${affiliateEmail}? This action cannot be undone and will delete all related data.`,
+        'Delete Affiliate',
+        `Are you sure you want to delete affiliate ${affiliateEmail}? This will also delete all related payouts, bank accounts, wallets, and referrals.`,
         async () => {
           try {
             // Perform all deletions in a batch
@@ -1304,19 +1305,19 @@
             affiliatesTable.row(row).remove().draw();
 
             // Remove related rows from other tables
-            payoutsTable.rows(function(idx, data, node) {
+            payoutsTable.rows(function(idx, data) {
               return data.affiliate_id === affiliateId;
             }).remove().draw();
 
-            bankTable.rows(function(idx, data, node) {
+            bankTable.rows(function(idx, data) {
               return data.affiliate_id === affiliateId;
             }).remove().draw();
 
-            walletTable.rows(function(idx, data, node) {
+            walletTable.rows(function(idx, data) {
               return data.affiliate_id === affiliateId;
             }).remove().draw();
 
-            referralsTable.rows(function(idx, data, node) {
+            referralsTable.rows(function(idx, data) {
               return data.affiliate_id === affiliateId;
             }).remove().draw();
 
@@ -1485,9 +1486,7 @@
 
     loadAll();
 
-    // ————————————
     // Delegated delete handlers
-    // ————————————
     $('#bank-table').on('click', '.btn-delete-bank', function() {
       const id = $(this).data('id');
       const row = $(this).closest('tr');
