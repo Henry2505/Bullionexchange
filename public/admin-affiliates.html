@@ -1279,13 +1279,26 @@
         `Are you sure you want to delete affiliate ${affiliateEmail}? This action cannot be undone and will delete all related data.`,
         async () => {
           try {
-            // Delete the affiliate from Supabase
-            const { error } = await supabase
-              .from('affiliate_accounts')
-              .delete()
-              .eq('id', affiliateId);
-            
-            if (error) throw error;
+            // Perform all deletions in a batch
+            const [
+              { error: payoutsError },
+              { error: bankError },
+              { error: walletError },
+              { error: referralsError },
+              { error: affiliateError }
+            ] = await Promise.all([
+              supabase.from('affiliate_payouts').delete().eq('affiliate_id', affiliateId),
+              supabase.from('affiliate_bank_accounts').delete().eq('affiliate_id', affiliateId),
+              supabase.from('affiliate_wallets').delete().eq('affiliate_id', affiliateId),
+              supabase.from('referrals').delete().eq('affiliate_id', affiliateId),
+              supabase.from('affiliate_accounts').delete().eq('id', affiliateId)
+            ]);
+
+            if (payoutsError) throw new Error(`Failed to delete payouts: ${payoutsError.message}`);
+            if (bankError) throw new Error(`Failed to delete bank accounts: ${bankError.message}`);
+            if (walletError) throw new Error(`Failed to delete wallets: ${walletError.message}`);
+            if (referralsError) throw new Error(`Failed to delete referrals: ${referralsError.message}`);
+            if (affiliateError) throw new Error(`Failed to delete affiliate: ${affiliateError.message}`);
 
             // Remove the row from affiliatesTable
             affiliatesTable.row(row).remove().draw();
