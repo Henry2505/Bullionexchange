@@ -554,9 +554,11 @@
       <div class="header-info">
         <div class="header-story">
           <h3>Listen to My Story</h3>
-          <button onclick="playVoiceStory()" aria-label="Play voice story">
-            ▶️ Play
+          <button id="voice-control" onclick="toggleVoiceStory()" aria-label="Play voice story">
+            <i class="fas fa-play" id="voice-icon"></i>
+            <span id="voice-text">Play</span>
           </button>
+          <audio id="voice-story" src="voice-story.mp3" preload="auto" style="display: none;"></audio>
         </div>
         <span id="local-time" aria-label="Current local time in Lagos"></span>
       </div>
@@ -905,11 +907,34 @@
     setInterval(updateImpactCounter, 4000);
     updateImpactCounter();
 
-    // Play Voice Story
-    function playVoiceStory() {
-      const audio = new Audio('voice-story.mp3');
-      audio.play();
+    // Voice Story Control
+    const audio = document.getElementById('voice-story');
+    const voiceControlButton = document.getElementById('voice-control');
+    const voiceIcon = document.getElementById('voice-icon');
+    const voiceText = document.getElementById('voice-text');
+
+    function toggleVoiceStory() {
+      if (audio.paused) {
+        audio.play();
+        voiceIcon.classList.remove('fa-play');
+        voiceIcon.classList.add('fa-pause');
+        voiceText.textContent = 'Pause';
+        voiceControlButton.setAttribute('aria-label', 'Pause voice story');
+      } else {
+        audio.pause();
+        voiceIcon.classList.remove('fa-pause');
+        voiceIcon.classList.add('fa-play');
+        voiceText.textContent = 'Play';
+        voiceControlButton.setAttribute('aria-label', 'Play voice story');
+      }
     }
+
+    audio.addEventListener('ended', () => {
+      voiceIcon.classList.remove('fa-pause');
+      voiceIcon.classList.add('fa-play');
+      voiceText.textContent = 'Play';
+      voiceControlButton.setAttribute('aria-label', 'Play voice story');
+    });
 
     // Scroll to AR Section
     function scrollToARElement() {
