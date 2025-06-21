@@ -12,247 +12,449 @@
   <script src="https://kit.fontawesome.com/your-kit-code.js" crossorigin="anonymous" defer></script>
 
   <style>
-    /*=============== Variables ===============*/
     :root {
-      --bg: #1a1a1a; --text: #fff; --gold: #d4af37;
-      --glass: rgba(255,255,255,0.05); --accent: #e0a106;
-      --error: #ff4d4f; --success: #4caf50;
-      --radius: 8px; --transition: 0.3s ease;
+      --bg: #1a1a1a; --text: #fff;
+      --gold: #d4af37; --gold-hover: #e6c855;
+      --glass: rgba(255,255,255,0.05);
+      --footer-bg: #111;
+      --success: #4caf50; --error: #f44336;
     }
     [data-theme="light"] {
-      --bg: #fafafa; --text: #111; --glass: rgba(0,0,0,0.05);
-      --gold: #b8860b; --accent: #aa7c1f;
+      --bg: #fafafa; --text: #111;
+      --gold: #b8860b; --gold-hover: #d4af37;
+      --glass: rgba(0,0,0,0.05);
+      --footer-bg: #f1f1f1;
+    }
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    html { scroll-behavior: smooth; }
+    body { 
+      font-family: 'Poppins', sans-serif; 
+      background: var(--bg); 
+      color: var(--text); 
+      overflow-x: hidden; 
+      line-height: 1.6; 
+      position: relative; 
     }
 
-    /*=============== Reset & Base ===============*/
-    *, *::before, *::after { box-sizing: border-box; margin:0; padding:0; }
-    html { scroll-behavior: smooth; font-size: 16px; }
-    body {
-      font-family: 'Poppins', sans-serif;
-      background: var(--bg); color: var(--text);
-      line-height: 1.6; overflow-x: hidden;
-    }
-    a { color: var(--gold); text-decoration: none; transition: color var(--transition); }
-    a:hover { color: var(--accent); }
-    img { display: block; max-width: 100%; height: auto; }
+    a { color: var(--gold); text-decoration: none; }
+    a:hover { text-decoration: underline; }
+    img { display: block; max-width: 100%; }
 
-    /*=============== Utility ===============*/
-    .container { max-width: 1000px; margin: 0 auto; padding: 0 20px; }
-    .flex { display: flex; gap: 1rem; }
-    .center { display: flex; align-items: center; justify-content: center; }
-    .btn {
-      display: inline-block; padding: .75rem 1.5rem;
-      border: none; border-radius: var(--radius);
-      font-weight: 500; cursor: pointer;
-      transition: background var(--transition), transform var(--transition);
+    /* Header */
+    .header-bar {
+      position: fixed; 
+      top: 0; 
+      left: 0; 
+      right: 0; 
+      height: 70px;
+      background: rgba(0,0,0,0.8); 
+      backdrop-filter: blur(8px);
+      display: flex; 
+      align-items: center; 
+      justify-content: space-between;
+      padding: 0 20px; 
+      z-index: 1000;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.3);
     }
-    .btn-gold {
-      background: var(--gold); color: #000;
+    .header-left { display: flex; align-items: center; gap: 20px; }
+    .logo img {
+      width: 140px; 
+      margin-top: 15px; 
+      cursor: pointer; 
+      transition: transform 0.3s, filter 0.3s;
     }
-    .btn-gold:hover { background: var(--accent); transform: translateY(-2px); }
-    .btn-secondary {
-      background: transparent; border: 2px solid var(--gold); color: var(--gold);
+    .logo img:hover { 
+      transform: scale(1.05); 
+      filter: drop-shadow(0 0 5px var(--gold)); 
     }
-    .btn-secondary:hover { background: var(--gold); color: #000; }
+    #theme-toggle {
+      background: none; 
+      border: none; 
+      font-size: 1.5rem;
+      color: var(--gold); 
+      cursor: pointer; 
+      transition: transform 0.3s;
+    }
+    #theme-toggle:hover { transform: scale(1.2); }
+    #local-time { font-size: 1rem; color: var(--gold); }
 
-    /*=============== Header ===============*/
-    header.header-bar {
-      position: fixed; top:0; left:0; right:0; height:70px;
-      background: rgba(0,0,0,0.7); backdrop-filter: blur(10px);
-      display: flex; align-items: center; justify-content: space-between;
-      padding: 0 20px; z-index: 1000;
+    /* Audio Button */
+    #audio-toggle {
+      position: fixed; 
+      top: 80px; 
+      right: 20px; 
+      z-index: 1001;
+      width: 50px; 
+      height: 50px;
+      background: var(--glass); 
+      border: 2px solid var(--gold);
+      border-radius: 50%; 
+      display: flex; 
+      align-items: center; 
+      justify-content: center;
+      font-size: 1.4rem; 
+      color: var(--gold); 
+      cursor: pointer;
+      transition: all 0.3s;
     }
-    header .logo img { width: 140px; cursor: pointer; transition: transform var(--transition); }
-    header .logo img:hover { transform: scale(1.05); }
-    header .nav-actions { display: flex; align-items: center; gap: 1rem; }
-    #theme-toggle, #audio-toggle {
-      background: none; border: none; font-size: 1.5rem; color: var(--gold);
-      cursor: pointer; position: relative; transition: transform var(--transition);
+    #audio-toggle.playing { 
+      animation: pulse 1s infinite; 
+      background: var(--gold); 
+      color: #000; 
     }
-    #theme-toggle:hover, #audio-toggle:hover { transform: scale(1.2); }
-    #local-time { font-size: .95rem; }
+    #audio-toggle:hover { 
+      background: var(--gold); 
+      color: #000; 
+    }
+    @keyframes pulse {
+      0% { transform: scale(1); }
+      50% { transform: scale(1.1); }
+      100% { transform: scale(1); }
+    }
 
-    /*=============== Scroll to Top ===============*/
-    #scrollTop {
-      position: fixed; bottom: 40px; right: 30px;
-      background: var(--gold); color: #000; border:none;
-      padding: .8rem; border-radius:50%; font-size:1.2rem;
-      cursor: pointer; opacity:0; visibility:hidden;
-      transition: opacity var(--transition), visibility var(--transition);
-      z-index:999;
-    }
-    #scrollTop.show { opacity: 1; visibility: visible; }
+    /* Wrapper */
+    main { padding: 100px 20px 60px; max-width: 1000px; margin: 0 auto; }
 
-    /*=============== Hero ===============*/
+    /* Slide-in Animation */
+    .slide-in { 
+      opacity: 0; 
+      transform: translateY(30px); 
+      transition: opacity 0.7s ease-out, transform 0.7s ease-out; 
+    }
+    .visible { opacity: 1; transform: translateY(0); }
+
+    /* Hero Section */
     #capital-hero {
-      margin-top: 100px; padding: 3rem 1rem;
-      background: var(--glass); backdrop-filter: blur(10px);
-      border-radius: var(--radius); text-align: center;
-      box-shadow: 0 8px 30px rgba(0,0,0,0.5);
-      opacity: 0; transform: translateY(30px);
-      transition: opacity .8s, transform .8s;
+      background: linear-gradient(135deg, var(--bg), #333);
+      padding: 3rem 2rem; 
+      border-radius: 12px;
+      box-shadow: 0 4px 30px rgba(0,0,0,0.5);
+      text-align: center; 
+      margin-bottom: 60px;
+      position: relative;
+      overflow: hidden;
     }
-    #capital-hero.visible {
-      opacity:1; transform: translateY(0);
+    #capital-hero::before {
+      content: '';
+      position: absolute;
+      top: 0; left: 0; right: 0; bottom: 0;
+      background: radial-gradient(circle, rgba(212,175,55,0.1) 0%, transparent 70%);
+      z-index: -1;
     }
-    #capital-hero h1 {
-      font-size: 2.8rem; color: var(--gold); margin-bottom: .5em;
+    #capital-hero h1 { 
+      font-size: 2.8rem; 
+      color: var(--gold); 
+      margin-bottom: 0.5em; 
+      text-shadow: 0 2px 4px rgba(0,0,0,0.3); 
     }
-    #capital-hero p { font-size: 1.1rem; margin-bottom: 1.5em; max-width: 700px; margin-left:auto; margin-right:auto; }
+    #capital-hero p { 
+      font-size: 1.2rem; 
+      max-width: 700px; 
+      margin: 0 auto 1.5rem; 
+    }
+    #capital-hero .btn-gold {
+      display: inline-block; 
+      padding: 14px 35px;
+      background: var(--gold); 
+      color: #000; 
+      border-radius: 6px;
+      font-weight: 500; 
+      transition: transform 0.3s, background 0.3s;
+    }
+    #capital-hero .btn-gold:hover { 
+      transform: scale(1.05); 
+      background: var(--gold-hover); 
+    }
 
-    /*=============== Form ===============*/
-    section#cs-apply { padding: 2rem 0; }
-    section#cs-apply h2 {
-      text-align: center; font-size: 2rem; margin-bottom: 1rem;
+    /* Why Choose Section */
+    #why-choose { 
+      text-align: center; 
+      margin-bottom: 60px; 
     }
-    form#capitalForm {
-      background: var(--glass); padding: 2rem; border-radius: var(--radius);
-      box-shadow: 0 4px 20px rgba(0,0,0,0.4);
-      display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem;
-      opacity:0; transform: translateY(30px);
-      transition: opacity .8s .2s, transform .8s .2s;
+    .features {
+      display: flex; 
+      justify-content: space-around; 
+      flex-wrap: wrap; 
+      gap: 20px;
     }
-    form#capitalForm.visible {
-      opacity:1; transform: translateY(0);
+    .feature {
+      width: 30%; 
+      min-width: 200px; 
+      padding: 20px;
+      background: var(--glass); 
+      border-radius: 8px;
+      transition: transform 0.3s;
     }
-    form label {
-      position: relative; display: block;
+    .feature:hover { transform: translateY(-5px); }
+    .feature i { 
+      font-size: 2.5rem; 
+      color: var(--gold); 
+      margin-bottom: 15px; 
     }
-    form input, form textarea {
-      width: 100%; padding: .9rem; border:none; border-radius: var(--radius);
-      background: rgba(255,255,255,0.1); color: var(--text);
-      transition: background var(--transition), box-shadow var(--transition);
+    .feature h3 { 
+      font-size: 1.5rem; 
+      margin-bottom: 10px; 
     }
-    form input:focus, form textarea:focus {
-      background: rgba(255,255,255,0.2);
-      box-shadow: 0 0 0 3px rgba(212,175,55,0.4);
-      outline: none;
-    }
-    /* Floating labels */
-    form label span {
-      position: absolute; top: 50%; left: .9rem; transform: translateY(-50%);
-      pointer-events: none; transition: transform var(--transition), font-size var(--transition);
-      color: rgba(255,255,255,0.7);
-    }
-    form input:focus + span,
-    form input:not(:placeholder-shown) + span,
-    form textarea:focus + span,
-    form textarea:not(:placeholder-shown) + span {
-      transform: translateY(-150%) scale(0.9);
-      font-size: .85rem; color: var(--gold);
-    }
-    /* Full width inputs */
-    form input[type="text"],
-    form input[type="email"],
-    form input[type="tel"],
-    form input[type="number"],
-    form textarea {
-      grid-column: span 2;
-    }
-    /* Checkbox row */
-    .form-checkbox { display: flex; align-items: center; grid-column: span 2; gap: .5rem; }
-    .form-checkbox input { width: auto; }
 
-    /* Submit & status */
+    /* Form Section */
+    #cs-apply { margin-bottom: 60px; }
+    #cs-apply h2 { 
+      text-align: center; 
+      font-size: 2rem; 
+      color: var(--gold); 
+      margin-bottom: 2rem; 
+    }
+    #capitalForm { 
+      background: var(--glass); 
+      padding: 2rem; 
+      border-radius: 12px; 
+      box-shadow: 0 4px 20px rgba(0,0,0,0.2); 
+    }
+    .form-group { margin-bottom: 1.5rem; }
+    .form-group label { 
+      display: block; 
+      margin-bottom: 0.5rem; 
+      font-weight: 500; 
+    }
+    .form-group label span.required { color: var(--gold); }
+    .form-group input, .form-group textarea {
+      width: 100%; 
+      padding: 0.75rem;
+      border: 1px solid var(--gold); 
+      border-radius: 6px;
+      background: var(--glass); 
+      color: var(--text);
+      font-family: 'Poppins', sans-serif;
+      transition: border-color 0.3s, box-shadow 0.3s;
+    }
+    .form-group input:focus, .form-group textarea:focus {
+      outline: none; 
+      border-color: var(--gold-hover); 
+      box-shadow: 0 0 5px var(--gold); 
+    }
+    .form-group textarea { resize: vertical; min-height: 100px; }
+    .form-group.checkbox label { 
+      display: flex; 
+      align-items: center; 
+      gap: 10px; 
+    }
     #submitBtn {
-      grid-column: span 2; justify-self: center;
-      padding: 1rem 2rem; font-size: 1rem;
+      width: 100%; 
+      padding: 12px;
+      background: var(--gold); 
+      color: #000; 
+      border: none; 
+      border-radius: 6px;
+      font-weight: 500; 
+      cursor: pointer; 
+      transition: background 0.3s, transform 0.3s;
     }
+    #submitBtn:hover:not(:disabled) { 
+      background: var(--gold-hover); 
+      transform: scale(1.02); 
+    }
+    #submitBtn:disabled { opacity: 0.7; cursor: not-allowed; }
     #statusMessage {
-      grid-column: span 2; text-align: center;
-      padding: .75rem 1rem; border-radius: var(--radius);
-      font-weight: 500; display:none;
+      margin-top: 1rem; 
+      padding: 0.75rem 1rem; 
+      border-radius: 4px;
+      font-weight: 500; 
+      display: none; 
+      text-align: center;
     }
     #statusMessage.success { background: var(--success); color: #fff; }
-    #statusMessage.error   { background: var(--error);   color: #fff; }
+    #statusMessage.error { background: var(--error); color: #fff; }
 
-    /*=============== Footer ===============*/
-    footer {
-      text-align:center; padding: 40px 20px; background: var(--bg);
-      border-top: 1px solid rgba(255,255,255,0.1); margin-top: 2rem;
-      font-size: .9rem;
+    /* FAQ Section */
+    #faq { margin-bottom: 60px; }
+    #faq h2 { 
+      text-align: center; 
+      font-size: 2rem; 
+      color: var(--gold); 
+      margin-bottom: 2rem; 
     }
-    footer a { margin: 0 .5rem; }
+    details { 
+      margin-bottom: 15px; 
+      background: var(--glass); 
+      padding: 1rem; 
+      border-radius: 6px; 
+    }
+    summary { 
+      cursor: pointer; 
+      font-weight: 500; 
+      padding: 0.5rem 0; 
+    }
+    details[open] summary { color: var(--gold); }
+    details p { padding: 0.5rem 0; }
 
-    /*=============== Responsive ===============*/
-    @media(max-width: 768px) {
-      form#capitalForm { display: block; }
-      form input, form textarea { grid-column: auto; }
+    /* Divider */
+    .divider {
+      border: none; 
+      height: 1px; 
+      background: var(--gold); 
+      margin: 40px 0; 
+      opacity: 0.5; 
+    }
+
+    /* Footer */
+    footer {
+      text-align: center; 
+      padding: 40px 20px;
+      background: var(--footer-bg); 
+      color: var(--text);
+      font-size: 0.9rem; 
+      margin-top: 40px;
+    }
+    footer a { color: var(--gold); }
+    .social-links { margin-top: 10px; }
+    .social-links a { 
+      margin: 0 10px; 
+      font-size: 1.2rem; 
+      transition: color 0.3s; 
+    }
+    .social-links a:hover { color: var(--gold-hover); }
+
+    /* Sticky Apply Button */
+    #scroll-to-form {
+      position: fixed; 
+      bottom: 20px; 
+      right: 20px; 
+      background: var(--gold); 
+      color: #000; 
+      padding: 10px 20px; 
+      border-radius: 6px; 
+      border: none; 
+      cursor: pointer; 
+      display: none; 
+      z-index: 1000; 
+      transition: opacity 0.3s; 
+    }
+    #scroll-to-form:hover { background: var(--gold-hover); }
+
+    @media (max-width: 768px) {
+      .logo img { margin-top: 18px; }
+      #audio-toggle { width: 45px; height: 45px; font-size: 1.2rem; top: 70px; }
+      main { padding: 80px 15px 40px; }
+      .features { flex-direction: column; align-items: center; }
+      .feature { width: 80%; }
+      #capital-hero { padding: 2rem 1rem; }
     }
   </style>
 </head>
 <body>
 
   <!-- Header -->
-  <header class="header-bar">
-    <div class="container flex">
+  <div class="header-bar">
+    <div class="header-left">
       <div class="logo">
-        <a href="index.html"><img src="CBE_logo.png" alt="CBE Logo" loading="lazy"></a>
+        <a href="index.html"><img src="CBE_logo.png" alt="CBE Logo"></a>
       </div>
-      <div class="nav-actions">
-        <button id="theme-toggle" aria-label="Toggle theme">🌞</button>
-        <span id="local-time" aria-live="polite"></span>
-        <button id="audio-toggle" aria-label="Play capital audio">▶️</button>
-      </div>
+      <button id="theme-toggle" aria-label="Toggle theme">🌞</button>
+      <span id="local-time"></span>
     </div>
-  </header>
+  </div>
 
-  <!-- Scroll to Top -->
-  <button id="scrollTop" aria-label="Scroll to top">↑</button>
+  <!-- Audio Toggle -->
+  <button id="audio-toggle" aria-label="Play capital audio">▶️</button>
+  <audio id="capital-audio" src="capitalsupport.mp3" preload="auto"></audio>
 
-  <!-- Main Content -->
-  <main class="container">
+  <main>
     <!-- Hero -->
-    <section id="capital-hero" class="slide-in">
+    <header id="capital-hero" class="slide-in">
       <h1>Capital Support & Mentorship</h1>
       <p>Bring your talent—We provide the funding, tech, and one-on-one coaching. All in-office, all world-class.</p>
-      <a href="#cs-apply" class="btn btn-gold">Apply Now</a>
+      <a href="#cs-apply" class="btn-gold">Apply Now</a>
+    </header>
+
+    <!-- Why Choose Section -->
+    <section id="why-choose" class="slide-in">
+      <h2>Why Choose CBE's Capital Support?</h2>
+      <div class="features">
+        <div class="feature">
+          <i class="fas fa-money-bill"></i>
+          <h3>Funding</h3>
+          <p>Access up to $100,000 in trading capital.</p>
+        </div>
+        <div class="feature">
+          <i class="fas fa-laptop"></i>
+          <h3>Tech</h3>
+          <p>State-of-the-art trading tools and platforms.</p>
+        </div>
+        <div class="feature">
+          <i class="fas fa-chalkboard-teacher"></i>
+          <h3>Mentorship</h3>
+          <p>One-on-one coaching from industry experts.</p>
+        </div>
+      </div>
     </section>
+
+    <hr class="divider">
 
     <!-- Application Form -->
-    <section id="cs-apply">
+    <section id="cs-apply" class="slide-in">
       <h2>Apply for Capital Support</h2>
-      <form id="capitalForm" novalidate>
-        <!-- Floating Label Inputs -->
-        <label>
-          <input type="text" id="fullName" name="fullName" placeholder=" " required>
-          <span>Full Name *</span>
-        </label>
-        <label>
-          <input type="email" id="email" name="email" placeholder=" " required>
-          <span>Email Address *</span>
-        </label>
-        <label>
-          <input type="tel" id="phone" name="phone" placeholder=" " required>
-          <span>Phone Number *</span>
-        </label>
-        <label>
-          <input type="tel" id="whatsapp" name="whatsapp" placeholder=" ">
-          <span>WhatsApp Number</span>
-        </label>
-        <label>
-          <input type="text" id="telegram" name="telegram" placeholder=" ">
-          <span>Telegram Handle</span>
-        </label>
-        <label>
-          <input type="number" id="experience" name="experience" placeholder=" " min="0">
-          <span>Trading Experience (years)</span>
-        </label>
-        <label>
-          <textarea id="reason" name="reason" placeholder=" " rows="4" required></textarea>
-          <span>Why do you deserve Capital Support? *</span>
-        </label>
-
-        <div class="form-checkbox">
-          <input type="checkbox" id="terms" name="terms" required>
-          <label for="terms">I agree to the <a href="terms.html" target="_blank">Terms & Conditions</a></label>
+      <form id="capitalForm">
+        <div class="form-group">
+          <label for="fullName">Full Name <span class="required">*</span></label>
+          <input type="text" id="fullName" name="fullName" placeholder="Jane Doe" required>
         </div>
-
-        <button type="submit" id="submitBtn" class="btn btn-gold">Submit Application</button>
-        <div id="statusMessage" role="alert"></div>
+        <div class="form-group">
+          <label for="email">Email Address <span class="required">*</span></label>
+          <input type="email" id="email" name="email" placeholder="you@example.com" required>
+        </div>
+        <div class="form-group">
+          <label for="phone">Phone <span class="required">*</span></label>
+          <input type="tel" id="phone" name="phone" placeholder="+234..." required>
+        </div>
+        <div class="form-group">
+          <label for="whatsapp">WhatsApp Number</label>
+          <input type="tel" id="whatsapp" name="whatsapp" placeholder="+234...">
+        </div>
+        <div class="form-group">
+          <label for="telegram">Telegram Handle</label>
+          <input type="text" id="telegram" name="telegram" placeholder="@yourhandle">
+        </div>
+        <div class="form-group">
+          <label for="experience">Trading Experience (years)</label>
+          <input type="number" id="experience" name="experience" min="0" placeholder="2">
+        </div>
+        <div class="form-group">
+          <label for="reason">Why do you deserve Capital Support? <span class="required">*</span></label>
+          <textarea id="reason" name="reason" rows="4" placeholder="Tell us your story..." required></textarea>
+        </div>
+        <div class="form-group checkbox">
+          <label>
+            <input type="checkbox" id="terms" name="terms" required>
+            I agree to the <a href="terms.html">Terms & Conditions</a>
+          </label>
+        </div>
+        <button type="submit" id="submitBtn">Submit Application</button>
       </form>
+      <div id="statusMessage"></div>
+    </section>
+
+    <hr class="divider">
+
+    <!-- FAQ Section -->
+    <section id="faq" class="slide-in">
+      <h2>Frequently Asked Questions</h2>
+      <details>
+        <summary>What are the eligibility criteria?</summary>
+        <p>[Placeholder: e.g., At least 2 years of trading experience and age 18+.]</p>
+      </details>
+      <details>
+        <summary>How much funding can I get?</summary>
+        <p>[Placeholder: e.g., Up to $100,000 based on evaluation.]</p>
+      </details>
+      <details>
+        <summary>What does the mentorship include?</summary>
+        <p>[Placeholder: e.g., Personalized coaching from industry experts.]</p>
+      </details>
     </section>
   </main>
+
+  <!-- Sticky Apply Button -->
+  <button id="scroll-to-form">Apply Now</button>
 
   <!-- Smartsupp Live Chat -->
   <script type="text/javascript">
@@ -264,31 +466,23 @@
     })(document);
   </script>
 
-  <!-- Supabase & Form Logic + Enhancements -->
+  <!-- Supabase & Form Logic -->
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
   <script>
-    // Supabase init
     const supabase = window.supabase.createClient(
       'https://dapwpgvnfjcfqqhrpxla.supabase.co',
-      'PUBLIC_ANON_KEY'
+      'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImRhcHdwZ3ZuZmpjZnFxaHJweGxhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDcwNDA4ODgsImV4cCI6MjA2MjYxNjg4OH0.ICC0UsLlzJDNre7rFCeD3k6iVzo6jOJgn3PhABpEMsQ'
     );
 
-    // Elements
     const form = document.getElementById('capitalForm');
     const statusMsg = document.getElementById('statusMessage');
     const submitBtn = document.getElementById('submitBtn');
-    const scrollTopBtn = document.getElementById('scrollTop');
+    const scrollToFormBtn = document.getElementById('scroll-to-form');
+    const formSection = document.getElementById('cs-apply');
+    const audioBtn = document.getElementById('audio-toggle');
+    const audioEl = document.getElementById('capital-audio');
 
-    // Inline validation
-    form.addEventListener('input', e => {
-      if (e.target.checkValidity()) {
-        e.target.style.boxShadow = '0 0 0 2px var(--success)';
-      } else {
-        e.target.style.boxShadow = '0 0 0 2px var(--error)';
-      }
-    });
-
-    // Submit handler
+    // Form Submission
     form.addEventListener('submit', async e => {
       e.preventDefault();
       submitBtn.disabled = true;
@@ -296,14 +490,14 @@
       statusMsg.style.display = 'none';
 
       const payload = {
-        full_name:  form.fullName.value.trim(),
-        email:      form.email.value.trim(),
-        phone:      form.phone.value.trim(),
-        whatsapp:   form.whatsapp.value.trim() || null,
-        telegram:   form.telegram.value.trim() || null,
+        full_name: form.fullName.value.trim(),
+        email: form.email.value.trim(),
+        phone: form.phone.value.trim(),
+        whatsapp: form.whatsapp.value.trim() || null,
+        telegram: form.telegram.value.trim() || null,
         experience: parseInt(form.experience.value, 10) || 0,
         motivation: form.reason.value.trim(),
-        status:     'Pending'
+        status: 'Pending'
       };
 
       const { error } = await supabase
@@ -312,70 +506,41 @@
 
       if (error) {
         statusMsg.className = 'error';
-        statusMsg.textContent = '❌ Submission failed. Please try again.';
-        statusMsg.style.display = 'block';
-        submitBtn.disabled = false;
-        submitBtn.textContent = 'Submit Application';
+        statusMsg.textContent = '❌ Submission failed. Please try again later.';
       } else {
         statusMsg.className = 'success';
         statusMsg.textContent = '✅ Application received! Thank you.';
-        statusMsg.style.display = 'block';
+        form.reset();
         submitBtn.textContent = 'Submitted';
         setTimeout(() => {
-          form.reset();
           statusMsg.style.display = 'none';
           submitBtn.disabled = false;
           submitBtn.textContent = 'Submit Application';
-          form.querySelectorAll('input,textarea').forEach(el=>el.style.boxShadow='none');
         }, 4000);
       }
+      statusMsg.style.display = 'block';
+      statusMsg.scrollIntoView({ behavior: 'smooth' });
     });
 
-    // Local time
-    function updateLocalTime(){
-      document.getElementById('local-time').textContent =
-        new Date().toLocaleString('en-US',{
-          hour:'numeric', minute:'numeric', second:'numeric',
-          hour12:true, timeZone:'Africa/Lagos'
+    // Update Local Time
+    function updateLocalTime() {
+      document.getElementById('local-time').textContent = 
+        new Date().toLocaleString('en-US', {
+          hour: 'numeric', minute: 'numeric', second: 'numeric',
+          hour12: true, timeZone: 'Africa/Lagos'
         }) + ' WAT';
     }
-    setInterval(updateLocalTime,1000);
+    setInterval(updateLocalTime, 1000);
     updateLocalTime();
 
-    // Theme toggle & persistence
-    const themeBtn = document.getElementById('theme-toggle');
-    themeBtn.addEventListener('click', () => {
-      const next = document.documentElement.getAttribute('data-theme') === 'dark' ? 'light' : 'dark';
-      document.documentElement.setAttribute('data-theme', next);
-      localStorage.setItem('theme', next);
-      themeBtn.textContent = next === 'dark' ? '🌞' : '🌜';
-    });
-    (()=>{
-      const saved = localStorage.getItem('theme') || 'dark';
-      document.documentElement.setAttribute('data-theme', saved);
-      themeBtn.textContent = saved === 'dark' ? '🌞' : '🌜';
-    })();
-
-    // Audio toggle
-    const audioBtn = document.getElementById('audio-toggle');
-    const audioEl  = new Audio('capitalsupport.mp3');
-    audioBtn.addEventListener('click', () => {
-      if (audioEl.paused) {
-        audioEl.play(); audioBtn.textContent = '⏸️';
-      } else {
-        audioEl.pause(); audioBtn.textContent = '▶️';
-      }
-    });
-    audioEl.addEventListener('ended', () => audioBtn.textContent = '▶️');
-
-    // Reveal animations
+    // Fade-in Animations
     document.addEventListener('DOMContentLoaded', () => {
-      document.querySelectorAll('.slide-in, #capitalForm').forEach(el => {
-        const obs = new IntersectionObserver((entries, obsr) => {
+      document.querySelectorAll('.slide-in').forEach(el => {
+        const obs = new IntersectionObserver((entries, o) => {
           entries.forEach(e => {
-            if(e.isIntersecting){
+            if (e.isIntersecting) {
               e.target.classList.add('visible');
-              obsr.unobserve(e.target);
+              o.unobserve(e.target);
             }
           });
         }, { threshold: 0.2 });
@@ -383,22 +548,84 @@
       });
     });
 
-    // Scroll to top
-    window.addEventListener('scroll', () => {
-      if (window.scrollY > 300) scrollTopBtn.classList.add('show');
-      else scrollTopBtn.classList.remove('show');
+    // Theme Toggle
+    const themeBtn = document.getElementById('theme-toggle');
+    themeBtn.addEventListener('click', () => {
+      const next = document.documentElement.getAttribute('data-theme') === 'dark' ? 'light' : 'dark';
+      document.documentElement.setAttribute('data-theme', next);
+      localStorage.setItem('theme', next);
+      themeBtn.textContent = next === 'dark' ? '🌞' : '🌜';
     });
-    scrollTopBtn.addEventListener('click', () => window.scrollTo({ top: 0, behavior: 'smooth' }));
+    (() => {
+      const saved = localStorage.getItem('theme') || 'dark';
+      document.documentElement.setAttribute('data-theme', saved);
+      themeBtn.textContent = saved === 'dark' ? '🌞' : '🌜';
+    })();
+
+    // Audio Toggle
+    audioBtn.addEventListener('click', () => {
+      if (audioEl.paused) {
+        audioEl.play();
+        audioBtn.textContent = '⏸️';
+        audioBtn.classList.add('playing');
+      } else {
+        audioEl.pause();
+        audioBtn.textContent = '▶️';
+        audioBtn.classList.remove('playing');
+      }
+    });
+    audioEl.addEventListener('ended', () => {
+      audioBtn.textContent = '▶️';
+      audioBtn.classList.remove('playing');
+    });
+
+    // Sticky Apply Button
+    window.addEventListener('scroll', () => {
+      const rect = formSection.getBoundingClientRect();
+      scrollToFormBtn.style.display = (rect.top < 0 || rect.bottom > window.innerHeight) ? 'block' : 'none';
+    });
+    scrollToFormBtn.addEventListener('click', () => {
+      formSection.scrollIntoView({ behavior: 'smooth' });
+    });
+
+    // Form Progress Saving
+    form.addEventListener('input', () => {
+      const formData = {
+        fullName: form.fullName.value,
+        email: form.email.value,
+        phone: form.phone.value,
+        whatsapp: form.whatsapp.value,
+        telegram: form.telegram.value,
+        experience: form.experience.value,
+        reason: form.reason.value,
+        terms: form.terms.checked
+      };
+      localStorage.setItem('formProgress', JSON.stringify(formData));
+    });
+    (() => {
+      const saved = JSON.parse(localStorage.getItem('formProgress'));
+      if (saved) {
+        form.fullName.value = saved.fullName || '';
+        form.email.value = saved.email || '';
+        form.phone.value = saved.phone || '';
+        form.whatsapp.value = saved.whatsapp || '';
+        form.telegram.value = saved.telegram || '';
+        form.experience.value = saved.experience || '';
+        form.reason.value = saved.reason || '';
+        form.terms.checked = saved.terms || false;
+      }
+    })();
   </script>
 
-  <!-- Footer -->
   <footer>
     <p>© 2025 Chukwuemeka Bullion Exchange. All rights reserved.</p>
     <p>Forex trading involves risk. For ages 18+ only.</p>
-    <p>
-      <a href="privacy.html">Privacy Policy</a> |
-      <a href="terms.html">Terms &amp; Conditions</a>
-    </p>
+    <p><a href="privacy.html">Privacy Policy</a> | <a href="terms.html">Terms & Conditions</a></p>
+    <div class="social-links">
+      <a href="#" aria-label="Twitter"><i class="fab fa-twitter"></i></a>
+      <a href="#" aria-label="LinkedIn"><i class="fab fa-linkedin"></i></a>
+      <a href="#" aria-label="Telegram"><i class="fab fa-telegram"></i></a>
+    </div>
   </footer>
 </body>
 </html>
