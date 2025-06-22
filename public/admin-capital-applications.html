@@ -336,13 +336,13 @@
             data: null,
             render: (data, type, row) => {
               let actions = `
-                <button class="btn btn-sm btn-primary me-2 view-btn" data-id="${row.id}">View</button>
-                <button class="btn btn-sm btn-secondary me-2 select-row-btn" data-id="${row.id}">Select</button>
+                <button class="btn btn-sm btn-primary me-2 view-btn" data-id="${row.id}"><i class="bi bi-eye"></i> View</button>
+                <button class="btn btn-sm btn-secondary me-2 select-row-btn" data-id="${row.id}"><i class="bi bi-check-square"></i> Select</button>
               `;
               if (row.status === 'Pending') {
                 actions += `
-                  <button class="btn btn-sm btn-success me-2 approve-btn" data-id="${row.id}">Approve</button>
-                  <button class="btn btn-sm btn-danger me-2 delete-btn" data-id="${row.id}">Delete</button>
+                  <button class="btn btn-sm btn-success me-2 approve-btn" data-id="${row.id}"><i class="bi bi-check"></i> Approve</button>
+                  <button class="btn btn-sm btn-danger me-2 delete-btn" data-id="${row.id}"><i class="bi bi-x"></i> Delete</button>
                 `;
               }
               return actions;
@@ -351,7 +351,7 @@
         ]
       });
 
-      // Delegate click events for table buttons
+      // Event Delegation for Buttons
       $('#applications-table tbody').on('click', '.view-btn', function () {
         const id = $(this).data('id');
         viewApplication(id);
@@ -454,24 +454,25 @@
           `;
           new bootstrap.Modal(document.getElementById('applicationModal')).show();
         }
+      };
+
       // Bulk Approve
-      document.getElementById('bulk-approve').click();
-        async () => {
-          const selectedIds = table.rows({ selected: true }).data().pluck('id').toArray();
-          if (!selectedIds.length) return showToast('No applications selected', false);
-          try {
-            const { error } = await supabase
-              .from('capital_applications')
-              .update({ status: 'Approved' })
-              .in('id', id);
-            if (error) throw error;
-            showToast('Selected applications approved');
-            loadCapitalApplications();
-          } catch (err) {
-            console.error(err);
-            showToast('Error approving applications', false);
-          }
-        });
+      document.getElementById('bulk-approve').addEventListener('click', async () => {
+        const selectedIds = table.rows({ selected: true }).data().pluck('id').toArray();
+        if (!selectedIds.length) return showToast('No applications selected', false);
+        try {
+          const { error } = await supabase
+            .from('capital_applications')
+            .update({ status: 'Approved' })
+            .in('id', selectedIds);
+          if (error) throw error;
+          showToast('Selected applications approved');
+          loadCapitalApplications();
+        } catch (err) {
+          console.error(err);
+          showToast('Error approving applications', false);
+        }
+      });
 
       // Bulk Delete
       document.getElementById('bulk-delete').addEventListener('click', async () => {
@@ -493,12 +494,12 @@
         }
       });
 
-      // Select All Statuses
+      // Select All
       document.getElementById('select-all').addEventListener('click', () => {
         table.rows().select();
       });
 
-      // Deselect All Statuses
+      // Deselect All
       document.getElementById('deselect-all').addEventListener('click', () => {
         table.rows().deselect();
       });
@@ -514,15 +515,13 @@
           e.preventDefault();
           table.rows().select();
         } else if (e.ctrlKey && e.shiftKey && e.key === 'A') {
-          e.preventDefault();
           document.getElementById('bulk-approve').click();
         } else if (e.ctrlKey && e.shiftKey && e.key === 'D') {
-          e.preventDefault();
           document.getElementById('bulk-delete').click();
         }
-        });
+      });
 
-      // Initial load
+      // Initial Load
       loadCapitalApplications();
     });
   </script>
