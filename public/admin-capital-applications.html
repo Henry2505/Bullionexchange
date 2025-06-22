@@ -1,8 +1,8 @@
 <!DOCTYPE html>
-<html lang="en" data-theme="dark">
+<html lang="en" data-bs-theme="dark">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>CBE Admin – Capital Applications</title>
   <script>
     // Redirect to login if not authenticated
@@ -15,11 +15,12 @@
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
   <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css" rel="stylesheet">
   <link href="https://cdn.datatables.net/1.13.4/css/dataTables.bootstrap5.min.css" rel="stylesheet">
+  <link href="https://cdn.datatables.net/responsive/2.2.9/css/responsive.dataTables.min.css" rel="stylesheet">
   <link href="https://cdn.datatables.net/select/1.4.0/css/select.dataTables.min.css" rel="stylesheet">
   <link href="https://cdn.datatables.net/buttons/2.2.3/css/buttons.dataTables.min.css" rel="stylesheet">
   <style>
     /* Theme Variables */
-    :root {
+    [data-bs-theme="dark"] {
       --bg: #000;
       --text: #fff;
       --gold: #ffd700;
@@ -28,7 +29,7 @@
       --overlay: rgba(0, 0, 0, 0.6);
       --shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
     }
-    [data-theme="light"] {
+    [data-bs-theme="light"] {
       --bg: #f5f5f5;
       --text: #333;
       --gold: #cca300;
@@ -154,6 +155,30 @@
     .spinner-border.text-gold {
       color: var(--gold);
     }
+
+    /* Media Queries for Responsiveness */
+    @media (max-width: 768px) {
+      .admin-header {
+        padding: 0.5rem 1rem;
+      }
+      .logo img {
+        height: 30px;
+      }
+      table.dataTable {
+        font-size: 0.875rem;
+      }
+      .dataTables_wrapper .dataTables_filter input {
+        width: 100%;
+      }
+    }
+    @media (max-width: 576px) {
+      .modal-dialog {
+        margin: 0.5rem;
+      }
+      .modal-body {
+        padding: 1rem;
+      }
+    }
   </style>
 </head>
 <body>
@@ -172,16 +197,18 @@
     <h2 id="section-title">Capital Applications</h2>
     <div class="glass table-panel">
       <!-- Bulk Actions and Filters -->
-      <div class="mb-3 d-flex justify-content-between align-items-center">
-        <div>
-          <button id="bulk-approve" class="btn btn-success me-2">Approve Selected</button>
-          <button id="bulk-delete" class="btn btn-danger me-2">Delete Selected</button>
+      <div class="row mb-3">
+        <div class="col-12 col-md-6 d-flex justify-content-start flex-wrap">
+          <button id="bulk-approve" class="btn btn-success me-2 mb-2"><i class="bi bi-check-circle"></i> Approve Selected</button>
+          <button id="bulk-delete" class="btn btn-danger me-2 mb-2"><i class="bi bi-trash"></i> Delete Selected</button>
         </div>
-        <select id="status-filter" class="form-select w-auto">
-          <option value="">All Statuses</option>
-          <option value="Pending">Pending</option>
-          <option value="Approved">Approved</option>
-        </select>
+        <div class="col-12 col-md-6 d-flex justify-content-end">
+          <select id="status-filter" class="form-select w-auto">
+            <option value="">All Statuses</option>
+            <option value="Pending">Pending</option>
+            <option value="Approved">Approved</option>
+          </select>
+        </div>
       </div>
       <!-- Loading Spinner -->
       <div id="loading" class="text-center" style="display: none;">
@@ -233,6 +260,8 @@
   <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
   <script src="https://cdn.datatables.net/1.13.4/js/jquery.dataTables.min.js"></script>
   <script src="https://cdn.datatables.net/1.13.4/js/dataTables.bootstrap5.min.js"></script>
+  <script src="https://cdn.datatables.net/responsive/2.2.9/js/dataTables.responsive.min.js"></script>
+  <script src="https://cdn.datatables.net/responsive/2.2.9/js/responsive.bootstrap5.min.js"></script>
   <script src="https://cdn.datatables.net/select/1.4.0/js/dataTables.select.min.js"></script>
   <script src="https://cdn.datatables.net/buttons/2.2.3/js/dataTables.buttons.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.1.3/jszip.min.js"></script>
@@ -249,12 +278,12 @@
       // Theme Toggle
       const themeBtn = document.getElementById('theme-toggle');
       const applyTheme = (theme) => {
-        document.documentElement.setAttribute('data-theme', theme);
+        document.documentElement.setAttribute('data-bs-theme', theme);
         localStorage.setItem('theme', theme);
         themeBtn.textContent = theme === 'dark' ? '🌞' : '🌜';
       };
       themeBtn.onclick = () => {
-        const current = document.documentElement.getAttribute('data-theme') === 'dark' ? 'light' : 'dark';
+        const current = document.documentElement.getAttribute('data-bs-theme') === 'dark' ? 'light' : 'dark';
         applyTheme(current);
       };
       applyTheme(localStorage.getItem('theme') || 'dark');
@@ -289,6 +318,7 @@
         select: { style: 'multi', selector: 'td:first-child' },
         dom: 'Bfrtip',
         buttons: ['copy', 'csv', 'excel', 'pdf', 'print'],
+        responsive: true,
         columns: [
           { data: null, defaultContent: '', className: 'select-checkbox', orderable: false },
           { data: 'id' },
@@ -302,11 +332,11 @@
           {
             data: null,
             render: (data, type, row) => {
-              let actions = `<button class="btn btn-sm btn-primary me-2" onclick="viewApplication(${row.id})">View</button>`;
+              let actions = `<button class="btn btn-sm btn-primary me-2" onclick="viewApplication(${row.id})"><i class="bi bi-eye"></i> View</button>`;
               if (row.status === 'Pending') {
                 actions += `
-                  <button class="btn btn-sm btn-success me-2" onclick="approveApplication(${row.id})">Approve</button>
-                  <button class="btn btn-sm btn-danger" onclick="deleteApplication(${row.id})">Delete</button>
+                  <button class="btn btn-sm btn-success me-2" onclick="approveApplication(${row.id})"><i class="bi bi-check"></i> Approve</button>
+                  <button class="btn btn-sm btn-danger" onclick="deleteApplication(${row.id})"><i class="bi bi-x"></i> Delete</button>
                 `;
               }
               return actions;
