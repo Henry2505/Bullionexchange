@@ -341,7 +341,7 @@
               `;
               if (row.status === 'Pending') {
                 actions += `
-                  <button class="btn btn-sm btn-success me-2" onclick="approveApplication(${row.id})"><i class="bi bi-check"></i> Approve</button>
+                  <button class="btn btn-sm btn-success me-2" onclick="approveApplication(event, ${row.id})"><i class="bi bi-check"></i> Approve</button>
                   <button class="btn btn-sm btn-danger me-2" onclick="deleteApplication(${row.id})"><i class="bi bi-x"></i> Delete</button>
                 `;
               }
@@ -380,7 +380,10 @@
       }
 
       // Approve Application
-      window.approveApplication = async (id) => {
+      window.approveApplication = async (evt, id) => {
+        const btn = evt.currentTarget;
+        btn.disabled = true;
+        btn.innerHTML = '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Approving…';
         try {
           const { error } = await supabase
             .from('capital_applications')
@@ -390,8 +393,10 @@
           showToast('Application approved');
           loadCapitalApplications();
         } catch (err) {
-          console.error(err);
           showToast('Error approving application', false);
+        } finally {
+          btn.disabled = false;
+          btn.innerHTML = '<i class="bi bi-check-circle"></i> Approve';
         }
       };
 
