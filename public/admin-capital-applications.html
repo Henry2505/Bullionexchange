@@ -2,287 +2,161 @@
 <html lang="en" data-theme="dark">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
   <title>CBE Admin – Capital Applications</title>
+
+  <!-- Redirect if not logged in -->
   <script>
-    // Redirect to login if not logged in
     if (localStorage.getItem('isLoggedIn') !== 'true') {
       window.location.replace('admin-login.html?redirect=' + encodeURIComponent(window.location.pathname));
     }
   </script>
-  <!-- CSS Dependencies -->
+
+  <!-- Fonts & Core CSS -->
   <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700&display=swap" rel="stylesheet">
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
   <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css" rel="stylesheet">
-  <link href="https://cdn.datatables.net/2.0.8/css/dataTables.bootstrap5.min.css" rel="stylesheet">
-  <link href="https://cdn.datatables.net/buttons/3.0.2/css/buttons.bootstrap5.min.css" rel="stylesheet">
+
+  <!-- DataTables + Buttons Extension CSS -->
+  <link href="https://cdn.datatables.net/1.13.4/css/dataTables.bootstrap5.min.css" rel="stylesheet">
+  <link href="https://cdn.datatables.net/buttons/2.3.6/css/buttons.bootstrap5.min.css" rel="stylesheet">
+
   <style>
     /* THEME VARIABLES */
     :root {
-      --bg: #121212;
-      --text: #e0e0e0;
+      --bg: #000;
+      --text: #fff;
       --gold: #ffd700;
-      --gold-accent: #cca700;
       --glass-bg: rgba(255, 255, 255, 0.05);
-      --overlay: linear-gradient(135deg, rgba(18, 18, 18, 0.95), rgba(50, 50, 50, 0.7));
-      --shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
-      --border: 1px solid rgba(255, 215, 0, 0.3);
+      --overlay: rgba(0, 0, 0, 0.6);
     }
     [data-theme="light"] {
-      --bg: #f8f9fa;
-      --text: #212529;
-      --gold: #cca700;
-      --gold-accent: #b59e00;
+      --bg: #f5f5f5;
+      --text: #333;
+      --gold: #cca300;
       --glass-bg: rgba(0, 0, 0, 0.05);
-      --overlay: linear-gradient(135deg, rgba(248, 249, 250, 0.95), rgba(200, 200, 200, 0.7));
-      --shadow: 0 8px 16px rgba(0, 0, 0, 0.1);
-      --border: 1px solid rgba(255, 215, 0, 0.5);
+      --overlay: rgba(255, 255, 255, 0.15);
     }
-    * { margin: 0; padding: 0; box-sizing: border-box; }
+    * { margin:0; padding:0; box-sizing:border-box; }
     body {
-      font-family: 'Poppins', sans-serif;
+      font-family:'Poppins',sans-serif;
       background: var(--bg);
       color: var(--text);
       overflow-x: hidden;
-      transition: background 0.3s ease;
     }
     a { color: var(--gold); text-decoration: none; }
-    a:hover { color: var(--gold-accent); }
-    .overlay {
-      position: fixed;
-      top: 0;
-      left: 0;
-      width: 100%;
-      height: 100%;
-      background: var(--overlay);
-      z-index: -1;
-    }
+    .overlay { position:fixed; top:0; left:0; width:100%; height:100%; background: var(--overlay); z-index:-1; }
     .glass {
       background: var(--glass-bg);
-      backdrop-filter: blur(12px);
-      border: var(--border);
-      border-radius: 12px;
-      box-shadow: var(--shadow);
-      transition: transform 0.3s ease, box-shadow 0.3s ease;
+      backdrop-filter: blur(10px);
+      border: 1px solid rgba(255,215,0,0.2);
+      transition: all .3s ease;
     }
-    .glass:hover {
-      transform: translateY(-4px);
-      box-shadow: 0 12px 24px rgba(0, 0, 0, 0.4);
-    }
+    .glass:hover { transform: translateY(-4px); }
 
     /* HEADER */
-    .admin-header {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      padding: 1rem 2rem;
-      background: rgba(0, 0, 0, 0.85);
-      border-bottom: var(--border);
-      position: sticky;
-      top: 0;
-      z-index: 1000;
+    header.admin-header {
+      display:flex; align-items:center; justify-content:space-between;
+      padding:1rem 2rem; background:rgba(0,0,0,0.6);
+      border-bottom:1px solid var(--gold);
+      position:sticky; top:0; z-index:10;
     }
-    .logo {
-      cursor: pointer;
-      display: flex;
-      align-items: center;
-      transition: transform 0.3s ease;
+    .logo { cursor:pointer; display:flex; align-items:center; }
+    .logo img { height:40px; }
+    #theme-toggle {
+      background:none; border:none; font-size:1.25rem;
+      cursor:pointer; color:var(--text);
     }
-    .logo:hover { transform: scale(1.05); }
-    .logo img { height: 50px; border-radius: 8px; }
-    #theme-btn {
-      background: none;
-      border: none;
-      font-size: 1.5rem;
-      cursor: pointer;
-      color: var(--gold);
-      transition: transform 0.3s ease;
-    }
-    #theme-btn:hover { transform: rotate(360deg); }
 
-    /* SECTION TITLE */
-    .section-title {
+    /* PAGE CONTROLS */
+    .controls {
+      display:flex; flex-wrap:wrap; gap:1rem; align-items:center;
+      margin-bottom:1rem; justify-content:space-between;
+    }
+    .dt-button { background: var(--gold) !important; border: none; color: #000 !important; font-weight:600; }
+    .dt-button:hover { opacity:.85; }
+
+    /* PAGE TITLE */
+    #section-title {
       color: var(--gold);
-      margin: 2rem 0;
+      margin: 2rem 0 1rem;
       text-align: center;
-      font-weight: 600;
-      text-transform: uppercase;
-      letter-spacing: 3px;
-      background: linear-gradient(45deg, var(--gold), var(--gold-accent));
-      background-clip: text;
-      -webkit-background-clip: text;
-      -webkit-text-fill-color: transparent;
-      animation: fadeIn 1s ease-out;
     }
 
     /* TABLE PANEL */
     .table-panel {
-      padding: 2rem;
-      margin: 2rem auto;
-      max-width: 1200px;
-      border-radius: 16px;
+      padding:2rem;
+      margin-bottom:2rem;
+      border-radius:8px;
       position: relative;
     }
-    .table {
-      background: transparent;
-      color: var(--text);
-    }
-    .table th, .table td {
-      border: none;
-      vertical-align: middle;
-      padding: 1rem;
-    }
-    .table thead th {
-      background: rgba(255, 215, 0, 0.1);
-      color: var(--gold);
-      font-weight: 600;
-      text-transform: uppercase;
-    }
-    .table-hover tbody tr:hover {
-      background: rgba(255, 215, 0, 0.05);
-    }
     .dataTables_wrapper .dataTables_filter input {
-      background: var(--glass-bg);
-      color: var(--text);
-      border: var(--border);
-      border-radius: 4px;
-      padding: 0.5rem;
+      background: var(--bg); color: var(--text); border:1px solid var(--gold);
     }
-    .dataTables_wrapper .dataTables_length select {
-      background: var(--glass-bg);
-      color: var(--text);
-      border: var(--border);
+    table.dataTable th, table.dataTable td {
+      vertical-align: middle;
+      transition: background .2s ease;
     }
-    .dataTables_paginate .pagination .page-link {
-      background: var(--glass-bg);
-      color: var(--gold);
-      border: var(--border);
-    }
-    .page-link .pagination .dataTables_paginate .active .page-link {
-      background: var(--gold);
-      color: var(--bg);
-    }
+    table.dataTable tbody tr:hover { background: rgba(255,215,0,0.1); cursor: pointer; }
 
-    /* CUSTOM BUTTONS */
-    .custom-btn {
-      background: linear-gradient(45deg, var(--gold), var(--gold-accent));
-      color: var(--bg);
-      border: none;
-      padding: 0.5rem 1rem;
-      border-radius: 8px;
-      font-weight: 500;
-      transition: transform 0.2s ease, box-shadow 0.2s ease;
+    /* LOADING OVERLAY */
+    #loading-overlay {
+      position:absolute; top:0; left:0; width:100%; height:100%;
+      background: rgba(0,0,0,0.7); display:flex; justify-content:center; align-items:center;
+      z-index:5; display:none;
     }
-    .custom-btn:hover {
-      transform: translateY(-2px);
-      box-shadow: 0 4px 12px rgba(255, 215, 0, 0.3);
-    }
-    .custom-btn-danger {
-      background: linear-gradient(45deg, #ff4b4b, #d32f2f);
-      color: #fff;
-    }
-    .custom-btn-danger:hover {
-      background: linear-gradient(45deg, #d32f2f, #b71c1c);
-      box-shadow: 0 4px 12px rgba(255, 0, 0, 0.3);
-    }
+    #loading-overlay .spinner-border { color: var(--gold); }
 
-    /* MODAL STYLES */
-    .modal-content {
-      background: var(--glass-bg);
-      border: var(--border);
-      border-radius: 12px;
-      color: var(--text);
-      box-shadow: var(--shadow);
-    }
-    .modal-header {
-      border-bottom: var(--border);
-      background: rgba(255, 215, 0, 0.05);
-    }
-    .modal-footer {
-      border-top: var(--border);
-      background: rgba(255, 215, 0, 0.05);
-    }
+    /* Details Modal */
+    .modal-header { background: var(--gold); color: #000; }
+    .modal-body { color: var(--text); }
 
-    /* ANIMATIONS */
-    @keyframes fadeIn {
-      0% { opacity: 0; transform: translateY(0.8); }
-      100% { opacity: 1; transform: translateY(1); }
-    }
-    .fade-in {
-      animation: fadeIn 0.5s ease-out;
-    }
-
-    /* RESPONSIVE */
-    @media screen andmax-width: 768px) {
-      .table-panel {
-        padding: 1rem;
-      }
-      .section-title {
-        font-size: 1.5rem;
-      }
-      .custom-btn {
-        font-size: 0.8rem;
-        padding: 0.4rem 0.8rem;
-      }
-    }
-
-    /* LOADING STATE */
-    .loading-spinner {
-      border: none;
-      position: absolute;
-      top: 50%;
-      left: translateX(-50%);
-      transform: translateY(-50%);
-      border: 4px solid var(--gold);
-      border-top: 4px solid transparent;
-      border-radius: 50%;
-      width: 40px;
-      height: 40px;
-      animation: spin 1s linear infinite;
-    }
-    @keyframes spin {
-      0% { transform: translateY(0); rotate(0deg); }
-      100% { transform: translateY(0); rotate(360deg); }
-    }
   </style>
 </head>
 <body>
   <div class="overlay"></div>
 
-  <!-- Main Header -->
+  <!-- Top Header -->
   <header class="admin-header glass">
     <div class="logo" id="logo">
-      <img src="CBE_logo.png" alt="CBE Logo">
+      <img src="CBE_logo.PNG" alt="CBE Logo">
     </div>
-    <div class="d-flex align-items-center gap-3">
-      <select id="status-filter" id="status-filter" class="custom-btn form-select" style="width: auto;">
-        <option value="">Filter by Status</option>
-        <option value="Pending">Pending</option>
-        <option value="Approved">Approved</option>
-      </select>
-      <button id="theme-btn" id="theme-toggle" aria-label="Toggle theme">🌞</button>
-    </div>
+    <button id="theme-toggle" aria-label="Toggle theme">🌞</button>
   </header>
 
   <!-- Main Content -->
-  <main classcontainer="container">
-    <h2 id="section-title" class="section-title">Capital Applications</h2>
-    <div classglass table-panel glass">
-      <div class="d-flex justify-content-between mb-3">
-        <div>
-          <button id="bulk-approve" class="custom-btn" disabled>Bulk Approve</button>
-          <button id="bulk-delete" class="custom-btn-danger custom-btn" disabled>Bulk Delete</button>
-        </div>
-        <div>
-          <button id="export-csv" class="btn custom-btn-sm"><i class="bi bi-file-earmark-spreadsheet"></i> Export CSV</button>
-          <button id="export-excel" class="custom-btn-sm"><i class="bi bi-file-earmark-excel"></i> Export Excel</button>
-        </div>
+  <main class="container">
+    <h2 id="section-title">Capital Applications</h2>
+    <!-- Controls -->
+    <div class="controls">
+      <div>
+        <button id="bulk-approve" class="btn btn-sm">Approve Selected</button>
+        <button id="bulk-delete" class="btn btn-sm">Delete Selected</button>
       </div>
-      <table id="applications-table" class="table table-hover table-borderless text">
+      <div>
+        <select id="status-filter" class="form-select form-select-sm">
+          <option value="">All Statuses</option>
+          <option value="Pending">Pending</option>
+          <option value="Approved">Approved</option>
+        </select>
+      </div>
+      <div>
+        <button id="export-csv" class="btn btn-sm">Export CSV</button>
+        <button id="export-excel" class="btn btn-sm">Export Excel</button>
+      </div>
+    </div>
+
+    <div class="glass table-panel">
+      <!-- Loading Overlay -->
+      <div id="loading-overlay">
+        <div class="spinner-border" role="status"><span class="visually-hidden">Loading...</span></div>
+      </div>
+
+      <table id="applications-table" class="table table-hover table-borderless text-white" style="width:100%">
         <thead>
           <tr>
-            <th><input type="checkbox" id="select-all-checkbox"></th>
-            <th>ID</th>
+            <th><input type="checkbox" id="select-all"></th>
+            <th>#</th>
             <th>Name</th>
             <th>Email</th>
             <th>WhatsApp</th>
@@ -295,187 +169,223 @@
         </thead>
         <tbody></tbody>
       </table>
-      <div class="loading-spinner" id="loading-spinner" style="spinner d-none"></div>
     </div>
   </main>
 
-  <!-- Application Details Modal -->
-  <div id="application-modal" class="modal fade" tabindex="-1">
-    <div classmodal-dialog="modal">
+  <!-- Details Modal -->
+  <div class="modal fade" id="appModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-lg modal-dialog-centered">
       <div class="modal-content">
-        <div classmodal-header="modal-header">
-          <h5 id="modal-title" class="modal-title">Application Details</h5>
-          <button typebutton class="button" type="btn-close data-bs-dismiss="modal" aria-label="Close modal"></button>
+        <div class="modal-header">
+          <h5 class="modal-title">Application Details</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
         </div>
-        <div classmodal-body="modal-body">
-          <p><strong>ID:</strong> <span id="modal-id"></span></p>
-          <p><strong>Name:</strong> <span id="modal-name"></span></p>          <p>
-            <strong>Email:</strong> <span id="modal-email"></span></p>          <p>
-            <strong>WhatsApp:</strong> <span id="modal-whatsapp"></span></p>
-          <p><strong>Telegram:</strong> <span id="modal-telegram"></span></p>
-          <p><strong>Experience:</strong> <span id="modal-experience"></span></p>
-          <p><strong>Motivation:</strong> <span id="modal-motivation"></span></p>
-          <p><strong>Status:</strong> <span id="modal-status"></span></p>
-          <p><strong>Created At:</strong> <span id="modal-created"></span></p>
-        </div>
-        <div classmodal-footer="modal-footer">
-          <button id="modal-approve" class="custom-btn">Approve</button>
-          <button id="modal-delete" class="custom-btn-danger">Delete</button>
-          <button type="button" class="custom-btn" data-bs-dismiss="modal">Close</button>
+        <div class="modal-body">
+          <!-- Dynamically filled -->
+          <dl class="row">
+            <dt class="col-sm-3">Name</dt><dd class="col-sm-9" id="detail-name"></dd>
+            <dt class="col-sm-3">Email</dt><dd class="col-sm-9" id="detail-email"></dd>
+            <dt class="col-sm-3">WhatsApp</dt><dd class="col-sm-9" id="detail-whatsapp"></dd>
+            <dt class="col-sm-3">Telegram</dt><dd class="col-sm-9" id="detail-telegram"></dd>
+            <dt class="col-sm-3">Experience</dt><dd class="col-sm-9" id="detail-exp"></dd>
+            <dt class="col-sm-3">Motivation</dt><dd class="col-sm-9" id="detail-motivation"></dd>
+            <dt class="col-sm-3">Status</dt><dd class="col-sm-9" id="detail-status"></dd>
+          </dl>
         </div>
       </div>
     </div>
-  <!-- </div> -->
+  </div>
 
   <!-- Dependencies -->
-<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-<script src="https://code.jquery.com/jquery-3.7.1/jquery-3.6.0.min.js"></script>
-<script src="https://cdn.datatables.net/2/js/jquery.dataTables.min.js"></script>
-<script src="https://cdn.datatables.net/2/js/dataTables.min.js"></script>
-<script src="https://cdn.datatables.net/buttons/3/js/dataTables.buttons.min.js"></script>
-<script src="https://cdn.datatables.net/buttons/3/js/buttons.bootstrap5.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/jszip@3.10.1/dist/jszip.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/pdfmake@0.2.10/build/pdfmake.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/pdfmake@0.2.10/pdfmake.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/pdfmake@0.10/build/vfs_fonts.min.js"></script>
-<script src="https://cdn.datatables.net/buttons/js/buttons.html5.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-<script>
-  document.addEventListener('DOMContentLoaded', () => {
-    // Logo click → Dashboard
-    document.getElementById('logo').onclick = () => {
-      window.location.href = 'admin-dashboard.html';
-    };
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+  <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
 
-    // Theme toggle
-    const themeBtn = document.getElementById('theme-btn');
-    const applyTheme = (t) => {
-      document.documentElement.setAttribute('data-theme', t);
-      localStorage.setItem('theme', t);
-      themeBtn.textContent = t === 'dark' ? '🌞' : '🌜';
-    };
-    themeBtn.onclick = () => {
-      const next = document.documentElement.getAttribute('data-theme') === 'dark' ? 'light' : 'dark';
-      applyTheme(next);
-    };
-    applyTheme(localStorage.getItem('theme') || 'dark');
+  <!-- DataTables + Buttons + JSZip -->
+  <script src="https://cdn.datatables.net/1.13.4/js/jquery.dataTables.min.js"></script>
+  <script src="https://cdn.datatables.net/1.13.4/js/dataTables.bootstrap5.min.js"></script>
+  <script src="https://cdn.datatables.net/buttons/2.3.6/js/dataTables.buttons.min.js"></script>
+  <script src="https://cdn.datatables.net/buttons/2.3.6/js/buttons.bootstrap5.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+  <script src="https://cdn.datatables.net/buttons/2.3.6/js/buttons.html5.min.js"></script>
 
-    // Auth guard
-    if (localStorage.getItem('isLoggedIn') !== 'true') {
-      window.location.href = 'admin-login.html?redirect=admin-capital-applications.html';
-    }
+  <!-- Supabase -->
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
-    // Supabase init
-    const supabase = window.supabase.createClient(
-      'https://dapwpgvnfjcfqqhrpxla.supabase.co',
-      'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImRhcHdwZ3ZuZmpjZnFxaHJweGxhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDcwNDA4ODgsImV4cCI6MjA2MjYxNjg4OH0.ICC0UsLlzJDNre7rFCeD3k6iVzo6jOJgn3PhABpEMsQ'
-    );
+  <script>
+    document.addEventListener('DOMContentLoaded', () => {
+      // Logo click → Dashboard
+      document.getElementById('logo').onclick = () => window.location.href = 'admin-dashboard.html';
 
-    // Toast helper
-    function showToast(msg, ok = true) {
-      const toast = document.createElement('div');
-      toast.className = `toast align-items-center text-white ${ok ? 'bg-success' : 'bg-danger'} border-0 position-fixed top-0 end-0 m-3 fade-in`;
-      toast.innerHTML = `
-        <div class="d-flex">
-          <div class="toast-body">${msg}</div>
-          <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast"></button>
-        </div>`;
-      document.body.append(toast);
-      const bsToast = new bootstrap.Toast(toast, { delay: 3000 });
-      bsToast.show();
-      setTimeout(() => toast.remove(), 3500);
-    }
+      // Theme toggle
+      const themeBtn = document.getElementById('theme-toggle');
+      const applyTheme = t => {
+        document.documentElement.setAttribute('data-theme', t);
+        localStorage.setItem('theme', t);
+        themeBtn.textContent = t==='dark'?'🌞':'🌜';
+      };
+      themeBtn.onclick = () => applyTheme(document.documentElement.getAttribute('data-theme')==='dark'?'light':'dark');
+      applyTheme(localStorage.getItem('theme')||'dark');
 
-    // Initialize DataTable
-    const table = $('#applications-table').DataTable({
-      dom: 'Bfrtip',
-      buttons: [
-        {
-          extend: 'csv',
-          className: 'custom-btn d-none',
-          text: 'Export CSV',
-        },
-        {
-          extend: 'excel',
-          className: 'custom-btn d-none',
-          text: 'Export Excel',
-        },
-      ],
-      columns: [
-        {
-          data: null,
-          render: () => '<input type="checkbox" class="row-checkbox">',
-          orderable: false,
-          searchable: false,
-        },
-        { data: 'id' },
-        { data: 'full_name', render: (data) => `<a href="#" class="view-details">${data}</a>` },
-        { data: 'email' },
-        { data: 'whatsapp', defaultContent: '—' },
-        { data: 'telegram', defaultContent: '—' },
-        { data: 'experience' },
-        { data: 'motivation', render: (txt) => `<small>${txt.substring(0, 50)}...</small>` },
-        { data: 'status' },
-        {
-          data: null,
-          render: (_, __, row) => `
-            <div class="d-flex gap-2">
-              ${row.status === 'Pending' ? `<button class="custom-btn btn-sm approve-btn" data-id="${row.id}">Approve</button>` : ''}
-              <button class="custom-btn-danger btn-sm delete-btn" data-id="${row.id}">Delete</button>
-            </div>
-          `,
-          orderable: false,
-          searchable: false,
-        },
-      ],
-      pageLength: 10,
-      responsive: true,
-      order: [[1, 'desc']],
-      language: {
-        search: 'Search applications:',
-        lengthMenu: 'Show _MENU_ entries',
-      },
-    });
+      // Supabase init
+      const supabase = window.supabase.createClient(
+        'https://dapwpgvnfjcfqqhrpxla.supabase.co',
+        'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9…EMsQ'
+      );
 
-    // Loading state
-    const spinner = $('#loading-spinner');
-    function toggleLoading(show) {
-      spinner.toggleClass('d-none', !show);
-      $('.table-panel').css('opacity', show ? 0.5 : 1);
-    }
+      // Toast helper
+      function showToast(msg, ok=true) {
+        const t = document.createElement('div');
+        t.className = `toast align-items-center text-white ${ok?'bg-success':'bg-danger'} border-0 position-fixed top-0 end-0 m-3`;
+        t.innerHTML = `
+          <div class="d-flex">
+            <div class="toast-body">${msg}</div>
+            <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast"></button>
+          </div>`;
+        document.body.append(t);
+        new bootstrap.Toast(t,{delay:3000}).show();
+      }
 
-    // Load applications
-    async function loadCapitalApplications() {
-      toggleLoading(true);
-      try {
+      // DataTable setup
+      const table = $('#applications-table').DataTable({
+        dom: 'Bfrtip',
+        buttons: [],
+        columns: [
+          { data: null, orderable:false, render: () => '<input type="checkbox" class="row-select">' },
+          { data: 'id' },
+          { data: 'full_name' },
+          { data: 'email' },
+          { data: 'whatsapp', defaultContent:'—' },
+          { data: 'telegram', defaultContent:'—' },
+          { data: 'experience' },
+          { data: 'motivation', render: txt => `<small>${txt}</small>` },
+          { data: 'status' },
+          { data: null, orderable:false, render: (_,__,row)=>
+              `<button class="btn btn-sm btn-success me-1" onclick="approveApplication(${row.id})">Approve</button>
+               <button class="btn btn-sm btn-outline-danger" onclick="deleteApplication(${row.id})">Delete</button>
+               <button class="btn btn-sm btn-outline-light ms-1" onclick="showDetails(${row.id})"><i class="bi bi-eye"></i></button>`
+          }
+        ],
+        order: [[1,'desc']],
+        deferRender: true,
+        scrollX: true
+      });
+
+      // Loading overlay control
+      const loadOverlay = $('#loading-overlay');
+      function setLoading(on){ on?loadOverlay.show():loadOverlay.hide(); }
+
+      // Load data
+      async function loadCapitalApplications() {
+        setLoading(true);
+        try {
+          let { data, error } = await supabase
+            .from('capital_applications')
+            .select('*')
+            .order('created_at',{ascending:false});
+          if (error) throw error;
+
+          table.clear().rows.add(data).draw();
+          setLoading(false);
+        } catch (err) {
+          console.error(err);
+          showToast('Error loading applications',false);
+          setLoading(false);
+        }
+      }
+
+      // Single approve
+      window.approveApplication = async id => {
+        if (!confirm('Approve this application?')) return;
+        try {
+          let { error } = await supabase
+            .from('capital_applications')
+            .update({ status:'Approved' })
+            .eq('id', id);
+          if (error) throw error;
+          showToast('Approved successfully');
+          loadCapitalApplications();
+        } catch {
+          showToast('Error approving',false);
+        }
+      };
+
+      // Single delete
+      window.deleteApplication = async id => {
+        if (!confirm('Delete this application?')) return;
+        try {
+          let { error } = await supabase.from('capital_applications').delete().eq('id',id);
+          if (error) throw error;
+          showToast('Deleted successfully');
+          loadCapitalApplications();
+        } catch {
+          showToast('Error deleting',false);
+        }
+      };
+
+      // Bulk actions
+      function getSelectedIds() {
+        return $('#applications-table tbody input.row-select:checked')
+          .closest('tr').map((_,tr)=>table.row(tr).data().id).get();
+      }
+      $('#select-all').on('click', function(){
+        const checked = this.checked;
+        $('input.row-select').prop('checked',checked);
+      });
+      $('#bulk-approve').on('click', async () => {
+        const ids = getSelectedIds();
+        if (!ids.length || !confirm(`Approve ${ids.length} selected?`)) return;
+        await supabase.from('capital_applications').update({status:'Approved'}).in('id',ids);
+        showToast('Bulk approved');
+        loadCapitalApplications();
+      });
+      $('#bulk-delete').on('click', async () => {
+        const ids = getSelectedIds();
+        if (!ids.length || !confirm(`Delete ${ids.length} selected?`)) return;
+        await supabase.from('capital_applications').delete().in('id',ids);
+        showToast('Bulk deleted');
+        loadCapitalApplications();
+      });
+
+      // Export
+      $('#export-csv').on('click', () => table.button().add( null, {
+        extend: 'csvHtml5', title: 'CBE_Applications'
+      }).trigger() );
+      $('#export-excel').on('click', () => table.button().add( null, {
+        extend: 'excelHtml5', title: 'CBE_Applications'
+      }).trigger() );
+
+      // Status filter
+      $('#status-filter').on('change', function(){
+        table.column(8).search(this.value).draw();
+      });
+
+      // Details modal
+      window.showDetails = async id => {
         const { data, error } = await supabase
           .from('capital_applications')
-          .select('id, full_name, email, whatsapp, telegram, experience, motivation, status, created_at')
-          .order('created_at', { ascending: false });
-        if (error) throw error;
-        table.clear();
-        table.rows.add(data || []);
-        table.draw();
-        toggleBulkButtons();
-      } catch (err) {
-        console.error(err);
-        showToast('Error loading applications', false);
-      } finally {
-        toggleLoading(false);
-      }
-    }
+          .select('*').eq('id',id).single();
+        if (error) return showToast('Error fetching details',false);
+        $('#detail-name').text(data.full_name);
+        $('#detail-email').text(data.email);
+        $('#detail-whatsapp').text(data.whatsapp||'—');
+        $('#detail-telegram').text(data.telegram||'—');
+        $('#detail-exp').text(data.experience);
+        $('#detail-motivation').text(data.motivation);
+        $('#detail-status').text(data.status);
+        new bootstrap.Modal(document.getElementById('appModal')).show();
+      };
 
-    // Approve action
-    window.approveApplication = async (id) => {
-      toggleLoading(true);
-      try {
-        const { error } = await supabase
-          .from('capital_applications')
-          .update({ status: 'Approved' })
-          .eq('id', id);
-        if (error) throw error;
-        showToast('Application approved');
-        loadCapitalApplications();
-      } catch (err) {
-        console.error(err);
-        showToast('Error approving', false);
+      // Keyboard shortcuts
+      document.addEventListener('keydown', e => {
+        if (e.target.tagName==='INPUT' || e.target.tagName==='TEXTAREA') return;
+        if (e.key==='A') $('#bulk-approve').click();
+        if (e.key==='D') $('#bulk-delete').click();
+        if (e.key==='E') $('#export-csv').click();
+      });
+
+      // Initial load
+      loadCapitalApplications();
+    });
+  </script>
+</body>
+</html>
