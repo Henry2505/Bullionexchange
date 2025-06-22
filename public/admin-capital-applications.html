@@ -199,6 +199,7 @@
       <!-- Bulk Actions and Filters -->
       <div class="row mb-3">
         <div class="col-12 col-md-6 d-flex justify-content-start flex-wrap">
+          <button id="select-all" class="btn btn-secondary me-2 mb-2"><i class="bi bi-check-square"></i> Select All</button>
           <button id="bulk-approve" class="btn btn-success me-2 mb-2"><i class="bi bi-check-circle"></i> Approve Selected</button>
           <button id="bulk-delete" class="btn btn-danger me-2 mb-2"><i class="bi bi-trash"></i> Delete Selected</button>
         </div>
@@ -338,7 +339,6 @@
                 actions += `
                   <button class="btn btn-sm btn-success me-2" onclick="approveApplication(${row.id})"><i class="bi bi-check"></i> Approve</button>
                   <button class="btn btn-sm btn-danger me-2" onclick="deleteApplication(${row.id})"><i class="bi bi-x"></i> Delete</button>
-                  <button class="btn btn-sm btn-warning" onclick="auctionApplication(${row.id})"><i class="bi bi-hammer"></i> Auction</button>
                 `;
               }
               return actions;
@@ -399,24 +399,6 @@
         }
       };
 
-      // Auction Application
-      window.auctionApplication = async (id) => {
-        if (confirm('Are you sure you want to mark this application for auction?')) {
-          try {
-            const { error } = await supabase
-              .from('capital_applications')
-              .update({ status: 'Auctioned' })
-              .eq('id', id);
-            if (error) throw error;
-            showToast('Application marked for auction');
-            loadCapitalApplications();
-          } catch (err) {
-            console.error(err);
-            showToast('Error marking application for auction', false);
-          }
-        }
-      };
-
       // View Application Details
       window.viewApplication = (id) => {
         const rowData = table.row(`#${id}`).data();
@@ -470,6 +452,11 @@
             showToast('Error deleting applications', false);
           }
         }
+      });
+
+      // Select All
+      document.getElementById('select-all').addEventListener('click', () => {
+        table.rows().select();
       });
 
       // Status Filter
