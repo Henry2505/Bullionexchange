@@ -200,6 +200,7 @@
       <div class="row mb-3">
         <div class="col-12 col-md-6 d-flex justify-content-start flex-wrap">
           <button id="select-all" class="btn btn-secondary me-2 mb-2"><i class="bi bi-check-square"></i> Select All</button>
+          <button id="deselect-all" class="btn btn-secondary me-2 mb-2"><i class="bi bi-square"></i> Deselect All</button>
           <button id="bulk-approve" class="btn btn-success me-2 mb-2"><i class="bi bi-check-circle"></i> Approve Selected</button>
           <button id="bulk-delete" class="btn btn-danger me-2 mb-2"><i class="bi bi-trash"></i> Delete Selected</button>
         </div>
@@ -334,7 +335,10 @@
           {
             data: null,
             render: (data, type, row) => {
-              let actions = `<button class="btn btn-sm btn-primary me-2" onclick="viewApplication(${row.id})"><i class="bi bi-eye"></i> View</button>`;
+              let actions = `
+                <button class="btn btn-sm btn-primary me-2" onclick="viewApplication(${row.id})"><i class="bi bi-eye"></i> View</button>
+                <button class="btn btn-sm btn-secondary me-2 select-row" onclick="toggleSelectRow(${row.id})"><i class="bi bi-check-square"></i> Select</button>
+              `;
               if (row.status === 'Pending') {
                 actions += `
                   <button class="btn btn-sm btn-success me-2" onclick="approveApplication(${row.id})"><i class="bi bi-check"></i> Approve</button>
@@ -346,6 +350,16 @@
           }
         ]
       });
+
+      // Toggle Select Row
+      window.toggleSelectRow = (id) => {
+        const row = table.row(`#${id}`);
+        if (row.selected()) {
+          row.deselect();
+        } else {
+          row.select();
+        }
+      };
 
       // Load Applications
       async function loadCapitalApplications() {
@@ -457,6 +471,11 @@
       // Select All
       document.getElementById('select-all').addEventListener('click', () => {
         table.rows().select();
+      });
+
+      // Deselect All
+      document.getElementById('deselect-all').addEventListener('click', () => {
+        table.rows().deselect();
       });
 
       // Status Filter
