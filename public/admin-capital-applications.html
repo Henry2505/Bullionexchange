@@ -16,9 +16,169 @@
   <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css" rel="stylesheet">
   <link href="https://cdn.datatables.net/1.13.4/css/dataTables.bootstrap5.min.css" rel="stylesheet">
   <link href="https://cdn.datatables.net/responsive/2.2.9/css/responsive.dataTables.min.css" rel="stylesheet">
+  <link href="https://cdn.datatables.net/select/1.4.0/css/select.dataTables.min.css" rel="stylesheet">
   <link href="https://cdn.datatables.net/buttons/2.2.3/css/buttons.dataTables.min.css" rel="stylesheet">
   <style>
-    /* (all your dark/light theme CSS remains exactly the same) */
+    /* Theme Variables */
+    [data-bs-theme="dark"] {
+      --bg: #000;
+      --text: #fff;
+      --gold: #ffd700;
+      --gold-gradient: linear-gradient(45deg, #ffd700, #ffec8b);
+      --glass-bg: rgba(255, 255, 255, 0.05);
+      --overlay: rgba(0, 0, 0, 0.6);
+      --shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    }
+    [data-bs-theme="light"] {
+      --bg: #f5f5f5;
+      --text: #333;
+      --gold: #cca300;
+      --gold-gradient: linear-gradient(45deg, #cca300, #e6d47b);
+      --glass-bg: rgba(0, 0, 0, 0.05);
+      --overlay: rgba(255, 255, 255, 0.15);
+      --shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
+    }
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      font-family: 'Poppins', sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      overflow-x: hidden;
+    }
+    a { color: var(--gold); text-decoration: none; }
+    .overlay {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: var(--overlay);
+      z-index: -1;
+    }
+    .glass {
+      background: var(--glass-bg);
+      backdrop-filter: blur(10px);
+      border: 1px solid rgba(255, 215, 0, 0.2);
+      box-shadow: var(--shadow);
+    }
+
+    /* Header Styles */
+    header.admin-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 1rem 2rem;
+      background: rgba(0, 0, 0, 0.6);
+      border-bottom: 1px solid var(--gold);
+      position: sticky;
+      top: 0;
+      z-index: 10;
+    }
+    .logo { cursor: pointer; display: flex; align-items: center; }
+    .logo img { height: 40px; }
+    #theme-toggle {
+      background: none;
+      border: none;
+      font-size: 1.25rem;
+      cursor: pointer;
+      color: var(--text);
+      transition: transform 0.3s ease;
+    }
+    #theme-toggle:hover { transform: scale(1.2); }
+
+    /* Page Title */
+    #section-title {
+      color: var(--gold);
+      margin: 2rem 0 1rem;
+      text-align: center;
+      font-weight: 600;
+      text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+    }
+
+    /* Table Panel */
+    .table-panel {
+      padding: 2rem;
+      margin-bottom: 2rem;
+      border-radius: 8px;
+      transition: all 0.3s ease;
+    }
+    .table-panel:hover {
+      transform: translateY(-5px);
+      box-shadow: 0 10px 20px rgba(0, 0, 0, 0.2);
+    }
+    table.dataTable thead th {
+      background: var(--gold-gradient);
+      color: #000;
+      border-bottom: 2px solid var(--gold);
+      font-weight: 600;
+    }
+    table.dataTable tbody tr {
+      transition: background-color 0.2s ease;
+    }
+    table.dataTable tbody tr:hover {
+      background-color: rgba(255, 215, 0, 0.1);
+    }
+    .dataTables_wrapper .dataTables_filter input {
+      background: var(--bg);
+      color: var(--text);
+      border: 1px solid var(--gold);
+      border-radius: 4px;
+    }
+    .btn {
+      transition: all 0.3s ease;
+    }
+    .btn:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+    }
+
+    /* Modal Styles */
+    .modal-content {
+      background: var(--glass-bg);
+      border: 2px solid var(--gold);
+      border-radius: 8px;
+    }
+    .modal-header, .modal-footer {
+      border-color: rgba(255, 215, 0, 0.2);
+    }
+
+    /* Toast Styles */
+    .toast.bg-success {
+      background-color: var(--gold) !important;
+      color: #000;
+    }
+    .toast.bg-danger {
+      background-color: #dc3545 !important;
+    }
+
+    /* Spinner */
+    .spinner-border.text-gold {
+      color: var(--gold);
+    }
+
+    /* Media Queries for Responsiveness */
+    @media (max-width: 768px) {
+      .admin-header {
+        padding: 0.5rem 1rem;
+      }
+      .logo img {
+        height: 30px;
+      }
+      table.dataTable {
+        font-size: 0.875rem;
+      }
+      .dataTables_wrapper .dataTables_filter input {
+        width: 100%;
+      }
+    }
+    @media (max-width: 576px) {
+      .modal-dialog {
+        margin: 0.5rem;
+      }
+      .modal-body {
+        padding: 1rem;
+      }
+    }
   </style>
 </head>
 <body>
@@ -26,7 +186,9 @@
 
   <!-- Top Header -->
   <header class="admin-header glass">
-    <div class="logo" id="logo"><img src="CBE_logo.PNG" alt="CBE Logo"></div>
+    <div class="logo" id="logo">
+      <img src="CBE_logo.PNG" alt="CBE Logo">
+    </div>
     <button id="theme-toggle" aria-label="Toggle theme">🌞</button>
   </header>
 
@@ -37,12 +199,8 @@
       <!-- Bulk Actions and Filters -->
       <div class="row mb-3">
         <div class="col-12 col-md-6 d-flex justify-content-start flex-wrap">
-          <button id="bulk-approve" class="btn btn-success me-2 mb-2">
-            <i class="bi bi-check-circle"></i> Approve Selected
-          </button>
-          <button id="bulk-delete" class="btn btn-danger me-2 mb-2">
-            <i class="bi bi-trash"></i> Delete Selected
-          </button>
+          <button id="bulk-approve" class="btn btn-success me-2 mb-2"><i class="bi bi-check-circle"></i> Approve Selected</button>
+          <button id="bulk-delete" class="btn btn-danger me-2 mb-2"><i class="bi bi-trash"></i> Delete Selected</button>
         </div>
         <div class="col-12 col-md-6 d-flex justify-content-end">
           <select id="status-filter" class="form-select w-auto">
@@ -53,19 +211,17 @@
           </select>
         </div>
       </div>
-
       <!-- Loading Spinner -->
       <div id="loading" class="text-center" style="display: none;">
         <div class="spinner-border text-gold" role="status">
           <span class="visually-hidden">Loading...</span>
         </div>
       </div>
-
       <!-- DataTable -->
       <table id="applications-table" class="table table-hover table-borderless text-white" style="width:100%">
         <thead>
           <tr>
-            <th><input type="checkbox" id="select-all"></th>
+            <th></th> <!-- Checkbox for selection -->
             <th>#</th>
             <th>Name</th>
             <th>Email</th>
@@ -74,6 +230,7 @@
             <th>Experience (yrs)</th>
             <th>Motivation</th>
             <th>Status</th>
+            <th>Action</th>
           </tr>
         </thead>
         <tbody></tbody>
@@ -82,14 +239,16 @@
   </main>
 
   <!-- Application Details Modal -->
-  <div class="modal fade" id="applicationModal" tabindex="-1" aria-hidden="true">
+  <div class="modal fade" id="applicationModal" tabindex="-1" aria-labelledby="applicationModalLabel" aria-hidden="true">
     <div class="modal-dialog modal-lg">
       <div class="modal-content glass">
         <div class="modal-header">
-          <h5 class="modal-title">Application Details</h5>
-          <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+          <h5 class="modal-title" id="applicationModalLabel">Application Details</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
         </div>
-        <div class="modal-body"><!-- filled dynamically --></div>
+        <div class="modal-body">
+          <!-- Populated dynamically -->
+        </div>
         <div class="modal-footer">
           <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
         </div>
@@ -97,40 +256,54 @@
     </div>
   </div>
 
-  <!-- JS Dependencies -->
+  <!-- JavaScript Dependencies -->
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
   <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
   <script src="https://cdn.datatables.net/1.13.4/js/jquery.dataTables.min.js"></script>
   <script src="https://cdn.datatables.net/1.13.4/js/dataTables.bootstrap5.min.js"></script>
   <script src="https://cdn.datatables.net/responsive/2.2.9/js/dataTables.responsive.min.js"></script>
   <script src="https://cdn.datatables.net/responsive/2.2.9/js/responsive.bootstrap5.min.js"></script>
+  <script src="https://cdn.datatables.net/select/1.4.0/js/dataTables.select.min.js"></script>
   <script src="https://cdn.datatables.net/buttons/2.2.3/js/dataTables.buttons.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.1.3/jszip.min.js"></script>
   <script src="https://cdn.datatables.net/buttons/2.2.3/js/buttons.html5.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
   <script>
     document.addEventListener('DOMContentLoaded', () => {
-      // Logo and Theme
-      document.getElementById('logo').onclick = () => window.location.href = 'admin-dashboard.html';
-      const themeBtn = document.getElementById('theme-toggle');
-      const applyTheme = th => {
-        document.documentElement.setAttribute('data-bs-theme', th);
-        localStorage.setItem('theme', th);
-        themeBtn.textContent = th === 'dark' ? '🌞' : '🌜';
+      // Logo Navigation
+      document.getElementById('logo').onclick = () => {
+        window.location.href = 'admin-dashboard.html';
       };
-      themeBtn.onclick = () => applyTheme(document.documentElement.getAttribute('data-bs-theme') === 'dark' ? 'light' : 'dark');
+
+      // Theme Toggle
+      const themeBtn = document.getElementById('theme-toggle');
+      const applyTheme = (theme) => {
+        document.documentElement.setAttribute('data-bs-theme', theme);
+        localStorage.setItem('theme', theme);
+        themeBtn.textContent = theme === 'dark' ? '🌞' : '🌜';
+      };
+      themeBtn.onclick = () => {
+        const current = document.documentElement.getAttribute('data-bs-theme') === 'dark' ? 'light' : 'dark';
+        applyTheme(current);
+      };
       applyTheme(localStorage.getItem('theme') || 'dark');
 
-      // Supabase client
+      // Authentication Guard
+      if (localStorage.getItem('isLoggedIn') !== 'true') {
+        window.location.href = 'admin-login.html?redirect=admin-capital-applications.html';
+      }
+
+      // Supabase Client
       const supabase = window.supabase.createClient(
         'https://dapwpgvnfjcfqqhrpxla.supabase.co',
-        'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...'
+        'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImRhcHdwZ3ZuZmpjZnFxaHJweGxhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDcwNDA4ODgsImV4cCI6MjA2MjYxNjg4OH0.ICC0UsLlzJDNre7rFCeD3k6iVzo6jOJgn3PhABpEMsQ'
       );
 
-      // Toast helper
-      function showToast(msg, ok = true) {
+      // Toast Notification Helper
+      function showToast(msg, success = true) {
         const toast = document.createElement('div');
-        toast.className = `toast align-items-center text-white ${ok ? 'bg-success' : 'bg-danger'} border-0 position-fixed top-0 end-0 m-3`;
+        toast.className = `toast align-items-center text-white ${success ? 'bg-success' : 'bg-danger'} border-0 position-fixed top-0 end-0 m-3`;
         toast.innerHTML = `
           <div class="d-flex">
             <div class="toast-body">${msg}</div>
@@ -140,18 +313,15 @@
         new bootstrap.Toast(toast, { delay: 3000 }).show();
       }
 
-      // Build the DataTable
+      // DataTable Initialization
       const table = $('#applications-table').DataTable({
+        rowId: 'id',
+        select: { style: 'multi', selector: 'td:first-child' },
         dom: 'Bfrtip',
-        buttons: ['copy','csv','excel','pdf','print'],
+        buttons: ['copy', 'csv', 'excel', 'pdf', 'print'],
         responsive: true,
         columns: [
-          {
-            data: null,
-            orderable: false,
-            render: (_,__,row) =>
-              `<input type="checkbox" class="row-select" data-id="${row.id}">`
-          },
+          { data: null, defaultContent: '', className: 'select-checkbox', orderable: false },
           { data: 'id' },
           { data: 'full_name' },
           { data: 'email' },
@@ -159,110 +329,168 @@
           { data: 'telegram', defaultContent: '—' },
           { data: 'experience' },
           { data: 'motivation', render: txt => `<small>${txt}</small>` },
-          { data: 'status' }
-        ],
-        order: [[1,'desc']]
+          { data: 'status' },
+          {
+            data: null,
+            render: (data, type, row) => {
+              let actions = `<button class="btn btn-sm btn-primary me-2" onclick="viewApplication(${row.id})"><i class="bi bi-eye"></i> View</button>`;
+              if (row.status === 'Pending') {
+                actions += `
+                  <button class="btn btn-sm btn-success me-2" onclick="approveApplication(${row.id})"><i class="bi bi-check"></i> Approve</button>
+                  <button class="btn btn-sm btn-danger me-2" onclick="deleteApplication(${row.id})"><i class="bi bi-x"></i> Delete</button>
+                  <button class="btn btn-sm btn-warning" onclick="auctionApplication(${row.id})"><i class="bi bi-hammer"></i> Auction</button>
+                `;
+              }
+              return actions;
+            }
+          }
+        ]
       });
 
-      // Load data
-      async function loadApplications() {
-        $('#loading').show();
+      // Load Applications
+      async function loadCapitalApplications() {
+        document.getElementById('loading').style.display = 'block';
         try {
           const { data, error } = await supabase
             .from('capital_applications')
-            .select('*')
-            .order('created_at',{ascending:false});
+            .select('id, full_name, email, whatsapp, telegram, experience, motivation, status')
+            .order('created_at', { ascending: false });
           if (error) throw error;
-          table.clear().rows.add(data).draw();
-        } catch (e) {
-          console.error(e);
+          table.clear().rows.add(data || []).draw();
+        } catch (err) {
+          console.error(err);
           showToast('Error loading applications', false);
         } finally {
-          $('#loading').hide();
+          document.getElementById('loading').style.display = 'none';
         }
       }
 
-      // Per-row actions
-      window.viewApplication = id => {
-        const row = table.rows().data().toArray().find(r=>r.id===id);
-        if (!row) return showToast('Not found', false);
-        document.querySelector('#applicationModal .modal-body').innerHTML = `
-          <p><strong>Name:</strong> ${row.full_name}</p>
-          <p><strong>Email:</strong> ${row.email}</p>
-          <p><strong>WhatsApp:</strong> ${row.whatsapp||'—'}</p>
-          <p><strong>Telegram:</strong> ${row.telegram||'—'}</p>
-          <p><strong>Experience:</strong> ${row.experience} yrs</p>
-          <p><strong>Motivation:</strong> ${row.motivation}</p>
-          <p><strong>Status:</strong> ${row.status}</p>`;
-        new bootstrap.Modal('#applicationModal').show();
-      };
-
-      async function updateStatus(ids, status, confirmMsg) {
-        if (status==='Deleted' && !confirm(confirmMsg)) return;
+      // Approve Application
+      window.approveApplication = async (id) => {
         try {
-          const op = status==='Deleted'
-            ? supabase.from('capital_applications').delete().in('id',ids)
-            : supabase.from('capital_applications').update({status}).in('id',ids);
-          const { error } = await op;
+          const { error } = await supabase
+            .from('capital_applications')
+            .update({ status: 'Approved' })
+            .eq('id', id);
           if (error) throw error;
-          showToast(
-            status==='Deleted'
-            ? 'Application(s) deleted'
-            : `Application(s) marked ${status.toLowerCase()}`
-          );
-          loadApplications();
-        } catch(e) {
-          console.error(e);
-          showToast(`Error updating`, false);
+          showToast('Application approved');
+          loadCapitalApplications();
+        } catch (err) {
+          console.error(err);
+          showToast('Error approving application', false);
         }
-      }
-
-      window.approveApplication = id => updateStatus([id],'Approved');
-      window.deleteApplication  = id => {
-        if (confirm('Are you sure you want to delete this application?'))
-          updateStatus([id],'Deleted','');
-      };
-      window.auctionApplication = id => {
-        if (confirm('Mark this application for auction?'))
-          updateStatus([id],'Auctioned');
       };
 
-      // Bulk actions helper
-      function getSelectedIds() {
-        return Array.from(document.querySelectorAll('.row-select:checked'))
-          .map(cb => parseInt(cb.dataset.id,10));
-      }
-
-      document.getElementById('bulk-approve').onclick = () => {
-        const ids = getSelectedIds();
-        if (!ids.length) return showToast('No applications selected', false);
-        updateStatus(ids,'Approved');
+      // Delete Application
+      window.deleteApplication = async (id) => {
+        if (confirm('Are you sure you want to delete this application?')) {
+          try {
+            const { error } = await supabase
+              .from('capital_applications')
+              .delete()
+              .eq('id', id);
+            if (error) throw error;
+            showToast('Application deleted');
+            loadCapitalApplications();
+          } catch (err) {
+            console.error(err);
+            showToast('Error deleting application', false);
+          }
+        }
       };
-      document.getElementById('bulk-delete').onclick = () => {
-        const ids = getSelectedIds();
-        if (!ids.length) return showToast('No applications selected', false);
-        if (confirm('Delete selected applications?'))
-          updateStatus(ids,'Deleted');
+
+      // Auction Application
+      window.auctionApplication = async (id) => {
+        if (confirm('Are you sure you want to mark this application for auction?')) {
+          try {
+            const { error } = await supabase
+              .from('capital_applications')
+              .update({ status: 'Auctioned' })
+              .eq('id', id);
+            if (error) throw error;
+            showToast('Application marked for auction');
+            loadCapitalApplications();
+          } catch (err) {
+            console.error(err);
+            showToast('Error marking application for auction', false);
+          }
+        }
       };
 
-      // Status filter
-      document.getElementById('status-filter').onchange = function(){
+      // View Application Details
+      window.viewApplication = (id) => {
+        const rowData = table.row(`#${id}`).data();
+        if (rowData) {
+          document.querySelector('#applicationModal .modal-body').innerHTML = `
+            <p><strong>Name:</strong> ${rowData.full_name}</p>
+            <p><strong>Email:</strong> ${rowData.email}</p>
+            <p><strong>WhatsApp:</strong> ${rowData.whatsapp || '—'}</p>
+            <p><strong>Telegram:</strong> ${rowData.telegram || '—'}</p>
+            <p><strong>Experience:</strong> ${rowData.experience} years</p>
+            <p><strong>Motivation:</strong> ${rowData.motivation}</p>
+            <p><strong>Status:</strong> ${rowData.status}</p>
+          `;
+          new bootstrap.Modal(document.getElementById('applicationModal')).show();
+        }
+      };
+
+      // Bulk Approve
+      document.getElementById('bulk-approve').addEventListener('click', async () => {
+        const selectedIds = table.rows({ selected: true }).data().pluck('id').toArray();
+        if (!selectedIds.length) return showToast('No applications selected', false);
+        try {
+          const { error } = await supabase
+            .from('capital_applications')
+            .update({ status: 'Approved' })
+            .in('id', selectedIds);
+          if (error) throw error;
+          showToast('Selected applications approved');
+          loadCapitalApplications();
+        } catch (err) {
+          console.error(err);
+          showToast('Error approving applications', false);
+        }
+      });
+
+      // Bulk Delete
+      document.getElementById('bulk-delete').addEventListener('click', async () => {
+        const selectedIds = table.rows({ selected: true }).data().pluck('id').toArray();
+        if (!selectedIds.length) return showToast('No applications selected', false);
+        if (confirm('Are you sure you want to delete the selected applications?')) {
+          try {
+            const { error } = await supabase
+              .from('capital_applications')
+              .delete()
+              .in('id', selectedIds);
+            if (error) throw error;
+            showToast('Selected applications deleted');
+            loadCapitalApplications();
+          } catch (err) {
+            console.error(err);
+            showToast('Error deleting applications', false);
+          }
+        }
+      });
+
+      // Status Filter
+      document.getElementById('status-filter').addEventListener('change', function () {
         table.column(8).search(this.value).draw();
-      };
-
-      // Select‐all checkbox
-      document.getElementById('select-all').addEventListener('change', function(){
-        const checked = this.checked;
-        document.querySelectorAll('.row-select').forEach(cb=> cb.checked=checked);
       });
 
-      // Un‐check “select all” if any row is unchecked
-      $('#applications-table tbody').on('change','.row-select', function(){
-        if (!this.checked) document.getElementById('select-all').checked = false;
+      // Keyboard Shortcuts
+      document.addEventListener('keydown', (e) => {
+        if (e.ctrlKey && e.key === 'a') {
+          e.preventDefault();
+          table.rows().select();
+        } else if (e.ctrlKey && e.shiftKey && e.key === 'A') {
+          document.getElementById('bulk-approve').click();
+        } else if (e.ctrlKey && e.shiftKey && e.key === 'D') {
+          document.getElementById('bulk-delete').click();
+        }
       });
 
-      // Initial load
-      loadApplications();
+      // Initial Load
+      loadCapitalApplications();
     });
   </script>
 </body>
